@@ -1,0 +1,12 @@
+#! /bin/bash
+# Jenkins setup for an ubuntu 16 image
+
+sudo apt-get install apt-transport-https ca-certificates software-properties-common
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
+sudo apt-get update
+sudo apt-get install docker-ce default-jre default-jdk
+sudo usermod -aG docker $USER
+wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war
+java -jar jenkins.war --httpPort=8080
+
