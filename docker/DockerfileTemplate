@@ -1,0 +1,19 @@
+FROM ubuntu:16.04
+
+# == Python & Python OpenML setup ==
+RUN apt-get update
+RUN apt-get install -y python3.5 python3-pip
+
+# NumPy and SciPy need be installed, otherwise OpenML setup will fail.
+RUN pip3 install --no-cache-dir numpy scipy
+RUN pip3 install --no-cache-dir openml
+# ==================================
+
+WORKDIR /automl
+ADD . /automl
+
+# CUSTOM_CONFIGURATION_HERE
+
+
+# https://docs.docker.com/engine/reference/builder/#entrypoint
+ENTRYPOINT ["/bin/bash", "-c", "$start_call $0 $*"]
