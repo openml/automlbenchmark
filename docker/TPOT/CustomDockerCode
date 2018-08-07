@@ -1,0 +1,2 @@
+RUN pip3 install --no-cache-dir tpot
+ENV start_call="python3 TPOT/run_tpot.py"
