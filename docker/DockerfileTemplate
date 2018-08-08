@@ -9,11 +9,12 @@ RUN pip3 install --no-cache-dir numpy scipy
 RUN pip3 install --no-cache-dir openml
 # ==================================
 
-WORKDIR /automl
-ADD . /automl
+WORKDIR /bench
+ADD common /bench/common
 
+# Adding/Removing lines below this comment can affect the working of the generate script.
 # CUSTOM_CONFIGURATION_HERE
 
 
 # https://docs.docker.com/engine/reference/builder/#entrypoint
-ENTRYPOINT ["/bin/bash", "-c", "$start_call $0 $*"]
+ENTRYPOINT ["/bin/bash", "-c", "./common/startup.sh $start_call $0 $*"]
