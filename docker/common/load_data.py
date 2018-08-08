@@ -18,19 +18,23 @@ arff_path = "{}/{}/{}/dataset.arff".format(
     dataset_id
 )
 
+data_marker_read = False
+data_rows = []
 with open(arff_path, 'r') as arff_file:
-    arff_content = arff.load(arff_file)
+    for line in arff_file:
+        if '@DATA' in line:
+            data_marker_read = True
+            continue
+        if data_marker_read:
+            data_rows.append(line)
 
-dataset = arff_content['data']
 train_inds, test_inds = task.get_train_test_split_indices(fold=fold_no)
 
-train_data = [row for i, row in enumerate(dataset) if i in train_inds]
-test_data = [row for i, row in enumerate(dataset) if i in test_inds]
+train_rows = [row for i, row in enumerate(data_rows) if i in train_inds]
+test_rows = [row for i, row in enumerate(data_rows) if i in test_inds]
 
 with open(output_path_train, 'w') as output_file:
-    for row in train_data:
-        output_file.write(','.join([str(el) for el in row])+'\n')
+    output_file.writelines(train_rows)
 
 with open(output_path_test, 'w') as output_file:
-    for row in test_data:
-        output_file.write(','.join([str(el) for el in row])+'\n')
+    output_file.writelines(test_rows)
