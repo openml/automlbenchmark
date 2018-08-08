@@ -1,1 +1,1 @@
-ENV start_call="python3 RandomForest/randomforest.py"
+ENV start_call="python3 randomforest.py"
