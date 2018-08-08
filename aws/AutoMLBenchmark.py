@@ -9,12 +9,9 @@ class AutoMLBenchmark:
 
   token = "THIS_IS_A_DUMMY_TOKEN"
 
-  def __init__(self, benchmarks, framework, ssh_key, sec_group, aws_instance_image, openml_apikey):
+  def __init__(self, benchmarks, framework, openml_apikey):
     self.benchmarks = benchmarks
     self.framework = framework
-    self.ssh_key = ssh_key
-    self.sec_group = sec_group
-    self.aws_instance_image = aws_instance_image
     self.openml_apikey = openml_apikey
 
   def getContainerName(self):
@@ -26,7 +23,7 @@ class AutoMLBenchmark:
 
     if upload:
       os.system("docker login")
-      os.system("docker upload %s" % (self.getContainerName()))
+      os.system("docker push %s" % (self.getContainerName()))
 
   def runLocal(self):
     results = {}
@@ -35,9 +32,9 @@ class AutoMLBenchmark:
       results[benchmark["id"]] = [x for x in res.splitlines() if re.search(self.token, x)][0].split(" ")[-1]
     return results
 
-  def runAWS(self):
+  def runAWS(self, ssh_key, sec_group, aws_instance_image):
 
-      runs = [AwsDockerOMLRun(self.ssh_key, self.sec_group, b["aws_instance_type"], self.aws_instance_image, self.getContainerName(), b["id"], b["runtime"], b["cores"], self.openml_apikey) for b in self.benchmarks]
+      runs = [AwsDockerOMLRun(ssh_key, sec_group, b["aws_instance_type"], aws_instance_image, self.getContainerName(), b["id"], b["runtime"], b["cores"], self.openml_apikey) for b in self.benchmarks]
 
       for run in runs:
         run.createInstanceRun()
@@ -49,7 +46,7 @@ class AutoMLBenchmark:
         results = [run.getResult() for run in runs]
         print("%i/%i benchmarks done" % (len(results) - results.count(None), len(results)))
 
-      print("done!")
+      print("all benchmarks done!")
       [run.terminateInstance() for run in runs]
       return dict(zip([x["id"] for x in self.benchmarks], results))
 
@@ -69,9 +66,9 @@ if __name__ == "main":
   with open("../resources/frameworks.json") as file:
     frameworks = json.load(file)
 
-  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["randomForest"], ssh_key = key, sec_group = sec, aws_instance_image = image, openml_apikey = apikey)
+  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["randomForest"], openml_apikey = apikey)
   bench.getContainerName()
   bench.framework["dockerfile"] = "../docker/RandomForest"
-  bench.updateDockerContainer()
+  bench.updateDockerContainer(upload = False)
   bench.runLocal()
-  bench.runAWS()
+  bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image)

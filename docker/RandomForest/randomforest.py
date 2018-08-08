@@ -21,7 +21,7 @@ run = openml.runs.run_model_on_task(task, rfc)
 
 # Because actual metric values are calculated on the server side of things, we actually need to do it manually here.
 # Note that code below does not generalize to e.g. repeated CV.
-print("THIS_IS_A_DUMMY_TOKEN " + str(np.mean(list(run.fold_evaluations[task.evaluation_measure][0].values()))))
+print("THIS_IS_A_DUMMY_TOKEN " + str(np.mean(list(run.fold_evaluations['predictive_accuracy'][0].values()))))
 
 
 
