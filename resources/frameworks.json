@@ -1,0 +1,22 @@
+{
+  "randomForest": {
+    "docker_image": {
+      "author":"jnkthms",
+      "image":"rf",
+      "tag":"latest"
+    },
+    "dockerfile":"docker/RandomForest",
+    "version":"0.1",
+    "project":"http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html"
+  },
+  "TPOT": {
+    "docker_image": {
+      "author":"",
+      "image":"",
+      "tag":"",
+      "version":"0.9.3",
+      "project":"https://github.com/EpistasisLab/tpot"
+    },
+    "dockerfile":"docker/TPOT"
+  }
+}
