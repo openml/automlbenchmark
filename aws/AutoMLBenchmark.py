@@ -1,5 +1,4 @@
-#!/bin/python3
-from AwsDockerOMLRun import AwsDockerOMLRun
+#!/usr/bin/python3
 
 import os
 import re
@@ -54,6 +53,7 @@ class AutoMLBenchmark:
 if __name__ == "main":
 
   import json
+  from AwsDockerOMLRun import AwsDockerOMLRun
 
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
