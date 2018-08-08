@@ -1,9 +1,9 @@
-#!/bin/python3
-from AwsDockerOMLRun import AwsDockerOMLRun
+#!/usr/bin/python3
 
 import os
 import re
 import time
+from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
 class AutoMLBenchmark:
 
@@ -19,7 +19,8 @@ class AutoMLBenchmark:
     return "%s/%s:%s" % (docker_image["author"],  docker_image["image"], docker_image["tag"])
 
   def updateDockerContainer(self, upload = False):
-    os.system("docker build -t %s %s" % (self.getContainerName(), self.framework["dockerfile"]))
+    #os.system("(cd docker && ./generate_docker.sh %s)" % (self.framework["dockerfile_folder"]))
+    os.system("docker build -t %s docker/%s" % (self.getContainerName(), self.framework["dockerfile_folder"]))
 
     if upload:
       os.system("docker login")
@@ -29,7 +30,14 @@ class AutoMLBenchmark:
     results = {}
     for benchmark in self.benchmarks:
       res = os.popen("docker run --rm %s %s %s %s %s" % (self.getContainerName(), benchmark["id"], benchmark["runtime"], benchmark["cores"], self.openml_apikey)).read()
-      results[benchmark["id"]] = [x for x in res.splitlines() if re.search(self.token, x)][0].split(" ")[-1]
+      res = [x for x in res.splitlines() if re.search(self.token, x)]
+      if len(res) != 1:
+          print("Run on task %s finished without valid result!" %s (benchmark["id"]))
+          res = float('nan')
+      else:
+          res = res[0].split(" ")[-1]
+      results[benchmark["id"]] = res
+
     return results
 
   def runAWS(self, ssh_key, sec_group, aws_instance_image):
@@ -54,6 +62,7 @@ class AutoMLBenchmark:
 if __name__ == "main":
 
   import json
+  from AwsDockerOMLRun import AwsDockerOMLRun
 
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
@@ -68,7 +77,6 @@ if __name__ == "main":
 
   bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["randomForest"], openml_apikey = apikey)
   bench.getContainerName()
-  bench.framework["dockerfile"] = "../docker/RandomForest"
   bench.updateDockerContainer(upload = False)
   bench.runLocal()
   bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image)

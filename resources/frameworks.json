@@ -5,7 +5,7 @@
       "image":"rf",
       "tag":"latest"
     },
-    "dockerfile":"docker/RandomForest",
+    "dockerfile_folder":"RandomForest",
     "version":"0.1",
     "project":"http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html"
   },
@@ -17,6 +17,6 @@
       "version":"0.9.3",
       "project":"https://github.com/EpistasisLab/tpot"
     },
-    "dockerfile":"docker/TPOT"
+    "dockerfile_folder":"TPOT"
   }
 }

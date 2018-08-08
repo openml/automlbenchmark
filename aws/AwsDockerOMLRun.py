@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 import boto3
 import re
@@ -56,8 +56,12 @@ class AwsDockerOMLRun:
       out = self.instance.console_output()
       if "Output" in out.keys():
         out = out["Output"].splitlines()
-        out = [x for x in out if re.search(self.token, x)][0]
-        return out.split(" ")[-1]
+        out = [x for x in out if re.search(self.token, x)]
+        if len(out) == 1:
+          return out[0].split(" ")[-1]
+        else:
+          print("Run finished without result!")
+          return float('nan')
 
   def __del__(self):
     self.terminateInstance()
