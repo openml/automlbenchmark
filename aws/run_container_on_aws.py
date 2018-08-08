@@ -1,13 +1,16 @@
 #!/bin/python3
 
 import boto3
+import re
 from time import sleep
 from os import popen
+
 
 class AwsDockerOMLRun:
 
   setup = '#!/bin/bash\napt-get update\napt-get install apt-transport-https ca-certificates curl software-properties-common\ncurl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -\nadd-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"\napt-get update\napt-get install -y docker-ce\nusermod -aG docker $USER\ndocker run --rm'
   instance = None
+  token = "asdfasdfasdfasdf"
 
   def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, runtime, cores, openml_apikey):
     self.ssh_key = ssh_key
@@ -22,7 +25,7 @@ class AwsDockerOMLRun:
     self.ec2_resource = boto3.resource("ec2")
 
   def createInstanceRun(self):
-    setup = " ".join([self.setup, self.docker_image, str(self.openml_id), str(self.runtime), str(self.cores), self.openml_apikey, ">> /home/ubuntu/result"])
+    setup = " ".join([self.setup, self.docker_image, str(self.openml_id), str(self.runtime), str(self.cores), self.openml_apikey, "\n echo", self.token])
     if self.instance is not None:
       print("Instance already exists, terminate existing instance")
       self.terminateInstance()
@@ -45,17 +48,19 @@ class AwsDockerOMLRun:
         print("Termination successful")
 
   def getResult(self):
+
     if self.instance is None:
-      print("Not instance created, run createInstanceRun first")
-      return None
+      print("No instance created, run createInstanceRun first")
     self.instance.load()
+
     if not self.instance.state["Name"] == "running":
       print("Instance %s" % (self.instance.state["Name"]))
-    try:
-      res = popen('scp "ubuntu@%s:~/result" "/dev/stdout"' % (self.instance.public_ip_address)).read()
-      return res
-    except:
-      print("Run not finished")
+    else:
+      out = self.instance.console_output()
+      if "Output" in out.keys():
+        out = out["Output"].splitlines()
+        ind = [i for i,x in enumerate(out) if re.search(self.token, x)][0] - 1
+        return out[ind].split(" ")[-1]
 
   def __del__(self):
     self.terminateInstance()
@@ -66,10 +71,10 @@ if __name__ == "main":
   instance = "t2.micro" # instance type
   image = "ami-58d7e821" # aws instance image
   dockerImage = "jnkthms/rf" # docker image
-  openmlid = 1
+  openmlid = 15
   runtime = 1
   cores = 1
-  apikey = popen("cat ~/.openml/config | grep apikey").read().split("=")[1][:-2] # openml apikey
+  apikey = popen("cat ~/.openml/config | grep apikey").read().split("=")[1][:-1] # openml apikey
 
   run = AwsDockerOMLRun(ssh_key = key, sec_group = sec, aws_instance_type = instance,
     aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, runtime = runtime, cores = cores,
@@ -77,6 +82,7 @@ if __name__ == "main":
 
   run.createInstanceRun()
   for i in range(100):
+    print(i)
     sleep(5)
     run.getResult()
   run.terminateInstance()
