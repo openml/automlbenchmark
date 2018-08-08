@@ -13,7 +13,7 @@ fold_no = int(sys.argv[2])
 task = openml.tasks.get_task(task_id)
 dataset_id = task.dataset_id
 arff_path = "{}/{}/{}/dataset.arff".format(
-    openml.config.cache_directory,
+    openml.config.get_cache_directory(),
     openml.datasets.functions.DATASETS_CACHE_DIR_NAME,
     dataset_id
 )
