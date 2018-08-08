@@ -2,9 +2,6 @@
 
 import boto3
 import re
-from time import sleep
-from os import popen
-
 
 class AwsDockerOMLRun:
 
@@ -22,7 +19,7 @@ class AwsDockerOMLRun:
     self.runtime = runtime
     self.cores = cores
     self.openml_apikey = openml_apikey
-    self.ec2_resource = boto3.resource("ec2")
+    self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
 
   def createInstanceRun(self):
     setup = " ".join([self.setup, self.docker_image, str(self.openml_id), str(self.runtime), str(self.cores), self.openml_apikey])
@@ -66,6 +63,10 @@ class AwsDockerOMLRun:
     self.terminateInstance()
 
 if __name__ == "main":
+
+  from time import sleep
+  from os import popen
+
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
   instance = "t2.micro" # instance type
