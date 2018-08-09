@@ -50,17 +50,18 @@ with open(arff_path, 'r') as arff_file:
 # need any additional information. For this, we need to order the data and attribute declarations accordingly.
 target_index = attributes.index(task.target_name)
 
-# We remove the new-line character before possibly reshuffling the data so we do not have to keep track of where it is.
+# If the last column is not the target column, we need to reorder the data.
 if target_index != len(attributes) - 1:
+    # We remove the new-line character before reshuffling the data so we do not have to keep track of where it is.
     data_rows = [line[:-1] for line in data_rows]
     data_rows_split = [row.split(',') for row in data_rows]
     reordered_data = [row[:target_index] + [row[-1]] + row[target_index+1:-1] + [row[target_index]]
                       for row in data_rows_split]
     data_rows = [",".join(row)+'\n' for row in reordered_data]
 
-last_attr_idx = [i for i, line in enumerate(header_lines) if '@attribute' in line.lower()][-1]
-target_attr_idx = [i for i, line in enumerate(header_lines) if '@attribute' in line.lower() and task.target_name in line][-1]
-header_lines[last_attr_idx], header_lines[target_attr_idx] = header_lines[target_attr_idx], header_lines[last_attr_idx]
+    last_attr_idx = [i for i, line in enumerate(header_lines) if '@attribute' in line.lower()][-1]
+    target_attr_idx = [i for i, line in enumerate(header_lines) if '@attribute' in line.lower() and task.target_name in line][-1]
+    header_lines[last_attr_idx], header_lines[target_attr_idx] = header_lines[target_attr_idx], header_lines[last_attr_idx]
 
 train_inds, test_inds = task.get_train_test_split_indices(fold=fold_no)
 train_rows = [row for i, row in enumerate(data_rows) if i in train_inds]
