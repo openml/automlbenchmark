@@ -32,4 +32,3 @@ else:
   res = bench.runLocal()
 
 print(res)
-
