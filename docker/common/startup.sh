@@ -1,14 +1,15 @@
 #!/bin/bash
 
-let nargs=($# - 5)
+let nargs=($# - 6)
 
 start_call=${@: 1 :$nargs}
-task_id=${@: -5:1}
-fold_n=${@: -4:1}
+task_id=${@: -6:1}
+fold_n=${@: -5:1}
+apikey=${@: -4:1}
 time_s=${@: -3:1}
 n_cores=${@: -2:1}
-apikey=${@: -1:1}
+metric=${@: -1:1}
 
-python3 ./common/load_data.py $task_id $fold_n
+python3 ./common/load_data.py $task_id $fold_n $apikey ./common/train.arff ./common/test.arff
 cd automl
-$start_call $task_id $time_s $n_cores $apikey
+$start_call $time_s $n_cores $metric
