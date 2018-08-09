@@ -19,8 +19,8 @@ class AutoMLBenchmark:
     return "%s/%s:%s" % (docker_image["author"],  docker_image["image"], docker_image["tag"])
 
   def updateDockerContainer(self, upload = False):
-    #os.system("(cd docker && ./generate_docker.sh %s)" % (self.framework["dockerfile_folder"]))
-    os.system("docker build -t %s docker/%s" % (self.getContainerName(), self.framework["dockerfile_folder"]))
+    os.system("(cd docker && ./generate_docker.sh %s)" % (self.framework["dockerfile_folder"]))
+    os.system("(cd docker && docker build -t %s -f %s/Dockerfile .)" % (self.getContainerName(), self.framework["dockerfile_folder"]))
 
     if upload:
       os.system("docker login")
