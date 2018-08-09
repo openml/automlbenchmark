@@ -51,19 +51,20 @@ with open(arff_path, 'r') as arff_file:
 target_index = attributes.index(task.target_name)
 
 # We remove the new-line character before possibly reshuffling the data so we do not have to keep track of where it is.
-data_rows = [line[:-1] for line in data_rows]
-data_rows_split = [row.split(',') for row in data_rows]
-reordered_data = [row[:target_index] + [row[-1]] + row[target_index+1:-1] + [row[target_index]]
-                  for row in data_rows_split]
-stringified_data = [",".join(row)+'\n' for row in reordered_data]
+if target_index != len(attributes) - 1:
+    data_rows = [line[:-1] for line in data_rows]
+    data_rows_split = [row.split(',') for row in data_rows]
+    reordered_data = [row[:target_index] + [row[-1]] + row[target_index+1:-1] + [row[target_index]]
+                      for row in data_rows_split]
+    data_rows = [",".join(row)+'\n' for row in reordered_data]
 
 last_attr_idx = [i for i, line in enumerate(header_lines) if '@attribute' in line.lower()][-1]
 target_attr_idx = [i for i, line in enumerate(header_lines) if '@attribute' in line.lower() and task.target_name in line][-1]
 header_lines[last_attr_idx], header_lines[target_attr_idx] = header_lines[target_attr_idx], header_lines[last_attr_idx]
 
 train_inds, test_inds = task.get_train_test_split_indices(fold=fold_no)
-train_rows = [row for i, row in enumerate(stringified_data) if i in train_inds]
-test_rows = [row for i, row in enumerate(stringified_data) if i in test_inds]
+train_rows = [row for i, row in enumerate(data_rows) if i in train_inds]
+test_rows = [row for i, row in enumerate(data_rows) if i in test_inds]
 
 with open(output_path_train, 'w') as output_file:
     output_file.writelines(header_lines)
