@@ -9,20 +9,22 @@ class AwsDockerOMLRun:
   instance = None
   token = "THIS_IS_A_DUMMY_TOKEN"
 
-  def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, runtime, cores, openml_apikey):
+  def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, openml_apikey, runtime, cores, metric):
     self.ssh_key = ssh_key
     self.sec_group = sec_group
     self.aws_instance_type = aws_instance_type
     self.aws_instance_image = aws_instance_image
     self.docker_image = docker_image
     self.openml_id = openml_id
+    self.fold = fold
+    self.openml_apikey = openml_apikey
     self.runtime = runtime
     self.cores = cores
-    self.openml_apikey = openml_apikey
+    self.metric = metric
     self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
 
   def createInstanceRun(self):
-    setup = " ".join([self.setup, self.docker_image, str(self.openml_id), str(self.runtime), str(self.cores), self.openml_apikey])
+    setup = " ".join([self.setup, self.docker_image, str(self.openml_id), str(self.fold), self.openml_apikey, str(self.runtime), str(self.cores), self.metric])
     if self.instance is not None:
       print("Instance already exists, terminate existing instance")
       self.terminateInstance()

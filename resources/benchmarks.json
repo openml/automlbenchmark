@@ -5,14 +5,16 @@
     "runtime":1,
     "cores":1,
     "aws_instance_type":"t2.micro",
-    "metric":"ACC"
+    "metric":"ACC",
+    "folds":2
   },
   {
     "id":3913,
     "runtime":1,
     "cores":1,
     "aws_instance_type":"t2.micro",
-    "metric":"ACC"
+    "metric":"ACC",
+    "folds":2
   }],
   "easy":[],
   "medium":[],

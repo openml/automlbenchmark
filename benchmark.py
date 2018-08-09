@@ -30,6 +30,3 @@ if sys.argv[3] == "aws":
 else:
   bench.updateDockerContainer(upload = False)
   res = bench.runLocal()
-
-print(res)
-
