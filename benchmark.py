@@ -10,7 +10,7 @@ import json
 framework = sys.argv[1]
 benchmark = sys.argv[2]
 mode = sys.argv[3]
-apikey = os.popen("cat ~/.openml/config | grep apikey").read().split("=")[1][:-1]
+apikey = "c1994bdb7ecb3c6f3c8f3b35f4b47f1f"  # public read-only openml API key
 
 
 with open("resources/benchmarks.json") as file:
@@ -22,7 +22,7 @@ with open("resources/frameworks.json") as file:
 
 bench = AutoMLBenchmark(benchmarks = benchmarks[benchmark], framework = frameworks[framework], openml_apikey = apikey)
 
-print("Running `%s` on `%s` benchmarks in `%s` mode" % (framework, benchmark, mode))
+#print("Running `%s` on `%s` benchmarks in `%s` mode" % (framework, benchmark, mode))
 
 if sys.argv[3] == "aws":
   bench.updateDockerContainer(upload = True)
