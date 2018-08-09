@@ -1,7 +1,8 @@
 {
   "test":[
   {
-    "id":59,
+    "benchmark_id":"test_1",
+    "openml_task_id":59,
     "runtime":1,
     "cores":1,
     "aws_instance_type":"t2.micro",
@@ -9,7 +10,8 @@
     "folds":2
   },
   {
-    "id":3913,
+    "benchmark_id":"test_2",
+    "openml_task_id":3913,
     "runtime":1,
     "cores":1,
     "aws_instance_type":"t2.micro",

@@ -30,14 +30,14 @@ class AutoMLBenchmark:
     results = []
     for benchmark in self.benchmarks:
       for fold in range(benchmark["folds"]):
-        res = os.popen("docker run --rm %s %s %s %s %s %s %s" % (self.getContainerName(), benchmark["id"], fold, self.openml_apikey, benchmark["runtime"], benchmark["cores"], benchmark["metric"])).read()
+        res = os.popen("docker run --rm %s %s %s %s %s %s %s" % (self.getContainerName(), benchmark["openml_task_id"], fold, self.openml_apikey, benchmark["runtime"], benchmark["cores"], benchmark["metric"])).read()
         res = [x for x in res.splitlines() if re.search(self.token, x)]
         if len(res) != 1:
-            print("Fold %s on task %s finished without valid result!" % (fold, benchmark["id"]))
+            print("Fold %s on benchmark %s finished without valid result!" % (fold, benchmark["benchmark_id"]))
             res = 'nan'
         else:
             res = res[0].split(" ")[-1]
-        results.append({"result":float(res), "id":benchmark["id"], "fold":fold})
+        results.append({"result":float(res), "benchmark_id":benchmark["benchmark_id"], "fold":fold})
 
     return results
 
@@ -47,7 +47,7 @@ class AutoMLBenchmark:
       for benchmark in self.benchmarks:
         for fold in range(benchmark["folds"]):
           jobs.append({
-                      "id":benchmark["id"],
+                      "benchmark_id":benchmark["benchmark_id"],
                       "fold":fold,
                       "run":AwsDockerOMLRun(
                                             ssh_key,
@@ -55,7 +55,7 @@ class AutoMLBenchmark:
                                             benchmark["aws_instance_type"],
                                             aws_instance_image,
                                             self.getContainerName(),
-                                            benchmark["id"],
+                                            benchmark["openml_task_id"],
                                             fold,
                                             self.openml_apikey,
                                             benchmark["runtime"],
