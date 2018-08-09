@@ -3,11 +3,13 @@ import sys
 
 import openml
 
-output_path_train = 'train.arff'
-output_path_test = 'test.arff'
-
 task_id = int(sys.argv[1])
 fold_no = int(sys.argv[2])
+api_key = sys.argv[3]
+output_path_train = sys.argv[4]
+output_path_test = sys.argv[5]
+
+openml.config.apikey = api_key
 
 task = openml.tasks.get_task(task_id)
 dataset_id = task.dataset_id
