@@ -1,4 +1,12 @@
-""" Saves the data of a specific OpenML task's fold to disk. """
+""" Saves the data of a specific OpenML task's fold to disk.
+
+Input:
+ - OpenML Task ID
+ - Fold number
+ - OpenML API Key. This may be read-only.
+ - Output path for train data.
+ - Output path for test data.
+"""
 import sys
 
 import openml
