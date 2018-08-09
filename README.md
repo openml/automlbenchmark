@@ -7,7 +7,7 @@ To run a benchmark call the `benchmark.py` file with three arguments.
 3. If the benchmark should be run `local` or on `aws`.
 
 
-## Run the benchmark locally
+## Run the benchmark local
 
 A minimal example would be to run the test benchmarks with a random forest:
 
