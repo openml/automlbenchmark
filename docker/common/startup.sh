@@ -14,5 +14,6 @@ metric=${@: -1:1}
 
 cd automl
 $start_call $time_s $n_cores $metric
+cd ..
 
-/venvs/setup/bin/python3 -c "print('execute some evaluation here.')"
+/venvs/setup/bin/python3 ./common/evaluate.py ./common/test.arff ./common/predictions.csv $metric
