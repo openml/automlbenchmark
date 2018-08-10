@@ -1,2 +1,3 @@
-RUN pip3 install --no-cache-dir tpot
+RUN pip3 install --no-cache-dir tpot==0.9.3
+RUN pip3 install --no-cache-dir liac-arff==2.3
 ENV start_call="python3 run_tpot.py"
