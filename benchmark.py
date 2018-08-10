@@ -44,6 +44,8 @@ if outfile is not None:
     with open(outfile, "a") as file:
         for r in res:
             file.writelines(",".join([r["benchmark_id"],
+                                     framework,
+                                     frameworks[framework]["version"],
                                      str(r["fold"]),
                                      str(r["result"]),
                                      mode,

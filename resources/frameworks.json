@@ -6,7 +6,7 @@
       "tag":"latest"
     },
     "dockerfile_folder":"RandomForest",
-    "version":"0.1",
+    "version":"0.19.2",
     "project":"http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html"
   },
   "TPOT": {

@@ -5,12 +5,12 @@ To run a benchmark call the `benchmark.py` file with three arguments:
 1. The AutoML framework that should be evaluated, see [frameworks.json](resources/frameworks.json) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
 2. The benchmark suite to run. Should be one implemented in [benchmarks.json](resources/benchmarks.json)
 3. If the benchmark should be run `local` or on `aws`.
-4. (Optional) a file to apend the results to
+4. (Optional) a file to append the results to
 
 
 ## Installation
 
-To run the benchmarks, you will need [Docker](https://docs.docker.com/install/), Python 2 or 3, and the `boto3` Python package. 
+To run the benchmarks, you will need [Docker](https://docs.docker.com/install/), Python 2 or 3, and the `boto3` Python package.
 
 
 ## Generate Docker Images
