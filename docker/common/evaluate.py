@@ -31,7 +31,7 @@ with open(test_data_filepath, 'r') as arff_data_file:
 
 target_name, target_type = data_arff['attributes'][-1]
 y_true = np.asarray(data_arff['data'])[:, -1]
-y_pred = np.loadtxt(predictions_filepath, dtype='float', delimiter=',')
+y_pred = np.loadtxt(predictions_filepath, dtype='str', delimiter=',')
 
 if isinstance(target_type, list):
     # targets are classes, so we must convert the target labels to a one-hot encoding to calculate the metric.
@@ -39,10 +39,10 @@ if isinstance(target_type, list):
     y_true_le = labelEncoder.transform(y_true).reshape(-1, 1)
     y_true_ohe = OneHotEncoder().fit_transform(y_true_le)
 
-    class_probabilities, class_predictions = y_pred[:, :-1], y_pred[:, -1]
+    class_probabilities, class_predictions = y_pred[:, :-1].astype(float), y_pred[:, -1]
 
     if metric == 'acc':
-        score = accuracy_score(y_true_le, class_predictions)
+        score = accuracy_score(y_true, class_predictions)
     elif metric == 'log_loss':
         score = log_loss(y_true_ohe, class_probabilities)
     else:
