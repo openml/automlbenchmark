@@ -2,17 +2,19 @@ import sys
 
 import arff
 import numpy as np
-from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from tpot import TPOTClassifier
 
 if __name__ == '__main__':
     train_data_path = "../common/train.arff"
     test_data_path = "../common/test.arff"
+    output_path = "../common/predictions.csv"
 
     runtime_seconds = sys.argv[1]
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
+    performance_metric = 'accuracy' if performance_metric=='acc' else performance_metric
     print('Loading data.')
     def get_X_y_from_arff(arff_file_path):
         with open(arff_file_path, 'r') as arff_data_file:
@@ -33,6 +35,17 @@ if __name__ == '__main__':
     print('ignoring runtime.')
     tpot = TPOTClassifier(n_jobs=number_cores, population_size=10, generations=2, verbosity=2, scoring=performance_metric)
     tpot.fit(X_train, y_train)
-    y_pred = tpot.predict(X_test)
-    print('Optimization was towards metric, but following score is always accuracy:')
-    print("THIS_IS_A_DUMMY_TOKEN " + str(accuracy_score(y_test, y_pred)))
+    class_predictions = tpot.predict(X_test)
+    try:
+        class_probabilities = tpot.predict_proba(X_test)
+    except RuntimeError:
+        # TPOT gives a RuntimeError in case the best pipeline can not predict probabilities.
+        with open(train_data_path, 'r') as arff_data_file:
+            target_name, target_type = arff_data_file['attributes'][-1]
+
+        le = LabelEncoder().fit(target_type)
+        class_predictions_le = le.transform(class_predictions).reshape(-1, 1)
+        class_probabilities = OneHotEncoder().fit_transform(class_predictions_le)
+
+    combined_predictions = np.hstack((class_probabilities, class_predictions.reshape(-1, 1))).astype(str)
+    np.savetxt(output_path, combined_predictions, delimiter=',', fmt="%s")
