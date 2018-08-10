@@ -14,21 +14,27 @@ A minimal example would be to run the test benchmarks with a random forest:
 ```
 ./benchmark.py RandomForest test local
 
-[{'fold': 0, 'id': 59, 'result': '0.9333333333333333'},
- {'fold': 1, 'id': 59, 'result': '1.0'},
- {'fold': 0, 'id': 3913, 'result': '0.8490566037735849'},
- {'fold': 1, 'id': 3913, 'result': '0.8490566037735849'}]
+\\some building output here
+
+  benchmark_id  fold    result
+0       test_1     0  0.933333
+1       test_1     1  1.000000
+2       test_2     0  0.811321
+3       test_2     1  0.849057
+
 
 ```
 ## Run the benchmark on AWS
 
 To run a benchmark on AWS you additionally need to
 
-- Have `boto3` set up on you machine with access to you AWS account
+- Have `boto3` set up on you machine with access to your AWS account
 - Change the name of the `ssh_key` and `sec_group` to values associated with you AWS account.
 
 ```
 ./benchmark.py RandomForest test aws
+
+\\some building output here
 
 Created 4 jobs
 Starting instances
@@ -61,13 +67,11 @@ Termination successful
 Termination successful
 Termination successful
 Termination successful
-Termination successful
-Termination successful
-Termination successful
-Termination successful
-[{'fold': 0, 'id': 59, 'result': '0.9333333333333333'},
- {'fold': 1, 'id': 59, 'result': '1.0'},
- {'fold': 0, 'id': 3913, 'result': '0.8490566037735849'},
- {'fold': 1, 'id': 3913, 'result': '0.8490566037735849'}]
+
+  benchmark_id  fold              result
+0       test_1     0  0.9333333333333333
+1       test_1     1                 1.0
+2       test_2     0  0.8679245283018868
+3       test_2     1  0.8490566037735849
 
 ```
