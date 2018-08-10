@@ -5,7 +5,7 @@ To run a benchmark call the `benchmark.py` file with three arguments.
 1. The AutoML framework that should be evaluated, see [frameworks.json](resources/frameworks.json) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
 2. The benchmark suite to run. Should be one implemented in [benchmarks.json](resources/benchmarks.json)
 3. If the benchmark should be run `local` or on `aws`.
-
+4. (Optional) a file to apend the results to
 
 ## Run the benchmark local
 
@@ -20,9 +20,6 @@ A minimal example would be to run the test benchmarks with a random forest:
  {'fold': 1, 'id': 3913, 'result': '0.8490566037735849'}]
 
 ```
-
-__Note__: The sript assumes that you have an OpenML configuration file with API Key at `~/.openml/config`.
-
 ## Run the benchmark on AWS
 
 To run a benchmark on AWS you additionally need to
