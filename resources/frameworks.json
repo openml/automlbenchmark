@@ -1,5 +1,5 @@
 {
-  "randomForest": {
+  "RandomForest": {
     "docker_image": {
       "author":"jnkthms",
       "image":"rf",

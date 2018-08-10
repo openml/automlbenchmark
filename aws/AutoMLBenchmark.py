@@ -101,7 +101,7 @@ if __name__ == "main":
   with open("resources/frameworks.json") as file:
     frameworks = json.load(file)
 
-  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["randomForest"], openml_apikey = apikey)
+  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["RandomForest"], openml_apikey = apikey)
   bench.getContainerName()
   bench.updateDockerContainer(upload = False)
   res = bench.runLocal()

@@ -12,7 +12,7 @@ To run a benchmark call the `benchmark.py` file with three arguments.
 A minimal example would be to run the test benchmarks with a random forest:
 
 ```
-./benchmark.py randomForest test local
+./benchmark.py RandomForest test local
 
 [{'fold': 0, 'id': 59, 'result': '0.9333333333333333'},
  {'fold': 1, 'id': 59, 'result': '1.0'},
@@ -28,7 +28,7 @@ To run a benchmark on AWS you additionally need to
 - Change the name of the `ssh_key` and `sec_group` to values associated with you AWS account.
 
 ```
-./benchmark.py randomForest test aws
+./benchmark.py RandomForest test aws
 
 Created 4 jobs
 Starting instances
