@@ -2,11 +2,16 @@ FROM ubuntu:16.04
 
 # == Python & Python OpenML setup ==
 RUN apt-get update
-RUN apt-get install -y python3.5 python3-pip
+RUN apt-get install -y python3.5 python3-pip python3-venv
+
+
+# We create a virtual environment so that AutoML systems may use their preferred versions of 
+# packages that we need to data pre- and postprocessing without breaking it.
+RUN python3 -m venv /venvs/setup
 
 # NumPy and SciPy need be installed, otherwise OpenML setup will fail.
-RUN pip3 install --no-cache-dir numpy scipy
-RUN pip3 install --no-cache-dir openml
+RUN /venvs/setup/bin/pip3 install --no-cache-dir numpy scipy
+RUN /venvs/setup/bin/pip3 install --no-cache-dir openml
 # ==================================
 
 WORKDIR /bench
