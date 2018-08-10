@@ -18,5 +18,15 @@
       "project":"https://github.com/EpistasisLab/tpot"
     },
     "dockerfile_folder":"TPOT"
+  },
+  "H2OAutoML": {
+    "docker_image": {
+      "author":"",
+      "image":"",
+      "tag":"",
+      "version":"3.20.0.5",
+      "project":"http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html"
+    },
+    "dockerfile_folder":"H2OAutoML"
   }
 }
