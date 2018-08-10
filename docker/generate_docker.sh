@@ -2,7 +2,7 @@
 DIRECTORY=$1
 
 # Copy the first layers.
-head -n -4 DockerfileTemplate > $DIRECTORY/Dockerfile
+cat DockerHeader > $DIRECTORY/Dockerfile
 
 # Add the AutoML system
 echo "ADD $DIRECTORY /bench/automl" >> $DIRECTORY/Dockerfile
@@ -11,4 +11,4 @@ echo "ADD $DIRECTORY /bench/automl" >> $DIRECTORY/Dockerfile
 cat $DIRECTORY/CustomDockerCode >> $DIRECTORY/Dockerfile
 
 # Append the ENTRY_POINT call.
-tail -n 4 DockerfileTemplate >> $DIRECTORY/Dockerfile
+cat DockerFooter >> $DIRECTORY/Dockerfile
