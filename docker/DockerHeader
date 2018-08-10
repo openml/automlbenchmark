@@ -10,8 +10,9 @@ RUN apt-get install -y python3.5 python3-pip python3-venv
 RUN python3 -m venv /venvs/setup
 
 # NumPy and SciPy need be installed, otherwise OpenML setup will fail.
-RUN /venvs/setup/bin/pip3 install --no-cache-dir numpy scipy
-RUN /venvs/setup/bin/pip3 install --no-cache-dir openml
+RUN /venvs/setup/bin/pip3 install --no-cache-dir numpy==1.15.0 
+RUN /venvs/setup/bin/pip3 install --no-cache-dir scipy==1.1.0
+RUN /venvs/setup/bin/pip3 install --no-cache-dir openml==0.7.0
 # ==================================
 
 WORKDIR /bench
