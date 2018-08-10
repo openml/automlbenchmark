@@ -16,4 +16,6 @@ RUN /venvs/setup/bin/pip3 install --no-cache-dir openml==0.7.0
 # ==================================
 
 WORKDIR /bench
-ADD common /bench/common
+ADD common/evaluate.py /bench/common/evaluate.py
+ADD common/load_data.py /bench/common/load_data.py
+ADD common/startup.sh /bench/common/startup.sh
