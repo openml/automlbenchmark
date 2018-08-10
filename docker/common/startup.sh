@@ -1,14 +1,36 @@
 #!/bin/bash
 
-let nargs=($# - 6)
+# http://wiki.bash-hackers.org/howto/getopts_tutorial
+while getopts :c:t:d:f:a:s:p:m: opt; do
+  case $opt in
+    c)
+	  start_call=$OPTARG;;
+	t)
+	  task_id=$OPTARG;;
+	d)
+	  datafile=$OPTARG;;
+	f)
+	  fold_n=$OPTARG;;
+	a)
+	  apikey=$OPTARG;;
+	s)
+	  time_s=$OPTARG;;
+	p)
+	  n_cores=$OPTARG;;
+	m)
+	  metric=$OPTARG;;
+	\?)
+	  echo "Invalid option: -$OPTARG";;
+  esac	  
+done
 
-start_call=${@: 1 :$nargs}
-task_id=${@: -6:1}
-fold_n=${@: -5:1}
-apikey=${@: -4:1}
-time_s=${@: -3:1}
-n_cores=${@: -2:1}
-metric=${@: -1:1}
+if [ -z ${start_call+x} ]; then echo "start_call is unset"; exit; fi
+if [ -z ${fold_n+x} ]; then echo "fold_n is unset"; exit; fi
+if [ -z ${apikey+x} ]; then echo "apikey is unset"; exit; fi
+if [ -z ${time_s+x} ]; then echo "time_s is unset"; exit; fi
+if [ -z ${n_cores+x} ]; then echo "n_cores is unset"; exit; fi
+if [ -z ${metric+x} ]; then echo "metric is unset"; exit; fi
+if [ -z ${task_id+x} ] && [ -z ${datafile+x} ]; then echo "Either task or datafile needs to be set"; exit; fi
 
 /venvs/setup/bin/python3 ./common/load_data.py $task_id $fold_n $apikey ./common/train.arff ./common/test.arff
 
