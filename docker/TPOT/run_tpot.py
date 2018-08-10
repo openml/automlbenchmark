@@ -41,7 +41,8 @@ if __name__ == '__main__':
     except RuntimeError:
         # TPOT gives a RuntimeError in case the best pipeline can not predict probabilities.
         with open(train_data_path, 'r') as arff_data_file:
-            target_name, target_type = arff_data_file['attributes'][-1]
+            arff_data = arff.load(arff_data_file)
+            target_name, target_type = arff_data['attributes'][-1]
 
         le = LabelEncoder().fit(target_type)
         class_predictions_le = le.transform(class_predictions).reshape(-1, 1)
