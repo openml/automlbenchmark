@@ -10,6 +10,9 @@ time_s=${@: -3:1}
 n_cores=${@: -2:1}
 metric=${@: -1:1}
 
-python3 ./common/load_data.py $task_id $fold_n $apikey ./common/train.arff ./common/test.arff
+/venvs/setup/bin/python3 ./common/load_data.py $task_id $fold_n $apikey ./common/train.arff ./common/test.arff
+
 cd automl
 $start_call $time_s $n_cores $metric
+
+/venvs/setup/bin/python3 -c "print('execute some evaluation here.')"
