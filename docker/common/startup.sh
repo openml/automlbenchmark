@@ -35,7 +35,7 @@ if [ ! -z ${task_id+x} ]; then
   /venvs/setup/bin/python3 ./common/load_data.py -t $task_id -f $fold_n -a $apikey --train ./common/train.arff --test ./common/test.arff
 elif [ ! -z ${datafile+x} ]; then
   echo "No task was specified. Data on disk will be used."
-  /venvs/setup/bin/python3 ./common/load_data.py -d /bench/automl/dataset -f $fold_n --train ./common/train.arff --test ./common/test.arff
+  /venvs/setup/bin/python3 ./common/load_data.py -d /bench/dataset -f $fold_n --train ./common/train.arff --test ./common/test.arff
 else
   echo "Neither a task nor datafile was specified. Can not continue."; exit
 fi
