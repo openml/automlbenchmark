@@ -47,6 +47,8 @@ if __name__ == '__main__':
         le = LabelEncoder().fit(target_type)
         class_predictions_le = le.transform(class_predictions).reshape(-1, 1)
         class_probabilities = OneHotEncoder().fit_transform(class_predictions_le)
+        class_probabilities = class_probabilities.todense()
 
-    combined_predictions = np.hstack((class_probabilities, class_predictions.reshape(-1, 1))).astype(str)
+    class_predictions = class_predictions.reshape(-1, 1)
+    combined_predictions = np.hstack((class_probabilities, class_predictions)).astype(str)
     np.savetxt(output_path, combined_predictions, delimiter=',', fmt="%s")
