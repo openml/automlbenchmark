@@ -10,5 +10,10 @@ cat $DIRECTORY/CustomDockerCode >> $DIRECTORY/Dockerfile
 # Add the AutoML system
 echo "ADD $DIRECTORY /bench/automl" >> $DIRECTORY/Dockerfile
 
+if [ $# -eq 2 ]; then
+	echo "Adding dataset to docker file"
+	echo "ADD $2 /bench/automl/dataset" >> $DIRECTORY/Dockerfile
+fi
+
 # Append the ENTRY_POINT call.
 cat DockerFooter >> $DIRECTORY/Dockerfile
