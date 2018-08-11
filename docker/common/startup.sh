@@ -32,7 +32,7 @@ if [ -z ${n_cores+x} ]; then echo "n_cores is unset"; exit; fi
 if [ -z ${metric+x} ]; then echo "metric is unset"; exit; fi
 if [ -z ${task_id+x} ] && [ -z ${datafile+x} ]; then echo "Either task or datafile needs to be set"; exit; fi
 
-/venvs/setup/bin/python3 ./common/load_data.py $task_id $fold_n $apikey ./common/train.arff ./common/test.arff
+/venvs/setup/bin/python3 ./common/load_data.py -t $task_id -f $fold_n -a $apikey --train ./common/train.arff --test ./common/test.arff
 
 cd automl
 $start_call $time_s $n_cores $metric
