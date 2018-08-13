@@ -1,0 +1,6 @@
+RUN apt-get update
+RUN apt-get install -y wget unzip default-jdk
+RUN wget http://www.cs.ubc.ca/labs/beta/Projects/autoweka/autoweka-2.6.zip
+RUN unzip autoweka-2.6.zip -d automl
+
+ENV start_call="./start_autoweka.sh"
