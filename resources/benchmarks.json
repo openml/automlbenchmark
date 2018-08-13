@@ -6,7 +6,7 @@
     "runtime":1,
     "cores":1,
     "aws_instance_type":"t2.micro",
-    "metric":"ACC",
+    "metric":"acc",
     "folds":2
   },
   {
@@ -15,7 +15,7 @@
     "runtime":1,
     "cores":1,
     "aws_instance_type":"t2.micro",
-    "metric":"ACC",
+    "metric":"acc",
     "folds":2
   }],
   "easy":[],

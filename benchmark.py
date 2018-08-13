@@ -29,7 +29,7 @@ with open("resources/frameworks.json") as file:
   frameworks = json.load(file)
 
 
-bench = AutoMLBenchmark(benchmarks = benchmarks[benchmark], framework = frameworks[framework], openml_apikey = "c1994bdb7ecb3c6f3c8f3b35f4b47f1f")
+bench = AutoMLBenchmark(benchmarks = benchmarks[benchmark], framework = frameworks[framework])
 
 print("Running `%s` on `%s` benchmarks in `%s` mode" % (framework, benchmark, mode))
 

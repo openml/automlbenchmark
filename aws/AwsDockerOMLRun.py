@@ -9,7 +9,7 @@ class AwsDockerOMLRun:
   instance = None
   token = "THIS_IS_A_DUMMY_TOKEN"
 
-  def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, openml_apikey, runtime, cores, metric):
+  def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
     self.ssh_key = ssh_key
     self.sec_group = sec_group
     self.aws_instance_type = aws_instance_type
@@ -17,14 +17,13 @@ class AwsDockerOMLRun:
     self.docker_image = docker_image
     self.openml_id = openml_id
     self.fold = fold
-    self.openml_apikey = openml_apikey
     self.runtime = runtime
     self.cores = cores
     self.metric = metric
     self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
 
   def createInstanceRun(self):
-    setup = " ".join([self.setup, self.docker_image, str(self.openml_id), str(self.fold), self.openml_apikey, str(self.runtime), str(self.cores), self.metric])
+    setup = "%s %s -f %i -t %i -s %i -p %i -m %s"  %(self.setup, self.docker_image, self.fold, self.openml_id, self.runtime, self.cores, self.metric)
     if self.instance is not None:
       print("Instance already exists, terminate existing instance")
       self.terminateInstance()
@@ -84,8 +83,7 @@ if __name__ == "main":
   apikey = popen("cat ~/.openml/config | grep apikey").read().split("=")[1][:-1] # openml apikey
 
   run = AwsDockerOMLRun(ssh_key = key, sec_group = sec, aws_instance_type = instance,
-    aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, runtime = runtime, cores = cores,
-    openml_apikey = apikey)
+    aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, runtime = runtime, cores = cores)
 
   run.createInstanceRun()
   for i in range(100):

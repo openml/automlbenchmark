@@ -9,10 +9,9 @@ class AutoMLBenchmark:
 
   token = "THIS_IS_A_DUMMY_TOKEN"
 
-  def __init__(self, benchmarks, framework, openml_apikey):
+  def __init__(self, benchmarks, framework):
     self.benchmarks = benchmarks
     self.framework = framework
-    self.openml_apikey = openml_apikey
 
   def getContainerName(self):
     docker_image = self.framework["docker_image"]
@@ -30,7 +29,7 @@ class AutoMLBenchmark:
     results = []
     for benchmark in self.benchmarks:
       for fold in range(benchmark["folds"]):
-        res = os.popen("docker run --rm %s %s %s %s %s %s %s" % (self.getContainerName(), benchmark["openml_task_id"], fold, self.openml_apikey, benchmark["runtime"], benchmark["cores"], benchmark["metric"])).read()
+        res = os.popen("docker run --rm %s -f %i -t %i -s %i -p %i -m %s"  % (self.getContainerName(), fold, benchmark["openml_task_id"], benchmark["runtime"], benchmark["cores"], benchmark["metric"])).read()
         res = [x for x in res.splitlines() if re.search(self.token, x)]
         if len(res) != 1:
             print("Fold %s on benchmark %s finished without valid result!" % (fold, benchmark["benchmark_id"]))
@@ -57,7 +56,6 @@ class AutoMLBenchmark:
                                             self.getContainerName(),
                                             benchmark["openml_task_id"],
                                             fold,
-                                            self.openml_apikey,
                                             benchmark["runtime"],
                                             benchmark["cores"],
                                             benchmark["metric"]
@@ -93,7 +91,6 @@ if __name__ == "main":
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
   image = "ami-58d7e821" # aws instance image
-  apikey = os.popen("cat ~/.openml/config | grep apikey").read().split("=")[1][:-1] # openml apikey
 
   with open("resources/benchmarks.json") as file:
     benchmarks = json.load(file)
@@ -101,8 +98,8 @@ if __name__ == "main":
   with open("resources/frameworks.json") as file:
     frameworks = json.load(file)
 
-  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["RandomForest"], openml_apikey = apikey)
+  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["RandomForest"])
   bench.getContainerName()
-  bench.updateDockerContainer(upload = False)
+  bench.updateDockerContainer(upload = True)
   res = bench.runLocal()
   bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image)
