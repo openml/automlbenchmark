@@ -19,3 +19,4 @@ WORKDIR /bench
 ADD common/evaluate.py /bench/common/evaluate.py
 ADD common/load_data.py /bench/common/load_data.py
 ADD common/startup.sh /bench/common/startup.sh
+ADD common/common_code.py /bench/common/common_code.py
