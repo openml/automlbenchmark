@@ -1,3 +1,5 @@
 RUN pip3 install --no-cache-dir tpot==0.9.3
 RUN pip3 install --no-cache-dir liac-arff==2.3
+RUN pip3 install --no-cache-dir xgboost==0.6a2
+
 ENV start_call="python3 run_tpot.py"
