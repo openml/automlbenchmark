@@ -60,9 +60,16 @@ An example for the iris dataset looks like:
 
 ```
 
-<!--- In the repository there are already examples for [Python], [R], and [Java]. --->
+### 1.3 Examples
+In the repository there are already examples for Python, R and Java, for instance:
 
+| AutoML | Language | Run Script | Docker Code |
+|---|---|---|---|
+| auto-sklearn | Python | [run_autosklearn.py](https://github.com/openml/automlbenchmark/blob/master/docker/autosklearn/run_autosklearn.py) | [CustomDockerCode](https://github.com/openml/automlbenchmark/blob/master/docker/autosklearn/CustomDockerCode) |
+| Auto-WEKA | Java | [start_autoweka.sh](https://github.com/openml/automlbenchmark/blob/master/docker/AutoWEKA/start_autoweka.sh) | [CustomDockerCode](https://github.com/openml/automlbenchmark/blob/master/docker/AutoWEKA/CustomDockerCode) |
+| tuneRanger | R | []() | []() |
 
+For more, take a look at the docker folder.
 
 ## 2. Create a Dockerfile
 A dockerfile for each AutoML submission is required.
