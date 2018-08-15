@@ -20,7 +20,7 @@ To add your own framework you need add a folder in the `docker` directory contai
  **TODO: Turn into parameterless flag.**
  - `-f <Fold Number>` The fold to use. The split data will be downloaded from OpenML for tasks, and generated for 
  custom data.
- - `-a <OpenML API key>` OpenML API Key. **TODO: Make entirely optional**
+ - `-a <OpenML API key>` OpenML API Key (optional, not required even when a task is specified).
  - `-s <Runtime (s)>` The wallclock time in seconds that may be used by the AutoML system.
  - `-p <Number Cores>` The number of cores that may be used by the AutoML system.
  - `-m <Metric>` Metric to optimize towards and evaluate.
