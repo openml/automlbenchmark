@@ -52,7 +52,7 @@ To run a benchmark on AWS you additionally need to
 - Change the name of the `ssh_key` and `sec_group` to values associated with you AWS account.
 
 ```
-python benchmark.py randomForest test aws
+python benchmark.py RandomForest test aws
 ```
 
 The output shows the instances starting, outputs the progress and then the results for each dataset/fold combination:
