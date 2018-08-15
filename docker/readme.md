@@ -110,9 +110,9 @@ From the docker directory, [build](https://docs.docker.com/engine/reference/comm
 `docker build -t name:tag -f DIRECTORY_NAME/Dockerfile .`
 
 Run:
-`docker run name:tag <OpenML Task ID> <Fold> <API key> <Runtime> <Cores> <Metric>`
+`docker run name:tag -t <OpenML Task ID> -f <Fold> -s <Runtime (s)> -p <Cores> -m <Metric>`
 
 e.g.
-`docker run TPOT:0.9.2 59 0 abcdefghijklmnopqrstuvwxyz123456 3600 4 accuracy`
+`docker run TPOT:0.9.2 -t 59 -f 0 -s 3600 -p 4 -m accuracy`
 
 ## 4. Submitting a pull request
