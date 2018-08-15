@@ -29,7 +29,7 @@ This will generate the Docker image for the Random Forest benchmark, where "Rand
 A minimal example would be to run the test benchmarks with a random forest:
 
 ```
-python benchmark.py randomForest test local
+python benchmark.py RandomForest test local
 ```
 The first time you execute the benchmark, it will download all the dependencies to install in the Docker image, so that will take some time.
 
