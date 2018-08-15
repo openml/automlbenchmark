@@ -20,7 +20,7 @@ To add your own framework you need add a folder in the `docker` directory contai
  **TODO: Turn into parameterless flag.**
  - `-f <Fold Number>` The fold to use. The split data will be downloaded from OpenML for tasks, and generated for 
  custom data.
- - `-a <OpenML API key>` OpenML API Key. **TODO: Make entirely optional**
+ - `-a <OpenML API key>` OpenML API Key (optional, not required even when a task is specified).
  - `-s <Runtime (s)>` The wallclock time in seconds that may be used by the AutoML system.
  - `-p <Number Cores>` The number of cores that may be used by the AutoML system.
  - `-m <Metric>` Metric to optimize towards and evaluate.
@@ -60,9 +60,16 @@ An example for the iris dataset looks like:
 
 ```
 
-<!--- In the repository there are already examples for [Python], [R], and [Java]. --->
+### 1.3 Examples
+In the repository there are already examples for Python, R and Java, for instance:
 
+| AutoML | Language | Run Script | Docker Code |
+|---|---|---|---|
+| auto-sklearn | Python | [run_autosklearn.py](https://github.com/openml/automlbenchmark/blob/master/docker/autosklearn/run_autosklearn.py) | [CustomDockerCode](https://github.com/openml/automlbenchmark/blob/master/docker/autosklearn/CustomDockerCode) |
+| Auto-WEKA | Java | [start_autoweka.sh](https://github.com/openml/automlbenchmark/blob/master/docker/AutoWEKA/start_autoweka.sh) | [CustomDockerCode](https://github.com/openml/automlbenchmark/blob/master/docker/AutoWEKA/CustomDockerCode) |
+| tuneRanger | R | []() | []() |
 
+For more, take a look at the docker folder.
 
 ## 2. Create a Dockerfile
 A dockerfile for each AutoML submission is required.
@@ -103,9 +110,9 @@ From the docker directory, [build](https://docs.docker.com/engine/reference/comm
 `docker build -t name:tag -f DIRECTORY_NAME/Dockerfile .`
 
 Run:
-`docker run name:tag <OpenML Task ID> <Fold> <API key> <Runtime> <Cores> <Metric>`
+`docker run name:tag -t <OpenML Task ID> -f <Fold> -s <Runtime (s)> -p <Cores> -m <Metric>`
 
 e.g.
-`docker run TPOT:0.9.2 59 0 abcdefghijklmnopqrstuvwxyz123456 3600 4 accuracy`
+`docker run TPOT:0.9.2 -t 59 -f 0 -s 3600 -p 4 -m accuracy`
 
 ## 4. Submitting a pull request
