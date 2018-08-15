@@ -20,7 +20,8 @@ if __name__ == '__main__':
 
     print('Starting H2O cluster')
     # TO DO: Maybe pass in a memory size as an argument to use here
-    h2o.init(ncores=number_cores, max_mem_size='16G')            
+    #h2o.init(ncores=number_cores, max_mem_size=16)
+    h2o.init(max_mem_size=16)           
 
     print('Loading data.')
     train = h2o.upload_file(train_data_path)
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     print('Running model on task.')
     runtime_min = (int(runtime_seconds)/60)
     print('ignoring runtime.')
-    aml = H2OAutoML(n_jobs=number_cores, max_runtime_secs=runtime_seconds, sort_metric=performance_metric)
+    aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric)
     aml.train(y = 0, training_frame = train)
     #y_pred = aml.predict(X_test)
     # TO DO: Convert to pandas df so we can use accuracy_score

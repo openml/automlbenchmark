@@ -1,6 +1,20 @@
+RUN \
+# Install Oracle Java 8
+  DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && \
+  add-apt-repository -y ppa:webupd8team/java && \
+  apt-get update -q && \
+  echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
+  echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y oracle-java8-installer && \
+  apt-get clean
+RUN pip3 install --no-cache-dir numpy==1.15.0
+RUN pip3 install --no-cache-dir scipy==1.1.0
+RUN pip3 install --no-cache-dir scikit-learn==0.19.2
 RUN pip3 install --no-cache-dir requests
 RUN pip3 install --no-cache-dir tabulate
 RUN pip3 install --no-cache-dir future
 RUN pip3 install --no-cache-dir colorama>=0.3.8
 RUN pip3 install --no-cache-dir h2o==3.20.0.5
+EXPOSE 54321
+EXPOSE 54322
 ENV start_call="python3 run_h2oautoml.py"
