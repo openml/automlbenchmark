@@ -24,9 +24,9 @@ lrns = list(
     makeLearner("classif.ranger", predict.type = "prob"),
   lrn.rpart = cpoImpactEncodeClassif() %>>%
     makeLearner("classif.rpart", predict.type = "prob"),
-  lrn.qda = cpoImpactEncodeClassif() %>>%
+  lrn.multinom = cpoImpactEncodeClassif() %>>%
     cpoImputeAll(classes = list(numeric = imputeHist(), factor = imputeConstant("__MISS__"))) %>>%
-    makeLearner("classif.qda", predict.type = "prob"),
+    makeLearner("classif.multinom", predict.type = "prob"),
   lrn.baseline = makeLearner("classif.featureless", predict.type = "prob")
 )
 
@@ -46,8 +46,10 @@ reg$default.resources = resources
 
 
 for(data.id in data.ids) {
-  addProblem(name = as.character(data.id),
-    data = convertOMLDataSetToMlr(getOMLDataSet(data.id)),
+  d = getOMLDataSet(data.id)
+  task = makeClassifTask(id = d$desc$name, data = d$data, target = d$target.features, check.data = FALSE)
+  addProblem(name = d$desc$name,
+    data = task,
     fun = function(job, data, res = resampling) makeResampleInstance(res, data))
 }
 

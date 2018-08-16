@@ -6,7 +6,6 @@ import re
 class AwsDockerOMLRun:
 
   setup = '#!/bin/bash\ndocker run --rm'
-  instance = None
   token = "THIS_IS_A_DUMMY_TOKEN"
 
   def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
@@ -21,6 +20,7 @@ class AwsDockerOMLRun:
     self.cores = cores
     self.metric = metric
     self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
+    self.instance = None
 
   def createInstanceRun(self):
     setup = "%s %s -f %i -t %i -s %i -p %i -m %s"  %(self.setup, self.docker_image, self.fold, self.openml_id, self.runtime, self.cores, self.metric)
