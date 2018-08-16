@@ -6,6 +6,7 @@ cat DockerHeader > $DIRECTORY/Dockerfile
 
 # Copy the AutoML-specific layers.
 cat $DIRECTORY/CustomDockerCode >> $DIRECTORY/Dockerfile
+echo '\n' >> $DIRECTORY/Dockerfile
 
 # Add the AutoML system
 echo "ADD $DIRECTORY /bench/automl" >> $DIRECTORY/Dockerfile
