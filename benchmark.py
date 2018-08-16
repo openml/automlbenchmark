@@ -13,7 +13,7 @@ import pandas as pd
 # changeme
 ssh_key = "laptop"
 sec_group = "launch-wizard-7"
-aws_instance_image = "ami-58d7e821"
+aws_instance_image = "ami-0615f1e34f8d36362"
 
 
 framework = sys.argv[1]

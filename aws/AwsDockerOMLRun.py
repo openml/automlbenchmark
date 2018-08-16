@@ -5,7 +5,7 @@ import re
 
 class AwsDockerOMLRun:
 
-  setup = '#!/bin/bash\napt-get update\napt-get install apt-transport-https ca-certificates curl software-properties-common\ncurl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -\nadd-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"\napt-get update\napt-get install -y docker-ce\nusermod -aG docker $USER\ndocker run --rm'
+  setup = '#!/bin/bash\ndocker run --rm'
   instance = None
   token = "THIS_IS_A_DUMMY_TOKEN"
 
