@@ -3,7 +3,7 @@ library(OpenML)
 library(mlr)
 library(mlrCPO)
 
-LOCAL = TRUE
+LOCAL = FALSE
 
 if (LOCAL) {
   data.ids = c(61)
@@ -47,7 +47,7 @@ reg$default.resources = resources
 
 for(data.id in data.ids) {
   d = getOMLDataSet(data.id)
-  task = makeClassifTask(id = d$desc$name, data = d$data, target = d$target.features, check.data = FALSE)
+  task = makeClassifTask(id = d$desc$name, data = d$data, target = d$target.features, fixup.data = "no", check.data = FALSE)
   addProblem(name = d$desc$name,
     data = task,
     fun = function(job, data, res = resampling) makeResampleInstance(res, data))
@@ -72,4 +72,5 @@ if (LOCAL) {
   getStatus()
   x = unwrap(reduceResultsDataTable(fun = function(x) x$aggr))
   res = x[getJobTable()[, algo.pars := lapply(algo.pars, function(x) x$lrn$id)]]
+  res
 }
