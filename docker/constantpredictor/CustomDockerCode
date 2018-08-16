@@ -1,0 +1,1 @@
+ENV start_call="/venvs/setup/bin/python3 run_constant_predictor.py"
