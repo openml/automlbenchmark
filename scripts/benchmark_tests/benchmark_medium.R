@@ -10,7 +10,7 @@ if (LOCAL) {
   replications = 1L
 } else {
   data.ids = c(1112, 1114, 1111, 40996, 40668, 23517, 23512, 4135, 1486, 41027, 1461, 151,
-  1590, 41167, 41126, 41169, 41168, 41137, 41165, 40685, 41159, 41161, 1216, 23513, 41150,
+  1590, 41167, 41169, 41168, 41166, 41165, 40685, 41159, 41161, 1216, 23513, 41150,
   41138, 41162)
   replications = 5L
 }
@@ -30,8 +30,6 @@ lrns = list(
   lrn.baseline = makeLearner("classif.featureless", predict.type = "prob")
 )
 
-resampling = makeResampleDesc("Holdout", split = 0.5, stratify = TRUE)
-
 resources = list(
   walltime = 3600L,
   memory = 1024L * 62L,
@@ -50,7 +48,7 @@ for(data.id in data.ids) {
   task = makeClassifTask(id = d$desc$name, data = d$data, target = d$target.features, fixup.data = "no", check.data = FALSE)
   addProblem(name = d$desc$name,
     data = task,
-    fun = function(job, data, res = resampling) makeResampleInstance(res, data))
+    fun = function(job, data) makeResampleInstance(makeResampleDesc("Holdout", split = 0.5, stratify = TRUE), data))
 }
 
 addAlgorithm(name = "mlr",
