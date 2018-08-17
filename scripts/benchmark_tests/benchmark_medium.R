@@ -45,7 +45,7 @@ reg$default.resources = resources
 
 for(data.id in data.ids) {
   d = getOMLDataSet(data.id)
-  task = makeClassifTask(id = d$desc$name, data = d$data, target = d$target.features, fixup.data = "no", check.data = FALSE)
+  task = makeClassifTask(id = d$desc$name, data = d$data, target = d$target.features)
   addProblem(name = d$desc$name,
     data = task,
     fun = function(job, data) makeResampleInstance(makeResampleDesc("Holdout", split = 0.5, stratify = TRUE), data))
