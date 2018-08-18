@@ -3,9 +3,9 @@ import numpy
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 # Relative directories as if from automl folder.
-TRAIN_DATA_PATH = "../common/train.arff"
-TEST_DATA_PATH = "../common/test.arff"
-OUTPUT_PATH = "../common/predictions.csv"
+TRAIN_DATA_PATH = "/bench/common/train.arff"
+TEST_DATA_PATH = "/bench/common/test.arff"
+OUTPUT_PATH = "/bench/common/predictions.csv"
 
 def get_X_y_from_arff(arff_file_path):
     """ Read data from the ARFF file as X and y, where y is the last column and X all other data.
