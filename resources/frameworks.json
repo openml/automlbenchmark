@@ -9,6 +9,16 @@
     "version":"0.19.2",
     "project":"http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html"
   },
+  "RandomForest_r": {
+    "docker_image": {
+      "author":"jnkthms",
+      "image":"rfr",
+      "tag":"latest"
+    },
+    "dockerfile_folder":"RandomForest_r",
+    "version":"0.10.1",
+    "project":"https://github.com/imbs-hl/ranger"
+  },
   "TPOT": {
     "docker_image": {
       "author":"",
