@@ -9,6 +9,8 @@ performance_metric = args[3]
 
 train = readARFF("/bench/common/train.arff")
 test = readARFF("/bench/common/test.arff")
+colnames(train) = make.names(colnames(train))
+colnames(test) = make.names(colnames(test))
 target = colnames(train)[ncol(train)]
 train = makeClassifTask(data = train, target = target)
 
