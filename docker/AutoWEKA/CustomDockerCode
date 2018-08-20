@@ -1,5 +1,5 @@
 RUN apt-get update
-RUN apt-get install -y wget unzip default-jdk
+RUN apt-get install -y wget unzip openjdk-8-jdk
 RUN wget http://www.cs.ubc.ca/labs/beta/Projects/autoweka/autoweka-2.6.zip
 RUN unzip autoweka-2.6.zip -d automl
 

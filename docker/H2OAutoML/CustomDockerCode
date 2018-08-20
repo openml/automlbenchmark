@@ -1,13 +1,6 @@
 # Install prerequisites for H2O
-RUN \
-# Install Oracle Java 8
-  DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && \
-  add-apt-repository -y ppa:webupd8team/java && \
-  apt-get update -q --fix-missing && \
-  echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
-  echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y oracle-java8-installer && \
-  apt-get clean
+RUN apt-get update
+RUN apt-get install -y openjdk-8-jdk
 RUN pip3 install --no-cache-dir numpy==1.15.0
 RUN pip3 install --no-cache-dir scipy==1.1.0
 RUN pip3 install --no-cache-dir scikit-learn==0.19.2
