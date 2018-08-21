@@ -69,7 +69,14 @@ summarizeExperiments()
 if (LOCAL) {
   submitJobs()
   getStatus()
-  x = unwrap(reduceResultsDataTable(fun = function(x) x$aggr))
+  x = reduceResultsDataTable(findDone(), fun = function(x) x$measures.test)
+  res = lapply(1:nrow(x), function(i) {
+   r = data.frame(job.id = i, x$result[[i]])
+   colnames(r)[3] = "auc"
+   r
+  })
+  x = data.table(do.call(rbind, res))
+  setkey(x, "job.id")
   res = x[getJobTable()[, algo.pars := sapply(algo.pars, function(x) x$lrn$id)]]
   res
 }
