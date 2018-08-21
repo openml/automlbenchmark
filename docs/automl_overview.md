@@ -1,6 +1,3 @@
----
----
-
 # AutoML systems
 
 List of AutoML systems in the benchmark, in alphabetical order:
