@@ -1,3 +1,10 @@
+---
+layout: page
+title: AutoML Systems
+tagline: An overview of AutoML Systems
+description: Brief description and references to AutoML systems in the benchmark.
+---
+
 # AutoML systems
 
 List of AutoML systems in the benchmark, in alphabetical order:
