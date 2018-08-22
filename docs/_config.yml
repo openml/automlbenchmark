@@ -1,3 +1,9 @@
 repository: openml.github.io/automlbenchmark
 remote_theme: fongandrew/hydeout
 markdown: kramdown
+
+title: AutoML Benchmark
+#description: config description
+
+#sidebar_home_link: true
+version: 0.1.0
