@@ -2,7 +2,7 @@ import sys
 
 from tpot import TPOTClassifier
 
-sys.path.append('../common')
+sys.path.append('/bench/common')
 import common_code
 
 if __name__ == '__main__':
