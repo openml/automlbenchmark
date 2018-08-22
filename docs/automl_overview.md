@@ -1,6 +1,7 @@
 ---
 layout: category
 title: AutoML Systems
+sidebar_sort_order: 2
 ---
 
 List of AutoML systems in the benchmark, in alphabetical order:
