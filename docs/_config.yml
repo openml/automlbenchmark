@@ -1,2 +1,3 @@
 repository: openml.github.io/automlbenchmark
 remote_theme: fongandrew/hydeout
+markdown: kramdown
