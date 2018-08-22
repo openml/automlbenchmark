@@ -1,10 +1,12 @@
 ---
+layout: index
+title: Home
 ---
 
 # Introduction
 
 This is the website for the AutoML benchmark.
-The AutoML Benchmark provides an overview and comparison of open-source AutoML systems <sup>1</sup>.
+The AutoML Benchmark provides an overview and comparison of open-source AutoML systems.
 
 A brief overview and further references for each AutoML system can be found on the [AutoML systems](automl_overview.md) page.
 For a thorough explanation of the benchmark, and evaluation of results, you can read our [paper]().
