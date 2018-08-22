@@ -8,6 +8,7 @@ from aws.AwsDockerOMLRun import AwsDockerOMLRun
 class AutoMLBenchmark:
 
   token = "THIS_IS_A_DUMMY_TOKEN"
+  query_freq = 10
 
   def __init__(self, benchmarks, framework):
     self.benchmarks = benchmarks
@@ -25,22 +26,24 @@ class AutoMLBenchmark:
       os.system("docker login")
       os.system("docker push %s" % (self.getContainerName()))
 
-  def runLocal(self):
+  def runLocal(self, keep_logs = False):
     results = []
     for benchmark in self.benchmarks:
       for fold in range(benchmark["folds"]):
-        res = os.popen("docker run --rm %s -f %i -t %i -s %i -p %i -m %s"  % (self.getContainerName(), fold, benchmark["openml_task_id"], benchmark["runtime"], benchmark["cores"], benchmark["metric"])).read()
-        res = [x for x in res.splitlines() if re.search(self.token, x)]
+        raw_log = os.popen("docker run --rm %s -f %i -t %i -s %i -p %i -m %s"  % (self.getContainerName(), fold, benchmark["openml_task_id"], benchmark["runtime"], benchmark["cores"], benchmark["metric"])).read()
+        res = [x for x in raw_log.splitlines() if re.search(self.token, x)]
         if len(res) != 1:
             print("Fold %s on benchmark %s finished without valid result!" % (fold, benchmark["benchmark_id"]))
             res = 'nan'
         else:
             res = res[0].split(" ")[-1]
         results.append({"result":float(res), "benchmark_id":benchmark["benchmark_id"], "fold":fold})
+        if keep_logs:
+          results[-1]["log"] = raw_log
 
     return results
 
-  def runAWS(self, ssh_key, sec_group, aws_instance_image):
+  def runAWS(self, ssh_key, sec_group, aws_instance_image, keep_logs = False):
 
       jobs = []
       for benchmark in self.benchmarks:
@@ -69,11 +72,15 @@ class AutoMLBenchmark:
         job["result"] = job["run"].getResult()
 
       while n_done != n_jobs:
-        time.sleep(10)
+        time.sleep(self.query_freq)
         for job in jobs:
           job["result"] = job["run"].getResult()
         n_done = n_jobs - [job["result"] for job in jobs].count(None)
         print("%i/%i jobs done" % (n_done, n_jobs))
+
+      if not keep_logs:
+        for job in jobs:
+          job["result"] = job["result"]["res"]
 
       print("All jobs done!\nTerminating Instances:")
       for job in jobs:
@@ -90,7 +97,7 @@ if __name__ == "main":
 
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
-  image = "ami-58d7e821" # aws instance image
+  image = "ami-0615f1e34f8d36362" # aws instance image
 
   with open("resources/benchmarks.json") as file:
     benchmarks = json.load(file)
@@ -102,4 +109,6 @@ if __name__ == "main":
   bench.getContainerName()
   bench.updateDockerContainer(upload = True)
   res = bench.runLocal()
+  res = bench.runLocal(keep_logs = True)
   bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image)
+  bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image, keep_logs = True)

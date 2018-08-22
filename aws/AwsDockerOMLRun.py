@@ -54,18 +54,15 @@ class AwsDockerOMLRun:
     if not self.instance.state["Name"] == "running":
       print("Instance %s" % (self.instance.state["Name"]))
     else:
-      out = self.instance.console_output()
-      if "Output" in out.keys():
-        out = out["Output"].splitlines()
+      raw_log = self.instance.console_output()
+      if "Output" in raw_log.keys():
+        out = raw_log["Output"].splitlines()
         out = [x for x in out if re.search(self.token, x)]
         if len(out) == 1:
-          return out[0].split(" ")[-1]
+          return {"res":out[0].split(" ")[-1], "log":raw_log}
         else:
           print("Run finished without result!")
-          return float('nan')
-
-  def __del__(self):
-    self.terminateInstance()
+          return {"res":float('nan'), "log":raw_log}
 
 if __name__ == "main":
 
@@ -75,19 +72,18 @@ if __name__ == "main":
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
   instance = "t2.micro" # instance type
-  image = "ami-58d7e821" # aws instance image
+  image = "ami-0615f1e34f8d36362" # aws instance image
   dockerImage = "jnkthms/rf" # docker image
   openmlid = 59
   runtime = 1
   cores = 1
-  apikey = popen("cat ~/.openml/config | grep apikey").read().split("=")[1][:-1] # openml apikey
-
   run = AwsDockerOMLRun(ssh_key = key, sec_group = sec, aws_instance_type = instance,
-    aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, runtime = runtime, cores = cores)
+    aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, fold = 1,
+    runtime = runtime, cores = cores, metric = "acc")
 
   run.createInstanceRun()
   for i in range(100):
     print(i)
     sleep(10)
-    run.getResult()
+    xx = run.getResult()
   run.terminateInstance()
