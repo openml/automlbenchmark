@@ -1,8 +1,7 @@
 ---
+layout: category
+title: AutoML Systems
 ---
-<!--- Comments --->
-
-# AutoML Systems
 
 List of AutoML systems in the benchmark, in alphabetical order:
 
@@ -98,10 +97,11 @@ Apache-2.0
 H2O AutoML performs Random Search followed by a stacking stage.
 By default it uses the H2O machine learning package, which supports distributed training.
 
-*Maybe mention something similar to the following?*
-H2O AutoML is developed by the company H2O.
+*Maybe mention something similar to the following? see source*
+<!-- H2O AutoML is developed by the company H2O.
 This means that the package features frequent updates and is less likely to be abandoned.
 On the other hand, as a free user your concerns might be overshadowed by users of their alternative, pay-to-use, driverless AI.
+-->
 
 #### Papers
 The booklets?
