@@ -21,5 +21,3 @@ We also invite you to [submit your own AutoML]() system to be evaluated against 
 Main result figure/Shiny App?
 
 For more results, see the [result](results.md) page.
-
-## Citing us
