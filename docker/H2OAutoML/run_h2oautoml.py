@@ -2,6 +2,7 @@ import sys
 import h2o
 from h2o.automl import H2OAutoML
 import pandas as pd
+import numpy as np
 from sklearn.metrics import accuracy_score
 sys.path.append('/bench/common')
 import common_code
@@ -42,10 +43,8 @@ if __name__ == '__main__':
           .format(runtime_seconds, number_cores, performance_metric))
 
     print('Running model on task.')
-    runtime_min = (int(runtime_seconds)/60)
     print('ignoring runtime.')
-    #aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric)
-    #aml = H2OAutoML(max_models=2). # For testing only
+    #aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric) #Add this
     aml = H2OAutoML(max_runtime_secs=runtime_seconds)
     aml.train(y=train.ncol-1, training_frame=train)
     y_pred_df = aml.predict(test).as_data_frame()
@@ -64,7 +63,7 @@ if __name__ == '__main__':
     print("THIS_IS_A_DUMMY_TOKEN " + str(accuracy_score(y_test, y_classpred)))
 
     # TO DO: See if we can use the h2o-sklearn wrappers here instead
-    class_predictions = y_pred_df.iloc[:, 0].values #TO DO: should this be dtype=object instead?
+    class_predictions = y_pred_df.iloc[:, 0].values.astype(np.str_)
     class_probabilities = y_pred_df.iloc[:, 1:].values
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
