@@ -7,7 +7,7 @@ sys.path.append('../common')
 import common_code
 
 if __name__ == '__main__':
-    runtime_seconds = sys.argv[1]
+    runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
