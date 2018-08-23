@@ -1,6 +1,7 @@
 import sys
 
 from tpot import TPOTClassifier
+from sklearn.metrics import accuracy_score
 
 sys.path.append('/bench/common')
 import common_code
@@ -29,5 +30,8 @@ if __name__ == '__main__':
     except RuntimeError:
         # TPOT throws a RuntimeError if the optimized pipeline does not support `predict_proba`.
         class_probabilities = common_code.one_hot_encode_predictions(class_predictions)
+
+    print('Optimization was towards metric, but following score is always accuracy:')
+    print("THIS_IS_A_DUMMY_TOKEN " + str(accuracy_score(y_test, class_predictions)))    
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
