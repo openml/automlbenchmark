@@ -93,7 +93,6 @@ class AutoMLBenchmark:
 if __name__ == "main":
 
   import json
-  from AwsDockerOMLRun import AwsDockerOMLRun
 
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
@@ -105,10 +104,10 @@ if __name__ == "main":
   with open("resources/frameworks.json") as file:
     frameworks = json.load(file)
 
-  bench = AutoMLBenchmark(benchmarks = benchmarks["test"], framework = frameworks["RandomForest"])
+  bench = AutoMLBenchmark(benchmarks = benchmarks["test_larger"], framework = frameworks["autosklearn"])
   bench.getContainerName()
   bench.updateDockerContainer(upload = True)
   res = bench.runLocal()
   res = bench.runLocal(keep_logs = True)
   bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image)
-  bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image, keep_logs = True)
+  res = bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image, keep_logs = True)

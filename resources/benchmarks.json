@@ -1,23 +1,34 @@
 {
   "test":[
-  {
-    "benchmark_id":"test_1",
-    "openml_task_id":59,
-    "runtime":1,
-    "cores":1,
-    "aws_instance_type":"t2.micro",
+    {
+      "benchmark_id":"test_1",
+      "openml_task_id":59,
+      "runtime":60,
+      "cores":1,
+      "aws_instance_type":"t2.micro",
+      "metric":"acc",
+      "folds":2
+    },
+    {
+      "benchmark_id":"test_2",
+      "openml_task_id":3913,
+      "runtime":60,
+      "cores":1,
+      "aws_instance_type":"t2.micro",
+      "metric":"acc",
+      "folds":2
+    }],
+  "test_larger":[
+    {
+    "benchmark_id":"test_larger_1",
+    "openml_task_id":146195,
+    "runtime":300,
+    "cores":4,
+    "aws_instance_type":"m5.xlarge",
     "metric":"acc",
     "folds":2
-  },
-  {
-    "benchmark_id":"test_2",
-    "openml_task_id":3913,
-    "runtime":1,
-    "cores":1,
-    "aws_instance_type":"t2.micro",
-    "metric":"acc",
-    "folds":2
-  }],
+  }
+  ],
   "easy":[],
   "medium":[],
   "hard":[]

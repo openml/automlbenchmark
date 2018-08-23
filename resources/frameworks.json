@@ -21,9 +21,9 @@
   },
   "TPOT": {
     "docker_image": {
-      "author":"",
-      "image":"",
-      "tag":"",
+      "author":"jnkthms",
+      "image":"tpot",
+      "tag":"latest",
       "version":"0.9.3",
       "project":"https://github.com/EpistasisLab/tpot"
     },
@@ -38,5 +38,15 @@
       "project":"http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html"
     },
     "dockerfile_folder":"H2OAutoML"
+  },
+  "autosklearn": {
+    "docker_image": {
+      "author":"jnkthms",
+      "image":"autosklearn",
+      "tag":"latest",
+      "version":"",
+      "project":""
+    },
+    "dockerfile_folder":"autosklearn"
   }
 }

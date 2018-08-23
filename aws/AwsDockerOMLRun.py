@@ -54,7 +54,7 @@ class AwsDockerOMLRun:
     if not self.instance.state["Name"] == "running":
       print("Instance %s" % (self.instance.state["Name"]))
     else:
-      raw_log = self.instance.console_output()
+      raw_log = self.instance.console_output(Latest = True)
       if "Output" in raw_log.keys():
         out = raw_log["Output"].splitlines()
         out = [x for x in out if re.search(self.token, x)]
@@ -71,19 +71,25 @@ if __name__ == "main":
 
   key = "laptop" #ssh key
   sec = "launch-wizard-7" # security group
-  instance = "t2.micro" # instance type
+  instance = "m5.xlarge" # instance type
   image = "ami-0615f1e34f8d36362" # aws instance image
-  dockerImage = "jnkthms/rf" # docker image
-  openmlid = 59
-  runtime = 1
-  cores = 1
+  dockerImage = "jnkthms/autosklearn" # docker image
+  openmlid = 146195
+  runtime = 300
+  cores = 4
   run = AwsDockerOMLRun(ssh_key = key, sec_group = sec, aws_instance_type = instance,
     aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, fold = 1,
     runtime = runtime, cores = cores, metric = "acc")
 
   run.createInstanceRun()
+  res = []
   for i in range(100):
     print(i)
     sleep(10)
-    xx = run.getResult()
+    run.instance.load()
+    res.append(run.instance.console_output())
+    print(res[-1])
+
+  r = run.instance.console_output()
+
   run.terminateInstance()
