@@ -31,9 +31,9 @@
   },
   "H2OAutoML": {
     "docker_image": {
-      "author":"",
-      "image":"",
-      "tag":"",
+      "author":"jnkthms",
+      "image":"h2oautoml",
+      "tag":"latest",
       "version":"3.20.0.5",
       "project":"http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html"
     },
