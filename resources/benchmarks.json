@@ -21,8 +21,8 @@
   "test_larger":[
     {
     "benchmark_id":"test_larger_1",
-    "openml_task_id":59,
-    "runtime":300,
+    "openml_task_id":146606,
+    "runtime":1200,
     "cores":4,
     "aws_instance_type":"m5.xlarge",
     "metric":"acc",
