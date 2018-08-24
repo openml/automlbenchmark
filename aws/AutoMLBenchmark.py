@@ -7,7 +7,7 @@ from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
 class AutoMLBenchmark:
 
-  token = "THIS_IS_A_DUMMY_TOKEN"
+  token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
   query_freq = 10
 
   def __init__(self, benchmarks, framework):
@@ -104,10 +104,12 @@ if __name__ == "main":
   with open("resources/frameworks.json") as file:
     frameworks = json.load(file)
 
-  bench = AutoMLBenchmark(benchmarks = benchmarks["test_larger"], framework = frameworks["autosklearn"])
+  bench = AutoMLBenchmark(benchmarks = benchmarks["test_larger"], framework = frameworks["TPOT"])
   bench.getContainerName()
   bench.updateDockerContainer(upload = True)
   res = bench.runLocal()
   res = bench.runLocal(keep_logs = True)
   bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image)
   res = bench.runAWS(ssh_key = key, sec_group = sec, aws_instance_image = image, keep_logs = True)
+
+

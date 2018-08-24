@@ -21,12 +21,12 @@
   "test_larger":[
     {
     "benchmark_id":"test_larger_1",
-    "openml_task_id":146195,
+    "openml_task_id":59,
     "runtime":300,
     "cores":4,
     "aws_instance_type":"m5.xlarge",
     "metric":"acc",
-    "folds":2
+    "folds":1
   }
   ],
   "easy":[],

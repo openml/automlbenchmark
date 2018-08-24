@@ -18,7 +18,7 @@ test_data_filepath = sys.argv[1]
 predictions_filepath = sys.argv[2]
 metric = sys.argv[3]
 
-token = 'THIS_IS_A_DUMMY_TOKEN'
+token = '6744dfceeb4d2b4a9e60874bcd46b3a1'
 metric_mapping = dict(
     acc=accuracy_score,
     log_loss=log_loss,

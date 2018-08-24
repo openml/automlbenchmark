@@ -6,7 +6,7 @@ import re
 class AwsDockerOMLRun:
 
   setup = '#!/bin/bash\ndocker run --rm'
-  token = "THIS_IS_A_DUMMY_TOKEN"
+  token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
 
   def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
     self.ssh_key = ssh_key
@@ -60,10 +60,9 @@ class AwsDockerOMLRun:
         out = [x for x in out if re.search(self.token, x)]
         if len(out) == 1:
           return {"res":out[0].split(" ")[-1], "log":raw_log}
-        else:
-          print("Run finished without result!")
-          return {"res":float('nan'), "log":raw_log}
-
+        #else:
+        #  print("Run finished without result!")
+        #  return {"res":float('nan'), "log":raw_log}
 if __name__ == "main":
 
   from time import sleep
@@ -73,9 +72,9 @@ if __name__ == "main":
   sec = "launch-wizard-7" # security group
   instance = "m5.xlarge" # instance type
   image = "ami-0615f1e34f8d36362" # aws instance image
-  dockerImage = "jnkthms/autosklearn" # docker image
-  openmlid = 146195
-  runtime = 300
+  dockerImage = "jnkthms/tpot" # docker image
+  openmlid = 59
+  runtime = 600
   cores = 4
   run = AwsDockerOMLRun(ssh_key = key, sec_group = sec, aws_instance_type = instance,
     aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, fold = 1,
@@ -86,9 +85,7 @@ if __name__ == "main":
   for i in range(100):
     print(i)
     sleep(10)
-    run.instance.load()
-    res.append(run.instance.console_output())
-    print(res[-1])
+    run.getResult()
 
   r = run.instance.console_output()
 

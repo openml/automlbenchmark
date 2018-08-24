@@ -32,6 +32,5 @@ if __name__ == '__main__':
         class_probabilities = common_code.one_hot_encode_predictions(class_predictions)
 
     print('Optimization was towards metric, but following score is always accuracy:')
-    print("THIS_IS_A_DUMMY_TOKEN " + str(accuracy_score(y_test, class_predictions)))    
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
