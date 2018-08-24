@@ -1,7 +1,8 @@
 # https://automl.github.io/auto-sklearn/stable/installation.html#installation
+RUN pip3 install --upgrade pip
 RUN apt-get install -y curl
 RUN apt-get install -y build-essential swig
 RUN curl https://raw.githubusercontent.com/automl/auto-sklearn/master/requirements.txt | xargs -n 1 -L 1 pip3 install
 RUN pip3 install auto-sklearn
 
-ENV start_call="python3 run_autosklearn.py"
+ENV start_call="python3 -Wmodule run_autosklearn.py"
