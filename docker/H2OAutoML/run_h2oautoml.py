@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     y_classpred = y_pred_df.iloc[:, 0]
     print('Optimization was towards metric, but following score is always accuracy:')
-    print("THIS_IS_A_DUMMY_TOKEN " + str(accuracy_score(y_test, y_classpred)))
+    print("Accuracy: " + str(accuracy_score(y_test, y_classpred)))
 
     # TO DO: See if we can use the h2o-sklearn wrappers here instead
     class_predictions = y_pred_df.iloc[:, 0].values.astype(np.str_)
