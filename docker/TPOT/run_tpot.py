@@ -25,6 +25,10 @@ if __name__ == '__main__':
     X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
     X_train, X_test = X_train.astype(float), X_test.astype(float)
 
+    # Convert response from string to integers
+    y_train = y_train.astype(int)
+    y_test = y_test.astype(int)
+
     performance_metric = 'accuracy' if performance_metric=='acc' else performance_metric
 
     print('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
@@ -49,7 +53,7 @@ if __name__ == '__main__':
     print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
 
     if class_probabilities.shape[1] == 2:
-        auc = roc_auc_score(y_true=y_test.astype(int_), y_score=class_probabilities[:,1])
+        auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
         print("AUC: " + str(auc))
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
