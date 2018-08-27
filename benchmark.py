@@ -23,22 +23,22 @@ outfile = sys.argv[4] if len(sys.argv) > 4 else None
 
 
 with open("resources/benchmarks.json") as file:
-  benchmarks = json.load(file)
+    benchmarks = json.load(file)
 
 with open("resources/frameworks.json") as file:
-  frameworks = json.load(file)
+    frameworks = json.load(file)
 
 
-bench = AutoMLBenchmark(benchmarks = benchmarks[benchmark], framework = frameworks[framework])
+bench = AutoMLBenchmark(benchmarks=benchmarks[benchmark], framework=frameworks[framework])
 
 print("Running `%s` on `%s` benchmarks in `%s` mode" % (framework, benchmark, mode))
 
 if mode == "aws":
-  bench.updateDockerContainer(upload = True)
-  res = bench.runAWS(ssh_key, sec_group, aws_instance_image)
+    bench.updateDockerContainer(upload=True)
+    res = bench.runAWS(ssh_key, sec_group, aws_instance_image)
 elif mode == "local":
-  bench.updateDockerContainer(upload = False)
-  res = bench.runLocal()
+    bench.updateDockerContainer(upload=False)
+    res = bench.runLocal()
 
 if outfile is not None:
     with open(outfile, "a") as file:
