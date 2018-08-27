@@ -48,5 +48,15 @@
       "project":""
     },
     "dockerfile_folder":"autosklearn"
+  },
+  "AutoWEKA": {
+    "docker_image": {
+      "author":"pgijsbers",
+      "image":"autoweka",
+      "tag":"latest",
+      "version":"",
+      "project":""
+    },
+    "dockerfile_folder":"AutoWEKA"
   }
 }
