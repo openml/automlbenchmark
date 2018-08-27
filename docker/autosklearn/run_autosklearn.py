@@ -10,10 +10,19 @@ sys.path.append('/bench/common')
 import common_code
 
 if __name__ == '__main__':
+
     runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
+    # Mapping of benchmark metrics to autosklearn metrics
+    if performance_metric == "acc":
+        performance_metric = autosklearn.metrics.accuracy
+    elif performance_metric == "auc":
+        performance_metric = autosklearn.metrics.roc_auc
+    else:
+        # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
+        print('Performance metric, {}, not supported.'.format(performance_metric))     
 
     X_train, y_train = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
     X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
@@ -40,10 +49,11 @@ if __name__ == '__main__':
         per_run_time_limit=runtime_seconds, \
         ml_memory_limit=ml_memory_limit)
     print('always optimize towards accuracy.')
-    auto_sklearn.fit(X_train, y_train, metric=autosklearn.metrics.accuracy)
+    auto_sklearn.fit(X_train, y_train, metric=performance_metric)
 
 
     # Convert output to strings for classification
+    print('Predicting on the test set.')
     class_predictions = auto_sklearn.predict(X_test).astype(np.int_).astype(np.str_)
     class_probabilities = auto_sklearn.predict_proba(X_test)
 
