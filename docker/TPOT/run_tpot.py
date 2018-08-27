@@ -53,7 +53,7 @@ if __name__ == '__main__':
     print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
 
     if class_probabilities.shape[1] == 2:
-        auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
+        auc = roc_auc_score(y_true=y_test, y_score=class_probabilities[:,1])
         print("AUC: " + str(auc))
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
