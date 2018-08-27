@@ -46,7 +46,7 @@ class AutoMLBenchmark:
 
         return results
 
-    def run_aws(self, ssh_key, sec_group, aws_instance_image, keep_logs=False):
+    def run_aws(self, aws_instance_image, keep_logs=False):
 
         jobs = []
         for benchmark in self.benchmarks:
@@ -55,8 +55,6 @@ class AutoMLBenchmark:
                     "benchmark_id": benchmark["benchmark_id"],
                     "fold": fold,
                     "run": AwsDockerOMLRun(
-                        ssh_key,
-                        sec_group,
                         benchmark["aws_instance_type"],
                         aws_instance_image,
                         self.get_container_name(),
@@ -111,5 +109,5 @@ if __name__ == "main":
     bench.update_docker_container(upload=True)
     res = bench.run_local()
     res = bench.run_local(keep_logs=True)
-    bench.run_aws(ssh_key=key, sec_group=sec, aws_instance_image=image)
-    res = bench.run_aws(ssh_key=key, sec_group=sec, aws_instance_image=image, keep_logs=True)
+    bench.run_aws(aws_instance_image=image)
+    res = bench.run_aws(aws_instance_image=image, keep_logs=True)

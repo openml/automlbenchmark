@@ -8,9 +8,7 @@ class AwsDockerOMLRun:
   setup = '#!/bin/bash\ndocker run --rm'
   token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
 
-  def __init__(self, ssh_key, sec_group, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
-    self.ssh_key = ssh_key
-    self.sec_group = sec_group
+  def __init__(self, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
     self.aws_instance_type = aws_instance_type
     self.aws_instance_image = aws_instance_image
     self.docker_image = docker_image
@@ -23,19 +21,17 @@ class AwsDockerOMLRun:
     self.instance = None
 
   def createInstanceRun(self):
-    setup = "%s %s -f %i -t %i -s %i -p %i -m %s"  %(self.setup, self.docker_image, self.fold, self.openml_id, self.runtime, self.cores, self.metric)
+    setup = "%s %s -f %i -t %i -s %i -p %i -m %s" % (self.setup, self.docker_image, self.fold, self.openml_id, self.runtime, self.cores, self.metric)
     if self.instance is not None:
       print("Instance already exists, terminate existing instance")
       self.terminateInstance()
 
     self.instance = self.ec2_resource.create_instances(
-      ImageId = self.aws_instance_image,
-      MinCount = 1,
-      MaxCount = 1,
-      InstanceType = self.aws_instance_type,
-      KeyName = self.ssh_key,
-      SecurityGroupIds = [self.sec_group],
-      UserData = setup)[0]
+      ImageId=self.aws_instance_image,
+      MinCount=1,
+      MaxCount=1,
+      InstanceType=self.aws_instance_type,
+      UserData=setup)[0]
 
   def terminateInstance(self):
     if self.instance is not None:
@@ -68,15 +64,13 @@ if __name__ == "main":
   from time import sleep
   from os import popen
 
-  key = "laptop" #ssh key
-  sec = "launch-wizard-7" # security group
   instance = "m5.xlarge" # instance type
   image = "ami-0615f1e34f8d36362" # aws instance image
   dockerImage = "jnkthms/tpot" # docker image
   openmlid = 59
   runtime = 600
   cores = 4
-  run = AwsDockerOMLRun(ssh_key = key, sec_group = sec, aws_instance_type = instance,
+  run = AwsDockerOMLRun(aws_instance_type = instance,
     aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, fold = 1,
     runtime = runtime, cores = cores, metric = "acc")
 
