@@ -19,14 +19,20 @@ if __name__ == '__main__':
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
+    # Mapping of benchmark metrics to H2O metrics
+    if performance_metric == "acc":
+        performance_metric = "mean_per_class_error"
+    elif performance_metric == "auc":
+        performance_metric = "AUC"
+    else:
+        # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
+        print('Performance metric, {}, not supported.'.format(performance_metric))    
+
     # Harcoded for testing
     # TO DO: un-hardcode this and grab args from input
     runtime_seconds = 30
     number_cores = -1
     performance_metric = "AUC"
-
-    # TO DO: Add a mapping of performance metrics from benchmark name -> H2O name
-    # e.g. "acc" -> "mean_per_class_error"
 
 
     print('Starting H2O cluster')
@@ -53,7 +59,7 @@ if __name__ == '__main__':
     y_pred_df = aml.predict(test).as_data_frame()
 
     if type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OBinomialModelMetrics:
-        y_scores = y_pred_df.iloc[:, 0]
+        y_scores = y_pred_df.iloc[:, -1]
         auc = roc_auc_score(y_true=y_test, y_score=y_scores)
         print("AUC: " + str(auc))
 
