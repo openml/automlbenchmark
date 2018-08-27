@@ -34,11 +34,11 @@ bench = AutoMLBenchmark(benchmarks=benchmarks[benchmark], framework=frameworks[f
 print("Running `%s` on `%s` benchmarks in `%s` mode" % (framework, benchmark, mode))
 
 if mode == "aws":
-    bench.updateDockerContainer(upload=True)
-    res = bench.runAWS(ssh_key, sec_group, aws_instance_image)
+    bench.update_docker_container(upload=True)
+    res = bench.run_aws(ssh_key, sec_group, aws_instance_image)
 elif mode == "local":
-    bench.updateDockerContainer(upload=False)
-    res = bench.runLocal()
+    bench.update_docker_container(upload=False)
+    res = bench.run_local()
 
 if outfile is not None:
     with open(outfile, "a") as file:
