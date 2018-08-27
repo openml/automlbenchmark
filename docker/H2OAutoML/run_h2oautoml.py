@@ -3,7 +3,7 @@ import h2o
 from h2o.automl import H2OAutoML
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_auc_score
 sys.path.append('/bench/common')
 import common_code
 
@@ -28,10 +28,11 @@ if __name__ == '__main__':
     # TO DO: Add a mapping of performance metrics from benchmark name -> H2O name
     # e.g. "acc" -> "mean_per_class_error"
 
+
     print('Starting H2O cluster')
     # TO DO: Pass in a memory size as an argument to use here
-    #h2o.init(ncores=number_cores, max_mem_size=16). #ncores not working if set to -1 (need to check)
-    h2o.init()
+    #h2o.init(nthreads=number_cores, max_mem_size=16). #ncores not working if set to -1 (need to check)
+    h2o.init(nthreads=number_cores)
 
     print('Loading data.')
     # Load train as an H2O Frame, but test as a Pandas DataFrame
@@ -43,20 +44,18 @@ if __name__ == '__main__':
           .format(runtime_seconds, number_cores, performance_metric))
 
     print('Running model on task.')
-    print('ignoring runtime.')
+    print('ignoring performance_metric (always optimizes AUC)')
     #aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric) #Add this
-    aml = H2OAutoML(max_runtime_secs=runtime_seconds)
+    aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric)
     aml.train(y=train.ncol-1, training_frame=train)
-    y_pred_df = aml.predict(test).as_data_frame()
-    # TO DO: this will only work for binary classification, need to extend to any task
-    #y_pred = y_pred_df.iloc[:, -1]
 
-    #if type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OBinomialModelMetrics:
-    #    y_pred = y_pred_df.iloc[:, 0]
-    #elif type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OMultinomialModelMetrics:
-    #    y_pred = y_pred_df.iloc[:, 0]
-    #else:
-    #    print('The benchmarks do not yet support Regression tasks')
+    print('Predicting on the test set.')
+    y_pred_df = aml.predict(test).as_data_frame()
+
+    if type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OBinomialModelMetrics:
+        y_scores = y_pred_df.iloc[:, 0]
+        auc = roc_auc_score(y_true=y_test, y_score=y_scores)
+        print("AUC: " + str(auc))
 
     y_classpred = y_pred_df.iloc[:, 0]
     print('Optimization was towards metric, but following score is always accuracy:')
