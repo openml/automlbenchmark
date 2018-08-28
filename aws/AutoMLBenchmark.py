@@ -58,42 +58,52 @@ class AutoMLBenchmark:
     def run_aws(self, keep_logs=False):
 
         jobs = []
-        for benchmark in self.benchmarks:
-            for fold in range(benchmark["folds"]):
-                jobs.append({
-                    "benchmark_id": benchmark["benchmark_id"],
-                    "fold": fold,
-                    "run": AwsDockerOMLRun(
-                        benchmark["aws_instance_type"],
-                        self.get_container_name(),
-                        benchmark["openml_task_id"],
-                        fold,
-                        benchmark["runtime"],
-                        benchmark["cores"],
-                        benchmark["metric"],
-                        self.region_name
-                    )
-                })
-        n_jobs = len(jobs)
-        n_done = 0
-        print("Created %s jobs\nStarting instances" % (n_jobs))
-        for job in jobs:
-            job["run"].createInstanceRun()
-            job["result"] = job["run"].getResult()
-        start_time = time.time()
-        while n_done != n_jobs:
-            time.sleep(self.query_frequency)
-            runtime = int(time.time() - start_time)
-            minutes, seconds = divmod(runtime, 60)
-            hours, minutes = divmod(minutes, 60)
+
+        def chunk_list(l, n):
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        chunks = list(chunk_list(self.benchmarks, int(self.max_parallel_jobs / self.benchmarks[0]["folds"])))
+        print("Grouping benchmarks in %i chunk(s) of %i parallel jobs" % (len(chunks), self.max_parallel_jobs))
+
+        for ind, chunk in enumerate(chunks):
+            print("---- Chunk %i/%i ----" %(ind + 1, len(chunks)))
+            for benchmark in chunk:
+                for fold in range(benchmark["folds"]):
+                    jobs.append({
+                        "benchmark_id": benchmark["benchmark_id"],
+                        "fold": fold,
+                        "run": AwsDockerOMLRun(
+                            benchmark["aws_instance_type"],
+                            self.get_container_name(),
+                            benchmark["openml_task_id"],
+                            fold,
+                            benchmark["runtime"],
+                            benchmark["cores"],
+                            benchmark["metric"],
+                            self.region_name
+                        )
+                    })
+            n_jobs = len(jobs)
+            n_done = 0
+            print("Created %s jobs\nStarting instances" % (n_jobs))
             for job in jobs:
+                job["run"].createInstanceRun()
                 job["result"] = job["run"].getResult()
-                if job["result"] is None and runtime > (job["run"].runtime + self.overhead_time):
-                    print("Benchmark %s on fold %i hit the walltime and is terminated" % (job["benchmark_id"], job["fold"]))
-                    job["run"].terminateInstance()
-                    job["result"] = {"log":"hit walltime", "res":"nan"}
-            n_done = n_jobs - [job["result"] for job in jobs].count(None)
-            print("[%02d:%02d:%02d] - %i/%i jobs done" % (hours, minutes, seconds, n_done, n_jobs))
+            start_time = time.time()
+            while n_done != n_jobs:
+                time.sleep(self.query_frequency)
+                runtime = int(time.time() - start_time)
+                minutes, seconds = divmod(runtime, 60)
+                hours, minutes = divmod(minutes, 60)
+                for job in jobs:
+                    job["result"] = job["run"].getResult()
+                    if job["result"] is None and runtime > (job["run"].runtime + self.overhead_time):
+                        print("Benchmark %s on fold %i hit the walltime and is terminated" % (job["benchmark_id"], job["fold"]))
+                        job["run"].terminateInstance()
+                        job["result"] = {"log":"hit walltime", "res":"nan"}
+                n_done = n_jobs - [job["result"] for job in jobs].count(None)
+                print("[%02d:%02d:%02d] - %i/%i jobs done" % (hours, minutes, seconds, n_done, n_jobs))
 
 
         if not keep_logs:
