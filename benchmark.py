@@ -8,7 +8,6 @@ import json
 from time import time
 import pandas as pd
 
-aws_instance_image = "ami-0615f1e34f8d36362"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('framework', type=str,
@@ -30,6 +29,12 @@ with open("resources/benchmarks.json") as file:
 with open("resources/frameworks.json") as file:
     frameworks = json.load(file)
 
+with open("resources/ami.json") as file:
+    ami = json.load(file)
+
+if args.region is not None and args.region not in ami.keys():
+    raise ValueError("Region not supported by AMI yet.")
+
 
 bench = AutoMLBenchmark(benchmarks=benchmarks[args.benchmark], framework=frameworks[args.framework], region_name=args.region)
 
@@ -37,7 +42,7 @@ print("Running `%s` on `%s` benchmarks in `%s` mode" % (args.framework, args.ben
 
 if args.mode == "aws":
     bench.update_docker_container(upload=True)
-    res = bench.run_aws(aws_instance_image)
+    res = bench.run_aws()
 elif args.mode == "local":
     bench.update_docker_container(upload=False)
     res = bench.run_local()

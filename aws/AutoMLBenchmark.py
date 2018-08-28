@@ -3,19 +3,25 @@
 import os
 import re
 import time
+import json
 from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
 
 class AutoMLBenchmark:
-    token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
-    overhead_time = 10 * 60 #additional time for setup etc.
 
-    def __init__(self, benchmarks, framework, query_frequency=10, region_name=None):
+    def __init__(self, benchmarks, framework, region_name=None):
         self.benchmarks = benchmarks
         self.framework = framework
-        self.query_frequency = query_frequency
         self.region_name = region_name
 
+        # load config file
+        with open("config.json") as file:
+            config = json.load(file)
+
+        self.token = config["token"]
+        self.overhead_time = config["overhead_time"]
+        self.query_frequency = config["query_frequency"]
+        self.max_parallel_jobs = config["max_parallel_jobs"]
 
     def get_container_name(self):
         docker_image = self.framework["docker_image"]
@@ -49,7 +55,7 @@ class AutoMLBenchmark:
 
         return results
 
-    def run_aws(self, aws_instance_image, keep_logs=False):
+    def run_aws(self, keep_logs=False):
 
         jobs = []
         for benchmark in self.benchmarks:
@@ -59,7 +65,6 @@ class AutoMLBenchmark:
                     "fold": fold,
                     "run": AwsDockerOMLRun(
                         benchmark["aws_instance_type"],
-                        aws_instance_image,
                         self.get_container_name(),
                         benchmark["openml_task_id"],
                         fold,
@@ -106,18 +111,16 @@ class AutoMLBenchmark:
 if __name__ == "main":
     import json
 
-    aws_instance_image = "ami-0615f1e34f8d36362"
-
     with open("resources/benchmarks.json") as file:
         benchmarks = json.load(file)
 
     with open("resources/frameworks.json") as file:
         frameworks = json.load(file)
 
-    bench = AutoMLBenchmark(benchmarks=benchmarks["test_larger"], framework=frameworks["TPOT"])
+    bench = AutoMLBenchmark(benchmarks=benchmarks["test_larger"], framework=frameworks["RandomForest"])
     bench.get_container_name()
     bench.update_docker_container(upload=True)
     res = bench.run_local()
     res = bench.run_local(keep_logs=True)
-    bench.run_aws(aws_instance_image=aws_instance_image)
-    res = bench.run_aws(aws_instance_image=aws_instance_image, keep_logs=True)
+    bench.run_aws()
+    res = bench.run_aws(keep_logs=True)

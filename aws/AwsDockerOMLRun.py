@@ -1,24 +1,39 @@
 #!/usr/bin/python3
 
 import boto3
+import json
 import re
 
 class AwsDockerOMLRun:
 
-  setup = '#!/bin/bash\ndocker run --rm'
-  token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
 
-  def __init__(self, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric, region_name=None):
+  def __init__(self, aws_instance_type, docker_image, openml_id, fold, runtime, cores, metric, region_name=None):
     self.aws_instance_type = aws_instance_type
-    self.aws_instance_image = aws_instance_image
     self.docker_image = docker_image
     self.openml_id = openml_id
     self.fold = fold
     self.runtime = runtime
     self.cores = cores
     self.metric = metric
-    region_name = region_name if region_name is not None else boto3.session.Session().region_name
+
+    # load config file
+    with open("config.json") as file:
+        config = json.load(file)
+
+    self.setup = config["setup"]
+    self.token = config["token"]
+
+    if region_name is None:
+      if "region_name" in config.keys() and len(config["region_name"]) > 0:
+        self.region_name = config["region_name"]
+      else:
+        self.region_name = boto3.session.Session().region_name
     self.ec2_resource = boto3.resource("ec2", region_name=region_name)  # Maybe this should be a class variable, not sure
+
+    with open("resources/ami.json") as file:
+        amis = json.load(file)
+
+    self.aws_instance_image = amis[self.region_name]
     self.instance = None
 
   def createInstanceRun(self):
@@ -66,14 +81,12 @@ if __name__ == "main":
   from os import popen
 
   instance = "m5.xlarge" # instance type
-  image = "ami-0615f1e34f8d36362" # aws instance image
   dockerImage = "jnkthms/tpot" # docker image
   openmlid = 59
   runtime = 600
   cores = 4
-  run = AwsDockerOMLRun(aws_instance_type = instance,
-    aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, fold = 1,
-    runtime = runtime, cores = cores, metric = "acc")
+  run = AwsDockerOMLRun(aws_instance_type = instance, docker_image = dockerImage, openml_id = openmlid,
+                        fold = 1, runtime = runtime, cores = cores, metric = "acc")
 
   run.createInstanceRun()
   res = []
