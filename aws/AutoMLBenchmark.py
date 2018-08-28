@@ -10,10 +10,12 @@ class AutoMLBenchmark:
     token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
     overhead_time = 10 * 60 #additional time for setup etc.
 
-    def __init__(self, benchmarks, framework, query_frequency=10):
+    def __init__(self, benchmarks, framework, query_frequency=10, region_name=None):
         self.benchmarks = benchmarks
         self.framework = framework
         self.query_frequency = query_frequency
+        self.region_name = region_name
+
 
     def get_container_name(self):
         docker_image = self.framework["docker_image"]
@@ -63,7 +65,8 @@ class AutoMLBenchmark:
                         fold,
                         benchmark["runtime"],
                         benchmark["cores"],
-                        benchmark["metric"]
+                        benchmark["metric"],
+                        self.region_name
                     )
                 })
         n_jobs = len(jobs)

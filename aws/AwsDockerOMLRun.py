@@ -8,7 +8,7 @@ class AwsDockerOMLRun:
   setup = '#!/bin/bash\ndocker run --rm'
   token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
 
-  def __init__(self, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
+  def __init__(self, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric, region_name=None):
     self.aws_instance_type = aws_instance_type
     self.aws_instance_image = aws_instance_image
     self.docker_image = docker_image
@@ -17,7 +17,8 @@ class AwsDockerOMLRun:
     self.runtime = runtime
     self.cores = cores
     self.metric = metric
-    self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
+    region_name = region_name if region_name is not None else boto3.session.Session().region_name
+    self.ec2_resource = boto3.resource("ec2", region_name=region_name)  # Maybe this should be a class variable, not sure
     self.instance = None
 
   def createInstanceRun(self):
