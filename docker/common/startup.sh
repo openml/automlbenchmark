@@ -32,13 +32,13 @@ if [ -z ${metric+x} ]; then echo "metric is unset"; exit; fi
 
 if [ ! -z ${task_id+x} ]; then
   if [ ! -z ${apikey+x} ]; then
-    /venvs/setup/bin/python3 ./common/load_data.py -t $task_id -f $fold_n -a $apikey --train ./common/train.arff --test ./common/test.arff
+    /venvs/setup/bin/python3 -Wignore ./common/load_data.py -t $task_id -f $fold_n -a $apikey --train ./common/train.arff --test ./common/test.arff
   else
-    /venvs/setup/bin/python3 ./common/load_data.py -t $task_id -f $fold_n --train ./common/train.arff --test ./common/test.arff
+    /venvs/setup/bin/python3 -Wignore ./common/load_data.py -t $task_id -f $fold_n --train ./common/train.arff --test ./common/test.arff
   fi
 elif [ ! -z ${datafile+x} ]; then
   echo "No task was specified. Data on disk will be used."
-  /venvs/setup/bin/python3 ./common/load_data.py -d /bench/dataset -f $fold_n --train ./common/train.arff --test ./common/test.arff
+  /venvs/setup/bin/python3 -Wignore ./common/load_data.py -d /bench/dataset -f $fold_n --train ./common/train.arff --test ./common/test.arff
 else
   echo "Neither a task nor datafile was specified. Can not continue."; exit
 fi
@@ -47,4 +47,4 @@ cd automl
 $start_call $time_s $n_cores $metric
 cd ..
 
-/venvs/setup/bin/python3 ./common/evaluate.py ./common/test.arff ./common/predictions.csv $metric
+/venvs/setup/bin/python3 -Wignore ./common/evaluate.py ./common/test.arff ./common/predictions.csv $metric

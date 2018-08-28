@@ -11,7 +11,7 @@ from math import sqrt
 
 import arff
 import numpy as np
-from sklearn.metrics import accuracy_score, log_loss, mean_squared_error
+from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 test_data_filepath = sys.argv[1]
@@ -37,7 +37,7 @@ if isinstance(target_type, list):
     # targets are classes, so we must convert the target labels to a one-hot encoding to calculate the metric.
     labelEncoder = LabelEncoder().fit(target_type)
     y_true_le = labelEncoder.transform(y_true).reshape(-1, 1)
-    y_true_ohe = OneHotEncoder().fit_transform(y_true_le)
+    y_true_ohe = OneHotEncoder().fit_transform(y_true_le).todense()
 
     class_probabilities, class_predictions = y_pred[:, :-1].astype(float), y_pred[:, -1]
 
@@ -45,6 +45,13 @@ if isinstance(target_type, list):
         score = accuracy_score(y_true, class_predictions)
     elif metric == 'log_loss':
         score = log_loss(y_true_ohe, class_probabilities)
+    elif metric == 'auc':
+        N, K = class_probabilities.shape
+        if K != 2:
+            raise ValueError("Metric AUC is not supported for non-binary classification.")
+        class_names = data_arff['attributes'][-1][1]
+        y_true_encoded = [1 if class_ == class_names[-1] else 0 for class_ in y_true]
+        score = roc_auc_score(y_true_encoded, class_probabilities[:, 1])
     else:
         raise ValueError("Predictions determined to be classification, but {} is not a known classification metric."
                          .format(metric))
