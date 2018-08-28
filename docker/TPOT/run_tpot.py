@@ -1,7 +1,7 @@
 import sys
 
 from tpot import TPOTClassifier
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_curve, auc
 
 sys.path.append('/bench/common')
 import common_code
@@ -24,10 +24,6 @@ if __name__ == '__main__':
     X_train, y_train = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
     X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
     X_train, X_test = X_train.astype(float), X_test.astype(float)
-
-    # Convert response from string to integers
-    y_train = y_train.astype(int)
-    y_test = y_test.astype(int)
 
     performance_metric = 'accuracy' if performance_metric=='acc' else performance_metric
 
@@ -53,7 +49,9 @@ if __name__ == '__main__':
     print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
 
     if class_probabilities.shape[1] == 2:
-        auc = roc_auc_score(y_true=y_test, y_score=class_probabilities[:,1])
-        print("AUC: " + str(auc))
+        class_names = common_code.get_class_names_from_arff(common_code.TRAIN_DATA_PATH)
+        fpr, tpr, thresholds = roc_curve(y_test, class_probabilities[:, 1], pos_label=class_names[1])
+        auc_score = auc(fpr, tpr)
+        print("AUC: " + str(auc_score))
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
