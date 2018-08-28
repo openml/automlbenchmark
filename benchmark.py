@@ -29,6 +29,12 @@ with open("resources/benchmarks.json") as file:
 with open("resources/frameworks.json") as file:
     frameworks = json.load(file)
 
+with open("resources/ami.json") as file:
+    ami = json.load(file)
+
+if args.region is not None and args.region not in ami.keys():
+    raise ValueError("Region not supported by AMI yet.")
+
 
 bench = AutoMLBenchmark(benchmarks=benchmarks[args.benchmark], framework=frameworks[args.framework], region_name=args.region)
 

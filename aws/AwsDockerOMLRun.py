@@ -81,14 +81,12 @@ if __name__ == "main":
   from os import popen
 
   instance = "m5.xlarge" # instance type
-  image = "ami-0615f1e34f8d36362" # aws instance image
   dockerImage = "jnkthms/tpot" # docker image
   openmlid = 59
   runtime = 600
   cores = 4
-  run = AwsDockerOMLRun(aws_instance_type = instance,
-    aws_instance_image = image, docker_image = dockerImage, openml_id = openmlid, fold = 1,
-    runtime = runtime, cores = cores, metric = "acc")
+  run = AwsDockerOMLRun(aws_instance_type = instance, docker_image = dockerImage, openml_id = openmlid,
+                        fold = 1, runtime = runtime, cores = cores, metric = "acc")
 
   run.createInstanceRun()
   res = []
