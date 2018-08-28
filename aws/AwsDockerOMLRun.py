@@ -6,17 +6,15 @@ import re
 
 class AwsDockerOMLRun:
 
-  def __init__(self, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
+
+  def __init__(self, aws_instance_type, docker_image, openml_id, fold, runtime, cores, metric, region_name=None):
     self.aws_instance_type = aws_instance_type
-    self.aws_instance_image = aws_instance_image
     self.docker_image = docker_image
     self.openml_id = openml_id
     self.fold = fold
     self.runtime = runtime
     self.cores = cores
     self.metric = metric
-    self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
-    self.instance = None
 
     # load config file
     with open("config.json") as file:
@@ -24,6 +22,19 @@ class AwsDockerOMLRun:
 
     self.setup = config["setup"]
     self.token = config["token"]
+
+    if region_name is None:
+      if "region_name" in config.keys() and len(config["region_name"]) > 0:
+        self.region_name = config["region_name"]
+      else:
+        self.region_name = boto3.session.Session().region_name
+    self.ec2_resource = boto3.resource("ec2", region_name=region_name)  # Maybe this should be a class variable, not sure
+
+    with open("resources/ami.json") as file:
+        amis = json.load(file)
+
+    self.aws_instance_image = amis[self.region_name]
+    self.instance = None
 
   def createInstanceRun(self):
     setup = "%s %s -f %i -t %i -s %i -p %i -m %s" % (self.setup, self.docker_image, self.fold, self.openml_id, self.runtime, self.cores, self.metric)

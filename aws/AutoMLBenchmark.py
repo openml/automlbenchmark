@@ -9,9 +9,10 @@ from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
 class AutoMLBenchmark:
 
-    def __init__(self, benchmarks, framework):
+    def __init__(self, benchmarks, framework, region_name=None):
         self.benchmarks = benchmarks
         self.framework = framework
+        self.region_name = region_name
 
         # load config file
         with open("config.json") as file:
@@ -54,7 +55,7 @@ class AutoMLBenchmark:
 
         return results
 
-    def run_aws(self, aws_instance_image, keep_logs=False):
+    def run_aws(self, keep_logs=False):
 
         jobs = []
         for benchmark in self.benchmarks:
@@ -64,13 +65,13 @@ class AutoMLBenchmark:
                     "fold": fold,
                     "run": AwsDockerOMLRun(
                         benchmark["aws_instance_type"],
-                        aws_instance_image,
                         self.get_container_name(),
                         benchmark["openml_task_id"],
                         fold,
                         benchmark["runtime"],
                         benchmark["cores"],
-                        benchmark["metric"]
+                        benchmark["metric"],
+                        self.region_name
                     )
                 })
         n_jobs = len(jobs)
