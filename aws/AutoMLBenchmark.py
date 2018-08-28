@@ -106,6 +106,8 @@ class AutoMLBenchmark:
 if __name__ == "main":
     import json
 
+    aws_instance_image = "ami-0615f1e34f8d36362"
+
     with open("resources/benchmarks.json") as file:
         benchmarks = json.load(file)
 
@@ -117,5 +119,5 @@ if __name__ == "main":
     bench.update_docker_container(upload=True)
     res = bench.run_local()
     res = bench.run_local(keep_logs=True)
-    bench.run_aws(aws_instance_image=image)
-    res = bench.run_aws(aws_instance_image=image, keep_logs=True)
+    bench.run_aws(aws_instance_image=aws_instance_image)
+    res = bench.run_aws(aws_instance_image=aws_instance_image, keep_logs=True)
