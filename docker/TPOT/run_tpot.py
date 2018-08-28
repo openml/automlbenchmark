@@ -25,15 +25,13 @@ if __name__ == '__main__':
     X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
     X_train, X_test = X_train.astype(float), X_test.astype(float)
 
-    performance_metric = 'accuracy' if performance_metric=='acc' else performance_metric
-
     print('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
           .format(runtime_seconds, number_cores, performance_metric))
 
     runtime_min = (int(runtime_seconds)/60)
-    tpot = TPOTClassifier(n_jobs=number_cores, \
-                          max_time_mins=runtime_min, \
-                          verbosity=2, \
+    tpot = TPOTClassifier(n_jobs=number_cores,
+                          max_time_mins=runtime_min,
+                          verbosity=2,
                           scoring=performance_metric)
     tpot.fit(X_train, y_train)
 
