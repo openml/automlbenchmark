@@ -48,9 +48,11 @@ The script will produce output that records the OpenML Task ID, the fold index t
 
 To run a benchmark on AWS you additionally need to:
 
-- Have the `boto3` Python package installed and [configured](https://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration) on your machine to have access to your AWS account credentials. If this is your first time setting up **boto3**, you can use the `aws configure` tool and will need your AWS Access Key ID, AWS Secret Access Key, a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) and you can select "text" as the default output format.
-- In the `benchmark.py` script, change the name of the `ssh_key` and `sec_group` to values associated with your AWS account.
-
+- Have the `boto3` Python package installed and [configured](https://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration) on your machine to have access to your AWS account credentials. If this is your first time setting up **boto3**, you can use the `aws configure` tool and will need your AWS Access Key ID, AWS Secret Access Key, a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) and you can select "text" as the default output format. 
+- _**NOTE:** Currently the AMI is only in the following regions so you'll have to set your default region as one of these_:
+  - us-east-1
+  - us-west-1
+  - eu-west-1
 
 To run a test test to see if the benchmark framework is working on AWS, do the following:
 
