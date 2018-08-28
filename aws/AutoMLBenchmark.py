@@ -3,17 +3,24 @@
 import os
 import re
 import time
+import json
 from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
 
 class AutoMLBenchmark:
-    token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
-    overhead_time = 10 * 60 #additional time for setup etc.
 
-    def __init__(self, benchmarks, framework, query_frequency=10):
+    def __init__(self, benchmarks, framework):
         self.benchmarks = benchmarks
         self.framework = framework
-        self.query_frequency = query_frequency
+
+        # load config file
+        with open("config.json") as file:
+            config = json.load(file)
+
+        self.token = config["token"]
+        self.overhead_time = config["overhead_time"]
+        self.query_frequency = config["query_frequency"]
+        self.max_parallel_jobs = config["max_parallel_jobs"]
 
     def get_container_name(self):
         docker_image = self.framework["docker_image"]
@@ -111,7 +118,7 @@ if __name__ == "main":
     with open("resources/frameworks.json") as file:
         frameworks = json.load(file)
 
-    bench = AutoMLBenchmark(benchmarks=benchmarks["test_larger"], framework=frameworks["TPOT"])
+    bench = AutoMLBenchmark(benchmarks=benchmarks["test_larger"], framework=frameworks["RandomForest"])
     bench.get_container_name()
     bench.update_docker_container(upload=True)
     res = bench.run_local()

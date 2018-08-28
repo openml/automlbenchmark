@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
 import boto3
+import json
 import re
 
 class AwsDockerOMLRun:
-
-  setup = '#!/bin/bash\ndocker run --rm'
-  token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
 
   def __init__(self, aws_instance_type, aws_instance_image, docker_image, openml_id, fold, runtime, cores, metric):
     self.aws_instance_type = aws_instance_type
@@ -19,6 +17,13 @@ class AwsDockerOMLRun:
     self.metric = metric
     self.ec2_resource = boto3.resource("ec2") # Maybe this should be a class variable, not sure
     self.instance = None
+
+    # load config file
+    with open("config.json") as file:
+        config = json.load(file)
+
+    self.setup = config["setup"]
+    self.token = config["token"]
 
   def createInstanceRun(self):
     setup = "%s %s -f %i -t %i -s %i -p %i -m %s" % (self.setup, self.docker_image, self.fold, self.openml_id, self.runtime, self.cores, self.metric)
