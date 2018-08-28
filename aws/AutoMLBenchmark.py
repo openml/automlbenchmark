@@ -8,6 +8,7 @@ from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
 class AutoMLBenchmark:
     token = "6744dfceeb4d2b4a9e60874bcd46b3a1"
+    overhead_time = 10 * 60 #additional time for setup etc.
 
     def __init__(self, benchmarks, framework, query_frequency=10):
         self.benchmarks = benchmarks
@@ -71,13 +72,21 @@ class AutoMLBenchmark:
         for job in jobs:
             job["run"].createInstanceRun()
             job["result"] = job["run"].getResult()
-
+        start_time = time.time()
         while n_done != n_jobs:
             time.sleep(self.query_frequency)
+            runtime = int(time.time() - start_time)
+            minutes, seconds = divmod(runtime, 60)
+            hours, minutes = divmod(minutes, 60)
             for job in jobs:
                 job["result"] = job["run"].getResult()
+                if job["result"] is None and runtime > (job["run"].runtime + self.overhead_time):
+                    print("Benchmark %s on fold %i hit the walltime and is terminated" % (job["benchmark_id"], job["fold"]))
+                    job["run"].terminateInstance()
+                    job["result"] = {"log":"hit walltime", "res":"nan"}
             n_done = n_jobs - [job["result"] for job in jobs].count(None)
-            print("%i/%i jobs done" % (n_done, n_jobs))
+            print("[%02d:%02d:%02d] - %i/%i jobs done" % (hours, minutes, seconds, n_done, n_jobs))
+
 
         if not keep_logs:
             for job in jobs:
@@ -93,10 +102,6 @@ class AutoMLBenchmark:
 
 if __name__ == "main":
     import json
-
-    key = "laptop"  # ssh key
-    sec = "launch-wizard-7"  # security group
-    image = "ami-0615f1e34f8d36362"  # aws instance image
 
     with open("resources/benchmarks.json") as file:
         benchmarks = json.load(file)
