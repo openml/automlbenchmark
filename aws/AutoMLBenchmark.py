@@ -61,16 +61,15 @@ class AutoMLBenchmark:
         for benchmark in self.benchmarks:
             for fold in range(benchmark["folds"]):
                 jobs.append({"benchmark_id": benchmark["benchmark_id"],
-                            "fold": fold,
-                            "run": AwsDockerOMLRun(
-                                                   benchmark["aws_instance_type"],
-                                                   self.get_container_name(),
-                                                   benchmark["openml_task_id"],
-                                                   fold,
-                                                   benchmark["runtime"],
-                                                   benchmark["cores"],
-                                                   benchmark["metric"],
-                                                   self.region_name)})
+                            "fold": fold, "run": AwsDockerOMLRun(
+                                                                 benchmark["aws_instance_type"],
+                                                                 self.get_container_name(),
+                                                                 benchmark["openml_task_id"],
+                                                                 fold,
+                                                                 benchmark["runtime"],
+                                                                 benchmark["cores"],
+                                                                 benchmark["metric"],
+                                                                 self.region_name)})
 
         def chunk_jobs(l, n):
             for i in range(0, len(l), n):
@@ -80,7 +79,7 @@ class AutoMLBenchmark:
         print("Grouping %i jobs in %i chunk(s) of %i parallel jobs" % (len(jobs), len(chunks), self.max_parallel_jobs))
 
         for ind, chunk in enumerate(chunks):
-            print("---- Chunk %i/%i ----" %(ind + 1, len(chunks)))
+            print("---- Chunk %i/%i ----" % (ind + 1, len(chunks)))
             n_jobs = len(chunk)
             n_done = 0
             print("Created %s jobs\nStarting instances" % (n_jobs))
@@ -98,7 +97,7 @@ class AutoMLBenchmark:
                     if job["result"] is None and runtime > (job["run"].runtime + self.overhead_time):
                         print("Benchmark %s on fold %i hit the walltime and is terminated" % (job["benchmark_id"], job["fold"]))
                         job["run"].terminateInstance()
-                        job["result"] = {"log":"hit walltime", "res":"nan"}
+                        job["result"] = {"log": "hit walltime", "res": "nan"}
                 n_done = n_jobs - [job["result"] for job in chunk].count(None)
                 print("[%02d:%02d:%02d] - %i/%i jobs done" % (hours, minutes, seconds, n_done, n_jobs))
 
@@ -113,12 +112,10 @@ class AutoMLBenchmark:
             for job in jobs:
                 job["result"] = job["result"]["res"]
 
-
         return jobs
 
 
 if __name__ == "main":
-    import json
 
     with open("resources/benchmarks.json") as file:
         benchmarks = json.load(file)
