@@ -76,7 +76,7 @@ class AutoMLBenchmark:
             for i in range(0, len(l), n):
                 yield l[i:i + n]
 
-        chunks = list(chunk_jobs(jobs, self.benchmarks[0]["folds"]))
+        chunks = list(chunk_jobs(jobs, self.max_parallel_jobs))
         print("Grouping %i jobs in %i chunk(s) of %i parallel jobs" % (len(jobs), len(chunks), self.max_parallel_jobs))
 
         for ind, chunk in enumerate(chunks):
