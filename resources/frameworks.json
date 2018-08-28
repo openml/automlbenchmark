@@ -23,40 +23,40 @@
     "docker_image": {
       "author":"jnkthms",
       "image":"tpot",
-      "tag":"latest",
-      "version":"0.9.3",
-      "project":"https://github.com/EpistasisLab/tpot"
+      "tag":"latest"
     },
-    "dockerfile_folder":"TPOT"
+    "dockerfile_folder":"TPOT",
+    "version":"0.9.3",
+    "project":"https://github.com/EpistasisLab/tpot"
   },
   "H2OAutoML": {
     "docker_image": {
       "author":"jnkthms",
       "image":"h2oautoml",
       "tag":"latest",
-      "version":"3.20.0.5",
-      "project":"http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html"
     },
+    "version":"3.20.0.5",
+    "project":"http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html",
     "dockerfile_folder":"H2OAutoML"
   },
   "autosklearn": {
     "docker_image": {
       "author":"jnkthms",
       "image":"autosklearn",
-      "tag":"latest",
-      "version":"",
-      "project":""
+      "tag":"latest"
     },
-    "dockerfile_folder":"autosklearn"
+    "dockerfile_folder":"autosklearn",
+    "version":"",
+    "project":""
   },
   "AutoWEKA": {
     "docker_image": {
       "author":"pgijsbers",
       "image":"autoweka",
-      "tag":"latest",
-      "version":"",
-      "project":""
+      "tag":"latest"
     },
-    "dockerfile_folder":"AutoWEKA"
+    "dockerfile_folder":"AutoWEKA",
+    "version":"",
+    "project":""
   }
 }
