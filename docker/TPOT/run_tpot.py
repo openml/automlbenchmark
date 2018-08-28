@@ -1,6 +1,7 @@
 import sys
 
 from tpot import TPOTClassifier
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, roc_curve, auc
 
 sys.path.append('/bench/common')
@@ -25,6 +26,11 @@ if __name__ == '__main__':
     X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
     X_train, X_test = X_train.astype(float), X_test.astype(float)
 
+    class_names = common_code.get_class_names_from_arff(common_code.TRAIN_DATA_PATH)
+    label_encoder = LabelEncoder().fit(class_names)
+    y_train = label_encoder.transform(y_train)
+    y_test_encoded = label_encoder.transform(y_test)
+
     print('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
           .format(runtime_seconds, number_cores, performance_metric))
 
@@ -44,12 +50,12 @@ if __name__ == '__main__':
         class_probabilities = common_code.one_hot_encode_predictions(class_predictions)
 
     print('Optimization was towards metric, but following score is always accuracy:')
-    print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
+    print("Accuracy: " + str(accuracy_score(y_test_encoded, class_predictions)))
 
     if class_probabilities.shape[1] == 2:
-        class_names = common_code.get_class_names_from_arff(common_code.TRAIN_DATA_PATH)
         fpr, tpr, thresholds = roc_curve(y_test, class_probabilities[:, 1], pos_label=class_names[1])
         auc_score = auc(fpr, tpr)
         print("AUC: " + str(auc_score))
 
+    class_predictions = label_encoder.inverse_transform(class_predictions)
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
