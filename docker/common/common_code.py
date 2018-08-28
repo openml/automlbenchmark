@@ -7,6 +7,19 @@ TRAIN_DATA_PATH = "/bench/common/train.arff"
 TEST_DATA_PATH = "/bench/common/test.arff"
 OUTPUT_PATH = "/bench/common/predictions.csv"
 
+
+def get_class_names_from_arff(arff_file_path):
+    """ Retrieves the class names (possible attribute values of last attribute) from the arff file.
+
+    :param arff_file_path: string. path to the arff file.
+    :return: a list of class names
+    """
+    with open(arff_file_path, 'r') as arff_data_file:
+        data_arff = arff.load(arff_data_file)
+    attribute_name, attribute_values = data_arff['attributes'][-1]
+    return attribute_values
+
+
 def get_X_y_from_arff(arff_file_path):
     """ Read data from the ARFF file as X and y, where y is the last column and X all other data.
 
