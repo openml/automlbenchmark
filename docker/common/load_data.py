@@ -41,7 +41,7 @@ def read_attribute_name(line):
     # @attribute <attribute-name> <datatype>
     # attribute-name may include spaces (but then MUST be quoted).
     _, attr_info = line.split(' ', 1)
-    attr_name, attr_type = attr_info.rsplit(' ', 1)
+    attr_name, attr_type = attr_info.split(' ', 1)
     return attr_name.replace("'", "")
 
 
@@ -56,10 +56,8 @@ with open(arff_path, 'r') as arff_file:
             data_rows.append(line)
         else:
             header_lines.append(line)
-
         if '@attribute' in line.lower():
             attributes.append(read_attribute_name(line))
-
         if '@data' in line.lower():
             data_marker_read = True
 
