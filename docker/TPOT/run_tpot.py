@@ -10,7 +10,7 @@ import common_code
 
 if __name__ == '__main__':
 
-    runtime_seconds = sys.argv[1]
+    runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     print('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
           .format(runtime_seconds, number_cores, performance_metric))
 
-    runtime_min = (int(runtime_seconds)/60)
+    runtime_min = (runtime_seconds/60)
     tpot = TPOTClassifier(n_jobs=number_cores,
                           max_time_mins=runtime_min,
                           verbosity=2,
