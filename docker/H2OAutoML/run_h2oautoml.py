@@ -15,7 +15,7 @@ if __name__ == '__main__':
     # The data is loaded from an ARFF file and the response is designated as a categorical
     # The response column is the last column and called 'class' (all OpenML datasets have this)
 
-    runtime_seconds = sys.argv[1]
+    runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
@@ -32,9 +32,9 @@ if __name__ == '__main__':
 
     # Harcoded for testing
     # TO DO: un-hardcode this and grab args from input
-    runtime_seconds = 30
-    number_cores = -1
-    performance_metric = "AUC"
+    #runtime_seconds = 30
+    #number_cores = -1
+    #performance_metric = "AUC"
 
 
     print('Starting H2O cluster')
