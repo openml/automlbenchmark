@@ -3,7 +3,7 @@ import sys
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
 import numpy as np
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
 
 
 sys.path.append('/bench/common')
@@ -20,9 +20,11 @@ if __name__ == '__main__':
         performance_metric = autosklearn.metrics.accuracy
     elif performance_metric == "auc":
         performance_metric = autosklearn.metrics.roc_auc
+    elif performance_metric == "logloss":
+        performance_metric = autosklearn.metrics.log_loss   
     else:
         # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
-        print('Performance metric, {}, not supported.'.format(performance_metric))     
+        print('Performance metric, {}, not supported.'.format(performance_metric))
 
     X_train, y_train = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
     X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
@@ -35,7 +37,7 @@ if __name__ == '__main__':
         number_cores = 8
         ml_memory_limit = 16000 #16GB
     elif len(y_train) <= 200000:
-        number_cores = 32
+        number_cores = 16
         ml_memory_limit = 64000 #64GB
     else:
         number_cores = 64
@@ -45,10 +47,10 @@ if __name__ == '__main__':
           .format(runtime_seconds, number_cores, performance_metric))
 
     print('Using meta-learned initialization, which might be bad (leakage).')
+    # TO DO: Should we set per_run_time_limit at all or leave it to default of 60?
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=runtime_seconds, \
         per_run_time_limit=runtime_seconds, \
         ml_memory_limit=ml_memory_limit)
-    print('always optimize towards accuracy.')
     auto_sklearn.fit(X_train, y_train, metric=performance_metric)
 
 

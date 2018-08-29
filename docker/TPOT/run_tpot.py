@@ -2,7 +2,7 @@ import sys
 
 from tpot import TPOTClassifier
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, roc_curve, auc
+from sklearn.metrics import accuracy_score, roc_curve, auc, log_loss
 
 sys.path.append('/bench/common')
 import common_code
@@ -18,6 +18,8 @@ if __name__ == '__main__':
         performance_metric = "accuracy"
     elif performance_metric == "auc":
         performance_metric = "roc_auc"
+    elif performance_metric == "logloss":
+        performance_metric = "neg_log_loss"   
     else:
         # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         print('Performance metric, {}, not supported.'.format(performance_metric))
@@ -52,6 +54,7 @@ if __name__ == '__main__':
     print('Optimization was towards metric, but following score is always accuracy:')
     print("Accuracy: " + str(accuracy_score(y_test_encoded, class_predictions)))
 
+    # TO DO: Change this to roc_curve, auc
     if class_probabilities.shape[1] == 2:
         fpr, tpr, thresholds = roc_curve(y_test, class_probabilities[:, 1], pos_label=class_names[1])
         auc_score = auc(fpr, tpr)
