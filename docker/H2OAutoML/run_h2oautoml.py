@@ -1,9 +1,11 @@
-import sys
 import h2o
 from h2o.automl import H2OAutoML
 import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
+import time
+
+import sys
 sys.path.append('/bench/common')
 import common_code
 
@@ -15,7 +17,7 @@ if __name__ == '__main__':
     # The data is loaded from an ARFF file and the response is designated as a categorical
     # The response column is the last column and called 'class' (all OpenML datasets have this)
 
-    runtime_seconds = sys.argv[1]
+    runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
 
@@ -32,9 +34,9 @@ if __name__ == '__main__':
 
     # Harcoded for testing
     # TO DO: un-hardcode this and grab args from input
-    runtime_seconds = 30
-    number_cores = -1
-    performance_metric = "AUC"
+    #runtime_seconds = 30
+    #number_cores = -1
+    #performance_metric = "AUC"
 
 
     print('Starting H2O cluster')
@@ -52,13 +54,15 @@ if __name__ == '__main__':
           .format(runtime_seconds, number_cores, performance_metric))
 
     print('Running model on task.')
-    print('ignoring performance_metric (always optimizes AUC)')
-    #aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric) #Add this
+    starttime = time.time()
     if performance_metric == "AUC":
         aml = H2OAutoML(max_runtime_secs=runtime_seconds, sort_metric=performance_metric)  #Let AUC use default stopping_metric
     else:        
         aml = H2OAutoML(max_runtime_secs=runtime_seconds, stopping_metric=performance_metric, sort_metric=performance_metric)
     aml.train(y=train.ncol-1, training_frame=train)
+    actual_runtime_min = (time.time() - starttime)/60.0
+    print('Requested training time (minutes): ' + str((runtime_seconds/60.0)))
+    print('Actual training time (minutes): ' + str(actual_runtime_min))
 
     print('Predicting on the test set.')
     y_pred_df = aml.predict(test).as_data_frame()

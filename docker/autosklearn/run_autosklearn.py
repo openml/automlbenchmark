@@ -1,11 +1,10 @@
-import sys
-
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
 from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
 from numpy import unique
+import time
 
-
+import sys
 sys.path.append('/bench/common')
 import common_code
 
@@ -34,24 +33,27 @@ if __name__ == '__main__':
     print('ignoring n_cores.')
     # If small data:
     if len(y_train) <= 20000:
-        number_cores = 8
+        #number_cores = 8
         ml_memory_limit = 16000 #16GB
     elif len(y_train) <= 200000:
-        number_cores = 16
+        #number_cores = 16
         ml_memory_limit = 64000 #64GB
     else:
-        number_cores = 64
+        #number_cores = 64
         ml_memory_limit = 640000 #64GB
 
     print('Running auto-sklearn with a maximum time of {}s on {} cores, optimizing {}.'
           .format(runtime_seconds, number_cores, performance_metric))
 
     print('Using meta-learned initialization, which might be bad (leakage).')
-    # TO DO: Should we set per_run_time_limit at all or leave it to default of 60?
+    # TO DO: Do we need to set per_run_time_limit too?
+    starttime = time.time()
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=runtime_seconds, \
-        per_run_time_limit=runtime_seconds, \
         ml_memory_limit=ml_memory_limit)
     auto_sklearn.fit(X_train, y_train, metric=performance_metric)
+    actual_runtime_min = (time.time() - starttime)/60.0
+    print('Requested training time (minutes): ' + str((runtime_seconds/60.0)))
+    print('Actual training time (minutes): ' + str(actual_runtime_min))    
 
 
     # Convert output to strings for classification
@@ -66,6 +68,6 @@ if __name__ == '__main__':
         auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
         print("AUC: " + str(auc))
     else:
-        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_predictions.astype(int), labels=unique(y_test.astype(int)))
+        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
