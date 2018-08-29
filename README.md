@@ -48,13 +48,13 @@ The script will produce output that records the OpenML Task ID, the fold index t
 
 To run a benchmark on AWS you additionally need to:
 
-- Have the `boto3` Python package installed and [configured](https://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration) on your machine to have access to your AWS account credentials. If this is your first time setting up **boto3**, you can use the `aws configure` tool and will need your AWS Access Key ID, AWS Secret Access Key, a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) and you can select "text" as the default output format. 
+- Have the `boto3` Python package installed and [configured](https://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration) on your machine to have access to your AWS account credentials. If this is your first time setting up **boto3**, you can use the `aws configure` tool and will need your AWS Access Key ID, AWS Secret Access Key, a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) and you can select "text" as the default output format.
 - _**NOTE:** Currently the AMI is only in the following regions so you'll have to set your default region as one of these_:
   - us-east-1
   - us-west-1
   - eu-west-1
 
-To run a test test to see if the benchmark framework is working on AWS, do the following:
+To run a test  to see if the benchmark framework is working on AWS, do the following:
 
 ```
 python benchmark.py RandomForest test aws
@@ -63,42 +63,27 @@ python benchmark.py RandomForest test aws
 The output shows the instances starting, outputs the progress and then the results for each dataset/fold combination:
 
 ```
+Grouping 4 jobs in 1 chunk(s) of 4 parallel jobs
+---- Chunk 1/1 ----
 Created 4 jobs
 Starting instances
 Instance pending
 Instance pending
 Instance pending
-Instance pending
-Instance pending
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-0/4 jobs done
-1/4 jobs done
-1/4 jobs done
-1/4 jobs done
-1/4 jobs done
-1/4 jobs done
-1/4 jobs done
-2/4 jobs done
-4/4 jobs done
-All jobs done!
-Terminating Instances:
+Instanceending
+[00:00:10] - 0/4 jobs done
+[00:00:25] - 0/4 jobs done
+[00:00:40] - 0/4 jobs done
+[00:00:56] - 0/4 jobs done
+[00:01:12] - 4/4 jobs done
+Chunk 1 done, terminating Instances:
 Termination successful
 Termination successful
 Termination successful
 Termination successful
-
   benchmark_id  fold              result
 0       test_1     0  0.9333333333333333
 1       test_1     1                 1.0
 2       test_2     0  0.8679245283018868
-3       test_2     1  0.8490566037735849
-
+3       test_2     1  0.8679245283018868
 ```

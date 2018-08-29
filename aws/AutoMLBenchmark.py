@@ -84,6 +84,8 @@ class AutoMLBenchmark:
             print("---- Chunk %i/%i ----" % (ind + 1, len(chunks)))
             n_jobs = len(chunk)
             n_done = 0
+            if ind > 0:
+                time.sleep(10)  # wait for previous instances to be shut down
             print("Created %s jobs\nStarting instances" % (n_jobs))
             for job in chunk:
                 job["run"].createInstanceRun()
