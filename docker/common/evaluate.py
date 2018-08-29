@@ -43,7 +43,7 @@ if isinstance(target_type, list):
 
     if metric == 'acc':
         score = accuracy_score(y_true, class_predictions)
-    elif metric == 'log_loss':
+    elif metric == 'logloss':
         score = log_loss(y_true_ohe, class_probabilities)
     elif metric == 'auc':
         N, K = class_probabilities.shape
