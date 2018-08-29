@@ -1,11 +1,10 @@
-import sys
-
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
 from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
 from numpy import unique
+import time
 
-
+import sys
 sys.path.append('/bench/common')
 import common_code
 
@@ -47,11 +46,14 @@ if __name__ == '__main__':
           .format(runtime_seconds, number_cores, performance_metric))
 
     print('Using meta-learned initialization, which might be bad (leakage).')
-    # TO DO: Should we set per_run_time_limit at all or leave it to default of 60?
+    # TO DO: Do we need to set per_run_time_limit too?
+    starttime = time.time()
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=runtime_seconds, \
-        per_run_time_limit=runtime_seconds, \
         ml_memory_limit=ml_memory_limit)
     auto_sklearn.fit(X_train, y_train, metric=performance_metric)
+    actual_runtime_min = (time.time() - starttime)/60.0
+    print('Requested training time (minutes): ' + str((runtime_seconds/60.0)))
+    print('Actual training time (minutes): ' + str(actual_runtime_min))    
 
 
     # Convert output to strings for classification

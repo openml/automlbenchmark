@@ -1,12 +1,12 @@
-import sys
-
 from tpot import TPOTClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, roc_curve, auc, log_loss
 import time
 
+import sys
 sys.path.append('/bench/common')
 import common_code
+
 
 if __name__ == '__main__':
 
