@@ -8,6 +8,8 @@ if [ $metric == acc ] ; then
   metric=errorRate
 elif [ $metric == auc ] ; then
   metric=areaUnderROC
+elif [ $metric == logloss ] ; then
+  metric=kBInformation
 fi
 
 echo "TODO: set memlimit"
