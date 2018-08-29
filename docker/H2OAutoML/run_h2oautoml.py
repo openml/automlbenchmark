@@ -27,7 +27,7 @@ if __name__ == '__main__':
     elif performance_metric == "auc":
         performance_metric = "AUC"
     elif performance_metric == "logloss":
-        pass
+        pass  # logloss is correct metric name for H2OAutoML.
     else:
         # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         print('Performance metric, {}, not supported.'.format(performance_metric))    
