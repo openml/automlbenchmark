@@ -42,7 +42,7 @@ if __name__ == '__main__':
     print('Starting H2O cluster')
     # TO DO: Pass in a memory size as an argument to use here
     #h2o.init(nthreads=number_cores, max_mem_size=16). #ncores not working if set to -1 (need to check)
-    h2o.init(nthreads=number_cores, max_mem_size=64)
+    h2o.init(nthreads=number_cores)
 
     print('Loading data.')
     # Load train as an H2O Frame, but test as a Pandas DataFrame
