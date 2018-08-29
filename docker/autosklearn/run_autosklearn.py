@@ -2,8 +2,8 @@ import sys
 
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
-import numpy as np
 from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
+from numpy import unique
 
 
 sys.path.append('/bench/common')
@@ -56,14 +56,16 @@ if __name__ == '__main__':
 
     # Convert output to strings for classification
     print('Predicting on the test set.')
-    class_predictions = auto_sklearn.predict(X_test).astype(np.int_).astype(np.str_)
+    class_predictions = auto_sklearn.predict(X_test).astype(int).astype(str)
     class_probabilities = auto_sklearn.predict_proba(X_test)
 
     print('Optimization was towards metric, but following score is always accuracy:')
     print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))  
 
     if class_probabilities.shape[1] == 2:
-        auc = roc_auc_score(y_true=y_test.astype(np.int_), y_score=class_probabilities[:,1])
+        auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
         print("AUC: " + str(auc))
+    else:
+        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_predictions.astype(int), labels=unique(y_test.astype(int)))
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
