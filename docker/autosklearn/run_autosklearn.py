@@ -66,6 +66,6 @@ if __name__ == '__main__':
         auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
         print("AUC: " + str(auc))
     else:
-        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_predictions.astype(int), labels=unique(y_test.astype(int)))
+        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
