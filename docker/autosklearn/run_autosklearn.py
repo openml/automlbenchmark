@@ -40,7 +40,7 @@ if __name__ == '__main__':
         ml_memory_limit = 64000 #64GB
     else:
         #number_cores = 64
-        ml_memory_limit = 640000 #64GB
+        ml_memory_limit = 64000 #64GB
 
     print('Running auto-sklearn with a maximum time of {}s on {} cores, optimizing {}.'
           .format(runtime_seconds, number_cores, performance_metric))
