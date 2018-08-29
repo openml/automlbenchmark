@@ -54,11 +54,12 @@ if __name__ == '__main__':
     print('Optimization was towards metric, but following score is always accuracy:')
     print("Accuracy: " + str(accuracy_score(y_test_encoded, class_predictions)))
 
-    # TO DO: Change this to roc_curve, auc
     if class_probabilities.shape[1] == 2:
         fpr, tpr, thresholds = roc_curve(y_test, class_probabilities[:, 1], pos_label=class_names[1])
         auc_score = auc(fpr, tpr)
         print("AUC: " + str(auc_score))
+    else:
+        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)    
 
     class_predictions = label_encoder.inverse_transform(class_predictions)
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
