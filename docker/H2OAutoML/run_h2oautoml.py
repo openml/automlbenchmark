@@ -3,7 +3,7 @@ import h2o
 from h2o.automl import H2OAutoML
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
 sys.path.append('/bench/common')
 import common_code
 
@@ -63,18 +63,21 @@ if __name__ == '__main__':
     print('Predicting on the test set.')
     y_pred_df = aml.predict(test).as_data_frame()
 
-    # TO DO: Change this to roc_curve, auc
-    if type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OBinomialModelMetrics:
-        y_scores = y_pred_df.iloc[:, -1]
-        auc = roc_auc_score(y_true=y_test, y_score=y_scores)
-        print("AUC: " + str(auc))
-
     y_classpred = y_pred_df.iloc[:, 0]
     print('Optimization was towards metric, but following score is always accuracy:')
     print("Accuracy: " + str(accuracy_score(y_test, y_classpred)))
 
     # TO DO: See if we can use the h2o-sklearn wrappers here instead
-    class_predictions = y_pred_df.iloc[:, 0].values.astype(np.str_)
+    class_predictions = y_pred_df.iloc[:, 0].values
     class_probabilities = y_pred_df.iloc[:, 1:].values
 
-    common_code.save_predictions_to_file(class_probabilities, class_predictions)
+    # TO DO: Change this to roc_curve, auc
+    if type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OBinomialModelMetrics:
+        y_scores = y_pred_df.iloc[:, -1]
+        auc = roc_auc_score(y_true=y_test, y_score=y_scores)
+        print("AUC: " + str(auc))
+    elif type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OMultinomialModelMetrics:
+        logloss = log_loss(y_true=y_test, y_pred=class_probabilities)
+        print("Log Loss: " + str(logloss))     
+
+    common_code.save_predictions_to_file(class_probabilities, class_predictions.astype(str))
