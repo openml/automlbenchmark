@@ -3,6 +3,7 @@ import sys
 from tpot import TPOTClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, roc_curve, auc, log_loss
+import time
 
 sys.path.append('/bench/common')
 import common_code
@@ -41,7 +42,11 @@ if __name__ == '__main__':
                           max_time_mins=runtime_min,
                           verbosity=2,
                           scoring=performance_metric)
+    starttime = time.time()
     tpot.fit(X_train, y_train)
+    actual_runtime_min = (time.time() - starttime)/60.0
+    print('Requested training time (minutes): ' + str(runtime_min))
+    print('Actual training time (minutes): ' + str(actual_runtime_min))
 
     print('Predicting on the test set.')
     class_predictions = tpot.predict(X_test)
@@ -59,7 +64,7 @@ if __name__ == '__main__':
         auc_score = auc(fpr, tpr)
         print("AUC: " + str(auc_score))
     else:
-        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)    
+        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)
 
     class_predictions = label_encoder.inverse_transform(class_predictions)
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
