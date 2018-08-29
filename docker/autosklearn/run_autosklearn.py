@@ -34,13 +34,13 @@ if __name__ == '__main__':
     print('ignoring n_cores.')
     # If small data:
     if len(y_train) <= 20000:
-        number_cores = 8
+        #number_cores = 8
         ml_memory_limit = 16000 #16GB
     elif len(y_train) <= 200000:
-        number_cores = 16
+        #number_cores = 16
         ml_memory_limit = 64000 #64GB
     else:
-        number_cores = 64
+        #number_cores = 64
         ml_memory_limit = 640000 #64GB
 
     print('Running auto-sklearn with a maximum time of {}s on {} cores, optimizing {}.'
