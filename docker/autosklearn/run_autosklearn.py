@@ -47,9 +47,8 @@ if __name__ == '__main__':
     # TO DO: Do we need to set per_run_time_limit too?
     starttime = time.time()
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=runtime_seconds,
-                                         ml_memory_limit=ml_memory_limit,
-                                         feat_type=categs)
-    auto_sklearn.fit(X_train, y_train, metric=performance_metric)
+                                         ml_memory_limit=ml_memory_limit)
+    auto_sklearn.fit(X_train, y_train, metric=performance_metric, feat_type=categs)
     actual_runtime_min = (time.time() - starttime)/60.0
     print('Requested training time (minutes): ' + str((runtime_seconds/60.0)))
     print('Actual training time (minutes): ' + str(actual_runtime_min))

@@ -36,7 +36,8 @@ def get_X_y_from_arff(arff_file_path, mapping=None):
             for ind in is_categorical:
                 mapping[ind] = {key: val if key is not None else float("NaN") for val, key in enumerate((set(data[:, ind])))}
         for ind in mapping.keys():
-            data[:, ind] = numpy.asarray([mapping[ind][val] for val in data[:, ind]])
+            i = max(mapping[ind].values()) + 1
+            data[:, ind] = numpy.asarray([mapping[ind].get(val, i) for val in data[:, ind]])
         data = data.astype(float)
         return data[:, :-1], data[:, -1], mapping
 
