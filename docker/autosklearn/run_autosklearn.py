@@ -1,18 +1,22 @@
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
 from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
-from numpy import unique
 import time
+import warnings
 
 import sys
 sys.path.append('/bench/common')
 import common_code
 
+
 if __name__ == '__main__':
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
     runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
+    memory_limit_mb = int(sys.argv[4])
 
     # Mapping of benchmark metrics to autosklearn metrics
     if performance_metric == "acc":
@@ -31,25 +35,14 @@ if __name__ == '__main__':
 
     # Set resources based on datasize
     print('ignoring n_cores.')
-    # If small data:
-    if len(y_train) <= 20000:
-        #number_cores = 8
-        ml_memory_limit = 16000 #16GB
-    elif len(y_train) <= 200000:
-        #number_cores = 16
-        ml_memory_limit = 64000 #64GB
-    else:
-        #number_cores = 64
-        ml_memory_limit = 64000 #64GB
-
-    print('Running auto-sklearn with a maximum time of {}s on {} cores, optimizing {}.'
-          .format(runtime_seconds, number_cores, performance_metric))
+    print('Running auto-sklearn with a maximum time of {}s on {} cores with {}MB, optimizing {}.'
+          .format(runtime_seconds, number_cores, memory_limit_mb, performance_metric))
 
     print('Using meta-learned initialization, which might be bad (leakage).')
     # TO DO: Do we need to set per_run_time_limit too?
     starttime = time.time()
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=runtime_seconds, \
-        ml_memory_limit=ml_memory_limit)
+        ml_memory_limit=memory_limit_mb)
     auto_sklearn.fit(X_train, y_train, metric=performance_metric)
     actual_runtime_min = (time.time() - starttime)/60.0
     print('Requested training time (minutes): ' + str((runtime_seconds/60.0)))
@@ -58,7 +51,7 @@ if __name__ == '__main__':
 
     # Convert output to strings for classification
     print('Predicting on the test set.')
-    class_predictions = auto_sklearn.predict(X_test).astype(int).astype(str)
+    class_predictions = auto_sklearn.predict(X_test)
     class_probabilities = auto_sklearn.predict_proba(X_test)
 
     print('Optimization was towards metric, but following score is always accuracy:')
@@ -68,6 +61,10 @@ if __name__ == '__main__':
         auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
         print("AUC: " + str(auc))
     else:
-        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)
+        from sklearn.preprocessing import LabelEncoder
+        label_encoder = LabelEncoder().fit(y_train)
+        y_test = label_encoder.transform(y_test).reshape(-1, 1)
+        logloss = log_loss(y_true=y_test, y_pred=class_probabilities)
+        print('logloss: ', logloss)
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
