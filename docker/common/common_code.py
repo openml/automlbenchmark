@@ -30,16 +30,17 @@ def get_X_y_from_arff(arff_file_path, mapping=None):
     with open(arff_file_path, 'r') as arff_data_file:
         data_arff = arff.load(arff_data_file)
         data = numpy.asarray(data_arff['data'])
+        X, y = data[:, :-1], data[:, -1]
         if mapping is None:
             mapping = {}
-            is_categorical = [ind for ind, col in enumerate(data_arff["attributes"]) if col[1] != "NUMERIC"]
+            is_categorical = [ind for ind, col in enumerate(data_arff["attributes"][:-1]) if col[1] != "NUMERIC"]
             for ind in is_categorical:
-                mapping[ind] = {key: val if key is not None else float("NaN") for val, key in enumerate((set(data[:, ind])))}
+                mapping[ind] = {key: val if key is not None else float("NaN") for val, key in enumerate((set(X[:, ind])))}
         for ind in mapping.keys():
             i = max(mapping[ind].values()) + 1
-            data[:, ind] = numpy.asarray([mapping[ind].get(val, i) for val in data[:, ind]])
-        data = data.astype(float)
-        return data[:, :-1], data[:, -1], mapping
+            X[:, ind] = numpy.asarray([mapping[ind].get(val, i) for val in X[:, ind]])
+        X = X.astype(float)
+        return X, y, mapping
 
 
 def one_hot_encode_predictions(predictions, reference_file=TRAIN_DATA_PATH):

@@ -8,6 +8,7 @@ sys.path.append('/bench/common')
 
 if __name__ == '__main__':
     import common_code
+    from numpy import dtype
 
     runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
@@ -55,16 +56,19 @@ if __name__ == '__main__':
 
     # Convert output to strings for classification
     print('Predicting on the test set.')
-    class_predictions = auto_sklearn.predict(X_test).astype(int).astype(str)
+    class_predictions = auto_sklearn.predict(X_test)
     class_probabilities = auto_sklearn.predict_proba(X_test)
+
+    if class_predictions.dtype != dtype('<U32'):
+        class_predictions = class_predictions.astype(int).astype(str)
 
     print('Optimization was towards metric, but following score is always accuracy:')
     print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
 
-    if class_probabilities.shape[1] == 2:
-        auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:, 1])
-        print("AUC: " + str(auc))
-    else:
-        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)
+    #if class_probabilities.shape[1] == 2:
+    #    auc = roc_auc_score(y_true=y_test, y_score=class_probabilities[:, 1])
+    #    print("AUC: " + str(auc))
+    #else:
+    #    logloss = log_loss(y_true=y_test, y_pred=class_probabilities)
 
     common_code.save_predictions_to_file(class_probabilities, class_predictions)
