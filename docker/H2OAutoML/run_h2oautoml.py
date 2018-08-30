@@ -20,6 +20,7 @@ if __name__ == '__main__':
     runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
     performance_metric = sys.argv[3]
+    memory_limit_mb = int(sys.argv[4])
 
     # Mapping of benchmark metrics to H2O metrics
     if performance_metric == "acc":
@@ -42,7 +43,8 @@ if __name__ == '__main__':
     print('Starting H2O cluster')
     # TO DO: Pass in a memory size as an argument to use here
     #h2o.init(nthreads=number_cores, max_mem_size=16). #ncores not working if set to -1 (need to check)
-    h2o.init(nthreads=number_cores)
+    print('cores {}, memory {}mb'.format(number_cores, memory_limit_mb))
+    h2o.init(nthreads=number_cores, max_mem_size=str(memory_limit_mb) + 'M')
 
     print('Loading data.')
     # Load train as an H2O Frame, but test as a Pandas DataFrame
