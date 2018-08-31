@@ -31,48 +31,48 @@
   ],
   "validation":[
     {
-      "benchmark_id":"val_1",
+      "benchmark_id":"dresses-sales",
       "openml_task_id":125920,
       "runtime":600,
       "cores":2,
       "aws_instance_type":"m5.large",
-      "metric":"acc",
+      "metric":"auc",
       "folds":2
     },
     {
-      "benchmark_id":"val_2",
+      "benchmark_id":"eucalyptus",
       "openml_task_id":2079,
       "runtime":600,
       "cores":2,
       "aws_instance_type":"m5.large",
-      "metric":"acc",
+      "metric":"logloss",
       "folds":2
     },
     {
-      "benchmark_id":"val_3",
+      "benchmark_id":"internet-advertisements",
       "openml_task_id":167125,
       "runtime":600,
       "cores":2,
       "aws_instance_type":"m5.large",
-      "metric":"acc",
+      "metric":"auc",
       "folds":2
     },
     {
-      "benchmark_id":"val_4",
+      "benchmark_id":"bioresponse",
       "openml_task_id":9910,
       "runtime":600,
       "cores":2,
       "aws_instance_type":"m5.large",
-      "metric":"acc",
+      "metric":"auc",
       "folds":2
     },
     {
-      "benchmark_id":"val_5",
+      "benchmark_id":"micro-mass",
       "openml_task_id":9950,
       "runtime":600,
       "cores":2,
       "aws_instance_type":"m5.large",
-      "metric":"acc",
+      "metric":"logloss",
       "folds":2
     }
   ],
