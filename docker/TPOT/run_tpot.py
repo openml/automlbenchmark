@@ -25,9 +25,8 @@ if __name__ == '__main__':
         # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         print('Performance metric, {}, not supported.'.format(performance_metric))
 
-    X_train, y_train = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
-    X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
-    X_train, X_test = X_train.astype(float), X_test.astype(float)
+    X_train, y_train, mapping = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
+    X_test, y_test, _ = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH, mapping)
 
     class_names = common_code.get_class_names_from_arff(common_code.TRAIN_DATA_PATH)
     label_encoder = LabelEncoder().fit(class_names)
@@ -63,8 +62,6 @@ if __name__ == '__main__':
         fpr, tpr, thresholds = roc_curve(y_test, class_probabilities[:, 1], pos_label=class_names[1])
         auc_score = auc(fpr, tpr)
         print("AUC: " + str(auc_score))
-    else:
-        logloss = log_loss(y_true=y_test.astype(int), y_pred=class_probabilities)
 
     class_predictions = label_encoder.inverse_transform(class_predictions)
     common_code.save_predictions_to_file(class_probabilities, class_predictions)

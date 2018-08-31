@@ -6,12 +6,13 @@ import warnings
 
 import sys
 sys.path.append('/bench/common')
-import common_code
 
 
 if __name__ == '__main__':
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
+    import common_code
+    from numpy import dtype
 
     runtime_seconds = int(sys.argv[1])
     number_cores = int(sys.argv[2])
@@ -24,15 +25,14 @@ if __name__ == '__main__':
     elif performance_metric == "auc":
         performance_metric = autosklearn.metrics.roc_auc
     elif performance_metric == "logloss":
-        performance_metric = autosklearn.metrics.log_loss   
+        performance_metric = autosklearn.metrics.log_loss
     else:
         # TO DO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         print('Performance metric, {}, not supported.'.format(performance_metric))
 
-    X_train, y_train = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
-    X_test, y_test = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH)
-    X_train, X_test = X_train.astype(float), X_test.astype(float)
-
+    X_train, y_train, mapping = common_code.get_X_y_from_arff(common_code.TRAIN_DATA_PATH)
+    X_test, y_test, _ = common_code.get_X_y_from_arff(common_code.TEST_DATA_PATH, mapping)
+    categs = ["Categorical" if col in mapping.keys() else "Numerical" for col in range(X_train.shape[1])]
     # Set resources based on datasize
     print('ignoring n_cores.')
     print('Running auto-sklearn with a maximum time of {}s on {} cores with {}MB, optimizing {}.'
@@ -43,19 +43,21 @@ if __name__ == '__main__':
     starttime = time.time()
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=runtime_seconds, \
         ml_memory_limit=memory_limit_mb)
-    auto_sklearn.fit(X_train, y_train, metric=performance_metric)
+    auto_sklearn.fit(X_train, y_train, metric=performance_metric, feat_type=categs)
     actual_runtime_min = (time.time() - starttime)/60.0
     print('Requested training time (minutes): ' + str((runtime_seconds/60.0)))
-    print('Actual training time (minutes): ' + str(actual_runtime_min))    
-
+    print('Actual training time (minutes): ' + str(actual_runtime_min))
 
     # Convert output to strings for classification
     print('Predicting on the test set.')
     class_predictions = auto_sklearn.predict(X_test)
     class_probabilities = auto_sklearn.predict_proba(X_test)
 
+    if class_predictions.dtype != dtype('<U32'):
+        class_predictions = class_predictions.astype(int).astype(str)
+
     print('Optimization was towards metric, but following score is always accuracy:')
-    print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))  
+    print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
 
     if class_probabilities.shape[1] == 2:
         auc = roc_auc_score(y_true=y_test.astype(int), y_score=class_probabilities[:,1])
