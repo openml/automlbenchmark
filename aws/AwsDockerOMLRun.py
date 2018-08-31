@@ -24,10 +24,7 @@ class AwsDockerOMLRun:
 
         self.setup = config["setup"]
         self.token = config["token"]
-        if config["subnet_id"] == "":
-          self.subnet_id = None
-        else:
-          self.subnet_id = config["subnet_id"]
+        self.subnet_id = config["subnet_id"]
 
         if region_name is None:
             if "region_name" in config.keys() and len(config["region_name"]) > 0:
@@ -35,7 +32,6 @@ class AwsDockerOMLRun:
             else:
                 self.region_name = boto3.session.Session().region_name
         self.ec2_resource = boto3.resource("ec2", region_name=region_name)
-
 
         with open("resources/ami.json") as file:
                 amis = json.load(file)
