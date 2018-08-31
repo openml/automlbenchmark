@@ -4,5 +4,6 @@
   "overhead_time":600,
   "query_frequency":10,
   "max_parallel_jobs":5,
-  "region_name":"eu-west-1"
+  "region_name":"us-east-1",
+  "subnet_id":""
 }

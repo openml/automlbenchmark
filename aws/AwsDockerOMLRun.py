@@ -24,6 +24,7 @@ class AwsDockerOMLRun:
 
         self.setup = config["setup"]
         self.token = config["token"]
+        self.subnet_id = config["subnet_id"]
 
         if region_name is None:
             if "region_name" in config.keys() and len(config["region_name"]) > 0:
@@ -55,6 +56,7 @@ class AwsDockerOMLRun:
             MinCount=1,
             MaxCount=1,
             InstanceType=self.aws_instance_type,
+            SubnetId=self.subnet_id,
             UserData=setup)[0]
 
     def terminateInstance(self):
