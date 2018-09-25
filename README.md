@@ -1,11 +1,15 @@
 # AutoML Benchmarking
 
+_**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._
+
+## Quickstart
+
 To run a benchmark call the `benchmark.py` file with three arguments:
 
 1. The AutoML framework that should be evaluated, see [frameworks.json](resources/frameworks.json) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
-2. The benchmark suite to run. Should be one implemented in [benchmarks.json](resources/benchmarks.json)
+2. The benchmark suite to run. Should be one implemented in [benchmarks.json](resources/benchmarks.json).
 3. If the benchmark should be run `local` or on `aws`.
-4. (Optional) a file to append the results to
+4. (Optional) a file to append the results to.
 
 
 ## Installation
