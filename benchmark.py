@@ -60,6 +60,7 @@ elif args.mode == "aws":
 else:
     raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 
+bench.setup()
 if args.task is not None:
     res = bench.run_one(args.task, args.fold)
 else:
