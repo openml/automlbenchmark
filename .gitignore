@@ -1,3 +1,17 @@
+#build/run
+Dockerfile
+
+# python env
 *.pyc
 __pycache__
-Dockerfile
+.python-version
+
+# editors/IDEs
+.idea/
+*.iml
+*.swp
+
+# tmp files
+*.log
+*.csv
+*.arff

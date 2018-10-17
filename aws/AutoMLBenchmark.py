@@ -2,10 +2,12 @@
 
 import os
 import re
+import sys
 import time
 import json
 from aws.AwsDockerOMLRun import AwsDockerOMLRun
 
+# sys.path.insert(0, os.getcwd())
 
 class AutoMLBenchmark:
 
@@ -35,6 +37,40 @@ class AutoMLBenchmark:
         if upload:
             os.system("docker login")
             os.system("docker push %s" % (self.get_container_name()))
+
+
+    # def run_test(self, keep_logs=False):
+    #     results = []
+    #     for benchmark in self.benchmarks:
+    #         for fold in range(benchmark["folds"]):
+    #             task_id = benchmark['openml_task_id']
+    #             load_log = os.popen("python -Wignore ./docker/common/load_data.py -t {task_id} -f {fold_n} --train ./docker/common/train.arff --test ./docker/common/test.arff"
+    #                                 .format(task_id=task_id, fold_n=fold)
+    #                                 ).read()
+    #             run_log = os.popen("python -Wignore ./docker/{framework}/run.py {time} {threads} {metric} {memory}"
+    #                                .format(
+    #                                     framework=self.framework["dockerfile_folder"],
+    #                                     time=benchmark["runtime"],
+    #                                     threads=benchmark["cores"],
+    #                                     metric=benchmark["metric"],
+    #                                     memory="2048"
+    #                                 )).read()
+    #             eval_log = os.popen("python -Wignore ./docker/common/evaluate.py ./docker/common/test.arff ./docker/common/predictions.csv {metric}"
+    #                                 .format(metric=benchmark['metric'])
+    #                                 ).read()
+    #             raw_log = '\n'.join([load_log, run_log, eval_log])
+    #             res = [x for x in raw_log.splitlines() if re.search(self.token, x)]
+    #             if len(res) != 1:
+    #                 print("Fold %s on benchmark %s finished without valid result!" % (fold, benchmark["benchmark_id"]))
+    #                 res = 'nan'
+    #             else:
+    #                 res = res[0].split(" ")[-1]
+    #             results.append({"result": float(res), "benchmark_id": benchmark["benchmark_id"], "fold": fold})
+    #             if keep_logs:
+    #                 results[-1]["log"] = raw_log
+    #
+    #     return results
+
 
     def run_local(self, keep_logs=False):
         results = []
