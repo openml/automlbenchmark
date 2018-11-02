@@ -16,7 +16,7 @@ parser.add_argument('benchmark', type=str,
                     help='The benchmark to run as specified in /resources/benchmarks.json')
 parser.add_argument('mode', type=str,
                     help='The mode that specifies what backend is used (currently local or aws)')
-parser.add_argument('-o', '--outfile', dest='outfile', metavar='-o', default=None,
+parser.add_argument('-o', '--outfolder', dest='outfolder', metavar='-o', default=None,
                     help='Path where the output should be written.')
 parser.add_argument('-r', '--region', dest='region', metavar='-r', default=None,
                     help='The region on which to run the benchmark when using AWS.')
@@ -40,17 +40,14 @@ bench = AutoMLBenchmark(benchmarks=benchmarks[args.benchmark], framework=framewo
 
 print("Running `%s` on `%s` benchmarks in `%s` mode" % (args.framework, args.benchmark, args.mode))
 
-if args.mode == "aws":
-    bench.update_docker_container(upload=True)
-    res = bench.run_aws()
-elif args.mode == "local":
-    bench.update_docker_container(upload=False)
-    res = bench.run_local()
-else:
-    raise ValueError('mode must be one of \'aws\' or \'local\'.')
+if args.mode not in ['aws', 'local']:
+    raise ValueError("mode must be one of 'aws' or 'local'.")
 
-if args.outfile is not None:
-    with open(args.outfile, "a") as file:
+bench.update_docker_container(upload=(args.mode == 'aws'))
+res = bench.run(where=args.mode, log_directory=args.outfolder)
+
+if args.outfolder is not None:
+    with open(args.outfolder, "a") as file:
         for r in res:
             file.writelines(",".join([r["benchmark_id"],
                                      args.framework,

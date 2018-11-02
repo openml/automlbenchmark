@@ -36,6 +36,27 @@ class AutoMLBenchmark:
             os.system("docker login")
             os.system("docker push %s" % (self.get_container_name()))
 
+    def run(self, where='local', log_directory=None):
+        """ Runs the benchmark either locally or on AWS, and optionally stores the log.
+
+        :param where: string (default: 'local')
+         Specifies where to run the benchmark, either 'local' or 'aws'.
+        :param log_directory: string or None (default: None)
+         Path to the directory where logs should be saved. If None, logs are not stored.
+         If a directory for the path is not found, it will be created.
+        :return: results
+        """
+        if log_directory is not None:
+            if not os.path.exists(log_directory):
+                os.mkdir(log_directory)
+
+        if where == 'local':
+            return self.run_local(log_directory)
+        elif where == 'aws':
+            return self.run_aws(log_directory)
+        else:
+            raise ValueError("`where` can only be one of 'local' or 'aws'.")
+
     def run_local(self, keep_logs=False):
         results = []
         for benchmark in self.benchmarks:
@@ -55,9 +76,10 @@ class AutoMLBenchmark:
 
         return results
 
-    def run_aws(self, keep_logs=False):
+    def run_aws(self, log_directory=None):
 
         jobs = []
+
         for benchmark in self.benchmarks:
             for fold in range(benchmark["folds"]):
                 jobs.append({"benchmark_id": benchmark["benchmark_id"],
@@ -69,7 +91,8 @@ class AutoMLBenchmark:
                                                                  benchmark["runtime"],
                                                                  benchmark["cores"],
                                                                  benchmark["metric"],
-                                                                 self.region_name)})
+                                                                 self.region_name,
+                                                                 log_directory=log_directory)})
 
         def chunk_jobs(l, n):
             for i in range(0, len(l), n):
@@ -112,7 +135,7 @@ class AutoMLBenchmark:
 
         jobs = [job for chunk in chunks for job in chunk]
 
-        if not keep_logs:
+        if not log_directory:
             for job in jobs:
                 job["result"] = job["result"]["res"]
 

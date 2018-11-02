@@ -2,13 +2,14 @@
 
 import boto3
 import json
+import os
 import re
 
 
 class AwsDockerOMLRun:
 
     def __init__(self, aws_instance_type, docker_image, openml_id, fold,
-                 runtime, cores, metric, region_name=None):
+                 runtime, cores, metric, region_name=None, log_directory=None):
 
         self.aws_instance_type = aws_instance_type
         self.docker_image = docker_image
@@ -17,6 +18,10 @@ class AwsDockerOMLRun:
         self.runtime = runtime
         self.cores = cores
         self.metric = metric
+
+        self._log_path = None
+        if log_directory is not None:
+            self._log_path = os.path.join(log_directory, 'awslog_{}_{}.txt'.format(self.openml_id, self.fold))
 
         # load config file
         with open("config.json") as file:
@@ -78,6 +83,9 @@ class AwsDockerOMLRun:
         else:
             raw_log = self.instance.console_output(Latest=True)
             if "Output" in raw_log.keys():
+                if self._log_path is not None:
+                    with open(self._log_path, 'a') as fh:
+                        fh.write(raw_log["Output"])
                 out = raw_log["Output"].splitlines()
                 out = [x for x in out if re.search(self.token, x)]
                 if len(out) == 1:
