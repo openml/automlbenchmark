@@ -65,7 +65,8 @@ class AutoMLBenchmark:
         :param fold: string or int. fold number for the task.
         :return: string. the file path for the log file.
         """
-        log_path = os.path.join(log_directory, 'log_{}_{}.txt'.format(task_id, fold))
+        log_path = os.path.join(log_directory,
+                                'log_{}_{}_{}.txt'.format(self.framework['dockerfile_folder'], task_id, fold))
         if os.path.exists(log_path):
             print("! WARNING ! Old log files exist. Renaming them with a '.old' extension."
                   "Should there be any old '.old'-logs, they will be deleted.")
