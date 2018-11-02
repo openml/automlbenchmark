@@ -57,7 +57,22 @@ class AutoMLBenchmark:
         else:
             raise ValueError("`where` can only be one of 'local' or 'aws'.")
 
-    def run_local(self, keep_logs=False):
+    def _secure_log_filepath_for_benchmark(self, log_directory, task_id, fold):
+        """ Compose log filepath for given directory, task, fold. Rename any existing file with that name.
+
+        :param log_directory: string. directory the log file is to be written in.
+        :param task_id: string or int. OpenML task id.
+        :param fold: string or int. fold number for the task.
+        :return: string. the file path for the log file.
+        """
+        log_path = os.path.join(log_directory, 'log_{}_{}.txt'.format(task_id, fold))
+        if os.path.exists(log_path):
+            print("! WARNING ! Old log files exist. Renaming them with a '.old' extension."
+                  "Should there be any old '.old'-logs, they will be deleted.")
+            os.rename(log_path, log_path[:-4] + '.old')
+        return log_path
+
+    def run_local(self, log_directory=None):
         results = []
         for benchmark in self.benchmarks:
             for fold in range(benchmark["folds"]):
@@ -71,8 +86,11 @@ class AutoMLBenchmark:
                 else:
                     res = res[0].split(" ")[-1]
                 results.append({"result": float(res), "benchmark_id": benchmark["benchmark_id"], "fold": fold})
-                if keep_logs:
-                    results[-1]["log"] = raw_log
+
+                if log_directory is not None:
+                    log_path = self._secure_log_filepath_for_benchmark(log_directory, benchmark["openml_task_id"], fold)
+                    with open(log_path, 'w') as fh:
+                        fh.write(raw_log)
 
         return results
 
@@ -82,6 +100,12 @@ class AutoMLBenchmark:
 
         for benchmark in self.benchmarks:
             for fold in range(benchmark["folds"]):
+                if log_directory is not None:
+                    log_filepath = self._secure_log_filepath_for_benchmark(log_directory,
+                                                                           benchmark["openml_task_id"],
+                                                                           fold)
+                else:
+                    log_filepath = None
                 jobs.append({"benchmark_id": benchmark["benchmark_id"],
                             "fold": fold, "run": AwsDockerOMLRun(
                                                                  benchmark["aws_instance_type"],
@@ -92,7 +116,7 @@ class AutoMLBenchmark:
                                                                  benchmark["cores"],
                                                                  benchmark["metric"],
                                                                  self.region_name,
-                                                                 log_directory=log_directory)})
+                                                                 log_filepath=log_filepath)})
 
         def chunk_jobs(l, n):
             for i in range(0, len(l), n):
@@ -134,11 +158,7 @@ class AutoMLBenchmark:
                 del (job["run"])
 
         jobs = [job for chunk in chunks for job in chunk]
-
-        if not log_directory:
-            for job in jobs:
-                job["result"] = job["result"]["res"]
-
+        job["result"] = job["result"]["res"]
         return jobs
 
 

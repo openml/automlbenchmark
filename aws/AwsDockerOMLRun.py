@@ -9,7 +9,7 @@ import re
 class AwsDockerOMLRun:
 
     def __init__(self, aws_instance_type, docker_image, openml_id, fold,
-                 runtime, cores, metric, region_name=None, log_directory=None):
+                 runtime, cores, metric, region_name=None, log_filepath=None):
 
         self.aws_instance_type = aws_instance_type
         self.docker_image = docker_image
@@ -18,10 +18,7 @@ class AwsDockerOMLRun:
         self.runtime = runtime
         self.cores = cores
         self.metric = metric
-
-        self._log_path = None
-        if log_directory is not None:
-            self._log_path = os.path.join(log_directory, 'awslog_{}_{}.txt'.format(self.openml_id, self.fold))
+        self._log_path = log_filepath
 
         # load config file
         with open("config.json") as file:

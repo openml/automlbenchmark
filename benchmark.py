@@ -45,16 +45,4 @@ if args.mode not in ['aws', 'local']:
 
 bench.update_docker_container(upload=(args.mode == 'aws'))
 res = bench.run(where=args.mode, log_directory=args.outfolder)
-
-if args.outfolder is not None:
-    with open(args.outfolder, "a") as file:
-        for r in res:
-            file.writelines(",".join([r["benchmark_id"],
-                                     args.framework,
-                                     frameworks[args.framework]["version"],
-                                     str(r["fold"]),
-                                     str(r["result"]),
-                                     args.mode,
-                                     str(int(time()))]) + "\n")
-else:
-    print(pd.DataFrame(res))
+print(pd.DataFrame(res))
