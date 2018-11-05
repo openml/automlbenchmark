@@ -19,6 +19,7 @@ class AwsDockerOMLRun:
         self.cores = cores
         self.metric = metric
         self._log_path = log_filepath
+        self._last_read_line = None
 
         # load config file
         with open("config.json") as file:
@@ -82,8 +83,14 @@ class AwsDockerOMLRun:
             if "Output" in raw_log.keys():
                 if self._log_path is not None:
                     with open(self._log_path, 'a') as fh:
-                        fh.write(raw_log["Output"])
+                        if self._last_read_line is not None:
+                            index_last_line = raw_log["Output"].index(self._last_read_line)
+                            index_last_line += len(self._last_read_line)
+                        else:
+                            index_last_line = 0
+                        fh.write(raw_log["Output"][index_last_line:])
                 out = raw_log["Output"].splitlines()
+                self._last_read_line = out[-1]
                 out = [x for x in out if re.search(self.token, x)]
                 if len(out) == 1:
                     return {"res": out[0].split(" ")[-1], "log": raw_log}
