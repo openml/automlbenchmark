@@ -12,7 +12,10 @@ def run(*args, **kwargs):
 
 def docker_commands():
     return """
-RUN apt-get install -y wget unzip openjdk-8-jdk
+RUN apt-get -y install software-properties-common apt-transport-https libxml2-dev
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+RUN add-apt-repository 'deb [arch=amd64,i386] https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
+RUN apt-get -y install r-base r-base-dev
 """
 
 

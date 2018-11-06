@@ -1,6 +1,0 @@
-RUN pip3 install --no-cache-dir tpot==0.9.4
-RUN pip3 install --no-cache-dir liac-arff==2.3
-RUN pip3 install --no-cache-dir xgboost==0.6a2
-RUN pip3 install --no-cache-dir dask==0.19.0
-
-ENV start_call="python3 run_tpot.py"

@@ -1,8 +1,0 @@
-#!/bin/bash
-
-echo "benchmark_id,framework,framework_version,fold,result,mode,timestap" > $1
-./benchmark.py RandomForest_r validation aws -o $1
-#./benchmark.py TPOT validation aws -o $1
-#./benchmark.py H2OAutoML validation aws -o $1
-#./benchmark.py autosklearn validation aws -o $1
-#./benchmark.py AutoWEKA validation aws -o $1

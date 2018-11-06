@@ -1,56 +1,131 @@
-import arff
-import numpy
+from collections import namedtuple
+import json
+import os
+import pathlib
+import stat
+from typing import Optional
+
+import numpy as np
+import psutil
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
-def get_class_names_from_arff(arff_file_path):
-    """ Retrieves the class names (possible attribute values of last attribute) from the arff file.
 
-    :param arff_file_path: string. path to the arff file.
-    :return: a list of class names
+def repr(obj):
+    return "{clazz}: {attributes}".format(clazz=obj.__class__, attributes=obj.__dict__)
+
+
+def cache(self, key, fn):
     """
-    with open(arff_file_path, 'r') as arff_data_file:
-        data_arff = arff.load(arff_data_file)
-    attribute_name, attribute_values = data_arff['attributes'][-1]
-    return attribute_values
 
-
-def get_X_y_from_arff(arff_file_path, mapping=None):
-    """ Read data from the ARFF file as X and y, where y is the last column and X all other data.
-
-    :param arff_file_path: string. path to the arff file.
-    :param mapping: (optional) defines mapping of categorical variables to integers, if not set is calculated
-    :return: a tuple of two numpy arrays and a dict of dicts mapping categorical levels to integers.
+    :param self: the object that will hold the cached value
+    :param key: the key/attribute for the cached value
+    :param fn: the function returning the value to be cached
+    :return: the value returned by fn on first call
     """
-    with open(arff_file_path, 'r') as arff_data_file:
-        data_arff = arff.load(arff_data_file)
-        data = numpy.asarray(data_arff['data'])
-        X, y = data[:, :-1], data[:, -1]
-        if mapping is None:
-            mapping = {}
-            is_categorical = [ind for ind, col in enumerate(data_arff["attributes"][:-1]) if col[1] != "NUMERIC"]
-            for ind in is_categorical:
-                mapping[ind] = {key: val if key is not None else float("NaN") for val, key in enumerate((set(X[:, ind])))}
-        for ind in mapping.keys():
-            i = max(mapping[ind].values()) + 1
-            X[:, ind] = numpy.asarray([mapping[ind].get(val, i) for val in X[:, ind]])
-        X = X.astype(float)
-        return X, y, mapping
+    if not hasattr(self, key):
+        value = fn(self)
+        setattr(self, key, value)
+    return getattr(self, key)
 
 
-def one_hot_encode_predictions(predictions, reference_file):
-    """ Performs one-hot encoding on predictions, order of column depends on reference file.
+def cached(fn):
+    """
+
+    :param fn:
+    :return:
+    """
+    result = '__cached_result__' + fn.__name__
+
+    def decorator(self):
+        return cache(self, result, fn)
+
+    return decorator
+
+
+def memoize(fn):
+    memo = {}
+
+    def decorator(self, key=None):
+        if key not in memo:
+            memo[key] = fn(self) if key is None else fn(self, key)
+        return memo[key]
+
+    return decorator
+
+
+def lazy_property(prop_fn):
+    """
+
+    :param prop_fn:
+    :return:
+    """
+    prop_name = '__cached__' + prop_fn.__name__
+
+    @property
+    def decorator(self):
+        return cache(self, prop_name, prop_fn)
+
+    return decorator
+
+
+def dict_to_namedtuple(dic, type_name='Tuple'):
+    return namedtuple(type_name, dic.keys())(*dic.values())
+
+
+def merge_namedtuple(ntuple1, ntuple2, type_name=None):
+    type_name = type(ntuple1).__name__ if not type_name else type_name
+    return namedtuple(type_name, ntuple1._fields+ntuple2._fields)(**ntuple1._asdict(), **ntuple2._asdict())
+
+
+def extend_namedtuple(ntuple, dict, type_name=None):
+    return merge_namedtuple(ntuple, dict_to_namedtuple(dict), type_name)
+
+
+def json_load(file, as_object=False):
+    if as_object:
+        return json.load(file, object_hook=lambda dic: dict_to_namedtuple(dic, 'JsonNode'))
+    else:
+        return json.load(file)
+
+
+def call_script_in_same_dir(caller_file, script_file, verbose=False):
+    here = os.path.dirname(os.path.realpath(caller_file))
+    script = os.path.join(here, script_file)
+    mod = os.stat(script).st_mode
+    os.chmod(script, mod | stat.S_IEXEC)
+    log = os.popen(script).read()
+    if verbose:
+        print(log)
+
+
+def available_memory_mb():
+    return psutil.virtual_memory().available / (1 << 20)
+
+
+def encoder(values) -> Optional[LabelEncoder]:
+    return LabelEncoder().fit(values) if values else None
+
+
+def encode_labels(data, labels):
+    """
+
+    :param data:
+    :param labels:
+    :return:
+    """
+    le = LabelEncoder().fit(labels)
+    return le.transform(data).reshape(-1, 1), le
+
+
+def one_hot_encode_predictions(predictions, target_feature):
+    """ Performs one-hot encoding on predictions, order of column depends on target.
 
     :param predictions: vector of target label predictions
-    :param reference_file: reference arff file which defines the target as last attribute.
+    :param target_feature: the target feature with categorical values.
       This is used to order the columns of the one-hot encoding.
     :return: a one hot encoding of the class predictions as numpy array.
     """
-    with open(reference_file, 'r') as arff_data_file:
-        arff_data = arff.load(arff_data_file)
-        target_name, target_type = arff_data['attributes'][-1]
-
-    le = LabelEncoder().fit(target_type)
-    class_predictions_le = le.transform(predictions).reshape(-1, 1)
+    class_predictions_le = target_feature.encode(predictions).reshape(-1, 1)
     class_probabilities = OneHotEncoder().fit_transform(class_predictions_le)
     return class_probabilities.todense()
 
@@ -65,5 +140,6 @@ def save_predictions_to_file(class_probabilities, class_predictions, file_path):
     """
     if class_predictions.ndim == 1:
         class_predictions = class_predictions.reshape(-1, 1)
-    combined_predictions = numpy.hstack((class_probabilities, class_predictions)).astype(str)
-    numpy.savetxt(file_path, combined_predictions, delimiter=',', fmt="%s")
+    combined_predictions = np.hstack((class_probabilities, class_predictions)).astype(str)
+    pathlib.Path(file_path).touch()
+    np.savetxt(file_path, combined_predictions, delimiter=',', fmt="%s")

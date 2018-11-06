@@ -1,0 +1,7 @@
+psutil
+liac-arff>=2.3
+numpy>=1.15.0
+pandas>=0.23.4
+scipy>=1.1.0
+scikit-learn>=0.19.2
+#openml>=0.7.0

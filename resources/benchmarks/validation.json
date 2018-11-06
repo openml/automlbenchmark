@@ -1,0 +1,42 @@
+{
+  "dresses-sales": {
+    "openml_task_id":125920,
+    "runtime":600,
+    "cores":2,
+    "aws_instance_type":"m5.large",
+    "metric":"auc",
+    "folds":2
+  },
+  "eucalyptus": {
+    "openml_task_id":2079,
+    "runtime":600,
+    "cores":2,
+    "aws_instance_type":"m5.large",
+    "metric":"logloss",
+    "folds":2
+  },
+  "internet-advertisements": {
+    "openml_task_id":167125,
+    "runtime":600,
+    "cores":2,
+    "aws_instance_type":"m5.large",
+    "metric":"auc",
+    "folds":2
+  },
+  "bioresponse": {
+    "openml_task_id":9910,
+    "runtime":600,
+    "cores":2,
+    "aws_instance_type":"m5.large",
+    "metric":"auc",
+    "folds":2
+  },
+  "micro-mass": {
+    "openml_task_id":9950,
+    "runtime":600,
+    "cores":2,
+    "aws_instance_type":"m5.large",
+    "metric":"logloss",
+    "folds":2
+  }
+}

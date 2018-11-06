@@ -1,9 +1,0 @@
-{
-  "setup":"#!/bin/bash\ndocker run --rm",
-  "token":"6744dfceeb4d2b4a9e60874bcd46b3a1",
-  "overhead_time":600,
-  "query_frequency":10,
-  "max_parallel_jobs":5,
-  "region_name":"us-east-1",
-  "subnet_id":""
-}

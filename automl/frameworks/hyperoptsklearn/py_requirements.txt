@@ -1,0 +1,2 @@
+hyperopt-sklearn
+networkx==1.11
