@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -9,8 +10,11 @@ from automl.data import Dataset
 from automl.utils import one_hot_encode_predictions, save_predictions_to_file
 
 
+log = logging.getLogger(__name__)
+
+
 def run(dataset: Dataset, config: TaskConfig):
-    print("\n**** TPOT ****\n")
+    log.info("\n**** TPOT ****\n")
 
     # Mapping of benchmark metrics to TPOT metrics
     if config.metric == 'acc':
@@ -27,7 +31,7 @@ def run(dataset: Dataset, config: TaskConfig):
     X_test = dataset.test.X_enc.astype(float)
     y_test = dataset.test.y_enc.astype(int)
 
-    print('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
+    log.info('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
           .format(config.max_runtime_seconds, config.cores, metric))
 
     runtime_min = (config.max_runtime_seconds/60)
@@ -38,10 +42,10 @@ def run(dataset: Dataset, config: TaskConfig):
     start_time = time.time()
     tpot.fit(X_train, y_train)
     actual_runtime_min = (time.time() - start_time)/60.0
-    print('Requested training time (minutes): ' + str(runtime_min))
-    print('Actual training time (minutes): ' + str(actual_runtime_min))
+    log.debug('Requested training time (minutes): ' + str(runtime_min))
+    log.debug('Actual training time (minutes): ' + str(actual_runtime_min))
 
-    print('Predicting on the test set.')
+    log.info('Predicting on the test set.')
     class_predictions = tpot.predict(X_test)
     try:
         class_probabilities = tpot.predict_proba(X_test)
@@ -49,17 +53,16 @@ def run(dataset: Dataset, config: TaskConfig):
         # TPOT throws a RuntimeError if the optimized pipeline does not support `predict_proba`.
         class_probabilities = one_hot_encode_predictions(class_predictions, dataset.target)
 
-    print('Optimization was towards metric, but following score is always accuracy:')
-    print("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
+    log.info('Optimization was towards metric, but following score is always accuracy')
+    log.info("Accuracy: " + str(accuracy_score(y_test, class_predictions)))
 
     if class_probabilities.shape[1] == 2:
         fpr, tpr, thresholds = roc_curve(dataset.test.y, class_probabilities[:, 1], pos_label=dataset.target.values[1])
         auc_score = auc(fpr, tpr)
-        print("AUC: " + str(auc_score))
+        log.info("AUC: " + str(auc_score))
 
     class_predictions = dataset.target.decode(class_predictions)
 
     dest_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_tpot_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
     save_predictions_to_file(class_probabilities, class_predictions, dest_file)
-    print("Predictions saved to "+dest_file)
-    print()
+    log.info("Predictions saved to %s", dest_file)

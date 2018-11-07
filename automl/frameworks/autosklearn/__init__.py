@@ -1,9 +1,10 @@
-from automl.utils import call_script_in_same_dir
+from automl.utils import call_script_in_same_dir, dir_of, pip_install
 
 
-def setup(verbose=True):
-    # call_script_in_same_dir(__file__, "setup.sh", verbose)
-    pass
+def setup():
+    call_script_in_same_dir(__file__, "setup.sh")
+    # pip_install('https://raw.githubusercontent.com/automl/auto-sklearn/master/requirements.txt', True)
+    # pip_install('automl/frameworks/autosklearn/py_requirements.txt', True)
 
 
 def run(*args, **kwargs):
@@ -14,9 +15,8 @@ def run(*args, **kwargs):
 def docker_commands():
     return """
 RUN apt-get install -y build-essential swig
-RUN curl https://raw.githubusercontent.com/automl/auto-sklearn/master/requirements.txt | xargs -n 1 -L 1 pip3 install
-RUN $PIP install --no-cache-dir -r automl/frameworks/autosklearn/py_requirements.txt
-"""
+RUN {here}/setup.sh
+""".format(here=dir_of(__file__, True))
 
 
 __all__ = (setup, run, docker_commands)

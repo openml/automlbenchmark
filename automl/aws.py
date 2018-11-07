@@ -23,11 +23,11 @@ class AWSBenchmark(Benchmark):
         if ami is None:
             raise ValueError("Region not supported by AMI yet.")
 
-    def setup(self):
-        """
-        todo: setup connection to EC2
-        """
-        super().setup()
+    def setup(self, mode):
+        if mode == Benchmark.SetupMode.skip:
+            pass
+
+        # todo: setup connection to EC2
 
     def run(self):
         if self.reuse_instance:

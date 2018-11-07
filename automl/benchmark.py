@@ -1,3 +1,4 @@
+from enum import Enum
 from importlib import import_module
 import os
 
@@ -20,6 +21,7 @@ class Benchmark:
     """
 
     task_loader = None
+    SetupMode = Enum('SetupMode', 'auto skip force only')
 
     def __init__(self, framework_name, benchmark_name, config):
         """
@@ -36,13 +38,17 @@ class Benchmark:
 
         self.framework_module = import_module('automl.frameworks.'+self.framework_def.name)
 
-    def setup(self):
+    def setup(self, mode: SetupMode):
         """
         ensure all dependencies needed by framework are available
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
         Benchmark.task_loader = Openml(api_key=self.resources.config['openml_apikey'])
+
+        if mode == Benchmark.SetupMode.skip or not hasattr(self.framework_module, 'setup'):
+            return
+
         self.framework_module.setup()
 
     def run(self):
@@ -150,7 +156,7 @@ class BenchmarkTask:
             self._dataset = Benchmark.task_loader.load(self._task_def.openml_task_id, self.fold)
         elif hasattr(self._task_def, 'dataset'):
             #todo
-            pass
+            raise NotImplementedError("raw dataset are not supported yet")
         else:
             raise ValueError("tasks should have one property among [openml_task_id, dataset]")
 

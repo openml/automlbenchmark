@@ -1,7 +1,9 @@
+import logging
 import os
 
 from .benchmark import Benchmark
 
+log = logging.getLogger(__name__)
 
 class DockerBenchmark(Benchmark):
     """DockerBenchmark
@@ -19,7 +21,11 @@ class DockerBenchmark(Benchmark):
         super().__init__(framework_name, benchmark_name, config)
         self.reuse_instance = reuse_instance
 
-    def setup(self):
+    def setup(self, mode):
+        if mode == Benchmark.SetupMode.skip:
+            return
+
+        # todo: if auto check if image is already built
         custom_commands = self.framework_module.docker_commands() if hasattr(self.framework_module, 'docker_commands') else ""
         self._generate_docker_script(custom_commands)
         self._build_docker_image()
@@ -29,7 +35,7 @@ class DockerBenchmark(Benchmark):
             self.start_docker("{framework} {benchmark}".format(
                 framework=self.framework_def.name,
                 benchmark=self.benchmark_name
-            ), verbose=True)
+            ))
         else:
             super().run()
 
@@ -42,18 +48,17 @@ class DockerBenchmark(Benchmark):
             benchmark=self.benchmark_name,
             task=task_name,
             fold=fold
-        ), verbose=True)
+        ))
 
-    def start_docker(self, script_params="", verbose=False):
-        cmd = "docker run -v {output}:/output --rm {image} {params} -o /output".format(
+    def start_docker(self, script_params=""):
+        cmd = "docker run -v {output}:/output --rm {image} {params} -o /output -s skip".format(
             output=self.resources.config['output_folder'],
             image=self._docker_image_name,
             params=script_params
         )
-        print("starting docker: " + cmd)
+        log.info("starting docker: " + cmd)
         output = os.popen(cmd).read()
-        if verbose:
-            print(output)
+        log.debug(output)
 
     @property
     def _docker_script(self):
@@ -90,9 +95,10 @@ RUN $PIP install --no-cache-dir openml
 
 # https://docs.docker.com/engine/reference/builder/#entrypoint
 ENTRYPOINT ["/bin/bash", "-c", "$PY runbenchmark.py $0 $*"]
-CMD ["constantpredictor", "test"]
+CMD ["{framework}", "test"]
 
-""".format(custom_commands=custom_commands)
+""".format(custom_commands=custom_commands, framework=self.framework_name)
+
         with open(self._docker_script, 'w') as file:
             file.write(docker_content)
 
@@ -105,10 +111,9 @@ CMD ["constantpredictor", "test"]
             tag=docker_image["tag"]
         )
 
-    def _build_docker_image(self, verbose=False):
+    def _build_docker_image(self):
         output = os.popen("docker build -t {container} -f {script} .".format(
             container=self._docker_image_name,
             script=self._docker_script
         )).read()
-        if verbose:
-            print(output)
+        log.debug(output)

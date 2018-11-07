@@ -2,6 +2,3 @@
 .idea
 libs
 
-#following can be removed later
-docker
-aws

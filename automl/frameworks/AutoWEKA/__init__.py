@@ -1,8 +1,8 @@
-from automl.utils import call_script_in_same_dir
+from automl.utils import call_script_in_same_dir, dir_of
 
 
-def setup(verbose=True):
-    call_script_in_same_dir(__file__, "setup.sh", verbose)
+def setup():
+    call_script_in_same_dir(__file__, "setup.sh")
 
 
 def run(*args, **kwargs):
@@ -13,7 +13,8 @@ def run(*args, **kwargs):
 def docker_commands():
     return """
 RUN apt-get install -y wget unzip openjdk-8-jdk
-"""
+RUN {here}/setup.sh
+""".format(here=dir_of(__file__, True))
 
 
 __all__ = (setup, run, docker_commands)

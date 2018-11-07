@@ -1,5 +1,6 @@
 from collections import namedtuple
 import json
+import logging
 import os
 import pathlib
 import stat
@@ -8,6 +9,14 @@ from typing import Optional
 import numpy as np
 import psutil
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+
+try:
+    from pip._internal import main as pip_main
+except ImportError:
+    from pip import main as pip_main
+
+
+log = logging.getLogger(__name__)
 
 
 def repr(obj):
@@ -88,14 +97,33 @@ def json_load(file, as_object=False):
         return json.load(file)
 
 
-def call_script_in_same_dir(caller_file, script_file, verbose=False):
-    here = os.path.dirname(os.path.realpath(caller_file))
+def pip_install(module_or_requirements, is_requirements=False):
+    try:
+        if is_requirements:
+            pip_main(['install', '--no-cache-dir', '-r', module_or_requirements])
+        else:
+            pip_main(['install', '--no-cache-dir', module_or_requirements])
+    except SystemExit as se:
+        log.error("error when trying to install python modules %s", module_or_requirements)
+        log.exception(se)
+
+
+def dir_of(caller_file, rel_to_project_root=False):
+    abs_path = os.path.dirname(os.path.realpath(caller_file))
+    if rel_to_project_root:
+        project_root = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
+        return os.path.relpath(abs_path, project_root)
+    else:
+        return abs_path
+
+
+def call_script_in_same_dir(caller_file, script_file):
+    here = dir_of(caller_file)
     script = os.path.join(here, script_file)
     mod = os.stat(script).st_mode
     os.chmod(script, mod | stat.S_IEXEC)
-    log = os.popen(script).read()
-    if verbose:
-        print(log)
+    output = os.popen(script).read()
+    log.debug(output)
 
 
 def available_memory_mb():

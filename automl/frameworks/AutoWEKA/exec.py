@@ -1,11 +1,14 @@
+import logging
 import os
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 
+log = logging.getLogger(__name__)
+
 
 def run(dataset: Dataset, config: TaskConfig):
-    print("\n**** AutoWEKA ****\n")
+    log.info("\n**** AutoWEKA ****\n")
 
     # Mapping of benchmark metrics to Weka metrics
     if config.metric == 'acc':
@@ -32,7 +35,7 @@ def run(dataset: Dataset, config: TaskConfig):
         predictions_output=weka_file
     )).read()
 
-    print(output)
+    log.info(output)
 
     with open(weka_file, 'r') as weka_file, open(dest_file, 'w') as output_file:
         for line in weka_file.readlines()[1:-1]:
