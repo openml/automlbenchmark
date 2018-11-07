@@ -81,7 +81,7 @@ def run(dataset: Dataset, config: TaskConfig):
             logloss = log_loss(y_true=y_true, y_pred=class_probabilities)
             log.info("Log Loss: " + str(logloss))
 
-        dest_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_h2o_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
+        dest_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_h2o_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
         save_predictions_to_file(class_probabilities, class_predictions.astype(str), dest_file)
         log.info("Predictions saved to %s", dest_file)
 

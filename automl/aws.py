@@ -1,4 +1,8 @@
+import logging
 from .benchmark import Benchmark
+
+
+log = logging.getLogger(__name__)
 
 
 class AWSBenchmark(Benchmark):
@@ -25,7 +29,7 @@ class AWSBenchmark(Benchmark):
 
     def setup(self, mode):
         if mode == Benchmark.SetupMode.skip:
-            pass
+            return
 
         # todo: setup connection to EC2
 

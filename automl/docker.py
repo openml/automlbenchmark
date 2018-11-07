@@ -4,6 +4,7 @@ import re
 
 from .benchmark import Benchmark
 
+
 log = logging.getLogger(__name__)
 
 
@@ -66,13 +67,16 @@ class DockerBenchmark(Benchmark):
         ))
 
     def start_docker(self, script_params=""):
-        out_dir = self.resources.config['output_folder']
-        cmd = "docker run -v {output}:/output --rm {image} {params} -o /output -s skip".format(
+        in_dir = self.resources.config['input_dir']
+        out_dir = self.resources.config['output_dir']
+        cmd = "docker run -v {input}:/input -v {output}:/output --rm {image} {params} -i /input -o /output -s skip".format(
+            input=in_dir,
             output=out_dir,
             image=self._docker_image_name,
             params=script_params
         )
         log.info("Starting docker: %s", cmd)
+        log.info("Datasets are loaded by default from folder %s", in_dir)
         log.info("Generated files will be available in folder %s", out_dir)
         output = os.popen(cmd).read()
         log.debug(output)
@@ -124,6 +128,7 @@ RUN $PY -m venv /venvs/setup
 RUN $V_PIP install --upgrade pip
 
 WORKDIR /bench
+VOLUME /input
 VOLUME /output
 
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)

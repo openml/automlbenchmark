@@ -70,6 +70,6 @@ def run(dataset: Dataset, config: TaskConfig):
         logloss = log_loss(y_true=y_test, y_pred=class_probabilities)
         log.info("logloss: ", logloss)
 
-    dest_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_autosklearn_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
+    dest_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_autosklearn_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
     save_predictions_to_file(class_probabilities, class_predictions, dest_file)
     log.info("Predictions saved to %s", dest_file)

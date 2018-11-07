@@ -21,8 +21,10 @@ parser.add_argument('-t', '--task', metavar='task_id', default=None,
                     help='The specific task name to run in the benchmark')
 parser.add_argument('-f', '--fold', metavar='fold_num', type=int, default=0,
                     help='The specific fold to run in the benchmark')
+parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
+                    help='Folder where datasets are loaded by default.')
 parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
-                    help='Path where all the outputs should be written.')
+                    help='Folder where all the outputs should be written.')
 parser.add_argument('-r', '--region', metavar='aws_region', default=None,
                     help='The region on which to run the benchmark when using AWS.')
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
@@ -41,8 +43,10 @@ log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.be
 with open("resources/config.json") as file:
     config = json_load(file)
     config['script'] = os.path.basename(__file__)
+    if args.indir:
+        config['input_dir'] = args.indir
     if args.outdir:
-        config['output_folder'] = args.outdir
+        config['output_dir'] = args.outdir
 
 if args.mode == "local":
     bench = automl.Benchmark(args.framework, args.benchmark, config)

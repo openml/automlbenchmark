@@ -31,7 +31,7 @@ def run(dataset: Dataset, config: TaskConfig):
     class_predictions = hyperoptsklearn.predict(X_test)
     class_probabilities = one_hot_encode_predictions(class_predictions, dataset.target)
 
-    dest_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_decision_tree_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
+    dest_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_decision_tree_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
     save_predictions_to_file(class_probabilities, class_predictions, dest_file)
     log.info("Predictions saved to %s", dest_file)
 

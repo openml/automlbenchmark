@@ -63,6 +63,6 @@ def run(dataset: Dataset, config: TaskConfig):
 
     class_predictions = dataset.target.decode(class_predictions)
 
-    dest_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_tpot_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
+    dest_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_tpot_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
     save_predictions_to_file(class_probabilities, class_predictions, dest_file)
     log.info("Predictions saved to %s", dest_file)

@@ -1,8 +1,9 @@
 {
   "frameworks_definition_file": "resources/frameworks.json",
-  "benchmarks_definitions_dir": "resources/benchmarks",
+  "benchmarks_definition_dir": "resources/benchmarks",
+  "input_dir": "~/.openml/cache",
+  "output_dir": "~/tmp",
   "openml_apikey": "c1994bdb7ecb3c6f3c8f3b35f4b47f1f",
-  "output_folder": "~/tmp",
 
   "aws": {
     "token": "6744dfceeb4d2b4a9e60874bcd46b3a1",

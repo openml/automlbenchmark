@@ -20,8 +20,8 @@ def run(dataset: Dataset, config: TaskConfig):
     else:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    weka_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_autoweka_{task}_{fold}.raw".format(task=config.name, fold=config.fold))
-    dest_file = os.path.join(os.path.expanduser(config.output_folder), "predictions_autoweka_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
+    weka_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_autoweka_{task}_{fold}.raw".format(task=config.name, fold=config.fold))
+    dest_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_autoweka_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
 
     output = os.popen("java -cp ./libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
     -classifications \"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {predictions_output}\" \

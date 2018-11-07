@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 
@@ -9,11 +10,15 @@ from .data import Dataset, Datasplit, Feature
 from .utils import lazy_property
 
 
+log = logging.getLogger(__name__)
+
+
 class Openml():
 
-    def __init__(self, api_key):
-        super().__init__()
-        oml.config.apikey = api_key #todo, rely on default openml setup, apikey is private...
+    def __init__(self, api_key, cache_dir=None):
+        oml.config.apikey = api_key  # todo, rely on default openml setup, apikey is private...
+        if cache_dir:
+            oml.config.set_cache_directory(cache_dir)
 
     def load(self, task_id, fold=0):
         task = oml.tasks.get_task(task_id)
@@ -67,6 +72,7 @@ class OpenmlDataset(Dataset):
     @property
     def attributes(self):
         if not self._attributes:
+            log.debug("loading attributes from dataset %s", self._oml_dataset.data_file)
             with open(self._oml_dataset.data_file) as f:
                 ds = arff.load(f)
                 self._attributes = ds['attributes']
@@ -97,6 +103,7 @@ class OpenmlDataset(Dataset):
         #                                                    return_attribute_names=True)
         # ods.retrieve_class_labels(self.target)
 
+        log.debug("loading dataset %s", ods.data_file)
         with open(ods.data_file) as f:
             ds = arff.load(f)
         self._attributes = ds['attributes']
@@ -113,7 +120,7 @@ class OpenmlDataset(Dataset):
                         indexes=test_ind)
 
     def _extract_unique_values(self, arff_dataset):
-        #TODO: support encoded string columns?
+        # todo: support encoded string columns?
         pass
 
 
@@ -131,6 +138,7 @@ class OpenmlDatasplit(Datasplit):
     @lazy_property
     def data(self):
         # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
+        log.debug("loading datasplit %s", self.path)
         with open(self.path) as file:
             ds = arff.load(file)
         return np.asarray(ds['data'])
@@ -145,6 +153,7 @@ def _get_split_path_for_dataset(ds_path, split='train', fold=0):
 def _save_split_set(path, name, full_dataset=None, indexes=None):
     # X_split = X[indexes, :]
     # y_split = y.reshape(-1, 1)[indexes, :]
+    log.debug("saving %s split dataset to %s", name, path)
     with open(path, 'w') as file:
         split_data = np.asarray(full_dataset['data'])[indexes, :]
         arff.dump({
