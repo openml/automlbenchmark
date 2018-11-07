@@ -6,6 +6,7 @@ from .openml import Openml
 from .resources import Resources
 from .utils import available_memory_mb
 
+
 class Benchmark:
     """Benchmark.
     Structure containing the generic information needed to run a benchmark:

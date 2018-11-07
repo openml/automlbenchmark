@@ -31,7 +31,7 @@ parser.add_argument('--reuse-instance', type=bool, metavar='true|false', nargs='
                     help='Set to true if reusing the same container instance(s) for all tasks (docker and aws mode only)')
 args = parser.parse_args()
 
-script_name = os.path.basename(__file__)
+script_name = os.path.splitext(os.path.basename(__file__))[0]
 automl.logger.setup(log_file=os.path.join(args.outdir if args.outdir else '.', script_name+'.log'),
                     root_file=os.path.join(args.outdir if args.outdir else '.', script_name+'_full.log'),
                     root_level='DEBUG', console_level='INFO')
@@ -40,6 +40,7 @@ log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.be
 
 with open("resources/config.json") as file:
     config = json_load(file)
+    config['script'] = os.path.basename(__file__)
     if args.outdir:
         config['output_folder'] = args.outdir
 

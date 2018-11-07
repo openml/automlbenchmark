@@ -1,14 +1,25 @@
 import logging
 import os
+import re
 
 from .benchmark import Benchmark
 
 log = logging.getLogger(__name__)
 
+
 class DockerBenchmark(Benchmark):
     """DockerBenchmark
     an extension of Benchmark to run benchmarks inside docker.
     """
+
+    @staticmethod
+    def docker_image_name(framework_def):
+        docker_image = framework_def.docker_image
+        return "{author}/{image}:{tag}".format(
+            author=docker_image["author"],
+            image=docker_image["image"],
+            tag=docker_image["tag"]
+        )
 
     def __init__(self, framework_name, benchmark_name, config, reuse_instance=False):
         """
@@ -21,14 +32,18 @@ class DockerBenchmark(Benchmark):
         super().__init__(framework_name, benchmark_name, config)
         self.reuse_instance = reuse_instance
 
-    def setup(self, mode):
+    def setup(self, mode, upload=False):
         if mode == Benchmark.SetupMode.skip:
             return
 
-        # todo: if auto check if image is already built
+        if mode == Benchmark.SetupMode.auto and self._docker_image_exists():
+            return
+
         custom_commands = self.framework_module.docker_commands() if hasattr(self.framework_module, 'docker_commands') else ""
         self._generate_docker_script(custom_commands)
         self._build_docker_image()
+        if upload:
+            self._upload_docker_image()
 
     def run(self):
         if self.reuse_instance:
@@ -51,18 +66,44 @@ class DockerBenchmark(Benchmark):
         ))
 
     def start_docker(self, script_params=""):
+        out_dir = self.resources.config['output_folder']
         cmd = "docker run -v {output}:/output --rm {image} {params} -o /output -s skip".format(
-            output=self.resources.config['output_folder'],
+            output=out_dir,
             image=self._docker_image_name,
             params=script_params
         )
-        log.info("starting docker: " + cmd)
+        log.info("Starting docker: %s", cmd)
+        log.info("Generated files will be available in folder %s", out_dir)
         output = os.popen(cmd).read()
         log.debug(output)
 
     @property
     def _docker_script(self):
         return os.path.join(self._framework_dir, 'Dockerfile')
+
+    @property
+    def _docker_image_name(self):
+        return DockerBenchmark.docker_image_name(self.framework_def)
+
+    def _docker_image_exists(self):
+        output = os.popen("docker images -q {image}".format(image=self._docker_image_name)).read()
+        log.debug("docker image id: %s", output)
+        return re.match(r'^[0-9a-f]+$', output.strip())
+
+    def _build_docker_image(self):
+        log.info("Building docker image %s", self._docker_image_name)
+        output = os.popen("docker build -t {container} -f {script} .".format(
+            container=self._docker_image_name,
+            script=self._docker_script
+        )).read()
+        log.info("Successfully built docker image %s", self._docker_image_name)
+        log.debug(output)
+
+    def _upload_docker_image(self):
+        log.info("Publishing docker image %s", self._docker_image_name)
+        output = os.popen("docker login && docker push {}".format(self._docker_image_name)).read()
+        log.info("Successfully published docker image %s", self._docker_image_name)
+        log.debug(output)
 
     def _generate_docker_script(self, custom_commands):
         docker_content = """FROM ubuntu:18.04
@@ -94,26 +135,13 @@ RUN $PIP install --no-cache-dir openml
 {custom_commands}
 
 # https://docs.docker.com/engine/reference/builder/#entrypoint
-ENTRYPOINT ["/bin/bash", "-c", "$PY runbenchmark.py $0 $*"]
+ENTRYPOINT ["/bin/bash", "-c", "$PY {script} $0 $*"]
 CMD ["{framework}", "test"]
 
-""".format(custom_commands=custom_commands, framework=self.framework_name)
+""".format(custom_commands=custom_commands,
+           framework=self.framework_name,
+           script=self.resources.config['script'])
 
         with open(self._docker_script, 'w') as file:
             file.write(docker_content)
 
-    @property
-    def _docker_image_name(self):
-        docker_image = self.framework_def.docker_image
-        return "{author}/{image}:{tag}".format(
-            author=docker_image["author"],
-            image=docker_image["image"],
-            tag=docker_image["tag"]
-        )
-
-    def _build_docker_image(self):
-        output = os.popen("docker build -t {container} -f {script} .".format(
-            container=self._docker_image_name,
-            script=self._docker_script
-        )).read()
-        log.debug(output)
