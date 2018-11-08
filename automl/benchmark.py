@@ -119,7 +119,7 @@ class TaskConfig:
         self.max_mem_size_mb = max_mem_size_mb
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.output_file_template = os.path.join(self.output_dir, "{{framework}}_{task}_{fold}".format(task=self.name, fold=self.fold))
+        self.output_file_template = os.path.join(output_dir, "{{framework}}_{task}_{fold}".format(task=name, fold=fold))
 
     @staticmethod
     def from_def(task_def, fold, config):

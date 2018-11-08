@@ -19,8 +19,34 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-def repr(obj):
-    return "{clazz}: {attributes}".format(clazz=obj.__class__, attributes=obj.__dict__)
+class Namespace:
+
+    def __init__(self, **kwargs):
+        for name in kwargs:
+            self.set(name, kwargs[name])
+
+    def __contains__(self, key):
+        return key in self.__dict__
+
+    def __iter__(self):
+        return iter(self.__dict__.items())
+
+    def __repr__(self):
+        return repr_def(self)
+
+    def get(self, name):
+        return getattr(self, name)
+
+    def set(self, name, value):
+        setattr(self, name, value)
+
+    def extend(self, namespace):
+        for name, value in namespace:
+            self.set(name, value)
+
+
+def repr_def(obj):
+    return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
 
 
 def cache(self, key, fn):
@@ -77,22 +103,9 @@ def lazy_property(prop_fn):
     return decorator
 
 
-def dict_to_namedtuple(dic, type_name='Tuple'):
-    return namedtuple(type_name, dic.keys())(*dic.values())
-
-
-def merge_namedtuple(ntuple1, ntuple2, type_name=None):
-    type_name = type(ntuple1).__name__ if not type_name else type_name
-    return namedtuple(type_name, ntuple1._fields+ntuple2._fields)(**ntuple1._asdict(), **ntuple2._asdict())
-
-
-def extend_namedtuple(ntuple, dict, type_name=None):
-    return merge_namedtuple(ntuple, dict_to_namedtuple(dict), type_name)
-
-
 def json_load(file, as_object=False):
     if as_object:
-        return json.load(file, object_hook=lambda dic: dict_to_namedtuple(dic, 'JsonNode'))
+        return json.load(file, object_hook=lambda dic: Namespace(**dic))
     else:
         return json.load(file)
 

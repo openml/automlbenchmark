@@ -1,7 +1,7 @@
 import logging
 import os
 
-from .utils import dict_to_namedtuple, extend_namedtuple, json_load
+from .utils import Namespace, json_load
 
 
 log = logging.getLogger(__name__)
@@ -34,8 +34,8 @@ class Resources:
             raise ValueError("incorrect framework: {}".format(name))
 
         framework = frameworks[name]
-        framework['name'] = name
-        framework = dict_to_namedtuple(framework, 'Framework')
+        framework = Namespace(**framework)
+        framework.name = name
         return framework
 
     def benchmark_definition(self, name):

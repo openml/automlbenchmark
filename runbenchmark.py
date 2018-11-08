@@ -34,11 +34,13 @@ parser.add_argument('--reuse-instance', type=bool, metavar='true|false', nargs='
 args = parser.parse_args()
 
 script_name = os.path.splitext(os.path.basename(__file__))[0]
-automl.logger.setup(log_file=os.path.join(args.outdir if args.outdir else '.', script_name+'.log'),
-                    root_file=os.path.join(args.outdir if args.outdir else '.', script_name+'_full.log'),
+log_dir = args.outdir if args.outdir else '.'
+automl.logger.setup(log_file=os.path.join(log_dir, script_name+'.log'),
+                    root_file=os.path.join(log_dir, script_name+'_full.log'),
                     root_level='DEBUG', console_level='INFO')
 
 log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.benchmark, args.mode)
+log.debug("script args: %s", args)
 
 with open("resources/config.json") as file:
     config = json_load(file)

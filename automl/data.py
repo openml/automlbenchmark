@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from numpy import ndarray
 
-from .utils import encoder, lazy_property, repr
+from .utils import encoder, lazy_property, repr_def
 
 
 class Feature:
@@ -41,7 +41,7 @@ class Feature:
         return label_encoder.inverse_transform(encoded_data) if label_encoder else encoded_data
 
     def __repr__(self):
-        return repr(self)
+        return repr_def(self)
 
 
 class Datasplit(ABC):
