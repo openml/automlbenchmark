@@ -23,10 +23,16 @@ class Namespace:
 
     def __init__(self, **kwargs):
         for name in kwargs:
-            self.set(name, kwargs[name])
+            self[name] = kwargs[name]
 
     def __contains__(self, key):
         return key in self.__dict__
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
     def __iter__(self):
         return iter(self.__dict__.items())
@@ -34,15 +40,9 @@ class Namespace:
     def __repr__(self):
         return repr_def(self)
 
-    def get(self, name):
-        return getattr(self, name)
-
-    def set(self, name, value):
-        setattr(self, name, value)
-
     def extend(self, namespace):
         for name, value in namespace:
-            self.set(name, value)
+            self[name] = value
 
 
 def repr_def(obj):

@@ -49,7 +49,7 @@ class Benchmark:
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
-        Benchmark.task_loader = Openml(api_key=self.resources.config['openml_apikey'], cache_dir=self.resources.config['input_dir'])
+        Benchmark.task_loader = Openml(api_key=self.resources.config.openml_apikey, cache_dir=self.resources.config.input_dir)
         if mode == Benchmark.SetupMode.skip or not hasattr(self.framework_module, 'setup'):
             return
 
@@ -130,9 +130,9 @@ class TaskConfig:
             metric=task_def.metric,
             max_runtime_seconds=task_def.runtime,
             cores=task_def.cores,
-            max_mem_size_mb=config['max_mem_size_mb'],
-            input_dir=config['input_dir'],
-            output_dir=config['output_dir']
+            max_mem_size_mb=config.max_mem_size_mb,
+            input_dir=config.input_dir,
+            output_dir=config.output_dir
         )
 
 
