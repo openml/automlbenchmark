@@ -1,9 +1,9 @@
-import argparse
-import os
-
 # prevent asap other modules from defining the root logger using basicConfig
 import logging
 logging.basicConfig(handlers=[logging.NullHandler()])
+
+import argparse
+import os
 
 import automl
 from automl.utils import json_load

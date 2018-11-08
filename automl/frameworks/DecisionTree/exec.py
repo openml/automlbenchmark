@@ -17,7 +17,5 @@ def run(dataset: Dataset, config: TaskConfig):
     class_probabilities = classifier.predict_proba(dataset.test.X)
     class_predictions = classifier.predict(dataset.test.X)
 
-    dest_file = os.path.join(os.path.expanduser(config.output_dir), "predictions_decision_tree_{task}_{fold}.txt".format(task=config.name, fold=config.fold))
-    save_predictions_to_file(class_probabilities, class_predictions, dest_file)
-    log.info("Predictions saved to %s", dest_file)
+    save_predictions_to_file(class_probabilities, class_predictions, config.predictions_file)
 

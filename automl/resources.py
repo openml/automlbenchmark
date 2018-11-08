@@ -25,8 +25,9 @@ class Resources:
         :param name:
         :return: the framework definition with the given name
         """
-        log.debug("loading frameworks definitions from %s", self.config['frameworks_definition_file'])
-        with open(self.config['frameworks_definition_file']) as file:
+        frameworks_file = self.config['frameworks_definition_file']
+        log.debug("loading frameworks definitions from %s", frameworks_file)
+        with open(frameworks_file) as file:
             frameworks = json_load(file)
 
         if not frameworks[name]:
@@ -43,8 +44,8 @@ class Resources:
         :param name:
         :return:
         """
-        log.debug("loading benchmark definitions from %s", self.config['benchmarks_definition_dir'])
         benchmark_file = "{dir}/{name}.json".format(dir=self.config['benchmarks_definition_dir'], name=name)
+        log.debug("loading benchmark definitions from %s", benchmark_file)
         if not os.path.exists(benchmark_file):
             benchmark_file = name
         if not os.path.exists(benchmark_file):
