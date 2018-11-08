@@ -35,4 +35,4 @@ def run(dataset: Dataset, config: TaskConfig):
 
     #todo: accuracy
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.predictions_file)
+    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)

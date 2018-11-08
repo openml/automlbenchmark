@@ -70,4 +70,4 @@ def run(dataset: Dataset, config: TaskConfig):
         logloss = log_loss(y_true=y_test, y_pred=class_probabilities)
         log.info("logloss: ", logloss)
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.predictions_file)
+    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)

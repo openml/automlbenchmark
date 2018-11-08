@@ -166,6 +166,7 @@ def save_predictions_to_file(class_probabilities, class_predictions, file_path):
     :param file_path: string. File to save the predictions to.
     :return: None
     """
+    file_path = file_path + '.pred'
     log.info("Saving predictions to %s", file_path)
     if class_predictions.ndim == 1:
         class_predictions = class_predictions.reshape(-1, 1)

@@ -109,13 +109,13 @@ class OpenmlDataset(Dataset):
         self._attributes = ds['attributes']
         self._extract_unique_values(ds)
 
-        name_pattern = "{name}_{{split}}_{fold}".format(name=ods.name, fold=self.fold)
+        name_template = "{name}_{{split}}_{fold}".format(name=ods.name, fold=self.fold)
         _save_split_set(path=train_path,
-                        name=name_pattern.format(split='train'),
+                        name=name_template.format(split='train'),
                         full_dataset=ds,
                         indexes=train_ind)
         _save_split_set(path=test_path,
-                        name=name_pattern.format(split='test'),
+                        name=name_template.format(split='test'),
                         full_dataset=ds,
                         indexes=test_ind)
 

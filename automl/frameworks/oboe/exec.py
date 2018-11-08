@@ -31,5 +31,5 @@ def run(dataset: Dataset, config: TaskConfig):
     class_predictions = dataset.target.decode(class_predictions).reshape(-1, 1)
     class_probabilities = one_hot_encode_predictions(class_predictions, dataset.target)
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.predictions_file)
+    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)
 

@@ -31,20 +31,20 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
     # create console handler
     console = logging.StreamHandler()
     console.setLevel(console_level)
-    console.setFormatter(logging.Formatter('[%(levelname)s] [%(name)s] %(message)s'))
+    # console.setFormatter(logging.Formatter('[%(levelname)s] [%(name)s] %(message)s'))
     logger.addHandler(console)
 
     file_formatter = MillisFormatter('[%(levelname)s] [%(name)s:%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 
     if log_file:
         # create file handler
-        file = logging.FileHandler(log_file, mode='w')
+        file = logging.FileHandler(log_file, mode='a')
         file.setLevel(app_level)
         file.setFormatter(file_formatter)
         logger.addHandler(file)
 
     if root_file:
-        file = logging.FileHandler(root_file, mode='w')
+        file = logging.FileHandler(root_file, mode='a')
         file.setLevel(root_level)
         file.setFormatter(file_formatter)
         root.addHandler(file)

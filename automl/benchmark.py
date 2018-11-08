@@ -119,7 +119,7 @@ class TaskConfig:
         self.max_mem_size_mb = max_mem_size_mb
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.predictions_file = os.path.join(self.output_dir, "predictions_{{framework}}_{task}_{fold}.txt".format(task=self.name, fold=self.fold))
+        self.output_file_template = os.path.join(self.output_dir, "{{framework}}_{task}_{fold}".format(task=self.name, fold=self.fold))
 
     @staticmethod
     def from_def(task_def, fold, config):
@@ -173,10 +173,11 @@ class BenchmarkTask:
         :param framework:
         :return:
         """
-        self.task.predictions_file = self.task.predictions_file.format(framework=framework.__name__.rsplit('.', 1)[1].lower())
+        self.task.output_file_template = self.task.output_file_template.format(framework=framework.__name__.rsplit('.', 1)[1].lower())
         framework.run(self._dataset, self.task)
         # todo: score predictions and print results
-        # with open(self.task.predictions_file) as file:
+        # predictions_file = self.task.output_file_template + '.pred'
+        # with open(predictions_file) as file:
         #     pass
 
 

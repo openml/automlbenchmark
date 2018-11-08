@@ -19,5 +19,5 @@ def run(dataset: Dataset, config: TaskConfig):
     class_probabilities = classifier.predict_proba(dataset.test.X)
     class_predictions = classifier.predict(dataset.test.X)
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.predictions_file)
+    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)
 
