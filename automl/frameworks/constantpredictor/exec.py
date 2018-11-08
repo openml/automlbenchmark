@@ -1,11 +1,10 @@
 import logging
-import os
 
 from sklearn.dummy import DummyClassifier
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.utils import save_predictions_to_file
+from automl.results import save_predictions_to_file
 
 
 log = logging.getLogger(__name__)
@@ -19,5 +18,10 @@ def run(dataset: Dataset, config: TaskConfig):
     class_probabilities = classifier.predict_proba(dataset.test.X)
     class_predictions = classifier.predict(dataset.test.X)
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)
+    save_predictions_to_file(dataset=dataset,
+                             output_file=config.output_file_template,
+                             class_probabilities=class_probabilities,
+                             class_predictions=class_predictions,
+                             class_truth=dataset.test.y,
+                             encode_classes=True)
 

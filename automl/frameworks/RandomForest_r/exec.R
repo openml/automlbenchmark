@@ -20,10 +20,12 @@ run <- function(train_file, test_file, output_predictions_file, cores) {
 
   mod = train(lrn, train)
   preds = predict(mod, newdata = test)$data
-  preds$truth = NULL
+  preds <- preds[c(2:ncol(preds), 1)]
+  names(preds)[names(preds) == "response"] <- "predictions"
+  names(preds) <- sub("^prob.", "", names(preds))
 
   write.table(preds, file = output_predictions_file,
-              row.names = FALSE, col.names = FALSE,
+              row.names = FALSE, col.names = TRUE,
               sep = ",", quote = FALSE)
 }
 

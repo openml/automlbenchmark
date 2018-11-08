@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 
 from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
@@ -10,7 +9,7 @@ from h2o.automl import H2OAutoML
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.utils import encode_labels, save_predictions_to_file
+from automl.results import save_predictions_to_file
 
 log = logging.getLogger(__name__)
 
@@ -48,40 +47,24 @@ def run(dataset: Dataset, config: TaskConfig):
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds, sort_metric=h2o_metric)
         aml.train(y=dataset.target.index, training_frame=train)
         actual_runtime_min = (time.time() - start_time)/60.0
-        log.debug("Requested training time (minutes): " + str((config.max_runtime_seconds/60.0)))
+        log.info("Requested training time (minutes): " + str((config.max_runtime_seconds/60.0)))
         log.info("Actual training time (minutes): " + str(actual_runtime_min))
 
-        log.info("Predicting the test set.")
+        log.debug("Predicting the test set.")
         predictions = aml.predict(test).as_data_frame()
 
-        preview_size = 20
-        # truth_df = test[:, -1].as_data_frame(header=False)
-        truth_df = test[:, dataset.target.index].as_data_frame(header=False)
-        predictions.insert(0, 'truth', truth_df)
-        log.info("Predictions sample:\n %s\n", predictions.head(preview_size).to_string())
+        y_pred = predictions.iloc[:, 0]
+        y_true = test[:, dataset.target.index].as_data_frame(header=False)
 
-        y_pred = predictions.iloc[:, 1]
-        y_true = predictions.iloc[:, 0]
-        log.debug("test target type: "+type_of_target(y_true))
-        accuracy = accuracy_score(y_true, y_pred)
-        log.info("Optimization was towards metric, but following score is always accuracy.")
-        log.info("Accuracy: "+str(accuracy))
-
-        # TO DO: See if we can use the h2o-sklearn wrappers here instead
         class_predictions = y_pred.values
-        class_probabilities = predictions.iloc[:, 2:].values
+        class_probabilities = predictions.iloc[:, 1:].values
 
-        # TO DO: Change this to roc_curve, auc
-        if type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OBinomialModelMetrics:
-            y_true_binary, _ = encode_labels(y_true, dataset.target.values)
-            y_scores = predictions.iloc[:, -1].values
-            auc = roc_auc_score(y_true=y_true_binary, y_score=y_scores)
-            log.info("AUC: " + str(auc))
-        elif type(aml.leader.model_performance()) == h2o.model.metrics_base.H2OMultinomialModelMetrics:
-            logloss = log_loss(y_true=y_true, y_pred=class_probabilities)
-            log.info("Log Loss: " + str(logloss))
-
-        save_predictions_to_file(class_probabilities, class_predictions.astype(str), config.output_file_template)
+        save_predictions_to_file(dataset=dataset,
+                                 output_file=config.output_file_template,
+                                 class_probabilities=class_probabilities,
+                                 class_predictions=class_predictions,
+                                 class_truth=y_true.values,
+                                 encode_classes=True)
 
     finally:
         if h2o.connection():

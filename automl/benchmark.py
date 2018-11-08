@@ -1,3 +1,4 @@
+from copy import copy
 from enum import Enum
 from importlib import import_module
 import logging
@@ -5,6 +6,7 @@ import os
 
 from .openml import Openml
 from .resources import Resources
+from .results import Results
 from .utils import available_memory_mb
 
 
@@ -28,18 +30,20 @@ class Benchmark:
     task_loader = None
     SetupMode = Enum('SetupMode', 'auto skip force only')
 
-    def __init__(self, framework_name, benchmark_name, config):
+    def __init__(self, framework_name: str, benchmark_name: str, resources: Resources):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param config:
+        :param resources:
         """
-        self.resources = Resources(config)
+        self.resources = resources
         self.framework_name = framework_name
         self.framework_def = self.resources.framework_definition(framework_name)
+        log.debug("Using framework definition: %s", self.framework_def)
         self.benchmark_name = benchmark_name
         self.benchmark_def = self.resources.benchmark_definition(benchmark_name)
+        log.debug("Using benchmark definition: %s", self.benchmark_def)
 
         self.framework_module = import_module('automl.frameworks.'+self.framework_def.name)
 
@@ -60,15 +64,31 @@ class Benchmark:
         runs the framework for every task in the benchmark definition
         """
         for task_def in self.benchmark_def:
+            if Benchmark._is_task_enabled(task_def):
+                self._run_task(task_def)
+
+    def run_one(self, task_name: str, fold):
+        """
+
+        :param task_name:
+        :param fold:
+        """
+        task_def = self._get_task_def(task_name)
+        if fold is None:
             self._run_task(task_def)
+        elif isinstance(fold, int):
+            self._run_fold(task_def, fold)
+        elif isinstance(fold, list) and all(isinstance(f, int) for f in fold):
+            for f in fold:
+                self._run_fold(task_def, f)
+        else:
+            raise ValueError("fold value should be None, an int, or a list of ints")
 
     def _run_task(self, task_def):
         """
         run the framework for every fold in the task definition
         :param task_def:
         """
-        if Benchmark._is_task_disabled(task_def):
-            return
         for fold in range(task_def.folds):
             self._run_fold(task_def, fold)
 
@@ -78,42 +98,40 @@ class Benchmark:
         :param task_def: the task to run
         :param fold: the specific fold to use on this task
         """
-        bench_task = BenchmarkTask(task_def, fold, self.resources.config)
+        if fold < 0 or fold >= task_def.folds:
+            raise ValueError("fold value {} is out of range for task {}".format(fold, task_def.name))
+
+        bench_task = BenchmarkTask(task_def, fold, self.resources)
         bench_task.load_data()
         bench_task.run(self.framework_module)
 
-    def run_one(self, task_name: str, fold: int):
-        """
-
-        :param task_name:
-        :param fold:
-        """
+    def _get_task_def(self, task_name):
         task_def = next(task for task in self.benchmark_def if task.name == task_name)
         if not task_def:
             raise ValueError("incorrect task name: {}".format(task_name))
-        if fold >= task_def.folds:
-            raise ValueError("fold value {} is out of range for task {}".format(fold, task_name))
-        if Benchmark._is_task_disabled(task_def):
+        if not Benchmark._is_task_enabled(task_def):
             raise ValueError("task {} is disabled, please enable it first".format(task_name))
-        self._run_fold(task_def, fold)
+        return task_def
 
     @property
     def _framework_dir(self):
         return os.path.dirname(self.framework_module.__file__)
 
     @staticmethod
-    def _is_task_disabled(task_def):
-        return hasattr(task_def, 'disabled') and task_def.disabled
+    def _is_task_enabled(task_def):
+        return not hasattr(task_def, 'enabled') or task_def.enabled in [True, 'true', 'True', 'yes']
 
 
 class TaskConfig:
 
-    def __init__(self, name, fold, metric, max_runtime_seconds,
+    def __init__(self, name, fold, metrics, max_runtime_seconds,
                  cores, max_mem_size_mb,
                  input_dir, output_dir):
+        self.framework = None
         self.name = name
         self.fold = fold
-        self.metric = metric
+        self.metrics = [metrics] if isinstance(metrics, str) else metrics
+        self.metric = metrics[0] if isinstance(metrics, list) else metrics
         self.max_runtime_seconds = max_runtime_seconds
         self.cores = cores
         self.max_mem_size_mb = max_mem_size_mb
@@ -127,7 +145,7 @@ class TaskConfig:
         return TaskConfig(
             name=task_def.name,
             fold=fold,
-            metric=task_def.metric,
+            metrics=task_def.metric,
             max_runtime_seconds=task_def.runtime,
             cores=task_def.cores,
             max_mem_size_mb=config.max_mem_size_mb,
@@ -141,28 +159,28 @@ class BenchmarkTask:
 
     """
 
-    def __init__(self, task_def, fold, config):
+    def __init__(self, task_def, fold, resources: Resources):
         """
 
         :param task_def:
         :param fold:
-        :param config:
+        :param resources:
         """
         self._task_def = task_def
-        self._dataset = None
+        self._resources = resources
         self.fold = fold
-        self.task = TaskConfig.from_def(self._task_def, self.fold, config)
+        self.task = TaskConfig.from_def(self._task_def, self.fold, resources.config)
+        self._dataset = None
 
     def load_data(self):
         """
-        Loads the training dataset for the given task
-        :param task: the task for which we want to load the dataset
+        Loads the training dataset for the current given task
         :return: path to the dataset file
         """
         if hasattr(self._task_def, 'openml_task_id'):
             self._dataset = Benchmark.task_loader.load(self._task_def.openml_task_id, self.fold)
         elif hasattr(self._task_def, 'dataset'):
-            #todo
+            # todo
             raise NotImplementedError("raw dataset are not supported yet")
         else:
             raise ValueError("tasks should have one property among [openml_task_id, dataset]")
@@ -173,12 +191,26 @@ class BenchmarkTask:
         :param framework:
         :return:
         """
-        self.task.output_file_template = self.task.output_file_template.format(framework=framework.__name__.rsplit('.', 1)[1].lower())
-        framework.run(self._dataset, self.task)
-        # todo: score predictions and print results
-        # predictions_file = self.task.output_file_template + '.pred'
-        # with open(predictions_file) as file:
-        #     pass
+        framework_name = framework.__name__.rsplit('.', 1)[1]
+        task_config = copy(self.task)
+        task_config.framework = framework_name
+        task_config.output_file_template = self.task.output_file_template.format(framework=task_config.framework.lower())
+        framework.run(self._dataset, task_config)
+
+        result = Results(task_name=self.task.name, fold=self.fold, resources=self._resources).get_result(framework_name)
+        scores = {}
+        for metric in task_config.metrics:
+            score = result.evaluate(metric)
+            scores[metric] = score
+
+        log.info("metric scores for {task}[{fold}] using {framework} = {scores}".format(
+            metric=task_config.metric,
+            task=self._task_def.name,
+            fold=self.fold,
+            framework=framework_name,
+            scores=scores
+        ))
+        return scores
 
 
 

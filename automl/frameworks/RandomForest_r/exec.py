@@ -23,6 +23,4 @@ def run(dataset: Dataset, config: TaskConfig):
     )).read()
     log.debug(output)
 
-    #todo: accuracy
-
     log.info("Predictions saved to %s", predictions_file)

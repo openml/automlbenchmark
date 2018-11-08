@@ -1,14 +1,12 @@
-from collections import namedtuple
 import json
 import logging
 import os
-import pathlib
 import stat
 from typing import Optional
 
-import numpy as np
 import psutil
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.base import TransformerMixin
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
 try:
     from pip._internal import main as pip_main
@@ -37,12 +35,20 @@ class Namespace:
     def __iter__(self):
         return iter(self.__dict__.items())
 
+    def __add__(self, other):
+        return Namespace(**self.__dict__).extend(other)
+
     def __repr__(self):
         return repr_def(self)
 
     def extend(self, namespace):
         for name, value in namespace:
             self[name] = value
+        return self
+
+    def clone(self):
+        cloned = Namespace()
+        return cloned.extend(self)
 
 
 def repr_def(obj):
@@ -143,46 +149,14 @@ def available_memory_mb():
     return psutil.virtual_memory().available / (1 << 20)
 
 
-def encoder(values) -> Optional[LabelEncoder]:
-    return LabelEncoder().fit(values) if values else None
-
-
-def encode_labels(data, labels):
-    """
-
-    :param data:
-    :param labels:
-    :return:
-    """
-    le = LabelEncoder().fit(labels)
-    return le.transform(data).reshape(-1, 1), le
-
-
-def one_hot_encode_predictions(predictions, target_feature):
-    """ Performs one-hot encoding on predictions, order of column depends on target.
-
-    :param predictions: vector of target label predictions
-    :param target_feature: the target feature with categorical values.
-      This is used to order the columns of the one-hot encoding.
-    :return: a one hot encoding of the class predictions as numpy array.
-    """
-    class_predictions_le = target_feature.encode(predictions).reshape(-1, 1)
-    class_probabilities = OneHotEncoder().fit_transform(class_predictions_le)
-    return class_probabilities.todense()
-
-
-def save_predictions_to_file(class_probabilities, class_predictions, file_path):
-    """ Save class probabilities and predicted labels to file in csv format.
-
-    :param class_probabilities: (N,K)-matrix describing class probabilities.
-    :param class_predictions:  (N,) or (N,1) vector.
-    :param file_path: string. File to save the predictions to.
-    :return: None
-    """
-    file_path = file_path + '.pred'
-    log.info("Saving predictions to %s", file_path)
-    if class_predictions.ndim == 1:
-        class_predictions = class_predictions.reshape(-1, 1)
-    combined_predictions = np.hstack((class_probabilities, class_predictions)).astype(str)
-    pathlib.Path(file_path).touch()
-    np.savetxt(file_path, combined_predictions, delimiter=',', fmt="%s")
+def encoder(values, type='label') -> Optional[TransformerMixin]:
+    if values is None:
+        return
+    if type == 'label':
+        return LabelEncoder().fit(values)
+    elif type == 'binary':
+        return LabelBinarizer().fit(values)
+    elif type == 'one_hot':
+        return OneHotEncoder(handle_unknown='ignore').fit(values)
+    else:
+        raise ValueError("encoder type should be one of {}".format(['label', 'binary', 'one_hot']))

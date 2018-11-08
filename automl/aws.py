@@ -10,16 +10,16 @@ class AWSBenchmark(Benchmark):
     an extension of Benchmark class, to run benchmarks on AWS
     """
 
-    def __init__(self, framework_name, benchmark_name, config, region=None, reuse_instance=False):
+    def __init__(self, framework_name, benchmark_name, resources, region=None, reuse_instance=False):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param config:
+        :param resources:
         :param region:
         :param reuse_instance:
         """
-        super().__init__(framework_name, benchmark_name, config)
+        super().__init__(framework_name, benchmark_name, resources)
         self.region = region if region else self.resources.config['aws']['default_region']
         self.reuse_instance = reuse_instance
 

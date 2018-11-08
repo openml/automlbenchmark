@@ -30,7 +30,15 @@ class Feature:
 
     @lazy_property
     def label_encoder(self):
-        return encoder(self.values)
+        return encoder(self.values, 'label')
+
+    @lazy_property
+    def label_binarizer(self):
+        return encoder(self.values, 'binary')
+
+    @lazy_property
+    def one_hot_encoder(self):
+        return encoder(self.values, 'one_hot')
 
     def encode(self, labelled_data, label_encoder=None):
         label_encoder = self.label_encoder if not label_encoder else label_encoder

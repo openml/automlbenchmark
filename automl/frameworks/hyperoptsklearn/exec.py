@@ -1,12 +1,12 @@
 import logging
-import os
 
 from hpsklearn import HyperoptEstimator, any_classifier
 from hyperopt import tpe
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.utils import one_hot_encode_predictions, save_predictions_to_file
+from automl.results import save_predictions_to_file
+from automl.utils import encoder
 
 
 log = logging.getLogger(__name__)
@@ -21,15 +21,19 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train = dataset.train.X_enc.astype(float)
     y_train = dataset.train.y_enc
     X_test = dataset.test.X_enc.astype(float)
-    # y_test = dataset.test.y_enc
+    y_test = dataset.test.y_enc
 
     log.warning('ignoring runtime.')  # Not available? just number of iterations.
     log.warning('ignoring n_cores.')  # Not available
     log.warning('always optimize towards accuracy.')  # loss_fn lambda y1,y2:loss(y1, y2)
     hyperoptsklearn = HyperoptEstimator(classifier=any_classifier('clf'), algo=tpe.suggest)
     hyperoptsklearn.fit(X_train, y_train)
-    class_predictions = hyperoptsklearn.predict(X_test)
-    class_probabilities = one_hot_encode_predictions(class_predictions, dataset.target)
+    class_predictions = hyperoptsklearn.predict(X_test).reshape(-1, 1)
+    class_probabilities = encoder(class_predictions, 'one_hot').transform(class_predictions).todense()
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)
+    save_predictions_to_file(dataset=dataset,
+                             output_file=config.output_file_template,
+                             class_probabilities=class_probabilities,
+                             class_predictions=class_predictions,
+                             class_truth=y_test)
 

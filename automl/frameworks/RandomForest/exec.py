@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.utils import save_predictions_to_file
+from automl.results import save_predictions_to_file
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train = imp.transform(dataset.train.X_enc)
     y_train = dataset.train.y_enc
     X_test = imp.transform(dataset.test.X_enc)
+    y_test = dataset.test.y_enc
 
     # TODO: Probably have to add a dummy encoder here in case there's any categoricals
     # TODO: If auto-sklearn & TPOT also require imputation & dummy encoding, let's move this to common_code
@@ -33,6 +34,9 @@ def run(dataset: Dataset, config: TaskConfig):
     class_predictions = rfc.predict(X_test)
     class_probabilities = rfc.predict_proba(X_test)
 
-    #todo: accuracy
+    save_predictions_to_file(dataset=dataset,
+                             output_file=config.output_file_template,
+                             class_probabilities=class_probabilities,
+                             class_predictions=class_predictions,
+                             class_truth=y_test)
 
-    save_predictions_to_file(class_probabilities, class_predictions, config.output_file_template)

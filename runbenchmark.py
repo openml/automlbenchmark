@@ -19,8 +19,8 @@ parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default=
                     help='The mode that specifies what backend is used (currently local [default], docker, or aws)')
 parser.add_argument('-t', '--task', metavar='task_id', default=None,
                     help='The specific task name to run in the benchmark')
-parser.add_argument('-f', '--fold', metavar='fold_num', type=int, default=0,
-                    help='The specific fold to run in the benchmark')
+parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*',
+                    help='The specific fold(s) to run in the benchmark')
 parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
                     help='Folder where datasets are loaded by default.')
 parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
@@ -43,19 +43,20 @@ log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.be
 log.debug("script args: %s", args)
 
 with open("resources/config.json") as file:
-    config = json_load(file)
-    config['script'] = os.path.basename(__file__)
+    config = json_load(file, as_object=True)
+    config.script = os.path.basename(__file__)
     if args.indir:
-        config['input_dir'] = args.indir
+        config.input_dir = args.indir
     if args.outdir:
-        config['output_dir'] = args.outdir
+        config.output_dir = args.outdir
+resources = automl.Resources(config)
 
 if args.mode == "local":
-    bench = automl.Benchmark(args.framework, args.benchmark, config)
+    bench = automl.Benchmark(args.framework, args.benchmark, resources)
 elif args.mode == "docker":
-    bench = automl.DockerBenchmark(args.framework, args.benchmark, config, reuse_instance=args.reuse_instance)
+    bench = automl.DockerBenchmark(args.framework, args.benchmark, resources, reuse_instance=args.reuse_instance)
 elif args.mode == "aws":
-    bench = automl.AWSBenchmark(args.framework, args.benchmark, config, region=args.region, reuse_instance=args.reuse_instance)
+    bench = automl.AWSBenchmark(args.framework, args.benchmark, resources, region=args.region, reuse_instance=args.reuse_instance)
 else:
     raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 
@@ -64,8 +65,8 @@ if args.setup == 'only':
 
 bench.setup(automl.Benchmark.SetupMode[args.setup])
 if args.setup != 'only':
-    if args.task is not None:
-        res = bench.run_one(args.task, args.fold)
-    else:
+    if args.task is None:
         res = bench.run()
+    else:
+        res = bench.run_one(args.task, args.fold)
 

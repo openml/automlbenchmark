@@ -22,15 +22,15 @@ class DockerBenchmark(Benchmark):
             tag=docker_image["tag"]
         )
 
-    def __init__(self, framework_name, benchmark_name, config, reuse_instance=False):
+    def __init__(self, framework_name, benchmark_name, resources, reuse_instance=False):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param config:
+        :param resources:
         :param reuse_instance:
         """
-        super().__init__(framework_name, benchmark_name, config)
+        super().__init__(framework_name, benchmark_name, resources)
         self.reuse_instance = reuse_instance
 
     def setup(self, mode, upload=False):
@@ -55,14 +55,21 @@ class DockerBenchmark(Benchmark):
         else:
             super().run()
 
-    def _run_fold(self, task_def, fold: int):
-        self.run_one(task_def.name, fold)
+    def _run_task(self, task_def):
+        if self.reuse_instance:
+            self.start_docker("{framework} {benchmark} -t {task}".format(
+                framework=self.framework_def.name,
+                benchmark=self.benchmark_name,
+                task=task_def.name,
+            ))
+        else:
+            super()._run_task(task_def)
 
-    def run_one(self, task_name: str, fold: int):
+    def _run_fold(self, task_def, fold: int):
         self.start_docker("{framework} {benchmark} -t {task} -f {fold}".format(
             framework=self.framework_def.name,
             benchmark=self.benchmark_name,
-            task=task_name,
+            task=task_def.name,
             fold=fold
         ))
 

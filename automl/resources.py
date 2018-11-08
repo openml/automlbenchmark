@@ -11,15 +11,16 @@ log = logging.getLogger(__name__)
 class Resources:
 
     @staticmethod
-    def _normalize(config):
-        normalized = config.copy()
-        for k in config.keys():
+    def _normalize(config: Namespace):
+        normalized = config.clone()
+        for k, v in config:
             if re.search(r'_(dir|file)$', k):
-                normalized[k] = os.path.realpath(os.path.expanduser(config[k]))
+                normalized[k] = os.path.realpath(os.path.expanduser(v))
         return normalized
 
-    def __init__(self, config):
-        self.config = Namespace(**Resources._normalize(config))
+    def __init__(self, config: Namespace):
+        self.config = Resources._normalize(config)
+        log.debug("Normalized config: %s", self.config)
 
     def framework_definition(self, name):
         """
@@ -30,13 +31,12 @@ class Resources:
         frameworks_file = self.config.frameworks_definition_file
         log.debug("loading frameworks definitions from %s", frameworks_file)
         with open(frameworks_file) as file:
-            frameworks = json_load(file)
+            frameworks = json_load(file, as_object=True)
 
         if not frameworks[name]:
             raise ValueError("incorrect framework: {}".format(name))
 
         framework = frameworks[name]
-        framework = Namespace(**framework)
         framework.name = name
         return framework
 

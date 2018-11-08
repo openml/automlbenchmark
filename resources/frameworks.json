@@ -55,5 +55,23 @@
     },
     "version":"2.6",
     "project":"https://www.cs.ubc.ca/labs/beta/Projects/autoweka/"
+  },
+  "hyperoptsklearn": {
+    "docker_image": {
+      "author":"automlbenchmark",
+      "image":"hyperoptsklearn",
+      "tag":"latest"
+    },
+    "version":"x.x",
+    "project":"http://hyperopt.github.io/hyperopt-sklearn/"
+  },
+  "oboe": {
+    "docker_image": {
+      "author":"automlbenchmark",
+      "image":"oboe",
+      "tag":"latest"
+    },
+    "version":"x.x",
+    "project":"https://github.com/udellgroup/oboe"
   }
 }

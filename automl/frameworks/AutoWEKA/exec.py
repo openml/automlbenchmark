@@ -3,6 +3,7 @@ import os
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
+from automl.results import save_predictions_to_file
 
 log = logging.getLogger(__name__)
 
@@ -35,11 +36,22 @@ def run(dataset: Dataset, config: TaskConfig):
 
     log.info(output)
 
-    dest_file = config.output_file_template + '.pred'
-    with open(weka_file, 'r') as weka_file, open(dest_file, 'w') as output_file:
+    with open(weka_file, 'r') as weka_file:
+        class_probabilities = []
+        class_predictions = []
+        class_truth = []
         for line in weka_file.readlines()[1:-1]:
             inst, actual, predicted, error, *distribution = line.split(',')
-            class_probabilities = [class_probability.replace('*', '').replace('\n', '') for class_probability in distribution]
-            class_index, class_name = predicted.split(':')
-            output_file.write(','.join(class_probabilities + [class_name + '\n']))
+            pred_probabilities = [pred_probability.replace('*', '').replace('\n', '') for pred_probability in distribution]
+            _, pred_class = predicted.split(':')
+            _, truth = actual.split(':')
+            class_probabilities.append(pred_probabilities)
+            class_predictions.append(pred_class)
+            class_truth.append(truth)
 
+    save_predictions_to_file(dataset=dataset,
+                             output_file=config.output_file_template,
+                             class_probabilities=class_probabilities,
+                             class_predictions=class_predictions,
+                             class_truth=class_truth,
+                             encode_classes=True)
