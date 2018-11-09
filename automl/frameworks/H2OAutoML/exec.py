@@ -1,9 +1,6 @@
 import logging
 import time
 
-from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
-from sklearn.utils.multiclass import type_of_target
-
 import h2o
 from h2o.automl import H2OAutoML
 

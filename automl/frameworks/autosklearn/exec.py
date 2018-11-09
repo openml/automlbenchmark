@@ -1,12 +1,9 @@
 import logging
-import os
 import time
 import warnings
 
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
-from numpy import dtype
-from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -37,8 +34,8 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("Running auto-sklearn with a maximum time of {}s on {} cores with {}MB, optimizing {}."
           .format(config.max_runtime_seconds, config.cores, config.max_mem_size_mb, performance_metric))
 
-    X_train = dataset.train.X_enc
-    y_train = dataset.train.y
+    X_train = dataset.train.X_enc.astype(float)
+    y_train = dataset.train.y_enc
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
@@ -52,27 +49,13 @@ def run(dataset: Dataset, config: TaskConfig):
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_true= dataset.test.X_enc
-    y_true = dataset.test.y
+    X_true= dataset.test.X_enc.astype(float)
+    y_true = dataset.test.y_enc
     class_predictions = auto_sklearn.predict(X_true)
     class_probabilities = auto_sklearn.predict_proba(X_true)
-
-    if class_predictions.dtype != dtype('<U32'):
-        class_predictions = class_predictions.astype(int).astype(str)
-
-    log.info("Optimization was towards metric, but following score is always accuracy.")
-    log.info("Accuracy: " + str(accuracy_score(y_true, class_predictions)))
-
-    if class_probabilities.shape[1] == 2:
-        auc = roc_auc_score(y_true=y_true, y_score=class_probabilities[:,1])
-        log.info("AUC: " + str(auc))
-    else:
-        logloss = log_loss(y_true=y_true, y_pred=class_probabilities)
-        log.info("logloss: ", logloss)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_file_template,
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
-                             class_truth=y_true.values,
-                             encode_classes=True)
+                             class_truth=y_true)

@@ -77,7 +77,7 @@ class ClassificationResult(Result):
 
     def auc(self):
         if self.type != 'binomial':
-            raise ValueError("AUC metric is only supported for binary classification")
+            raise ValueError("AUC metric is only supported for binary classification: {}".format(self.classes))
         return roc_auc_score(self.truth, self.probabilities[:, 1])
 
     def logloss(self):

@@ -86,6 +86,7 @@ class DockerBenchmark(Benchmark):
         log.info("Datasets are loaded by default from folder %s", in_dir)
         log.info("Generated files will be available in folder %s", out_dir)
         output = os.popen(cmd).read()
+        # fixme: handle subprocesses errors
         log.debug(output)
 
     @property
@@ -129,7 +130,7 @@ RUN pip3 install --upgrade pip
 ENV V_PIP /venvs/setup/bin/pip3
 ENV V_PY /venvs/setup/bin/python3
 ENV PIP pip3
-ENV PY python3
+ENV PY python3 -W ignore
 
 RUN $PY -m venv /venvs/setup
 RUN $V_PIP install --upgrade pip

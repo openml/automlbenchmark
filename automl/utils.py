@@ -84,9 +84,10 @@ def cached(fn):
 
 
 def memoize(fn):
-    memo = {}
+    prop_name = '__memo__' + fn.__name__
 
     def decorator(self, key=None):
+        memo = cache(self, prop_name, lambda _: {})
         if key not in memo:
             memo[key] = fn(self) if key is None else fn(self, key)
         return memo[key]

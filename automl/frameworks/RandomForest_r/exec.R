@@ -23,6 +23,7 @@ run <- function(train_file, test_file, output_predictions_file, cores) {
   preds <- preds[c(2:ncol(preds), 1)]
   names(preds)[names(preds) == "response"] <- "predictions"
   names(preds) <- sub("^prob.", "", names(preds))
+  # FIXME: label encoding for predictions and truth
 
   write.table(preds, file = output_predictions_file,
               row.names = FALSE, col.names = TRUE,
