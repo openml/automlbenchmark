@@ -59,3 +59,7 @@ class AWSBenchmark(Benchmark):
         pass
 
 
+    def stop_instance(self, cmd):
+        pass
+
+

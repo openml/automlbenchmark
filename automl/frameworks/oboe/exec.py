@@ -5,7 +5,7 @@ from auto_learner import AutoLearner
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
-from automl.utils import encoder
+from automl.utils import Encoder
 
 
 log = logging.getLogger(__name__)
@@ -27,8 +27,8 @@ def run(dataset: Dataset, config: TaskConfig):
                          runtime_limit=config.max_runtime_seconds
                          )
     automl.fit_doubling_time_constrained(X_train, y_train)
-    class_predictions = automl.predict(X_test).reshape(-1, 1)
-    class_probabilities = encoder(class_predictions, 'one_hot').transform(class_predictions).todense()
+    class_predictions = automl.predict(X_test)
+    class_probabilities = Encoder('one-hot').fit_transform(class_predictions).astype(float)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_file_template,

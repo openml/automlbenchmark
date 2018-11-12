@@ -6,7 +6,7 @@ from hyperopt import tpe
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
-from automl.utils import encoder
+from automl.utils import Encoder
 
 
 log = logging.getLogger(__name__)
@@ -28,8 +28,8 @@ def run(dataset: Dataset, config: TaskConfig):
     log.warning('always optimize towards accuracy.')  # loss_fn lambda y1,y2:loss(y1, y2)
     hyperoptsklearn = HyperoptEstimator(classifier=any_classifier('clf'), algo=tpe.suggest)
     hyperoptsklearn.fit(X_train, y_train)
-    class_predictions = hyperoptsklearn.predict(X_test).reshape(-1, 1)
-    class_probabilities = encoder(class_predictions, 'one_hot').transform(class_predictions).todense()
+    class_predictions = hyperoptsklearn.predict(X_test)
+    class_probabilities = Encoder('one-hot').fit_transform(class_predictions).astype(float)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_file_template,

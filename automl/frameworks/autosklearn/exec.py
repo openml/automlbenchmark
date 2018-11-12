@@ -49,13 +49,13 @@ def run(dataset: Dataset, config: TaskConfig):
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_true= dataset.test.X_enc.astype(float)
-    y_true = dataset.test.y_enc
-    class_predictions = auto_sklearn.predict(X_true)
-    class_probabilities = auto_sklearn.predict_proba(X_true)
+    X_test= dataset.test.X_enc.astype(float)
+    y_test = dataset.test.y_enc
+    class_predictions = auto_sklearn.predict(X_test)
+    class_probabilities = auto_sklearn.predict_proba(X_test)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_file_template,
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
-                             class_truth=y_true)
+                             class_truth=y_test)

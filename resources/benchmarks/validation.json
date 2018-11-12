@@ -5,8 +5,8 @@
     "runtime":600,
     "cores":2,
     "aws_instance_type":"m5.large",
-    "metric":"auc",
-    "folds":2
+    "metric":["auc", "acc"],
+    "folds":1
   },
   {
     "name": "eucalyptus",
@@ -14,8 +14,8 @@
     "runtime":600,
     "cores":2,
     "aws_instance_type":"m5.large",
-    "metric":"logloss",
-    "folds":2
+    "metric":["logloss", "acc"],
+    "folds":1
   },
   {
     "name": "internet-advertisements",
@@ -23,8 +23,8 @@
     "runtime":600,
     "cores":2,
     "aws_instance_type":"m5.large",
-    "metric":"auc",
-    "folds":2
+    "metric":["auc", "acc"],
+    "folds":1
   },
   {
     "name": "bioresponse",
@@ -32,8 +32,8 @@
     "runtime":600,
     "cores":2,
     "aws_instance_type":"m5.large",
-    "metric":"auc",
-    "folds":2
+    "metric":["auc", "acc"],
+    "folds":1
   },
   {
     "name": "micro-mass",
@@ -41,7 +41,7 @@
     "runtime":600,
     "cores":2,
     "aws_instance_type":"m5.large",
-    "metric":"logloss",
-    "folds":2
+    "metric":["logloss", "acc"],
+    "folds":1
   }
 ]

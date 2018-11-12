@@ -23,6 +23,9 @@ class Openml():
     def load(self, task_id, fold=0):
         task = oml.tasks.get_task(task_id)
         dataset = task.get_dataset()
+        _, nfolds, _ = task.get_split_dimensions()
+        if fold >= nfolds:
+            raise ValueError("this OpenML task only accepts `fold` < {}".format(nfolds))
         return OpenmlDataset(task, dataset, fold)
 
 
@@ -63,11 +66,12 @@ class OpenmlDataset(Dataset):
                 f.nominal_values = self._unique_values.get(f.name)
             return f.nominal_values
 
-        return [Feature(f.index, f.name, f.data_type, get_values(f)) for i, f in sorted(self._oml_dataset.features.items())]
+        is_target = lambda f: f.name == self._oml_task.target_name
+        return [Feature(f.index, f.name, f.data_type, get_values(f), is_target(f)) for i, f in sorted(self._oml_dataset.features.items())]
 
     @lazy_property
     def target(self):
-        return next(f for f in self.features if f.name == self._oml_task.target_name)
+        return next(f for f in self.features if f.is_target)
 
     @property
     def attributes(self):
@@ -124,10 +128,9 @@ class OpenmlDataset(Dataset):
         pass
 
 
-
 class OpenmlDatasplit(Datasplit):
 
-    def __init__(self, dataset: Dataset, path:str):
+    def __init__(self, dataset: Dataset, path: str):
         super().__init__(dataset, 'arff')
         self._path = path
 
@@ -149,6 +152,7 @@ def _get_split_path_for_dataset(ds_path, split='train', fold=0):
     split_base = re.sub(r'\.(\w+)$', r'_{split}_{fold}.\1'.format(split=split, fold=fold), ds_base)
     split_path = os.path.join(ds_dir, split_base)
     return split_path
+
 
 def _save_split_set(path, name, full_dataset=None, indexes=None):
     # X_split = X[indexes, :]

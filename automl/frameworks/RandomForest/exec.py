@@ -1,5 +1,4 @@
 import logging
-import os
 
 from sklearn.preprocessing import Imputer
 from sklearn.ensemble import RandomForestClassifier

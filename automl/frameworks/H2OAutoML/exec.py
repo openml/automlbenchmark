@@ -47,11 +47,15 @@ def run(dataset: Dataset, config: TaskConfig):
         log.info("Requested training time (minutes): " + str((config.max_runtime_seconds/60.0)))
         log.info("Actual training time (minutes): " + str(actual_runtime_min))
 
+        if not aml.leader:
+            log.warning("H2O could not produce any model in the requested time.")
+            return
+
         log.debug("Predicting the test set.")
         predictions = aml.predict(test).as_data_frame()
 
         y_pred = predictions.iloc[:, 0]
-        y_true = test[:, dataset.target.index].as_data_frame(header=False)
+        y_truth = test[:, dataset.target.index].as_data_frame(header=False)
 
         class_predictions = y_pred.values
         class_probabilities = predictions.iloc[:, 1:].values
@@ -60,7 +64,7 @@ def run(dataset: Dataset, config: TaskConfig):
                                  output_file=config.output_file_template,
                                  class_probabilities=class_probabilities,
                                  class_predictions=class_predictions,
-                                 class_truth=y_true.values,
+                                 class_truth=y_truth.values,
                                  encode_classes=True)
 
     finally:

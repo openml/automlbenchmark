@@ -179,6 +179,7 @@ class BenchmarkTask:
         """
         if hasattr(self._task_def, 'openml_task_id'):
             self._dataset = Benchmark.task_loader.load(self._task_def.openml_task_id, self.fold)
+            log.debug("loaded OpenML dataset for task_id %s", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'dataset'):
             # todo
             raise NotImplementedError("raw dataset are not supported yet")

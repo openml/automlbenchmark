@@ -4,12 +4,12 @@ from typing import List
 import numpy as np
 from numpy import ndarray
 
-from .utils import encoder, lazy_property, repr_def
+from .utils import Encoder, lazy_property, repr_def
 
 
 class Feature:
 
-    def __init__(self, index, name, data_type, values=None):
+    def __init__(self, index, name, data_type, values=None, is_target=False):
         """
 
         :param index:
@@ -21,6 +21,7 @@ class Feature:
         self.name = name
         self.data_type = data_type
         self.values = values
+        self.is_target = is_target
 
     def is_categorical(self, strict=True):
         if strict:
@@ -30,23 +31,11 @@ class Feature:
 
     @lazy_property
     def label_encoder(self):
-        return encoder(self.values, 'label')
-
-    @lazy_property
-    def label_binarizer(self):
-        return encoder(self.values, 'binary')
+        return Encoder('label' if self.values else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
 
     @lazy_property
     def one_hot_encoder(self):
-        return encoder(self.values, 'one_hot')
-
-    def encode(self, labelled_data, label_encoder=None):
-        label_encoder = self.label_encoder if not label_encoder else label_encoder
-        return label_encoder.transform(labelled_data) if label_encoder else labelled_data
-
-    def decode(self, encoded_data, label_encoder=None):
-        label_encoder = self.label_encoder if not label_encoder else label_encoder
-        return label_encoder.inverse_transform(encoded_data) if label_encoder else encoded_data
+        return Encoder('one-hot' if self.values else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
 
     def __repr__(self):
         return repr_def(self)
@@ -100,12 +89,13 @@ class Datasplit(ABC):
 
     @lazy_property
     def X_enc(self) -> ndarray:
-        encoded_cols = [p.encode(self.data[:, p.index]) for p in self.dataset.predictors]
+        # todo: should we use one_hot_encoder here instead?
+        encoded_cols = [p.label_encoder.transform(self.data[:, p.index]) for p in self.dataset.predictors]
         return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
 
     @lazy_property
     def y_enc(self) -> ndarray:
-        return self.dataset.target.encode(self.y)
+        return self.dataset.target.label_encoder.transform(self.y)
 
 
 class Dataset(ABC):
