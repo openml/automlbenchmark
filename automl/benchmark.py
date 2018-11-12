@@ -196,7 +196,11 @@ class BenchmarkTask:
         task_config = copy(self.task)
         task_config.framework = framework_name
         task_config.output_file_template = self.task.output_file_template.format(framework=task_config.framework.lower())
-        framework.run(self._dataset, task_config)
+        try:
+            framework.run(self._dataset, task_config)
+        except Exception as e:
+            log.error("%s failed with error $s", framework_name, str(e))
+            log.exception(e)
 
         result = Results(task_name=self.task.name, fold=self.fold, resources=self._resources).get_result(framework_name)
         scores = {}
