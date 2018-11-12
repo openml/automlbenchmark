@@ -74,8 +74,8 @@ class DockerBenchmark(Benchmark):
         ))
 
     def start_docker(self, script_params=""):
-        in_dir = self.resources.config['input_dir']
-        out_dir = self.resources.config['output_dir']
+        in_dir = self.resources.config.input_dir
+        out_dir = self.resources.config.output_dir
         cmd = "docker run -v {input}:/input -v {output}:/output --rm {image} {params} -i /input -o /output -s skip".format(
             input=in_dir,
             output=out_dir,
@@ -153,7 +153,7 @@ CMD ["{framework}", "test"]
 
 """.format(custom_commands=custom_commands,
            framework=self.framework_name,
-           script=self.resources.config['script'])
+           script=self.resources.config.script)
 
         with open(self._docker_script, 'w') as file:
             file.write(docker_content)

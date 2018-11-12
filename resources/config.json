@@ -1,4 +1,5 @@
 {
+  "project_repository": "https://github.com/seb-h2o/automlbenchmark",
   "frameworks_definition_file": "resources/frameworks.json",
   "benchmarks_definition_dir": "resources/benchmarks",
   "input_dir": "~/.openml/cache",
