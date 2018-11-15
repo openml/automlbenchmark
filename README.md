@@ -1,6 +1,6 @@
 # AutoML Benchmarking
 
-_**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._
+<span style="color:red">_**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._</span>
 
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
@@ -13,12 +13,15 @@ This toolkit aims to address both problems by setting up standardized environmen
 Documentation: https://openml.github.io/automlbenchmark/
 
 ### Features:
-* Curated suites of benchmarking datasets
+* Curated suites of benchmarking datasets from OpenML (TODO: add study link)
 * Includes a [wide range of AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
 * [New AutoML systems can be added](https://github.com/openml/automlbenchmark/tree/master/docker) as Docker images
 * Execute experiments locally or on AWS (see below)
 
-In the future, we also aim to add support for sharing benchmarking results on OpenML.
+Current limitations (which will be addressed in future versions):  
+* AutoML systems are always run under their default settings.
+* The benchmark datasets currently only cover classification
+* We don't automatically share the evaluations on OpenML yet.
 
 
 ## Quickstart
