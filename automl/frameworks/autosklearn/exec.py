@@ -58,4 +58,5 @@ def run(dataset: Dataset, config: TaskConfig):
                              output_file=config.output_file_template,
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
-                             class_truth=y_test)
+                             class_truth=y_test,
+                             classes_are_encoded=True)

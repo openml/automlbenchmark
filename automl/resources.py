@@ -2,7 +2,7 @@ import logging
 import os
 import re
 
-from .utils import Namespace, json_load
+from .utils import Namespace, json_load, lazy_property, memoize
 
 
 log = logging.getLogger(__name__)
@@ -32,18 +32,22 @@ class Resources:
         :param name:
         :return: the framework definition with the given name
         """
+        framework = self._frameworks[name]
+        if not framework:
+            raise ValueError("incorrect framework: {}".format(name))
+        return framework
+
+    @lazy_property
+    def _frameworks(self):
         frameworks_file = self.config.frameworks_definition_file
         log.debug("loading frameworks definitions from %s", frameworks_file)
         with open(frameworks_file) as file:
             frameworks = json_load(file, as_object=True)
+        for name, framework in frameworks:
+            framework.name = name
+        return frameworks
 
-        if not frameworks[name]:
-            raise ValueError("incorrect framework: {}".format(name))
-
-        framework = frameworks[name]
-        framework.name = name
-        return framework
-
+    @memoize
     def benchmark_definition(self, name):
         """
 
@@ -60,3 +64,4 @@ class Resources:
         with open(benchmark_file) as file:
             tasks = json_load(file, as_object=True)
         return tasks
+

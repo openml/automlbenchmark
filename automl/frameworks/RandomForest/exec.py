@@ -17,9 +17,9 @@ def run(dataset: Dataset, config: TaskConfig):
     imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
     imp.fit(dataset.train.X_enc)
     X_train = imp.transform(dataset.train.X_enc)
-    y_train = dataset.train.y_enc
+    y_train = dataset.train.y
     X_test = imp.transform(dataset.test.X_enc)
-    y_test = dataset.test.y_enc
+    y_test = dataset.test.y
 
     # TODO: Probably have to add a dummy encoder here in case there's any categoricals
     # TODO: If auto-sklearn & TPOT also require imputation & dummy encoding, let's move this to common_code
@@ -37,5 +37,6 @@ def run(dataset: Dataset, config: TaskConfig):
                              output_file=config.output_file_template,
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
-                             class_truth=y_test)
+                             class_truth=y_test,
+                             classes_are_encoded=False)
 

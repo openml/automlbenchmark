@@ -31,11 +31,11 @@ class Feature:
 
     @lazy_property
     def label_encoder(self):
-        return Encoder('label' if self.values else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
+        return Encoder('label' if self.values is not None else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
 
     @lazy_property
     def one_hot_encoder(self):
-        return Encoder('one-hot' if self.values else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
+        return Encoder('one-hot' if self.values is not None else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
 
     def __repr__(self):
         return repr_def(self)

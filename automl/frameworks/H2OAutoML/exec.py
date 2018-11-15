@@ -64,8 +64,7 @@ def run(dataset: Dataset, config: TaskConfig):
                                  output_file=config.output_file_template,
                                  class_probabilities=class_probabilities,
                                  class_predictions=class_predictions,
-                                 class_truth=y_truth.values,
-                                 encode_classes=True)
+                                 class_truth=y_truth.values)
 
     finally:
         if h2o.connection():

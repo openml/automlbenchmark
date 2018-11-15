@@ -57,5 +57,4 @@ def run(dataset: Dataset, config: TaskConfig):
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
                              class_truth=class_truth,
-                             class_probabilities_labels=class_probabilities_labels,
-                             encode_classes=True)
+                             class_probabilities_labels=class_probabilities_labels)

@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 import math
 import os
@@ -22,38 +23,29 @@ class Results:
         self.resources = resources
 
     @memoize
-    def get_result(self, framework):
+    def get_result(self, framework_name):
         predictions_file = os.path.join(self.resources.config.predictions_dir, "{framework}_{task}_{fold}.csv").format(
-            framework=framework.lower(),
+            framework=framework_name.lower(),
             task=self.task,
             fold=self.fold
         )
-        log.info("Loading predictions from %s", predictions_file)
-        if os.path.isfile(predictions_file):
-            df = pd.read_csv(predictions_file)
-            log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
-            if df.shape[1] > 2:
-                return ClassificationResult(df)
-            else:
-                return RegressionResult(df)
-        else:
-            log.warning("Predictions file {file} is missing: {framework} either failed or could not produce any prediction".format(
-                file=predictions_file,
-                framework=framework
-            ))
-            return NoResult()
+        return load_predictions_from_file(predictions_file)
 
-    def compute_scores(self, framework, metrics):
+    def compute_scores(self, framework_name, metrics):
+        framework_def = self.resources.framework_definition(framework_name)
+        # todo: add mode? local, docker, aws
         scores = dict(
-            framework=framework,
+            framework=framework_name,
+            version=framework_def.version,
             task=self.task,
             fold=self.fold,
+            time=dt.datetime.utcnow().isoformat()
         )
-        result = self.get_result(framework)
+        result = self.get_result(framework_name)
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
-
+        scores['result'] = scores[metrics[0]]
         log.info("metric scores: %s", scores)
         return scores
 
@@ -113,7 +105,7 @@ class ClassificationResult(Result):
 
     def __init__(self, predictions_df):
         super().__init__(predictions_df)
-        self.classes = self.df.columns[:-2].values
+        self.classes = self.df.columns[:-2].values.astype(str)
         self.probabilities = self.df.iloc[:, :-2].values.astype(float)
         self.target = Feature(0, 'class', 'categorical', self.classes, is_target=True)
         self.type = 'binomial' if len(self.classes) == 2 else 'multinomial'
@@ -130,8 +122,8 @@ class ClassificationResult(Result):
         return log_loss(self.truth, self.probabilities)
 
     def _autoencode(self, vec):
-        needs_encoding = isinstance(vec[0], str) and not vec[0].isdigit()
-        return self.target.encode(vec) if needs_encoding else vec
+        needs_encoding = not encode_predictions_and_truth or (isinstance(vec[0], str) and not vec[0].isdigit())
+        return self.target.label_encoder.transform(vec) if needs_encoding else vec
 
 
 class RegressionResult(Result):
@@ -143,14 +135,33 @@ class RegressionResult(Result):
         self.type = 'regression'
 
 
+encode_predictions_and_truth = False
+
+
+def load_predictions_from_file(predictions_file):
+    log.info("Loading predictions from %s", predictions_file)
+    if os.path.isfile(predictions_file):
+        df = pd.read_csv(predictions_file)
+        log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
+        if df.shape[1] > 2:
+            return ClassificationResult(df)
+        else:
+            return RegressionResult(df)
+    else:
+        log.warning("Predictions file {file} is missing: framework either failed or could not produce any prediction".format(
+            file=predictions_file,
+        ))
+        return NoResult()
+
+
 def save_predictions_to_file(dataset: Dataset, output_file: str,
                              class_probabilities: ndarray=None, class_predictions: ndarray=None, class_truth: ndarray=None,
                              class_probabilities_labels=None,
-                             encode_classes=False):
+                             classes_are_encoded=False):
     """ Save class probabilities and predicted labels to file in csv format.
 
     :param dataset:
-    :param task:
+    :param task
     :param class_probabilities:
     :param class_predictions:
     :param class_truth:
@@ -163,19 +174,32 @@ def save_predictions_to_file(dataset: Dataset, output_file: str,
     df = pd.DataFrame(class_probabilities, columns=prob_cols)
     if class_probabilities_labels:
         df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
-    df = df.assign(predictions=class_predictions if not encode_classes else dataset.target.label_encoder.transform(class_predictions))
+
+    predictions = class_predictions
     truth = class_truth if class_truth is not None else dataset.test.y
-    df = df.assign(truth=truth if not encode_classes else dataset.target.label_encoder.transform(truth))
+    if not encode_predictions_and_truth and classes_are_encoded:
+        predictions = dataset.target.label_encoder.inverse_transform(class_predictions)
+        truth = dataset.target.label_encoder.inverse_transform(truth)
+    if encode_predictions_and_truth and not classes_are_encoded:
+        predictions = dataset.target.label_encoder.transform(class_predictions)
+        truth = dataset.target.label_encoder.transform(truth)
+
+    df = df.assign(predictions=predictions)
+    df = df.assign(truth=truth)
     log.info("Predictions preview:\n %s\n", df.head(20).to_string())
     df.to_csv(file_path, index=False)
     log.debug("Predictions successfully saved to %s", file_path)
 
 
 def scores_as_df(scores, index=None):
-    index = index if index else ['task', 'fold', 'framework']
-    return pd.DataFrame.from_records(scores, index=index)
+    index = index if index else ['task', 'framework', 'fold']
+    df = pd.DataFrame.from_records(scores, index=index)
+    log.info("scores columns: %s", df.columns)
+    # todo: sort the columns to have index columns, followed by result, metrics and finally version and time
+    return df
 
 
-def save_scores_to_file(scores, output_file: str):
+def save_scores_to_file(scores, output_file: str, append=False):
     scores_df = scores if isinstance(scores, pd.DataFrame) else scores_as_df(scores)
     scores_df.to_csv(output_file)
+    # todo: append
