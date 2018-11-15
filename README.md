@@ -34,7 +34,9 @@ To run a benchmark call the `benchmark.py` file with three arguments:
 ## Installation
 
 To run the benchmarks, you will need [Docker](https://docs.docker.com/install/), Python 2 or 3, and the `boto3` Python package.
-
+```
+git clone https://github.com/openml/automlbenchmark.git
+```
 
 ### Generate Docker Images
 
