@@ -18,11 +18,10 @@ Documentation: https://openml.github.io/automlbenchmark/
 * [New AutoML systems can be added](https://github.com/openml/automlbenchmark/tree/master/docker) as Docker images
 * Execute experiments locally or on AWS (see below)
 
-Current limitations (which will be addressed in future versions):  
-* AutoML systems are always run under their default settings.
-* The benchmark datasets currently only cover classification
-* We don't automatically share the evaluations on OpenML yet.
-
+Future plans:  
+* Automatic sharing of benchmarkling results on OpenML.
+* Allow tuning of the AutoML systems (hyper-hyperparameters), beyond their default settings.
+* More benchmark datasets, and datasets of other types (e.g. regression).
 
 ## Quickstart
 
