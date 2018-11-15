@@ -36,7 +36,7 @@ To run a benchmark call the `benchmark.py` file with three arguments:
 To run the benchmarks, you will need [Docker](https://docs.docker.com/install/), Python 2 or 3, and the `boto3` Python package.
 
 
-## Generate Docker Images
+### Generate Docker Images
 
 The first time you run the benchmarks, you will need to generate the Docker images. As an example, if you want to run the Random Forest benchmark, you would first need to execute the following to generate the Random Forest Docker image:
 
@@ -47,7 +47,7 @@ cd docker
 This will generate the Docker image for the Random Forest benchmark, where "RandomForest" is the folder name inside the `./docker` folder.
 
 
-## Run the benchmark locally
+### Run the benchmark locally
 
 A minimal example would be to run the test benchmarks with a random forest:
 
@@ -67,7 +67,7 @@ The script will produce output that records the OpenML Task ID, the fold index t
 ```
 
 
-## Run the benchmark on AWS
+### Run the benchmark on AWS
 
 To run a benchmark on AWS you additionally need to:
 
@@ -110,3 +110,4 @@ Termination successful
 2       test_2     0  0.8679245283018868
 3       test_2     1  0.8679245283018868
 ```
+
