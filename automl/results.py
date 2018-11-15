@@ -3,7 +3,7 @@ import math
 import os
 import re
 
-from numpy import ndarray, sort
+from numpy import NaN, ndarray, sort
 import pandas as pd
 from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score
 
@@ -79,6 +79,9 @@ class Result:
     def rmse(self):
         return math.sqrt(self.mse())
 
+    def auc(self):
+        return NaN
+
     def evaluate(self, metric):
         if hasattr(self, metric):
             return getattr(self, metric)()
@@ -100,6 +103,9 @@ class NoResult(Result):
         return self.missing_result
 
     def rmse(self):
+        return self.missing_result
+
+    def auc(self):
         return self.missing_result
 
 

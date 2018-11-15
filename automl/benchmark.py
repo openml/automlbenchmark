@@ -4,8 +4,6 @@ from importlib import import_module
 import logging
 import os
 
-import pandas as pd
-
 from .openml import Openml
 from .resources import Resources
 from .results import Results, scores_as_df, save_scores_to_file
