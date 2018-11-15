@@ -40,7 +40,7 @@ class AWSBenchmark(Benchmark):
 
     def run(self):
         if self.reuse_instance:
-            self.start_instances("{framework} {benchmark} -m docker".format(
+            self.start_instances("{framework} {benchmark}".format(
                 script=self.resources.config['script'],
                 framework=self.framework_def.name,
                 benchmark=self.benchmark_name
@@ -52,7 +52,7 @@ class AWSBenchmark(Benchmark):
         self.run_one(task_def.name, fold)
 
     def run_one(self, task_name: str, fold: int):
-        self.start_instances("{framework} {benchmark} -m docker -t {task} -f {fold}".format(
+        self.start_instances("{framework} {benchmark} -t {task} -f {fold}".format(
             framework=self.framework_def.name,
             benchmark=self.benchmark_name,
             task=task_name,
@@ -72,7 +72,7 @@ class AWSBenchmark(Benchmark):
         self.instances.extend(instances)
         log.info("Started EC2 instances %s", [inst.id for inst in instances])
 
-    def stop_instances(self, ids):
+    def stop_instances(self, ids=None):
         ids = ids if ids else [inst.id for inst in self.instances]
         # self.ec2.instances.filter(InstanceIds=ids).stop()
         log.info("Terminating EC2 instances %s", ids)
@@ -81,10 +81,53 @@ class AWSBenchmark(Benchmark):
         # todo error handling
 
     def _startup_script(self, params):
+        return """
+#cloud-config
+
+package_update: true
+package_upgrade: false
+packages:
+  - curl
+  - wget
+  - unzip
+  - awscli
+  - git
+  - python3
+  - python3-pip
+
+runcmd:
+  - export PIP=pip3
+  - export -f PY() {{ python3 -W ignore "$@" \}}
+  - mkdir -p /s3bucket
+  - mkdir ~/repo
+  - cd ~/repo
+  - git clone {repo} .
+  - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
+  - PIP install --no-cache-dir openml
+  - PY {script} {params} -o /s3bucket -s only
+  - PY {script} {params} -o /s3bucket -s skip
+  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+
+final_message: "AutoML benchmark completed after $UPTIME s"
+
+power_state:
+  delay: "+30"
+  mode: poweroff
+  message: See you soon
+  timeout: 21600
+  condition: True
+ 
+""".format(
+            repo=self.resources.config.project_repository,
+            script=self.resources.config.script,
+            params=params
+        )
+
+    def _startup_script_bash(self, params):
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
-apt-get install -y curl wget unzip git
+apt-get install -y curl wget unzip git awscli
 apt-get install -y python3 python3-pip 
 pip3 install --upgrade pip
 
@@ -101,6 +144,7 @@ PIP install --no-cache-dir openml
 
 PY {script} {params} -o /s3bucket -s only
 PY {script} {params} -o /s3bucket -s skip
+rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 """.format(
             repo=self.resources.config.project_repository,
             script=self.resources.config.script,

@@ -4,9 +4,11 @@ from importlib import import_module
 import logging
 import os
 
+import pandas as pd
+
 from .openml import Openml
 from .resources import Resources
-from .results import Results
+from .results import Results, save_scores_to_file
 from .utils import available_memory_mb
 
 
@@ -59,38 +61,68 @@ class Benchmark:
 
         self.framework_module.setup()
 
-    def run(self):
+    def run(self, save_scores=False):
         """
         runs the framework for every task in the benchmark definition
         """
+        results = {}
         for task_def in self.benchmark_def:
             if Benchmark._is_task_enabled(task_def):
-                self._run_task(task_def)
+                results.update(self._run_task(task_def))
+        scores_df = pd.DataFrame(results).T
+        log.info("Summing up metric scores for {benchmark} on {framework}:\n {scores}".format(
+            benchmark=self.benchmark_name,
+            framework=self.framework_name,
+            scores=scores_df
+        ))
+        if save_scores:
+            save_scores_to_file(scores_df,
+                                os.path.join(self.resources.config.scores_dir, "{framework}_benchmark_{benchmark}.csv"
+                                             .format(framework=self.framework_name, benchmark=self.benchmark_name)))
+        return scores_df
 
-    def run_one(self, task_name: str, fold):
+    def run_one(self, task_name: str, fold, save_scores=False):
         """
 
         :param task_name:
         :param fold:
+        :param save_scores:
         """
+        results = {}
         task_def = self._get_task_def(task_name)
         if fold is None:
-            self._run_task(task_def)
+            results = self._run_task(task_def)
         elif isinstance(fold, int):
-            self._run_fold(task_def, fold)
+            scores, key = self._run_fold(task_def, fold)
+            results[key] = scores
         elif isinstance(fold, list) and all(isinstance(f, int) for f in fold):
             for f in fold:
-                self._run_fold(task_def, f)
+                scores, key = self._run_fold(task_def, f)
+                results[key] = scores
         else:
             raise ValueError("fold value should be None, an int, or a list of ints")
+        scores_df = pd.DataFrame(results).T
+        log.info("Summing up metric scores for {task} on {framework}:\n {scores}".format(
+            task=task_name,
+            framework=self.framework_name,
+            scores=scores_df
+        ))
+        if save_scores:
+            save_scores_to_file(scores_df,
+                                os.path.join(self.resources.config.scores_dir, "scores", "{framework}_task_{task}.csv"
+                                             .format(framework=self.framework_name, task=task_name)))
+        return scores_df
 
     def _run_task(self, task_def):
         """
         run the framework for every fold in the task definition
         :param task_def:
         """
+        results = {}
         for fold in range(task_def.folds):
-            self._run_fold(task_def, fold)
+            scores, key = self._run_fold(task_def, fold)
+            results[key] = scores
+        return results
 
     def _run_fold(self, task_def, fold: int):
         """
@@ -103,7 +135,7 @@ class Benchmark:
 
         bench_task = BenchmarkTask(task_def, fold, self.resources)
         bench_task.load_data()
-        bench_task.run(self.framework_module)
+        return bench_task.run(self.framework_module)
 
     def _get_task_def(self, task_name):
         task_def = next(task for task in self.benchmark_def if task.name == task_name)
@@ -150,7 +182,7 @@ class TaskConfig:
             cores=task_def.cores,
             max_mem_size_mb=config.max_mem_size_mb,
             input_dir=config.input_dir,
-            output_dir=config.output_dir
+            output_dir=config.predictions_dir,
         )
 
 
@@ -215,8 +247,6 @@ class BenchmarkTask:
             framework=framework_name,
             scores=scores
         ))
-        return scores
-
-
-
+        key = "{}[{}]".format(self._task_def.name, self.fold)
+        return scores, key
 

@@ -16,3 +16,4 @@ __pycache__
 *.csv
 *.arff
 libs/
+results/

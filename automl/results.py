@@ -23,7 +23,7 @@ class Results:
 
     @memoize
     def get_result(self, framework):
-        predictions_file = os.path.join(self.resources.config.output_dir, "{framework}_{task}_{fold}.pred").format(
+        predictions_file = os.path.join(self.resources.config.output_dir, "predictions", "{framework}_{task}_{fold}.pred").format(
             framework=framework.lower(),
             task=self.task,
             fold=self.fold
@@ -145,3 +145,7 @@ def save_predictions_to_file(dataset: Dataset, output_file: str,
     log.info("Predictions preview:\n %s\n", df.head(20).to_string())
     df.to_csv(file_path, index=False)
     log.debug("Predictions successfully saved to %s", file_path)
+
+
+def save_scores_to_file(scores: pd.DataFrame, output_file: str):
+    scores.to_csv(output_file)

@@ -20,6 +20,10 @@ class Resources:
 
     def __init__(self, config: Namespace):
         self.config = Resources._normalize(config)
+        self.config.predictions_dir = os.path.join(self.config.output_dir, 'predictions')
+        self.config.scores_dir = os.path.join(self.config.output_dir, 'scores')
+        os.makedirs(self.config.predictions_dir, exist_ok=True)
+        os.makedirs(self.config.scores_dir, exist_ok=True)
         log.debug("Normalized config: %s", self.config)
 
     def framework_definition(self, name):

@@ -34,8 +34,6 @@ def run(dataset: Dataset, config: TaskConfig):
         predictions_output=weka_file
     )).read()
 
-    log.info(output)
-
     with open(weka_file, 'r') as weka_file:
         class_probabilities = []
         class_predictions = []

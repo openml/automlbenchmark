@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import stat
-from typing import Optional
 
 import numpy as np
 import psutil

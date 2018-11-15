@@ -43,6 +43,7 @@ log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.be
 log.debug("script args: %s", args)
 
 with open("resources/config.json") as file:
+    # todo: allow a custom automlbenchmark_config.json in user directory: maybe this would allow removal of parameters like region, indir, outdir
     config = json_load(file, as_object=True)
     config.script = os.path.basename(__file__)
     if args.indir:
@@ -66,7 +67,7 @@ if args.setup == 'only':
 bench.setup(automl.Benchmark.SetupMode[args.setup])
 if args.setup != 'only':
     if args.task is None:
-        res = bench.run()
+        res = bench.run(save_scores=True)
     else:
-        res = bench.run_one(args.task, args.fold)
+        res = bench.run_one(args.task, args.fold, save_scores=True)
 
