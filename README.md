@@ -1,6 +1,6 @@
 # AutoML Benchmarking
 
-<span style="color:red">_**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._</span>
+_**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._
 
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
