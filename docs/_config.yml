@@ -1,5 +1,5 @@
 repository: openml.github.io/automlbenchmark
-remote_theme: fongandrew/hydeout
+theme: jekyll-theme-slate
 markdown: kramdown
 
 title: AutoML Benchmark
