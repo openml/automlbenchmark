@@ -3,7 +3,7 @@ import math
 import os
 import re
 
-from numpy import ndarray
+from numpy import ndarray, sort
 import pandas as pd
 from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score
 
@@ -125,6 +125,7 @@ class RegressionResult(Result):
 
 def save_predictions_to_file(dataset: Dataset, output_file: str,
                              class_probabilities: ndarray=None, class_predictions: ndarray=None, class_truth: ndarray=None,
+                             class_probabilities_labels=None,
                              encode_classes=False):
     """ Save class probabilities and predicted labels to file in csv format.
 
@@ -138,7 +139,10 @@ def save_predictions_to_file(dataset: Dataset, output_file: str,
     """
     file_path = output_file if re.search(r'\.pred$', output_file) else output_file + '.pred'
     log.info("Saving predictions to %s", file_path)
-    df = pd.DataFrame(class_probabilities, columns=dataset.target.label_encoder.classes)
+    prob_cols = class_probabilities_labels if class_probabilities_labels else dataset.target.label_encoder.classes
+    df = pd.DataFrame(class_probabilities, columns=prob_cols)
+    if class_probabilities_labels:
+        df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
     df = df.assign(predictions=class_predictions if not encode_classes else dataset.target.label_encoder.transform(class_predictions))
     truth = class_truth if class_truth is not None else dataset.test.y
     df = df.assign(truth=truth if not encode_classes else dataset.target.label_encoder.transform(truth))

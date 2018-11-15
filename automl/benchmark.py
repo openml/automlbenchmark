@@ -109,7 +109,7 @@ class Benchmark:
         ))
         if save_scores:
             save_scores_to_file(scores_df,
-                                os.path.join(self.resources.config.scores_dir, "scores", "{framework}_task_{task}.csv"
+                                os.path.join(self.resources.config.scores_dir, "{framework}_task_{task}.csv"
                                              .format(framework=self.framework_name, task=task_name)))
         return scores_df
 

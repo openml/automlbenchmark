@@ -33,7 +33,12 @@ def run(dataset: Dataset, config: TaskConfig):
         metric=metric,
         predictions_output=weka_file
     )).read()
+    log.debug(output)
 
+    # if target values are not sorted alphabetically in the ARFF file, then class probabilities are returned in the original order
+    # interestingly, other frameworks seem to always sort the target values first
+    # that's why we need to specify the probabilities labels here: sorting+formatting is done in saving function
+    class_probabilities_labels = dataset.target.values
     with open(weka_file, 'r') as weka_file:
         class_probabilities = []
         class_predictions = []
@@ -52,4 +57,5 @@ def run(dataset: Dataset, config: TaskConfig):
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
                              class_truth=class_truth,
+                             class_probabilities_labels=class_probabilities_labels,
                              encode_classes=True)

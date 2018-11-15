@@ -220,6 +220,11 @@ class Encoder(TransformerMixin):
         if not self.delegate:
             return vec
 
+        return_value = lambda v: v
+        if isinstance(vec, str):
+            vec = [vec]
+            return_value = (lambda v: v[0])
+
         if self.str_encoder:
             vec = self.str_encoder.transform(vec)
 
@@ -235,13 +240,14 @@ class Encoder(TransformerMixin):
                     if None in missing:
                         res = res.astype(self.encoded_type)
                     res[mask] = np.NaN if self.encoded_type == float else None
-                return res
+                return return_value(res)
 
-        return self.delegate.transform(vec, **params)
+        return return_value(self.delegate.transform(vec, **params))
 
     def inverse_transform(self, vec, **params):
         if not self.delegate:
             return vec
 
+        # todo handle mask
         return self.delegate.inverse_transform(vec, **params)
 
