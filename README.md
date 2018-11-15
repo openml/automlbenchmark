@@ -8,7 +8,7 @@ Automatic Machine Learning (AutoML) systems automatically build machine learning
 
 * Subtle differences in the problem definition, such as the design of the hyperparameter search space or the way time budgets are defined, can drastically alter a task’s difficulty. This issue makes it difficult to reproduce published research and compare results from different papers.
 
-This toolkit aims to address both problems by setting up standardized environments for in-depth experimentation with a wide range of AutoML systems.
+This toolkit aims to address these problems by setting up standardized environments for in-depth experimentation with a wide range of AutoML systems.
 
 Documentation: https://openml.github.io/automlbenchmark/
 
