@@ -8,7 +8,7 @@ import pandas as pd
 
 from .openml import Openml
 from .resources import Resources
-from .results import Results, save_scores_to_file
+from .results import Results, scores_as_df, save_scores_to_file
 from .utils import available_memory_mb
 
 
@@ -65,14 +65,14 @@ class Benchmark:
         """
         runs the framework for every task in the benchmark definition
         """
-        results = {}
+        results = []
         for task_def in self.benchmark_def:
             if Benchmark._is_task_enabled(task_def):
-                results.update(self._run_task(task_def))
-        scores_df = pd.DataFrame(results).T
-        log.info("Summing up metric scores for {benchmark} on {framework}:\n {scores}".format(
+                results.extend(self._run_task(task_def))
+
+        scores_df = scores_as_df(results)
+        log.info("Summing up scores for {benchmark} benchamrk:\n {scores}".format(
             benchmark=self.benchmark_name,
-            framework=self.framework_name,
             scores=scores_df
         ))
         if save_scores:
@@ -88,23 +88,21 @@ class Benchmark:
         :param fold:
         :param save_scores:
         """
-        results = {}
+        results = []
         task_def = self._get_task_def(task_name)
         if fold is None:
-            results = self._run_task(task_def)
+            results.extend(self._run_task(task_def))
         elif isinstance(fold, int):
-            scores, key = self._run_fold(task_def, fold)
-            results[key] = scores
+            results.append(self._run_fold(task_def, fold))
         elif isinstance(fold, list) and all(isinstance(f, int) for f in fold):
             for f in fold:
-                scores, key = self._run_fold(task_def, f)
-                results[key] = scores
+                results.append(self._run_fold(task_def, f))
         else:
             raise ValueError("fold value should be None, an int, or a list of ints")
-        scores_df = pd.DataFrame(results).T
-        log.info("Summing up metric scores for {task} on {framework}:\n {scores}".format(
+
+        scores_df = scores_as_df(results)
+        log.info("Summing up scores for {task} task:\n {scores}".format(
             task=task_name,
-            framework=self.framework_name,
             scores=scores_df
         ))
         if save_scores:
@@ -118,10 +116,9 @@ class Benchmark:
         run the framework for every fold in the task definition
         :param task_def:
         """
-        results = {}
+        results = []
         for fold in range(task_def.folds):
-            scores, key = self._run_fold(task_def, fold)
-            results[key] = scores
+            results.append(self._run_fold(task_def, fold))
         return results
 
     def _run_fold(self, task_def, fold: int):
@@ -234,19 +231,4 @@ class BenchmarkTask:
             log.error("%s failed with error $s", framework_name, str(e))
             log.exception(e)
 
-        result = Results(task_name=self.task.name, fold=self.fold, resources=self._resources).get_result(framework_name)
-        scores = {}
-        for metric in task_config.metrics:
-            score = result.evaluate(metric)
-            scores[metric] = score
-
-        log.info("metric scores for {task}[{fold}] using {framework} = {scores}".format(
-            metric=task_config.metric,
-            task=self._task_def.name,
-            fold=self.fold,
-            framework=framework_name,
-            scores=scores
-        ))
-        key = "{}[{}]".format(self._task_def.name, self.fold)
-        return scores, key
-
+        return Results(task_name=self.task.name, fold=self.fold, resources=self._resources).compute_scores(framework_name, task_config.metrics)

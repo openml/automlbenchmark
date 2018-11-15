@@ -23,7 +23,7 @@ class Results:
 
     @memoize
     def get_result(self, framework):
-        predictions_file = os.path.join(self.resources.config.output_dir, "predictions", "{framework}_{task}_{fold}.pred").format(
+        predictions_file = os.path.join(self.resources.config.predictions_dir, "{framework}_{task}_{fold}.csv").format(
             framework=framework.lower(),
             task=self.task,
             fold=self.fold
@@ -42,6 +42,20 @@ class Results:
                 framework=framework
             ))
             return NoResult()
+
+    def compute_scores(self, framework, metrics):
+        scores = dict(
+            framework=framework,
+            task=self.task,
+            fold=self.fold,
+        )
+        result = self.get_result(framework)
+        for metric in metrics:
+            score = result.evaluate(metric)
+            scores[metric] = score
+
+        log.info("metric scores: %s", scores)
+        return scores
 
 
 class Result:
@@ -137,7 +151,7 @@ def save_predictions_to_file(dataset: Dataset, output_file: str,
     :param encode_labels:
     :return: None
     """
-    file_path = output_file if re.search(r'\.pred$', output_file) else output_file + '.pred'
+    file_path = output_file if re.search(r'\.csv$', output_file) else output_file + '.csv'
     log.info("Saving predictions to %s", file_path)
     prob_cols = class_probabilities_labels if class_probabilities_labels else dataset.target.label_encoder.classes
     df = pd.DataFrame(class_probabilities, columns=prob_cols)
@@ -151,5 +165,11 @@ def save_predictions_to_file(dataset: Dataset, output_file: str,
     log.debug("Predictions successfully saved to %s", file_path)
 
 
-def save_scores_to_file(scores: pd.DataFrame, output_file: str):
-    scores.to_csv(output_file)
+def scores_as_df(scores, index=None):
+    index = index if index else ['task', 'fold', 'framework']
+    return pd.DataFrame.from_records(scores, index=index)
+
+
+def save_scores_to_file(scores, output_file: str):
+    scores_df = scores if isinstance(scores, pd.DataFrame) else scores_as_df(scores)
+    scores_df.to_csv(output_file)
