@@ -15,8 +15,8 @@ Documentation: https://openml.github.io/automlbenchmark/
 ### Features:
 * Curated suites of benchmarking datasets
 * Includes a [wide range of AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
-* New AutoML systems can be added as Docker images
-* Execute experiments locally or on AWS
+* [New AutoML systems can be added](https://github.com/openml/automlbenchmark/tree/master/docker) as Docker images
+* Execute experiments locally or on AWS (see below)
 
 In the future, we also aim to add support for sharing benchmarking results on OpenML.
 
