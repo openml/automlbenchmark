@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 import logging
 import os
@@ -32,7 +33,7 @@ class Namespace:
         return key in self.__dict__
 
     def __getitem__(self, item):
-        return getattr(self, item)
+        return getattr(self, item) if hasattr(self, item) else None
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
@@ -91,8 +92,10 @@ def cached(fn):
 def memoize(fn):
     prop_name = '__memo__' + fn.__name__
 
-    def decorator(self, key=None):
+    def decorator(self, key=None):  # todo: could support unlimited args by making a tuple out of *args + **kwargs: not needed for now
         memo = cache(self, prop_name, lambda _: {})
+        if not isinstance(key, str) and hasattr(key, '__iter__'):
+            key = tuple(key)
         if key not in memo:
             memo[key] = fn(self) if key is None else fn(self, key)
         return memo[key]
@@ -122,6 +125,42 @@ def json_load(file, as_object=False):
         return json.load(file)
 
 
+def now_iso(date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
+    """
+
+    :param date:
+    :param time:
+    :param micros:
+    :param date_sep:
+    :param time_sep:
+    :param datetime_sep:
+    :param micros_sep:
+    :param no_sep: if True then all separators are taken as empty string
+    :return:
+    """
+    # strf = "%Y{ds}%m{ds}%d{dts}%H{ts}%M{ts}%S{ms}%f".format(ds=date_sep, ts=time_sep, dts=datetime_sep, ms=micros_sep)
+    if no_sep:
+        date_sep = time_sep = datetime_sep = micros_sep = ''
+    strf = ""
+    if date:
+        strf += "%Y{_}%m{_}%d".format(_=date_sep)
+        if time:
+            strf += datetime_sep
+    if time:
+        strf += "%H{_}%M{_}%S".format(_=time_sep)
+        if micros:
+            strf += "{_}%f".format(_=micros_sep)
+    return dt.datetime.utcnow().strftime(strf)
+
+
+def str2bool(s):
+    if s.lower() in ('true', 't', 'yes', 'y', '1'):
+        return True
+    elif s.lower() in ('false', 'f', 'no', 'n', '0'):
+        return False
+    else:
+        raise ValueError(s+" can't be interpreted as a boolean")
+
 def pip_install(module_or_requirements, is_requirements=False):
     try:
         if is_requirements:
@@ -142,13 +181,27 @@ def dir_of(caller_file, rel_to_project_root=False):
         return abs_path
 
 
+def run_cmd(cmd, return_output=True):
+    # todo: switch to subprocess module (Popen) instead of os? would allow to use timeouts and kill signal
+    #   besides, this implementation doesn't seem to work well with some commands if output is not read.
+    output = None
+    with os.popen(cmd) as subp:
+        if return_output:
+            output = subp.read()
+    if subp.close():
+        tail = '\n'.join([''] + output.splitlines()[-5:]) if output else 'Unknown Error'
+        raise OSError("Error when running command `{cnd}`: {error}".format(cnd=cmd, error=tail))
+    return output
+
+
 def call_script_in_same_dir(caller_file, script_file):
     here = dir_of(caller_file)
     script = os.path.join(here, script_file)
     mod = os.stat(script).st_mode
     os.chmod(script, mod | stat.S_IEXEC)
-    output = os.popen(script).read()
+    output = run_cmd(script)
     log.debug(output)
+    return output
 
 
 def available_memory_mb():

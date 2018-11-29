@@ -4,6 +4,7 @@ import os
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
+from automl.utils import run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -21,8 +22,8 @@ def run(dataset: Dataset, config: TaskConfig):
     else:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    weka_file = config.output_file_template + '.weka_pred'
-    output = os.popen("java -cp ./libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
+    weka_file = config.output_predictions_file.replace(os.path.splitext(config.output_predictions_file)[1], '.weka_pred.csv')
+    output = run_cmd("java -cp ./libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
     -classifications \"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {predictions_output}\" \
     -timeLimit {time} -parallelRuns {cores} -metric {metric}".format(
         train=dataset.train.path,
@@ -32,7 +33,7 @@ def run(dataset: Dataset, config: TaskConfig):
         cores=config.cores,
         metric=metric,
         predictions_output=weka_file
-    )).read()
+    ))
     log.debug(output)
 
     # if target values are not sorted alphabetically in the ARFF file, then class probabilities are returned in the original order
@@ -53,7 +54,7 @@ def run(dataset: Dataset, config: TaskConfig):
             class_truth.append(truth)
 
     save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_file_template,
+                             output_file=config.output_predictions_file,
                              class_probabilities=class_probabilities,
                              class_predictions=class_predictions,
                              class_truth=class_truth,

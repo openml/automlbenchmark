@@ -35,7 +35,7 @@
       "image":"h2oautoml",
       "tag":"latest"
     },
-    "version":"3.20.0.5",
+    "version":"3.22.0.1",
     "project":"http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html"
   },
   "autosklearn": {

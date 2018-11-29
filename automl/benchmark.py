@@ -5,9 +5,9 @@ import logging
 import os
 
 from .openml import Openml
-from .resources import Resources
-from .results import Results, scores_as_df, save_scores_to_file
-from .utils import available_memory_mb
+from .resources import get as rget, config as rconfig
+from .results import Scoreboard, TaskResult
+from .utils import available_memory_mb, now_iso, str2bool
 
 
 log = logging.getLogger(__name__)
@@ -30,20 +30,20 @@ class Benchmark:
     task_loader = None
     SetupMode = Enum('SetupMode', 'auto skip force only')
 
-    def __init__(self, framework_name: str, benchmark_name: str, resources: Resources):
+    def __init__(self, framework_name: str, benchmark_name: str):
         """
 
         :param framework_name:
         :param benchmark_name:
         :param resources:
         """
-        self.resources = resources
         self.framework_name = framework_name
-        self.framework_def = self.resources.framework_definition(framework_name)
+        self.framework_def = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s", self.framework_def)
         self.benchmark_name = benchmark_name
-        self.benchmark_def = self.resources.benchmark_definition(benchmark_name)
+        self.benchmark_def = rget().benchmark_definition(benchmark_name)
         log.debug("Using benchmark definition: %s", self.benchmark_def)
+        self.uid = "{}_{}_{}".format(framework_name, benchmark_name, now_iso(micros=True, no_sep=True))
 
         self.framework_module = import_module('automl.frameworks.'+self.framework_def.name)
 
@@ -53,31 +53,36 @@ class Benchmark:
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
-        Benchmark.task_loader = Openml(api_key=self.resources.config.openml_apikey, cache_dir=self.resources.config.input_dir)
+        Benchmark.task_loader = Openml(api_key=rconfig().openml_apikey, cache_dir=rconfig().input_dir)
         if mode == Benchmark.SetupMode.skip or not hasattr(self.framework_module, 'setup'):
             return
 
         self.framework_module.setup()
 
+    def cleanup(self):
+        # anything to do?
+        pass
+
     def run(self, save_scores=False):
         """
         runs the framework for every task in the benchmark definition
         """
-        results = []
+        scores = []
         for task_def in self.benchmark_def:
             if Benchmark._is_task_enabled(task_def):
-                results.extend(self._run_task(task_def))
+                scores.extend(self._run_task(task_def))
 
-        scores_df = scores_as_df(results)
-        log.info("Summing up scores for {benchmark} benchamrk:\n {scores}".format(
-            benchmark=self.benchmark_name,
-            scores=scores_df
-        ))
+        if len(scores) == 0 or not any(scores):
+            return None
+
+        board = Scoreboard(scores, framework_name=self.framework_name, benchmark_name=self.benchmark_name)
         if save_scores:
-            save_scores_to_file(scores_df,
-                                os.path.join(self.resources.config.scores_dir, "{framework}_benchmark_{benchmark}.csv"
-                                             .format(framework=self.framework_name, benchmark=self.benchmark_name)))
-        return scores_df
+            board.save(append=True)
+        log.info("Summing up scores for {benchmark} benchmark:\n {scores}".format(
+            benchmark=self.benchmark_name,
+            scores=board.as_data_frame()
+        ))
+        return board.as_data_frame()
 
     def run_one(self, task_name: str, fold, save_scores=False):
         """
@@ -86,38 +91,39 @@ class Benchmark:
         :param fold:
         :param save_scores:
         """
-        results = []
+        scores = []
         task_def = self._get_task_def(task_name)
         if fold is None:
-            results.extend(self._run_task(task_def))
+            scores.extend(self._run_task(task_def))
         elif isinstance(fold, int):
-            results.append(self._run_fold(task_def, fold))
+            scores.append(self._run_fold(task_def, fold))
         elif isinstance(fold, list) and all(isinstance(f, int) for f in fold):
             for f in fold:
-                results.append(self._run_fold(task_def, f))
+                scores.append(self._run_fold(task_def, f))
         else:
             raise ValueError("fold value should be None, an int, or a list of ints")
 
-        scores_df = scores_as_df(results)
+        if len(scores) == 0 or not any(scores):
+            return None
+
+        board = Scoreboard(scores, framework_name=self.framework_name, task_name=task_name)
+        if save_scores:
+            board.save(append=True)
         log.info("Summing up scores for {task} task:\n {scores}".format(
             task=task_name,
-            scores=scores_df
+            scores=board.as_data_frame()
         ))
-        if save_scores:
-            save_scores_to_file(scores_df,
-                                os.path.join(self.resources.config.scores_dir, "{framework}_task_{task}.csv"
-                                             .format(framework=self.framework_name, task=task_name)))
-        return scores_df
+        return board.as_data_frame()
 
     def _run_task(self, task_def):
         """
         run the framework for every fold in the task definition
         :param task_def:
         """
-        results = []
+        scores = []
         for fold in range(task_def.folds):
-            results.append(self._run_fold(task_def, fold))
-        return results
+            scores.append(self._run_fold(task_def, fold))
+        return scores
 
     def _run_fold(self, task_def, fold: int):
         """
@@ -128,7 +134,7 @@ class Benchmark:
         if fold < 0 or fold >= task_def.folds:
             raise ValueError("fold value {} is out of range for task {}".format(fold, task_def.name))
 
-        bench_task = BenchmarkTask(task_def, fold, self.resources)
+        bench_task = BenchmarkTask(task_def, fold)
         bench_task.load_data()
         return bench_task.run(self.framework_module)
 
@@ -146,7 +152,7 @@ class Benchmark:
 
     @staticmethod
     def _is_task_enabled(task_def):
-        return not hasattr(task_def, 'enabled') or task_def.enabled in [True, 'true', 'True', 'yes']
+        return not hasattr(task_def, 'enabled') or str2bool(str(task_def.enabled))
 
 
 class TaskConfig:
@@ -164,16 +170,16 @@ class TaskConfig:
         self.max_mem_size_mb = max_mem_size_mb
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.output_file_template = os.path.join(output_dir, "{{framework}}_{task}_{fold}".format(task=name, fold=fold))
+        self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
 
     @staticmethod
     def from_def(task_def, fold, config):
-        # todo: check available memory with possible warning
+        # todo: check available memory with possible warning: cf. utils.available_memory_mb()
         return TaskConfig(
             name=task_def.name,
             fold=fold,
             metrics=task_def.metric,
-            max_runtime_seconds=task_def.runtime,
+            max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
             max_mem_size_mb=config.max_mem_size_mb,
             input_dir=config.input_dir,
@@ -186,17 +192,15 @@ class BenchmarkTask:
 
     """
 
-    def __init__(self, task_def, fold, resources: Resources):
+    def __init__(self, task_def, fold):
         """
 
         :param task_def:
         :param fold:
-        :param resources:
         """
         self._task_def = task_def
-        self._resources = resources
         self.fold = fold
-        self.task = TaskConfig.from_def(self._task_def, self.fold, resources.config)
+        self.task = TaskConfig.from_def(self._task_def, self.fold, rconfig())
         self._dataset = None
 
     def load_data(self):
@@ -220,13 +224,14 @@ class BenchmarkTask:
         :return:
         """
         framework_name = framework.__name__.rsplit('.', 1)[1]
+        results = TaskResult(task_name=self.task.name, fold=self.fold)
         task_config = copy(self.task)
         task_config.framework = framework_name
-        task_config.output_file_template = self.task.output_file_template.format(framework=task_config.framework.lower())
+        task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         try:
             framework.run(self._dataset, task_config)
         except Exception as e:
             log.error("%s failed with error $s", framework_name, str(e))
             log.exception(e)
 
-        return Results(task_name=self.task.name, fold=self.fold, resources=self._resources).compute_scores(framework_name, task_config.metrics)
+        return results.compute_scores(framework_name, task_config.metrics)

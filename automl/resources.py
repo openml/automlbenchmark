@@ -45,6 +45,7 @@ class Resources:
             frameworks = json_load(file, as_object=True)
         for name, framework in frameworks:
             framework.name = name
+            self._validate_framework(framework)
         return frameworks
 
     @memoize
@@ -63,5 +64,45 @@ class Resources:
 
         with open(benchmark_file) as file:
             tasks = json_load(file, as_object=True)
+        for task in tasks:
+            self._validate_task(task)
         return tasks
+
+    def _validate_framework(self, framework):
+        # todo: validate docker image definition? anything else?
+        pass
+
+    def _validate_task(self, task):
+        missing = []
+        for config in ['name', 'openml_task_id', 'metric']:
+            if task[config] is None:
+                missing.append(config)
+        if len(missing) > 0:
+            raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}".format(missing=missing, taskdef=task))
+
+        for config in ['max_runtime_seconds', 'cores', 'folds']:
+            if task[config] is None:
+                task[config] = self.config.benchmark_definition_defaults[config]
+                log.debug("config `{config}` not set for task {name}, using default `{value}`".format(config=config, name=task.name, value=task[config]))
+
+        config = 'ec2_instance_type'
+        if task[config] is None:
+            task[config] = self.config.aws.ec2.instance_type
+            log.debug("config `{config}` not set for task {name}, using default `{value}`".format(config=config, name=task.name, value=task[config]))
+
+
+__INSTANCE__: Resources = None
+
+
+def from_config(config: Namespace):
+    global __INSTANCE__
+    __INSTANCE__ = Resources(config)
+
+
+def get() -> Resources:
+    return __INSTANCE__
+
+
+def config():
+    return __INSTANCE__.config
 

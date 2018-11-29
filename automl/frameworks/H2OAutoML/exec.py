@@ -61,7 +61,7 @@ def run(dataset: Dataset, config: TaskConfig):
         class_probabilities = predictions.iloc[:, 1:].values
 
         save_predictions_to_file(dataset=dataset,
-                                 output_file=config.output_file_template,
+                                 output_file=config.output_predictions_file,
                                  class_probabilities=class_probabilities,
                                  class_predictions=class_predictions,
                                  class_truth=y_truth.values)
