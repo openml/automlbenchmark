@@ -53,9 +53,17 @@ class Scoreboard:
         if data_frame is None:
             data_frame = self.as_data_frame()
         exists = os.path.isfile(self._score_file())
+        new_format = False
+        if exists:
+            # todo: detect format change, i.e. data_frame columns are different or different order from existing file
+            pass
+        if new_format or (exists and not append):
+            # todo: backup existing file, i.e. rename to {file_name}_{last_write_time}.ext
+            pass
+        new_file = not exists or not append or new_format
         data_frame.to_csv(self._score_file(),
-                          header=not exists or not append,
-                          mode='a' if append else 'w')
+                          header=new_file,
+                          mode='w' if new_file else 'a')
 
     def _score_file(self):
         if self.framework_name:
@@ -141,7 +149,7 @@ class TaskResult:
         return self.load_predictions(self._predictions_file(framework_name))
 
     def compute_scores(self, framework_name, metrics):
-        framework_def = rget().framework_definition(framework_name)
+        framework_def, _ = rget().framework_definition(framework_name)
         scores = dict(
             framework=framework_name,
             version=framework_def.version,

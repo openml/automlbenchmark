@@ -15,6 +15,7 @@
 
   "aws": {
     "region": "",
+    "iam": {},
     "s3": {
       "bucket": "automl_benchmark_bucket",
       "temporary": true
@@ -34,5 +35,5 @@
   },
 
   "max_mem_size_mb": 2048,
-  "max_parallel_jobs": 5
+  "max_parallel_jobs": 2
 }

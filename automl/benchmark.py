@@ -3,11 +3,14 @@ from enum import Enum
 from importlib import import_module
 import logging
 import os
+import queue
+import threading
+import time
 
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import available_memory_mb, now_iso, str2bool
+from .utils import Namespace, available_memory_mb, now_iso, str2bool
 
 
 log = logging.getLogger(__name__)
@@ -30,22 +33,26 @@ class Benchmark:
     task_loader = None
     SetupMode = Enum('SetupMode', 'auto skip force only')
 
-    def __init__(self, framework_name: str, benchmark_name: str):
+    def __init__(self, framework_name: str, benchmark_name: str, parallel_jobs=1):
         """
 
         :param framework_name:
         :param benchmark_name:
         :param resources:
         """
-        self.framework_name = framework_name
-        self.framework_def = rget().framework_definition(framework_name)
+        self.framework_def, self.framework_name = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s", self.framework_def)
-        self.benchmark_name = benchmark_name
-        self.benchmark_def = rget().benchmark_definition(benchmark_name)
+        self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
         log.debug("Using benchmark definition: %s", self.benchmark_def)
+        self.parallel_jobs = parallel_jobs
         self.uid = "{}_{}_{}".format(framework_name, benchmark_name, now_iso(micros=True, no_sep=True))
 
         self.framework_module = import_module('automl.frameworks.'+self.framework_def.name)
+
+    def _validate(self):
+        if self.parallel_jobs > 1:
+            log.warning("parallelization is not supported in local mode: ignoring `parallel_jobs` parameter")
+            self.parallel_jobs = 1
 
     def setup(self, mode: SetupMode):
         """
@@ -67,10 +74,7 @@ class Benchmark:
         """
         runs the framework for every task in the benchmark definition
         """
-        scores = []
-        for task_def in self.benchmark_def:
-            if Benchmark._is_task_enabled(task_def):
-                scores.extend(self._run_task(task_def))
+        scores = [res.result for res in self._run_jobs(self._benchmark_jobs())]
 
         if len(scores) == 0 or not any(scores):
             return None
@@ -91,17 +95,8 @@ class Benchmark:
         :param fold:
         :param save_scores:
         """
-        scores = []
         task_def = self._get_task_def(task_name)
-        if fold is None:
-            scores.extend(self._run_task(task_def))
-        elif isinstance(fold, int):
-            scores.append(self._run_fold(task_def, fold))
-        elif isinstance(fold, list) and all(isinstance(f, int) for f in fold):
-            for f in fold:
-                scores.append(self._run_fold(task_def, f))
-        else:
-            raise ValueError("fold value should be None, an int, or a list of ints")
+        scores = [res.result for res in self._run_jobs(self._custom_task_jobs(task_def, fold))]
 
         if len(scores) == 0 or not any(scores):
             return None
@@ -115,17 +110,43 @@ class Benchmark:
         ))
         return board.as_data_frame()
 
-    def _run_task(self, task_def):
+    def _run_jobs(self, jobs):
+        if self.parallel_jobs == 1:
+            return SimpleJobRunner(jobs).start()
+        else:
+            return ParallelJobRunner(jobs, self.parallel_jobs).start()
+
+    def _benchmark_jobs(self):
+        jobs = []
+        for task_def in self.benchmark_def:
+            if Benchmark._is_task_enabled(task_def):
+                jobs.extend(self._task_jobs(task_def))
+        return jobs
+
+    def _custom_task_jobs(self, task_def, folds):
+        jobs = []
+        if folds is None:
+            jobs.extend(self._task_jobs(task_def))
+        elif isinstance(folds, int):
+            jobs.append(self._fold_job(task_def, folds))
+        elif isinstance(folds, list) and all(isinstance(f, int) for f in folds):
+            for f in folds:
+                jobs.append(self._fold_job(task_def, f))
+        else:
+            raise ValueError("fold value should be None, an int, or a list of ints")
+        return jobs
+
+    def _task_jobs(self, task_def):
         """
         run the framework for every fold in the task definition
         :param task_def:
         """
-        scores = []
+        jobs = []
         for fold in range(task_def.folds):
-            scores.append(self._run_fold(task_def, fold))
-        return scores
+            jobs.append(self._fold_job(task_def, fold))
+        return jobs
 
-    def _run_fold(self, task_def, fold: int):
+    def _fold_job(self, task_def, fold: int):
         """
         runs the framework against a given fold
         :param task_def: the task to run
@@ -134,9 +155,7 @@ class Benchmark:
         if fold < 0 or fold >= task_def.folds:
             raise ValueError("fold value {} is out of range for task {}".format(fold, task_def.name))
 
-        bench_task = BenchmarkTask(task_def, fold)
-        bench_task.load_data()
-        return bench_task.run(self.framework_module)
+        return BenchmarkTask(task_def, fold).as_job(self.framework_module)
 
     def _get_task_def(self, task_name):
         task_def = next(task for task in self.benchmark_def if task.name == task_name)
@@ -217,6 +236,15 @@ class BenchmarkTask:
         else:
             raise ValueError("tasks should have one property among [openml_task_id, dataset]")
 
+    def as_job(self, framework):
+        def _run():
+            self.load_data()
+            return self.run(framework)
+        job = Job("local_{}_{}_{}".format(self.task.name, self.fold, framework.__name__))
+        job._run = _run
+        return job
+        # return Namespace(run=lambda: self.run(framework))
+
     def run(self, framework):
         """
 
@@ -231,7 +259,103 @@ class BenchmarkTask:
         try:
             framework.run(self._dataset, task_config)
         except Exception as e:
-            log.error("%s failed with error $s", framework_name, str(e))
+            log.error("%s failed with error %s", framework_name, str(e))
             log.exception(e)
+            return None
 
         return results.compute_scores(framework_name, task_config.metrics)
+
+
+class Job:
+
+    def __init__(self, name=""):
+        self.name = name
+
+    def run(self):
+        try:
+            beep = time.time()
+            result = self._run()
+            duration = time.time() - beep
+            log.info("Job %s executed in %s seconds", self.name, duration)
+            log.debug("Job %s returned: %s", self.name, result)
+            return result, duration
+        except Exception as e:
+            log.error("Job `%s` failed with error %s", self.name, str(e))
+            log.exception(e)
+            return None, -1
+
+    def _run(self):
+        pass
+
+
+class JobRunner:
+
+    State = Enum('State', 'created running stopping stopped')
+
+    def __init__(self, jobs):
+        self.jobs = jobs
+        self.results = []
+        self.state = JobRunner.State.created
+
+    def start(self):
+        start_time = time.time()
+        self.state = JobRunner.State.running
+        self._run()
+        self.state = JobRunner.State.stopped
+        stop_time = time.time()
+        log.info("All jobs executed in %s seconds", stop_time-start_time)
+        return self.results
+
+    def stop(self):
+        self.state = JobRunner.State.stopping
+
+    def _run(self):
+        pass
+
+
+class SimpleJobRunner(JobRunner):
+
+    def _run(self):
+        for job in self.jobs:
+            if self.state == JobRunner.State.stopping:
+                break
+            result, duration = job.run()
+            self.results.append(Namespace(name=job.name, result=result, duration=duration))
+
+
+class ParallelJobRunner(JobRunner):
+
+    def __init__(self, jobs, parallel_jobs):
+        super().__init__(jobs)
+        self.parallel_jobs = parallel_jobs
+
+    def _run(self):
+        q = queue.Queue()
+
+        def worker():
+            while True:
+                job = q.get()
+                if job is None or self.state == JobRunner.State.stopping:
+                    break
+                result, duration = job.run()
+                self.results.append(Namespace(name=job.name, result=result, duration=duration))
+                q.task_done()
+
+        threads = []
+        for thread in range(self.parallel_jobs):
+            thread = threading.Thread(target=worker)
+            thread.start()
+            threads.append(thread)
+
+        try:
+            for job in self.jobs:
+                q.put(job)     # todo: timeout
+                if self.state == JobRunner.State.stopping:
+                    break
+            q.join()
+        finally:
+            for _ in range(self.parallel_jobs):
+                q.put(None)     # stopping workers
+            for thread in threads:
+                thread.join()
+

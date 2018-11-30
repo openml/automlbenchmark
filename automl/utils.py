@@ -189,6 +189,7 @@ def run_cmd(cmd, return_output=True):
         if return_output:
             output = subp.read()
     if subp.close():
+        log.debug(output)
         tail = '\n'.join([''] + output.splitlines()[-5:]) if output else 'Unknown Error'
         raise OSError("Error when running command `{cnd}`: {error}".format(cnd=cmd, error=tail))
     return output

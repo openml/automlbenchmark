@@ -28,14 +28,13 @@ class Resources:
 
     def framework_definition(self, name):
         """
-
         :param name:
-        :return: the framework definition with the given name
+        :return: name of the framework as defined in the frameworks.json file
         """
         framework = self._frameworks[name]
         if not framework:
             raise ValueError("incorrect framework: {}".format(name))
-        return framework
+        return framework, name
 
     @lazy_property
     def _frameworks(self):
@@ -51,22 +50,24 @@ class Resources:
     @memoize
     def benchmark_definition(self, name):
         """
-
-        :param name:
+        :param name: name of the benchmark as defined by resources/benchmarks/{name}.json or the path to a user-defined benchmark description file.
         :return:
         """
-        benchmark_file = "{dir}/{name}.json".format(dir=self.config.benchmarks_definition_dir, name=name)
+        benchmark_name = name
+        benchmark_file = "{dir}/{name}.json".format(dir=self.config.benchmarks_definition_dir, name=benchmark_name)
         log.debug("loading benchmark definitions from %s", benchmark_file)
         if not os.path.exists(benchmark_file):
             benchmark_file = name
+            benchmark_name, _ = os.path.splitext(os.path.basename(name))
         if not os.path.exists(benchmark_file):
+            # should we support s3 and check for s3 path before raising error?
             raise ValueError("incorrect benchmark name or path: {}".format(name))
 
         with open(benchmark_file) as file:
             tasks = json_load(file, as_object=True)
         for task in tasks:
             self._validate_task(task)
-        return tasks
+        return tasks, benchmark_name, benchmark_file
 
     def _validate_framework(self, framework):
         # todo: validate docker image definition? anything else?

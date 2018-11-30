@@ -29,9 +29,12 @@ parser.add_argument('-r', '--region', metavar='aws_region', default=None,
                     help='The region on which to run the benchmark when using AWS.')
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
                     help='Framework/platform setup mode (supported values = auto [default], skip, force, only).')
-parser.add_argument('--keep-instance', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
-                    help='Set to true [default] if reusing the same container instance(s) for all tasks (docker and aws mode only). '
-                         'If disabled in aws mode, we will try to distribute computing over multiple ec2 instances.')
+parser.add_argument('-p', '--parallel', metavar='jobs_num', type=int, default=1,
+                    help='The number of jobs (i.e. tasks or folds) that can be run in parallel.'
+                         'Currently supported only in aws mode.')
+# parser.add_argument('--keep-instance', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
+#                     help='Set to true [default] if reusing the same container instance(s) for all tasks (docker and aws mode only). '
+#                          'If disabled in aws mode, we will try to distribute computing over multiple ec2 instances.')
 # group = parser.add_mutually_exclusive_group()
 # group.add_argument('--keep-instance', dest='keep_instance', action='store_true',
 #                    help='Set to true [default] if reusing the same container instance(s) for all tasks (docker and aws mode only). '
@@ -43,8 +46,8 @@ args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
 log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
 os.makedirs(log_dir, exist_ok=True)
-# now_str = now_iso(date_sep='', time_sep='')
-now_str = now_iso(time=False, no_sep=True)
+now_str = now_iso(date_sep='', time_sep='')
+# now_str = now_iso(time=False, no_sep=True)
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
                     root_level='DEBUG', console_level='INFO')
@@ -64,11 +67,11 @@ with open("resources/config.json") as file:
 automl.resources.from_config(config)
 
 if args.mode == "local":
-    bench = automl.Benchmark(args.framework, args.benchmark)
+    bench = automl.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
 elif args.mode == "docker":
-    bench = automl.DockerBenchmark(args.framework, args.benchmark, keep_instance=args.keep_instance)
+    bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
 elif args.mode == "aws":
-    bench = automl.AWSBenchmark(args.framework, args.benchmark, region=args.region, keep_instance=args.keep_instance)
+    bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
 else:
     raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 

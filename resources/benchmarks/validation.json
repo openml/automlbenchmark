@@ -3,7 +3,7 @@
     "name": "dresses-sales",
     "openml_task_id":125920,
     "metric":["auc", "acc"],
-    "folds":1,
+    "folds":2,
     "max_runtime_seconds":60,
     "cores":2
   },
@@ -11,7 +11,7 @@
     "name": "eucalyptus",
     "openml_task_id":2079,
     "metric":["logloss", "acc"],
-    "folds":1,
+    "folds":2,
     "max_runtime_seconds":60,
     "cores":2
   },

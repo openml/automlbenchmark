@@ -2,7 +2,7 @@ import logging
 import os
 import re
 
-from .benchmark import Benchmark
+from .benchmark import Benchmark, Job
 from .resources import config as rconfig
 from .results import Scoreboard
 from .utils import run_cmd
@@ -25,15 +25,19 @@ class DockerBenchmark(Benchmark):
             tag=docker_image["tag"]
         )
 
-    def __init__(self, framework_name, benchmark_name, keep_instance=False):
+    def __init__(self, framework_name, benchmark_name, parallel_jobs=1):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param keep_instance:
+        :param parallel_jobs:
         """
-        super().__init__(framework_name, benchmark_name)
-        self.keep_instance = keep_instance
+        super().__init__(framework_name, benchmark_name, parallel_jobs)
+
+    def _validate(self):
+        if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
+            log.warning("forcing parallelization to its upper limit: %s", rconfig().max_parallel_jobs)
+            self.parallel_jobs = rconfig().max_parallel_jobs
 
     def setup(self, mode, upload=False):
         if mode == Benchmark.SetupMode.skip:
@@ -44,7 +48,7 @@ class DockerBenchmark(Benchmark):
 
         custom_commands = self.framework_module.docker_commands() if hasattr(self.framework_module, 'docker_commands') else ""
         self._generate_docker_script(custom_commands)
-        self._build_docker_image()
+        self._build_docker_image(cache=(mode != Benchmark.SetupMode.force))
         if upload:
             self._upload_docker_image()
 
@@ -53,45 +57,39 @@ class DockerBenchmark(Benchmark):
         pass
 
     def run(self, save_scores=False):
-        if self.keep_instance:
-            self._start_docker("{framework} {benchmark}".format(
-                framework=self.framework_def.name,
-                benchmark=self.benchmark_name
-            ))
-            return
+        jobs = []
+        if self.parallel_jobs == 1:
+            jobs.append(self._make_job())
         else:
-            return super().run(save_scores=False)
+            jobs.extend(self._benchmark_jobs())
+        self._run_jobs(jobs)
 
     def run_one(self, task_name: str, fold, save_scores=False):
-        if self.keep_instance and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
-            self._start_docker("{framework} {benchmark} -t {task} {folds}".format(
-                framework=self.framework_def.name,
-                benchmark=self.benchmark_name,
-                task=task_name,
-                folds='' if fold is None else ' '.join(['-f']+fold)
-            ))
+        jobs = []
+        if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
+            jobs.append(self._make_job(task_name, fold))
         else:
-            return super().run_one(task_name=task_name, fold=fold, save_scores=False)
+            jobs.extend(self._custom_task_jobs(task_name, fold))
+        self._run_jobs(jobs)
         # board = Scoreboard.for_task(task_name, framework_name=self.framework_name)
 
-    def _run_task(self, task_def):
-        if self.keep_instance:
-            self._start_docker("{framework} {benchmark} -t {task}".format(
-                framework=self.framework_def.name,
-                benchmark=self.benchmark_name,
-                task=task_def.name,
-            ))
-        else:
-            super()._run_task(task_def)
-        return []
+    def _fold_job(self, task_def, fold: int):
+        return self._make_job(task_def.name, [fold])
 
-    def _run_fold(self, task_def, fold: int):
-        self._start_docker("{framework} {benchmark} -t {task} -f {fold}".format(
-            framework=self.framework_def.name,
-            benchmark=self.benchmark_name,
-            task=task_def.name,
-            fold=fold
-        ))
+    def _make_job(self, task_name=None, folds=None):
+        folds = [] if folds is None else [str(f) for f in folds]
+
+        def _run():
+            self._start_docker("{framework} {benchmark} {task_param} {folds_param}".format(
+                framework=self.framework_name,
+                benchmark=self.benchmark_name,
+                task_param='' if task_name is None else ('-t '+task_name),
+                folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
+            ))
+
+        job = Job("docker_{}_{}_{}".format(task_name, ':'.join(folds), self.framework_name))
+        job._run = _run
+        return job
 
     def _start_docker(self, script_params=""):
         in_dir = rconfig().input_dir
@@ -121,9 +119,10 @@ class DockerBenchmark(Benchmark):
         log.debug("docker image id: %s", output)
         return re.match(r'^[0-9a-f]+$', output.strip())
 
-    def _build_docker_image(self):
+    def _build_docker_image(self, cache=True):
         log.info("Building docker image %s", self._docker_image_name)
-        output = run_cmd("docker build -t {container} -f {script} .".format(
+        output = run_cmd("docker build {options} -t {container} -f {script} .".format(
+            options="" if cache else "--no-cache",
             container=self._docker_image_name,
             script=self._docker_script
         ))
