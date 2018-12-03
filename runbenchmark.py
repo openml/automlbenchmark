@@ -6,7 +6,7 @@ import argparse
 import os
 
 import automl
-from automl.utils import json_load, now_iso, str2bool
+from automl.utils import json_load, datetime_iso, str2bool
 from automl import log
 
 
@@ -15,7 +15,7 @@ parser.add_argument('framework', type=str,
                     help='The framework to evaluate as defined in resources/frameworks.json.')
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
                     help='The benchmark type to run as defined in resources/benchmarks/{benchmark}.json or the path to a benchmark description file. Defaults to `test`.')
-parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default='local',
+parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws', 'aws-remote'], default='local',
                     help='The mode that specifies what backend is used (currently local [default], docker, or aws).')
 parser.add_argument('-t', '--task', metavar='task_id', default=None,
                     help='The specific task name to run in the benchmark.')
@@ -46,7 +46,7 @@ args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
 log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
 os.makedirs(log_dir, exist_ok=True)
-now_str = now_iso(date_sep='', time_sep='')
+now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = now_iso(time=False, no_sep=True)
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
@@ -72,6 +72,8 @@ elif args.mode == "docker":
     bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
 elif args.mode == "aws":
     bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+elif args.mode == "aws-remote":
+    bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
 else:
     raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 

@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import logging
 import os
+import shutil
 import stat
 
 import numpy as np
@@ -128,7 +129,7 @@ def json_load(file, as_object=False):
         return json.load(file)
 
 
-def now_iso(date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
+def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
     """
 
     :param date:
@@ -153,7 +154,8 @@ def now_iso(date=True, time=True, micros=False, date_sep='-', datetime_sep='T', 
         strf += "%H{_}%M{_}%S".format(_=time_sep)
         if micros:
             strf += "{_}%f".format(_=micros_sep)
-    return dt.datetime.utcnow().strftime(strf)
+    datetime = dt.datetime.utcnow() if datetime is None else datetime
+    return datetime.strftime(strf)
 
 
 def str2bool(s):
@@ -163,6 +165,21 @@ def str2bool(s):
         return False
     else:
         raise ValueError(s+" can't be interpreted as a boolean")
+
+
+def str_def(s, if_none=''):
+    if s is None:
+        return if_none
+    return str(s)
+
+
+def head(s, lines=10):
+    return '\n'.join([''] + s.splitlines()[:lines]) if s else ''
+
+
+def tail(s, lines=10):
+    return '\n'.join([''] + s.splitlines()[-lines:]) if s else ''
+
 
 def pip_install(module_or_requirements, is_requirements=False):
     try:
@@ -184,6 +201,17 @@ def dir_of(caller_file, rel_to_project_root=False):
         return abs_path
 
 
+def backup_file(file_path):
+    src_path = os.path.realpath(file_path)
+    if not os.path.isfile(src_path):
+        return
+    base, ext = os.path.splitext(src_path)
+    mod_time = dt.datetime.utcfromtimestamp(os.path.getmtime(src_path))
+    dest_path = ''.join([base, '_', datetime_iso(mod_time, date_sep='', time_sep=''), ext])
+    shutil.copyfile(src_path, dest_path)
+    log.info('file `%s` was backed up to `%s`.', src_path, dest_path)
+
+
 def run_cmd(cmd, return_output=True):
     # todo: switch to subprocess module (Popen) instead of os? would allow to use timeouts and kill signal
     #   besides, this implementation doesn't seem to work well with some commands if output is not read.
@@ -193,8 +221,8 @@ def run_cmd(cmd, return_output=True):
             output = subp.read()
     if subp.close():
         log.debug(output)
-        tail = '\n'.join([''] + output.splitlines()[-5:]) if output else 'Unknown Error'
-        raise OSError("Error when running command `{cnd}`: {error}".format(cnd=cmd, error=tail))
+        output_tail = tail(output, 5) if output else 'Unknown Error'
+        raise OSError("Error when running command `{cnd}`: {error}".format(cnd=cmd, error=output_tail))
     return output
 
 

@@ -1,11 +1,14 @@
 import logging
+import os
 import time
 
 import boto3
+import botocore.exceptions
 
 from .benchmark import Benchmark, Job
+from .docker import DockerBenchmark
 from .resources import config as rconfig
-from .utils import now_iso
+from .utils import backup_file, datetime_iso, str_def, tail
 
 
 log = logging.getLogger(__name__)
@@ -81,54 +84,72 @@ class AWSBenchmark(Benchmark):
 
     def _make_job(self, task_name=None, folds=None):
         folds = [] if folds is None else [str(f) for f in folds]
+        instance_type = self._get_task_def(task_name).ec2_instance_type if task_name else rconfig().aws.ec2.instance_type
 
         def _run():
-            self._start_instance("{framework} {benchmark} {task_param} {folds_param}".format(
-                framework=self.framework_name,
-                benchmark=self.benchmark_name,  # todo: pass path to downloaded benchmark def file
-                task_param='' if task_name is None else ('-t '+task_name),
-                folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
-            ))
+            instance_id = self._start_instance(
+                instance_type,
+                "{framework} {benchmark} {task_param} {folds_param}".format(
+                    framework=self.framework_name,
+                    # benchmark=self.benchmark_name,
+                    benchmark="/s3bucket/input/{}.json".format(self.benchmark_name),
+                    task_param='' if task_name is None else ('-t '+task_name),
+                    folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
+                ))
+            self._monitor_instance(instance_id)
 
         job = Job("aws_{}_{}_{}".format(task_name, ':'.join(folds), self.framework_name))
         job._run = _run
         return job
 
-    def _run_jobs(self, jobs):
-        while len(self.instances) > 0:
-            for iid, (instance, ikey) in self.instances.items():
-                if instance.state['Code'] > 16:     # ended instance
-                    log.info("EC2 instance %s is %s", iid, instance.state['Name'])
-                    self._download_results(iid)
-                    del self.instances[iid]
-            time.sleep(rconfig().aws.query_frequency_seconds)
-
-    def _start_instance(self, script_params):
+    def _start_instance(self, instance_type, script_params):
         log.info("Starting new EC2 instance with params: %s", script_params)
-        inst_key = "{}_${}_i{}".format(self.ami, self.uid, now_iso(micros=True, no_sep=True))
-        instance = self.ec2.create_instance(
+        inst_key = "{}_${}_i{}".format(self.ami, self.uid, datetime_iso(micros=True, no_sep=True)).lower()
+        instance = self.ec2.create_instances(
             ImageId=self.ami,
             MinCount=1,
             MaxCount=1,
-            InstanceType=self.benchmark_def.ec2_instance_type,
+            InstanceType=instance_type,
             SubnetId=rconfig().aws.ec2.subnet_id,
             UserData=self._ec2_startup_script(inst_key, script_params)
         )[0]
         # todo: error handling
         self.instances[instance.id] = (instance, inst_key)
         log.info("Started EC2 instance %s", instance.id)
+        return instance.id
 
-    def _monitor_instance(self, instance):
-        # todo: ideally, would be nice to monitor instance individually and asynchronously, cf. asyncio
-        pass
+    def _monitor_instance(self, instance_id):
+        instance, _ = self.instances[instance_id]
 
-    def _stop_instance(self, instance, terminate=False):
-        log.info("%s EC2 instances %s", "Terminating" if terminate else "Stopping", instance.id)
+        def log_console():
+            try:
+                output = instance.console_output(Latest=True)
+                if 'Output' in output:
+                    output = output['Output']
+                    log.info(tail(output, 50))
+            except Exception as e:
+                log.exception(e)
+
+        while True:
+            log.info("[%s] checking %s: %s", datetime_iso(), instance_id, instance.state['Name'])
+            if instance.state['Code'] > 16:     # ended instance
+                log.info("EC2 instance %s is %s", instance_id, instance.state['Name'])
+                log_console()
+                self._download_results(instance_id)
+                del self.instances[instance_id]
+                break
+            else:
+                log_console()
+            time.sleep(rconfig().aws.query_frequency_seconds)
+
+    def _stop_instance(self, instance_id, terminate=False):
+        log.info("%s EC2 instances %s", "Terminating" if terminate else "Stopping", instance_id)
+        instance, _ = self.instances[instance_id]
         if terminate:
             response = instance.terminate()
         else:
             response = instance.stop()
-        log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", instance.id, response)
+        log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", instance_id, response)
         # todo error handling
 
     def _stop_all_instances(self, terminate=False):
@@ -145,43 +166,51 @@ class AWSBenchmark(Benchmark):
     def _create_s3_bucket(self):
         bucket_name = rconfig().aws.s3.bucket
         if rconfig().aws.s3.temporary:
-            bucket_name += ('_' + self.uid)
-        if bucket_name in self.s3.get_available_subresources():
-            return self.s3.Bucket(bucket_name)  # apparently no need to load bucket
-        else:
-            return self.s3.create_bucket(
-                Bucket=bucket_name
-            )
+            bucket_name += ('-' + self.uid)
+        try:
+            self.s3.meta.client.head_bucket(Bucket=bucket_name)
+            bucket = self.s3.Bucket(bucket_name)
+        except botocore.exceptions.ClientError as e:
+            error_code = int(e.response['Error']['Code'])
+            if error_code == 404:
+                log.info("%s bucket doesn't exist in region %s, creating it", bucket_name, self.region)
+                bucket = self.s3.create_bucket(
+                    Bucket=bucket_name,
+                    CreateBucketConfiguration=dict(
+                        LocationConstraint=self.region
+                    )
+                )
+        return bucket
 
     def _delete_s3_bucket(self):
         if self.bucket and rconfig().aws.s3.temporary:
             self.bucket.delete()
 
     def _upload_resources(self):
-        # todo: upload benchmark definition to bucket
-        pass
+        root_key = str_def(rconfig().aws.s3.root_key)
+        benchmark_basename = os.path.basename(self.benchmark_path)
+        self.bucket.upload_file(self.benchmark_path, root_key+('/'.join(['input', benchmark_basename])))
 
     def _download_results(self, instance_id):
-        # todo: ensure we download all the files and only the files created by this run
-        #   idea: if s3 if shared, then pass self.uid to instances and create upload dir named after self.uid on s3
-        pass
+        instance, ikey = self.instances[instance_id]
+        root_key = str_def(rconfig().aws.s3.root_key)
+        predictions_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
+        scores_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
 
-    @staticmethod
-    def _ec2_startup_script(instance_key, script_params):
-        # todo:
-        #   packages:
-        #     ensure docker is installed
-        #     quid of docker repo access? public image?
-        #   in runcmd:
-        #     export S3_PATH=s3://{self.bucket.name}/
-        #     download resources from S3_PATH to /s3bucket/input/resources
-        #     pass /s3bucket/input as input dir to docker: -i /s3bucket/input
-        #     pass /s3bucket/output as output dir to docker: -o /s3bucket/output
-        #     pass full path to benchmark file to docker: /s3bucket/input/resources/{benchmark}.json
-        #     start docker image (skip mode if we always want a prebuilt image)
-        #     on completion:
-        #       upload /s3bucket/output/predictions to s3
-        #       upload /s3bucket/output/scores to s3
+        for obj in predictions_objs:
+            # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
+            dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
+            backup_file(dest_path)
+            obj.download_file(dest_path)
+        for obj in scores_objs:
+            # todo: saving scores for now after backing up previous scores but this should be merged to existing scores files!!!
+            dest_path = os.path.join(rconfig().scores_dir, os.path.basename(obj.key))
+            backup_file(dest_path)
+            obj.download_file(dest_path)
+
+    def _ec2_startup_script(self, instance_key, script_params):
+        # todo: quid of docker repo access? public image?
+        # note for power_state: delay (in mn) passed to the shutdown command is executed, timeout (in sec) waiting for cloud-init to complete before triggering shutdown
         return """
 #cloud-config
 
@@ -198,22 +227,25 @@ packages:
   - docker
 
 runcmd:
-  - export PIP=pip3
-  - export -f PY() {{ python3 -W ignore "$@" \}}
-  - mkdir -p /s3bucket
-  - mkdir ~/repo
-  - cd ~/repo
+  - alias PIP='pip3'
+  - alias PY='python3 -W ignore'
+  - mkdir -p /s3bucket/input
+  - mkdir -p /s3bucket/output
+  - mkdir /repo
+  - cd /repo
   - git clone {repo} .
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s skip
+  - aws s3 cp {s3_base_url}/input /s3bucket/input --recursive
+#  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -m docker -s skip
+  - aws s3 cp /s3bucket/output {s3_base_url}/output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
 final_message: "AutoML benchmark completed after $UPTIME s"
 
 power_state:
-  delay: "+30"
+  delay: "+1"
   mode: poweroff
   message: See you soon
   timeout: 21600
@@ -221,12 +253,13 @@ power_state:
  
 """.format(
             repo=rconfig().project_repository,
+            s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
+            ikey=instance_key,
             params=script_params
         )
 
-    @staticmethod
-    def _ec2_startup_script_bash(instance_key, script_params):
+    def _ec2_startup_script_bash(self, instance_key, script_params):
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
@@ -234,10 +267,11 @@ apt-get install -y curl wget unzip git awscli
 apt-get install -y python3 python3-pip 
 pip3 install --upgrade pip
 
-export PIP=pip3
-export -f PY() {{ python3 -W ignore "$@" \}}
+alias PIP='pip3'
+alias PY='python3 -W ignore'
 
-mkdir /s3bucket
+mkdir -p /s3bucket/input
+mkdir -p /s3bucket/output
 mkdir ~/repo
 cd ~/repo
 git clone {repo} .
@@ -245,13 +279,58 @@ git clone {repo} .
 PIP install --no-cache-dir -r requirements.txt --process-dependency-links
 PIP install --no-cache-dir openml
 
-PY {script} {params} -o /s3bucket -s only
+aws s3 cp {s3_base_url}/input /s3bucket/input --recursive
+#PY {script} {params} -o /s3bucket -s only
 PY {script} {params} -o /s3bucket -s skip
+aws s3 cp /s3bucket/output {s3_base_url}/output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 """.format(
             repo=rconfig().project_repository,
+            s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
+            ikey=instance_key,
             params=script_params
         )
 
+
+class AWSRemoteBenchmark(DockerBenchmark):
+
+    # TODO: idea is to handle results progressively on the remote side and push results as soon as they're generated
+    #   this would allow to safely run multiple tasks on single AWS instance
+
+    def __init__(self, framework_name, benchmark_name, parallel_jobs=1, region=None):
+        self.region = region
+        self.s3 = boto3.resource('s3', region_name=self.region)
+        self.bucket = self._init_bucket()
+        self._download_resources()
+        super().__init__(framework_name, benchmark_name, parallel_jobs)
+
+    def run(self, save_scores=False):
+        super().run(save_scores)
+        self._upload_results()
+
+    def run_one(self, task_name: str, fold, save_scores=False):
+        super().run_one(task_name, fold, save_scores)
+        self._upload_results()
+
+    def _make_job(self, task_name=None, folds=None):
+        job = super()._make_job(task_name, folds)
+        super_run = job._run
+        def new_run():
+            super_run()
+            # self._upload_result()
+
+        job._run = new_run
+        return job
+
+    def _init_bucket(self):
+        pass
+
+    def _download_resources(self):
+        root_key = str_def(rconfig().aws.s3.root_key)
+        benchmark_basename = os.path.basename(self.benchmark_path)
+        self.bucket.upload_file(self.benchmark_path, root_key+('/'.join(['input', benchmark_basename])))
+
+    def _upload_results(self):
+        pass
 

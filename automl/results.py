@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_au
 
 from .data import Dataset, Feature
 from .resources import get as rget, config as rconfig
-from .utils import Namespace, memoize, now_iso
+from .utils import Namespace, backup_file, memoize, datetime_iso
 
 log = logging.getLogger(__name__)
 
@@ -65,8 +65,7 @@ class Scoreboard:
             # todo: detect format change, i.e. data_frame columns are different or different order from existing file
             pass
         if new_format or (exists and not append):
-            # todo: backup existing file, i.e. rename to {file_name}_{last_write_time}.ext
-            pass
+            backup_file(self._score_file())
         new_file = not exists or not append or new_format
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
         data_frame.to_csv(self._score_file(),
@@ -145,6 +144,7 @@ class TaskResult:
         df = df.assign(predictions=predictions)
         df = df.assign(truth=truth)
         log.info("Predictions preview:\n %s\n", df.head(20).to_string())
+        backup_file(predictions_file)
         df.to_csv(predictions_file, index=False)
         log.debug("Predictions successfully saved to %s", predictions_file)
 
@@ -165,7 +165,7 @@ class TaskResult:
             task=self.task,
             fold=self.fold,
             mode=rconfig().run_mode,    # fixme: at the end, we're always running in local mode!!!
-            utc=now_iso()
+            utc=datetime_iso()
         )
         result = self.get_result(framework_name)
         for metric in metrics:

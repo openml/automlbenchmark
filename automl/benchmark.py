@@ -10,7 +10,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, available_memory_mb, now_iso, str2bool
+from .utils import Namespace, available_memory_mb, datetime_iso, str2bool
 
 
 log = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class Benchmark:
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
         log.debug("Using benchmark definition: %s", self.benchmark_def)
         self.parallel_jobs = parallel_jobs
-        self.uid = "{}_{}_{}".format(framework_name, benchmark_name, now_iso(micros=True, no_sep=True))
+        self.uid = "{}-{}-{}".format(framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)).lower()
 
         self.framework_module = import_module('automl.frameworks.'+self.framework_def.name)
 
