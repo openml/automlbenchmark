@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_au
 
 from .data import Dataset, Feature
 from .resources import get as rget, config as rconfig
-from .utils import memoize, now_iso
+from .utils import Namespace, memoize, now_iso
 
 log = logging.getLogger(__name__)
 
@@ -43,10 +43,17 @@ class Scoreboard:
 
     @memoize
     def as_data_frame(self, index=None):
-        index = index if index else ['task', 'framework', 'fold']
-        df = self.scores if isinstance(self.scores, pd.DataFrame) else pd.DataFrame.from_records(self.scores, index=index)
+        # index = index if index else ['task', 'framework', 'fold']
+        df = self.scores if isinstance(self.scores, pd.DataFrame) \
+            else pd.DataFrame.from_records([sc.as_dict() for sc in self.scores], index=index)
+        index = index if index else []
+        # fixed_cols = ['result', 'mode', 'version', 'utc']
+        fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc']
+        fixed_cols = [col for col in fixed_cols if col not in index]
+        dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
+        dynamic_cols.sort()
+        df = df.reindex(columns=[]+fixed_cols+dynamic_cols)
         log.debug("scores columns: %s", df.columns)
-        # todo: sort the columns to have index columns, followed by result, metrics and finally version and utc time
         return df
 
     def save(self, append=False, data_frame=None):
@@ -61,8 +68,10 @@ class Scoreboard:
             # todo: backup existing file, i.e. rename to {file_name}_{last_write_time}.ext
             pass
         new_file = not exists or not append or new_format
+        is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
         data_frame.to_csv(self._score_file(),
                           header=new_file,
+                          index=not is_default_index,
                           mode='w' if new_file else 'a')
 
     def _score_file(self):
@@ -150,7 +159,7 @@ class TaskResult:
 
     def compute_scores(self, framework_name, metrics):
         framework_def, _ = rget().framework_definition(framework_name)
-        scores = dict(
+        scores = Namespace(
             framework=framework_name,
             version=framework_def.version,
             task=self.task,
@@ -162,7 +171,7 @@ class TaskResult:
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
-        scores['result'] = scores[metrics[0]]
+        scores.result = scores[metrics[0]]
         log.info("metric scores: %s", scores)
         return scores
 

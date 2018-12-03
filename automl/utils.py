@@ -56,6 +56,9 @@ class Namespace:
         cloned = Namespace()
         return cloned.extend(self)
 
+    def as_dict(self):
+        return self.__dict__
+
 
 def repr_def(obj):
     return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))

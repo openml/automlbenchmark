@@ -276,7 +276,7 @@ class Job:
             beep = time.time()
             result = self._run()
             duration = time.time() - beep
-            log.info("Job %s executed in %s seconds", self.name, duration)
+            log.info("Job %s executed in %.3f seconds", self.name, duration)
             log.debug("Job %s returned: %s", self.name, result)
             return result, duration
         except Exception as e:
@@ -303,7 +303,7 @@ class JobRunner:
         self._run()
         self.state = JobRunner.State.stopped
         stop_time = time.time()
-        log.info("All jobs executed in %s seconds", stop_time-start_time)
+        log.info("All jobs executed in %.3f seconds", stop_time-start_time)
         return self.results
 
     def stop(self):
