@@ -359,8 +359,8 @@ apt-get install -y curl wget unzip git awscli
 apt-get install -y python3 python3-pip python3-venv
 
 python3 -m venv /venvs/bench
-alias PIP='/venvs/bench/pip3'
-alias PY='/venvs/bench/python3 -W ignore'
+alias PIP='/venvs/bench/bin/pip3'
+alias PY='/venvs/bench/bin/python3 -W ignore'
 PIP install --upgrade pip
 
 mkdir -p /s3bucket/input
