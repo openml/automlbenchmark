@@ -22,6 +22,7 @@ class Resources:
         self.config = Resources._normalize(config)
         self.config.predictions_dir = os.path.join(self.config.output_dir, 'predictions')
         self.config.scores_dir = os.path.join(self.config.output_dir, 'scores')
+        self.config.logs_dir = os.path.join(self.config.output_dir, 'logs')
         os.makedirs(self.config.predictions_dir, exist_ok=True)
         os.makedirs(self.config.scores_dir, exist_ok=True)
         log.debug("Normalized config: %s", self.config)

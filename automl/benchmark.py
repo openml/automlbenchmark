@@ -4,6 +4,7 @@ from importlib import import_module
 import logging
 import os
 import queue
+import random as rnd
 import threading
 import time
 
@@ -350,6 +351,7 @@ class ParallelJobRunner(JobRunner):
         try:
             for job in self.jobs:
                 q.put(job)     # todo: timeout
+                time.sleep(rnd.uniform(1, 5))    # short sleep between enqueued jobs to make console more readable
                 if self.state == JobRunner.State.stopping:
                     break
             q.join()

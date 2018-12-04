@@ -1,4 +1,4 @@
-requests
+requests>=2.10
 tabulate
 future
 colorama>=0.3.8

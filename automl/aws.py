@@ -205,9 +205,9 @@ class AWSBenchmark(Benchmark):
     def _download_results(self, instance_id):
         instance, ikey = self.instances[instance_id]
         root_key = str_def(rconfig().aws.s3.root_key)
-        predictions_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
-        scores_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
-        logs_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'logs'])))]
+        predictions_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
+        scores_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
+        logs_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'logs'])))]
 
         for obj in predictions_objs:
             # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
@@ -220,7 +220,8 @@ class AWSBenchmark(Benchmark):
             backup_file(dest_path)
             obj.download_file(dest_path)
         for obj in logs_objs:
-            dest_path = os.path.join(rconfig().log_di, os.path.basename(obj.key))
+            dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
+            obj.download_file(dest_path)
 
 
     def _create_instance_profile(self):
