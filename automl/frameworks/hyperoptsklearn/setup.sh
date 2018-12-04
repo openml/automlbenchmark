@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-if ! [[ -x "$(command -v PIP)" ]]; then
-    alias PIP=pip3
-fi
+. ../setup/aliases.sh
 PIP install --no-cache-dir -r requirements.txt
 DOWNLOAD_DIR="./libs"
 TARGET_DIR="$DOWNLOAD_DIR/hyperopt-sklearn"

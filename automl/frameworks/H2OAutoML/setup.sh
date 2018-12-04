@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-if ! [[ -x "$(command -v PIP)" ]]; then
-    alias PIP=pip3
-fi
+. ../setup/aliases.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     apt-get install -y openjdk-8-jdk
 fi
