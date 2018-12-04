@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -32,9 +33,11 @@ class AWSBenchmark(Benchmark):
             else rconfig().aws.region if rconfig().aws['region'] \
             else boto3.session.Session().region_name
         self.ami = rconfig().aws.ec2.regions[self.region].ami
-        self.s3 = None
         self.ec2 = None
+        self.iam = None
+        self.s3 = None
         self.bucket = None
+        self.instance_profile = None
         self.instances = {}
         self.jobs = []
         self._validate2()
@@ -51,9 +54,11 @@ class AWSBenchmark(Benchmark):
     def setup(self, mode):
         if mode == Benchmark.SetupMode.skip:
             log.warning("AWS setup mode set to unsupported {mode}, ignoring".format(mode=mode))
+        self.iam = boto3.resource('iam', region_name=self.region)
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
         self._upload_resources()
+        self.instance_profile = self._create_instance_profile()
         self.ec2 = boto3.resource("ec2", region_name=self.region)
 
     def cleanup(self):
@@ -104,13 +109,14 @@ class AWSBenchmark(Benchmark):
 
     def _start_instance(self, instance_type, script_params):
         log.info("Starting new EC2 instance with params: %s", script_params)
-        inst_key = "{}_${}_i{}".format(self.ami, self.uid, datetime_iso(micros=True, no_sep=True)).lower()
+        inst_key = "{}_b{}_i{}".format(self.ami, self.uid, datetime_iso(micros=True, no_sep=True)).lower()
         instance = self.ec2.create_instances(
             ImageId=self.ami,
             MinCount=1,
             MaxCount=1,
             InstanceType=instance_type,
             SubnetId=rconfig().aws.ec2.subnet_id,
+            IamInstanceProfile=dict(Name=self.instance_profile.name),
             UserData=self._ec2_startup_script(inst_key, script_params)
         )[0]
         # todo: error handling
@@ -120,13 +126,18 @@ class AWSBenchmark(Benchmark):
 
     def _monitor_instance(self, instance_id):
         instance, _ = self.instances[instance_id]
+        last_console_line = -1
 
         def log_console():
+            nonlocal last_console_line
             try:
                 output = instance.console_output(Latest=True)
                 if 'Output' in output:
-                    output = output['Output']
-                    log.info(tail(output, 50))
+                    output = output['Output']   # note that console_output only returns the last 64kB of console
+                    new_log, last_line = tail(output, from_line=last_console_line, include_line=False)
+                    if last_line is not None:
+                        last_console_line = last_line['line']
+                    log.info(new_log)
             except Exception as e:
                 log.exception(e)
 
@@ -196,6 +207,7 @@ class AWSBenchmark(Benchmark):
         root_key = str_def(rconfig().aws.s3.root_key)
         predictions_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
         scores_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
+        logs_objs = [o for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'logs'])))]
 
         for obj in predictions_objs:
             # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
@@ -207,6 +219,82 @@ class AWSBenchmark(Benchmark):
             dest_path = os.path.join(rconfig().scores_dir, os.path.basename(obj.key))
             backup_file(dest_path)
             obj.download_file(dest_path)
+        for obj in logs_objs:
+            dest_path = os.path.join(rconfig().log_di, os.path.basename(obj.key))
+
+
+    def _create_instance_profile(self):
+        """
+        see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+        for steps defined here
+        :return:
+        """
+        iamc = rconfig().aws.iam
+        irole = None
+        try:
+            self.iam.meta.client.get_role(RoleName=iamc.role_name)
+            irole = self.iam.Role(iamc.role_name)
+        except botocore.exceptions.ClientError as e:
+            log.info("role %s doesn't exist, creating it: %s", iamc.role_name, str(e))
+
+        if not irole:
+            ec2_role_trust_policy_json = json.dumps({   # trust role
+                'Version': '2012-10-17',  # version of the policy language, cf. https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_version.html
+                'Statement': [
+                    {
+                        'Effect': 'Allow',
+                        'Principal': {'Service': 'ec2.amazonaws.com'},
+                        'Action': 'sts:AssumeRole'
+                    }
+                ]
+            })
+            irole = self.iam.create_role(
+                RoleName=iamc.role_name,
+                AssumeRolePolicyDocument=ec2_role_trust_policy_json,
+                MaxSessionDuration=3600  # in seconds
+            )
+
+        if iamc.s3_policy_name not in [p.name for p in irole.policies.all()]:
+            resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=self.bucket.name, root_key=str_def(rconfig().aws.s3.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
+            s3_policy_json = json.dumps({
+                'Version': '2012-10-17',
+                'Statement': [
+                    {
+                        'Effect': 'Allow',
+                        'Action': 's3:List*',
+                        'Resource': 'arn:aws:s3:::{}*'.format(self.bucket.name)
+                    },
+                    {
+                        'Effect': 'Allow',
+                        'Action': 's3:GetObject',   # S3 actions, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html
+                        'Resource': resource_prefix+'input/*'
+                    },
+                    {
+                        'Effect': 'Allow',
+                        'Action': 's3:PutObject',
+                        'Resource': resource_prefix+'output/*'   # technically, we could grant write access for each instance only to its own 'directory', but this is not necessary
+                    }
+                ]
+            })
+            self.iam.meta.client.put_role_policy(
+                RoleName=irole.name,
+                PolicyName=iamc.s3_policy_name,
+                PolicyDocument=s3_policy_json
+            )
+
+        iprofile = None
+        try:
+            self.iam.meta.client.get_instance_profile(InstanceProfileName=iamc.instance_profile_name)
+            iprofile = self.iam.InstanceProfile(iamc.instance_profile_name)
+        except botocore.exceptions.ClientError as e:
+            log.info("instance profile %s doesn't exist, creating it: %s", iamc.instance_profile_name, str(e))
+        if not iprofile:
+            iprofile = self.iam.create_instance_profile(InstanceProfileName=iamc.instance_profile_name)
+
+        if irole.name not in [r.name for r in iprofile.roles]:
+            iprofile.add_role(RoleName=irole.name)
+
+        return iprofile
 
     def _ec2_startup_script(self, instance_key, script_params):
         # todo: quid of docker repo access? public image?
@@ -236,10 +324,10 @@ runcmd:
   - git clone {repo} .
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
-  - aws s3 cp {s3_base_url}/input /s3bucket/input --recursive
-#  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -m docker -s skip
-  - aws s3 cp /s3bucket/output {s3_base_url}/output/{ikey} --recursive
+  - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s skip
+  - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
 final_message: "AutoML benchmark completed after $UPTIME s"
@@ -250,7 +338,6 @@ power_state:
   message: See you soon
   timeout: 21600
   condition: True
- 
 """.format(
             repo=rconfig().project_repository,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
@@ -279,10 +366,10 @@ git clone {repo} .
 PIP install --no-cache-dir -r requirements.txt --process-dependency-links
 PIP install --no-cache-dir openml
 
-aws s3 cp {s3_base_url}/input /s3bucket/input --recursive
+aws s3 cp {s3_base_url}input /s3bucket/input --recursive
 #PY {script} {params} -o /s3bucket -s only
 PY {script} {params} -o /s3bucket -s skip
-aws s3 cp /s3bucket/output {s3_base_url}/output/{ikey} --recursive
+aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 """.format(
             repo=rconfig().project_repository,

@@ -174,11 +174,31 @@ def str_def(s, if_none=''):
 
 
 def head(s, lines=10):
-    return '\n'.join([''] + s.splitlines()[:lines]) if s else ''
+    s_lines = s.splitlines() if s else []
+    return '\n'.join(s_lines[:lines])
 
 
-def tail(s, lines=10):
-    return '\n'.join([''] + s.splitlines()[-lines:]) if s else ''
+def tail(s, lines=10, from_line=None, include_line=True):
+    if s is None:
+        return None if from_line is None else None, None
+
+    s_lines = s.splitlines()
+    start = -lines
+    if isinstance(from_line, int):
+        start = from_line
+        if not include_line:
+            start += 1
+    elif isinstance(from_line, str):
+        try:
+            start = s_lines.index(from_line)
+            if not include_line:
+                start += 1
+        except ValueError:
+            start = 0
+    last_line = dict(index=len(s_lines) - 1,
+                     line=s_lines[-1] if len(s_lines) > 0 else None)
+    t = '\n'.join(s_lines[start:])
+    return t if from_line is None else t, last_line
 
 
 def pip_install(module_or_requirements, is_requirements=False):

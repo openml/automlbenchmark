@@ -15,11 +15,15 @@
 
   "aws": {
     "region": "",
-    "iam": {},
+    "iam": {
+      "role_name": "AutomlBenchmarkRole",
+      "s3_policy_name": "AutomlBenchmarkS3Policy",
+      "instance_profile_name": "AutomlBenchmarkProfile"
+    },
     "s3": {
       "bucket": "automl-benchmark",
       "temporary": false,
-      "root_key": "automlbenchmark/"
+      "root_key": "ec2/"
     },
     "ec2": {
       "instance_type": "m5.large",
