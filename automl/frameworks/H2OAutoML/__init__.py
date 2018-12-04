@@ -12,7 +12,6 @@ def run(*args, **kwargs):
 
 def docker_commands():
     return """
-RUN apt-get install -y openjdk-8-jdk
 RUN {here}/setup.sh
 EXPOSE 54321
 EXPOSE 54322

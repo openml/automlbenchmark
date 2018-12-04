@@ -20,9 +20,9 @@ class DockerBenchmark(Benchmark):
     def docker_image_name(framework_def):
         docker_image = framework_def.docker_image
         return "{author}/{image}:{tag}".format(
-            author=docker_image["author"],
-            image=docker_image["image"],
-            tag=docker_image["tag"]
+            author=docker_image['author'],
+            image=docker_image['image'],
+            tag=docker_image['tag']
         )
 
     def __init__(self, framework_name, benchmark_name, parallel_jobs=1):
@@ -87,7 +87,7 @@ class DockerBenchmark(Benchmark):
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
             ))
 
-        job = Job("docker_{}_{}_{}".format(task_name, ':'.join(folds), self.framework_name))
+        job = Job("docker_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run
         return job
 

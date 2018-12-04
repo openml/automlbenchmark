@@ -5,8 +5,8 @@ from hyperopt import tpe
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
+from automl.datautils import Encoder
 from automl.results import save_predictions_to_file
-from automl.utils import Encoder
 
 
 log = logging.getLogger(__name__)

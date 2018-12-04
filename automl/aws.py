@@ -103,7 +103,7 @@ class AWSBenchmark(Benchmark):
                 ))
             self._monitor_instance(instance_id)
 
-        job = Job("aws_{}_{}_{}".format(task_name, ':'.join(folds), self.framework_name))
+        job = Job("aws_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run
         return job
 
@@ -322,6 +322,7 @@ runcmd:
   - mkdir /repo
   - cd /repo
   - git clone {repo} .
+#  - PY -m pip install --user --upgrade pip
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive

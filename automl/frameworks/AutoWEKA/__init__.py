@@ -12,7 +12,6 @@ def run(*args, **kwargs):
 
 def docker_commands():
     return """
-RUN apt-get install -y wget unzip openjdk-8-jdk
 RUN {here}/setup.sh
 """.format(here=dir_of(__file__, True))
 

@@ -24,4 +24,6 @@ __all__ = (
 #  features:
 #    AWS support (in progress)
 #    group score files into global one
+#    timeouts (esp. for AWS, but also for all jobs in general: global timeout + job timeout?)
+#    progress bar?? fancy useless stuff
 #    search for todos in code

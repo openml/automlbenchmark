@@ -4,7 +4,8 @@ from typing import List
 import numpy as np
 from numpy import ndarray
 
-from .utils import Encoder, lazy_property, repr_def
+from .datautils import Encoder
+from .utils import lazy_property, repr_def
 
 
 class Feature:

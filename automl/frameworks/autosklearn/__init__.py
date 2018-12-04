@@ -14,7 +14,6 @@ def run(*args, **kwargs):
 
 def docker_commands():
     return """
-RUN apt-get install -y build-essential swig
 RUN {here}/setup.sh
 """.format(here=dir_of(__file__, True))
 
