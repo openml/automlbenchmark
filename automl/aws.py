@@ -313,17 +313,20 @@ packages:
   - git
   - python3
   - python3-pip
+  - python3-venv
   - docker
 
 runcmd:
-  - alias PIP='pip3'
-  - alias PY='python3 -W ignore'
+  - python3 -m venv /venvs/bench
+  - alias PIP='/venvs/bench/bin/pip3'
+  - alias PY='/venvs/bench/bin/python3 -W ignore'
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir /repo
   - cd /repo
   - git clone {repo} .
 #  - PY -m pip install --user --upgrade pip
+  - PIP install --upgrade pip
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
@@ -353,11 +356,12 @@ power_state:
 apt-get update
 #apt-get -y upgrade
 apt-get install -y curl wget unzip git awscli
-apt-get install -y python3 python3-pip 
-pip3 install --upgrade pip
+apt-get install -y python3 python3-pip python3-venv
 
-alias PIP='pip3'
-alias PY='python3 -W ignore'
+python3 -m venv /venvs/bench
+alias PIP='/venvs/bench/pip3'
+alias PY='/venvs/bench/python3 -W ignore'
+PIP install --upgrade pip
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output

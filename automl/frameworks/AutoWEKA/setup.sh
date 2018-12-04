@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
+if ! [[ -x "$(command -v PIP)" ]]; then
+    alias PIP=pip3
+fi
 if [[ -x "$(command -v apt-get)" ]]; then
     apt-get install -y wget unzip openjdk-8-jdk
 fi
 
-pip3 install --no-cache-dir -r requirements.txt
+PIP install --no-cache-dir -r requirements.txt
 
 AUTOWEKA_ARCHIVE="autoweka-2.6.zip"
 DOWNLOAD_DIR="./libs"

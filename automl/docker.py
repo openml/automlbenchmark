@@ -145,13 +145,13 @@ RUN pip3 install --upgrade pip
 
 # We create a virtual environment so that AutoML systems may use their preferred versions of 
 # packages that we need to data pre- and postprocessing without breaking it.
-ENV V_PIP /venvs/setup/bin/pip3
-ENV V_PY /venvs/setup/bin/python3
-ENV PIP pip3
-ENV PY python3 -W ignore
+ENV PIP /venvs/bench/bin/pip3
+ENV PY /venvs/bench/bin/python3 -W ignore
+ENV SPIP pip3
+ENV SPY python3
 
-RUN $PY -m venv /venvs/setup
-RUN $V_PIP install --upgrade pip
+RUN $SPY -m venv /venvs/bench
+RUN $PIP install --upgrade pip
 
 WORKDIR /bench
 VOLUME /input
