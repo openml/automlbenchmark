@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. ../setup/aliases.sh
+. $(dirname "$0")/../../setup/aliases.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     apt-get install -y openjdk-8-jdk
 fi

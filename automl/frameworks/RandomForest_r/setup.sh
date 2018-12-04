@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. ../setup/aliases.sh
+. $(dirname "$0")/../../setup/aliases.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     apt-get -y install software-properties-common apt-transport-https libxml2-dev
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9

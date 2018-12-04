@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. ../setup/aliases.sh
+. $(dirname "$0")/../../setup/aliases.sh
 PIP install --no-cache-dir -r requirements.txt
 DOWNLOAD_DIR="./libs"
 TARGET_DIR="$DOWNLOAD_DIR/hyperopt-sklearn"
