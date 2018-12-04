@@ -4,3 +4,5 @@ if [[ -x "$(command -v /venvs/bench/bin/pip3)" ]]; then
 else
     alias PIP='pip3'
 fi
+echo "$(command -v PIP)"
+echo "$(alias)"
