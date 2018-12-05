@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-. $(dirname "$0")/../../setup/aliases.sh
+. $(dirname "$0")/../../setup/shared.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     apt-get install -y wget unzip openjdk-8-jdk
 fi
-
-PIP install --no-cache-dir -r requirements.txt
 
 AUTOWEKA_ARCHIVE="autoweka-2.6.zip"
 DOWNLOAD_DIR="./libs"

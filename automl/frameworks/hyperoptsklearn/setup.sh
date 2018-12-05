@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-. $(dirname "$0")/../../setup/aliases.sh
-PIP install --no-cache-dir -r requirements.txt
+. $(dirname "$0")/../../setup/shared.sh
 DOWNLOAD_DIR="./libs"
 TARGET_DIR="$DOWNLOAD_DIR/hyperopt-sklearn"
 if [[ ! -e "$TARGET_DIR" ]]; then

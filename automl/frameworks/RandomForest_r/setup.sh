@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. $(dirname "$0")/../../setup/aliases.sh
+. $(dirname "$0")/../../setup/shared.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     apt-get -y install software-properties-common apt-transport-https libxml2-dev
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
@@ -7,7 +7,6 @@ if [[ -x "$(command -v apt-get)" ]]; then
     apt update
     apt-get -y install r-base r-base-dev
 fi
-PIP install --no-cache-dir -r requirements.txt
 #PIP install --no-cache-dir -r automl/frameworks/RandomForest_r/py_requirements.txt
 
 Rscript -e 'install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'
