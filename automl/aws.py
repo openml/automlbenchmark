@@ -130,7 +130,7 @@ class AWSBenchmark(Benchmark):
             InstanceType=instance_type,
             SubnetId=rconfig().aws.ec2.subnet_id,
             IamInstanceProfile=dict(Name=self.instance_profile.name),
-            UserData=self._ec2_startup_script(inst_key, script_params+script_params, timeout_secs=timeout_secs)
+            UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
         )[0]
         # todo: error handling
         self.instances[instance.id] = (instance, inst_key)
@@ -227,7 +227,6 @@ class AWSBenchmark(Benchmark):
             obj.download_file(dest_path)
 
         for obj in scores_objs:
-            # todo: saving scores for now after backing up previous scores but this should be merged to existing scores files!!!
             dest_path = os.path.join(rconfig().scores_dir, os.path.basename(obj.key))
             backup_file(dest_path)
             with io.StringIO() as buffer:
