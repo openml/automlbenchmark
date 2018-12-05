@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -9,6 +10,7 @@ import botocore.exceptions
 from .benchmark import Benchmark, Job
 from .docker import DockerBenchmark
 from .resources import config as rconfig
+from .results import Scoreboard
 from .utils import backup_file, datetime_iso, str_def, tail
 
 
@@ -73,7 +75,9 @@ class AWSBenchmark(Benchmark):
             jobs.append(self._make_job())
         else:
             jobs.extend(self._benchmark_jobs())
-        self._run_jobs(jobs)
+        results = self._run_jobs(jobs)
+        log.debug("results from aws run (not merged to other scores yet): %s", results)
+        return self._process_results(results, save_scores=save_scores)
 
     def run_one(self, task_name: str, fold: int, save_scores=False):
         jobs = []
@@ -81,8 +85,9 @@ class AWSBenchmark(Benchmark):
             jobs.append(self._make_job(task_name, fold))
         else:
             jobs.extend(self._custom_task_jobs(task_name, fold))
-        self._run_jobs(jobs)
-        # board = Scoreboard.for_task(task_name, framework_name=self.framework_name)
+        results = self._run_jobs(jobs)
+        log.debug("results from aws run (not merged to other scores yet): %s", results)
+        return self._process_results(results, save_scores=save_scores)
 
     def _fold_job(self, task_def, fold: int):
         return self._make_job(task_def.name, [fold])
@@ -90,26 +95,34 @@ class AWSBenchmark(Benchmark):
     def _make_job(self, task_name=None, folds=None):
         folds = [] if folds is None else [str(f) for f in folds]
         instance_type = self._get_task_def(task_name).ec2_instance_type if task_name else rconfig().aws.ec2.instance_type
+        timeout_secs = self._get_task_def(task_name).max_runtime_seconds if task_name \
+            else sum([task.max_runtime_seconds for task in self.benchmark_def])
+        timeout_secs += rconfig().aws.overhead_time_seconds
 
         def _run():
             instance_id = self._start_instance(
                 instance_type,
-                "{framework} {benchmark} {task_param} {folds_param}".format(
+                script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
                     # benchmark=self.benchmark_name,
                     benchmark="/s3bucket/input/{}.json".format(self.benchmark_name),
                     task_param='' if task_name is None else ('-t '+task_name),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
-                ))
-            self._monitor_instance(instance_id)
+                ),
+                timeout_secs=timeout_secs
+            )
+            return self._wait_for_results(instance_id)
 
         job = Job("aws_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run
         return job
 
-    def _start_instance(self, instance_type, script_params):
+    def _start_instance(self, instance_type, script_params="", timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s", script_params)
         inst_key = "{}_b{}_i{}".format(self.ami, self.uid, datetime_iso(micros=True, no_sep=True)).lower()
+        # todo: don't know if it would be considerably faster to reuse previously stopped instances sometimes
+        #   instead of always creating a new one:
+        #   would still need to set a new UserData though before restarting the instance.
         instance = self.ec2.create_instances(
             ImageId=self.ami,
             MinCount=1,
@@ -117,16 +130,17 @@ class AWSBenchmark(Benchmark):
             InstanceType=instance_type,
             SubnetId=rconfig().aws.ec2.subnet_id,
             IamInstanceProfile=dict(Name=self.instance_profile.name),
-            UserData=self._ec2_startup_script(inst_key, script_params)
+            UserData=self._ec2_startup_script(inst_key, script_params+script_params, timeout_secs=timeout_secs)
         )[0]
         # todo: error handling
         self.instances[instance.id] = (instance, inst_key)
         log.info("Started EC2 instance %s", instance.id)
         return instance.id
 
-    def _monitor_instance(self, instance_id):
+    def _wait_for_results(self, instance_id):
         instance, _ = self.instances[instance_id]
         last_console_line = -1
+        results = []
 
         def log_console():
             nonlocal last_console_line
@@ -137,7 +151,8 @@ class AWSBenchmark(Benchmark):
                     new_log, last_line = tail(output, from_line=last_console_line, include_line=False)
                     if last_line is not None:
                         last_console_line = last_line['line']
-                    log.info(new_log)
+                    if new_log:
+                        log.info(new_log)
             except Exception as e:
                 log.exception(e)
 
@@ -147,15 +162,18 @@ class AWSBenchmark(Benchmark):
                 log.info("EC2 instance %s is %s", instance_id, instance.state['Name'])
                 log_console()
                 self._download_results(instance_id)
-                del self.instances[instance_id]
+                self._stop_instance(instance_id, terminate=rconfig().aws.ec2.terminate_instances)
                 break
             else:
                 log_console()
             time.sleep(rconfig().aws.query_frequency_seconds)
 
+        return results
+
     def _stop_instance(self, instance_id, terminate=False):
         log.info("%s EC2 instances %s", "Terminating" if terminate else "Stopping", instance_id)
         instance, _ = self.instances[instance_id]
+        del self.instances[instance_id]
         if terminate:
             response = instance.terminate()
         else:
@@ -163,16 +181,9 @@ class AWSBenchmark(Benchmark):
         log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", instance_id, response)
         # todo error handling
 
-    def _stop_all_instances(self, terminate=False):
-        ids = [inst.id for inst in self.instances]
-        log.info("%s EC2 instances %s", "Terminating" if terminate else "Stopping", ids)
-        instances = self.ec2.instances.filter(InstanceIds=ids)
-        if terminate:
-            response = instances.terminate()
-        else:
-            response = instances.stop()
-        log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", ids, response)
-        # todo error handling
+    def _stop_all_instances(self):
+        for id in [inst.id for inst in self.instances]:
+            self._stop_instance(id, terminate=rconfig().aws.ec2.terminate_instances)
 
     def _create_s3_bucket(self):
         bucket_name = rconfig().aws.s3.bucket
@@ -214,15 +225,23 @@ class AWSBenchmark(Benchmark):
             dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
             backup_file(dest_path)
             obj.download_file(dest_path)
+
         for obj in scores_objs:
             # todo: saving scores for now after backing up previous scores but this should be merged to existing scores files!!!
             dest_path = os.path.join(rconfig().scores_dir, os.path.basename(obj.key))
             backup_file(dest_path)
-            obj.download_file(dest_path)
+            with io.StringIO() as buffer:
+                obj.download_file_obj(buffer)
+            # fixme: bypassing the save_scores flag here, do we care?
+            df = Scoreboard.load_df(buffer)
+            df.loc[:,'mode'] = 'aws'
+            self._save(Scoreboard(scores=df,
+                                  framework_name=self.framework_name,
+                                  benchmark_name=self.benchmark_name))
+
         for obj in logs_objs:
             dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
             obj.download_file(dest_path)
-
 
     def _create_instance_profile(self):
         """
@@ -297,9 +316,28 @@ class AWSBenchmark(Benchmark):
 
         return iprofile
 
-    def _ec2_startup_script(self, instance_key, script_params):
-        # todo: quid of docker repo access? public image?
-        # note for power_state: delay (in mn) passed to the shutdown command is executed, timeout (in sec) waiting for cloud-init to complete before triggering shutdown
+    def _ec2_startup_script(self, instance_key, script_params="", timeout_secs=-1):
+        """
+        Generates the UserData is cloud-config format for the EC2 instance:
+        this script is automatically executed by the instance at the end of its boot process.
+
+        This cloud-config version is currently preferred as the runcmd are always executed sequentially,
+        regardless of the previous one raising an error. Especially, the power_state directive is always executed.
+
+        Notes about cloud-config syntax:
+            - runcmd: all command are executed sequentially. If one raises an error, the next one is still executed afterwards.
+            - power_state:
+                * delay (in mn) passed to the shutdown command is executed,
+                * timeout (in sec) waiting for cloud-init to complete before triggering shutdown.
+
+        :param instance_key: the unique local identifier for the instance.
+            This is different from EC2 instance id as we don't know it yet.
+            Mainly used to put output files to dedicated key on s3.
+        :param script_params: the custom params passed to the benchmark script, usually only task, fold params
+        :return: the UserData for the new ec2 instance
+        todo: quid of docker repo access? public image?
+        """
+
         return """
 #cloud-config
 
@@ -309,11 +347,11 @@ packages:
   - curl
   - wget
   - unzip
-  - awscli
   - git
   - python3
   - python3-pip
   - python3-venv
+  - awscli
   - docker
 
 runcmd:
@@ -325,7 +363,6 @@ runcmd:
   - mkdir /repo
   - cd /repo
   - git clone {repo} .
-#  - PY -m pip install --user --upgrade pip
   - PIP install --upgrade pip
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
@@ -340,28 +377,41 @@ final_message: "AutoML benchmark completed after $UPTIME s"
 power_state:
   delay: "+1"
   mode: poweroff
-  message: See you soon
-  timeout: 21600
+  message: "I'm losing power"
+  timeout: {timeout}
   condition: True
 """.format(
             repo=rconfig().project_repository,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
             ikey=instance_key,
-            params=script_params
+            params=script_params,
+            timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds
         )
 
-    def _ec2_startup_script_bash(self, instance_key, script_params):
+    def _ec2_startup_script_bash(self, instance_key, script_params="", timeout_secs=-1):
+        """
+        Backup UserData version if the cloud-config version doesn't work as expected.
+
+        Generates the UserData is bash format for the EC2 instance:
+        this script is automatically executed by the instance at the end of its boot process.
+        TODO: current version doesn't handle errors at all, that's why the cloud-config version is currently preferred.
+        :param instance_key: the unique local identifier for the instance.
+            This is different from EC2 instance id as we don't know it yet.
+            Mainly used to put output files to dedicated key on s3.
+        :param script_params: the custom params passed to the benchmark script, usually only task, fold params
+        :return: the UserData for the new ec2 instance
+        """
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
-apt-get install -y curl wget unzip git awscli
+apt-get install -y curl wget unzip git
 apt-get install -y python3 python3-pip python3-venv
+apt-get install -y awscli docker
 
 python3 -m venv /venvs/bench
 alias PIP='/venvs/bench/bin/pip3'
 alias PY='/venvs/bench/bin/python3 -W ignore'
-PIP install --upgrade pip
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
@@ -369,14 +419,16 @@ mkdir ~/repo
 cd ~/repo
 git clone {repo} .
 
+PIP install --upgrade pip
 PIP install --no-cache-dir -r requirements.txt --process-dependency-links
 PIP install --no-cache-dir openml
 
 aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-#PY {script} {params} -o /s3bucket -s only
+PY {script} {params} -o /s3bucket -s only
 PY {script} {params} -o /s3bucket -s skip
 aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+shutdown -P +1 "I'm losing power"
 """.format(
             repo=rconfig().project_repository,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),

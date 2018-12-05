@@ -26,19 +26,21 @@
       "root_key": "ec2/"
     },
     "ec2": {
+      "terminate_instances": true,
       "instance_type": "m5.large",
       "subnet_id": "",
       "regions": {
         "us-east-1": { "ami": "ami-0797482d7f93b830c" },
         "us-west-1": { "ami": "ami-0f27f14c7e0fffda9" },
         "eu-west-1": { "ami": "ami-0615f1e34f8d36362" },
-        "eu-central-1": { "ami": "ami-0bdf93799014acdc4", "description": "Ubuntu Server 18.04 LTS (HVM),EBS General Purpose (SSD) Volume Type" }
+        "eu-central-1": { "ami": "ami-0bdf93799014acdc4", "description": "Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) Volume Type" }
       }
     },
-    "overhead_time_seconds": 600,
-    "query_frequency_seconds": 10
+    "max_timeout_seconds": 21600,
+    "overhead_time_seconds": 900,
+    "query_frequency_seconds": 15
   },
 
   "max_mem_size_mb": 2048,
-  "max_parallel_jobs": 2
+  "max_parallel_jobs": 5
 }

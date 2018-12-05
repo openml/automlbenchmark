@@ -1,4 +1,5 @@
 import datetime as dt
+import functools as ft
 import json
 import logging
 import os
@@ -114,6 +115,10 @@ def lazy_property(prop_fn):
     return decorator
 
 
+def flatten(iterable):
+    return ft.reduce(lambda l, r: (l.extend(r) if isinstance(r, list) else l.append(r)) or l, iterable, [])
+
+
 def json_load(file, as_object=False):
     if as_object:
         return json.load(file, object_hook=lambda dic: Namespace(**dic))
@@ -217,9 +222,13 @@ def backup_file(file_path):
     src_path = os.path.realpath(file_path)
     if not os.path.isfile(src_path):
         return
-    base, ext = os.path.splitext(src_path)
+    dirname, basename = os.path.split(src_path)
+    base, ext = os.path.splitext(basename)
     mod_time = dt.datetime.utcfromtimestamp(os.path.getmtime(src_path))
-    dest_path = ''.join([base, '_', datetime_iso(mod_time, date_sep='', time_sep=''), ext])
+    dest_name = ''.join([base, '_', datetime_iso(mod_time, date_sep='', time_sep=''), ext])
+    dest_dir = os.path.join(dirname, 'backup')
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
     log.info('file `%s` was backed up to `%s`.', src_path, dest_path)
 

@@ -62,7 +62,9 @@ class DockerBenchmark(Benchmark):
             jobs.append(self._make_job())
         else:
             jobs.extend(self._benchmark_jobs())
-        self._run_jobs(jobs)
+        results = self._run_jobs(jobs)
+        log.debug("results from docker run (merged to other scores but not to global scores yet): %s", results)
+        return self._process_results(results, save_scores=save_scores)
 
     def run_one(self, task_name: str, fold, save_scores=False):
         jobs = []
@@ -70,8 +72,9 @@ class DockerBenchmark(Benchmark):
             jobs.append(self._make_job(task_name, fold))
         else:
             jobs.extend(self._custom_task_jobs(task_name, fold))
-        self._run_jobs(jobs)
-        # board = Scoreboard.for_task(task_name, framework_name=self.framework_name)
+        results = self._run_jobs(jobs)
+        log.debug("results from docker run (merged to other scores but not to global scores yet): %s", results)
+        return self._process_results(results, save_scores=save_scores)
 
     def _fold_job(self, task_def, fold: int):
         return self._make_job(task_def.name, [fold])
@@ -86,6 +89,7 @@ class DockerBenchmark(Benchmark):
                 task_param='' if task_name is None else ('-t '+task_name),
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
             ))
+            # todo: would be nice to reload generated scores and return them
 
         job = Job("docker_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run

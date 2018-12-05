@@ -11,7 +11,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, available_memory_mb, datetime_iso, str2bool
+from .utils import Namespace, available_memory_mb, datetime_iso, flatten, str2bool
 
 
 log = logging.getLogger(__name__)
@@ -75,19 +75,8 @@ class Benchmark:
         """
         runs the framework for every task in the benchmark definition
         """
-        scores = [res.result for res in self._run_jobs(self._benchmark_jobs())]
-
-        if len(scores) == 0 or not any(scores):
-            return None
-
-        board = Scoreboard(scores, framework_name=self.framework_name, benchmark_name=self.benchmark_name)
-        if save_scores:
-            board.save(append=True)
-        log.info("Summing up scores for {benchmark} benchmark:\n {scores}".format(
-            benchmark=self.benchmark_name,
-            scores=board.as_data_frame()
-        ))
-        return board.as_data_frame()
+        results = self._run_jobs(self._benchmark_jobs())
+        return self._process_results(results, save_scores=save_scores)
 
     def run_one(self, task_name: str, fold, save_scores=False):
         """
@@ -97,19 +86,8 @@ class Benchmark:
         :param save_scores:
         """
         task_def = self._get_task_def(task_name)
-        scores = [res.result for res in self._run_jobs(self._custom_task_jobs(task_def, fold))]
-
-        if len(scores) == 0 or not any(scores):
-            return None
-
-        board = Scoreboard(scores, framework_name=self.framework_name, task_name=task_name)
-        if save_scores:
-            board.save(append=True)
-        log.info("Summing up scores for {task} task:\n {scores}".format(
-            task=task_name,
-            scores=board.as_data_frame()
-        ))
-        return board.as_data_frame()
+        results = self._run_jobs(self._custom_task_jobs(task_def, fold))
+        return self._process_results(results, save_scores=save_scores)
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
@@ -165,6 +143,24 @@ class Benchmark:
         if not Benchmark._is_task_enabled(task_def):
             raise ValueError("task {} is disabled, please enable it first".format(task_name))
         return task_def
+
+    def _process_results(self, results, task_name=None, save_scores=False):
+        scores = flatten([res.result for res in results])
+        if len(scores) == 0 or not any(scores):
+            return None
+
+        board = Scoreboard(scores, framework_name=self.framework_name, task_name=task_name) if task_name \
+            else Scoreboard(scores, framework_name=self.framework_name, benchmark_name=self.benchmark_name)
+
+        if save_scores:
+            self._save(board)
+
+        log.info("Summing up scores for current run:\n%s", board.as_data_frame())
+        return board.as_data_frame()
+
+    def _save(self, board):
+        board.save(append=True)
+        Scoreboard.for_all().append(board).save()
 
     @property
     def _framework_dir(self):

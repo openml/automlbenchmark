@@ -1,11 +1,50 @@
 import numpy as np
+import pandas as pd
 from sklearn.base import TransformerMixin
+from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
 try:
     from sklearn.preprocessing import OrdinalEncoder
 except ImportError:
     from sklearn.preprocessing import LabelEncoder as OrdinalEncoder
+
+"""
+Module implementing or aliasing various functions for data manipulations.
+
+This is (and should remain) the only non-framework module with dependencies to libraries like pandas or sklearn 
+until replacement by simpler/lightweight versions to avoid potential version conflicts with libraries imported by benchmark frameworks.
+"""
+
+
+def read_csv(file):
+    """
+    read csv file to DataFrame.
+
+    for now, delegates to pandas, just simplifying signature in the case we want to get rid of pandas dependency
+     (numpy should be enough for our needs).
+    :param file: the path to a csv file or a file-like object, or readable (with read() method) object
+    :return: a DataFrame
+    """
+    return pd.read_csv(file)
+
+
+def write_csv(data_frame, file, header=True, index=True, append=False):
+    data_frame.to_csv(file, header=header, index=index, mode='a' if append else 'w')
+
+
+def is_data_frame(df):
+    return isinstance(df, pd.DataFrame)
+
+
+def to_data_frame(obj, columns=None):
+    if isinstance(obj, dict):
+        return pd.DataFrame.from_dict(obj, columns=columns, orient='columns' if columns is None else 'index')
+    elif isinstance(obj, (list, np.ndarray)):
+        return pd.DataFrame.from_records(obj, columns=columns)
+    else:
+        raise ValueError("object should be a dictionary {col1:values, col2:values, ...} "
+                         "or an array of dictionary-like objects [{col1:val, col2:val}, {col1:val, col2:val}, ...]")
 
 
 class Encoder(TransformerMixin):

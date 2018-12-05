@@ -1,12 +1,12 @@
+import io
 import logging
 import math
 import os
 
 from numpy import NaN, sort
-import pandas as pd
-from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score
 
 from .data import Dataset, Feature
+from .datautils import accuracy_score, log_loss, mean_squared_error, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig
 from .utils import Namespace, backup_file, memoize, datetime_iso
 
@@ -20,33 +20,68 @@ log = logging.getLogger(__name__)
 class Scoreboard:
 
     @staticmethod
-    def for_all():
-        #todo: list benchmarks from resources and load all boards
-        scores = []
-        board = Scoreboard(scores)
-        return board
+    def for_all(scores_dir=None):
+        return Scoreboard(scores_dir=scores_dir)
 
     @staticmethod
-    def for_benchmark(benchmark_name, framework_name=None):
-        pass
+    def for_framework(framework_name, benchmark_name=None, task_name=None, scores_dir=None):
+        if framework_name is None:
+            raise ValueError("framework_name is mandatory")
+        return Scoreboard(framework_name=framework_name, benchmark_name=benchmark_name, task_name=task_name, scores_dir=scores_dir)
 
     @staticmethod
-    def for_task(task_name, framework_name=None):
-        pass
+    def for_benchmark(benchmark_name, framework_name=None, scores_dir=None):
+        if benchmark_name is None:
+            raise ValueError("benchmark_name is mandatory")
+        return Scoreboard(framework_name=framework_name, benchmark_name=benchmark_name, scores_dir=scores_dir)
 
-    def __init__(self, scores, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
-        self.scores = scores
+    @staticmethod
+    def for_task(task_name, framework_name=None, scores_dir=None):
+        if task_name is None:
+            raise ValueError("task_name is mandatory")
+        return Scoreboard(framework_name=framework_name, task_name=task_name, scores_dir=scores_dir)
+
+    @staticmethod
+    def load_df(file):
+        name = file if isinstance(file, str) else type(file)
+        log.debug("Loading scores from %s", name)
+        exists = os.path.isfile(file) or isinstance(file, io.IOBase)
+        df = read_csv(file) if exists else to_data_frame({})
+        log.info("Loaded scores from %s", name)
+        return df
+
+    @staticmethod
+    def save_df(data_frame, path, append=False):
+        exists = os.path.isfile(path)
+        new_format = False
+        if exists:
+            # todo: detect format change, i.e. data_frame columns are different or different order from existing file
+            pass
+        if new_format or (exists and not append):
+            backup_file(path)
+        new_file = not exists or not append or new_format
+        is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
+        log.debug("Saving scores to %s", path)
+        write_csv(data_frame,
+                  file=path,
+                  header=new_file,
+                  index=not is_default_index,
+                  append=not new_file)
+        log.info("Scores saved to %s", path)
+
+    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
         self.framework_name = framework_name
         self.benchmark_name = benchmark_name
         self.task_name = task_name
         self.scores_dir = scores_dir if scores_dir else rconfig().scores_dir
+        self.scores = scores if scores is not None else self._load()
 
     @memoize
-    def as_data_frame(self, index=None):
-        # index = index if index else ['task', 'framework', 'fold']
-        df = self.scores if isinstance(self.scores, pd.DataFrame) \
-            else pd.DataFrame.from_records([sc.as_dict() for sc in self.scores], index=index)
-        index = index if index else []
+    def as_data_frame(self):
+        # index = ['task', 'framework', 'fold']
+        index = []
+        df = self.scores if is_data_frame(self.scores) \
+            else to_data_frame([sc.as_dict() for sc in self.scores])
         # fixed_cols = ['result', 'mode', 'version', 'utc']
         fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc']
         fixed_cols = [col for col in fixed_cols if col not in index]
@@ -56,22 +91,19 @@ class Scoreboard:
         log.debug("scores columns: %s", df.columns)
         return df
 
-    def save(self, append=False, data_frame=None):
-        if data_frame is None:
-            data_frame = self.as_data_frame()
-        exists = os.path.isfile(self._score_file())
-        new_format = False
-        if exists:
-            # todo: detect format change, i.e. data_frame columns are different or different order from existing file
-            pass
-        if new_format or (exists and not append):
-            backup_file(self._score_file())
-        new_file = not exists or not append or new_format
-        is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
-        data_frame.to_csv(self._score_file(),
-                          header=new_file,
-                          index=not is_default_index,
-                          mode='w' if new_file else 'a')
+    def _load(self):
+        return self.load_df(self._score_file())
+
+    def save(self, append=False):
+        self.save_df(self.as_data_frame(), path=self._score_file(), append=append)
+
+    def append(self, board):
+        scores = self.as_data_frame().append(board.as_data_frame(), sort=False)
+        return Scoreboard(scores=scores,
+                          framework_name=self.framework_name,
+                          benchmark_name=self.benchmark_name,
+                          task_name=self.task_name,
+                          scores_dir=self.scores_dir)
 
     def _score_file(self):
         if self.framework_name:
@@ -98,7 +130,7 @@ class TaskResult:
     def load_predictions(predictions_file):
         log.info("Loading predictions from %s", predictions_file)
         if os.path.isfile(predictions_file):
-            df = pd.read_csv(predictions_file)
+            df = read_csv(predictions_file)
             log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
             if df.shape[1] > 2:
                 return ClassificationResult(df)
@@ -126,9 +158,9 @@ class TaskResult:
         :param classes_are_encoded:
         :return: None
         """
-        log.info("Saving predictions to %s", predictions_file)
+        log.debug("Saving predictions to %s", predictions_file)
         prob_cols = class_probabilities_labels if class_probabilities_labels else dataset.target.label_encoder.classes
-        df = pd.DataFrame(class_probabilities, columns=prob_cols)
+        df = to_data_frame(class_probabilities, columns=prob_cols)
         if class_probabilities_labels:
             df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
 
@@ -145,8 +177,8 @@ class TaskResult:
         df = df.assign(truth=truth)
         log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(predictions_file)
-        df.to_csv(predictions_file, index=False)
-        log.debug("Predictions successfully saved to %s", predictions_file)
+        write_csv(df, file=predictions_file, index=False)
+        log.info("Predictions saved to %s", predictions_file)
 
     def __init__(self, task_name: str, fold: int, predictions_dir=None):
         self.task = task_name
