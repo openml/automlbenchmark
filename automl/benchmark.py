@@ -330,7 +330,7 @@ class SimpleJobRunner(JobRunner):
                 break
             result, duration = job.run()
             self.results.append(Namespace(name=job.name, result=result, duration=duration))
-            job.complete()
+            job.done()
 
 
 class ParallelJobRunner(JobRunner):
