@@ -105,8 +105,10 @@ class AWSBenchmark(Benchmark):
         timeout_secs = self._get_task_def(task_name).max_runtime_seconds if task_name \
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
+        instance_id = None
 
         def _run():
+            nonlocal instance_id
             instance_id = self._start_instance(
                 instance_type,
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
@@ -120,8 +122,13 @@ class AWSBenchmark(Benchmark):
             )
             return self._wait_for_results(instance_id)
 
+        def _on_done():
+            self._download_results(instance_id)
+            self._stop_instance(instance_id, terminate=rconfig().aws.ec2.terminate_instances)
+
         job = Job("aws_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run
+        job._on_done = _on_done
         return job
 
     def _start_instance(self, instance_type, script_params="", timeout_secs=-1):
@@ -165,14 +172,10 @@ class AWSBenchmark(Benchmark):
 
         while True:
             log.info("[%s] checking %s: %s", datetime_iso(), instance_id, instance.state['Name'])
+            log_console()
             if instance.state['Code'] > 16:     # ended instance
                 log.info("EC2 instance %s is %s", instance_id, instance.state['Name'])
-                log_console()
-                self._download_results(instance_id)
-                self._stop_instance(instance_id, terminate=rconfig().aws.ec2.terminate_instances)
                 break
-            else:
-                log_console()
             time.sleep(rconfig().aws.query_frequency_seconds)
 
         return results

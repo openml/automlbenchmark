@@ -281,7 +281,19 @@ class Job:
             log.exception(e)
             return None, -1
 
+    def done(self):
+        try:
+            self._on_done()
+        except Exception as e:
+            log.error("Job `%s` completion failed with error %s", self.name, str(e))
+            log.exception(e)
+
     def _run(self):
+        """jobs should implement their run logic in this method"""
+        pass
+
+    def _on_done(self):
+        """hook to execute logic after job completion in a thread-safe way as this is executed in the main thread"""
         pass
 
 
@@ -318,6 +330,7 @@ class SimpleJobRunner(JobRunner):
                 break
             result, duration = job.run()
             self.results.append(Namespace(name=job.name, result=result, duration=duration))
+            job.complete()
 
 
 class ParallelJobRunner(JobRunner):
@@ -356,4 +369,6 @@ class ParallelJobRunner(JobRunner):
                 q.put(None)     # stopping workers
             for thread in threads:
                 thread.join()
+            for job in self.jobs:
+                job.done()
 
