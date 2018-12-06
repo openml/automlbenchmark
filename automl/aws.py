@@ -75,7 +75,10 @@ class AWSBenchmark(Benchmark):
             jobs.append(self._make_job())
         else:
             jobs.extend(self._benchmark_jobs())
-        results = self._run_jobs(jobs)
+        try:
+            results = self._run_jobs(jobs)
+        finally:
+            self.cleanup()
         log.debug("results from aws run (not merged to other scores yet): %s", results)
         return self._process_results(results, save_scores=save_scores)
 
@@ -84,10 +87,14 @@ class AWSBenchmark(Benchmark):
         if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
             jobs.append(self._make_job(task_name, fold))
         else:
-            jobs.extend(self._custom_task_jobs(task_name, fold))
-        results = self._run_jobs(jobs)
+            task_def = self._get_task_def(task_name)
+            jobs.extend(self._custom_task_jobs(task_def, fold))
+        try:
+            results = self._run_jobs(jobs)
+        finally:
+            self.cleanup()
         log.debug("results from aws run (not merged to other scores yet): %s", results)
-        return self._process_results(results, save_scores=save_scores)
+        return self._process_results(results, task_name=task_name, save_scores=save_scores)
 
     def _fold_job(self, task_def, fold: int):
         return self._make_job(task_def.name, [fold])
@@ -182,7 +189,7 @@ class AWSBenchmark(Benchmark):
         # todo error handling
 
     def _stop_all_instances(self):
-        for id in [inst.id for inst in self.instances]:
+        for id in list(self.instances.keys()):
             self._stop_instance(id, terminate=rconfig().aws.ec2.terminate_instances)
 
     def _create_s3_bucket(self):
@@ -227,16 +234,21 @@ class AWSBenchmark(Benchmark):
             obj.download_file(dest_path)
 
         for obj in scores_objs:
-            dest_path = os.path.join(rconfig().scores_dir, os.path.basename(obj.key))
-            backup_file(dest_path)
-            with io.StringIO() as buffer:
-                obj.download_file_obj(buffer)
+            basename = os.path.basename(obj.key)
             # fixme: bypassing the save_scores flag here, do we care?
-            df = Scoreboard.load_df(buffer)
-            df.loc[:,'mode'] = 'aws'
-            self._save(Scoreboard(scores=df,
-                                  framework_name=self.framework_name,
-                                  benchmark_name=self.benchmark_name))
+            board = Scoreboard.from_file(basename)
+            if board:
+                with io.BytesIO() as buffer:
+                    obj.download_fileobj(buffer)
+                    with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
+                        df = Scoreboard.load_df(file)
+                df.loc[:,'mode'] = 'aws'
+                board.append(df).save(append=True)
+            else:
+                # todo: test case when there are also backup files in the download
+                dest_path = os.path.join(rconfig().scores_dir, basename)
+                backup_file(dest_path)
+                obj.download_file(dest_path)
 
         for obj in logs_objs:
             dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))

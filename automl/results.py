@@ -2,6 +2,7 @@ import io
 import logging
 import math
 import os
+import re
 
 from numpy import NaN, sort
 
@@ -19,33 +20,48 @@ log = logging.getLogger(__name__)
 
 class Scoreboard:
 
-    @staticmethod
-    def for_all(scores_dir=None):
-        return Scoreboard(scores_dir=scores_dir)
+    results_file = 'results.csv'
 
-    @staticmethod
-    def for_framework(framework_name, benchmark_name=None, task_name=None, scores_dir=None):
-        if framework_name is None:
-            raise ValueError("framework_name is mandatory")
-        return Scoreboard(framework_name=framework_name, benchmark_name=benchmark_name, task_name=task_name, scores_dir=scores_dir)
+    @classmethod
+    def all(cls, scores_dir=None):
+        return cls(scores_dir=scores_dir)
 
-    @staticmethod
-    def for_benchmark(benchmark_name, framework_name=None, scores_dir=None):
-        if benchmark_name is None:
-            raise ValueError("benchmark_name is mandatory")
-        return Scoreboard(framework_name=framework_name, benchmark_name=benchmark_name, scores_dir=scores_dir)
+    @classmethod
+    def from_file(cls, path):
+        folder, basename = os.path.split(path)
+        framework_name = None
+        benchmark_name = None
+        task_name = None
+        patterns = [
+            cls.results_file,
+            r"(?P<framework>\w+)_benchmark_(?P<benchmark>\w+).csv",
+            r"benchmark_(?P<benchmark>\w+).csv",
+            r"(?P<framework>\w+)_task_(?P<task>\w+).csv",
+            r"task_(?P<task>\w+).csv",
+            r"(?P<framework>\w+).csv",
+        ]
+        found = False
+        for pat in patterns:
+            m = re.fullmatch(pat, basename)
+            if m:
+                found = True
+                d = m.groupdict()
+                benchmark_name = 'benchmark' in d and d['benchmark']
+                task_name = 'task' in d and d['task']
+                framework_name = 'framework' in d and d['framework']
+                break
 
-    @staticmethod
-    def for_task(task_name, framework_name=None, scores_dir=None):
-        if task_name is None:
-            raise ValueError("task_name is mandatory")
-        return Scoreboard(framework_name=framework_name, task_name=task_name, scores_dir=scores_dir)
+        if not found:
+            return None
+
+        scores_dir = None if path == basename else folder
+        return cls(framework_name=framework_name, benchmark_name=benchmark_name, task_name=task_name, scores_dir=scores_dir)
 
     @staticmethod
     def load_df(file):
         name = file if isinstance(file, str) else type(file)
         log.debug("Loading scores from %s", name)
-        exists = os.path.isfile(file) or isinstance(file, io.IOBase)
+        exists = isinstance(file, io.IOBase) or os.path.isfile(file)
         df = read_csv(file) if exists else to_data_frame({})
         log.info("Loaded scores from %s", name)
         return df
@@ -82,6 +98,9 @@ class Scoreboard:
         index = []
         df = self.scores if is_data_frame(self.scores) \
             else to_data_frame([sc.as_dict() for sc in self.scores])
+        if df.empty:
+            # avoid dtype conversions during reindexing on empty frame
+            return df
         # fixed_cols = ['result', 'mode', 'version', 'utc']
         fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc']
         fixed_cols = [col for col in fixed_cols if col not in index]
@@ -97,8 +116,9 @@ class Scoreboard:
     def save(self, append=False):
         self.save_df(self.as_data_frame(), path=self._score_file(), append=append)
 
-    def append(self, board):
-        scores = self.as_data_frame().append(board.as_data_frame(), sort=False)
+    def append(self, board_or_df):
+        to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
+        scores = self.as_data_frame().append(to_append, sort=False)
         return Scoreboard(scores=scores,
                           framework_name=self.framework_name,
                           benchmark_name=self.benchmark_name,
@@ -119,7 +139,7 @@ class Scoreboard:
             elif self.benchmark_name:
                 file_name = "benchmark_{benchmark}.csv".format(benchmark=self.benchmark_name)
             else:
-                file_name = "all_results.csv"
+                file_name = Scoreboard.results_file
 
         return os.path.join(self.scores_dir, file_name)
 

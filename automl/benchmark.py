@@ -87,7 +87,7 @@ class Benchmark:
         """
         task_def = self._get_task_def(task_name)
         results = self._run_jobs(self._custom_task_jobs(task_def, fold))
-        return self._process_results(results, save_scores=save_scores)
+        return self._process_results(results, task_name=task_name, save_scores=save_scores)
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
@@ -160,7 +160,7 @@ class Benchmark:
 
     def _save(self, board):
         board.save(append=True)
-        Scoreboard.for_all().append(board).save()
+        Scoreboard.all().append(board).save()
 
     @property
     def _framework_dir(self):

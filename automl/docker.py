@@ -71,10 +71,11 @@ class DockerBenchmark(Benchmark):
         if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
             jobs.append(self._make_job(task_name, fold))
         else:
-            jobs.extend(self._custom_task_jobs(task_name, fold))
+            task_def = self._get_task_def(task_name)
+            jobs.extend(self._custom_task_jobs(task_def, fold))
         results = self._run_jobs(jobs)
         log.debug("results from docker run (merged to other scores but not to global scores yet): %s", results)
-        return self._process_results(results, save_scores=save_scores)
+        return self._process_results(results, task_name=task_name, save_scores=save_scores)
 
     def _fold_job(self, task_def, fold: int):
         return self._make_job(task_def.name, [fold])

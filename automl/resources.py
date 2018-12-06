@@ -25,6 +25,7 @@ class Resources:
         self.config.logs_dir = os.path.join(self.config.output_dir, 'logs')
         os.makedirs(self.config.predictions_dir, exist_ok=True)
         os.makedirs(self.config.scores_dir, exist_ok=True)
+        os.makedirs(self.config.logs_dir, exist_ok=True)
         log.debug("Normalized config: %s", self.config)
 
     def framework_definition(self, name):
