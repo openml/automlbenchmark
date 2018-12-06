@@ -243,7 +243,7 @@ class AWSBenchmark(Benchmark):
                     with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
                         df = Scoreboard.load_df(file)
                 df.loc[:,'mode'] = 'aws'
-                board.append(df).save(append=True)
+                board.append(df).save()
             else:
                 # todo: test case when there are also backup files in the download
                 dest_path = os.path.join(rconfig().scores_dir, basename)

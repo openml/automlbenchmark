@@ -72,13 +72,13 @@ elif args.mode == "docker":
     bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
 elif args.mode == "aws":
     bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
-elif args.mode == "aws-remote":
-    bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+# elif args.mode == "aws-remote":
+#     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
 else:
     raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 
 if args.setup == 'only':
-    log.warn("Setting up {} environment only, no benchmark will be run".format(args.mode))
+    log.warn("Setting up {} environment only for {}, no benchmark will be run".format(args.mode, args.framework))
 
 bench.setup(automl.Benchmark.SetupMode[args.setup])
 if args.setup != 'only':
