@@ -127,8 +127,8 @@ class AWSBenchmark(Benchmark):
             self._download_results(job_self.instance_id)
             self._stop_instance(job_self.instance_id, terminate=rconfig().aws.ec2.terminate_instances)
 
-        job._run = _run
-        job._on_done = _on_done
+        job._run = _run.__get__(job)
+        job._on_done = _on_done.__get__(job)
         return job
 
     def _wait_for_results(self, job):
