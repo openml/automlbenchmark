@@ -137,8 +137,9 @@ class Benchmark:
         return BenchmarkTask(task_def, fold).as_job(self.framework_module)
 
     def _get_task_def(self, task_name):
-        task_def = next(task for task in self.benchmark_def if task.name == task_name)
-        if not task_def:
+        try:
+            task_def = next(task for task in self.benchmark_def if task.name == task_name)
+        except StopIteration:
             raise ValueError("incorrect task name: {}".format(task_name))
         if not Benchmark._is_task_enabled(task_def):
             raise ValueError("task {} is disabled, please enable it first".format(task_name))

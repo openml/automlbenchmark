@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import os
+import re
 import time
 
 import boto3
@@ -106,7 +107,7 @@ class AWSBenchmark(Benchmark):
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
 
-        job = Job("aws_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
+        job = Job("aws_{}_{}_{}_{}".format(self.benchmark_name, task_name if task_name else 'all', '.'.join(folds), self.framework_name))
         job.instance_id = None
 
         def _run(job_self):
@@ -119,6 +120,7 @@ class AWSBenchmark(Benchmark):
                     task_param='' if task_name is None else ('-t '+task_name),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
+                instance_key="{}_{}".format(job.name, datetime_iso(micros=True, time_sep='.')),
                 timeout_secs=timeout_secs
             )
             return self._wait_for_results(job_self)
@@ -160,9 +162,12 @@ class AWSBenchmark(Benchmark):
 
         return results
 
-    def _start_instance(self, instance_type, script_params="", timeout_secs=-1):
+    def _start_instance(self, instance_type, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s", script_params)
-        inst_key = "{}_b{}_i{}".format(self.ami, self.uid, datetime_iso(micros=True, no_sep=True)).lower()
+        inst_key = instance_key.lower() if instance_key \
+            else "{}_p{}_i{}".format(self.uid,
+                                     re.sub(r"[\s-]", '', script_params),
+                                     datetime_iso(micros=True, time_sep='.')).lower()
         # todo: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
@@ -386,7 +391,7 @@ runcmd:
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
-final_message: "AutoML benchmark completed after $UPTIME s"
+final_message: "AutoML benchmark {ikey} completed after $UPTIME s"
 
 power_state:
   delay: "+1"
