@@ -34,24 +34,31 @@ aws:
     instance_profile_name: AutomlBenchmarkProfile
   s3:
     bucket: automl-benchmark
-    temporary: false
+    temporary: false    # if true, the S3 bucket is created at the beginning of the main job and deleted at the end.
+                        # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
+                        # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
     root_key: ec2/
   ec2:
-    terminate_instances: true
+    terminate_instances: true   # if true, EC2 instances are always terminated at the end of the main job.
+                                # if false, the instances are only stopped and open to manual investigation after restart in case of issue.
     instance_type: m5.large
     subnet_id: ''
     regions:
       us-east-1:
-        ami: ami-0797482d7f93b830c
+        ami: ami-0797482d7f93b830c  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1
       us-west-1:
-        ami: ami-0f27f14c7e0fffda9
+        ami: ami-0f27f14c7e0fffda9  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1
       eu-west-1:
-        ami: ami-0615f1e34f8d36362
+        ami: ami-0615f1e34f8d36362  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
   max_timeout_seconds: 21600
   overhead_time_seconds: 900
   query_frequency_seconds: 15
-  use_docker: true      # if true, ec2 instances will run benchmark tasks in docker image, otherwise it will run in local mode after cloning project_repository
+  use_docker: false     # if true, EC2 instances will run benchmark tasks in a docker instance.
+                        # if false, it will run in local mode after cloning project_repository.
+                        # Note that using docker in AWS mode requires the docker image being
+                        # previously published in a public repository or using an AMI with the pre-downloaded image,
+                        # whereas the local mode is self-configured and framework agnostic (works with generic AMI).
 
