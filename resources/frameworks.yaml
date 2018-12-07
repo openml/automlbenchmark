@@ -1,0 +1,68 @@
+---
+constantpredictor:
+  version: 0.0.0
+
+autosklearn:
+  docker_image:
+    author: automlbenchmark
+    image: autosklearn
+    tag: latest
+  version: 0.4.0
+  project: https://automl.github.io/auto-sklearn/stable/
+
+AutoWEKA:
+  docker_image:
+    author: automlbenchmark
+    image: autoweka
+    tag: latest
+  version: '2.6'
+  project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
+
+H2OAutoML:
+  docker_image:
+    author: automlbenchmark
+    image: h2oautoml
+    tag: latest
+  version: 3.22.0.1
+  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+
+hyperoptsklearn:
+  docker_image:
+    author: automlbenchmark
+    image: hyperoptsklearn
+    tag: latest
+  version: x.x
+  project: http://hyperopt.github.io/hyperopt-sklearn/
+
+oboe:
+  docker_image:
+    author: automlbenchmark
+    image: oboe
+    tag: latest
+  version: x.x
+  project: https://github.com/udellgroup/oboe
+
+RandomForest:
+  docker_image:
+    author: automlbenchmark
+    image: rf
+    tag: latest
+  version: 0.19.2
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+
+RandomForest_R:
+  docker_image:
+    author: automlbenchmark
+    image: rfr
+    tag: latest
+  version: 0.10.1
+  project: https://github.com/imbs-hl/ranger
+
+TPOT:
+  docker_image:
+    author: automlbenchmark
+    image: tpot
+    tag: latest
+  version: 0.9.3
+  project: https://github.com/EpistasisLab/tpot
+

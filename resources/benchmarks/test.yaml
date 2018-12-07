@@ -1,0 +1,19 @@
+---
+- name: test_1
+  openml_task_id: 59
+  metric:
+      - acc
+      - logloss
+  enabled: true
+  folds: 2
+  cores: 2
+  max_runtime_seconds: 60
+
+- name: test_2
+  openml_task_id: 3913
+  metric:
+      - acc
+      - auc
+  folds: 2
+  cores: 2
+  max_runtime_seconds: 60

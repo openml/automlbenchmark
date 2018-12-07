@@ -34,11 +34,11 @@ class Scoreboard:
         task_name = None
         patterns = [
             cls.results_file,
-            r"(?P<framework>\w+)_benchmark_(?P<benchmark>\w+).csv",
-            r"benchmark_(?P<benchmark>\w+).csv",
-            r"(?P<framework>\w+)_task_(?P<task>\w+).csv",
-            r"task_(?P<task>\w+).csv",
-            r"(?P<framework>\w+).csv",
+            r"(?P<framework>[\w\-]+)_benchmark_(?P<benchmark>[\w\-]+).csv",
+            r"benchmark_(?P<benchmark>[\w\-]+).csv",
+            r"(?P<framework>[\w\-]+)_task_(?P<task>[\w\-]+).csv",
+            r"task_(?P<task>[\w\-]+).csv",
+            r"(?P<framework>[\w\-]+).csv",
         ]
         found = False
         for pat in patterns:
@@ -97,7 +97,7 @@ class Scoreboard:
         # index = ['task', 'framework', 'fold']
         index = []
         df = self.scores if is_data_frame(self.scores) \
-            else to_data_frame([sc.as_dict() for sc in self.scores])
+            else to_data_frame([dict(sc) for sc in self.scores])
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
@@ -200,6 +200,23 @@ class TaskResult:
         write_csv(df, file=predictions_file, index=False)
         log.info("Predictions saved to %s", predictions_file)
 
+    @classmethod
+    def score_from_predictions_file(cls, path):
+        folder, basename = os.path.split(path)
+        pattern = r"(?P<framework>[\w\-]+?)_(?P<task>[\w\-]+)_(?P<fold>\d+)(_(?P<datetime>\d{8}T\d{6}))?.csv"
+        m = re.fullmatch(pattern, basename)
+        if not m:
+            log.error("%s predictions file name has wrong format", path)
+            return None
+
+        d = m.groupdict()
+        framework_name = d['framework']
+        task_name = d['task']
+        fold = int(d['fold'])
+        result = cls.load_predictions(path)
+        task_result = cls(task_name, fold)
+        return task_result.compute_scores(framework_name, result.metrics, result=result)
+
     def __init__(self, task_name: str, fold: int, predictions_dir=None):
         self.task = task_name
         self.fold = fold
@@ -209,7 +226,7 @@ class TaskResult:
     def get_result(self, framework_name):
         return self.load_predictions(self._predictions_file(framework_name))
 
-    def compute_scores(self, framework_name, metrics):
+    def compute_scores(self, framework_name, metrics, result=None):
         framework_def, _ = rget().framework_definition(framework_name)
         scores = Namespace(
             framework=framework_name,
@@ -219,7 +236,7 @@ class TaskResult:
             mode=rconfig().run_mode,    # fixme: at the end, we're always running in local mode!!!
             utc=datetime_iso()
         )
-        result = self.get_result(framework_name)
+        result = self.get_result(framework_name) if result is None else result
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
@@ -243,15 +260,16 @@ class Result:
         self.predictions = self.df.iloc[:, -2].values
         self.target = None
         self.type = None
+        self.metrics = ['acc', 'logloss', 'mse', 'rmse', 'auc']
 
     def acc(self):
-        return accuracy_score(self.truth, self.predictions)
+        return float(accuracy_score(self.truth, self.predictions))
 
     def logloss(self):
-        return log_loss(self.truth, self.predictions)
+        return float(log_loss(self.truth, self.predictions))
 
     def mse(self):
-        return mean_squared_error(self.truth, self.predictions)
+        return float(mean_squared_error(self.truth, self.predictions))
 
     def rmse(self):
         return math.sqrt(self.mse())
@@ -300,11 +318,11 @@ class ClassificationResult(Result):
     def auc(self):
         if self.type != 'binomial':
             raise ValueError("AUC metric is only supported for binary classification: {}".format(self.classes))
-        return roc_auc_score(self.truth, self.probabilities[:, 1])
+        return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
 
     def logloss(self):
         # truth_enc = self.target.label_binarizer.transform(self.truth)
-        return log_loss(self.truth, self.probabilities)
+        return float(log_loss(self.truth, self.probabilities))
 
     def _autoencode(self, vec):
         needs_encoding = not encode_predictions_and_truth or (isinstance(vec[0], str) and not vec[0].isdigit())

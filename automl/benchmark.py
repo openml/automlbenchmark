@@ -335,9 +335,10 @@ class SimpleJobRunner(JobRunner):
 
 class ParallelJobRunner(JobRunner):
 
-    def __init__(self, jobs, parallel_jobs):
+    def __init__(self, jobs, parallel_jobs, done_async=False):
         super().__init__(jobs)
         self.parallel_jobs = parallel_jobs
+        self.done_async = done_async
 
     def _run(self):
         q = queue.Queue()
@@ -349,6 +350,8 @@ class ParallelJobRunner(JobRunner):
                     break
                 result, duration = job.run()
                 self.results.append(Namespace(name=job.name, result=result, duration=duration))
+                if self.done_async:
+                    job.done()
                 q.task_done()
 
         threads = []
@@ -369,6 +372,7 @@ class ParallelJobRunner(JobRunner):
                 q.put(None)     # stopping workers
             for thread in threads:
                 thread.join()
-            for job in self.jobs:
-                job.done()
+            if not self.done_async:
+                for job in self.jobs:
+                    job.done()
 

@@ -1,8 +1,9 @@
+import copy
 import logging
 import os
 import re
 
-from .utils import Namespace, json_load, lazy_property, memoize
+from .utils import Namespace, config_load, lazy_property, memoize
 
 
 log = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ class Resources:
 
     @staticmethod
     def _normalize(config: Namespace):
-        normalized = config.clone()
+        normalized = copy.copy(config)
         for k, v in config:
             if re.search(r'_(dir|file)$', k):
                 normalized[k] = os.path.realpath(os.path.expanduser(v))
@@ -31,7 +32,7 @@ class Resources:
     def framework_definition(self, name):
         """
         :param name:
-        :return: name of the framework as defined in the frameworks.json file
+        :return: name of the framework as defined in the frameworks definition file
         """
         framework = self._frameworks[name]
         if not framework:
@@ -42,8 +43,7 @@ class Resources:
     def _frameworks(self):
         frameworks_file = self.config.frameworks_definition_file
         log.debug("loading frameworks definitions from %s", frameworks_file)
-        with open(frameworks_file) as file:
-            frameworks = json_load(file, as_object=True)
+        frameworks = config_load(frameworks_file)
         for name, framework in frameworks:
             framework.name = name
             self._validate_framework(framework)
@@ -52,11 +52,11 @@ class Resources:
     @memoize
     def benchmark_definition(self, name):
         """
-        :param name: name of the benchmark as defined by resources/benchmarks/{name}.json or the path to a user-defined benchmark description file.
+        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
         :return:
         """
         benchmark_name = name
-        benchmark_file = "{dir}/{name}.json".format(dir=self.config.benchmarks_definition_dir, name=benchmark_name)
+        benchmark_file = "{dir}/{name}.yaml".format(dir=self.config.benchmarks_definition_dir, name=benchmark_name)
         log.debug("loading benchmark definitions from %s", benchmark_file)
         if not os.path.exists(benchmark_file):
             benchmark_file = name
@@ -65,8 +65,7 @@ class Resources:
             # should we support s3 and check for s3 path before raising error?
             raise ValueError("incorrect benchmark name or path: {}".format(name))
 
-        with open(benchmark_file) as file:
-            tasks = json_load(file, as_object=True)
+        tasks = config_load(benchmark_file)
         for task in tasks:
             self._validate_task(task)
         return tasks, benchmark_name, benchmark_file

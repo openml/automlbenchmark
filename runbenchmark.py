@@ -6,7 +6,7 @@ import argparse
 import os
 
 import automl
-from automl.utils import json_load, datetime_iso, str2bool
+from automl.utils import config_load, datetime_iso, str2bool
 from automl import log
 
 
@@ -47,7 +47,7 @@ script_name = os.path.splitext(os.path.basename(__file__))[0]
 log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
 os.makedirs(log_dir, exist_ok=True)
 now_str = datetime_iso(date_sep='', time_sep='')
-# now_str = now_iso(time=False, no_sep=True)
+# now_str = datetime_iso(time=False, no_sep=True)
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
                     root_level='DEBUG', console_level='INFO')
@@ -55,15 +55,14 @@ automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(s
 log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.benchmark, args.mode)
 log.debug("script args: %s", args)
 
-with open("resources/config.json") as file:
-    # todo: allow a custom automlbenchmark_config.json in user directory: maybe this would allow removal of parameters like region, indir, outdir
-    config = json_load(file, as_object=True)
-    config.run_mode = args.mode
-    config.script = os.path.basename(__file__)
-    if args.indir:
-        config.input_dir = args.indir
-    if args.outdir:
-        config.output_dir = args.outdir
+# todo: allow a custom automlbenchmark_config.json in user directory: maybe this would allow removal of parameters like region, indir, outdir
+config = config_load("resources/config.yaml")
+config.run_mode = args.mode
+config.script = os.path.basename(__file__)
+if args.indir:
+    config.input_dir = args.indir
+if args.outdir:
+    config.output_dir = args.outdir
 automl.resources.from_config(config)
 
 if args.mode == "local":

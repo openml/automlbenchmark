@@ -1,6 +1,7 @@
 import datetime as dt
 import functools as ft
 import json
+import yaml
 import logging
 import os
 import shutil
@@ -19,39 +20,54 @@ log = logging.getLogger(__name__)
 
 class Namespace:
 
-    def __init__(self, **kwargs):
-        for name in kwargs:
-            self[name] = kwargs[name]
+    mangled_prefix = '_Namespace__'
 
-    def __contains__(self, key):
-        return key in self.__dict__
-
-    def __getitem__(self, item):
-        return getattr(self, item) if hasattr(self, item) else None
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-
-    def __iter__(self):
-        return iter(self.__dict__.items())
+    def __init__(self, *args, **kwargs):
+        self.__ns = dict(*args, **kwargs)
 
     def __add__(self, other):
-        return Namespace(**self.__dict__).extend(other)
-
-    def __repr__(self):
-        return repr_def(self)
-
-    def extend(self, namespace):
-        for name, value in namespace:
-            self[name] = value
+        self.__ns.update(other)
         return self
 
-    def clone(self):
-        cloned = Namespace()
-        return cloned.extend(self)
+    def __contains__(self, key):
+        return key in self.__ns
 
-    def as_dict(self):
-        return self.__dict__
+    def __len__(self):
+        return len(self.__ns)
+
+    def __getattr__(self, name):
+        if name.startswith(Namespace.mangled_prefix):
+            return super().__getattr__(name)
+        elif name in self.__ns:
+            return self.__ns[name]
+        raise AttributeError(name)
+
+    def __setattr__(self, key, value):
+        if key.startswith(Namespace.mangled_prefix):
+            super().__setattr__(key, value)
+        else:
+            self.__ns[key] = value
+
+    def __getitem__(self, item):
+        return self.__ns[item] if item in self.__ns else None
+
+    def __setitem__(self, key, value):
+        self.__ns[key] = value
+
+    def __iter__(self):
+        return iter(self.__ns.items())
+
+    def __copy__(self):
+        return Namespace(self.__ns.copy())
+
+    def __dir__(self):
+        return list(self.__ns.keys())
+
+    def __str__(self):
+        return str(self.__ns)
+
+    def __repr__(self):
+        return repr(self.__ns)
 
 
 def repr_def(obj):
@@ -119,11 +135,44 @@ def flatten(iterable):
     return ft.reduce(lambda l, r: (l.extend(r) if isinstance(r, list) else l.append(r)) or l, iterable, [])
 
 
-def json_load(file, as_object=False):
-    if as_object:
+class YAMLNamespaceLoader(yaml.loader.SafeLoader):
+
+    def __init__(self, stream):
+        super().__init__(stream)
+
+    @classmethod
+    def init(cls):
+        cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
+
+    def construct_yaml_map(self, node):
+        data = Namespace()
+        yield data
+        value = self.construct_mapping(node)
+        data + value
+
+
+YAMLNamespaceLoader.init()
+
+
+def json_load(file, as_namespace=False):
+    if as_namespace:
         return json.load(file, object_hook=lambda dic: Namespace(**dic))
     else:
         return json.load(file)
+
+
+def yaml_load(file, as_namespace=False):
+    if as_namespace:
+        return yaml.load(file, Loader=YAMLNamespaceLoader)
+    else:
+        return yaml.load(file)
+
+
+def config_load(path):
+    base, ext = os.path.splitext(path.lower())
+    loader = json_load if ext == 'json' else yaml_load
+    with open(path, 'r') as file:
+        return loader(file, as_namespace=True)
 
 
 def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
@@ -156,9 +205,9 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
 
 
 def str2bool(s):
-    if s.lower() in ('true', 't', 'yes', 'y', '1'):
+    if s.lower() in ('true', 't', 'yes', 'y', 'on', '1'):
         return True
-    elif s.lower() in ('false', 'f', 'no', 'n', '0'):
+    elif s.lower() in ('false', 'f', 'no', 'n', 'off', '0'):
         return False
     else:
         raise ValueError(s+" can't be interpreted as a boolean")

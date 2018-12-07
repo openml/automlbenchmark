@@ -7,6 +7,6 @@ if [[ -x "$(command -v apt-get)" ]]; then
     apt update
     apt-get -y install r-base r-base-dev
 fi
-#PIP install --no-cache-dir -r automl/frameworks/RandomForest_r/py_requirements.txt
+#PIP install --no-cache-dir -r automl/frameworks/RandomForest_R/py_requirements.txt
 
 Rscript -e 'install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'

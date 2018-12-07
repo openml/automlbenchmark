@@ -51,6 +51,8 @@ def run(dataset: Dataset, config: TaskConfig):
             log.warning("H2O could not produce any model in the requested time.")
             return
 
+        log.info("Leaderboard:\n%s", str(aml.leaderboard))
+
         log.debug("Predicting the test set.")
         predictions = aml.predict(test).as_data_frame()
 

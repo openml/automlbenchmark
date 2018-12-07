@@ -105,31 +105,60 @@ class AWSBenchmark(Benchmark):
         timeout_secs = self._get_task_def(task_name).max_runtime_seconds if task_name \
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
-        instance_id = None
 
-        def _run():
-            nonlocal instance_id
-            instance_id = self._start_instance(
+        job = Job("aws_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
+        job.instance_id = None
+
+        def _run(job_self):
+            job_self.instance_id = self._start_instance(
                 instance_type,
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
                     # benchmark=self.benchmark_name,
-                    benchmark="/s3bucket/input/{}.json".format(self.benchmark_name),
+                    benchmark="/s3bucket/input/{}.yaml".format(self.benchmark_name),
                     task_param='' if task_name is None else ('-t '+task_name),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
                 timeout_secs=timeout_secs
             )
-            return self._wait_for_results(instance_id)
+            return self._wait_for_results(job_self)
 
-        def _on_done():
-            self._download_results(instance_id)
-            self._stop_instance(instance_id, terminate=rconfig().aws.ec2.terminate_instances)
+        def _on_done(job_self):
+            self._download_results(job_self.instance_id)
+            self._stop_instance(job_self.instance_id, terminate=rconfig().aws.ec2.terminate_instances)
 
-        job = Job("aws_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run
         job._on_done = _on_done
         return job
+
+    def _wait_for_results(self, job):
+        instance, _ = self.instances[job.instance_id]
+        last_console_line = -1
+        results = []
+
+        def log_console():
+            nonlocal last_console_line
+            try:
+                output = instance.console_output(Latest=True)
+                if 'Output' in output:
+                    output = output['Output']   # note that console_output only returns the last 64kB of console
+                    new_log, last_line = tail(output, from_line=last_console_line, include_line=False)
+                    if last_line is not None:
+                        last_console_line = last_line['line']
+                    if new_log:
+                        log.info(new_log)
+            except Exception as e:
+                log.exception(e)
+
+        while True:
+            log.info("[%s] checking job %s on instance %s: %s", datetime_iso(), job.name, job.instance_id, instance.state['Name'])
+            log_console()
+            if instance.state['Code'] > 16:     # ended instance
+                log.info("EC2 instance %s is %s", job.instance_id, instance.state['Name'])
+                break
+            time.sleep(rconfig().aws.query_frequency_seconds)
+
+        return results
 
     def _start_instance(self, instance_type, script_params="", timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s", script_params)
@@ -150,35 +179,6 @@ class AWSBenchmark(Benchmark):
         self.instances[instance.id] = (instance, inst_key)
         log.info("Started EC2 instance %s", instance.id)
         return instance.id
-
-    def _wait_for_results(self, instance_id):
-        instance, _ = self.instances[instance_id]
-        last_console_line = -1
-        results = []
-
-        def log_console():
-            nonlocal last_console_line
-            try:
-                output = instance.console_output(Latest=True)
-                if 'Output' in output:
-                    output = output['Output']   # note that console_output only returns the last 64kB of console
-                    new_log, last_line = tail(output, from_line=last_console_line, include_line=False)
-                    if last_line is not None:
-                        last_console_line = last_line['line']
-                    if new_log:
-                        log.info(new_log)
-            except Exception as e:
-                log.exception(e)
-
-        while True:
-            log.info("[%s] checking %s: %s", datetime_iso(), instance_id, instance.state['Name'])
-            log_console()
-            if instance.state['Code'] > 16:     # ended instance
-                log.info("EC2 instance %s is %s", instance_id, instance.state['Name'])
-                break
-            time.sleep(rconfig().aws.query_frequency_seconds)
-
-        return results
 
     def _stop_instance(self, instance_id, terminate=False):
         log.info("%s EC2 instances %s", "Terminating" if terminate else "Stopping", instance_id)
