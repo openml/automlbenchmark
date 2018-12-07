@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
@@ -8,6 +10,8 @@ try:
     from sklearn.preprocessing import OrdinalEncoder
 except ImportError:
     from sklearn.preprocessing import LabelEncoder as OrdinalEncoder
+
+log = logging.getLogger(__name__)
 
 """
 Module implementing or aliasing various functions for data manipulations.

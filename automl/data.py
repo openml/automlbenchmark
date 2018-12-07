@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 from typing import List
 
 import numpy as np
@@ -6,6 +7,8 @@ from numpy import ndarray
 
 from .datautils import Encoder
 from .utils import lazy_property, repr_def
+
+log = logging.getLogger(__name__)
 
 
 class Feature:

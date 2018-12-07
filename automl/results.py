@@ -256,8 +256,8 @@ class Result:
 
     def __init__(self, predictions_df):
         self.df = predictions_df
-        self.truth = self.df.iloc[:, -1].values
-        self.predictions = self.df.iloc[:, -2].values
+        self.truth = self.df.iloc[:, -1].values if self.df is not None else None
+        self.predictions = self.df.iloc[:, -2].values if self.df is not None else None
         self.target = None
         self.type = None
         self.metrics = ['acc', 'logloss', 'mse', 'rmse', 'auc']
@@ -286,6 +286,7 @@ class Result:
 class NoResult(Result):
 
     def __init__(self):
+        super().__init__(None)
         self.missing_result = 'NA'
 
     def acc(self):
@@ -312,8 +313,8 @@ class ClassificationResult(Result):
         self.probabilities = self.df.iloc[:, :-2].values.astype(float)
         self.target = Feature(0, 'class', 'categorical', self.classes, is_target=True)
         self.type = 'binomial' if len(self.classes) == 2 else 'multinomial'
-        self.truth = self._autoencode(self.truth)
-        self.predictions = self._autoencode(self.predictions)
+        self.truth = self._autoencode(self.truth.astype(str))
+        self.predictions = self._autoencode(self.predictions.astype(str))
 
     def auc(self):
         if self.type != 'binomial':

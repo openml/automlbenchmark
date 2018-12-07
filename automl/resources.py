@@ -34,10 +34,10 @@ class Resources:
         :param name:
         :return: name of the framework as defined in the frameworks definition file
         """
-        framework = self._frameworks[name]
+        framework = self._frameworks[name.lower()]
         if not framework:
             raise ValueError("incorrect framework: {}".format(name))
-        return framework, name
+        return framework, framework.name
 
     @lazy_property
     def _frameworks(self):
@@ -47,6 +47,8 @@ class Resources:
         for name, framework in frameworks:
             framework.name = name
             self._validate_framework(framework)
+        for name, framework in dict(frameworks).items():
+            frameworks[name.lower()] = framework
         return frameworks
 
     @memoize
