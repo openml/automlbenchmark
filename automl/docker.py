@@ -18,11 +18,11 @@ class DockerBenchmark(Benchmark):
 
     @staticmethod
     def docker_image_name(framework_def):
-        docker_image = framework_def.docker_image
+        di = framework_def.docker_image
         return "{author}/{image}:{tag}".format(
-            author=docker_image['author'],
-            image=docker_image['image'],
-            tag=docker_image['tag']
+            author=di.author,
+            image=di.image if di.image else framework_def.name.lower(),
+            tag=di.tag
         )
 
     def __init__(self, framework_name, benchmark_name, parallel_jobs=1):

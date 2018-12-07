@@ -4,7 +4,8 @@ logging.basicConfig(handlers=[logging.NullHandler()])
 
 import argparse
 import os
-import yaml
+
+from ruamel import yaml
 
 import automl
 from automl import log

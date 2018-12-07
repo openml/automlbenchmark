@@ -1,22 +1,33 @@
 ---
 project_repository: https://github.com/seb-h2o/automlbenchmark
-frameworks_definition_file: resources/frameworks.yaml
-benchmarks_definition_dir: resources/benchmarks
-input_dir: "~/.openml/cache"
+input_dir: ~/.openml/cache
 output_dir: results
-openml_apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
-script: "<auto>"
+script:     # set by runbenchmark.py
 
-max_mem_size_mb: 2048
 max_parallel_jobs: 5
 
-benchmark_definition_defaults:
-  folds: 1
-  max_runtime_seconds: 600
-  cores: 1
+frameworks:
+  definition_file: resources/frameworks.yaml
+
+benchmarks:
+  definition_dir: resources/benchmarks
+  defaults:
+    folds: 1
+    max_runtime_seconds: 600
+    cores: 1
+    max_mem_size_mb: 2048
+
+openml:
+  apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
+
+docker:
+  image_defaults:
+    author: automlbenchmark
+    image:    # set by docker.py based on framework name, lowercase
+    tag: latest
 
 aws:
-  region: ''
+  region: ''      # read from ~/.aws/config by default
   iam:
     role_name: AutomlBenchmarkRole
     s3_policy_name: AutomlBenchmarkS3Policy
@@ -42,4 +53,5 @@ aws:
   max_timeout_seconds: 21600
   overhead_time_seconds: 900
   query_frequency_seconds: 15
+  use_docker: true      # if true, ec2 instances will run benchmark tasks in docker image, otherwise it will run in local mode after cloning project_repository
 

@@ -1,13 +1,13 @@
 import datetime as dt
 import functools as ft
 import json
-import yaml
 import logging
 import os
 import shutil
 import stat
 
 import psutil
+from ruamel import yaml
 
 try:
     from pip._internal import main as pip_main
@@ -137,9 +137,6 @@ def flatten(iterable):
 
 class YAMLNamespaceLoader(yaml.loader.SafeLoader):
 
-    def __init__(self, stream):
-        super().__init__(stream)
-
     @classmethod
     def init(cls):
         cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
@@ -165,7 +162,7 @@ def yaml_load(file, as_namespace=False):
     if as_namespace:
         return yaml.load(file, Loader=YAMLNamespaceLoader)
     else:
-        return yaml.load(file)
+        return yaml.safe_load(file)
 
 
 def config_load(path):
@@ -258,6 +255,10 @@ def pip_install(module_or_requirements, is_requirements=False):
         log.exception(se)
 
 
+def normalize_path(path):
+    return os.path.realpath(os.path.expanduser(path))
+
+
 def dir_of(caller_file, rel_to_project_root=False):
     abs_path = os.path.dirname(os.path.realpath(caller_file))
     if rel_to_project_root:
@@ -265,6 +266,12 @@ def dir_of(caller_file, rel_to_project_root=False):
         return os.path.relpath(abs_path, project_root)
     else:
         return abs_path
+
+
+def touch(file_path):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'a'):
+        os.utime(file_path, times=None)
 
 
 def backup_file(file_path):

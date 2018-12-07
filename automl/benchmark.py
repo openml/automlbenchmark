@@ -11,7 +11,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, available_memory_mb, datetime_iso, flatten, str2bool
+from .utils import Namespace, available_memory_mb, datetime_iso, flatten, str2bool, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -61,11 +61,15 @@ class Benchmark:
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
-        Benchmark.task_loader = Openml(api_key=rconfig().openml_apikey, cache_dir=rconfig().input_dir)
+        Benchmark.task_loader = Openml(api_key=rconfig().openml.apikey, cache_dir=rconfig().input_dir)
         if mode == Benchmark.SetupMode.skip or not hasattr(self.framework_module, 'setup'):
             return
 
+        if mode == Benchmark.SetupMode.auto and self._setup_done():
+            return
+
         self.framework_module.setup()
+        self._setup_done(touch=True)
 
     def cleanup(self):
         # anything to do?
@@ -163,6 +167,14 @@ class Benchmark:
         board.save(append=True)
         Scoreboard.all().append(board).save()
 
+    def _setup_done(self, touch=False):
+        marker_file = os.path.join(self._framework_dir, '.marker_setup_safe_to_delete')
+        setup_done = os.path.isfile(marker_file)
+        if touch and not setup_done:
+            ftouch(marker_file)
+            setup_done = True
+        return setup_done
+
     @property
     def _framework_dir(self):
         return os.path.dirname(self.framework_module.__file__)
@@ -198,7 +210,7 @@ class TaskConfig:
             metrics=task_def.metric,
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
-            max_mem_size_mb=config.max_mem_size_mb,
+            max_mem_size_mb=task_def.max_mem_size_mb,
             input_dir=config.input_dir,
             output_dir=config.predictions_dir,
         )
@@ -254,12 +266,7 @@ class BenchmarkTask:
         task_config = copy(self.task)
         task_config.framework = framework_name
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
-        try:
-            framework.run(self._dataset, task_config)
-        except Exception as e:
-            log.error("%s failed with error %s", framework_name, str(e))
-            log.exception(e)
-            return None
+        framework.run(self._dataset, task_config)
 
         return results.compute_scores(framework_name, task_config.metrics)
 

@@ -111,12 +111,12 @@ class AWSBenchmark(Benchmark):
         job.instance_id = None
 
         def _run(job_self):
+            resources_root = "" if rconfig().aws.use_docker else "/s3bucket"
             job_self.instance_id = self._start_instance(
                 instance_type,
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
-                    # benchmark=self.benchmark_name,
-                    benchmark="/s3bucket/input/{}.yaml".format(self.benchmark_name),
+                    benchmark="{}/input/{}.yaml".format(resources_root, self.benchmark_name),
                     task_param='' if task_name is None else ('-t '+task_name),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
@@ -250,7 +250,7 @@ class AWSBenchmark(Benchmark):
                     obj.download_fileobj(buffer)
                     with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
                         df = Scoreboard.load_df(file)
-                df.loc[:,'mode'] = 'aws'
+                df.loc[:,'mode'] = rconfig().run_mode
                 board.append(df).save()
             else:
                 # todo: test case when there are also backup files in the download
@@ -356,8 +356,32 @@ class AWSBenchmark(Benchmark):
         :return: the UserData for the new ec2 instance
         todo: quid of docker repo access? public image?
         """
+        cloud_config = """
+#cloud-config
 
-        return """
+package_update: true
+package_upgrade: false
+packages:
+  - awscli
+  - docker.io
+
+runcmd:
+  - mkdir -p /s3bucket/input
+  - mkdir -p /s3bucket/output
+  - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
+  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output --rm {image} {params} -i /input -o /output -s skip
+  - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
+  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+
+final_message: "AutoML benchmark (docker) {ikey} completed after $UPTIME s"
+
+power_state:
+  delay: "+1"
+  mode: poweroff
+  message: "I'm losing power"
+  timeout: {timeout}
+  condition: True
+""" if rconfig().aws.use_docker else """
 #cloud-config
 
 package_update: true
@@ -371,7 +395,6 @@ packages:
   - python3-pip
   - python3-venv
   - awscli
-  - docker
 
 runcmd:
   - python3 -m venv /venvs/bench
@@ -387,7 +410,7 @@ runcmd:
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s skip
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -399,13 +422,15 @@ power_state:
   message: "I'm losing power"
   timeout: {timeout}
   condition: True
-""".format(
+"""
+        return cloud_config.format(
             repo=rconfig().project_repository,
+            image=DockerBenchmark.docker_image_name(self.framework_def),
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
-            timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds
+            timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds,
         )
 
     def _ec2_startup_script_bash(self, instance_key, script_params="", timeout_secs=-1):
@@ -426,7 +451,7 @@ apt-get update
 #apt-get -y upgrade
 apt-get install -y curl wget unzip git
 apt-get install -y python3 python3-pip python3-venv
-apt-get install -y awscli docker
+apt-get install -y awscli docker.io
 
 python3 -m venv /venvs/bench
 alias PIP='/venvs/bench/bin/pip3'
@@ -444,7 +469,7 @@ PIP install --no-cache-dir openml
 
 aws s3 cp {s3_base_url}input /s3bucket/input --recursive
 PY {script} {params} -o /s3bucket -s only
-PY {script} {params} -o /s3bucket -s skip
+PY {script} {params} -o /s3bucket
 aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"

@@ -1,5 +1,9 @@
 .git
 .idea
 libs
+logs
 results
 
+#following can be removed later
+docker
+aws

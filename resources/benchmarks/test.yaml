@@ -1,10 +1,23 @@
 ---
+#for doc purpose using <placeholder:default_value> syntax when it applies.
+
+#FORMAT: defaults are defined in config.yaml
+- name: __dummy_task
+  enabled: true  # actual default is `true` of course...
+  openml_task_id: 0
+  metric: # the first metric in the task list will be used for the main result as a comparison metric, the other ones are optional and purely informative
+    - acc # accuracy
+    - logloss # log loss
+    - mse # mean squared error
+    - rmse  # root mean squared error
+    - auc # array under curve
+  folds: 1
+  cores: 1
+  max_runtime_seconds: 600
+
 - name: test_1
   openml_task_id: 59
-  metric:
-      - acc
-      - logloss
-  enabled: true
+  metric: [acc, logloss]
   folds: 2
   cores: 2
   max_runtime_seconds: 60

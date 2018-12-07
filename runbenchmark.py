@@ -4,6 +4,7 @@ logging.basicConfig(handlers=[logging.NullHandler()])
 
 import argparse
 import os
+import sys
 
 import automl
 from automl.utils import config_load, datetime_iso, str2bool
@@ -65,24 +66,27 @@ if args.outdir:
     config.output_dir = args.outdir
 automl.resources.from_config(config)
 
-if args.mode == "local":
-    bench = automl.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
-elif args.mode == "docker":
-    bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
-elif args.mode == "aws":
-    bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
-# elif args.mode == "aws-remote":
-#     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
-else:
-    raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
-
-if args.setup == 'only':
-    log.warn("Setting up {} environment only for {}, no benchmark will be run".format(args.mode, args.framework))
-
-bench.setup(automl.Benchmark.SetupMode[args.setup])
-if args.setup != 'only':
-    if args.task is None:
-        res = bench.run(save_scores=True)
+try:
+    if args.mode == "local":
+        bench = automl.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+    elif args.mode == "docker":
+        bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+    elif args.mode == "aws":
+        bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+    # elif args.mode == "aws-remote":
+    #     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     else:
-        res = bench.run_one(args.task, args.fold, save_scores=True)
+        raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 
+    if args.setup == 'only':
+        log.warn("Setting up {} environment only for {}, no benchmark will be run".format(args.mode, args.framework))
+
+    bench.setup(automl.Benchmark.SetupMode[args.setup])
+    if args.setup != 'only':
+        if args.task is None:
+            res = bench.run(save_scores=True)
+        else:
+            res = bench.run_one(args.task, args.fold, save_scores=True)
+except ValueError as e:
+    log.error('\nERROR:\n%s', e)
+    sys.exit(1)

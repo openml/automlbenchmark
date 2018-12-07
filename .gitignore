@@ -1,5 +1,6 @@
 #build/run
 Dockerfile
+.marker*
 
 # python env
 *.pyc
