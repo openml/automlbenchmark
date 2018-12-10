@@ -1,5 +1,6 @@
 ---
-project_repository: https://github.com/seb-h2o/automlbenchmark
+project_repository: https://github.com/openml/automlbenchmark
+user_dir: ~/.config/automlbenchmark
 input_dir: ~/.openml/cache
 output_dir: results
 script:     # set by runbenchmark.py

@@ -1,0 +1,32 @@
+---
+#for doc purpose using <placeholder:default_value> syntax when it applies.
+
+# FORMAT:
+__dummy_framework_with_defaults:
+  version: ''
+  module: # defaults to `automl.frameworks.framework_name`
+  setup_args: ''
+  project: http://url/to/project/repo
+  docker_image: # will result in built docker image `author/image:tag`
+    author: automlbenchmark
+    image:  # defaults to `framework name to lowercase`
+    tag: latest
+
+#H2OAutoML:
+#  version: '3.22.0.2'
+#  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+#  # my test repo
+#  docker_image:
+#    author: seibp
+#    image: automlbenchmark
+
+H2OAutoML_wright:
+  module: automl.frameworks.H2OAutoML
+  setup_args: 'wright'
+  version: '3.20.0.10'
+
+H2OAutoML_local:
+  module: automl.frameworks.H2OAutoML
+  setup_cmd: 'PIP install -U ~/repos/h2o/h2o-3/h2o-py/build/dist/h2o-3.23.0.99999-py2.py3-none-any.whl'
+  version: 'local'
+

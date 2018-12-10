@@ -58,13 +58,16 @@ log.debug("script args: %s", args)
 
 # todo: allow a custom automlbenchmark_config.json in user directory: maybe this would allow removal of parameters like region, indir, outdir
 config = config_load("resources/config.yaml")
+config_input = None
 config.run_mode = args.mode
 config.script = os.path.basename(__file__)
 if args.indir:
     config.input_dir = args.indir
+    config_input = config_load(os.path.join(args.indir, "config.yaml"))
 if args.outdir:
     config.output_dir = args.outdir
-automl.resources.from_config(config)
+config_user = config_load(os.path.join(config.user_dir, "config.yaml"))
+automl.resources.from_configs(config, config_input, config_user)
 
 try:
     if args.mode == "local":

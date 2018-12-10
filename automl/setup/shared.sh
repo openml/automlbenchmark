@@ -9,5 +9,4 @@ fi
 #    /venvs/bench/bin/activate
 #fi
 echo "$(command -v PIP)"
-echo "$(alias)"
 PIP install --no-cache-dir -r requirements.txt

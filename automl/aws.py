@@ -225,8 +225,16 @@ class AWSBenchmark(Benchmark):
 
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
+        dest_path = lambda name: root_key+('/'.join(['input', benchmark_basename]))
         benchmark_basename = os.path.basename(self.benchmark_path)
-        self.bucket.upload_file(self.benchmark_path, root_key+('/'.join(['input', benchmark_basename])))
+        self.bucket.upload_file(self.benchmark_path, dest_path(benchmark_basename))
+        if rconfig().aws['resource_files']:
+            for res in rconfig().aws.resource_files:
+                if not os.path.isfile(res):
+                    log.warning("Not uploading file `%s` as it doesn't exist.", res)
+                    continue
+                res_basename = os.path.basename(res)
+                self.bucket.upload_file(res, dest_path(res_basename))
 
     def _download_results(self, instance_id):
         instance, ikey = self.instances[instance_id]

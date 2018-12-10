@@ -11,7 +11,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, available_memory_mb, datetime_iso, flatten, str2bool, touch as ftouch
+from .utils import Namespace, available_memory_mb, datetime_iso, flatten, str2bool, run_cmd, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class Benchmark:
         self.parallel_jobs = parallel_jobs
         self.uid = "{}-{}-{}".format(framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)).lower()
 
-        self.framework_module = import_module('automl.frameworks.'+self.framework_def.name)
+        self.framework_module = import_module(self.framework_def.module)
 
     def _validate(self):
         if self.parallel_jobs > 1:
@@ -68,7 +68,10 @@ class Benchmark:
         if mode == Benchmark.SetupMode.auto and self._setup_done():
             return
 
-        self.framework_module.setup()
+        self.framework_module.setup(self.framework_def.setup_args)
+        if self.framework_def.setup_cmd is not None:
+            log.debug(run_cmd(self.framework_def.setup_cmd))
+
         self._setup_done(touch=True)
 
     def cleanup(self):
@@ -138,7 +141,7 @@ class Benchmark:
         if fold < 0 or fold >= task_def.folds:
             raise ValueError("fold value {} is out of range for task {}".format(fold, task_def.name))
 
-        return BenchmarkTask(task_def, fold).as_job(self.framework_module)
+        return BenchmarkTask(task_def, fold).as_job(self.framework_module, self.framework_name)
 
     def _get_task_def(self, task_name):
         try:
@@ -246,22 +249,21 @@ class BenchmarkTask:
         else:
             raise ValueError("tasks should have one property among [openml_task_id, dataset]")
 
-    def as_job(self, framework):
+    def as_job(self, framework, framework_name):
         def _run():
             self.load_data()
-            return self.run(framework)
-        job = Job("local_{}_{}_{}".format(self.task.name, self.fold, framework.__name__))
+            return self.run(framework, framework_name)
+        job = Job("local_{}_{}_{}".format(self.task.name, self.fold, framework_name))
         job._run = _run
         return job
         # return Namespace(run=lambda: self.run(framework))
 
-    def run(self, framework):
+    def run(self, framework, framework_name):
         """
 
         :param framework:
         :return:
         """
-        framework_name = framework.__name__.rsplit('.', 1)[1]
         results = TaskResult(task_name=self.task.name, fold=self.fold)
         task_config = copy(self.task)
         task_config.framework = framework_name

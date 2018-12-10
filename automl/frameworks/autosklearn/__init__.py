@@ -1,10 +1,8 @@
-from automl.utils import call_script_in_same_dir, dir_of, pip_install
+from automl.utils import call_script_in_same_dir, dir_of
 
 
-def setup():
-    call_script_in_same_dir(__file__, "setup.sh")
-    # pip_install('https://raw.githubusercontent.com/automl/auto-sklearn/master/requirements.txt', True)
-    # pip_install('automl/frameworks/autosklearn/py_requirements.txt', True)
+def setup(*args):
+    call_script_in_same_dir(__file__, "setup.sh", *args)
 
 
 def run(*args, **kwargs):

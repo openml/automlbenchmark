@@ -1,8 +1,8 @@
 from automl.utils import call_script_in_same_dir, dir_of
 
 
-def setup():
-    call_script_in_same_dir(__file__, "setup.sh")
+def setup(*args):
+    call_script_in_same_dir(__file__, "setup.sh", *args)
 
 
 def run(*args, **kwargs):

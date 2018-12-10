@@ -12,24 +12,29 @@ log = logging.getLogger(__name__)
 class Resources:
 
     @staticmethod
-    def _normalize(config: Namespace):
+    def _normalize(config: Namespace, replace=None):
+        def nz_path(path):
+            if replace is not None:
+                path = path.format_map(replace)
+            return normalize_path(path)
+
         normalized = copy.copy(config)
         for k, v in config:
             if isinstance(v, Namespace):
-                normalized[k] = Resources._normalize(v)
-            elif re.search(r'_(dir|file)$', k):
-                normalized[k] = normalize_path(v)
+                normalized[k] = Resources._normalize(v, replace=replace)
+            elif re.search(r'_(dir|file)s?$', k):
+                normalized[k] = [nz_path(p) for p in v] if isinstance(v, list) else nz_path(v)
         return normalized
 
     def __init__(self, config: Namespace):
-        self.config = Resources._normalize(config)
+        self.config = Resources._normalize(config, replace=dict(input=config.input_dir, output=config.output_dir, user=config.user_dir))
         self.config.predictions_dir = os.path.join(self.config.output_dir, 'predictions')
         self.config.scores_dir = os.path.join(self.config.output_dir, 'scores')
         self.config.logs_dir = os.path.join(self.config.output_dir, 'logs')
         os.makedirs(self.config.predictions_dir, exist_ok=True)
         os.makedirs(self.config.scores_dir, exist_ok=True)
         os.makedirs(self.config.logs_dir, exist_ok=True)
-        log.debug("Normalized config: %s", self.config)
+        log.debug("Using config:\n%s", self.config)
 
     def framework_definition(self, name):
         """
@@ -44,13 +49,20 @@ class Resources:
     @lazy_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
-        log.debug("loading frameworks definitions from %s", frameworks_file)
-        frameworks = config_load(frameworks_file)
+        log.info("Loading frameworks definitions from %s.", frameworks_file)
+        if not isinstance(frameworks_file, list):
+            frameworks_file = [frameworks_file]
+
+        frameworks = Namespace()
+        for ff in frameworks_file:
+            frameworks + config_load(ff)
+
         for name, framework in frameworks:
             framework.name = name
             self._validate_framework(framework)
         for name, framework in dict(frameworks).items():
             frameworks[name.lower()] = framework
+        log.debug("Using framework definitions:\n%s", frameworks)
         return frameworks
 
     @memoize
@@ -61,7 +73,7 @@ class Resources:
         """
         benchmark_name = name
         benchmark_file = "{dir}/{name}.yaml".format(dir=self.config.benchmarks.definition_dir, name=benchmark_name)
-        log.debug("loading benchmark definitions from %s", benchmark_file)
+        log.debug("Loading benchmark definitions from %s.", benchmark_file)
         if not os.path.exists(benchmark_file):
             benchmark_file = name
             benchmark_name, _ = os.path.splitext(os.path.basename(name))
@@ -72,9 +84,19 @@ class Resources:
         tasks = config_load(benchmark_file)
         for task in tasks:
             self._validate_task(task)
+        log.debug("Using benchmark definition:\n%s", tasks)
         return tasks, benchmark_name, benchmark_file
 
     def _validate_framework(self, framework):
+        if framework['module'] is None:
+            framework.module = 'automl.frameworks.'+framework.name
+
+        if framework['setup_args'] is None:
+            framework.setup_args = None
+
+        if framework['setup_cmd'] is None:
+            framework.setup_cmd = None
+
         did = self.config.docker.image_defaults
         if framework['docker_image'] is None:
             framework['docker_image'] = did
@@ -107,6 +129,11 @@ __INSTANCE__: Resources = None
 def from_config(config: Namespace):
     global __INSTANCE__
     __INSTANCE__ = Resources(config)
+
+
+def from_configs(*configs: Namespace):
+    global __INSTANCE__
+    __INSTANCE__ = Resources(Namespace.merge(*configs, deep=True))
 
 
 def get() -> Resources:

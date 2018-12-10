@@ -1,0 +1,19 @@
+# rename this file to config.yaml and put it in custom input dir or in ~/.config/automlbenchmark directory
+# in order to have a custom setup, allowing to add custom frameworks definitions (in our case, creating a benchmark for various H2O versions)
+---
+project_repository: https://github.com/seb-h2o/automlbenchmark
+
+frameworks:
+  definition_file:
+    - resources/frameworks.yaml
+    - '{input}/frameworks.yaml'
+    - '{user}/frameworks.yaml'
+
+aws:
+  resource_files:
+    - '{user}/config.yaml'
+    - '{user}/frameworks.yaml'
+
+
+  use_docker: false
+

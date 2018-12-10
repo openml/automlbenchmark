@@ -22,6 +22,22 @@ class Namespace:
 
     mangled_prefix = '_Namespace__'
 
+    @staticmethod
+    def merge(*namespaces, deep=False):
+        merged = Namespace()
+        for ns in namespaces:
+            if ns is None:
+                continue
+            if not deep:
+                merged + ns
+            else:
+                for k, v in ns:
+                    if isinstance(v, Namespace):
+                        merged[k] = Namespace.merge(merged[k], v, deep=True)
+                    else:
+                        merged[k] = v
+        return merged
+
     def __init__(self, *args, **kwargs):
         self.__ns = dict(*args, **kwargs)
 
@@ -131,8 +147,10 @@ def lazy_property(prop_fn):
     return decorator
 
 
-def flatten(iterable):
-    return ft.reduce(lambda l, r: (l.extend(r) if isinstance(r, list) else l.append(r)) or l, iterable, [])
+def flatten(iterable, flatten_tuple=False, flatten_dict=False):
+    return ft.reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
+                                   else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
+                                   else l.append(r)) or l, iterable, [])
 
 
 class YAMLNamespaceLoader(yaml.loader.SafeLoader):
@@ -166,8 +184,14 @@ def yaml_load(file, as_namespace=False):
 
 
 def config_load(path):
+    path = normalize_path(path)
+    if not os.path.isfile(path):
+        log.warning("No config file at `%s`, skipping it.", path)
+        return Namespace()
+
     base, ext = os.path.splitext(path.lower())
     loader = json_load if ext == 'json' else yaml_load
+    log.info("Loading config file `%s`.", path)
     with open(path, 'r') as file:
         return loader(file, as_namespace=True)
 
@@ -289,26 +313,32 @@ def backup_file(file_path):
     log.info('file `%s` was backed up to `%s`.', src_path, dest_path)
 
 
-def run_cmd(cmd, return_output=True):
+def run_cmd(cmd, return_output=True, *args, **kvargs):
     # todo: switch to subprocess module (Popen) instead of os? would allow to use timeouts and kill signal
     #   besides, this implementation doesn't seem to work well with some commands if output is not read.
     output = None
-    with os.popen(cmd) as subp:
+    cmd_args = list(filter(None, []
+                                 + ([] if args is None else list(args))
+                                 + flatten(kvargs.items(), flatten_tuple=True) if kvargs is not None else []
+                           ))
+    full_cmd = ' '.join([cmd]+cmd_args)
+    log.info("running cmd `%s`", full_cmd)
+    with os.popen(full_cmd) as subp:
         if return_output:
             output = subp.read()
     if subp.close():
         log.debug(output)
         output_tail = tail(output, 25) if output else 'Unknown Error'
-        raise OSError("Error when running command `{cmd}`: {error}".format(cmd=cmd, error=output_tail))
+        raise OSError("Error when running command `{cmd}`: {error}".format(cmd=full_cmd, error=output_tail))
     return output
 
 
-def call_script_in_same_dir(caller_file, script_file):
+def call_script_in_same_dir(caller_file, script_file, *args, **kvargs):
     here = dir_of(caller_file)
     script = os.path.join(here, script_file)
     mod = os.stat(script).st_mode
     os.chmod(script, mod | stat.S_IEXEC)
-    output = run_cmd(script)
+    output = run_cmd(script, True, *args, **kvargs)
     log.debug(output)
     return output
 
