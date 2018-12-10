@@ -40,6 +40,7 @@ class AWSBenchmark(Benchmark):
         self.iam = None
         self.s3 = None
         self.bucket = None
+        self.uploaded_resources = None
         self.instance_profile = None
         self.instances = {}
         self.jobs = []
@@ -60,12 +61,13 @@ class AWSBenchmark(Benchmark):
         self.iam = boto3.resource('iam', region_name=self.region)
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
-        self._upload_resources()
+        self.uploaded_resources = self._upload_resources()
         self.instance_profile = self._create_instance_profile()
         self.ec2 = boto3.resource("ec2", region_name=self.region)
 
     def cleanup(self):
         self._stop_all_instances()
+        self._delete_resources()
         self._delete_s3_bucket()
 
     def run(self, save_scores=False):
@@ -227,6 +229,7 @@ class AWSBenchmark(Benchmark):
         root_key = str_def(rconfig().aws.s3.root_key)
         dest_path = lambda name: root_key+('/'.join(['input', name]))
         upload_files = [self.benchmark_path] + (rconfig().aws.resource_files if rconfig().aws['resource_files'] else [])
+        uploaded_resources = []
         for res in upload_files:
             if not os.path.isfile(res):
                 log.warning("Not uploading file `%s` as it doesn't exist.", res)
@@ -234,6 +237,18 @@ class AWSBenchmark(Benchmark):
             upload_path = dest_path(os.path.basename(res))
             log.info("Uploading `%s` to `%s` on s3 bucket %s.", res, upload_path, self.bucket.name)
             self.bucket.upload_file(res, upload_path)
+            uploaded_resources.append(upload_path)
+        return uploaded_resources
+
+    def _delete_resources(self):
+        if self.uploaded_resources is None:
+            return
+        log.info("Deleting uploaded resources `%s` from s3 bucket %s.", self.uploaded_resources, self.bucket.name)
+        self.bucket.delete_objects(
+            Delete=dict(
+                Objects=[dict(Key=res) for res in self.uploaded_resources]
+            )
+        )
 
     def _download_results(self, instance_id):
         instance, ikey = self.instances[instance_id]
@@ -246,7 +261,7 @@ class AWSBenchmark(Benchmark):
             # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
             dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
             backup_file(dest_path)
-            log.info("Downloading `%s` from s3 bucket %s to `%s`", obj.key, self.bucket.name, dest_path)
+            log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
             obj.download_file(dest_path)
 
         for obj in scores_objs:
@@ -255,7 +270,7 @@ class AWSBenchmark(Benchmark):
             board = Scoreboard.from_file(basename)
             if board:
                 with io.BytesIO() as buffer:
-                    log.info("Downloading `%s` from s3 bucket %s in memory for merge to `%s`", obj.key, self.bucket.name, board._score_file())
+                    log.info("Downloading `%s` from s3 bucket %s in memory for merge to `%s`.", obj.key, self.bucket.name, board._score_file())
                     obj.download_fileobj(buffer)
                     with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
                         df = Scoreboard.load_df(file)
@@ -265,12 +280,12 @@ class AWSBenchmark(Benchmark):
                 # todo: test case when there are also backup files in the download
                 dest_path = os.path.join(rconfig().scores_dir, basename)
                 backup_file(dest_path)
-                log.info("Downloading `%s` from s3 bucket %s to `%s`", obj.key, self.bucket.name, dest_path)
+                log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
                 obj.download_file(dest_path)
 
         for obj in logs_objs:
             dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
-            log.info("Downloading `%s` from s3 bucket %s to `%s`", obj.key, self.bucket.name, dest_path)
+            log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
             obj.download_file(dest_path)
 
     def _create_instance_profile(self):
