@@ -186,7 +186,7 @@ def yaml_load(file, as_namespace=False):
 def config_load(path):
     path = normalize_path(path)
     if not os.path.isfile(path):
-        log.warning("No config file at `%s`, skipping it.", path)
+        log.warning("No config file at `%s`, ignoring it.", path)
         return Namespace()
 
     base, ext = os.path.splitext(path.lower())

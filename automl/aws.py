@@ -225,16 +225,15 @@ class AWSBenchmark(Benchmark):
 
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
-        dest_path = lambda name: root_key+('/'.join(['input', benchmark_basename]))
-        benchmark_basename = os.path.basename(self.benchmark_path)
-        self.bucket.upload_file(self.benchmark_path, dest_path(benchmark_basename))
-        if rconfig().aws['resource_files']:
-            for res in rconfig().aws.resource_files:
-                if not os.path.isfile(res):
-                    log.warning("Not uploading file `%s` as it doesn't exist.", res)
-                    continue
-                res_basename = os.path.basename(res)
-                self.bucket.upload_file(res, dest_path(res_basename))
+        dest_path = lambda name: root_key+('/'.join(['input', name]))
+        upload_files = [self.benchmark_path] + (rconfig().aws.resource_files if rconfig().aws['resource_files'] else [])
+        for res in upload_files:
+            if not os.path.isfile(res):
+                log.warning("Not uploading file `%s` as it doesn't exist.", res)
+                continue
+            upload_path = dest_path(os.path.basename(res))
+            log.info("Uploading `%s` to `%s` on s3 bucket %s.", res, upload_path, self.bucket.name)
+            self.bucket.upload_file(res, upload_path)
 
     def _download_results(self, instance_id):
         instance, ikey = self.instances[instance_id]
@@ -247,6 +246,7 @@ class AWSBenchmark(Benchmark):
             # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
             dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
             backup_file(dest_path)
+            log.info("Downloading `%s` from s3 bucket %s to `%s`", obj.key, self.bucket.name, dest_path)
             obj.download_file(dest_path)
 
         for obj in scores_objs:
@@ -255,6 +255,7 @@ class AWSBenchmark(Benchmark):
             board = Scoreboard.from_file(basename)
             if board:
                 with io.BytesIO() as buffer:
+                    log.info("Downloading `%s` from s3 bucket %s in memory for merge to `%s`", obj.key, self.bucket.name, board._score_file())
                     obj.download_fileobj(buffer)
                     with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
                         df = Scoreboard.load_df(file)
@@ -264,10 +265,12 @@ class AWSBenchmark(Benchmark):
                 # todo: test case when there are also backup files in the download
                 dest_path = os.path.join(rconfig().scores_dir, basename)
                 backup_file(dest_path)
+                log.info("Downloading `%s` from s3 bucket %s to `%s`", obj.key, self.bucket.name, dest_path)
                 obj.download_file(dest_path)
 
         for obj in logs_objs:
             dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
+            log.info("Downloading `%s` from s3 bucket %s to `%s`", obj.key, self.bucket.name, dest_path)
             obj.download_file(dest_path)
 
     def _create_instance_profile(self):
