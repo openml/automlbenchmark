@@ -6,14 +6,12 @@ project_repository: https://github.com/seb-h2o/automlbenchmark
 frameworks:
   definition_file:
     - resources/frameworks.yaml
-    - '{input}/frameworks.yaml'
-    - '{user}/frameworks.yaml'
+    - '{user}/frameworks.yaml'    # this file is loaded on local side
+    - '{input}/frameworks.yaml'   # this file is loaded on remote side (ec2 instance)
 
 aws:
-  resource_files:
-    - '{user}/config.yaml'
-    - '{user}/frameworks.yaml'
-
-
+  resource_files:                 # those resources are uploaded to input directory on the remote (ec2) instance, that's why they should represent local paths.
+    - '{user}/config.yaml'        # needed remotely as it contains the path to custom framework definitions
+    - '{user}/frameworks.yaml'    # the custom framework definitions
   use_docker: false
 
