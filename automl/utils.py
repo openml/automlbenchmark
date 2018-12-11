@@ -1,3 +1,12 @@
+"""
+**utils** module provide a set of generic utility functions and decorators, which are not data-related
+(data manipulation utility functions should go to **datautils**).
+
+important
+    This module can be imported by any other module, therefore, it should have as few external dependencies as possible,
+    and should have no dependency to any other **automl** module.
+
+"""
 import datetime as dt
 import functools as ft
 import json

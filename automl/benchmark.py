@@ -1,3 +1,13 @@
+"""
+**benchmark** module handles all the main logic:
+
+- load specified framework and benchmark.
+- extract the tasks and configure them.
+- create jobs for each task.
+- run the jobs.
+- collect and save results.
+"""
+
 from copy import copy
 from enum import Enum
 from importlib import import_module

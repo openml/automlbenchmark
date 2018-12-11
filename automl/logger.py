@@ -1,3 +1,6 @@
+"""
+**logger** module just exposes a ``setup`` function to quickly configure the python logger.
+"""
 import datetime as dt
 import logging
 
@@ -22,6 +25,15 @@ class MillisFormatter(logging.Formatter):
 
 
 def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=None, console_level=None):
+    """
+    configures the Python logger.
+    :param log_file:
+    :param root_file:
+    :param root_level:
+    :param app_level:
+    :param console_level:
+    :return:
+    """
     root = logging.getLogger()
     root.setLevel(root_level)
 

@@ -1,3 +1,15 @@
+"""
+**data** module provides abstractions for data manipulation:
+
+- **Dataset** represents the entire dataset used by a job:
+  providing simple access to subsets like training set, test set,
+  and metadata like target feature, and predictors.
+- **Datasplit** represents and subset of the dataset,
+  providing access to data, either as a file (``path``),
+  or as vectors/arrays (``y`` for target, ``X`` for predictors)
+  which can also be encoded (``y_enc``, ``X_enc``)
+- **Feature** provides metadata for a given feature/column as well as encoding functions.
+"""
 from abc import ABC, abstractmethod
 import logging
 from typing import List

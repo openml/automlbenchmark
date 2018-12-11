@@ -1,3 +1,18 @@
+"""
+**aws** module is built on top of **benchmark** to provide the platform-specific logic
+necessary to run a benchmark on EC2 instances:
+
+- create a S3 bucket (if it doesn't already exist).
+- upload some resources on S3.
+- configures an AWS IAM profile to provide read/write access to the S3 bucket from the future EC2 instances.
+- create jobs and start an EC2 instance for each job:
+    - the EC2 instance download some resources from S3.
+    - the EC2 instance runs the task locally or using docker.
+    - on task completion, the EC2 instance uploads the results and logs to S3 and stops.
+- monitors each job and downloads results and logs from s3 when the job is completed.
+- merge downloaded results with existing/local results.
+- properly cleans up AWS resources (S3, EC2).
+"""
 import io
 import json
 import logging
@@ -381,8 +396,10 @@ class AWSBenchmark(Benchmark):
             Mainly used to put output files to dedicated key on s3.
         :param script_params: the custom params passed to the benchmark script, usually only task, fold params
         :return: the UserData for the new ec2 instance
-        todo: quid of docker repo access? public image?
         """
+        split_url = rconfig().project_repository.split('#', 2)
+        repo = split_url[0]
+        branch = 'master' if len(split_url) == 1 else split_url[1]
         cloud_config = """
 #cloud-config
 
@@ -431,7 +448,7 @@ runcmd:
   - mkdir -p /s3bucket/output
   - mkdir /repo
   - cd /repo
-  - git clone {repo} .
+  - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - PIP install --upgrade pip
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
@@ -451,7 +468,8 @@ power_state:
   condition: True
 """
         return cloud_config.format(
-            repo=rconfig().project_repository,
+            repo=repo,
+            branch=branch,
             image=DockerBenchmark.docker_image_name(self.framework_def),
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
@@ -473,6 +491,9 @@ power_state:
         :param script_params: the custom params passed to the benchmark script, usually only task, fold params
         :return: the UserData for the new ec2 instance
         """
+        split_url = rconfig().project_repository.split('#', 2)
+        repo = split_url[0]
+        branch = 'master' if len(split_url) == 1 else split_url[1]
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
@@ -488,7 +509,7 @@ mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
 mkdir ~/repo
 cd ~/repo
-git clone {repo} .
+git clone --depth 1 --single-branch --branch {branch} {repo} .
 
 PIP install --upgrade pip
 PIP install --no-cache-dir -r requirements.txt --process-dependency-links
@@ -501,7 +522,8 @@ aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
 """.format(
-            repo=rconfig().project_repository,
+            repo=repo,
+            branch=branch,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
             ikey=instance_key,

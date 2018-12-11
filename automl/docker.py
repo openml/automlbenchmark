@@ -1,3 +1,9 @@
+"""
+**docker** module is build on top of **benchmark** module to provide logic to create and run docker images
+that are preconfigured with a given automl framework, and that can be used to run a benchmark anywhere.
+The docker image embeds a version of the automlbenchmark app so that tasks are later run in local mode inside docker,
+providing the same parameters and features allowing to import config and export results through mounted folders.
+"""
 import logging
 import os
 import re

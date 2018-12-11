@@ -1,3 +1,7 @@
+"""
+**openml** module implements the abstractions defined in **data** module
+to expose `OpenML<https://www.openml.org>`_ datasets.
+"""
 import logging
 import os
 import re

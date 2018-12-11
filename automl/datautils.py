@@ -1,3 +1,10 @@
+"""
+**datautils** module provide some utility functions for data manipulation.
+
+important
+    This is (and should remain) the only non-framework module with dependencies to libraries like pandas or sklearn
+    until replacement by simpler/lightweight versions to avoid potential version conflicts with libraries imported by benchmark frameworks.
+"""
 import logging
 
 import numpy as np
@@ -12,13 +19,6 @@ except ImportError:
     from sklearn.preprocessing import LabelEncoder as OrdinalEncoder
 
 log = logging.getLogger(__name__)
-
-"""
-Module implementing or aliasing various functions for data manipulations.
-
-This is (and should remain) the only non-framework module with dependencies to libraries like pandas or sklearn 
-until replacement by simpler/lightweight versions to avoid potential version conflicts with libraries imported by benchmark frameworks.
-"""
 
 
 def read_csv(file):

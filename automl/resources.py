@@ -1,3 +1,7 @@
+"""
+**resources** modules exposes a singleton ``Resources`` instance providing easy access to app configuration properties,
+as well as handy methods to access other resources like *automl frameworks* and *benchmark definitions*
+"""
 import copy
 import logging
 import os

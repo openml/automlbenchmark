@@ -13,26 +13,32 @@ from automl import log
 
 parser = argparse.ArgumentParser()
 parser.add_argument('framework', type=str,
-                    help='The framework to evaluate as defined in resources/frameworks.json.')
+                    help="The framework to evaluate as defined by default in resources/frameworks.yaml.")
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
-                    help='The benchmark type to run as defined in resources/benchmarks/{benchmark}.json or the path to a benchmark description file. Defaults to `test`.')
-parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws', 'aws-remote'], default='local',
-                    help='The mode that specifies what backend is used (currently local [default], docker, or aws).')
+                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml "
+                         "or the path to a benchmark description file. Defaults to `%(default)s`.")
+parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default='local',
+                    help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', default=None,
-                    help='The specific task name to run in the benchmark.')
+                    help="The specific task name (as defined in the benchmark file) to run. "
+                         "If not provided, then all tasks from the benchmark will be run.")
 parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*',
-                    help='The specific fold(s) to run in the benchmark.')
+                    help="If task is provided, the specific fold(s) to run. "
+                         "If fold is not provided, then all folds from the task definition will be run.")
 parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
-                    help='Folder where datasets are loaded by default.')
+                    help="Folder where datasets are loaded by default. Defaults to `input_dir` as defined in resources/config.yaml")
 parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
-                    help='Folder where all the outputs should be written.')
-parser.add_argument('-r', '--region', metavar='aws_region', default=None,
-                    help='The region on which to run the benchmark when using AWS.')
+                    help="Folder where all the outputs should be written. Defaults to `output_dir` as defined in resources/config.yaml")
+parser.add_argument('-p', '--parallel', metavar='jobs_count', type=int, default=1,
+                    help="The number of jobs (i.e. tasks or folds) that can run in parallel. Defaults to %(default)s. "
+                         "Currently supported only in docker and aws mode.")
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
-                    help='Framework/platform setup mode (supported values = auto [default], skip, force, only).')
-parser.add_argument('-p', '--parallel', metavar='jobs_num', type=int, default=1,
-                    help='The number of jobs (i.e. tasks or folds) that can be run in parallel.'
-                         'Currently supported only in aws mode.')
+                    help="Framework/platform setup mode. Defaults to %(default)s. "
+                         "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup if always executed. •only: only setup is executed (no benchmark).")
+# todo: we can probably remove this command line argument: by default, we're using the user default region as defined in ~/aws/config
+#  on top of this, user can now override the aws.region setting in his custom ~/.config/automlbenchmark/config.yaml settings.
+parser.add_argument('-r', '--region', metavar='aws_region', default=None,
+                    help="The region on which to run the benchmark when using AWS.")
 # parser.add_argument('--keep-instance', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
 #                     help='Set to true [default] if reusing the same container instance(s) for all tasks (docker and aws mode only). '
 #                          'If disabled in aws mode, we will try to distribute computing over multiple ec2 instances.')
@@ -56,17 +62,19 @@ automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(s
 log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.benchmark, args.mode)
 log.debug("script args: %s", args)
 
-# todo: allow a custom automlbenchmark_config.json in user directory: maybe this would allow removal of parameters like region, indir, outdir
 config = config_load("resources/config.yaml")
 config_input = None
 config.run_mode = args.mode
 config.script = os.path.basename(__file__)
 if args.indir:
     config.input_dir = args.indir
+    # allowing config override from input_dir: useful for custom benchmarks executed on aws for example.
     config_input = config_load(os.path.join(args.indir, "config.yaml"))
 if args.outdir:
     config.output_dir = args.outdir
+# allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
 config_user = config_load(os.path.join(config.user_dir, "config.yaml"))
+# merging all configuration files
 automl.resources.from_configs(config, config_input, config_user)
 
 try:
