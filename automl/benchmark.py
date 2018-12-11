@@ -11,7 +11,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, system_memory_mb, datetime_iso, flatten, str2bool, run_cmd, touch as ftouch
+from .utils import Namespace, datetime_iso, flatten, str2bool, run_cmd, system_cores, system_memory_mb, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -217,12 +217,17 @@ class TaskConfig:
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
 
-    def estimate_max_mem_size_mb(self):
+    def estimate_system_params(self):
+        sys_cores = system_cores()
+        self.cores = min(self.cores, sys_cores) if self.cores > 0 else sys_cores
+        log.info("Assigning %s cores (total=%s) for new job %s.", self.cores, sys_cores, self.name)
+
         sys_mem = system_memory_mb()
         os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
         # os is already using mem, so leaving half of recommended mem
         assigned_mem = self.max_mem_size_mb if self.max_mem_size_mb > 0 else int(sys_mem.available - os_recommended_mem / 2)
-        log.info("Assigning %sMB for new job %s.", assigned_mem, self.name)
+        log.info("Assigning %sMB (total=%sMB) for new job %s.", assigned_mem, sys_mem.total, self.name)
+        self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.available:
             log.warning("Assigned memory (%sMB) exceeds system available memory (%sMB / total=%sMB)!",
                         assigned_mem, sys_mem.available, sys_mem.total)
@@ -230,7 +235,6 @@ class TaskConfig:
             log.warning("Assigned memory (%sMB) within %sMB of system total memory (%sMB): "
                         "We recommend a %sMB buffer, otherwise OS memory usage might interfere with the benchmark task.",
                         assigned_mem, os_recommended_mem, sys_mem.total, os_recommended_mem)
-        self.max_mem_size_mb = assigned_mem
 
 
 class BenchmarkTask:
@@ -282,7 +286,7 @@ class BenchmarkTask:
         task_config = copy(self.task)
         task_config.framework = framework_name
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
-        task_config.estimate_max_mem_size_mb()
+        task_config.estimate_system_params()
         framework.run(self._dataset, task_config)
 
         return results.compute_scores(framework_name, task_config.metrics)

@@ -16,7 +16,7 @@ benchmarks:
   defaults:
     folds: 1
     max_runtime_seconds: 600
-    cores: 2                  # default amount of cores used for each automl task: default set to match default aws.ec2.instance_type.
+    cores: -1                 # default amount of cores used for each automl task. If <= 0, will try to use all cores.
     max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
 
 openml:

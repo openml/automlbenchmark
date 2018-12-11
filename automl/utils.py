@@ -351,3 +351,6 @@ def system_memory_mb():
         available=to_mb(vm.available)
     )
 
+
+def system_cores():
+    return psutil.cpu_count()
