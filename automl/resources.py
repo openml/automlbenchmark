@@ -72,15 +72,26 @@ class Resources:
         :return:
         """
         benchmark_name = name
-        benchmark_file = "{dir}/{name}.yaml".format(dir=self.config.benchmarks.definition_dir, name=benchmark_name)
-        log.debug("Loading benchmark definitions from %s.", benchmark_file)
-        if not os.path.exists(benchmark_file):
+        benchmark_dir = self.config.benchmarks.definition_dir
+        if not isinstance(benchmark_dir, list):
+            benchmark_dir = [benchmark_dir]
+
+        benchmark_file = None
+        for bd in benchmark_dir:
+            bf = os.path.join(bd, "{}.yaml".format(benchmark_name))
+            if os.path.exists(bf):
+                benchmark_file = bf
+                break
+
+        if benchmark_file is None:
             benchmark_file = name
             benchmark_name, _ = os.path.splitext(os.path.basename(name))
+
         if not os.path.exists(benchmark_file):
             # should we support s3 and check for s3 path before raising error?
-            raise ValueError("incorrect benchmark name or path `{}`, name not available in {}".format(name, self.config.benchmarks.definition_dir))
+            raise ValueError("Incorrect benchmark name or path `{}`, name not available in {}.".format(name, self.config.benchmarks.definition_dir))
 
+        log.info("Loading benchmark definitions from %s.", benchmark_file)
         tasks = config_load(benchmark_file)
         for task in tasks:
             self._validate_task(task)

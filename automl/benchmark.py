@@ -11,7 +11,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, available_memory_mb, datetime_iso, flatten, str2bool, run_cmd, touch as ftouch
+from .utils import Namespace, system_memory_mb, datetime_iso, flatten, str2bool, run_cmd, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -189,6 +189,19 @@ class Benchmark:
 
 class TaskConfig:
 
+    @staticmethod
+    def from_def(task_def, fold, config):
+        return TaskConfig(
+            name=task_def.name,
+            fold=fold,
+            metrics=task_def.metric,
+            max_runtime_seconds=task_def.max_runtime_seconds,
+            cores=task_def.cores,
+            max_mem_size_mb=task_def.max_mem_size_mb,
+            input_dir=config.input_dir,
+            output_dir=config.predictions_dir,
+        )
+
     def __init__(self, name, fold, metrics, max_runtime_seconds,
                  cores, max_mem_size_mb,
                  input_dir, output_dir):
@@ -204,19 +217,20 @@ class TaskConfig:
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
 
-    @staticmethod
-    def from_def(task_def, fold, config):
-        # todo: check available memory with possible warning: cf. utils.available_memory_mb()
-        return TaskConfig(
-            name=task_def.name,
-            fold=fold,
-            metrics=task_def.metric,
-            max_runtime_seconds=task_def.max_runtime_seconds,
-            cores=task_def.cores,
-            max_mem_size_mb=task_def.max_mem_size_mb,
-            input_dir=config.input_dir,
-            output_dir=config.predictions_dir,
-        )
+    def estimate_max_mem_size_mb(self):
+        sys_mem = system_memory_mb()
+        os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
+        # os is already using mem, so leaving half of recommended mem
+        assigned_mem = self.max_mem_size_mb if self.max_mem_size_mb > 0 else int(sys_mem.available - os_recommended_mem / 2)
+        log.info("Assigning %sMB for new job %s.", assigned_mem, self.name)
+        if assigned_mem > sys_mem.available:
+            log.warning("Assigned memory (%sMB) exceeds system available memory (%sMB / total=%sMB)!",
+                        assigned_mem, sys_mem.available, sys_mem.total)
+        elif assigned_mem > sys_mem.total - os_recommended_mem:
+            log.warning("Assigned memory (%sMB) within %sMB of system total memory (%sMB): "
+                        "We recommend a %sMB buffer, otherwise OS memory usage might interfere with the benchmark task.",
+                        assigned_mem, os_recommended_mem, sys_mem.total, os_recommended_mem)
+        self.max_mem_size_mb = assigned_mem
 
 
 class BenchmarkTask:
@@ -268,6 +282,7 @@ class BenchmarkTask:
         task_config = copy(self.task)
         task_config.framework = framework_name
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
+        task_config.estimate_max_mem_size_mb()
         framework.run(self._dataset, task_config)
 
         return results.compute_scores(framework_name, task_config.metrics)

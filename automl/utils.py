@@ -343,6 +343,11 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kvargs):
     return output
 
 
-def available_memory_mb():
-    return psutil.virtual_memory().available / (1 << 20)
+def system_memory_mb():
+    vm = psutil.virtual_memory()
+    to_mb = lambda m: int(m / (1 << 20))
+    return Namespace(
+        total=to_mb(vm.total),
+        available=to_mb(vm.available)
+    )
 

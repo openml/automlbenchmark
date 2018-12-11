@@ -2,7 +2,7 @@
 #for doc purpose using <placeholder:default_value> syntax when it applies.
 
 #FORMAT: defaults are defined in config.yaml
-- name: __dummy_task
+- name: __dummy-task
   enabled: false  # actual default is `true` of course...
   openml_task_id: 0
   metric: # the first metric in the task list will be used for the main result as a comparison metric, the other ones are optional and purely informative
@@ -12,18 +12,19 @@
     - rmse  # root mean squared error
     - auc # array under curve
   folds: 1
-  cores: 1
   max_runtime_seconds: 600
+  cores: 1
+  max_mem_size_mb: -1
   ec2_instance_type: m5.large
 
-- name: test_1
+- name: test-1
   openml_task_id: 59
   metric: [acc, logloss]
   folds: 2
   cores: 2
   max_runtime_seconds: 60
 
-- name: test_2
+- name: test-2
   openml_task_id: 3913
   metric:
       - acc

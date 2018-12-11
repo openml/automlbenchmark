@@ -9,7 +9,16 @@ frameworks:
     - '{user}/frameworks.yaml'    # this file is loaded on local side
     - '{input}/frameworks.yaml'   # this file is loaded on remote side (ec2 instance)
 
+benchmarks:
+  definition_dir:
+    - '{user}'
+    - resources/benchmarks
+  defaults:
+    cores: 4
+
 aws:
+  ec2:
+    instance_type: c5.xlarge
   resource_files:                 # those resources are uploaded to input directory on the remote (ec2) instance, that's why they should represent local paths.
     - '{user}/config.yaml'        # needed remotely as it contains the path to custom framework definitions
     - '{user}/frameworks.yaml'    # the custom framework definitions

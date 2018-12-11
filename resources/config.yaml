@@ -12,11 +12,12 @@ frameworks:
 
 benchmarks:
   definition_dir: resources/benchmarks
+  os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   defaults:
     folds: 1
     max_runtime_seconds: 600
-    cores: 1
-    max_mem_size_mb: 2048
+    cores: 2                  # default amount of cores used for each automl task: default set to match default aws.ec2.instance_type.
+    max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
 
 openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
@@ -29,16 +30,19 @@ docker:
 
 aws:
   region: ''      # read from ~/.aws/config by default
+
   iam:
     role_name: AutomlBenchmarkRole
     s3_policy_name: AutomlBenchmarkS3Policy
     instance_profile_name: AutomlBenchmarkProfile
+
   s3:
     bucket: automl-benchmark
     temporary: false    # if true, the S3 bucket is created at the beginning of the main job and deleted at the end.
                         # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
                         # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
     root_key: ec2/
+
   ec2:
     terminate_instances: true   # if true, EC2 instances are always terminated at the end of the main job.
                                 # if false, the instances are only stopped and open to manual investigation after restart in case of issue.
@@ -54,9 +58,11 @@ aws:
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+
   max_timeout_seconds: 21600
   overhead_time_seconds: 900
   query_frequency_seconds: 15
+  resource_files: []
   use_docker: false     # if true, EC2 instances will run benchmark tasks in a docker instance.
                         # if false, it will run in local mode after cloning project_repository.
                         # Note that using docker in AWS mode requires the docker image being

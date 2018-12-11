@@ -196,6 +196,7 @@ class AWSBenchmark(Benchmark):
         else:
             response = instance.stop()
         log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", instance_id, response)
+        log.info("Instance %s state: %s", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
         # todo error handling
 
     def _stop_all_instances(self):
@@ -228,7 +229,7 @@ class AWSBenchmark(Benchmark):
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
         dest_path = lambda name: root_key+('/'.join(['input', name]))
-        upload_files = [self.benchmark_path] + (rconfig().aws.resource_files if rconfig().aws['resource_files'] else [])
+        upload_files = [self.benchmark_path] + rconfig().aws.resource_files
         uploaded_resources = []
         for res in upload_files:
             if not os.path.isfile(res):
