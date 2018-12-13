@@ -33,8 +33,10 @@ def run(dataset: Dataset, config: TaskConfig):
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from {}".format(dataset.train.path))
         train = h2o.import_file(dataset.train.path)
+        # train.impute(method='mean')
         log.debug("Loading test data from {}".format(dataset.test.path))
         test = h2o.import_file(dataset.test.path)
+        # test.impute(method='mean')
 
         log.info("Running model on task {}, fold {}".format(config.name, config.fold))
         log.debug("Running H2O AutoML with a maximum time of {}s on {} core(s), optimizing {}."
@@ -55,6 +57,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
         log.debug("Predicting the test set.")
         predictions = aml.predict(test).as_data_frame()
+        # predictions = h2o.get_model(aml.leaderboard[0][1, 0]).predict(test).as_data_frame()
 
         y_pred = predictions.iloc[:, 0]
         y_truth = test[:, dataset.target.index].as_data_frame(header=False)

@@ -198,6 +198,7 @@ def impute(X_fit, *X_s, missing_values='NaN', strategy='mean'):
     :param strategy: 'mean', 'median', 'most_frequent', 'constant' (from sklearn 0.20 only, requires fill_value arg)
     :return:
     """
+    # todo: impute only if np.isnan(X_fit).any() ?
     imputer = Imputer(missing_values=missing_values, strategy=strategy, axis=0)
     imputed = imputer.fit_transform(X_fit)
     if len(X_s) > 0:
