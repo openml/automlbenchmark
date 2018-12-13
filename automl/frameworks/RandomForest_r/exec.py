@@ -22,4 +22,4 @@ def run(dataset: Dataset, config: TaskConfig):
     ))
     log.debug(output)
 
-    log.info("Predictions saved to %s", predictions_file)
+    log.info("Predictions saved to %s", config.output_predictions_file)

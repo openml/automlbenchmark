@@ -2,38 +2,84 @@
 
 _**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._
 
+Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
+
+* We currently lack standardized, easily-accessible benchmarking suites of tasks (datasets) that are curated to reflect important problem domains, practical to use, and sufficiently challenging to support a rigorous analysis of performance results. 
+
+* Subtle differences in the problem definition, such as the design of the hyperparameter search space or the way time budgets are defined, can drastically alter a task’s difficulty. This issue makes it difficult to reproduce published research and compare results from different papers.
+
+This toolkit aims to address these problems by setting up standardized environments for in-depth experimentation with a wide range of AutoML systems.
+
+Documentation: https://openml.github.io/automlbenchmark/
+
+### Features:
+* Curated suites of benchmarking datasets from OpenML (TODO: add study link)
+* Includes a [wide range of AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
+* [New AutoML systems can be added](https://github.com/openml/automlbenchmark/tree/master/docker) as Docker images
+* Execute experiments locally or on AWS (see below)
+
+Future plans:  
+* Automatic sharing of benchmarkling results on OpenML.
+* Allow tuning of the AutoML systems (hyper-hyperparameters), beyond their default settings.
+* More benchmark datasets, and datasets of other types (e.g. regression).
+
 ## Quickstart
 
-To run a benchmark call the `benchmark.py` file with three arguments:
+To run a benchmark call the `runbenchmark.py` file at least arguments:
 
-1. The AutoML framework that should be evaluated, see [frameworks.json](resources/frameworks.json) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
-2. The benchmark suite to run. Should be one implemented in [benchmarks.json](resources/benchmarks.json).
-3. If the benchmark should be run `local` or on `aws`.
-4. (Optional) a file to append the results to.
+1. The AutoML framework that should be evaluated, see [frameworks.yaml](resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
+2. The benchmark suite to run. Should be one implemented in [benchmarks folder](resources/benchmarks).
+3. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
+
+Examples:
+```bash
+python3 -W ignore runbenchmark.py autosklearn validation
+
+python3 -W ignore runbenchmark.py h2oautoml validation -m aws
+```
+
+For the complete list of supported arguments, run:
+```bash
+python runbenchmark.py --help
+```
 
 
 ## Installation
 
-To run the benchmarks, you will need [Docker](https://docs.docker.com/install/), Python 2 or 3, and the `boto3` Python package.
-
-
-## Generate Docker Images
-
-The first time you run the benchmarks, you will need to generate the Docker images. As an example, if you want to run the Random Forest benchmark, you would first need to execute the following to generate the Random Forest Docker image:
+To run the benchmarks, you will need:
+* Python 3.5+ (TODO: verify work necessary to support Py2 and older versions of Py3).
+* the Python libraries listed in [requirements.txt](requirements.txt).
+* the [OpenML](https://github.com/openml/openml-python) Python client (currently fails installing if included in requirements.txt when numpy is not already installed).
+* [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
 ```
-cd docker
-./generate_docker.sh RandomForest  # Directory name from docker folder
+git clone https://github.com/openml/automlbenchmark.git
+cd automlbenchmark
+pip3 install -r requirements.txt
+pip3 install openml
 ```
-This will generate the Docker image for the Random Forest benchmark, where "RandomForest" is the folder name inside the `./docker` folder.
+
+### Generate Docker Images
+
+The Docker image is automatically built before running the benchmark if it doesn't exist locally or in a public repository.
+The generated image is usually named: automlbenchmark/{framework}:{tag}
+
+```bash
+python runbenchmark.py RandomForest validation -m docker
+```
+
+To build the image without running any benchmark:
+```bash
+python runbenchmark.py TPOT -m docker -s only
+```
 
 
-## Run the benchmark locally
+### Run the benchmark locally
 
 A minimal example would be to run the test benchmarks with a random forest:
 
 ```
-python benchmark.py RandomForest test local
+python runbenchmark.py RandomForest test local
 ```
 The first time you execute the benchmark, it will download all the dependencies to install in the Docker image, so that will take some time.
 
@@ -48,7 +94,7 @@ The script will produce output that records the OpenML Task ID, the fold index t
 ```
 
 
-## Run the benchmark on AWS
+### Run the benchmark on AWS
 
 To run a benchmark on AWS you additionally need to:
 
@@ -91,3 +137,4 @@ Termination successful
 2       test_2     0  0.8679245283018868
 3       test_2     1  0.8679245283018868
 ```
+

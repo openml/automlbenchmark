@@ -1,5 +1,8 @@
 ---
-project_repository: https://github.com/openml/automlbenchmark
+project_repository: https://github.com/openml/automlbenchmark     # this is also the url used to clone the repository on ec2 instances
+                                                                  # when running those without docker.
+                                                                  # to clone a specific branch/tag, add a url fragment, e.g.:
+                                                                  # https://github.com/openml/automlbenchmark#stable
 user_dir: ~/.config/automlbenchmark
 input_dir: ~/.openml/cache
 output_dir: results
@@ -50,17 +53,17 @@ aws:
     subnet_id: ''
     regions:
       us-east-1:
-        ami: ami-0797482d7f93b830c  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1
+        ami: ami-0797482d7f93b830c  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
       us-west-1:
-        ami: ami-0f27f14c7e0fffda9  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1
+        ami: ami-0f27f14c7e0fffda9  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
       eu-west-1:
-        ami: ami-0615f1e34f8d36362  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1
+        ami: ami-0615f1e34f8d36362  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
 
   max_timeout_seconds: 21600
-  overhead_time_seconds: 900
+  overhead_time_seconds: 900   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
   query_frequency_seconds: 15
   resource_files: []
   use_docker: false     # if true, EC2 instances will run benchmark tasks in a docker instance.

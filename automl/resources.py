@@ -19,7 +19,7 @@ class Resources:
     def _normalize(config: Namespace, replace=None):
         def nz_path(path):
             if replace is not None:
-                path = path.format_map(replace)
+                path = path.format(**replace)
             return normalize_path(path)
 
         normalized = copy.copy(config)

@@ -5,7 +5,7 @@ from tpot import TPOTClassifier
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import Encoder
+from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
 
 
@@ -25,10 +25,8 @@ def run(dataset: Dataset, config: TaskConfig):
     else:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    X_train = dataset.train.X_enc.astype(float)
-    y_train = dataset.train.y_enc
-    X_test = dataset.test.X_enc.astype(float)
-    y_test = dataset.test.y_enc
+    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     log.info('Running TPOT with a maximum time of {}s on {} cores, optimizing {}.'
           .format(config.max_runtime_seconds, config.cores, metric))
@@ -50,7 +48,7 @@ def run(dataset: Dataset, config: TaskConfig):
         class_probabilities = tpot.predict_proba(X_test)
     except RuntimeError:
         # TPOT throws a RuntimeError if the optimized pipeline does not support `predict_proba`.
-        class_probabilities = Encoder('one-hot').fit_transform(class_predictions).astype(float)
+        class_probabilities = Encoder('one-hot', target=False).fit_transform(class_predictions)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

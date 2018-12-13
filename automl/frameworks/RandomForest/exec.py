@@ -1,10 +1,10 @@
 import logging
 
-from sklearn.preprocessing import Imputer
 from sklearn.ensemble import RandomForestClassifier
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
+from automl.datautils import impute
 from automl.results import save_predictions_to_file
 
 log = logging.getLogger(__name__)
@@ -14,15 +14,8 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** Random Forest (sklearn) ****\n")
 
     # Impute any missing data (can test using -t 146606)
-    imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    imp.fit(dataset.train.X_enc)
-    X_train = imp.transform(dataset.train.X_enc)
-    y_train = dataset.train.y
-    X_test = imp.transform(dataset.test.X_enc)
-    y_test = dataset.test.y
-
-    # TODO: Probably have to add a dummy encoder here in case there's any categoricals
-    # TODO: If auto-sklearn & TPOT also require imputation & dummy encoding, let's move this to common_code
+    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    y_train, y_test = dataset.train.y, dataset.test.y
 
     log.info('Running RandomForest with a maximum time of {}s on {} cores.'.format(config.max_runtime_seconds, config.cores))
     log.warning('We completely ignore the requirement to stay within the time limit.')

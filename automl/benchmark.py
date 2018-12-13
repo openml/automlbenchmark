@@ -239,12 +239,12 @@ class TaskConfig:
         log.info("Assigning %sMB (total=%sMB) for new job %s.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.available:
-            log.warning("Assigned memory (%sMB) exceeds system available memory (%sMB / total=%sMB)!",
-                        assigned_mem, sys_mem.available, sys_mem.total)
+            log.warning("BEWARE! Assigned memory (%(assigned)sMB) exceeds system available memory (%(available)sMB / total=%(total)sMB)!",
+                        dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total))
         elif assigned_mem > sys_mem.total - os_recommended_mem:
-            log.warning("Assigned memory (%sMB) within %sMB of system total memory (%sMB): "
-                        "We recommend a %sMB buffer, otherwise OS memory usage might interfere with the benchmark task.",
-                        assigned_mem, os_recommended_mem, sys_mem.total, os_recommended_mem)
+            log.warning("BEWARE! Assigned memory (%(assigned)sMB) is within %(buffer)sMB of system total memory (%(total)sMB): "
+                        "We recommend a %(buffer)sMB buffer, otherwise OS memory usage might interfere with the benchmark task.",
+                        dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total, buffer=os_recommended_mem))
 
 
 class BenchmarkTask:

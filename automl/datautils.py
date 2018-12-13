@@ -14,9 +14,28 @@ from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_au
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
 try:
-    from sklearn.preprocessing import OrdinalEncoder
+    from sklearn.preprocessing import OrdinalEncoder    # from sklearn 0.20
 except ImportError:
-    from sklearn.preprocessing import LabelEncoder as OrdinalEncoder
+    class OrdinalEncoder(LabelEncoder):
+
+        def _reshape(self, y):
+            return np.asarray(y).reshape(len(y))
+
+        def fit(self, y):
+            super().fit(self._reshape(y))
+            return self
+
+        def fit_transform(self, y):
+            return super().fit_transform(self._reshape(y)).astype(float)
+
+        def transform(self, y):
+            return super().transform(self._reshape(y)).astype(float)
+
+try:
+    from sklearn.impute import SimpleImputer as Imputer     # from sklearn 0.20
+except ImportError:
+    from sklearn.preprocessing import Imputer
+
 
 log = logging.getLogger(__name__)
 
@@ -80,8 +99,8 @@ class Encoder(TransformerMixin):
         if type == 'label':
             self.delegate = LabelEncoder() if target else OrdinalEncoder()
         elif type == 'one-hot':
-            self.str_encoder = None if target else OrdinalEncoder()
-            self.delegate = LabelBinarizer() if target else OneHotEncoder(handle_unknown='ignore')
+            self.str_encoder = None if target else LabelEncoder()
+            self.delegate = LabelBinarizer() if target else OneHotEncoder(sparse=False, handle_unknown='ignore')
         elif type == 'no-op':
             self.delegate = None
         else:
@@ -99,20 +118,35 @@ class Encoder(TransformerMixin):
     def _encode_missing(self):
         return not self.for_target and self.missing_handle == 'encode'
 
+    def _reshape(self, vec):
+        return vec if self.for_target else vec.reshape(-1, 1)
+
     def fit(self, vec):
+        """
+
+        :param vec: must be a line vector (array)
+        :return:
+        """
         if not self.delegate:
             return self
 
+        vec = np.asarray(vec)
         self.classes = np.unique(vec) if self._ignore_missing else np.unique(np.insert(vec, 0, self.missing_replaced_by))
         self._enc_classes_ = self.str_encoder.fit_transform(self.classes) if self.str_encoder else self.classes
 
         if self._mask_missing:
-            self.missing_encoded_value = self.delegate.fit_transform(self.classes)[0]
+            self.missing_encoded_value = self.delegate.fit_transform(self._reshape(self.classes))[0]
         else:
-            self.delegate.fit(self.classes)
+            self.delegate.fit(self._reshape(self.classes))
         return self
 
     def transform(self, vec, **params):
+        """
+
+        :param vec: must be single value (str) or a line vector (array)
+        :param params:
+        :return:
+        """
         if not self.delegate:
             return vec
 
@@ -121,29 +155,56 @@ class Encoder(TransformerMixin):
             vec = [vec]
             return_value = (lambda v: v[0])
 
+        vec = np.asarray(vec)
         if self.str_encoder:
             vec = self.str_encoder.transform(vec)
 
         if self._mask_missing or self._encode_missing:
             mask = [v in self.missing_values for v in vec]
             if any(mask):
-                nvec = vec if isinstance(vec, np.ndarray) else np.array(vec)
                 if self._mask_missing:
-                    missing = nvec[mask]
-                nvec[mask] = self.missing_replaced_by
-                res = self.delegate.transform(nvec, **params)
+                    missing = vec[mask]
+                vec[mask] = self.missing_replaced_by
+                res = self.delegate.transform(self._reshape(vec), **params)
                 if self._mask_missing and self.encoded_type != int:
                     if None in missing:
                         res = res.astype(self.encoded_type)
                     res[mask] = np.NaN if self.encoded_type == float else None
                 return return_value(res)
 
-        return return_value(self.delegate.transform(vec, **params))
+        return return_value(self.delegate.transform(self._reshape(vec), **params))
 
     def inverse_transform(self, vec, **params):
+        """
+
+        :param vec: must a single value or line vector (array)
+        :param params:
+        :return:
+        """
         if not self.delegate:
             return vec
 
         # todo handle mask
+        vec = np.asarray(vec)
         return self.delegate.inverse_transform(vec, **params)
+
+
+def impute(X_fit, *X_s, missing_values='NaN', strategy='mean'):
+    """
+
+    :param X_fit:
+    :param X_s:
+    :param missing_values:
+    :param strategy: 'mean', 'median', 'most_frequent', 'constant' (from sklearn 0.20 only, requires fill_value arg)
+    :return:
+    """
+    imputer = Imputer(missing_values=missing_values, strategy=strategy, axis=0)
+    imputed = imputer.fit_transform(X_fit)
+    if len(X_s) > 0:
+        result = [imputed]
+        for X in X_s:
+            result.append(imputer.transform(X))
+        return result
+    else:
+        return imputed
 

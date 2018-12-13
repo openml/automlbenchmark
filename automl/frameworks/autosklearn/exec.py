@@ -34,22 +34,18 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("Running auto-sklearn with a maximum time of {}s on {} cores with {}MB, optimizing {}."
           .format(config.max_runtime_seconds, config.cores, config.max_mem_size_mb, performance_metric))
 
-    X_train = dataset.train.X_enc.astype(float)
+    X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: Do we need to set per_run_time_limit too?
-    start_time = time.time()
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=config.max_runtime_seconds, ml_memory_limit=config.max_mem_size_mb)
     auto_sklearn.fit(X_train, y_train, metric=performance_metric, feat_type=predictors_type)
-    actual_runtime_min = (time.time() - start_time)/60.0
-    log.info("Requested training time (minutes): " + str((config.max_runtime_seconds/60.0)))
-    log.info("Actual training time (minutes): " + str(actual_runtime_min))
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_test= dataset.test.X_enc.astype(float)
+    X_test= dataset.test.X_enc
     y_test = dataset.test.y_enc
     class_predictions = auto_sklearn.predict(X_test)
     class_probabilities = auto_sklearn.predict_proba(X_test)

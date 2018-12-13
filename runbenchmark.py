@@ -90,7 +90,7 @@ try:
         raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
 
     if args.setup == 'only':
-        log.warn("Setting up {} environment only for {}, no benchmark will be run".format(args.mode, args.framework))
+        log.warning("Setting up %s environment only for %s, no benchmark will be run", args.mode, args.framework)
 
     bench.setup(automl.Benchmark.SetupMode[args.setup])
     if args.setup != 'only':
