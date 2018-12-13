@@ -33,9 +33,9 @@ To run a benchmark call the `runbenchmark.py` file at least arguments:
 
 Examples:
 ```bash
-python3 -W ignore runbenchmark.py autosklearn validation
+python runbenchmark.py autosklearn validation
 
-python3 -W ignore runbenchmark.py h2oautoml validation -m aws
+python runbenchmark.py h2oautoml validation -m aws
 ```
 
 For the complete list of supported arguments, run:

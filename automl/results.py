@@ -245,7 +245,7 @@ class TaskResult:
             score = result.evaluate(metric)
             scores[metric] = score
         scores.result = scores[metrics[0]]
-        log.info("metric scores: %s", scores)
+        log.info("Metric scores: %s", scores)
         return scores
 
     def _predictions_file(self, framework_name):

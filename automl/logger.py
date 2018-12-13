@@ -34,6 +34,8 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
     :param console_level:
     :return:
     """
+    logging.captureWarnings(True)
+
     root = logging.getLogger()
     root.setLevel(root_level)
 

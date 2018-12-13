@@ -192,15 +192,15 @@ def yaml_load(file, as_namespace=False):
         return yaml.safe_load(file)
 
 
-def config_load(path):
+def config_load(path, verbose=False):
     path = normalize_path(path)
     if not os.path.isfile(path):
-        log.warning("No config file at `%s`, ignoring it.", path)
+        log.log(logging.WARNING if verbose else logging.DEBUG, "No config file at `%s`, ignoring it.", path)
         return Namespace()
 
     base, ext = os.path.splitext(path.lower())
     loader = json_load if ext == 'json' else yaml_load
-    log.info("Loading config file `%s`.", path)
+    log.log(logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path)
     with open(path, 'r') as file:
         return loader(file, as_namespace=True)
 
@@ -319,7 +319,7 @@ def backup_file(file_path):
     os.makedirs(dest_dir, exist_ok=True)
     dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
-    log.info('file `%s` was backed up to `%s`.', src_path, dest_path)
+    log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)
 
 
 def run_cmd(cmd, return_output=True, *args, **kvargs):
