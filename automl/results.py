@@ -13,7 +13,7 @@ from numpy import NaN, sort
 from .data import Dataset, Feature
 from .datautils import accuracy_score, log_loss, mean_squared_error, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig
-from .utils import Namespace, backup_file, memoize, datetime_iso
+from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ class Scoreboard:
         return cls(framework_name=framework_name, benchmark_name=benchmark_name, task_name=task_name, scores_dir=scores_dir)
 
     @staticmethod
+    # @profile(logger=log)
     def load_df(file):
         name = file if isinstance(file, str) else type(file)
         log.debug("Loading scores from %s", name)
@@ -71,6 +72,7 @@ class Scoreboard:
         return df
 
     @staticmethod
+    # @profile(logger=log)
     def save_df(data_frame, path, append=False):
         exists = os.path.isfile(path)
         new_format = False
@@ -96,7 +98,7 @@ class Scoreboard:
         self.scores_dir = scores_dir if scores_dir else rconfig().scores_dir
         self.scores = scores if scores is not None else self._load()
 
-    @memoize
+    @cached
     def as_data_frame(self):
         # index = ['task', 'framework', 'fold']
         index = []
@@ -151,6 +153,7 @@ class Scoreboard:
 class TaskResult:
 
     @staticmethod
+    # @profile(logger=log)
     def load_predictions(predictions_file):
         log.info("Loading predictions from %s", predictions_file)
         if os.path.isfile(predictions_file):
@@ -167,6 +170,7 @@ class TaskResult:
             return NoResult()
 
     @staticmethod
+    # @profile(logger=log)
     def save_predictions(dataset: Dataset, predictions_file: str,
                          class_probabilities=None, class_predictions=None, class_truth=None,
                          class_probabilities_labels=None,
@@ -190,10 +194,10 @@ class TaskResult:
 
         predictions = class_predictions
         truth = class_truth if class_truth is not None else dataset.test.y
-        if not encode_predictions_and_truth and classes_are_encoded:
+        if not _encode_predictions_and_truth_ and classes_are_encoded:
             predictions = dataset.target.label_encoder.inverse_transform(class_predictions)
             truth = dataset.target.label_encoder.inverse_transform(truth)
-        if encode_predictions_and_truth and not classes_are_encoded:
+        if _encode_predictions_and_truth_ and not classes_are_encoded:
             predictions = dataset.target.label_encoder.transform(class_predictions)
             truth = dataset.target.label_encoder.transform(truth)
 
@@ -230,6 +234,7 @@ class TaskResult:
     def get_result(self, framework_name):
         return self.load_predictions(self._predictions_file(framework_name))
 
+    @profile(logger=log)
     def compute_scores(self, framework_name, metrics, result=None):
         framework_def, _ = rget().framework_definition(framework_name)
         scores = Namespace(
@@ -313,12 +318,12 @@ class ClassificationResult(Result):
 
     def __init__(self, predictions_df):
         super().__init__(predictions_df)
-        self.classes = self.df.columns[:-2].values.astype(str)
-        self.probabilities = self.df.iloc[:, :-2].values.astype(float)
+        self.classes = self.df.columns[:-2].values.astype(str, copy=False)
+        self.probabilities = self.df.iloc[:, :-2].values.astype(float, copy=False)
         self.target = Feature(0, 'class', 'categorical', self.classes, is_target=True)
         self.type = 'binomial' if len(self.classes) == 2 else 'multinomial'
-        self.truth = self._autoencode(self.truth.astype(str))
-        self.predictions = self._autoencode(self.predictions.astype(str))
+        self.truth = self._autoencode(self.truth.astype(str, copy=False))
+        self.predictions = self._autoencode(self.predictions.astype(str, copy=False))
 
     def auc(self):
         if self.type != 'binomial':
@@ -330,7 +335,7 @@ class ClassificationResult(Result):
         return float(log_loss(self.truth, self.probabilities))
 
     def _autoencode(self, vec):
-        needs_encoding = not encode_predictions_and_truth or (isinstance(vec[0], str) and not vec[0].isdigit())
+        needs_encoding = not _encode_predictions_and_truth_ or (isinstance(vec[0], str) and not vec[0].isdigit())
         return self.target.label_encoder.transform(vec) if needs_encoding else vec
 
 
@@ -338,12 +343,12 @@ class RegressionResult(Result):
 
     def __init__(self, predictions_df):
         super().__init__(predictions_df)
-        self.truth = self.truth.astype(float)
+        self.truth = self.truth.astype(float, copy=False)
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = 'regression'
 
 
-encode_predictions_and_truth = False
+_encode_predictions_and_truth_ = False
 
 
 def save_predictions_to_file(dataset: Dataset, output_file: str,

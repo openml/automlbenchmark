@@ -3,11 +3,13 @@
 """
 import datetime as dt
 import logging
+import sys
 
 import automl
 
 
 logger = logging.getLogger(automl.__name__)
+logging.TRACE = logging.TRACE if hasattr(logging, 'TRACE') else 5
 
 
 class MillisFormatter(logging.Formatter):
@@ -35,6 +37,11 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
     :return:
     """
     logging.captureWarnings(True)
+    # warnings = logging.getLogger('py.warnings')
+
+    if not sys.warnoptions:
+        import warnings
+        warnings.simplefilter("ignore")
 
     root = logging.getLogger()
     root.setLevel(root_level)

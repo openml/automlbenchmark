@@ -8,12 +8,14 @@ important
 
 """
 import datetime as dt
-import functools as ft
+from functools import reduce, wraps
 import json
 import logging
 import os
 import shutil
 import stat
+import sys
+import time
 
 import psutil
 from ruamel import yaml
@@ -99,6 +101,22 @@ def repr_def(obj):
     return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
 
 
+_CACHE_PROP_PREFIX_ = '__cached__'
+
+
+def _cached_property_name(fn):
+    return _CACHE_PROP_PREFIX_ + (fn.__name__ if hasattr(fn, '__name__') else str(fn))
+
+
+def clear_cache(self, functions=None):
+    cached_properties = [prop for prop in dir(self) if prop.startswith(_CACHE_PROP_PREFIX_)]
+    properties_to_clear = cached_properties if functions is None \
+        else [prop for prop in [_cached_property_name(fn) for fn in functions] if prop in cached_properties]
+    for prop in properties_to_clear:
+        delattr(self, prop)
+    log.debug("Cleared cached properties: %s", properties_to_clear)
+
+
 def cache(self, key, fn):
     """
 
@@ -119,7 +137,7 @@ def cached(fn):
     :param fn:
     :return:
     """
-    result = '__cached_result__' + fn.__name__
+    result = _cached_property_name(fn)
 
     def decorator(self):
         return cache(self, result, fn)
@@ -128,7 +146,7 @@ def cached(fn):
 
 
 def memoize(fn):
-    prop_name = '__memo__' + fn.__name__
+    prop_name = _cached_property_name(fn)
 
     def decorator(self, key=None):  # todo: could support unlimited args by making a tuple out of *args + **kwargs: not needed for now
         memo = cache(self, prop_name, lambda _: {})
@@ -147,7 +165,7 @@ def lazy_property(prop_fn):
     :param prop_fn:
     :return:
     """
-    prop_name = '__cached__' + prop_fn.__name__
+    prop_name = _cached_property_name(prop_fn)
 
     @property
     def decorator(self):
@@ -156,10 +174,64 @@ def lazy_property(prop_fn):
     return decorator
 
 
+def profile(logger=log, log_level=None, duration=True, memory=True):
+    ps = psutil.Process() if memory else None
+
+    def decorator(fn):
+
+        @wraps(fn)
+        def profiler(*args, **kwargs):
+            nonlocal log_level
+            log_level = log_level or (logging.TRACE if hasattr(logging, 'TRACE') else logging.DEBUG)
+            if not logger.isEnabledFor(log_level):
+                return fn(*args, **kwargs)
+
+            before_mem = ps.memory_full_info() if memory else 0
+            start = time.time() if duration else 0
+            ret = fn(*args, **kwargs)
+            stop = time.time() if duration else 0
+            after_mem = ps.memory_full_info() if memory else 0
+            name = fn_name(fn)
+            if duration:
+                logger.log(log_level, "[PROFILING] `%s` executed in %.3fs", name, stop-start)
+            if memory:
+                ret_size = obj_size(ret)
+                if ret_size > 0:
+                    logger.log(log_level, "[PROFILING] `%s` returned object size: %.3f MB", name, to_mb(ret_size))
+                logger.log(log_level, "[PROFILING] `%s` memory change; process: %+.2f MB/%.2f MB, resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB",
+                           name,
+                           to_mb(after_mem.uss-before_mem.uss),
+                           to_mb(after_mem.uss),
+                           to_mb(after_mem.rss-before_mem.rss),
+                           to_mb(after_mem.rss),
+                           to_mb(after_mem.vms-before_mem.vms),
+                           to_mb(after_mem.vms))
+            return ret
+
+        return profiler
+
+    return decorator
+
+
+def fn_name(fn):
+    return ".".join([fn.__module__, fn.__qualname__])
+
+
+def obj_size(o):
+    if o is None:
+        return 0
+    # handling numpy obj size (nbytes property)
+    return o.nbytes if hasattr(o, 'nbytes') else sys.getsizeof(o, -1)
+
+
+def to_mb(size_in_bytes):
+    return size_in_bytes / (1 << 20)
+
+
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):
-    return ft.reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
-                                   else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
-                                   else l.append(r)) or l, iterable, [])
+    return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
+                                else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
+                                else l.append(r)) or l, iterable, [])
 
 
 class YAMLNamespaceLoader(yaml.loader.SafeLoader):
@@ -354,7 +426,6 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kvargs):
 
 def system_memory_mb():
     vm = psutil.virtual_memory()
-    to_mb = lambda m: int(m / (1 << 20))
     return Namespace(
         total=to_mb(vm.total),
         available=to_mb(vm.available)

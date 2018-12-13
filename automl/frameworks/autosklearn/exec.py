@@ -1,9 +1,9 @@
 import logging
-import time
 import warnings
 
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
+import numpy as np
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -30,12 +30,13 @@ def run(dataset: Dataset, config: TaskConfig):
         performance_metric = None
 
     # Set resources based on datasize
-    log.warning("ignoring n_cores.")
+    log.warning("Ignoring n_cores.")
     log.info("Running auto-sklearn with a maximum time of {}s on {} cores with {}MB, optimizing {}."
           .format(config.max_runtime_seconds, config.cores, config.max_mem_size_mb, performance_metric))
 
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
+    # log.info("finite=%s", np.isfinite(X_train))
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")

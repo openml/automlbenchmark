@@ -21,7 +21,7 @@ import time
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import Namespace, datetime_iso, flatten, str2bool, run_cmd, system_cores, system_memory_mb, touch as ftouch
+from .utils import Namespace, datetime_iso, flatten, profile, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -230,13 +230,13 @@ class TaskConfig:
     def estimate_system_params(self):
         sys_cores = system_cores()
         self.cores = min(self.cores, sys_cores) if self.cores > 0 else sys_cores
-        log.info("Assigning %s cores (total=%s) for new job %s.", self.cores, sys_cores, self.name)
+        log.info("Assigning %s cores (total=%s) for new task %s.", self.cores, sys_cores, self.name)
 
         sys_mem = system_memory_mb()
         os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
         # os is already using mem, so leaving half of recommended mem
-        assigned_mem = self.max_mem_size_mb if self.max_mem_size_mb > 0 else int(sys_mem.available - os_recommended_mem / 2)
-        log.info("Assigning %sMB (total=%sMB) for new job %s.", assigned_mem, sys_mem.total, self.name)
+        assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0 else int(sys_mem.available - os_recommended_mem / 2))
+        log.info("Assigning %sMB (total=%sMB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.available:
             log.warning("BEWARE! Assigned memory (%(assigned)sMB) exceeds system available memory (%(available)sMB / total=%(total)sMB)!",
@@ -263,6 +263,7 @@ class BenchmarkTask:
         self.task = TaskConfig.from_def(self._task_def, self.fold, rconfig())
         self._dataset = None
 
+    @profile(logger=log)
     def load_data(self):
         """
         Loads the training dataset for the current given task
@@ -270,12 +271,12 @@ class BenchmarkTask:
         """
         if hasattr(self._task_def, 'openml_task_id'):
             self._dataset = Benchmark.task_loader.load(self._task_def.openml_task_id, self.fold)
-            log.debug("loaded OpenML dataset for task_id %s", self._task_def.openml_task_id)
+            log.debug("Loaded OpenML dataset for task_id %s", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'dataset'):
             # todo
-            raise NotImplementedError("raw dataset are not supported yet")
+            raise NotImplementedError("Raw dataset are not supported yet")
         else:
-            raise ValueError("tasks should have one property among [openml_task_id, dataset]")
+            raise ValueError("Tasks should have one property among [openml_task_id, dataset]")
 
     def as_job(self, framework, framework_name):
         def _run():
@@ -286,6 +287,7 @@ class BenchmarkTask:
         return job
         # return Namespace(run=lambda: self.run(framework))
 
+    @profile(logger=log)
     def run(self, framework, framework_name):
         """
 
@@ -298,7 +300,7 @@ class BenchmarkTask:
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         task_config.estimate_system_params()
         framework.run(self._dataset, task_config)
-
+        self._dataset.release()
         return results.compute_scores(framework_name, task_config.metrics)
 
 

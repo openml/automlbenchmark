@@ -35,19 +35,19 @@ parser.add_argument('-p', '--parallel', metavar='jobs_count', type=int, default=
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
                     help="Framework/platform setup mode. Defaults to %(default)s. "
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup if always executed. •only: only setup is executed (no benchmark).")
+parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
+                    help="Set to true [default] to save/add scores in output directory")
+# group = parser.add_mutually_exclusive_group()
+# group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
+#                    help="Set to true [default] to save/add scores in output directory")
+# group.add_argument('--no-keep-scores', dest='keep_scores', action='store_false')
+# parser.set_defaults(keep_scores=True)
+
 # todo: we can probably remove this command line argument: by default, we're using the user default region as defined in ~/aws/config
 #  on top of this, user can now override the aws.region setting in his custom ~/.config/automlbenchmark/config.yaml settings.
 parser.add_argument('-r', '--region', metavar='aws_region', default=None,
                     help="The region on which to run the benchmark when using AWS.")
-# parser.add_argument('--keep-instance', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
-#                     help='Set to true [default] if reusing the same container instance(s) for all tasks (docker and aws mode only). '
-#                          'If disabled in aws mode, we will try to distribute computing over multiple ec2 instances.')
-# group = parser.add_mutually_exclusive_group()
-# group.add_argument('--keep-instance', dest='keep_instance', action='store_true',
-#                    help='Set to true [default] if reusing the same container instance(s) for all tasks (docker and aws mode only). '
-#                         'If disabled in aws mode, we will try to distribute computing over multiple ec2 instances.')
-# group.add_argument('--no-keep-instance', dest='keep_instance', action='store_false')
-# parser.set_defaults(keep_instance=True)
+
 args = parser.parse_args()
 
 script_name = os.path.splitext(os.path.basename(__file__))[0]
@@ -55,6 +55,7 @@ log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
 os.makedirs(log_dir, exist_ok=True)
 now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = datetime_iso(time=False, no_sep=True)
+# logging.TRACE = logging.INFO
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
                     root_level='DEBUG', console_level='INFO')
@@ -78,11 +79,11 @@ config_user = config_load(os.path.join(config.user_dir, "config.yaml"))
 automl.resources.from_configs(config, config_input, config_user)
 
 try:
-    if args.mode == "local":
+    if args.mode == 'local':
         bench = automl.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
-    elif args.mode == "docker":
+    elif args.mode == 'docker':
         bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
-    elif args.mode == "aws":
+    elif args.mode == 'aws':
         bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     # elif args.mode == "aws-remote":
     #     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
@@ -92,12 +93,15 @@ try:
     if args.setup == 'only':
         log.warning("Setting up %s environment only for %s, no benchmark will be run", args.mode, args.framework)
 
+    if not args.keep_scores and args.mode != 'local':
+        log.warning("`keep_scores` parameter is currently ignored in %s mode, scores are always saved in this mode.", args.mode)
+
     bench.setup(automl.Benchmark.SetupMode[args.setup])
     if args.setup != 'only':
         if args.task is None:
-            res = bench.run(save_scores=True)
+            res = bench.run(save_scores=args.keep_scores)
         else:
-            res = bench.run_one(args.task, args.fold, save_scores=True)
+            res = bench.run_one(args.task, args.fold, save_scores=args.keep_scores)
 except ValueError as e:
     log.error('\nERROR:\n%s', e)
     sys.exit(1)

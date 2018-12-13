@@ -97,7 +97,6 @@ class AWSBenchmark(Benchmark):
             results = self._run_jobs(jobs)
         finally:
             self.cleanup()
-        log.debug("results from aws run (not merged to other scores yet): %s", results)
         return self._process_results(results, save_scores=save_scores)
 
     def run_one(self, task_name: str, fold: int, save_scores=False):
@@ -111,7 +110,6 @@ class AWSBenchmark(Benchmark):
             results = self._run_jobs(jobs)
         finally:
             self.cleanup()
-        log.debug("results from aws run (not merged to other scores yet): %s", results)
         return self._process_results(results, task_name=task_name, save_scores=save_scores)
 
     def _fold_job(self, task_def, fold: int):

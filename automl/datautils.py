@@ -19,17 +19,17 @@ except ImportError:
     class OrdinalEncoder(LabelEncoder):
 
         def _reshape(self, y):
-            return np.asarray(y).reshape(len(y))
+            return np.asarray(y, dtype=object).reshape(len(y))
 
         def fit(self, y):
             super().fit(self._reshape(y))
             return self
 
         def fit_transform(self, y):
-            return super().fit_transform(self._reshape(y)).astype(float)
+            return super().fit_transform(self._reshape(y)).astype(float, copy=False)
 
         def transform(self, y):
-            return super().transform(self._reshape(y)).astype(float)
+            return super().transform(self._reshape(y)).astype(float, copy=False)
 
 try:
     from sklearn.impute import SimpleImputer as Imputer     # from sklearn 0.20
@@ -73,12 +73,12 @@ def to_data_frame(obj, columns=None):
 class Encoder(TransformerMixin):
 
     def __init__(self, type='label', target=True, encoded_type=float,
-                 missing_handle='ignore', missing_values=None, missing_replaced_by=''):
+                 missing_policy='ignore', missing_values=None, missing_replaced_by=''):
         """
 
         :param type:
         :param target:
-        :param missing_handle: one of ['ignore', 'mask', 'encode'].
+        :param missing_policy: one of ['ignore', 'mask', 'encode'].
             ignore: use only if there's no missing value for sure data to be transformed, otherwise it may raise an error during transform()
             mask: replace missing values only internally
             encode: encode all missing values as the encoded value of missing_replaced_by
@@ -86,9 +86,9 @@ class Encoder(TransformerMixin):
         :param missing_replaced_by:
         """
         super().__init__()
-        assert missing_handle in ['ignore', 'mask', 'encode']
+        assert missing_policy in ['ignore', 'mask', 'encode']
         self.for_target = target
-        self.missing_handle = missing_handle
+        self.missing_policy = missing_policy
         self.missing_values = set(missing_values).union([None]) if missing_values else {None}
         self.missing_replaced_by = missing_replaced_by
         self.missing_encoded_value = None
@@ -108,15 +108,15 @@ class Encoder(TransformerMixin):
 
     @property
     def _ignore_missing(self):
-        return self.for_target or self.missing_handle == 'ignore'
+        return self.for_target or self.missing_policy == 'ignore'
 
     @property
     def _mask_missing(self):
-        return not self.for_target and self.missing_handle == 'mask'
+        return not self.for_target and self.missing_policy == 'mask'
 
     @property
     def _encode_missing(self):
-        return not self.for_target and self.missing_handle == 'encode'
+        return not self.for_target and self.missing_policy == 'encode'
 
     def _reshape(self, vec):
         return vec if self.for_target else vec.reshape(-1, 1)
@@ -130,7 +130,7 @@ class Encoder(TransformerMixin):
         if not self.delegate:
             return self
 
-        vec = np.asarray(vec)
+        vec = np.asarray(vec, dtype=object)
         self.classes = np.unique(vec) if self._ignore_missing else np.unique(np.insert(vec, 0, self.missing_replaced_by))
         self._enc_classes_ = self.str_encoder.fit_transform(self.classes) if self.str_encoder else self.classes
 
@@ -147,32 +147,31 @@ class Encoder(TransformerMixin):
         :param params:
         :return:
         """
-        if not self.delegate:
-            return vec
-
         return_value = lambda v: v
         if isinstance(vec, str):
             vec = [vec]
-            return_value = (lambda v: v[0])
+            return_value = lambda v: v[0]
 
-        vec = np.asarray(vec)
+        vec = np.asarray(vec, dtype=object)
+
+        if not self.delegate:
+            return return_value(vec.astype(self.encoded_type, copy=False))
+
         if self.str_encoder:
             vec = self.str_encoder.transform(vec)
 
         if self._mask_missing or self._encode_missing:
             mask = [v in self.missing_values for v in vec]
             if any(mask):
-                if self._mask_missing:
-                    missing = vec[mask]
+                # if self._mask_missing:
+                #     missing = vec[mask]
                 vec[mask] = self.missing_replaced_by
-                res = self.delegate.transform(self._reshape(vec), **params)
-                if self._mask_missing and self.encoded_type != int:
-                    if None in missing:
-                        res = res.astype(self.encoded_type)
+                res = self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False)
+                if self._mask_missing:
                     res[mask] = np.NaN if self.encoded_type == float else None
                 return return_value(res)
 
-        return return_value(self.delegate.transform(self._reshape(vec), **params))
+        return return_value(self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False))
 
     def inverse_transform(self, vec, **params):
         """
@@ -185,7 +184,7 @@ class Encoder(TransformerMixin):
             return vec
 
         # todo handle mask
-        vec = np.asarray(vec)
+        vec = np.asarray(vec, dtype=object).astype(self.encoded_type, copy=False)
         return self.delegate.inverse_transform(vec, **params)
 
 

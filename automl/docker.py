@@ -69,7 +69,6 @@ class DockerBenchmark(Benchmark):
         else:
             jobs.extend(self._benchmark_jobs())
         results = self._run_jobs(jobs)
-        log.debug("results from docker run (merged to other scores but not to global scores yet): %s", results)
         return self._process_results(results, save_scores=save_scores)
 
     def run_one(self, task_name: str, fold, save_scores=False):
@@ -80,7 +79,6 @@ class DockerBenchmark(Benchmark):
             task_def = self._get_task_def(task_name)
             jobs.extend(self._custom_task_jobs(task_def, fold))
         results = self._run_jobs(jobs)
-        log.debug("results from docker run (merged to other scores but not to global scores yet): %s", results)
         return self._process_results(results, task_name=task_name, save_scores=save_scores)
 
     def _fold_job(self, task_def, fold: int):

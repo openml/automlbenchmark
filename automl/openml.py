@@ -11,7 +11,7 @@ import arff
 import numpy as np
 
 from .data import Dataset, Datasplit, Feature
-from .utils import lazy_property
+from .utils import lazy_property, obj_size, profile, to_mb
 
 
 log = logging.getLogger(__name__)
@@ -20,16 +20,17 @@ log = logging.getLogger(__name__)
 class Openml():
 
     def __init__(self, api_key, cache_dir=None):
-        oml.config.apikey = api_key  # todo, rely on default openml setup, apikey is private...
+        oml.config.apikey = api_key
         if cache_dir:
             oml.config.set_cache_directory(cache_dir)
 
+    @profile(logger=log)
     def load(self, task_id, fold=0):
         task = oml.tasks.get_task(task_id)
         dataset = task.get_dataset()
         _, nfolds, _ = task.get_split_dimensions()
         if fold >= nfolds:
-            raise ValueError("this OpenML task only accepts `fold` < {}".format(nfolds))
+            raise ValueError("OpenML task {} only accepts `fold` < {}".format(task_id, nfolds))
         return OpenmlDataset(task, dataset, fold)
 
 
@@ -46,16 +47,19 @@ class OpenmlDataset(Dataset):
         self._unique_values = {}
 
     @property
+    @profile(logger=log)
     def train(self):
         self._ensure_loaded()
         return self._train
 
     @property
+    @profile(logger=log)
     def test(self):
         self._ensure_loaded()
         return self._test
 
     @lazy_property
+    @profile(logger=log)
     def features(self):
         def get_values(f):
             """
@@ -70,8 +74,15 @@ class OpenmlDataset(Dataset):
                 f.nominal_values = self._unique_values.get(f.name)
             return f.nominal_values
 
+        has_missing_values = lambda f: f.number_missing_values > 0
         is_target = lambda f: f.name == self._oml_task.target_name
-        return [Feature(f.index, f.name, f.data_type, get_values(f), is_target(f)) for i, f in sorted(self._oml_dataset.features.items())]
+        return [Feature(f.index,
+                        f.name,
+                        f.data_type,
+                        values=get_values(f),
+                        has_missing_values=has_missing_values(f),
+                        is_target=is_target(f)
+                        ) for i, f in sorted(self._oml_dataset.features.items())]
 
     @lazy_property
     def target(self):
@@ -80,12 +91,13 @@ class OpenmlDataset(Dataset):
     @property
     def attributes(self):
         if not self._attributes:
-            log.debug("loading attributes from dataset %s", self._oml_dataset.data_file)
+            log.debug("Loading attributes from dataset %s", self._oml_dataset.data_file)
             with open(self._oml_dataset.data_file) as f:
                 ds = arff.load(f)
                 self._attributes = ds['attributes']
         return self._attributes
 
+    @profile(logger=log)
     def _ensure_loaded(self):
         if self._train is None and self._test is None:
             self._load_split()
@@ -111,7 +123,7 @@ class OpenmlDataset(Dataset):
         #                                                    return_attribute_names=True)
         # ods.retrieve_class_labels(self.target)
 
-        log.debug("loading dataset %s", ods.data_file)
+        log.debug("Loading dataset %s", ods.data_file)
         with open(ods.data_file) as f:
             ds = arff.load(f)
         self._attributes = ds['attributes']
@@ -143,12 +155,13 @@ class OpenmlDatasplit(Datasplit):
         return self._path
 
     @lazy_property
+    @profile(logger=log)
     def data(self):
         # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
-        log.debug("loading datasplit %s", self.path)
+        log.debug("Loading datasplit %s", self.path)
         with open(self.path) as file:
             ds = arff.load(file)
-        return np.asarray(ds['data'])
+        return np.asarray(ds['data'], dtype=object)
 
 
 def _get_split_path_for_dataset(ds_path, split='train', fold=0):
@@ -158,12 +171,13 @@ def _get_split_path_for_dataset(ds_path, split='train', fold=0):
     return split_path
 
 
+@profile(logger=log)
 def _save_split_set(path, name, full_dataset=None, indexes=None):
     # X_split = X[indexes, :]
     # y_split = y.reshape(-1, 1)[indexes, :]
-    log.debug("saving %s split dataset to %s", name, path)
+    log.debug("Saving %s split dataset to %s", name, path)
     with open(path, 'w') as file:
-        split_data = np.asarray(full_dataset['data'])[indexes, :]
+        split_data = np.asarray(full_dataset['data'], dtype=object)[indexes, :]
         arff.dump({
             'description': full_dataset['description'],
             'relation': name,

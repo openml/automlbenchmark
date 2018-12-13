@@ -18,14 +18,14 @@ import numpy as np
 from numpy import ndarray
 
 from .datautils import Encoder
-from .utils import lazy_property, repr_def
+from .utils import clear_cache, lazy_property, profile, repr_def
 
 log = logging.getLogger(__name__)
 
 
 class Feature:
 
-    def __init__(self, index, name, data_type, values=None, is_target=False):
+    def __init__(self, index, name, data_type, values=None, has_missing_values=False, is_target=False):
         """
 
         :param index:
@@ -37,6 +37,7 @@ class Feature:
         self.name = name
         self.data_type = data_type
         self.values = values
+        self.has_missing_values = has_missing_values
         self.is_target = is_target
 
     def is_categorical(self, strict=True):
@@ -47,11 +48,17 @@ class Feature:
 
     @lazy_property
     def label_encoder(self):
-        return Encoder('label' if self.values is not None else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
+        return Encoder('label' if self.values is not None else 'no-op',
+                       target=self.is_target,
+                       missing_policy='mask' if self.has_missing_values else 'ignore'
+                       ).fit(self.values)
 
     @lazy_property
     def one_hot_encoder(self):
-        return Encoder('one-hot' if self.values is not None else 'no-op', target=self.is_target, missing_handle='mask').fit(self.values)
+        return Encoder('one-hot' if self.values is not None else 'no-op',
+                       target=self.is_target,
+                       missing_policy='mask' if self.has_missing_values else 'ignore'
+                       ).fit(self.values)
 
     def __repr__(self):
         return repr_def(self)
@@ -87,6 +94,7 @@ class Datasplit(ABC):
         pass
 
     @lazy_property
+    @profile(logger=log)
     def X(self) -> ndarray:
         """
 
@@ -96,6 +104,7 @@ class Datasplit(ABC):
         return self.data[:, predictors_ind]
 
     @lazy_property
+    @profile(logger=log)
     def y(self) -> ndarray:
         """
 
@@ -104,14 +113,32 @@ class Datasplit(ABC):
         return self.data[:, self.dataset.target.index]
 
     @lazy_property
-    def X_enc(self) -> ndarray:
-        # todo: should we use one_hot_encoder here instead?
-        encoded_cols = [p.label_encoder.transform(self.data[:, p.index]) for p in self.dataset.predictors]
+    @profile(logger=log)
+    def data_enc(self) -> ndarray:
+        encoded_cols = [f.label_encoder.transform(self.data[:, f.index]) for f in self.dataset.features]
+        # optimize mem usage : frameworks use either raw data or encoded ones,
+        # so we can clear the cached raw data once they've been encoded
+        self.release(['data', 'X', 'y'])
         return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
 
     @lazy_property
+    @profile(logger=log)
+    def X_enc(self) -> ndarray:
+        # todo: should we use one_hot_encoder here instead?
+        # encoded_cols = [p.label_encoder.transform(self.data[:, p.index]) for p in self.dataset.predictors]
+        # return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
+        predictors_ind = [p.index for p in self.dataset.predictors]
+        return self.data_enc[:, predictors_ind]
+
+    @lazy_property
+    @profile(logger=log)
     def y_enc(self) -> ndarray:
-        return self.dataset.target.label_encoder.transform(self.y)
+        # return self.dataset.target.label_encoder.transform(self.y)
+        return self.data_enc[:, self.dataset.target.index]
+
+    @profile(logger=log)
+    def release(self, properties=None):
+        clear_cache(self, properties)
 
 
 class Dataset(ABC):
@@ -162,4 +189,10 @@ class Dataset(ABC):
         :return:
         """
         pass
+
+    @profile(logger=log)
+    def release(self, properties=None):
+        self.train.release()
+        self.test.release()
+        clear_cache(self, properties)
 
