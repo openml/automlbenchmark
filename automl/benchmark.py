@@ -78,9 +78,12 @@ class Benchmark:
         if mode == Benchmark.SetupMode.auto and self._setup_done():
             return
 
+        log.info("Setting up framework {}.".format(self.framework_name))
         self.framework_module.setup(self.framework_def.setup_args)
         if self.framework_def.setup_cmd is not None:
-            log.debug(run_cmd(self.framework_def.setup_cmd))
+            output = run_cmd(self.framework_def.setup_cmd)
+            log.debug(output)
+        log.info("Setup of framework {} completed successfully.".format(self.framework_name))
 
         self._setup_done(touch=True)
 

@@ -270,7 +270,7 @@ def config_load(path, verbose=False):
         log.log(logging.WARNING if verbose else logging.DEBUG, "No config file at `%s`, ignoring it.", path)
         return Namespace()
 
-    base, ext = os.path.splitext(path.lower())
+    _, ext = os.path.splitext(path.lower())
     loader = json_load if ext == 'json' else yaml_load
     log.log(logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path)
     with open(path, 'r') as file:
@@ -364,6 +364,17 @@ def normalize_path(path):
     return os.path.realpath(os.path.expanduser(path))
 
 
+def split_path(path):
+    dir, file = os.path.split(path)
+    base, ext = os.path.splitext(file)
+    return Namespace(dirname=dir, filename=file, basename=base, extension=ext)
+
+
+def path_from_split(split, real_path=True):
+    return os.path.join(os.path.realpath(split.dirname) if real_path else split.dirname,
+                        split.basename)+split.extension
+
+
 def dir_of(caller_file, rel_to_project_root=False):
     abs_path = os.path.dirname(os.path.realpath(caller_file))
     if rel_to_project_root:
@@ -383,11 +394,10 @@ def backup_file(file_path):
     src_path = os.path.realpath(file_path)
     if not os.path.isfile(src_path):
         return
-    dirname, basename = os.path.split(src_path)
-    base, ext = os.path.splitext(basename)
+    p = split_path(src_path)
     mod_time = dt.datetime.utcfromtimestamp(os.path.getmtime(src_path))
-    dest_name = ''.join([base, '_', datetime_iso(mod_time, date_sep='', time_sep=''), ext])
-    dest_dir = os.path.join(dirname, 'backup')
+    dest_name = ''.join([p.basename, '_', datetime_iso(mod_time, date_sep='', time_sep=''), p.extension])
+    dest_dir = os.path.join(p.dirname, 'backup')
     os.makedirs(dest_dir, exist_ok=True)
     dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
@@ -403,7 +413,7 @@ def run_cmd(cmd, return_output=True, *args, **kvargs):
                                  + flatten(kvargs.items(), flatten_tuple=True) if kvargs is not None else []
                            ))
     full_cmd = ' '.join([cmd]+cmd_args)
-    log.info("running cmd `%s`", full_cmd)
+    log.info("Running cmd `%s`.", full_cmd)
     with os.popen(full_cmd) as subp:
         if return_output:
             output = subp.read()

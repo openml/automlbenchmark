@@ -85,7 +85,7 @@ class Scoreboard:
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
         log.debug("Saving scores to %s", path)
         write_csv(data_frame,
-                  file=path,
+                  path=path,
                   header=new_file,
                   index=not is_default_index,
                   append=not new_file)
@@ -205,7 +205,7 @@ class TaskResult:
         df = df.assign(truth=truth)
         log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(predictions_file)
-        write_csv(df, file=predictions_file, index=False)
+        write_csv(df, path=predictions_file, index=False)
         log.info("Predictions saved to %s", predictions_file)
 
     @classmethod

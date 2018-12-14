@@ -1,10 +1,10 @@
 import logging
-import os
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
+from automl.datautils import reorder_dataset
 from automl.results import save_predictions_to_file
-from automl.utils import run_cmd
+from automl.utils import path_from_split, run_cmd, split_path
 
 log = logging.getLogger(__name__)
 
@@ -22,12 +22,21 @@ def run(dataset: Dataset, config: TaskConfig):
     else:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    weka_file = config.output_predictions_file.replace(os.path.splitext(config.output_predictions_file)[1], '.weka_pred.csv')
+    train_file = dataset.train.path
+    test_file = dataset.test.path
+    # Weka to requires target as the last attribute
+    if dataset.target.index != len(dataset.predictors):
+        train_file = reorder_dataset(dataset.train.path, target_src=dataset.target.index)
+        test_file = reorder_dataset(dataset.test.path, target_src=dataset.target.index)
+
+    f = split_path(config.output_predictions_file)
+    f.extension = '.weka_pred.csv'
+    weka_file = path_from_split(f)
     output = run_cmd("java -cp ./libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
     -classifications \"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {predictions_output}\" \
     -timeLimit {time} -parallelRuns {cores} -metric {metric}".format(
-        train=dataset.train.path,
-        test=dataset.test.path,
+        train=train_file,
+        test=test_file,
         max_memory=config.max_mem_size_mb,
         time=int(config.max_runtime_seconds/60),
         cores=config.cores,

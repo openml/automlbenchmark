@@ -3,7 +3,6 @@ import warnings
 
 from autosklearn.classification import AutoSklearnClassifier
 import autosklearn.metrics
-import numpy as np
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset

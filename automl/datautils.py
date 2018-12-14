@@ -6,12 +6,16 @@ important
     until replacement by simpler/lightweight versions to avoid potential version conflicts with libraries imported by benchmark frameworks.
 """
 import logging
+import os
 
+import arff
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
 from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
+
+from .utils import profile, path_from_split, split_path
 
 try:
     from sklearn.preprocessing import OrdinalEncoder    # from sklearn 0.20
@@ -40,20 +44,70 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-def read_csv(file):
+def read_csv(path):
     """
     read csv file to DataFrame.
 
     for now, delegates to pandas, just simplifying signature in the case we want to get rid of pandas dependency
      (numpy should be enough for our needs).
-    :param file: the path to a csv file or a file-like object, or readable (with read() method) object
+    :param path: the path to a csv file or a file-like object, or readable (with read() method) object
     :return: a DataFrame
     """
-    return pd.read_csv(file)
+    return pd.read_csv(path)
 
 
-def write_csv(data_frame, file, header=True, index=True, append=False):
-    data_frame.to_csv(file, header=header, index=index, mode='a' if append else 'w')
+def write_csv(data_frame, path, header=True, index=True, append=False):
+    data_frame.to_csv(path, header=header, index=index, mode='a' if append else 'w')
+
+
+@profile(logger=log)
+def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
+    if target_src == target_dest and save:
+        return path
+
+    p = split_path(path)
+    p.basename += ("_target_" + ("first" if target_dest == 0 else "last" if target_dest == -1 else str(target_dest)))
+    default_path = path_from_split(p)
+
+    if os.path.isfile(default_path):
+        if save:
+            return default_path
+        else:
+            path = default_path
+
+    with open(path) as file:
+        df = arff.load(file)
+
+    columns = np.asarray(df['attributes'], dtype=object)
+    data = np.asarray(df['data'], dtype=object)
+
+    if target_src == target_dest or path == default_path:
+        return data
+
+    ori = list(range(len(columns)))
+    src = len(columns)+1+target_src if target_src < 0 else target_src
+    dest = len(columns)+1+target_dest if target_dest < 0 else target_dest
+    if src < dest:
+        new = ori[:src]+ori[src+1:dest]+[src]+ori[dest:]
+    elif src > dest:
+        new = ori[:dest]+[src]+ori[dest:src]+ori[src+1:]
+    else:
+        return data if not save else path
+
+    reordered_attr = columns[new]
+    reordered_data = data[:, new]
+
+    if not save:
+        return reordered_data
+
+    with open(default_path, 'w') as file:
+        arff.dump({
+            'description': df['description'],
+            'relation': df['relation'],
+            'attributes': reordered_attr.tolist(),
+            'data': reordered_data.tolist()
+        }, file)
+    return default_path
 
 
 def is_data_frame(df):
