@@ -25,14 +25,38 @@ class Openml():
             oml.config.set_cache_directory(cache_dir)
 
     @profile(logger=log)
-    def load(self, task_id, fold=0):
-        task = oml.tasks.get_task(task_id)
-        dataset = task.get_dataset()
-        _, nfolds, _ = task.get_split_dimensions()
-        if fold >= nfolds:
-            raise ValueError("OpenML task {} only accepts `fold` < {}".format(task_id, nfolds))
+    def load(self, task_id=None, dataset_id=None, fold=0):
+        if task_id is not None:
+            if dataset_id is not None:
+                log.warning("Ignoring dataset id {} as a task id {} was already provided".format(dataset_id, task_id))
+            task = oml.tasks.get_task(task_id)
+            dataset = task.get_dataset()
+            _, nfolds, _ = task.get_split_dimensions()
+            if fold >= nfolds:
+                raise ValueError("OpenML task {} only accepts `fold` < {}".format(task_id, nfolds))
+        elif dataset_id is not None:
+            raise NotImplementedError("OpenML raw datasets are not supported yet, please use an OpenML task instead.")
+            dataset = oml.datasets.get_dataset(dataset_id)
+            task = AutoTask(dataset)
+            if fold > 0:
+                raise ValueError("OpenML raw datasets {} only accepts `fold` = 0".format(task_id))
+        else:
+            raise ValueError("A task id or a dataset id are required when using OpenML")
         return OpenmlDataset(task, dataset, fold)
 
+
+class AutoTask(oml.OpenMLTask):
+    """A minimal task implementation providing only the information necessary to get the logic of this current module working."""
+
+    def __init__(self, oml_dataset: oml.OpenMLDataset):
+        self._dataset = oml_dataset
+        self._nrows = oml_dataset.qualities['NumberOfInstances']
+        self.target_name = oml_dataset.default_target_attribute
+
+
+    def get_train_test_split_indices(self, fold=0):
+        # todo: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
+        pass
 
 class OpenmlDataset(Dataset):
 

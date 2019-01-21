@@ -3,9 +3,9 @@
 (data manipulation utility functions should go to **datautils**).
 
 important
-    This module can be imported by any other module, therefore, it should have as few external dependencies as possible,
+    This module can be imported by any other module (especially framework integration modules),
+    therefore, it should have as few external dependencies as possible,
     and should have no dependency to any other **automl** module.
-
 """
 import datetime as dt
 from functools import reduce, wraps

@@ -34,9 +34,9 @@ parser.add_argument('-p', '--parallel', metavar='jobs_count', type=int, default=
                          "Currently supported only in docker and aws mode.")
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
                     help="Framework/platform setup mode. Defaults to %(default)s. "
-                         "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup if always executed. •only: only setup is executed (no benchmark).")
+                         "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
-                    help="Set to true [default] to save/add scores in output directory")
+                    help="Set to true [default] to save/add scores in output directory.")
 # group = parser.add_mutually_exclusive_group()
 # group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
 #                    help="Set to true [default] to save/add scores in output directory")
@@ -45,8 +45,8 @@ parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', 
 
 # todo: we can probably remove this command line argument: by default, we're using the user default region as defined in ~/aws/config
 #  on top of this, user can now override the aws.region setting in his custom ~/.config/automlbenchmark/config.yaml settings.
-parser.add_argument('-r', '--region', metavar='aws_region', default=None,
-                    help="The region on which to run the benchmark when using AWS.")
+# parser.add_argument('-r', '--region', metavar='aws_region', default=None,
+#                     help="The region on which to run the benchmark when using AWS.")
 
 args = parser.parse_args()
 

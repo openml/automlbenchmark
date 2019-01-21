@@ -273,13 +273,13 @@ class BenchmarkTask:
         :return: path to the dataset file
         """
         if hasattr(self._task_def, 'openml_task_id'):
-            self._dataset = Benchmark.task_loader.load(self._task_def.openml_task_id, self.fold)
+            self._dataset = Benchmark.task_loader.load(task_id=self._task_def.openml_task_id, fold=self.fold)
             log.debug("Loaded OpenML dataset for task_id %s", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'dataset'):
             # todo
             raise NotImplementedError("Raw dataset are not supported yet")
         else:
-            raise ValueError("Tasks should have one property among [openml_task_id, dataset]")
+            raise ValueError("Tasks should have one property amtaskong [openml_task_id, dataset]")
 
     def as_job(self, framework, framework_name):
         def _run():

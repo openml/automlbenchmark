@@ -4,6 +4,8 @@
 important
     This is (and should remain) the only non-framework module with dependencies to libraries like pandas or sklearn
     until replacement by simpler/lightweight versions to avoid potential version conflicts with libraries imported by benchmark frameworks.
+    Also, this module is intended to be imported by frameworks integration modules,
+    therefore, it should have no dependency to any other **automl** module outside **utils**.
 """
 import logging
 import os
@@ -12,7 +14,7 @@ import arff
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
-from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score # just aliasing
+from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score  # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
 from .utils import profile, path_from_split, split_path
@@ -62,18 +64,18 @@ def write_csv(data_frame, path, header=True, index=True, append=False):
 
 @profile(logger=log)
 def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
-    if target_src == target_dest and save:
+    if target_src == target_dest and save:  # no reordering needed, not data to load, returning original path
         return path
 
     p = split_path(path)
     p.basename += ("_target_" + ("first" if target_dest == 0 else "last" if target_dest == -1 else str(target_dest)))
-    default_path = path_from_split(p)
+    reordered_path = path_from_split(p)
 
-    if os.path.isfile(default_path):
-        if save:
-            return default_path
-        else:
-            path = default_path
+    if os.path.isfile(reordered_path):
+        if save:  # reordered file already exists, returning it as there's no data to load here
+            return reordered_path
+        else:  # reordered file already exists, use it to load reordered data
+            path = reordered_path
 
     with open(path) as file:
         df = arff.load(file)
@@ -81,7 +83,7 @@ def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
     columns = np.asarray(df['attributes'], dtype=object)
     data = np.asarray(df['data'], dtype=object)
 
-    if target_src == target_dest or path == default_path:
+    if target_src == target_dest or path == reordered_path:  # no reordering needed, returning loaded data
         return data
 
     ori = list(range(len(columns)))
@@ -91,7 +93,7 @@ def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
         new = ori[:src]+ori[src+1:dest]+[src]+ori[dest:]
     elif src > dest:
         new = ori[:dest]+[src]+ori[dest:src]+ori[src+1:]
-    else:
+    else:  # no reordering needed, returning loaded data or original path
         return data if not save else path
 
     reordered_attr = columns[new]
@@ -100,14 +102,17 @@ def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
     if not save:
         return reordered_data
 
-    with open(default_path, 'w') as file:
+    with open(reordered_path, 'w') as file:
         arff.dump({
             'description': df['description'],
             'relation': df['relation'],
             'attributes': reordered_attr.tolist(),
             'data': reordered_data.tolist()
         }, file)
-    return default_path
+    # todo: provide the possibility to return data even if save is set to false,
+    #  as the client code doesn't want to have to load the data again,
+    #  and may want to benefit from the caching of reordered data for future runs.
+    return reordered_path
 
 
 def is_data_frame(df):
@@ -125,11 +130,14 @@ def to_data_frame(obj, columns=None):
 
 
 class Encoder(TransformerMixin):
+    """
+    Overly complex "generic" encoder that can handle missing values, auto encoded format (e.g. int for target, float for predictors)...
+    Should never have written this, but does the job currently. However, should think about simpler single-purpose approach.
+    """
 
     def __init__(self, type='label', target=True, encoded_type=float,
                  missing_policy='ignore', missing_values=None, missing_replaced_by=''):
         """
-
         :param type:
         :param target:
         :param missing_policy: one of ['ignore', 'mask', 'encode'].

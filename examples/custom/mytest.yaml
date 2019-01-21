@@ -1,0 +1,16 @@
+---
+
+- name: iris
+  openml_task_id: 59
+  metric: [acc, logloss]
+  folds: 2
+  max_runtime_seconds: 30
+
+- name: kc2
+  openml_task_id: 3913
+  metric:
+      - acc
+      - auc
+  folds: 2
+  max_runtime_seconds: 30
+  
