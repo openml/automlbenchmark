@@ -19,7 +19,7 @@ Documentation: https://openml.github.io/automlbenchmark/
 * Execute experiments locally or on AWS (see below)
 
 Future plans:  
-* Automatic sharing of benchmarkling results on OpenML.
+* Automatic sharing of benchmarking results on OpenML.
 * Allow tuning of the AutoML systems (hyper-hyperparameters), beyond their default settings.
 * More benchmark datasets, and datasets of other types (e.g. regression).
 
@@ -168,7 +168,7 @@ The application is using the [boto3](https://boto3.readthedocs.io/) Python packa
  ```bash
  aws configure
  ```
-You will need your AWS Access Key ID, AWS Secret Access Key, a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) and select "text" as the default output format.
+You will need your AWS Access Key ID, AWS Secret Access Key, and pick a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions).
 
 - _**NOTE:** Currently the AMI is only configured for the following regions so you'll have to set your default region as one of these_:
   - us-east-1
@@ -188,11 +188,42 @@ python benchmark.py AUTOWEKA validation -m aws -p 4
 ```
 will keep 4 EC2 instances running, monitor them in a dedicated thread, and finally collect all outputs from s3.
 
-**NOTE**: each EC2 instance is provided with a time limit at startup, to ensure that in any case, the instance is stopped even if there is an issue when running the benchmark task. In this case the instance is stopped, not terminated, and we can therefore inspect the machine manually (ideally after resetting its UserData field to avoid re-triggering the benchmark on the next startup).
+- _**NOTE**: each EC2 instance is provided with a time limit at startup to ensure that in any case, the instance is stopped even if there is an issue when running the benchmark task. In this case the instance is stopped, not terminated, and we can therefore inspect the machine manually (ideally after resetting its UserData field to avoid re-triggering the benchmark on the next startup)._
 
 The console output is still showing the instances starting, outputs the progress and then the results for each dataset/fold combination:
 ```text
-Console output example HERE
+
+[2019-01-22T12:00:32] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
+[2019-01-22T12:00:33] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: running
+[2019-01-22T12:00:48] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
+[2019-01-22T12:00:48] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: running
+...
+[  731.511738] cloud-init[1521]: Predictions saved to /s3bucket/output/predictions/h2oautoml_nightly_micro-mass_0.csv
+[  731.512132] cloud-init[1521]: H2O session _sid_96e7 closed.
+[  731.512506] cloud-init[1521]: Loading predictions from /s3bucket/output/predictions/h2oautoml_nightly_micro-mass_0.csv
+[  731.512890] cloud-init[1521]: Metric scores: {'framework': 'H2OAutoML_nightly', 'version': 'nightly', 'task': 'micro-mass', 'fold': 0, 'mode': 'local', 'utc': '2019-01-22T12:00:02', 'logloss': 0.6498889633819804, 'acc': 0.8793103448275862, 'result': 0.6498889633819804}
+[  731.513275] cloud-init[1521]: Job local_micro-mass_0_H2OAutoML_nightly executed in 608.534 seconds
+[  731.513662] cloud-init[1521]: All jobs executed in 608.534 seconds
+[  731.514089] cloud-init[1521]: Scores saved to /s3bucket/output/scores/H2OAutoML_nightly_task_micro-mass.csv
+[  731.514542] cloud-init[1521]: Loaded scores from /s3bucket/output/scores/results.csv
+[  731.515006] cloud-init[1521]: Scores saved to /s3bucket/output/scores/results.csv
+[  731.515357] cloud-init[1521]: Summing up scores for current run:
+[  731.515782] cloud-init[1521]:          task          framework    ...         acc   logloss
+[  731.516228] cloud-init[1521]: 0  micro-mass  H2OAutoML_nightly    ...     0.87931  0.649889
+[  731.516671] cloud-init[1521]: [1 rows x 9 columns]
+...
+EC2 instance i-0cd081efc97c3bf6f is stopped
+Job aws_validation_micro-mass_0_H2OAutoML_nightly executed in 819.305 seconds
+[2019-01-22T12:01:34] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
+[2019-01-22T12:01:49] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
+EC2 instance i-0251c1655e286897c is stopping
+Job aws_validation_micro-mass_1_H2OAutoML_nightly executed in 818.463 seconds
+...
+Terminating EC2 instances i-0251c1655e286897c
+Terminated EC2 instances i-0251c1655e286897c with response {'TerminatingInstances': [{'CurrentState': {'Code': 32, 'Name': 'shutting-down'}, 'InstanceId': 'i-0251c1655e286897c', 'PreviousState': {'Code': 64, 'Name': 'stopping'}}], 'ResponseMetadata': {'RequestId': 'd09eeb0c-7a58-4cde-8f8b-2308a371a801', 'HTTPStatusCode': 200, 'HTTPHeaders': {'content-type': 'text/xml;charset=UTF-8', 'transfer-encoding': 'chunked', 'vary': 'Accept-Encoding', 'date': 'Tue, 22 Jan 2019 12:01:53 GMT', 'server': 'AmazonEC2'}, 'RetryAttempts': 0}}
+Instance i-0251c1655e286897c state: shutting-down
+All jobs executed in 2376.891 seconds
+Deleting uploaded resources `['ec2/input/validation.yaml', 'ec2/input/config.yaml', 'ec2/input/frameworks.yaml']` from s3 bucket automl-benchmark.
 ```
 
 ### Output

@@ -404,12 +404,12 @@ class AWSBenchmark(Benchmark):
 package_update: true
 package_upgrade: false
 packages:
-  - awscli
   - docker.io
 
 runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
+  - pip install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output --rm {image} {params} -i /input -o /output -s skip
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
@@ -436,7 +436,6 @@ packages:
   - python3
   - python3-pip
   - python3-venv
-  - awscli
 
 runcmd:
   - python3 -m venv /venvs/bench
@@ -450,6 +449,7 @@ runcmd:
   - PIP install --upgrade pip
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
+  - PIP install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output
@@ -497,7 +497,7 @@ apt-get update
 #apt-get -y upgrade
 apt-get install -y curl wget unzip git
 apt-get install -y python3 python3-pip python3-venv
-apt-get install -y awscli docker.io
+apt-get install -y docker.io
 
 python3 -m venv /venvs/bench
 alias PIP='/venvs/bench/bin/pip3'
@@ -512,6 +512,7 @@ git clone --depth 1 --single-branch --branch {branch} {repo} .
 PIP install --upgrade pip
 PIP install --no-cache-dir -r requirements.txt --process-dependency-links
 PIP install --no-cache-dir openml
+PIP install --upgrade awscli
 
 aws s3 cp {s3_base_url}input /s3bucket/input --recursive
 PY {script} {params} -o /s3bucket -s only

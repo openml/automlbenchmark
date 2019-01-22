@@ -84,7 +84,8 @@ try:
     elif args.mode == 'docker':
         bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
     elif args.mode == 'aws':
-        bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+        bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+        # bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     # elif args.mode == "aws-remote":
     #     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     else:
