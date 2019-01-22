@@ -314,7 +314,7 @@ class AWSBenchmark(Benchmark):
             self.iam.meta.client.get_role(RoleName=iamc.role_name)
             irole = self.iam.Role(iamc.role_name)
         except botocore.exceptions.ClientError as e:
-            log.info("role %s doesn't exist, creating it: %s", iamc.role_name, str(e))
+            log.info("Role %s doesn't exist, creating it: %s", iamc.role_name, str(e))
 
         if not irole:
             ec2_role_trust_policy_json = json.dumps({   # trust role
@@ -366,7 +366,7 @@ class AWSBenchmark(Benchmark):
             self.iam.meta.client.get_instance_profile(InstanceProfileName=iamc.instance_profile_name)
             iprofile = self.iam.InstanceProfile(iamc.instance_profile_name)
         except botocore.exceptions.ClientError as e:
-            log.info("instance profile %s doesn't exist, creating it: %s", iamc.instance_profile_name, str(e))
+            log.info("Instance profile %s doesn't exist, creating it: %s", iamc.instance_profile_name, str(e))
         if not iprofile:
             iprofile = self.iam.create_instance_profile(InstanceProfileName=iamc.instance_profile_name)
 
@@ -404,12 +404,14 @@ class AWSBenchmark(Benchmark):
 package_update: true
 package_upgrade: false
 packages:
+  - python3
+  - python3-pip
   - docker.io
 
 runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
-  - pip install --upgrade awscli
+  - pip3 install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output --rm {image} {params} -i /input -o /output -s skip
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
@@ -438,6 +440,7 @@ packages:
   - python3-venv
 
 runcmd:
+  - pip3 install --upgrade awscli
   - python3 -m venv /venvs/bench
   - alias PIP='/venvs/bench/bin/pip3'
   - alias PY='/venvs/bench/bin/python3 -W ignore'
@@ -449,7 +452,6 @@ runcmd:
   - PIP install --upgrade pip
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
-  - PIP install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output
@@ -499,6 +501,7 @@ apt-get install -y curl wget unzip git
 apt-get install -y python3 python3-pip python3-venv
 apt-get install -y docker.io
 
+pip3 install --upgrade awscli
 python3 -m venv /venvs/bench
 alias PIP='/venvs/bench/bin/pip3'
 alias PY='/venvs/bench/bin/python3 -W ignore'

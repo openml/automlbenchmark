@@ -192,7 +192,17 @@ will keep 4 EC2 instances running, monitor them in a dedicated thread, and final
 
 The console output is still showing the instances starting, outputs the progress and then the results for each dataset/fold combination:
 ```text
-
+Running `H2OAutoML_nightly` on `validation` benchmarks in `aws` mode
+Loading frameworks definitions from ['/Users/me/repos/automlbenchmark/resources/frameworks.yaml'].
+Loading benchmark definitions from /Users/me/repos/automlbenchmark/resources/benchmarks/validationt.yaml.
+Uploading `/Users/me/repos/automlbenchmark/resources/benchmarks/validation.yaml` to `ec2/input/validation.yaml` on s3 bucket automl-benchmark.
+...
+Starting new EC2 instance with params: H2OAutoML_nightly /s3bucket/input/validation.yaml -t micro-mass -f 0
+Started EC2 instance i-0cd081efc97c3bf6f 
+[2019-01-22T11:51:32] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: pending 
+Starting new EC2 instance with params: H2OAutoML_nightly /s3bucket/input/validation.yaml -t micro-mass -f 1
+Started EC2 instance i-0251c1655e286897c 
+...
 [2019-01-22T12:00:32] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
 [2019-01-22T12:00:33] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: running
 [2019-01-22T12:00:48] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
