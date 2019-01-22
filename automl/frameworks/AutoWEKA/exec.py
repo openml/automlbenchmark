@@ -13,13 +13,13 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** AutoWEKA ****\n")
 
     # Mapping of benchmark metrics to Weka metrics
-    if config.metric == 'acc':
-        metric = 'errorRate'
-    elif config.metric == 'auc':
-        metric = 'areaUnderROC'
-    elif config.metric == 'logloss':
-        metric = 'kBInformation'
-    else:
+    metrics_mapping = dict(
+        acc='errorRate',
+        auc='areaUnderROC',
+        logloss='kBInformation'
+    )
+    metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    if metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
     train_file = dataset.train.path

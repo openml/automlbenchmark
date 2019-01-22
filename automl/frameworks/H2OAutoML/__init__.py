@@ -11,6 +11,7 @@ def run(*args, **kwargs):
 
 
 def docker_commands():
+    # fixme: doesn't allow to build docker images for custom versions of h2o
     return """
 RUN {here}/setup.sh
 EXPOSE 54321

@@ -241,6 +241,9 @@ class AWSBenchmark(Benchmark):
 
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
+        # todo: we may want to upload resources to a different path for each run (just in case we run multiple benchmarks in parallel and aws.s3.temporary=False)
+        #  for example: root_key+('/'.join(['input', self.uid, name]))
+        #  this also requires updating _delete_resources and _ec2_startup_script
         dest_path = lambda name: root_key+('/'.join(['input', name]))
         upload_files = [self.benchmark_path] + rconfig().aws.resource_files
         uploaded_resources = []
@@ -257,6 +260,7 @@ class AWSBenchmark(Benchmark):
     def _delete_resources(self):
         if self.uploaded_resources is None:
             return
+        # todo: do we still want to delete resources if concern in _upload_resources is fixed?
         log.info("Deleting uploaded resources `%s` from s3 bucket %s.", self.uploaded_resources, self.bucket.name)
         self.bucket.delete_objects(
             Delete=dict(
@@ -453,7 +457,7 @@ runcmd:
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
+  #- PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
@@ -518,7 +522,7 @@ PIP install --no-cache-dir openml
 PIP install --upgrade awscli
 
 aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-PY {script} {params} -o /s3bucket -s only
+#PY {script} {params} -o /s3bucket -s only
 PY {script} {params} -o /s3bucket
 aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user

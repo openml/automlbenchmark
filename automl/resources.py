@@ -106,6 +106,9 @@ class Resources:
         if framework['module'] is None:
             framework.module = 'automl.frameworks.'+framework.name
 
+        if framework['install_module_cmd'] is None:
+            framework.install_module_cmd = None
+
         if framework['setup_args'] is None:
             framework.setup_args = None
 

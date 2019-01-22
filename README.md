@@ -260,3 +260,9 @@ By default, a benchmark run creates the following subdirectories and files in th
 ##### CPUs
 
 ### AWS config
+
+## HOW-TO
+
+### Add a new benchmark
+
+### Add a new framework

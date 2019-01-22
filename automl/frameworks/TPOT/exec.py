@@ -16,13 +16,13 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** TPOT ****\n")
 
     # Mapping of benchmark metrics to TPOT metrics
-    if config.metric == 'acc':
-        metric = 'accuracy'
-    elif config.metric == 'auc':
-        metric = 'roc_auc'
-    elif config.metric == 'logloss':
-        metric = 'neg_log_loss'
-    else:
+    metrics_mapping = dict(
+        acc='accuracy',
+        auc='roc_auc',
+        logloss='neg_log_loss'
+    )
+    metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    if metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)

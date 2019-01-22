@@ -14,16 +14,15 @@ log = logging.getLogger(__name__)
 def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** H2O AutoML ****\n")
     # Mapping of benchmark metrics to H2O metrics
-    if config.metric == 'acc':
-        h2o_metric = 'mean_per_class_error'
-    elif config.metric == 'auc':
-        h2o_metric = 'AUC'
-    elif config.metric == 'logloss':
-        h2o_metric = 'logloss'
-    else:
+    metrics_mapping = dict(
+        acc='mean_per_class_error',
+        auc='AUC',
+        logloss='logloss'
+    )
+    h2o_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    if h2o_metric is None:
         # TODO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         log.warning("Performance metric {} not supported, using AUTO.".format(config.metric))
-        h2o_metric = None
 
     try:
         log.info("Starting H2O cluster.")
@@ -43,6 +42,7 @@ def run(dataset: Dataset, config: TaskConfig):
               .format(config.max_runtime_seconds, config.cores, h2o_metric))
         start_time = time.time()
 
+        # todo: should we be able to pass as seed for reproducibility (or to see improvements/degradation across versions)
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds, sort_metric=h2o_metric)
         aml.train(y=dataset.target.index, training_frame=train)
         actual_runtime_min = (time.time() - start_time)/60.0

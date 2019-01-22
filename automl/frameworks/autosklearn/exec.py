@@ -17,16 +17,15 @@ def run(dataset: Dataset, config: TaskConfig):
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
     # Mapping of benchmark metrics to autosklearn metrics
-    if config.metric == "acc":
-        performance_metric = autosklearn.metrics.accuracy
-    elif config.metric == "auc":
-        performance_metric = autosklearn.metrics.roc_auc
-    elif config.metric == "logloss":
-        performance_metric = autosklearn.metrics.log_loss
-    else:
+    metrics_mapping = dict(
+        acc=autosklearn.metrics.accuracy,
+        auc=autosklearn.metrics.roc_auc,
+        logloss=autosklearn.metrics.log_loss
+    )
+    performance_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    if performance_metric is None:
         # TODO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         log.warning("Performance metric {} not supported.".format(config.metric))
-        performance_metric = None
 
     # Set resources based on datasize
     log.warning("Ignoring n_cores.")
