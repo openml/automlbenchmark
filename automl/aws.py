@@ -457,7 +457,7 @@ runcmd:
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-  #- PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
@@ -522,7 +522,7 @@ PIP install --no-cache-dir openml
 PIP install --upgrade awscli
 
 aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-#PY {script} {params} -o /s3bucket -s only
+PY {script} {params} -o /s3bucket -s only
 PY {script} {params} -o /s3bucket
 aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
