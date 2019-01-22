@@ -6,6 +6,7 @@ import copy
 import logging
 import os
 import re
+import sys
 
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path
 
@@ -26,7 +27,7 @@ class Resources:
         for k, v in config:
             if isinstance(v, Namespace):
                 normalized[k] = Resources._normalize(v, replace=replace)
-            elif re.search(r'_(dir|file)s?$', k):
+            elif re.search(r'_(dir|file|cmd)s?$', k):
                 normalized[k] = [nz_path(p) for p in v] if isinstance(v, list) else nz_path(v)
         return normalized
 
@@ -40,6 +41,10 @@ class Resources:
         os.makedirs(self.config.logs_dir, exist_ok=True)
         log.debug("Using config:\n%s", self.config)
 
+        # allowing to load custom modules from user and input directories
+        sys.path.extend([normalize_path(config.user_dir), normalize_path(config.input_dir)])
+        log.debug("Extended Python sys.path to user and input directories: %s", sys.path)
+
     def framework_definition(self, name):
         """
         :param name:
@@ -47,7 +52,7 @@ class Resources:
         """
         framework = self._frameworks[name.lower()]
         if not framework:
-            raise ValueError("incorrect framework `{}`: not listed in {}".format(name, self.config.frameworks.definition_file))
+            raise ValueError("Incorrect framework `{}`: not listed in {}".format(name, self.config.frameworks.definition_file))
         return framework, framework.name
 
     @lazy_property
@@ -106,9 +111,6 @@ class Resources:
         if framework['module'] is None:
             framework.module = 'automl.frameworks.'+framework.name
 
-        if framework['install_module_cmd'] is None:
-            framework.install_module_cmd = None
-
         if framework['setup_args'] is None:
             framework.setup_args = None
 
@@ -133,12 +135,12 @@ class Resources:
         for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb']:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
-                log.debug("config `{config}` not set for task {name}, using default `{value}`".format(config=conf, name=task.name, value=task[conf]))
+                log.debug("Config `{config}` not set for task {name}, using default `{value}`".format(config=conf, name=task.name, value=task[conf]))
 
         conf = 'ec2_instance_type'
         if task[conf] is None:
             task[conf] = self.config.aws.ec2.instance_type
-            log.debug("config `{config}` not set for task {name}, using default `{value}`".format(config=conf, name=task.name, value=task[conf]))
+            log.debug("Config `{config}` not set for task {name}, using default `{value}`".format(config=conf, name=task.name, value=task[conf]))
 
 
 __INSTANCE__: Resources = None

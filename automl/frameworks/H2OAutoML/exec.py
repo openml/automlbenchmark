@@ -42,7 +42,7 @@ def run(dataset: Dataset, config: TaskConfig):
               .format(config.max_runtime_seconds, config.cores, h2o_metric))
         start_time = time.time()
 
-        # todo: should we be able to pass as seed for reproducibility (or to see improvements/degradation across versions)
+        # todo: should we be able to pass a seed for reproducibility (or to see improvements/degradation across versions)
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds, sort_metric=h2o_metric)
         aml.train(y=dataset.target.index, training_frame=train)
         actual_runtime_min = (time.time() - start_time)/60.0

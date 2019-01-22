@@ -30,4 +30,5 @@ __all__ = (
 #    meta-benchmark? benchmark a subset of configured frameworks: runbenchmark.py frameworks.yaml test -m aws -p 4
 #    timeouts (esp. for AWS, but also for all jobs in general: global timeout + job timeout?)
 #    progress bar?? fancy useless stuff
+#    visualizations for results.csv
 #    search for todos in code

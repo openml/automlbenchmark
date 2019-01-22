@@ -25,6 +25,10 @@ benchmarks:
 openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
 
+versions:
+  pip: 18.1
+  python: 3.6.5  # should we also enforce the Python version in docker images/ec2 instances?
+
 docker:
   image_defaults:
     author: automlbenchmark

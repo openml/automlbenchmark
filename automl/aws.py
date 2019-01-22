@@ -453,7 +453,7 @@ runcmd:
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
-  - PIP install --upgrade pip
+  - PIP install --upgrade pip=={pip_version}
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
@@ -475,6 +475,7 @@ power_state:
             repo=repo,
             branch=branch,
             image=DockerBenchmark.docker_image_name(self.framework_def),
+            pip_version=rconfig().versions.pip,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
             ikey=instance_key,
@@ -516,7 +517,7 @@ mkdir ~/repo
 cd ~/repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
-PIP install --upgrade pip
+PIP install --upgrade pip=={pip_version}
 PIP install --no-cache-dir -r requirements.txt --process-dependency-links
 PIP install --no-cache-dir openml
 PIP install --upgrade awscli
@@ -530,6 +531,7 @@ shutdown -P +1 "I'm losing power"
 """.format(
             repo=repo,
             branch=branch,
+            pip_version=rconfig().versions.pip,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
             ikey=instance_key,

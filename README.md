@@ -251,7 +251,6 @@ By default, a benchmark run creates the following subdirectories and files in th
 
 ### Running a custom benchmark
 
-
 ### Running a custom framework
 
 ### Benchmark constraints
@@ -266,3 +265,11 @@ By default, a benchmark run creates the following subdirectories and files in th
 ### Add a new benchmark
 
 ### Add a new framework
+
+## Troubleshoot
+
+### Logs
+
+### Profiling the application
+##### Memory usage
+##### Methods duration

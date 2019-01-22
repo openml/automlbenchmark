@@ -58,13 +58,6 @@ class Benchmark:
         self.parallel_jobs = parallel_jobs
         self.uid = "{}-{}-{}".format(framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)).lower()
 
-        # allows to import modules outside project: should work on AWS as well,
-        # as soon as module is uploaded as a resource, and install_module_cmd installs from input dir
-        if self.framework_def.install_module_cmd is not None:
-            output = run_cmd(self.framework_def.install_module_cmd)
-            log.debug(output)
-            invalidate_caches()
-
         self.framework_module = import_module(self.framework_def.module)
 
     def _validate(self):
