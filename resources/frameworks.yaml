@@ -16,7 +16,7 @@ constantpredictor:
   version: '0.0.0'
 
 autosklearn:
-  version: '0.4.0'
+  version: '0.4.2'
   project: https://automl.github.io/auto-sklearn/stable/
 
 AutoWEKA:
@@ -28,11 +28,11 @@ H2OAutoML:
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 
 hyperoptsklearn:
-  version: 'x.x'
+  version: '0.0.3'
   project: http://hyperopt.github.io/hyperopt-sklearn/
 
 oboe:
-  version: 'x.x'
+  version: 'latest'
   project: https://github.com/udellgroup/oboe
 
 RandomForest:
@@ -48,6 +48,6 @@ RandomForest_R:
     image: rfr
 
 TPOT:
-  version: '0.9.3'
+  version: '0.9.5'
   project: https://github.com/EpistasisLab/tpot
 

@@ -260,7 +260,7 @@ def impute(X_fit, *X_s, missing_values='NaN', strategy='mean'):
     :return:
     """
     # TODO: impute only if np.isnan(X_fit).any() ?
-    imputer = Imputer(missing_values=missing_values, strategy=strategy, axis=0)
+    imputer = Imputer(missing_values=missing_values, strategy=strategy)
     imputed = imputer.fit_transform(X_fit)
     if len(X_s) > 0:
         result = [imputed]
