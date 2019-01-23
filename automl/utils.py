@@ -148,7 +148,7 @@ def cached(fn):
 def memoize(fn):
     prop_name = _cached_property_name(fn)
 
-    def decorator(self, key=None):  # todo: could support unlimited args by making a tuple out of *args + **kwargs: not needed for now
+    def decorator(self, key=None):  # TODO: could support unlimited args by making a tuple out of *args + **kwargs: not needed for now
         memo = cache(self, prop_name, lambda _: {})
         if not isinstance(key, str) and hasattr(key, '__iter__'):
             key = tuple(key)
@@ -405,7 +405,7 @@ def backup_file(file_path):
 
 
 def run_cmd(cmd, return_output=True, *args, **kvargs):
-    # todo: switch to subprocess module (Popen) instead of os? would allow to use timeouts and kill signal
+    # TODO: switch to subprocess module (Popen) instead of os? would allow to use timeouts and kill signal
     #   besides, this implementation doesn't seem to work well with some commands if output is not read.
     output = None
     cmd_args = list(filter(None, []

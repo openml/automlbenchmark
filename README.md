@@ -26,6 +26,7 @@ Future plans:
 ## Installation
 To run the benchmarks, you will need:
 * Python 3.5+ (TODO: verify work necessary to support Py2 and older versions of Py3).
+* PIP3: ensure you have a recent version, this has been tested with `pip3 18.1`: if necessary, upgrade your pip using `pip3 install --upgrade pip==18.1`.
 * the Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv)) and work in it if you don't want to mess up your global Python environment.
 * the [OpenML](https://github.com/openml/openml-python). (The Python requirements currently fails installing if `openml` is included in `requirements.txt` when `numpy` is not already installed).
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
@@ -36,6 +37,7 @@ cd automlbenchmark
 pip3 install -r requirements.txt
 pip3 install openml
 ```
+_**NOTE**: in case of issues when installing Python requirements, you may want to retry after enforcing `pip3` version above._
 
 ## Quickstart
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
@@ -46,14 +48,14 @@ To run a benchmark call the `runbenchmark.py` script with at least the following
 
 Examples:
 ```bash
-python runbenchmark.py autosklearn test -m docker
+python3 runbenchmark.py autosklearn test -m docker
 
-python runbenchmark.py h2oautoml validation -m aws
+python3 runbenchmark.py h2oautoml validation -m aws
 ```
 
 For the complete list of supported arguments, run:
 ```bash
-python runbenchmark.py --help
+python3 runbenchmark.py --help
 ```
 
 ```text
@@ -129,17 +131,17 @@ The generated image is usually named `automlbenchmark/{framework}:{tag}`, but th
 
 For example, this will build a Docker image for the `RandomForest` framework and then immediately start a container to run the `validation` benchmark:
 ```bash
-python runbenchmark.py RandomForest validation -m docker
+python3 runbenchmark.py RandomForest validation -m docker
 ```
 
 If the corresponding image already exists locally and you want it to be rebuilt before running the benchmark, then the setup needs to be forced:
 ```bash
-python runbenchmark.py RandomForest validation -m docker -s force
+python3 runbenchmark.py RandomForest validation -m docker -s force
 ```
 
 The image can also be built without running any benchmark:
 ```bash
-python runbenchmark.py {framework} -m docker -s only
+python3 runbenchmark.py {framework} -m docker -s only
 ```
 
 ### In local environment
@@ -147,17 +149,17 @@ If docker allows portability, it is still possible to run the benchmarks locally
 
 First, the framework needs to be set up locally, which may also take some time:
 ```bash
-python runbenchmark.py {framework} -s only
+python3 runbenchmark.py {framework} -s only
 ```
 You can then run the benchmarks as many times as you wish.
 A minimal example would be to run the test benchmarks with a random forest:
 ```bash
-python runbenchmark.py RandomForest test
+python3 runbenchmark.py RandomForest test
 ```
 
 When testing a framework or a new dataset, you may want to run only a single task and a specific fold:
 ```bash
-python runbenchmark.py TPOT validation -t bioresponse -f 0
+python3 runbenchmark.py TPOT validation -t bioresponse -f 0
 ```
 
 ### On AWS
@@ -178,13 +180,13 @@ You will need your AWS Access Key ID, AWS Secret Access Key, and pick a default 
 
 To run a test to see if the benchmark framework is working on AWS, do the following:
 ```bash
-python benchmark.py RandomForest test -m aws
+python3 benchmark.py RandomForest test -m aws
 ```
 This will create and start an EC2 instance for each benchmark job and run the 4 jobs (2 OpenML tasks * 2 folds) from the `test` benchmark sequentially, each job running for 1mn in this case (excluding setup time for the EC2 instances).
 
 For longer benchmarks, you'll probably want to run multiple jobs in parallel and distribute the work to several EC2 instances, for example:
 ```bash
-python benchmark.py AUTOWEKA validation -m aws -p 4
+python3 benchmark.py AUTOWEKA validation -m aws -p 4
 ```
 will keep 4 EC2 instances running, monitor them in a dedicated thread, and finally collect all outputs from s3.
 
@@ -250,8 +252,10 @@ By default, a benchmark run creates the following subdirectories and files in th
 ## Advanced configuration
 
 ### Running a custom benchmark
+see [HOWTO.md]
 
 ### Running a custom framework
+see [HOWTO.md]
 
 ### Benchmark constraints
 ##### Time limits
@@ -260,16 +264,5 @@ By default, a benchmark run creates the following subdirectories and files in th
 
 ### AWS config
 
-## HOW-TO
 
-### Add a new benchmark
-
-### Add a new framework
-
-## Troubleshoot
-
-### Logs
-
-### Profiling the application
-##### Memory usage
-##### Methods duration
+[HOWTO.md]: ./HOWTO.md

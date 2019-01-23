@@ -59,7 +59,7 @@ class DockerBenchmark(Benchmark):
             self._upload_docker_image()
 
     def cleanup(self):
-        # todo: remove generated docker script? anything else?
+        # TODO: remove generated docker script? anything else?
         pass
 
     def run(self, save_scores=False):
@@ -94,7 +94,7 @@ class DockerBenchmark(Benchmark):
                 task_param='' if task_name is None else ('-t '+task_name),
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
             ))
-            # todo: would be nice to reload generated scores and return them
+            # TODO: would be nice to reload generated scores and return them
 
         job = Job("docker_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
         job._run = _run

@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    #TODO use rpy2 instead? not necessary here though as the call is very simple
+    #TODO: use rpy2 instead? not necessary here though as the call is very simple
     log.info("\n**** Random Forest (R) ****\n")
 
     here = dir_of(__file__)

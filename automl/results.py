@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 
 # TODO: reconsider organisation of output files:
 #   predictions: add framework version to name, timestamp? group into subdirs?
-#   gather scores in one single file?
 
 
 class Scoreboard:
@@ -77,7 +76,7 @@ class Scoreboard:
         exists = os.path.isfile(path)
         new_format = False
         if exists:
-            # todo: detect format change, i.e. data_frame columns are different or different order from existing file
+            # TODO: detect format change, i.e. data_frame columns are different or different order from existing file
             pass
         if new_format or (exists and not append):
             backup_file(path)
@@ -242,7 +241,7 @@ class TaskResult:
             version=framework_def.version,
             task=self.task,
             fold=self.fold,
-            mode=rconfig().run_mode,    # fixme: at the end, we're always running in local mode!!!
+            mode=rconfig().run_mode,  # FIXME: set correctly in local mode and a posteriori for aws mode, but not for docker mode
             utc=datetime_iso()
         )
         result = self.get_result(framework_name) if result is None else result

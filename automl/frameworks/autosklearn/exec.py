@@ -24,7 +24,7 @@ def run(dataset: Dataset, config: TaskConfig):
     )
     performance_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if performance_metric is None:
-        # TODO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
+        # TODO: figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         log.warning("Performance metric {} not supported.".format(config.metric))
 
     # Set resources based on datasize
@@ -38,7 +38,7 @@ def run(dataset: Dataset, config: TaskConfig):
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
-    # TODO: Do we need to set per_run_time_limit too?
+    # TODO: do we need to set per_run_time_limit too?
     auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=config.max_runtime_seconds, ml_memory_limit=config.max_mem_size_mb)
     auto_sklearn.fit(X_train, y_train, metric=performance_metric, feat_type=predictors_type)
 

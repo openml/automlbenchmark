@@ -124,7 +124,7 @@ class Datasplit(ABC):
     @lazy_property
     @profile(logger=log)
     def X_enc(self) -> ndarray:
-        # todo: should we use one_hot_encoder here instead?
+        # TODO: should we use one_hot_encoder here instead?
         # encoded_cols = [p.label_encoder.transform(self.data[:, p.index]) for p in self.dataset.predictors]
         # return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
         predictors_ind = [p.index for p in self.dataset.predictors]

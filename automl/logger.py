@@ -1,6 +1,7 @@
 """
 **logger** module just exposes a ``setup`` function to quickly configure the python logger.
 """
+import builtins
 import datetime as dt
 import logging
 import sys
@@ -26,7 +27,7 @@ class MillisFormatter(logging.Formatter):
         return s
 
 
-def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=None, console_level=None):
+def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=None, console_level=None, print_to_log=False):
     """
     configures the Python logger.
     :param log_file:
@@ -70,3 +71,17 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
         file.setFormatter(file_formatter)
         root.addHandler(file)
 
+    if print_to_log:
+        nl = '\n'
+        print_logger = logging.getLogger(automl.__name__+'.print')
+        buffer = []
+
+        def new_print(self, *args, sep=' ', end=nl, file=None):
+            nonlocal buffer
+            msg = sep.join([self, *args]) #+ end
+            buffer.append(msg)
+            if end == nl:
+                print_logger.info(''.join(buffer))
+                buffer = []
+
+        builtins.print = new_print

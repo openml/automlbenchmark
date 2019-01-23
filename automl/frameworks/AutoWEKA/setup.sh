@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 . $(dirname "$0")/../../setup/shared.sh
 if [[ -x "$(command -v apt-get)" ]]; then
-    apt-get install -y wget unzip openjdk-8-jdk
+    SUDO apt-get install -y wget unzip openjdk-8-jdk
 fi
 
 AUTOWEKA_ARCHIVE="autoweka-2.6.zip"

@@ -55,7 +55,7 @@ class AutoTask(oml.OpenMLTask):
 
 
     def get_train_test_split_indices(self, fold=0):
-        # todo: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
+        # TODO: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
         pass
 
 class OpenmlDataset(Dataset):
@@ -164,7 +164,7 @@ class OpenmlDataset(Dataset):
                         indexes=test_ind)
 
     def _extract_unique_values(self, arff_dataset):
-        # todo: support encoded string columns?
+        # TODO: support encoded string columns?
         pass
 
 

@@ -43,7 +43,7 @@ parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', 
 # group.add_argument('--no-keep-scores', dest='keep_scores', action='store_false')
 # parser.set_defaults(keep_scores=True)
 
-# todo: we can probably remove this command line argument: by default, we're using the user default region as defined in ~/aws/config
+# removing this command line argument for now: by default, we're using the user default region as defined in ~/aws/config
 #  on top of this, user can now override the aws.region setting in his custom ~/.config/automlbenchmark/config.yaml settings.
 # parser.add_argument('-r', '--region', metavar='aws_region', default=None,
 #                     help="The region on which to run the benchmark when using AWS.")
@@ -58,7 +58,7 @@ now_str = datetime_iso(date_sep='', time_sep='')
 # logging.TRACE = logging.INFO
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
-                    root_level='DEBUG', console_level='INFO')
+                    root_level='DEBUG', console_level='INFO', print_to_log=True)
 
 log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.benchmark, args.mode)
 log.debug("script args: %s", args)

@@ -4,7 +4,7 @@ echo "setting up H2O version $VERSION"
 
 . $(dirname "$0")/../../setup/shared.sh
 if [[ -x "$(command -v apt-get)" ]]; then
-    apt-get install -y openjdk-8-jdk
+    SUDO apt-get install -y openjdk-8-jdk
 fi
 PIP install --no-cache-dir -r automl/frameworks/H2OAutoML/py_requirements.txt
 if [[ "$VERSION" = "xu" || -z "$VERSION" ]]; then

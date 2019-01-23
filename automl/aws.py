@@ -86,7 +86,7 @@ class AWSBenchmark(Benchmark):
         self._delete_s3_bucket()
 
     def run(self, save_scores=False):
-        # todo: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
+        # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
         #   than having a job per task. This depends on job duration especially
         jobs = []
         if self.parallel_jobs == 1:
@@ -183,7 +183,7 @@ class AWSBenchmark(Benchmark):
             else "{}_p{}_i{}".format(self.uid,
                                      re.sub(r"[\s-]", '', script_params),
                                      datetime_iso(micros=True, time_sep='.')).lower()
-        # todo: don't know if it would be considerably faster to reuse previously stopped instances sometimes
+        # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
         instance = self.ec2.create_instances(
@@ -195,7 +195,7 @@ class AWSBenchmark(Benchmark):
             IamInstanceProfile=dict(Name=self.instance_profile.name),
             UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
         )[0]
-        # todo: error handling
+        # TODO: error handling
         self.instances[instance.id] = (instance, inst_key)
         log.info("Started EC2 instance %s", instance.id)
         return instance.id
@@ -210,7 +210,7 @@ class AWSBenchmark(Benchmark):
             response = instance.stop()
         log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", instance_id, response)
         log.info("Instance %s state: %s", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
-        # todo error handling
+        # TODO: error handling
 
     def _stop_all_instances(self):
         for id in list(self.instances.keys()):
@@ -241,7 +241,7 @@ class AWSBenchmark(Benchmark):
 
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
-        # todo: we may want to upload resources to a different path for each run (just in case we run multiple benchmarks in parallel and aws.s3.temporary=False)
+        # TODO: we may want to upload resources to a different path for each run (just in case we run multiple benchmarks in parallel and aws.s3.temporary=False)
         #  for example: root_key+('/'.join(['input', self.uid, name]))
         #  this also requires updating _delete_resources and _ec2_startup_script
         dest_path = lambda name: root_key+('/'.join(['input', name]))
@@ -260,7 +260,7 @@ class AWSBenchmark(Benchmark):
     def _delete_resources(self):
         if self.uploaded_resources is None:
             return
-        # todo: do we still want to delete resources if concern in _upload_resources is fixed?
+        # TODO: do we still want to delete resources if concern in _upload_resources is fixed?
         log.info("Deleting uploaded resources `%s` from s3 bucket %s.", self.uploaded_resources, self.bucket.name)
         self.bucket.delete_objects(
             Delete=dict(
@@ -284,7 +284,7 @@ class AWSBenchmark(Benchmark):
 
         for obj in scores_objs:
             basename = os.path.basename(obj.key)
-            # fixme: bypassing the save_scores flag here, do we care?
+            # FIXME: bypassing the save_scores flag here, do we care?
             board = Scoreboard.from_file(basename)
             if board:
                 with io.BytesIO() as buffer:
@@ -295,7 +295,7 @@ class AWSBenchmark(Benchmark):
                 df.loc[:,'mode'] = rconfig().run_mode
                 board.append(df).save()
             else:
-                # todo: test case when there are also backup files in the download
+                # TODO: test case when there are also backup files in the download
                 dest_path = os.path.join(rconfig().scores_dir, basename)
                 backup_file(dest_path)
                 log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)

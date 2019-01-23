@@ -5,6 +5,13 @@ if [[ -x "$(command -v /venvs/bench/bin/pip3)" ]]; then
 else
     alias PIP='pip3'
 fi
+
+if [[ $EUID == 0 ]]; then
+    alias SUDO=''
+else
+    alias SUDO='sudo'
+fi
+
 #if [[ -x "$(command -v /venvs/bench/bin/activate)" ]]; then
 #    /venvs/bench/bin/activate
 #fi

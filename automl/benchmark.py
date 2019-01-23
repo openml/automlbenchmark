@@ -239,7 +239,10 @@ class TaskConfig:
         sys_mem = system_memory_mb()
         os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
         # os is already using mem, so leaving half of recommended mem
-        assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0 else int(sys_mem.available - os_recommended_mem / 2))
+        left_for_app_mem = int(sys_mem.available - os_recommended_mem / 2)
+        assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0
+                             else left_for_app_mem if left_for_app_mem > 0
+                             else sys_mem.available)
         log.info("Assigning %sMB (total=%sMB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.available:
@@ -252,9 +255,6 @@ class TaskConfig:
 
 
 class BenchmarkTask:
-    """
-
-    """
 
     def __init__(self, task_def, fold):
         """
@@ -276,11 +276,14 @@ class BenchmarkTask:
         if hasattr(self._task_def, 'openml_task_id'):
             self._dataset = Benchmark.task_loader.load(task_id=self._task_def.openml_task_id, fold=self.fold)
             log.debug("Loaded OpenML dataset for task_id %s", self._task_def.openml_task_id)
+        elif hasattr(self._task_def, 'openml_dataset_id'):
+            # TODO
+            raise NotImplementedError("OpenML datasets without task_id are not supported yet")
         elif hasattr(self._task_def, 'dataset'):
-            # todo
+            # TODO
             raise NotImplementedError("Raw dataset are not supported yet")
         else:
-            raise ValueError("Tasks should have one property among [openml_task_id, dataset]")
+            raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset]")
 
     def as_job(self, framework, framework_name):
         def _run():
@@ -407,7 +410,7 @@ class ParallelJobRunner(JobRunner):
 
         try:
             for job in self.jobs:
-                q.put(job)     # todo: timeout
+                q.put(job)     # TODO: timeout
                 time.sleep(rnd.uniform(1, 5))    # short sleep between enqueued jobs to make console more readable
                 if self.state == JobRunner.State.stopping:
                     break

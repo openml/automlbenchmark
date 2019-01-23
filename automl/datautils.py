@@ -109,7 +109,7 @@ def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
             'attributes': reordered_attr.tolist(),
             'data': reordered_data.tolist()
         }, file)
-    # todo: provide the possibility to return data even if save is set to false,
+    # TODO: provide the possibility to return data even if save is set to false,
     #  as the client code doesn't want to have to load the data again,
     #  and may want to benefit from the caching of reordered data for future runs.
     return reordered_path
@@ -245,7 +245,7 @@ class Encoder(TransformerMixin):
         if not self.delegate:
             return vec
 
-        # todo handle mask
+        # TODO: handle mask
         vec = np.asarray(vec, dtype=object).astype(self.encoded_type, copy=False)
         return self.delegate.inverse_transform(vec, **params)
 
@@ -259,7 +259,7 @@ def impute(X_fit, *X_s, missing_values='NaN', strategy='mean'):
     :param strategy: 'mean', 'median', 'most_frequent', 'constant' (from sklearn 0.20 only, requires fill_value arg)
     :return:
     """
-    # todo: impute only if np.isnan(X_fit).any() ?
+    # TODO: impute only if np.isnan(X_fit).any() ?
     imputer = Imputer(missing_values=missing_values, strategy=strategy, axis=0)
     imputed = imputer.fit_transform(X_fit)
     if len(X_s) > 0:
