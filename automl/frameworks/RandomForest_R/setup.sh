@@ -9,4 +9,4 @@ if [[ -x "$(command -v apt-get)" ]]; then
 fi
 #PIP install --no-cache-dir -r automl/frameworks/RandomForest_R/py_requirements.txt
 
-Rscript -e 'install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'
+SUDO Rscript -e 'install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'

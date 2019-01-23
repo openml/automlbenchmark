@@ -48,7 +48,7 @@ pyenv local ve-automl
 pip3 install -r requirements.txt
 pip3 install openml
 ```
-_**NOTE**: in case of issues when installing Python requirements, you may want to retry after enforcing `pip3` version above._
+_**NOTE**: in case of issues when installing Python requirements, you may want to retry after enforcing `pip3` version above in your virtualenv._
 
 ## Quickstart
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
