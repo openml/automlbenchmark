@@ -8,7 +8,8 @@ import logging
 import os
 import re
 
-from .benchmark import Benchmark, Job
+from .benchmark import Benchmark
+from .job import Job
 from .resources import config as rconfig
 from .results import Scoreboard
 from .utils import run_cmd
@@ -28,7 +29,7 @@ class DockerBenchmark(Benchmark):
         return "{author}/{image}:{tag}".format(
             author=di.author,
             image=di.image if di.image else framework_def.name.lower(),
-            tag=di.tag
+            tag=di.tag if di.tag else framework_def.version.lower()
         )
 
     def __init__(self, framework_name, benchmark_name, parallel_jobs=1):
@@ -147,7 +148,9 @@ class DockerBenchmark(Benchmark):
     def _generate_docker_script(self, custom_commands):
         docker_content = """FROM ubuntu:18.04
 
+ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
+RUN apt-get install -y apt-utils dialog
 RUN apt-get install -y curl wget unzip git
 RUN apt-get install -y python3 python3-pip python3-venv
 RUN pip3 install --upgrade pip

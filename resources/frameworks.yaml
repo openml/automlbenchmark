@@ -11,7 +11,7 @@ __dummy_framework_with_defaults:
   docker_image: # will result in built docker image `author/image:tag`
     author: automlbenchmark
     image:  # defaults to `framework name to lowercase`
-    tag: latest
+    tag:  # defaults to `framework version`
 
 constantpredictor:
   version: '0.0.0'
@@ -25,7 +25,7 @@ AutoWEKA:
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 H2OAutoML:
-  version: '3.22.0.5'
+  version: '3.22.1.2'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 
 hyperoptsklearn:

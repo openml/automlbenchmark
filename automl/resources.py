@@ -120,6 +120,9 @@ class Resources:
         if framework['params'] is None:
             framework.params = dict()
 
+        if framework['version'] is None:
+            framework.version = 'latest'
+
         did = self.config.docker.image_defaults
         if framework['docker_image'] is None:
             framework['docker_image'] = did

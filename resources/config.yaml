@@ -34,7 +34,7 @@ docker:
   image_defaults:
     author: automlbenchmark
     image:    # set by docker.py based on framework name, lowercase
-    tag: latest
+    tag:  # set by docker.py based on framework version
 
 aws:
   region: ''      # read from ~/.aws/config by default

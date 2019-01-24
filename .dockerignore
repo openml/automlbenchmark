@@ -1,9 +1,9 @@
 .git
 .idea
-libs
 logs
 results
+**/libs
+**/.marker*
+**/__pycache__
+*.iml
 
-#following can be removed later
-docker
-aws

@@ -23,8 +23,9 @@ import time
 import boto3
 import botocore.exceptions
 
-from .benchmark import Benchmark, Job
+from .benchmark import Benchmark
 from .docker import DockerBenchmark
+from .job import Job
 from .resources import config as rconfig
 from .results import Scoreboard
 from .utils import backup_file, datetime_iso, str_def, tail
@@ -504,7 +505,7 @@ apt-get update
 #apt-get -y upgrade
 apt-get install -y curl wget unzip git
 apt-get install -y python3 python3-pip python3-venv
-apt-get install -y docker.io
+#apt-get install -y docker.io
 
 pip3 install --upgrade awscli
 python3 -m venv /venvs/bench

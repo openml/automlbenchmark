@@ -65,6 +65,7 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
         file.setLevel(app_level)
         file.setFormatter(file_formatter)
         app_logger.addHandler(file)
+        frameworks_logger.addHandler(file)
 
     if root_file:
         file = logging.FileHandler(root_file, mode='a')
