@@ -21,7 +21,7 @@ def run(dataset: Dataset, config: TaskConfig):
     log.warning('We completely ignore the requirement to stay within the time limit.')
     log.warning('We completely ignore the advice to optimize towards metric: {}.'.format(config.metric))
 
-    rfc = RandomForestClassifier(n_jobs=config.cores, n_estimators=2000)
+    rfc = RandomForestClassifier(n_jobs=config.cores, **config.framework_params)
     rfc.fit(X_train, y_train)
     class_predictions = rfc.predict(X_test)
     class_probabilities = rfc.predict_proba(X_test)

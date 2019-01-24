@@ -18,7 +18,7 @@ from .job import Job, SimpleJobRunner, ParallelJobRunner
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import Scoreboard, TaskResult
-from .utils import datetime_iso, flatten, profile, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
+from .utils import datetime_iso, flatten, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -49,9 +49,9 @@ class Benchmark:
         :param resources:
         """
         self.framework_def, self.framework_name = rget().framework_definition(framework_name)
-        log.debug("Using framework definition: %s", self.framework_def)
+        log.debug("Using framework definition: %s.", self.framework_def)
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
-        log.debug("Using benchmark definition: %s", self.benchmark_def)
+        log.debug("Using benchmark definition: %s.", self.benchmark_def)
         self.parallel_jobs = parallel_jobs
         self.uid = "{}-{}-{}".format(framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)).lower()
 
@@ -59,7 +59,7 @@ class Benchmark:
 
     def _validate(self):
         if self.parallel_jobs > 1:
-            log.warning("parallelization is not supported in local mode: ignoring `parallel_jobs` parameter")
+            log.warning("Parallelization is not supported in local mode: ignoring `parallel_jobs` parameter.")
             self.parallel_jobs = 1
 
     def setup(self, mode: SetupMode):
@@ -130,7 +130,7 @@ class Benchmark:
             for f in folds:
                 jobs.append(self._fold_job(task_def, f))
         else:
-            raise ValueError("fold value should be None, an int, or a list of ints")
+            raise ValueError("Fold value should be None, an int, or a list of ints.")
         return jobs
 
     def _task_jobs(self, task_def):
@@ -150,7 +150,7 @@ class Benchmark:
         :param fold: the specific fold to use on this task
         """
         if fold < 0 or fold >= task_def.folds:
-            raise ValueError("fold value {} is out of range for task {}".format(fold, task_def.name))
+            raise ValueError("Fold value {} is out of range for task {}.".format(fold, task_def.name))
 
         return BenchmarkTask(task_def, fold).as_job(self.framework_module, self.framework_name)
 
@@ -158,9 +158,9 @@ class Benchmark:
         try:
             task_def = next(task for task in self.benchmark_def if task.name == task_name)
         except StopIteration:
-            raise ValueError("incorrect task name: {}".format(task_name))
+            raise ValueError("Incorrect task name: {}.".format(task_name))
         if not Benchmark._is_task_enabled(task_def):
-            raise ValueError("task {} is disabled, please enable it first".format(task_name))
+            raise ValueError("Task {} is disabled, please enable it first.".format(task_name))
         return task_def
 
     def _process_results(self, results, task_name=None, save_scores=False):
@@ -273,15 +273,15 @@ class BenchmarkTask:
         """
         if hasattr(self._task_def, 'openml_task_id'):
             self._dataset = Benchmark.task_loader.load(task_id=self._task_def.openml_task_id, fold=self.fold)
-            log.debug("Loaded OpenML dataset for task_id %s", self._task_def.openml_task_id)
+            log.debug("Loaded OpenML dataset for task_id %s.", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'openml_dataset_id'):
             # TODO
-            raise NotImplementedError("OpenML datasets without task_id are not supported yet")
+            raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
             # TODO
-            raise NotImplementedError("Raw dataset are not supported yet")
+            raise NotImplementedError("Raw dataset are not supported yet.")
         else:
-            raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset]")
+            raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
     def as_job(self, framework, framework_name):
         def _run():
@@ -306,6 +306,7 @@ class BenchmarkTask:
         task_config.framework_params = framework_def.params
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         task_config.estimate_system_params()
+        log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))
         framework.run(self._dataset, task_config)
         self._dataset.release()
         return results.compute_scores(framework_name, task_config.metrics)

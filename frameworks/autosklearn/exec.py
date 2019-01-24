@@ -39,7 +39,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
-    auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=config.max_runtime_seconds, ml_memory_limit=config.max_mem_size_mb)
+    auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=config.max_runtime_seconds, ml_memory_limit=config.max_mem_size_mb, **config.framework_params)
     auto_sklearn.fit(X_train, y_train, metric=performance_metric, feat_type=predictors_type)
 
     # Convert output to strings for classification

@@ -64,16 +64,16 @@ class AWSBenchmark(Benchmark):
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
-            log.warning("forcing parallelization to its upper limit: %s", rconfig().max_parallel_jobs)
+            log.warning("Forcing parallelization to its upper limit: %s.", rconfig().max_parallel_jobs)
             self.parallel_jobs = rconfig().max_parallel_jobs
 
     def _validate2(self):
         if self.ami is None:
-            raise ValueError("region {} not supported by AMI yet.".format(self.region))
+            raise ValueError("Region {} not supported by AMI yet.".format(self.region))
 
     def setup(self, mode):
         if mode == Benchmark.SetupMode.skip:
-            log.warning("AWS setup mode set to unsupported {mode}, ignoring".format(mode=mode))
+            log.warning("AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode))
         self.iam = boto3.resource('iam', region_name=self.region)
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
@@ -169,17 +169,17 @@ class AWSBenchmark(Benchmark):
                 log.exception(e)
 
         while True:
-            log.info("[%s] checking job %s on instance %s: %s", datetime_iso(), job.name, job.instance_id, instance.state['Name'])
+            log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, instance.state['Name'])
             log_console()
             if instance.state['Code'] > 16:     # ended instance
-                log.info("EC2 instance %s is %s", job.instance_id, instance.state['Name'])
+                log.info("EC2 instance %s is %s.", job.instance_id, instance.state['Name'])
                 break
             time.sleep(rconfig().aws.query_frequency_seconds)
 
         return results
 
     def _start_instance(self, instance_type, script_params="", instance_key=None, timeout_secs=-1):
-        log.info("Starting new EC2 instance with params: %s", script_params)
+        log.info("Starting new EC2 instance with params: %s.", script_params)
         inst_key = instance_key.lower() if instance_key \
             else "{}_p{}_i{}".format(self.uid,
                                      re.sub(r"[\s-]", '', script_params),
@@ -198,19 +198,19 @@ class AWSBenchmark(Benchmark):
         )[0]
         # TODO: error handling
         self.instances[instance.id] = (instance, inst_key)
-        log.info("Started EC2 instance %s", instance.id)
+        log.info("Started EC2 instance %s.", instance.id)
         return instance.id
 
     def _stop_instance(self, instance_id, terminate=False):
-        log.info("%s EC2 instances %s", "Terminating" if terminate else "Stopping", instance_id)
+        log.info("%s EC2 instances %s.", "Terminating" if terminate else "Stopping", instance_id)
         instance, _ = self.instances[instance_id]
         del self.instances[instance_id]
         if terminate:
             response = instance.terminate()
         else:
             response = instance.stop()
-        log.info("%s EC2 instances %s with response %s", "Terminated" if terminate else "Stopped", instance_id, response)
-        log.info("Instance %s state: %s", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
+        log.info("%s EC2 instances %s with response %s.", "Terminated" if terminate else "Stopped", instance_id, response)
+        log.info("Instance %s state: %s.", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
         # TODO: error handling
 
     def _stop_all_instances(self):
@@ -227,7 +227,7 @@ class AWSBenchmark(Benchmark):
         except botocore.exceptions.ClientError as e:
             error_code = int(e.response['Error']['Code'])
             if error_code == 404:
-                log.info("%s bucket doesn't exist in region %s, creating it", bucket_name, self.region)
+                log.info("%s bucket doesn't exist in region %s, creating it.", bucket_name, self.region)
                 bucket = self.s3.create_bucket(
                     Bucket=bucket_name,
                     CreateBucketConfiguration=dict(
@@ -319,7 +319,7 @@ class AWSBenchmark(Benchmark):
             self.iam.meta.client.get_role(RoleName=iamc.role_name)
             irole = self.iam.Role(iamc.role_name)
         except botocore.exceptions.ClientError as e:
-            log.info("Role %s doesn't exist, creating it: %s", iamc.role_name, str(e))
+            log.info("Role %s doesn't exist, creating it: %s.", iamc.role_name, str(e))
 
         if not irole:
             ec2_role_trust_policy_json = json.dumps({   # trust role
@@ -371,7 +371,7 @@ class AWSBenchmark(Benchmark):
             self.iam.meta.client.get_instance_profile(InstanceProfileName=iamc.instance_profile_name)
             iprofile = self.iam.InstanceProfile(iamc.instance_profile_name)
         except botocore.exceptions.ClientError as e:
-            log.info("Instance profile %s doesn't exist, creating it: %s", iamc.instance_profile_name, str(e))
+            log.info("Instance profile %s doesn't exist, creating it: %s.", iamc.instance_profile_name, str(e))
         if not iprofile:
             iprofile = self.iam.create_instance_profile(InstanceProfileName=iamc.instance_profile_name)
 

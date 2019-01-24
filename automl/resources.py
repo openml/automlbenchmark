@@ -32,7 +32,12 @@ class Resources:
         return normalized
 
     def __init__(self, config: Namespace):
-        self.config = Resources._normalize(config, replace=dict(input=config.input_dir, output=config.output_dir, user=config.user_dir))
+        self._common_dirs = dict(
+            input=normalize_path(config.input_dir),
+            output=normalize_path(config.output_dir),
+            user=normalize_path(config.user_dir)
+        )
+        self.config = Resources._normalize(config, replace=self._common_dirs)
         self.config.predictions_dir = os.path.join(self.config.output_dir, 'predictions')
         self.config.scores_dir = os.path.join(self.config.output_dir, 'scores')
         self.config.logs_dir = os.path.join(self.config.output_dir, 'logs')
@@ -42,8 +47,8 @@ class Resources:
         log.debug("Using config:\n%s", self.config)
 
         # allowing to load custom modules from user and input directories
-        sys.path.extend([normalize_path(config.user_dir), normalize_path(config.input_dir)])
-        log.debug("Extended Python sys.path to user and input directories: %s", sys.path)
+        sys.path.extend([self._common_dirs['user'], self._common_dirs['input']])
+        log.debug("Extended Python sys.path to user and input directories: %s.", sys.path)
 
     def framework_definition(self, name):
         """
@@ -52,7 +57,7 @@ class Resources:
         """
         framework = self._frameworks[name.lower()]
         if not framework:
-            raise ValueError("Incorrect framework `{}`: not listed in {}".format(name, self.config.frameworks.definition_file))
+            raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
         return framework, framework.name
 
     @lazy_property
@@ -66,13 +71,35 @@ class Resources:
         for ff in frameworks_file:
             frameworks + config_load(ff)
 
+        to_validate = []
         for name, framework in frameworks:
             framework.name = name
-            self._validate_framework(framework)
-        for name, framework in dict(frameworks).items():
-            frameworks[name.lower()] = framework
+            to_validate.append(framework)
+
+        validated = []
+        while len(to_validate) > 0:
+            later = []
+            for framework in to_validate:
+                if framework['extends'] is not None:
+                    parent = frameworks[framework.extends]
+                    if parent is None:
+                        log.warning("Removing framework %s as parent %s doesn't exist.", framework.name, framework.extends)
+                        continue
+                    elif parent not in validated:
+                        later.append(framework)
+                        continue
+                    else:
+                        framework % parent  # adds framework's missing keys from parent
+                self._validate_framework(framework)
+                validated.append(framework)
+            to_validate = later
+
         log.debug("Using framework definitions:\n%s", frameworks)
-        return frameworks
+
+        frameworks_lookup = Namespace()
+        for framework in validated:
+            frameworks_lookup[framework.name.lower()] = framework
+        return frameworks_lookup
 
     @memoize
     def benchmark_definition(self, name):
@@ -116,19 +143,27 @@ class Resources:
 
         if framework['setup_cmd'] is None:
             framework.setup_cmd = None
+        else:
+            framework.setup_cmd = framework.setup_cmd.format(**self._common_dirs)
 
         if framework['params'] is None:
             framework.params = dict()
+        else:
+            framework.params = Namespace.dict(framework.params)
 
         if framework['version'] is None:
             framework.version = 'latest'
 
-        did = self.config.docker.image_defaults
+        did = copy.copy(self.config.docker.image_defaults)
         if framework['docker_image'] is None:
             framework['docker_image'] = did
         for conf in ['author', 'image', 'tag']:
             if framework.docker_image[conf] is None:
                 framework.docker_image[conf] = did[conf]
+        if framework.docker_image.image is None:
+            framework.docker_image.image = framework.name.lower()
+        if framework.docker_image.tag is None:
+            framework.docker_image.tag = framework.version.lower()
 
     def _validate_task(self, task):
         missing = []
@@ -136,17 +171,17 @@ class Resources:
             if task[conf] is None:
                 missing.append(conf)
         if len(missing) > 0:
-            raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}".format(missing=missing, taskdef=task))
+            raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}.".format(missing=missing, taskdef=task))
 
         for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb']:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
-                log.debug("Config `{config}` not set for task {name}, using default `{value}`".format(config=conf, name=task.name, value=task[conf]))
+                log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
 
         conf = 'ec2_instance_type'
         if task[conf] is None:
             task[conf] = self.config.aws.ec2.instance_type
-            log.debug("Config `{config}` not set for task {name}, using default `{value}`".format(config=conf, name=task.name, value=task[conf]))
+            log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
 
 
 __INSTANCE__: Resources = None

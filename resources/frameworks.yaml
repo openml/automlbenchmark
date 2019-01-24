@@ -41,6 +41,8 @@ RandomForest:
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   docker_image:
     image: rf
+  params:
+    n_estimators: 2000
 
 RandomForest_R:
   version: '0.10.1'

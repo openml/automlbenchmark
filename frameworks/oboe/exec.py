@@ -24,7 +24,8 @@ def run(dataset: Dataset, config: TaskConfig):
 
     automl = AutoLearner(p_type='classification',
                          n_cores=config.cores,
-                         runtime_limit=config.max_runtime_seconds)
+                         runtime_limit=config.max_runtime_seconds,
+                         **config.framework_params)
     automl.fit(X_train, y_train)
     class_predictions = automl.predict(X_test).reshape(len(X_test))
     class_probabilities = Encoder('one-hot', target=False).fit_transform(class_predictions)

@@ -49,11 +49,26 @@ class Namespace:
                         merged[k] = v
         return merged
 
+    @staticmethod
+    def dict(namespace):
+        dic = dict(namespace)
+        for k, v in dic.items():
+            if isinstance(v, Namespace):
+                dic[k] = Namespace.dict(v)
+        return dic
+
     def __init__(self, *args, **kwargs):
         self.__ns = dict(*args, **kwargs)
 
     def __add__(self, other):
+        """extends self with other (always overrides)"""
         self.__ns.update(other)
+        return self
+
+    def __mod__(self, other):
+        """extends self with other (adds only missing keys)"""
+        for k, v in other:
+            self.__ns.setdefault(k, v)
         return self
 
     def __contains__(self, key):
@@ -76,7 +91,7 @@ class Namespace:
             self.__ns[key] = value
 
     def __getitem__(self, item):
-        return self.__ns[item] if item in self.__ns else None
+        return self.__ns.get(item)
 
     def __setitem__(self, key, value):
         self.__ns[key] = value

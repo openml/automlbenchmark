@@ -60,8 +60,8 @@ automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(s
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
                     root_level='DEBUG', console_level='INFO', print_to_log=True)
 
-log.info("Running `%s` on `%s` benchmarks in `%s` mode", args.framework, args.benchmark, args.mode)
-log.debug("script args: %s", args)
+log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
+log.debug("Script args: %s.", args)
 
 config = config_load("resources/config.yaml")
 config_input = None
@@ -89,10 +89,10 @@ try:
     # elif args.mode == "aws-remote":
     #     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     else:
-        raise ValueError("mode must be one of 'aws', 'docker' or 'local'.")
+        raise ValueError("`mode` must be one of 'aws', 'docker' or 'local'.")
 
     if args.setup == 'only':
-        log.warning("Setting up %s environment only for %s, no benchmark will be run", args.mode, args.framework)
+        log.warning("Setting up %s environment only for %s, no benchmark will be run.", args.mode, args.framework)
 
     if not args.keep_scores and args.mode != 'local':
         log.warning("`keep_scores` parameter is currently ignored in %s mode, scores are always saved in this mode.", args.mode)

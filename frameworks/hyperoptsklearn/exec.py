@@ -24,7 +24,7 @@ def run(dataset: Dataset, config: TaskConfig):
     log.warning('ignoring runtime.')  # Not available? just number of iterations.
     log.warning('ignoring n_cores.')  # Not available
     log.warning('always optimize towards accuracy.')  # loss_fn lambda y1,y2:loss(y1, y2)
-    hyperoptsklearn = HyperoptEstimator(classifier=any_classifier('clf'), algo=tpe.suggest)
+    hyperoptsklearn = HyperoptEstimator(classifier=any_classifier('clf'), algo=tpe.suggest, **config.framework_params)
     hyperoptsklearn.fit(X_train, y_train)
     class_predictions = hyperoptsklearn.predict(X_test)
     class_probabilities = Encoder('one-hot', target=False).fit_transform(class_predictions)

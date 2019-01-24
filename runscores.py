@@ -14,7 +14,7 @@ from automl.utils import config_load
 
 parser = argparse.ArgumentParser()
 parser.add_argument('predictions', type=str,
-                    help='The predictions file to load and compute the scores for')
+                    help='The predictions file to load and compute the scores for.')
 args = parser.parse_args()
 
 # script_name = os.path.splitext(os.path.basename(__file__))[0]

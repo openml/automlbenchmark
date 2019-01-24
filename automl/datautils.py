@@ -126,8 +126,8 @@ def to_data_frame(obj, columns=None):
     elif isinstance(obj, (list, np.ndarray)):
         return pd.DataFrame.from_records(obj, columns=columns)
     else:
-        raise ValueError("object should be a dictionary {col1:values, col2:values, ...} "
-                         "or an array of dictionary-like objects [{col1:val, col2:val}, {col1:val, col2:val}, ...]")
+        raise ValueError("Object should be a dictionary {col1:values, col2:values, ...} "
+                         "or an array of dictionary-like objects [{col1:val, col2:val}, {col1:val, col2:val}, ...].")
 
 
 class Encoder(TransformerMixin):
@@ -167,7 +167,7 @@ class Encoder(TransformerMixin):
         elif type == 'no-op':
             self.delegate = None
         else:
-            raise ValueError("encoder type should be one of {}".format(['label', 'one-hot']))
+            raise ValueError("Encoder `type` should be one of {}.".format(['label', 'one-hot']))
 
     @property
     def _ignore_missing(self):

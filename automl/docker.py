@@ -43,7 +43,7 @@ class DockerBenchmark(Benchmark):
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
-            log.warning("forcing parallelization to its upper limit: %s", rconfig().max_parallel_jobs)
+            log.warning("Forcing parallelization to its upper limit: %s.", rconfig().max_parallel_jobs)
             self.parallel_jobs = rconfig().max_parallel_jobs
 
     def setup(self, mode, upload=False):
@@ -110,9 +110,9 @@ class DockerBenchmark(Benchmark):
             image=self._docker_image_name,
             params=script_params
         )
-        log.info("Starting docker: %s", cmd)
-        log.info("Datasets are loaded by default from folder %s", in_dir)
-        log.info("Generated files will be available in folder %s", out_dir)
+        log.info("Starting docker: %s.", cmd)
+        log.info("Datasets are loaded by default from folder %s.", in_dir)
+        log.info("Generated files will be available in folder %s.", out_dir)
         output = run_cmd(cmd)
         log.debug(output)
 
@@ -130,19 +130,19 @@ class DockerBenchmark(Benchmark):
         return re.match(r'^[0-9a-f]+$', output.strip())
 
     def _build_docker_image(self, cache=True):
-        log.info("Building docker image %s", self._docker_image_name)
+        log.info("Building docker image %s.", self._docker_image_name)
         output = run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
             container=self._docker_image_name,
             script=self._docker_script
         ))
-        log.info("Successfully built docker image %s", self._docker_image_name)
+        log.info("Successfully built docker image %s.", self._docker_image_name)
         log.debug(output)
 
     def _upload_docker_image(self):
-        log.info("Publishing docker image %s", self._docker_image_name)
+        log.info("Publishing docker image %s.", self._docker_image_name)
         output = run_cmd("docker login && docker push {}".format(self._docker_image_name))
-        log.info("Successfully published docker image %s", self._docker_image_name)
+        log.info("Successfully published docker image %s.", self._docker_image_name)
         log.debug(output)
 
     def _generate_docker_script(self, custom_commands):

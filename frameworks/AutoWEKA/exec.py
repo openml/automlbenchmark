@@ -32,18 +32,19 @@ def run(dataset: Dataset, config: TaskConfig):
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
     weka_file = path_from_split(f)
-    output = run_cmd("java -cp {here}/libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
-    -classifications \"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {predictions_output}\" \
-    -timeLimit {time} -parallelRuns {cores} -metric {metric}".format(
-        here=dir_of(__file__),
-        train=train_file,
-        test=test_file,
-        max_memory=config.max_mem_size_mb,
-        time=int(config.max_runtime_seconds/60),
-        cores=config.cores,
+    cmd_root = "java -cp {here}/libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier ".format(here=dir_of(__file__))
+    cmd_params = dict(
+        t=train_file,
+        T=test_file,
+        memLimit=config.max_mem_size_mb,
+        classifications='"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {}"'.format(weka_file),
+        timeLimit=int(config.max_runtime_seconds/60),
+        parallelRuns=config.cores,
         metric=metric,
-        predictions_output=weka_file
-    ))
+        **config.framework_params
+    )
+    cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
+    output = run_cmd(cmd)
     log.debug(output)
 
     # if target values are not sorted alphabetically in the ARFF file, then class probabilities are returned in the original order

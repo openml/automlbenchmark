@@ -64,10 +64,10 @@ class Scoreboard:
     # @profile(logger=log)
     def load_df(file):
         name = file if isinstance(file, str) else type(file)
-        log.debug("Loading scores from %s", name)
+        log.debug("Loading scores from %s.", name)
         exists = isinstance(file, io.IOBase) or os.path.isfile(file)
         df = read_csv(file) if exists else to_data_frame({})
-        log.info("Loaded scores from %s", name)
+        log.info("Loaded scores from %s.", name)
         return df
 
     @staticmethod
@@ -82,13 +82,13 @@ class Scoreboard:
             backup_file(path)
         new_file = not exists or not append or new_format
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
-        log.debug("Saving scores to %s", path)
+        log.debug("Saving scores to %s.", path)
         write_csv(data_frame,
                   path=path,
                   header=new_file,
                   index=not is_default_index,
                   append=not new_file)
-        log.info("Scores saved to %s", path)
+        log.info("Scores saved to %s.", path)
 
     def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
         self.framework_name = framework_name
@@ -112,7 +112,7 @@ class Scoreboard:
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
         df = df.reindex(columns=[]+fixed_cols+dynamic_cols)
-        log.debug("scores columns: %s", df.columns)
+        log.debug("Scores columns: %s.", df.columns)
         return df
 
     def _load(self):
@@ -163,7 +163,7 @@ class TaskResult:
             else:
                 return RegressionResult(df)
         else:
-            log.warning("Predictions file {file} is missing: framework either failed or could not produce any prediction".format(
+            log.warning("Predictions file {file} is missing: framework either failed or could not produce any prediction.".format(
                 file=predictions_file,
             ))
             return NoResult()
@@ -213,7 +213,7 @@ class TaskResult:
         pattern = r"(?P<framework>[\w\-]+?)_(?P<task>[\w\-]+)_(?P<fold>\d+)(_(?P<datetime>\d{8}T\d{6}))?.csv"
         m = re.fullmatch(pattern, basename)
         if not m:
-            log.error("%s predictions file name has wrong format", path)
+            log.error("Predictions file `%s` has wrong naming format.", path)
             return None
 
         d = m.groupdict()
@@ -289,7 +289,7 @@ class Result:
     def evaluate(self, metric):
         if hasattr(self, metric):
             return getattr(self, metric)()
-        raise ValueError("Metric {metric} is not supported for {type}".format(metric=metric, type=self.type))
+        raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
 
 
 class NoResult(Result):
@@ -327,7 +327,7 @@ class ClassificationResult(Result):
 
     def auc(self):
         if self.type != 'binomial':
-            raise ValueError("AUC metric is only supported for binary classification: {}".format(self.classes))
+            raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
         return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
 
     def logloss(self):

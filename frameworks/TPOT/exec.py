@@ -35,7 +35,8 @@ def run(dataset: Dataset, config: TaskConfig):
     tpot = TPOTClassifier(n_jobs=config.cores,
                           max_time_mins=runtime_min,
                           verbosity=2,
-                          scoring=metric)
+                          scoring=metric,
+                          **config.framework_params)
     start_time = time.time()
     tpot.fit(X_train, y_train)
     actual_runtime_min = (time.time() - start_time)/60.0

@@ -28,20 +28,20 @@ class Openml():
     def load(self, task_id=None, dataset_id=None, fold=0):
         if task_id is not None:
             if dataset_id is not None:
-                log.warning("Ignoring dataset id {} as a task id {} was already provided".format(dataset_id, task_id))
+                log.warning("Ignoring dataset id {} as a task id {} was already provided.".format(dataset_id, task_id))
             task = oml.tasks.get_task(task_id)
             dataset = task.get_dataset()
             _, nfolds, _ = task.get_split_dimensions()
             if fold >= nfolds:
-                raise ValueError("OpenML task {} only accepts `fold` < {}".format(task_id, nfolds))
+                raise ValueError("OpenML task {} only accepts `fold` < {}.".format(task_id, nfolds))
         elif dataset_id is not None:
             raise NotImplementedError("OpenML raw datasets are not supported yet, please use an OpenML task instead.")
             dataset = oml.datasets.get_dataset(dataset_id)
             task = AutoTask(dataset)
             if fold > 0:
-                raise ValueError("OpenML raw datasets {} only accepts `fold` = 0".format(task_id))
+                raise ValueError("OpenML raw datasets {} only accepts `fold` = 0.".format(task_id))
         else:
-            raise ValueError("A task id or a dataset id are required when using OpenML")
+            raise ValueError("A task id or a dataset id are required when using OpenML.")
         return OpenmlDataset(task, dataset, fold)
 
 
@@ -115,7 +115,7 @@ class OpenmlDataset(Dataset):
     @property
     def attributes(self):
         if not self._attributes:
-            log.debug("Loading attributes from dataset %s", self._oml_dataset.data_file)
+            log.debug("Loading attributes from dataset %s.", self._oml_dataset.data_file)
             with open(self._oml_dataset.data_file) as f:
                 ds = arff.load(f)
                 self._attributes = ds['attributes']
@@ -147,7 +147,7 @@ class OpenmlDataset(Dataset):
         #                                                    return_attribute_names=True)
         # ods.retrieve_class_labels(self.target)
 
-        log.debug("Loading dataset %s", ods.data_file)
+        log.debug("Loading dataset %s.", ods.data_file)
         with open(ods.data_file) as f:
             ds = arff.load(f)
         self._attributes = ds['attributes']
@@ -182,7 +182,7 @@ class OpenmlDatasplit(Datasplit):
     @profile(logger=log)
     def data(self):
         # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
-        log.debug("Loading datasplit %s", self.path)
+        log.debug("Loading datasplit %s.", self.path)
         with open(self.path) as file:
             ds = arff.load(file)
         return np.asarray(ds['data'], dtype=object)
@@ -199,7 +199,7 @@ def _get_split_path_for_dataset(ds_path, split='train', fold=0):
 def _save_split_set(path, name, full_dataset=None, indexes=None):
     # X_split = X[indexes, :]
     # y_split = y.reshape(-1, 1)[indexes, :]
-    log.debug("Saving %s split dataset to %s", name, path)
+    log.debug("Saving %s split dataset to %s.", name, path)
     with open(path, 'w') as file:
         split_data = np.asarray(full_dataset['data'], dtype=object)[indexes, :]
         arff.dump({
