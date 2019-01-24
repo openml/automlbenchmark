@@ -3,6 +3,8 @@
 ## Run a benchmark
 see [README.md]
 
+### Run a framework with different (hyper-)parameters
+
 ### Add a new benchmark
 
 ### Add a new framework

@@ -2,11 +2,12 @@
 VERSION=$1
 echo "setting up H2O version $VERSION"
 
-. $(dirname "$0")/../../setup/shared.sh
+HERE=$(dirname "$0")
+. $HERE/../shared/setup.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y openjdk-8-jdk
 fi
-PIP install --no-cache-dir -r automl/frameworks/H2OAutoML/py_requirements.txt
+PIP install --no-cache-dir -r $HERE/requirements.txt
 if [[ "$VERSION" = "xu" || -z "$VERSION" ]]; then
     echo "installing H2O-3 xu"
     PIP install --no-cache-dir -U http://h2o-release.s3.amazonaws.com/h2o/rel-xu/2/Python/h2o-3.22.1.2-py2.py3-none-any.whl

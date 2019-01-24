@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-. $(dirname "$0")/../../setup/shared.sh
+HERE=$(dirname "$0")
+. $HERE/../shared/setup.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get -y install software-properties-common apt-transport-https libxml2-dev
     SUDO apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
@@ -7,6 +8,6 @@ if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt update
     SUDO apt-get -y install r-base r-base-dev
 fi
-#PIP install --no-cache-dir -r automl/frameworks/RandomForest_R/py_requirements.txt
+#PIP install --no-cache-dir -r $HERE/py_requirements.txt
 
-SUDO Rscript -e 'install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'
+SUDO Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'

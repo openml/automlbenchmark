@@ -109,13 +109,16 @@ class Resources:
 
     def _validate_framework(self, framework):
         if framework['module'] is None:
-            framework.module = 'automl.frameworks.'+framework.name
+            framework.module = '.'.join([self.config.frameworks.root_module, framework.name])
 
         if framework['setup_args'] is None:
             framework.setup_args = None
 
         if framework['setup_cmd'] is None:
             framework.setup_cmd = None
+
+        if framework['params'] is None:
+            framework.params = dict()
 
         did = self.config.docker.image_defaults
         if framework['docker_image'] is None:

@@ -2,7 +2,7 @@
 automl entrypoint package.
 """
 
-from .logger import logger as log
+from .logger import app_logger as log
 from .resources import Resources
 from .benchmark import Benchmark
 from .docker import DockerBenchmark

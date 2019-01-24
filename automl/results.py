@@ -76,8 +76,8 @@ class Scoreboard:
         exists = os.path.isfile(path)
         new_format = False
         if exists:
-            # TODO: detect format change, i.e. data_frame columns are different or different order from existing file
-            pass
+            df = read_csv(path, nrows=1)
+            new_format = list(df.columns) != list(data_frame.columns)
         if new_format or (exists and not append):
             backup_file(path)
         new_file = not exists or not append or new_format
@@ -106,7 +106,7 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        # fixed_cols = ['result', 'mode', 'version', 'utc']
+        # fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'utc'] # TODO: enable this?
         fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
@@ -239,6 +239,7 @@ class TaskResult:
         scores = Namespace(
             framework=framework_name,
             version=framework_def.version,
+            # params=str(framework_def.params), # TODO: enable this?
             task=self.task,
             fold=self.fold,
             mode=rconfig().run_mode,  # FIXME: set correctly in local mode and a posteriori for aws mode, but not for docker mode

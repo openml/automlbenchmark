@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-. $(dirname "$0")/../../setup/shared.sh
-DOWNLOAD_DIR="./libs"
-TARGET_DIR="$DOWNLOAD_DIR/hyperopt-sklearn"
+HERE=$(dirname "$0")
+. $HERE/../shared/setup.sh
+TARGET_DIR="$HERE/libs/hyperopt-sklearn"
 if [[ ! -e "$TARGET_DIR" ]]; then
     git clone https://github.com/hyperopt/hyperopt-sklearn.git $TARGET_DIR
 fi

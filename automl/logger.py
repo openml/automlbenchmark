@@ -6,10 +6,10 @@ import datetime as dt
 import logging
 import sys
 
-import automl
 
+app_logger = logging.getLogger('automl')
+frameworks_logger = logging.getLogger('frameworks')
 
-logger = logging.getLogger(automl.__name__)
 logging.TRACE = logging.TRACE if hasattr(logging, 'TRACE') else 5
 
 
@@ -54,7 +54,8 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
     console = logging.StreamHandler()
     console.setLevel(console_level)
     # console.setFormatter(logging.Formatter('[%(levelname)s] [%(name)s] %(message)s'))
-    logger.addHandler(console)
+    app_logger.addHandler(console)
+    frameworks_logger.addHandler(console)
 
     file_formatter = MillisFormatter('[%(levelname)s] [%(name)s:%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 
@@ -63,7 +64,7 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
         file = logging.FileHandler(log_file, mode='a')
         file.setLevel(app_level)
         file.setFormatter(file_formatter)
-        logger.addHandler(file)
+        app_logger.addHandler(file)
 
     if root_file:
         file = logging.FileHandler(root_file, mode='a')
@@ -73,7 +74,7 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
 
     if print_to_log:
         nl = '\n'
-        print_logger = logging.getLogger(automl.__name__+'.print')
+        print_logger = logging.getLogger(app_logger.name + '.print')
         buffer = []
 
         def new_print(self, *args, sep=' ', end=nl, file=None):

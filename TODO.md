@@ -8,6 +8,7 @@
 4. unit tests
 
 ### Features
+1. offer the possibility to pass hyper-parameters to frameworks: partially done.
 1. support regression tasks: currently only classification ones are supported. 
 1. meta-benchmark? benchmark a subset of configured frameworks:\
 `runbenchmark.py frameworks_list.yaml test`.

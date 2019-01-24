@@ -150,7 +150,7 @@ class DockerBenchmark(Benchmark):
 RUN apt-get update
 RUN apt-get install -y curl wget unzip git
 RUN apt-get install -y python3 python3-pip python3-venv
-RUN pip3 install --upgrade pip=={pip_version}
+RUN pip3 install --upgrade pip
 
 # We create a virtual environment so that AutoML systems may use their preferred versions of 
 # packages that we need to data pre- and postprocessing without breaking it.

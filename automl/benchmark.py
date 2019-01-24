@@ -220,6 +220,7 @@ class TaskConfig:
                  cores, max_mem_size_mb,
                  input_dir, output_dir):
         self.framework = None
+        self.framework_params = None
         self.name = name
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
@@ -302,8 +303,10 @@ class BenchmarkTask:
         :return:
         """
         results = TaskResult(task_name=self.task.name, fold=self.fold)
+        framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task)
         task_config.framework = framework_name
+        task_config.framework_params = framework_def.params
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         task_config.estimate_system_params()
         framework.run(self._dataset, task_config)

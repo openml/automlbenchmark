@@ -21,17 +21,23 @@ __dummy_framework_with_defaults:
 #    image: automlbenchmark
 
 H2OAutoML_wright:
-  module: automl.frameworks.H2OAutoML
+  module: frameworks.H2OAutoML
   setup_args: 'wright'
   version: '3.20.0.10'
 
 H2OAutoML_nightly:
-  module: automl.frameworks.H2OAutoML
+  module: frameworks.H2OAutoML
   setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip3 install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${LATEST_H2O}/Python/h2o-3.23.0.${LATEST_H2O}-py2.py3-none-any.whl"'
   version: 'nightly'
+  params:
+    foo: '"bar"'
+    baz: 123
 
 H2OAutoML_local:
-  module: automl.frameworks.H2OAutoML
+  module: frameworks.H2OAutoML
   setup_cmd: 'PIP install -U ~/repos/h2o/h2o-3/h2o-py/build/dist/h2o-3.23.0.99999-py2.py3-none-any.whl'
   version: 'local'
 
+Decision_Tree:
+  module: Decision_Tree
+  version: 'local'

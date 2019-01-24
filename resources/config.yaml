@@ -12,6 +12,7 @@ max_parallel_jobs: 5
 
 frameworks:
   definition_file: resources/frameworks.yaml
+  root_module: frameworks
 
 benchmarks:
   definition_dir: resources/benchmarks

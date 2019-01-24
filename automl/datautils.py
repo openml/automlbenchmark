@@ -46,16 +46,17 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-def read_csv(path):
+def read_csv(path, nrows=None):
     """
     read csv file to DataFrame.
 
     for now, delegates to pandas, just simplifying signature in the case we want to get rid of pandas dependency
      (numpy should be enough for our needs).
-    :param path: the path to a csv file or a file-like object, or readable (with read() method) object
+    :param path: the path to a csv file or a file-like object, or readable (with read() method) object.
+    :param nrows: the number of rows to read, if not specified, all are read.
     :return: a DataFrame
     """
-    return pd.read_csv(path)
+    return pd.read_csv(path, nrows=nrows)
 
 
 def write_csv(data_frame, path, header=True, index=True, append=False):

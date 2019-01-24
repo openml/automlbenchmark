@@ -1,14 +1,14 @@
 import logging
 import sys
-sys.path.append("./libs/oboe/automl")
-
-from auto_learner import AutoLearner
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
+from automl.utils import dir_of
 
+sys.path.append("{}/libs/oboe/automl".format(dir_of(__file__)))
+from auto_learner import AutoLearner
 
 log = logging.getLogger(__name__)
 

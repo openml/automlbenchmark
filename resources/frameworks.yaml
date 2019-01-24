@@ -6,6 +6,7 @@ __dummy_framework_with_defaults:
   version: ''
   module: # defaults to `framework name`
   setup_args: ''
+  params: {}
   project: http://url/to/project/repo
   docker_image: # will result in built docker image `author/image:tag`
     author: automlbenchmark

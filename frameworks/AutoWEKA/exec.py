@@ -4,7 +4,7 @@ from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import reorder_dataset
 from automl.results import save_predictions_to_file
-from automl.utils import path_from_split, run_cmd, split_path
+from automl.utils import dir_of, path_from_split, run_cmd, split_path
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +32,10 @@ def run(dataset: Dataset, config: TaskConfig):
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
     weka_file = path_from_split(f)
-    output = run_cmd("java -cp ./libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
+    output = run_cmd("java -cp {here}/libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier -t {train} -T {test} -memLimit {max_memory} \
     -classifications \"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {predictions_output}\" \
     -timeLimit {time} -parallelRuns {cores} -metric {metric}".format(
+        here=dir_of(__file__),
         train=train_file,
         test=test_file,
         max_memory=config.max_mem_size_mb,
