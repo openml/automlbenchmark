@@ -16,6 +16,8 @@ import shutil
 import stat
 import sys
 import time
+import threading
+import _thread
 
 import psutil
 from ruamel import yaml
@@ -27,6 +29,9 @@ except ImportError:
 
 
 log = logging.getLogger(__name__)
+
+
+""" CORE FUNCTIONS """
 
 
 class Namespace:
@@ -116,6 +121,113 @@ def repr_def(obj):
     return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
 
 
+def to_mb(size_in_bytes):
+    return size_in_bytes / (1 << 20)
+
+
+def flatten(iterable, flatten_tuple=False, flatten_dict=False):
+    return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
+                                else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
+                                else l.append(r)) or l, iterable, [])
+
+
+def str2bool(s):
+    if s.lower() in ('true', 't', 'yes', 'y', 'on', '1'):
+        return True
+    elif s.lower() in ('false', 'f', 'no', 'n', 'off', '0'):
+        return False
+    else:
+        raise ValueError(s+" can't be interpreted as a boolean.")
+
+
+def str_def(s, if_none=''):
+    if s is None:
+        return if_none
+    return str(s)
+
+
+def head(s, lines=10):
+    s_lines = s.splitlines() if s else []
+    return '\n'.join(s_lines[:lines])
+
+
+def tail(s, lines=10, from_line=None, include_line=True):
+    if s is None:
+        return None if from_line is None else None, None
+
+    s_lines = s.splitlines()
+    start = -lines
+    if isinstance(from_line, int):
+        start = from_line
+        if not include_line:
+            start += 1
+    elif isinstance(from_line, str):
+        try:
+            start = s_lines.index(from_line)
+            if not include_line:
+                start += 1
+        except ValueError:
+            start = 0
+    last_line = dict(index=len(s_lines) - 1,
+                     line=s_lines[-1] if len(s_lines) > 0 else None)
+    t = '\n'.join(s_lines[start:])
+    return t if from_line is None else (t, last_line)
+
+
+def fn_name(fn):
+    return ".".join([fn.__module__, fn.__qualname__])
+
+
+
+""" CONFIG """
+
+
+class YAMLNamespaceLoader(yaml.loader.SafeLoader):
+
+    @classmethod
+    def init(cls):
+        cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
+
+    def construct_yaml_map(self, node):
+        data = Namespace()
+        yield data
+        value = self.construct_mapping(node)
+        data + value
+
+
+YAMLNamespaceLoader.init()
+
+
+def json_load(file, as_namespace=False):
+    if as_namespace:
+        return json.load(file, object_hook=lambda dic: Namespace(**dic))
+    else:
+        return json.load(file)
+
+
+def yaml_load(file, as_namespace=False):
+    if as_namespace:
+        return yaml.load(file, Loader=YAMLNamespaceLoader)
+    else:
+        return yaml.safe_load(file)
+
+
+def config_load(path, verbose=False):
+    path = normalize_path(path)
+    if not os.path.isfile(path):
+        log.log(logging.WARNING if verbose else logging.DEBUG, "No config file at `%s`, ignoring it.", path)
+        return Namespace()
+
+    _, ext = os.path.splitext(path.lower())
+    loader = json_load if ext == 'json' else yaml_load
+    log.log(logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path)
+    with open(path, 'r') as file:
+        return loader(file, as_namespace=True)
+
+
+""" CACHING """
+
+
 _CACHE_PROP_PREFIX_ = '__cached__'
 
 
@@ -129,7 +241,7 @@ def clear_cache(self, functions=None):
         else [prop for prop in [_cached_property_name(fn) for fn in functions] if prop in cached_properties]
     for prop in properties_to_clear:
         delattr(self, prop)
-    log.debug("Cleared cached properties: %s", properties_to_clear)
+    log.debug("Cleared cached properties: %s.", properties_to_clear)
 
 
 def cache(self, key, fn):
@@ -189,107 +301,7 @@ def lazy_property(prop_fn):
     return decorator
 
 
-def profile(logger=log, log_level=None, duration=True, memory=True):
-    ps = psutil.Process() if memory else None
-
-    def decorator(fn):
-
-        @wraps(fn)
-        def profiler(*args, **kwargs):
-            nonlocal log_level
-            log_level = log_level or (logging.TRACE if hasattr(logging, 'TRACE') else logging.DEBUG)
-            if not logger.isEnabledFor(log_level):
-                return fn(*args, **kwargs)
-
-            before_mem = ps.memory_full_info() if memory else 0
-            start = time.time() if duration else 0
-            ret = fn(*args, **kwargs)
-            stop = time.time() if duration else 0
-            after_mem = ps.memory_full_info() if memory else 0
-            name = fn_name(fn)
-            if duration:
-                logger.log(log_level, "[PROFILING] `%s` executed in %.3fs", name, stop-start)
-            if memory:
-                ret_size = obj_size(ret)
-                if ret_size > 0:
-                    logger.log(log_level, "[PROFILING] `%s` returned object size: %.3f MB", name, to_mb(ret_size))
-                logger.log(log_level, "[PROFILING] `%s` memory change; process: %+.2f MB/%.2f MB, resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB",
-                           name,
-                           to_mb(after_mem.uss-before_mem.uss),
-                           to_mb(after_mem.uss),
-                           to_mb(after_mem.rss-before_mem.rss),
-                           to_mb(after_mem.rss),
-                           to_mb(after_mem.vms-before_mem.vms),
-                           to_mb(after_mem.vms))
-            return ret
-
-        return profiler
-
-    return decorator
-
-
-def fn_name(fn):
-    return ".".join([fn.__module__, fn.__qualname__])
-
-
-def obj_size(o):
-    if o is None:
-        return 0
-    # handling numpy obj size (nbytes property)
-    return o.nbytes if hasattr(o, 'nbytes') else sys.getsizeof(o, -1)
-
-
-def to_mb(size_in_bytes):
-    return size_in_bytes / (1 << 20)
-
-
-def flatten(iterable, flatten_tuple=False, flatten_dict=False):
-    return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
-                                else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
-                                else l.append(r)) or l, iterable, [])
-
-
-class YAMLNamespaceLoader(yaml.loader.SafeLoader):
-
-    @classmethod
-    def init(cls):
-        cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
-
-    def construct_yaml_map(self, node):
-        data = Namespace()
-        yield data
-        value = self.construct_mapping(node)
-        data + value
-
-
-YAMLNamespaceLoader.init()
-
-
-def json_load(file, as_namespace=False):
-    if as_namespace:
-        return json.load(file, object_hook=lambda dic: Namespace(**dic))
-    else:
-        return json.load(file)
-
-
-def yaml_load(file, as_namespace=False):
-    if as_namespace:
-        return yaml.load(file, Loader=YAMLNamespaceLoader)
-    else:
-        return yaml.safe_load(file)
-
-
-def config_load(path, verbose=False):
-    path = normalize_path(path)
-    if not os.path.isfile(path):
-        log.log(logging.WARNING if verbose else logging.DEBUG, "No config file at `%s`, ignoring it.", path)
-        return Namespace()
-
-    _, ext = os.path.splitext(path.lower())
-    loader = json_load if ext == 'json' else yaml_load
-    log.log(logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path)
-    with open(path, 'r') as file:
-        return loader(file, as_namespace=True)
+""" TIME """
 
 
 def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
@@ -321,58 +333,55 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     return datetime.strftime(strf)
 
 
-def str2bool(s):
-    if s.lower() in ('true', 't', 'yes', 'y', 'on', '1'):
-        return True
-    elif s.lower() in ('false', 'f', 'no', 'n', 'off', '0'):
-        return False
-    else:
-        raise ValueError(s+" can't be interpreted as a boolean")
+class Timer:
+
+    @staticmethod
+    def _zero():
+        return 0
+
+    def __init__(self, use_clock=False, enabled=True):
+        self.start = 0
+        self.stop = 0
+        self._time = Timer._zero if not enabled \
+            else time.clock if use_clock \
+            else time.time
+
+    def __enter__(self):
+        self.start = self._time()
+        return self
+
+    def __exit__(self, *args):
+        self.stop = self._time()
+
+    @property
+    def duration(self):
+        if self.stop > 0:
+            return self.stop - self.start
+        return self._time() - self.start
 
 
-def str_def(s, if_none=''):
-    if s is None:
-        return if_none
-    return str(s)
+class InterruptTimer:
+
+    def __init__(self, timeout_secs, message=None, log_level=logging.WARNING):
+
+        def interruption():
+            nonlocal message
+            if message is None:
+                message = "Interrupting main thread after {}s timeout.".format(timeout_secs)
+            log.log(log_level, message)
+            _thread.interrupt_main()
+
+        self.timer = threading.Timer(timeout_secs, interruption)
+
+    def __enter__(self):
+        self.timer.start()
+        return self
+
+    def __exit__(self, *args):
+        self.timer.cancel()
 
 
-def head(s, lines=10):
-    s_lines = s.splitlines() if s else []
-    return '\n'.join(s_lines[:lines])
-
-
-def tail(s, lines=10, from_line=None, include_line=True):
-    if s is None:
-        return None if from_line is None else None, None
-
-    s_lines = s.splitlines()
-    start = -lines
-    if isinstance(from_line, int):
-        start = from_line
-        if not include_line:
-            start += 1
-    elif isinstance(from_line, str):
-        try:
-            start = s_lines.index(from_line)
-            if not include_line:
-                start += 1
-        except ValueError:
-            start = 0
-    last_line = dict(index=len(s_lines) - 1,
-                     line=s_lines[-1] if len(s_lines) > 0 else None)
-    t = '\n'.join(s_lines[start:])
-    return t if from_line is None else (t, last_line)
-
-
-def pip_install(module_or_requirements, is_requirements=False):
-    try:
-        if is_requirements:
-            pip_main(['install', '--no-cache-dir', '-r', module_or_requirements])
-        else:
-            pip_main(['install', '--no-cache-dir', module_or_requirements])
-    except SystemExit as se:
-        log.error("error when trying to install python modules %s", module_or_requirements)
-        log.exception(se)
+""" FILE SYSTEM """
 
 
 def normalize_path(path):
@@ -449,6 +458,9 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kvargs):
     return output
 
 
+""" PROCESS """
+
+
 def system_memory_mb():
     vm = psutil.virtual_memory()
     return Namespace(
@@ -459,3 +471,83 @@ def system_memory_mb():
 
 def system_cores():
     return psutil.cpu_count()
+
+
+class MemoryMonitor:
+
+    def __init__(self, process=psutil.Process(), enabled=True):
+        self.ps = process if enabled else None
+        self.before_mem = None
+        self.after_mem = None
+
+    def __enter__(self):
+        if self.ps is not None:
+            self.before_mem = self.ps.memory_full_info()
+        return self
+
+    def __exit__(self, *args):
+        if self.ps is not None:
+            self.after_mem = self.ps.memory_full_info()
+
+    def usage(self):
+        if self.ps is not None:
+            mem = self.after_mem if self.after_mem is not None else self.ps.memory_full_info()
+            return Namespace(
+                process_diff=to_mb(mem.uss-self.before_mem.uss),
+                process=to_mb(mem.uss),
+                resident_diff=to_mb(mem.rss-self.before_mem.rss),
+                resident=to_mb(mem.rss),
+                virtual_diff=to_mb(mem.vms-self.before_mem.vms),
+                virtual=to_mb(mem.vms)
+            )
+
+
+def obj_size(o):
+    if o is None:
+        return 0
+    # handling numpy obj size (nbytes property)
+    return o.nbytes if hasattr(o, 'nbytes') else sys.getsizeof(o, -1)
+
+
+def profile(logger=log, log_level=None, duration=True, memory=True):
+    def decorator(fn):
+
+        @wraps(fn)
+        def profiler(*args, **kwargs):
+            nonlocal log_level
+            log_level = log_level or (logging.TRACE if hasattr(logging, 'TRACE') else logging.DEBUG)
+            if not logger.isEnabledFor(log_level):
+                return fn(*args, **kwargs)
+
+            with Timer(enabled=duration) as t, MemoryMonitor(enabled=memory) as m:
+                ret = fn(*args, **kwargs)
+            name = fn_name(fn)
+            if duration:
+                logger.log(log_level, "[PROFILING] `%s` executed in %.3fs.", name, t.duration)
+            if memory:
+                ret_size = obj_size(ret)
+                if ret_size > 0:
+                    logger.log(log_level, "[PROFILING] `%s` returned object size: %.3f MB.", name, to_mb(ret_size))
+                mem = m.usage()
+                logger.log(log_level, "[PROFILING] `%s` memory change; process: %+.2f MB/%.2f MB, resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB.",
+                           name, mem.process_diff, mem.process, mem.resident_diff, mem.resident, mem.virtual_diff, mem.virtual)
+            return ret
+
+        return profiler
+
+    return decorator
+
+
+""" MODULES """
+
+
+def pip_install(module_or_requirements, is_requirements=False):
+    try:
+        if is_requirements:
+            pip_main(['install', '--no-cache-dir', '-r', module_or_requirements])
+        else:
+            pip_main(['install', '--no-cache-dir', module_or_requirements])
+    except SystemExit as se:
+        log.error("Error when trying to install python modules %s.", module_or_requirements)
+        log.exception(se)
+

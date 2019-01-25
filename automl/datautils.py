@@ -14,7 +14,7 @@ import arff
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
-from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, roc_auc_score  # just aliasing
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score  # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
 from .utils import profile, path_from_split, split_path
@@ -121,7 +121,9 @@ def is_data_frame(df):
 
 
 def to_data_frame(obj, columns=None):
-    if isinstance(obj, dict):
+    if obj is None:
+        return pd.DataFrame()
+    elif isinstance(obj, dict):
         return pd.DataFrame.from_dict(obj, columns=columns, orient='columns' if columns is None else 'index')
     elif isinstance(obj, (list, np.ndarray)):
         return pd.DataFrame.from_records(obj, columns=columns)
@@ -155,10 +157,11 @@ class Encoder(TransformerMixin):
         self.missing_values = set(missing_values).union([None]) if missing_values else {None}
         self.missing_replaced_by = missing_replaced_by
         self.missing_encoded_value = None
-        self.encoded_type = int if target else encoded_type
         self.str_encoder = None
         self.classes = None
         self._enc_classes_ = None
+        # self.encoded_type = int if target else encoded_type
+        self.encoded_type = encoded_type
         if type == 'label':
             self.delegate = LabelEncoder() if target else OrdinalEncoder()
         elif type == 'one-hot':
@@ -166,6 +169,7 @@ class Encoder(TransformerMixin):
             self.delegate = LabelBinarizer() if target else OneHotEncoder(sparse=False, handle_unknown='ignore')
         elif type == 'no-op':
             self.delegate = None
+            # self.encoded_type = encoded_type
         else:
             raise ValueError("Encoder `type` should be one of {}.".format(['label', 'one-hot']))
 

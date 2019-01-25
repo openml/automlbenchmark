@@ -37,6 +37,7 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
+parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 # group = parser.add_mutually_exclusive_group()
 # group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
 #                    help="Set to true [default] to save/add scores in output directory")
@@ -55,7 +56,8 @@ log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
 os.makedirs(log_dir, exist_ok=True)
 now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = datetime_iso(time=False, no_sep=True)
-# logging.TRACE = logging.INFO
+if args.profiling:
+    logging.TRACE = logging.INFO
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
                     root_level='DEBUG', console_level='INFO', print_to_log=True)

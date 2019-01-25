@@ -31,6 +31,9 @@ H2OAutoML:
 hyperoptsklearn:
   version: '0.0.3'
   project: http://hyperopt.github.io/hyperopt-sklearn/
+  params:
+    max_evals: 1000
+#    verbose: True
 
 oboe:
   version: 'latest'

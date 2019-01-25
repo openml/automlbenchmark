@@ -33,7 +33,7 @@ class Job:
             log.debug("Job %s returned: %s", self.name, result)
             return result, duration
         except Exception as e:
-            log.error("Job `%s` failed with error %s.", self.name, str(e))
+            log.error("Job `%s` failed with error: %s", self.name, str(e))
             log.exception(e)
             return None, -1
 
@@ -41,7 +41,7 @@ class Job:
         try:
             self._on_done()
         except Exception as e:
-            log.error("Job `%s` completion failed with error %s.", self.name, str(e))
+            log.error("Job `%s` completion failed with error: %s", self.name, str(e))
             log.exception(e)
 
     def _run(self):

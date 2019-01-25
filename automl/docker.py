@@ -150,7 +150,7 @@ class DockerBenchmark(Benchmark):
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
-RUN apt-get install -y apt-utils dialog
+RUN apt-get install -y apt-utils dialog locales
 RUN apt-get install -y curl wget unzip git
 RUN apt-get install -y python3 python3-pip python3-venv
 RUN pip3 install --upgrade pip
@@ -161,6 +161,13 @@ ENV PIP /venvs/bench/bin/pip3
 ENV PY /venvs/bench/bin/python3 -W ignore
 ENV SPIP pip3
 ENV SPY python3
+
+# Enforce UTF-8 encoding
+ENV PYTHONUTF8 1
+ENV PYTHONIOENCODING utf-8
+# RUN locale-gen en-US.UTF-8
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
 RUN $SPY -m venv /venvs/bench
 RUN $PIP install --upgrade pip=={pip_version}

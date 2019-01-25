@@ -17,7 +17,7 @@ import os
 from .job import Job, SimpleJobRunner, ParallelJobRunner
 from .openml import Openml
 from .resources import get as rget, config as rconfig
-from .results import Scoreboard, TaskResult
+from .results import NoResult, Scoreboard, TaskResult
 from .utils import datetime_iso, flatten, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
 
 
@@ -218,6 +218,7 @@ class TaskConfig:
                  input_dir, output_dir):
         self.framework = None
         self.framework_params = None
+        self.type = None
         self.name = name
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
@@ -302,13 +303,19 @@ class BenchmarkTask:
         results = TaskResult(task_name=self.task.name, fold=self.fold)
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task)
+        task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         task_config.estimate_system_params()
-        log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))
-        framework.run(self._dataset, task_config)
-        self._dataset.release()
+        try:
+            log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))
+            framework.run(self._dataset, task_config)
+        except Exception as e:
+            log.exception(e)
+            return results.compute_scores(framework_name, task_config.metrics, NoResult(info='Error: '+str(e)))
+        finally:
+            self._dataset.release()
         return results.compute_scores(framework_name, task_config.metrics)
 
 

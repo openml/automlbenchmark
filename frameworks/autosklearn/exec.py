@@ -1,8 +1,8 @@
 import logging
 import warnings
 
-from autosklearn.classification import AutoSklearnClassifier
-import autosklearn.metrics
+from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
+import autosklearn.metrics as metrics
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -16,21 +16,27 @@ def run(dataset: Dataset, config: TaskConfig):
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
+    is_classification = config.type == 'classification'
+
     # Mapping of benchmark metrics to autosklearn metrics
     metrics_mapping = dict(
-        acc=autosklearn.metrics.accuracy,
-        auc=autosklearn.metrics.roc_auc,
-        logloss=autosklearn.metrics.log_loss
+        acc=metrics.accuracy,
+        auc=metrics.roc_auc,
+        f1=metrics.f1,
+        logloss=metrics.log_loss,
+        mae=metrics.mean_absolute_error,
+        mse=metrics.mean_squared_error,
+        r2=metrics.r2
     )
-    performance_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
-    if performance_metric is None:
+    perf_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    if perf_metric is None:
         # TODO: figure out if we are going to blindly pass metrics through, or if we use a strict mapping
-        log.warning("Performance metric {} not supported.".format(config.metric))
+        log.warning("Performance metric %s not supported.", config.metric)
 
     # Set resources based on datasize
-    log.warning("Ignoring n_cores.")
-    log.info("Running auto-sklearn with a maximum time of {}s on {} cores with {}MB, optimizing {}."
-          .format(config.max_runtime_seconds, config.cores, config.max_mem_size_mb, performance_metric))
+    log.warning("Ignoring cores constraint of %s cores.", config.cores)
+    log.info("Running auto-sklearn with a maximum time of %ss on %s cores with %sMB, optimizing %s.",
+             config.max_runtime_seconds, 'all', config.max_mem_size_mb, perf_metric)
 
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
@@ -39,15 +45,18 @@ def run(dataset: Dataset, config: TaskConfig):
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
-    auto_sklearn = AutoSklearnClassifier(time_left_for_this_task=config.max_runtime_seconds, ml_memory_limit=config.max_mem_size_mb, **config.framework_params)
-    auto_sklearn.fit(X_train, y_train, metric=performance_metric, feat_type=predictors_type)
+    estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
+    auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
+                             ml_memory_limit=config.max_mem_size_mb,
+                             **config.framework_params)
+    auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
     X_test= dataset.test.X_enc
     y_test = dataset.test.y_enc
     class_predictions = auto_sklearn.predict(X_test)
-    class_probabilities = auto_sklearn.predict_proba(X_test)
+    class_probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

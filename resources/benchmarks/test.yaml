@@ -5,12 +5,18 @@
 - name: __dummy-task
   enabled: false  # actual default is `true` of course...
   openml_task_id: 0
-  metric: # the first metric in the task list will be used for the main result as a comparison metric, the other ones are optional and purely informative
-    - acc # accuracy
-    - logloss # log loss
-    - mse # mean squared error
+  metric: # the first metric in the task list will be optimized against used for the main result, the other ones are optional and purely informative. Only the metrics annoted with (*) can be used a performance metric.
+    - # classification
+    - acc # (*) accuracy
+    - auc # (*) array under curve
+    - logloss # (*) log loss
+    - f1  # F1 score
+    - # regression
+    - mae  # (*) mean absolute error
+    - mse # (*) mean squared error
     - rmse  # root mean squared error
-    - auc # array under curve
+    - rmsle  # root mean squared log error
+    - r2  # R^2 score
   folds: 1
   max_runtime_seconds: 600
   cores: 1
@@ -32,3 +38,14 @@
   folds: 2
   cores: 2
   max_runtime_seconds: 60
+
+- name: cholesterol
+  openml_task_id: 2295
+  metric:
+    - mae
+    - mse
+    - rmse
+    - r2
+  folds: 2
+  cores: 2
+  max_runtime_seconds: 10

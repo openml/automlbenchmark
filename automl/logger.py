@@ -1,8 +1,8 @@
 """
 **logger** module just exposes a ``setup`` function to quickly configure the python logger.
 """
-import builtins
 import datetime as dt
+import io
 import logging
 import sys
 
@@ -61,29 +61,41 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
 
     if log_file:
         # create file handler
-        file = logging.FileHandler(log_file, mode='a')
-        file.setLevel(app_level)
-        file.setFormatter(file_formatter)
-        app_logger.addHandler(file)
-        frameworks_logger.addHandler(file)
+        app_handler = logging.FileHandler(log_file, mode='a')
+        app_handler.setLevel(app_level)
+        app_handler.setFormatter(file_formatter)
+        app_logger.addHandler(app_handler)
+        frameworks_logger.addHandler(app_handler)
 
     if root_file:
-        file = logging.FileHandler(root_file, mode='a')
-        file.setLevel(root_level)
-        file.setFormatter(file_formatter)
-        root.addHandler(file)
+        root_handler = logging.FileHandler(root_file, mode='a')
+        root_handler.setLevel(root_level)
+        root_handler.setFormatter(file_formatter)
+        root.addHandler(root_handler)
 
     if print_to_log:
+        import builtins
         nl = '\n'
         print_logger = logging.getLogger(app_logger.name + '.print')
-        buffer = []
+        buffer = dict(out=None, err=None)
 
+        ori_print = builtins.print
         def new_print(self, *args, sep=' ', end=nl, file=None):
+            if file not in [None, sys.stdout, sys.stderr]:
+                return ori_print(self, *args, sep=sep, end=end, file=file)
+
             nonlocal buffer
-            msg = sep.join([self, *args]) #+ end
-            buffer.append(msg)
+            buf = buffer['err'] if file is sys.stderr else buffer['out']
+            buf = buf if buf is not None else io.StringIO()
+            buf.write(sep.join([self, *args]))  # end added by logger
             if end == nl:
-                print_logger.info(''.join(buffer))
-                buffer = []
+                with buf:
+                    if file is sys.stderr:
+                        print_logger.error(buf.getvalue())
+                        buffer['err'] = None
+                        # ori_print(traceback.format_stack())
+                    else:
+                        print_logger.info(buf.getvalue())
+                        buffer['out'] = None
 
         builtins.print = new_print

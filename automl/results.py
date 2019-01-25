@@ -11,15 +11,19 @@ import re
 from numpy import NaN, sort
 
 from .data import Dataset, Feature
-from .datautils import accuracy_score, log_loss, mean_squared_error, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
+from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig
 from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
 
 log = logging.getLogger(__name__)
 
+
+class NoResultError(Exception):
+    pass
+
+
 # TODO: reconsider organisation of output files:
 #   predictions: add framework version to name, timestamp? group into subdirs?
-
 
 class Scoreboard:
 
@@ -64,10 +68,10 @@ class Scoreboard:
     # @profile(logger=log)
     def load_df(file):
         name = file if isinstance(file, str) else type(file)
-        log.debug("Loading scores from %s.", name)
+        log.debug("Loading scores from `%s`.", name)
         exists = isinstance(file, io.IOBase) or os.path.isfile(file)
         df = read_csv(file) if exists else to_data_frame({})
-        log.info("Loaded scores from %s.", name)
+        log.info("Loaded scores from `%s`.", name)
         return df
 
     @staticmethod
@@ -82,13 +86,13 @@ class Scoreboard:
             backup_file(path)
         new_file = not exists or not append or new_format
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
-        log.debug("Saving scores to %s.", path)
+        log.debug("Saving scores to `%s`.", path)
         write_csv(data_frame,
                   path=path,
                   header=new_file,
                   index=not is_default_index,
                   append=not new_file)
-        log.info("Scores saved to %s.", path)
+        log.info("Scores saved to `%s`.", path)
 
     def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
         self.framework_name = framework_name
@@ -107,7 +111,7 @@ class Scoreboard:
             # avoid dtype conversions during reindexing on empty frame
             return df
         # fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'utc'] # TODO: enable this?
-        fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc']
+        fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
@@ -154,7 +158,7 @@ class TaskResult:
     @staticmethod
     # @profile(logger=log)
     def load_predictions(predictions_file):
-        log.info("Loading predictions from %s", predictions_file)
+        log.info("Loading predictions from `%s`.", predictions_file)
         if os.path.isfile(predictions_file):
             df = read_csv(predictions_file)
             log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
@@ -163,10 +167,8 @@ class TaskResult:
             else:
                 return RegressionResult(df)
         else:
-            log.warning("Predictions file {file} is missing: framework either failed or could not produce any prediction.".format(
-                file=predictions_file,
-            ))
-            return NoResult()
+            log.warning("Predictions file `%s` is missing: framework either failed or could not produce any prediction.", predictions_file)
+            return NoResult("Missing predictions.")
 
     @staticmethod
     # @profile(logger=log)
@@ -185,7 +187,7 @@ class TaskResult:
         :param classes_are_encoded:
         :return: None
         """
-        log.debug("Saving predictions to %s", predictions_file)
+        log.debug("Saving predictions to `%s`.", predictions_file)
         prob_cols = class_probabilities_labels if class_probabilities_labels else dataset.target.label_encoder.classes
         df = to_data_frame(class_probabilities, columns=prob_cols)
         if class_probabilities_labels:
@@ -205,7 +207,7 @@ class TaskResult:
         log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(predictions_file)
         write_csv(df, path=predictions_file, index=False)
-        log.info("Predictions saved to %s", predictions_file)
+        log.info("Predictions saved to `%s`.", predictions_file)
 
     @classmethod
     def score_from_predictions_file(cls, path):
@@ -250,6 +252,7 @@ class TaskResult:
             score = result.evaluate(metric)
             scores[metric] = score
         scores.result = scores[metrics[0]]
+        scores.info = result.info
         log.info("Metric scores: %s", scores)
         return scores
 
@@ -263,61 +266,36 @@ class TaskResult:
 
 class Result:
 
-    def __init__(self, predictions_df):
+    def __init__(self, predictions_df, info=None):
         self.df = predictions_df
+        self.info = info
         self.truth = self.df.iloc[:, -1].values if self.df is not None else None
         self.predictions = self.df.iloc[:, -2].values if self.df is not None else None
         self.target = None
         self.type = None
-        self.metrics = ['acc', 'logloss', 'mse', 'rmse', 'auc']
-
-    def acc(self):
-        return float(accuracy_score(self.truth, self.predictions))
-
-    def logloss(self):
-        return float(log_loss(self.truth, self.predictions))
-
-    def mse(self):
-        return float(mean_squared_error(self.truth, self.predictions))
-
-    def rmse(self):
-        return math.sqrt(self.mse())
-
-    def auc(self):
-        return NaN
 
     def evaluate(self, metric):
         if hasattr(self, metric):
             return getattr(self, metric)()
-        raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
+        # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
+        log.warning("Metric %s is not supported for %s!", metric, type=self.type)
+        return NaN
 
 
 class NoResult(Result):
 
-    def __init__(self):
-        super().__init__(None)
+    def __init__(self, info=None):
+        super().__init__(None, info)
         self.missing_result = 'NA'
 
-    def acc(self):
-        return self.missing_result
-
-    def logloss(self):
-        return self.missing_result
-
-    def mse(self):
-        return self.missing_result
-
-    def rmse(self):
-        return self.missing_result
-
-    def auc(self):
+    def evaluate(self, metric):
         return self.missing_result
 
 
 class ClassificationResult(Result):
 
-    def __init__(self, predictions_df):
-        super().__init__(predictions_df)
+    def __init__(self, predictions_df, info=None):
+        super().__init__(predictions_df, info)
         self.classes = self.df.columns[:-2].values.astype(str, copy=False)
         self.probabilities = self.df.iloc[:, :-2].values.astype(float, copy=False)
         self.target = Feature(0, 'class', 'categorical', self.classes, is_target=True)
@@ -325,10 +303,21 @@ class ClassificationResult(Result):
         self.truth = self._autoencode(self.truth.astype(str, copy=False))
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))
 
+    def acc(self):
+        return float(accuracy_score(self.truth, self.predictions))
+
     def auc(self):
         if self.type != 'binomial':
-            raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
+            # raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
+            log.warning("AUC metric is only supported for binary classification: %s.", self.classes)
+            return NaN
         return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
+
+    def cm(self):
+        return confusion_matrix(self.truth, self.predictions)
+
+    def f1(self):
+        return float(f1_score(self.truth, self.predictions))
 
     def logloss(self):
         # truth_enc = self.target.label_binarizer.transform(self.truth)
@@ -341,11 +330,29 @@ class ClassificationResult(Result):
 
 class RegressionResult(Result):
 
-    def __init__(self, predictions_df):
-        super().__init__(predictions_df)
+    def __init__(self, predictions_df, info=None):
+        super().__init__(predictions_df, info)
         self.truth = self.truth.astype(float, copy=False)
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = 'regression'
+
+    def mae(self):
+        return float(mean_absolute_error(self.truth, self.predictions))
+
+    def mse(self):
+        return float(mean_squared_error(self.truth, self.predictions))
+
+    def msle(self):
+        return float(mean_squared_log_error(self.truth, self.predictions))
+
+    def rmse(self):
+        return math.sqrt(self.mse())
+
+    def rmsle(self):
+        return math.sqrt(self.msle())
+
+    def r2(self):
+        return float(r2_score(self.truth, self.predictions))
 
 
 _encode_predictions_and_truth_ = False
