@@ -111,7 +111,7 @@ class Benchmark:
         if self.parallel_jobs == 1:
             return SimpleJobRunner(jobs).start()
         else:
-            return ParallelJobRunner(jobs, self.parallel_jobs, delay_secs=5).start()
+            return ParallelJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
 
     def _benchmark_jobs(self):
         jobs = []

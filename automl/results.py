@@ -320,7 +320,7 @@ class ClassificationResult(Result):
         return float(f1_score(self.truth, self.predictions))
 
     def logloss(self):
-        # truth_enc = self.target.label_binarizer.transform(self.truth)
+        # truth_enc = self.target.one_hot_encoder.transform(self.truth)
         return float(log_loss(self.truth, self.probabilities))
 
     def _autoencode(self, vec):

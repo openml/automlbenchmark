@@ -33,7 +33,7 @@ hyperoptsklearn:
   project: http://hyperopt.github.io/hyperopt-sklearn/
   params:
     max_evals: 1000
-#    verbose: True
+#    verbose: true
 
 oboe:
   version: 'latest'

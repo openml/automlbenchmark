@@ -33,8 +33,8 @@
 - name: kc2
   openml_task_id: 3913
   metric:
-      - acc
-      - auc
+    - acc
+    - auc
   folds: 2
   cores: 2
   max_runtime_seconds: 60

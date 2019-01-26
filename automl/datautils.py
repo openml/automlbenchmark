@@ -138,7 +138,7 @@ class Encoder(TransformerMixin):
     Should never have written this, but does the job currently. However, should think about simpler single-purpose approach.
     """
 
-    def __init__(self, type='label', target=True, encoded_type=float,
+    def __init__(self, type='label', target=True, encoded_type=int,
                  missing_policy='ignore', missing_values=None, missing_replaced_by=''):
         """
         :param type:

@@ -22,18 +22,18 @@ def run(dataset: Dataset, config: TaskConfig):
 
     default = lambda: 0
     metrics_to_loss_mapping = dict(
-        acc=default,  # lambda y, pred: 1.0 - accuracy_score(y, pred)
-        auc=lambda y, pred: 1.0 - roc_auc_score(y, pred),
-        f1=lambda y, pred: 1.0 - f1_score(y, pred),
-        logloss=log_loss,
-        mae=mean_absolute_error,
-        mse=mean_squared_error,
-        msle=mean_squared_log_error,
-        r2=default,  # lambda y, pred: 1.0 - r2_score(y, pred)
+        acc=(default, False), # lambda y, pred: 1.0 - accuracy_score(y, pred)
+        auc=(lambda y, pred: 1.0 - roc_auc_score(y, pred), False),
+        f1=(lambda y, pred: 1.0 - f1_score(y, pred), False),
+        # logloss=(log_loss, True),
+        mae=(mean_absolute_error, False),
+        mse=(mean_squared_error, False),
+        msle=(mean_squared_log_error, False),
+        r2=(default, False), # lambda y, pred: 1.0 - r2_score(y, pred)
     )
-    loss_fn = metrics_to_loss_mapping[config.metric] if config.metric in metrics_to_loss_mapping else None
+    loss_fn, continuous_loss_fn = metrics_to_loss_mapping[config.metric] if config.metric in metrics_to_loss_mapping else (None, False)
     if loss_fn is None:
-        log.warning("Performance metric %s not supported: defaulting to $s.",
+        log.warning("Performance metric %s not supported: defaulting to %s.",
                     config.metric, 'accuracy' if is_classification else 'r2')
     if loss_fn is default:
         loss_fn = None
@@ -56,6 +56,7 @@ def run(dataset: Dataset, config: TaskConfig):
                                   regressor=regressor,
                                   algo=tpe.suggest,
                                   loss_fn=loss_fn,
+                                  continuous_loss_fn=continuous_loss_fn,
                                   trial_timeout=config.max_runtime_seconds,
                                   **config.framework_params)
 
@@ -63,7 +64,7 @@ def run(dataset: Dataset, config: TaskConfig):
         estimator.fit(X_train, y_train)
 
     class_predictions = estimator.predict(X_test)
-    class_probabilities = Encoder('one-hot', target=False).fit_transform(class_predictions) if is_classification else None
+    class_probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(class_predictions) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

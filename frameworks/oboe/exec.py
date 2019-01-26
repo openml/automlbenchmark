@@ -28,7 +28,7 @@ def run(dataset: Dataset, config: TaskConfig):
                          **config.framework_params)
     automl.fit(X_train, y_train)
     class_predictions = automl.predict(X_test).reshape(len(X_test))
-    class_probabilities = Encoder('one-hot', target=False).fit_transform(class_predictions)
+    class_probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(class_predictions)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

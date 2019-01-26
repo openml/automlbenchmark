@@ -8,8 +8,7 @@
 4. unit tests
 
 ### Features
-1. offer the possibility to pass hyper-parameters to frameworks: partially done.
-1. support regression tasks: currently only classification ones are supported. 
+1. support regression tasks: done for autosklearn, H2OAutoML, hyperoptsklearn, TPOT
 1. meta-benchmark? benchmark a subset of configured frameworks:\
 `runbenchmark.py frameworks_list.yaml test`.
 2. support list of sub-tasks in a benchmark:\
@@ -19,6 +18,9 @@
 4. progress bar?? fancy useless stuff.
 
 ### Bugs & Improvements
+1. properly kill job threads on KeyInterruptError
+1. review AWS termination logic: when is it stopped, when terminated
+1. timeout handle for hypersklearn: interruption works but sometimes blocks current process later.
 1. Fix input file transfer to EC2 instances: current logic can cause issues when running multiple benchmarks at the same time if using the same S3 bucket.
 1. AWS: reuse instances for faster startup, at least during a single benchmark, we could limit #instances = #parallel jobs.
 2. timeouts (already in place for AWS, but could be implemented for each job individually).
