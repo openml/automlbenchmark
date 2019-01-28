@@ -38,6 +38,8 @@ hyperoptsklearn:
 oboe:
   version: 'latest'
   project: https://github.com/udellgroup/oboe
+  params:
+    verbose: true
 
 RandomForest:
   version: '0.19.2'
@@ -46,6 +48,7 @@ RandomForest:
     image: rf
   params:
     n_estimators: 2000
+#    verbose: true
 
 RandomForest_R:
   version: '0.10.1'

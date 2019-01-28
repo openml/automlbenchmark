@@ -12,6 +12,10 @@ log = logging.getLogger(__name__)
 def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** AutoWEKA ****\n")
 
+    is_classification = config.type == 'classification'
+    if not is_classification:
+        raise ValueError('Regression is not supported.')
+
     # Mapping of benchmark metrics to Weka metrics
     metrics_mapping = dict(
         acc='errorRate',

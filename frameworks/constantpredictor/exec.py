@@ -17,8 +17,8 @@ def run(dataset: Dataset, config: TaskConfig):
     predictor = DummyClassifier(strategy='prior') if is_classification else DummyRegressor(strategy='median')
 
     predictor.fit(dataset.train.X, dataset.train.y)
-    class_probabilities = predictor.predict_proba(dataset.test.X) if is_classification else None
     class_predictions = predictor.predict(dataset.test.X)
+    class_probabilities = predictor.predict_proba(dataset.test.X) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

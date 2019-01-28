@@ -12,6 +12,10 @@ def run(dataset: Dataset, config: TaskConfig):
     #TODO: use rpy2 instead? not necessary here though as the call is very simple
     log.info("\n**** Random Forest (R) ****\n")
 
+    is_classification = config.type == 'classification'
+    if not is_classification:
+        raise ValueError('Regression is not supported.')
+
     here = dir_of(__file__)
     output = run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', '{output}', {cores})" """.format(
         script=os.path.join(here, 'exec.R'),
