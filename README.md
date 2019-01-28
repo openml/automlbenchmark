@@ -25,7 +25,7 @@ Future plans:
 
 ## Installation
 To run the benchmarks, you will need:
-* Python 3.5+ (TODO: verify work necessary to support Py2 and older versions of Py3).
+* Python 3.5+.
 * PIP3: ensure you have a recent version, this has been tested with `pip3 18.1`: if necessary, upgrade your pip using `pip3 install --upgrade pip==18.1`.
 * the Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * the [OpenML](https://github.com/openml/openml-python). (The Python requirements currently fails installing if `openml` is included in `requirements.txt` when `numpy` is not already installed).

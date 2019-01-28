@@ -173,8 +173,8 @@ class TaskResult:
     @staticmethod
     # @profile(logger=log)
     def save_predictions(dataset: Dataset, predictions_file: str,
-                         class_probabilities=None, class_predictions=None, class_truth=None,
-                         class_probabilities_labels=None,
+                         class_predictions=None, class_truth=None,
+                         class_probabilities=None, class_probabilities_labels=None,
                          classes_are_encoded=False):
         """ Save class probabilities and predicted labels to file in csv format.
 
@@ -359,10 +359,10 @@ _encode_predictions_and_truth_ = False
 
 
 def save_predictions_to_file(dataset: Dataset, output_file: str,
-                             class_probabilities=None, class_predictions=None, class_truth=None,
-                             class_probabilities_labels=None,
+                             class_predictions=None, class_truth=None,
+                             class_probabilities=None, class_probabilities_labels=None,
                              classes_are_encoded=False):
     TaskResult.save_predictions(dataset, predictions_file=output_file,
-                                class_probabilities=class_probabilities, class_predictions=class_predictions, class_truth=class_truth,
-                                class_probabilities_labels=class_probabilities_labels,
+                                class_predictions=class_predictions, class_truth=class_truth,
+                                class_probabilities=class_probabilities, class_probabilities_labels=class_probabilities_labels,
                                 classes_are_encoded=classes_are_encoded)

@@ -1,6 +1,6 @@
 import logging
 
-from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyClassifier, DummyRegressor
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** Constant predictor (sklearn dummy) ****\n")
 
-    classifier = DummyClassifier(strategy='prior')
-    classifier.fit(dataset.train.X, dataset.train.y)
-    class_probabilities = classifier.predict_proba(dataset.test.X)
-    class_predictions = classifier.predict(dataset.test.X)
+    is_classification = config.type == 'classification'
+    predictor = DummyClassifier(strategy='prior') if is_classification else DummyRegressor(strategy='median')
+
+    predictor.fit(dataset.train.X, dataset.train.y)
+    class_probabilities = predictor.predict_proba(dataset.test.X) if is_classification else None
+    class_predictions = predictor.predict(dataset.test.X)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

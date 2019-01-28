@@ -40,6 +40,7 @@
   max_runtime_seconds: 60
 
 - name: cholesterol
+  enabled: false
   openml_task_id: 2295
   metric:
     - mae
