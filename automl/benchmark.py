@@ -311,11 +311,14 @@ class BenchmarkTask:
         try:
             log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))
             framework.run(self._dataset, task_config)
+            self._dataset.release()
+            return results.compute_scores(framework_name, task_config.metrics)
         except Exception as e:
             log.exception(e)
-            return results.compute_scores(framework_name, task_config.metrics, NoResult(info='Error: '+str(e)))
+            msg = 'Error: '+str(e)
+            max_len = rconfig().results.error_max_length
+            msg = msg if len(msg) <= max_len else (msg[:max_len - 3] + '...')
+            return results.compute_scores(framework_name, task_config.metrics, NoResult(info=msg))
         finally:
             self._dataset.release()
-        return results.compute_scores(framework_name, task_config.metrics)
-
 

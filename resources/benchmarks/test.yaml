@@ -49,4 +49,4 @@
     - r2
   folds: 2
   cores: 2
-  max_runtime_seconds: 10
+  max_runtime_seconds: 60
