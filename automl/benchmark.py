@@ -174,7 +174,7 @@ class Benchmark:
         if save_scores:
             self._save(board)
 
-        log.info("Summing up scores for current run:\n%s", board.as_data_frame())
+        log.info("Summing up scores for current run:\n%s", board.as_data_frame().dropna(how='all', axis='columns').to_string())
         return board.as_data_frame()
 
     def _save(self, board):

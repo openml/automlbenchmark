@@ -437,7 +437,7 @@ def run_cmd(cmd, return_output=True, *args, **kvargs):
                                  + flatten(kvargs.items(), flatten_tuple=True) if kvargs is not None else []
                            ))
     full_cmd = ' '.join([cmd]+cmd_args)
-    log.info("Running cmd `%s`.", full_cmd)
+    log.info("Running cmd `%s`", full_cmd)
     with os.popen(full_cmd) as subp:
         if return_output:
             output = subp.read()

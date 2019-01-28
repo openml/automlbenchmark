@@ -32,6 +32,7 @@ class Resources:
         return normalized
 
     def __init__(self, config: Namespace):
+        self._config = config
         self._common_dirs = dict(
             input=normalize_path(config.input_dir),
             output=normalize_path(config.output_dir),

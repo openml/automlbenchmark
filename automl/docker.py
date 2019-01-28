@@ -10,9 +10,9 @@ import re
 
 from .benchmark import Benchmark
 from .job import Job
-from .resources import config as rconfig
+from .resources import config as rconfig, get as rget
 from .results import Scoreboard
-from .utils import run_cmd
+from .utils import run_cmd, normalize_path
 
 
 log = logging.getLogger(__name__)
@@ -104,9 +104,13 @@ class DockerBenchmark(Benchmark):
     def _start_docker(self, script_params=""):
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
-        cmd = "docker run -v {input}:/input -v {output}:/output --rm {image} {params} -i /input -o /output -s skip".format(
+        local_user_dir = rconfig().user_dir
+        docker_user_dir = normalize_path(rget()._config.user_dir.replace('~', '/root'))
+        cmd = "docker run -v {input}:/input -v {output}:/output -v {user_local}:{user_docker} --rm {image} {params} -i /input -o /output -s skip".format(
             input=in_dir,
             output=out_dir,
+            user_local=local_user_dir,
+            user_docker=docker_user_dir,
             image=self._docker_image_name,
             params=script_params
         )
@@ -175,6 +179,7 @@ RUN $PIP install --upgrade pip=={pip_version}
 WORKDIR /bench
 VOLUME /input
 VOLUME /output
+RUN mkdir -p {user_dir}
 
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 ADD . /bench/
@@ -191,6 +196,7 @@ CMD ["{framework}", "test"]
 """.format(custom_commands=custom_commands,
            framework=self.framework_name,
            script=rconfig().script,
+           user_dir=rget()._config.user_dir,
            pip_version=rconfig().versions.pip)
 
         with open(self._docker_script, 'w') as file:

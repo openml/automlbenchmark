@@ -14,7 +14,7 @@ __dummy_framework_with_defaults:
     tag:  # defaults to `framework version`
 
 constantpredictor:
-  version: '0.0.0'
+  version: 'latest'
 
 autosklearn:
   version: '0.4.2'
