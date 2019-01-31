@@ -54,23 +54,23 @@ def run(dataset: Dataset, config: TaskConfig):
     # if target values are not sorted alphabetically in the ARFF file, then class probabilities are returned in the original order
     # interestingly, other frameworks seem to always sort the target values first
     # that's why we need to specify the probabilities labels here: sorting+formatting is done in saving function
-    class_probabilities_labels = dataset.target.values
+    probabilities_labels = dataset.target.values
     with open(weka_file, 'r') as weka_file:
-        class_probabilities = []
-        class_predictions = []
-        class_truth = []
+        probabilities = []
+        predictions = []
+        truth = []
         for line in weka_file.readlines()[1:-1]:
             inst, actual, predicted, error, *distribution = line.split(',')
             pred_probabilities = [pred_probability.replace('*', '').replace('\n', '') for pred_probability in distribution]
-            _, pred_class = predicted.split(':')
+            _, pred = predicted.split(':')
             _, truth = actual.split(':')
-            class_probabilities.append(pred_probabilities)
-            class_predictions.append(pred_class)
-            class_truth.append(truth)
+            probabilities.append(pred_probabilities)
+            predictions.append(pred)
+            truth.append(truth)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
-                             class_probabilities=class_probabilities,
-                             class_predictions=class_predictions,
-                             class_truth=class_truth,
-                             class_probabilities_labels=class_probabilities_labels)
+                             probabilities=probabilities,
+                             predictions=predictions,
+                             truth=truth,
+                             probabilities_labels=probabilities_labels)

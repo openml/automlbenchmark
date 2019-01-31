@@ -8,6 +8,6 @@ if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt update
     SUDO apt-get install -y r-base r-base-dev
 fi
-#PIP install --no-cache-dir -r $HERE/py_requirements.txt
+#PIP install --no-cache-dir -r $HERE/requirements.txt
 
 SUDO Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr", "mlrCPO", "ranger", "farff"), repos="https://cloud.r-project.org/")'

@@ -14,7 +14,7 @@ from importlib import import_module, invalidate_caches
 import logging
 import os
 
-from .job import Job, SimpleJobRunner, ParallelJobRunner
+from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import NoResult, Scoreboard, TaskResult
@@ -55,11 +55,12 @@ class Benchmark:
         self.parallel_jobs = parallel_jobs
         self.uid = "{}-{}-{}".format(framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)).lower()
 
+        self._validate()
         self.framework_module = import_module(self.framework_def.module)
 
     def _validate(self):
         if self.parallel_jobs > 1:
-            log.warning("Parallelization is not supported in local mode: ignoring `parallel_jobs` parameter.")
+            log.warning("Parallelization is not supported in local mode: ignoring `parallel_jobs=%s` parameter.", self.parallel_jobs)
             self.parallel_jobs = 1
 
     def setup(self, mode: SetupMode):
@@ -96,22 +97,33 @@ class Benchmark:
         results = self._run_jobs(self._benchmark_jobs())
         return self._process_results(results, save_scores=save_scores)
 
-    def run_one(self, task_name: str, fold, save_scores=False):
+    def run_one(self, task_name, fold, save_scores=False):
         """
 
         :param task_name:
         :param fold:
         :param save_scores:
         """
-        task_def = self._get_task_def(task_name)
-        results = self._run_jobs(self._custom_task_jobs(task_def, fold))
-        return self._process_results(results, task_name=task_name, save_scores=save_scores)
+        jobs = []
+        task_names = task_name if isinstance(task_name, list) else [task_name]
+        if len(task_names) == 0:
+            raise ValueError("No task was provided.")
+        for task_name in task_names:
+            task_def = self._get_task_def(task_name)
+            jobs.extend(self._custom_task_jobs(task_def, fold))
+        results = self._run_jobs(jobs)
+        log.info(results)
+        for task_name in task_names:
+            task_results = filter(lambda res: res.result.task == task_name, results)
+            scoreboard = self._process_results(task_results, task_name=task_name, save_scores=save_scores)
+        return scoreboard
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
             return SimpleJobRunner(jobs).start()
         else:
-            return ParallelJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
+            # return ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs).start()
+            return MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
 
     def _benchmark_jobs(self):
         jobs = []
@@ -229,6 +241,9 @@ class TaskConfig:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
+
+    def __json__(self):
+        return self.__dict__
 
     def estimate_system_params(self):
         sys_cores = system_cores()

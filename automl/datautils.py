@@ -40,13 +40,17 @@ except ImportError:
 try:
     from sklearn.impute import SimpleImputer as Imputer     # from sklearn 0.20
 except ImportError:
-    from sklearn.preprocessing import Imputer
+    from sklearn.preprocessing import Imputer as Imp
+
+    class Imputer(Imp):
+        def __init__(self, missing_values=np.NaN, **kwargs):
+            super(Imputer, self).__init__(missing_values='NaN' if missing_values is np.NaN else missing_values, **kwargs)
 
 
 log = logging.getLogger(__name__)
 
 
-def read_csv(path, nrows=None):
+def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True):
     """
     read csv file to DataFrame.
 
@@ -56,11 +60,23 @@ def read_csv(path, nrows=None):
     :param nrows: the number of rows to read, if not specified, all are read.
     :return: a DataFrame
     """
-    return pd.read_csv(path, nrows=nrows)
+    df = pd.read_csv(path,
+                     nrows=nrows,
+                     header=0 if header else None,
+                     index_col=0 if index else None)
+    return df if as_data_frame else df.values
 
 
-def write_csv(data_frame, path, header=True, index=True, append=False):
-    data_frame.to_csv(path, header=header, index=index, mode='a' if append else 'w')
+def write_csv(data, path, header=True, columns=None, index=False, append=False):
+    if is_data_frame(data):
+        data_frame = data
+    else:
+        data_frame = to_data_frame(data, columns=columns)
+        header = columns is not None
+    data_frame.to_csv(path,
+                      header=header,
+                      index=index,
+                      mode='a' if append else 'w')
 
 
 @profile(logger=log)
@@ -255,7 +271,7 @@ class Encoder(TransformerMixin):
         return self.delegate.inverse_transform(vec, **params)
 
 
-def impute(X_fit, *X_s, missing_values='NaN', strategy='mean'):
+def impute(X_fit, *X_s, missing_values=np.NaN, strategy='mean'):
     """
 
     :param X_fit:

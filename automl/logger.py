@@ -80,22 +80,21 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
         buffer = dict(out=None, err=None)
 
         ori_print = builtins.print
+
         def new_print(self, *args, sep=' ', end=nl, file=None):
             if file not in [None, sys.stdout, sys.stderr]:
                 return ori_print(self, *args, sep=sep, end=end, file=file)
 
             nonlocal buffer
-            buf = buffer['err'] if file is sys.stderr else buffer['out']
-            buf = buf if buf is not None else io.StringIO()
+            buf_type = 'err' if file is sys.stderr else 'out'
+            buf = buffer[buf_type]
+            if buf is None:
+                buf = buffer[buf_type] = io.StringIO()
             buf.write(sep.join([self, *args]))  # end added by logger
             if end == nl:
                 with buf:
-                    if file is sys.stderr:
-                        print_logger.error(buf.getvalue())
-                        buffer['err'] = None
-                        # ori_print(traceback.format_stack())
-                    else:
-                        print_logger.info(buf.getvalue())
-                        buffer['out'] = None
+                    level = logging.ERROR if buf_type == 'err' else logging.INFO
+                    print_logger.log(level, buf.getvalue())
+                    buffer[buf_type] = None
 
         builtins.print = new_print

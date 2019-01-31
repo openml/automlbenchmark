@@ -55,12 +55,12 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("Predicting on the test set.")
     X_test= dataset.test.X_enc
     y_test = dataset.test.y_enc
-    class_predictions = auto_sklearn.predict(X_test)
-    class_probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
+    predictions = auto_sklearn.predict(X_test)
+    probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
-                             class_probabilities=class_probabilities,
-                             class_predictions=class_predictions,
-                             class_truth=y_test,
-                             classes_are_encoded=True)
+                             probabilities=probabilities,
+                             predictions=predictions,
+                             truth=y_test,
+                             target_is_encoded=True)

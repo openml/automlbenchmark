@@ -172,42 +172,42 @@ class TaskResult:
 
     @staticmethod
     # @profile(logger=log)
-    def save_predictions(dataset: Dataset, predictions_file: str,
-                         class_predictions=None, class_truth=None,
-                         class_probabilities=None, class_probabilities_labels=None,
-                         classes_are_encoded=False):
+    def save_predictions(dataset: Dataset, output_file: str,
+                         predictions=None, truth=None,
+                         probabilities=None, probabilities_labels=None,
+                         target_is_encoded=False):
         """ Save class probabilities and predicted labels to file in csv format.
 
         :param dataset:
-        :param predictions_file:
-        :param class_probabilities:
-        :param class_predictions:
-        :param class_truth:
-        :param class_probabilities_labels:
-        :param classes_are_encoded:
+        :param output_file:
+        :param probabilities:
+        :param predictions:
+        :param truth:
+        :param probabilities_labels:
+        :param target_is_encoded:
         :return: None
         """
-        log.debug("Saving predictions to `%s`.", predictions_file)
-        prob_cols = class_probabilities_labels if class_probabilities_labels else dataset.target.label_encoder.classes
-        df = to_data_frame(class_probabilities, columns=prob_cols)
-        if class_probabilities_labels:
+        log.debug("Saving predictions to `%s`.", output_file)
+        prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
+        df = to_data_frame(probabilities, columns=prob_cols)
+        if probabilities_labels:
             df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
 
-        predictions = class_predictions
-        truth = class_truth if class_truth is not None else dataset.test.y
-        if not _encode_predictions_and_truth_ and classes_are_encoded:
-            predictions = dataset.target.label_encoder.inverse_transform(class_predictions)
+        preds = predictions
+        truth = truth if truth is not None else dataset.test.y
+        if not _encode_predictions_and_truth_ and target_is_encoded:
+            preds = dataset.target.label_encoder.inverse_transform(predictions)
             truth = dataset.target.label_encoder.inverse_transform(truth)
-        if _encode_predictions_and_truth_ and not classes_are_encoded:
-            predictions = dataset.target.label_encoder.transform(class_predictions)
+        if _encode_predictions_and_truth_ and not target_is_encoded:
+            preds = dataset.target.label_encoder.transform(predictions)
             truth = dataset.target.label_encoder.transform(truth)
 
-        df = df.assign(predictions=predictions)
+        df = df.assign(predictions=preds)
         df = df.assign(truth=truth)
         log.info("Predictions preview:\n %s\n", df.head(20).to_string())
-        backup_file(predictions_file)
-        write_csv(df, path=predictions_file, index=False)
-        log.info("Predictions saved to `%s`.", predictions_file)
+        backup_file(output_file)
+        write_csv(df, path=output_file)
+        log.info("Predictions saved to `%s`.", output_file)
 
     @classmethod
     def score_from_predictions_file(cls, path):
@@ -359,10 +359,10 @@ _encode_predictions_and_truth_ = False
 
 
 def save_predictions_to_file(dataset: Dataset, output_file: str,
-                             class_predictions=None, class_truth=None,
-                             class_probabilities=None, class_probabilities_labels=None,
-                             classes_are_encoded=False):
-    TaskResult.save_predictions(dataset, predictions_file=output_file,
-                                class_predictions=class_predictions, class_truth=class_truth,
-                                class_probabilities=class_probabilities, class_probabilities_labels=class_probabilities_labels,
-                                classes_are_encoded=classes_are_encoded)
+                             predictions=None, truth=None,
+                             probabilities=None, probabilities_labels=None,
+                             target_is_encoded=False):
+    TaskResult.save_predictions(dataset, output_file=output_file,
+                                predictions=predictions, truth=truth,
+                                probabilities=probabilities, probabilities_labels=probabilities_labels,
+                                target_is_encoded=target_is_encoded)

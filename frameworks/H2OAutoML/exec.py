@@ -58,22 +58,24 @@ def run(dataset: Dataset, config: TaskConfig):
 
         log.debug("Leaderboard:\n%s", str(aml.leaderboard.as_data_frame()))
 
-        predictions = aml.predict(test).as_data_frame()
+        preds = aml.predict(test).as_data_frame()
         # predictions = h2o.get_model(aml.leaderboard[0][1, 0]).predict(test).as_data_frame()
 
-        y_pred = predictions.iloc[:, 0]
+        y_pred = preds.iloc[:, 0]
         y_truth = test[:, dataset.target.index].as_data_frame(header=False)
 
-        class_predictions = y_pred.values
-        class_probabilities = predictions.iloc[:, 1:].values
+        predictions = y_pred.values
+        probabilities = preds.iloc[:, 1:].values
 
         save_predictions_to_file(dataset=dataset,
                                  output_file=config.output_predictions_file,
-                                 class_probabilities=class_probabilities,
-                                 class_predictions=class_predictions,
-                                 class_truth=y_truth.values)
+                                 probabilities=probabilities,
+                                 predictions=predictions,
+                                 truth=y_truth.values)
 
     finally:
         if h2o.connection():
             h2o.connection().close()
+        # if h2o.cluster():
+        #     h2o.cluster().shutdown()
 

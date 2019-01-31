@@ -14,7 +14,9 @@ import logging
 import os
 import shutil
 import stat
+import subprocess
 import sys
+import tempfile
 import time
 import threading
 import _thread
@@ -116,6 +118,10 @@ class Namespace:
     def __repr__(self):
         return repr(self.__ns)
 
+    def __json__(self):
+        # return self.__ns
+        return Namespace.dict(self)
+
 
 def repr_def(obj):
     return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
@@ -178,6 +184,43 @@ def fn_name(fn):
     return ".".join([fn.__module__, fn.__qualname__])
 
 
+def json_load(file, as_namespace=False):
+    with open(file, 'r') as f:
+        return json_loads(f.read(), as_namespace=as_namespace)
+
+
+def json_loads(s, as_namespace=False):
+    if as_namespace:
+        return json.loads(s, object_hook=lambda dic: Namespace(**dic))
+    else:
+        return json.loads(s)
+
+
+def json_dump(o, file, style='default'):
+    with open(file, 'w') as f:
+        f.write(json_dumps(o, style=style))
+
+
+def json_dumps(o, style='default'):
+    """
+
+    :param o:
+    :param style: str among ('compact', 'default', 'pretty').
+                - `compact` removes all blanks (no space, no newline).
+                - `default` adds a space after each separator but prints on one line
+                - `pretty` adds a space after each separator and indents after opening brackets.
+    :return:
+    """
+    separators = (',', ':') if style == 'compact' else None
+    indent = 4 if style == 'pretty' else None
+
+    def default_encode(o):
+        if hasattr(o, '__json__') and callable(o.__json__):
+            return o.__json__()
+        return json.encoder.JSONEncoder.default(None, o)
+
+    return json.dumps(o, indent=indent, separators=separators, default=default_encode)
+
 
 """ CONFIG """
 
@@ -196,13 +239,6 @@ class YAMLNamespaceLoader(yaml.loader.SafeLoader):
 
 
 YAMLNamespaceLoader.init()
-
-
-def json_load(file, as_namespace=False):
-    if as_namespace:
-        return json.load(file, object_hook=lambda dic: Namespace(**dic))
-    else:
-        return json.load(file)
 
 
 def yaml_load(file, as_namespace=False):
@@ -428,32 +464,64 @@ def backup_file(file_path):
     log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)
 
 
-def run_cmd(cmd, return_output=True, *args, **kvargs):
-    # TODO: switch to subprocess module (Popen) instead of os? would allow to use timeouts and kill signal
-    #   besides, this implementation doesn't seem to work well with some commands if output is not read.
-    output = None
+class TmpDir:
+
+    def __init__(self):
+        self.tmp_dir = None
+
+    def __enter__(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        return self.tmp_dir
+
+    def __exit__(self, *args):
+        shutil.rmtree(self.tmp_dir)
+        # pass
+
+
+def run_cmd(cmd, *args, **kwargs):
+    params = dict(input_str=None, capture_output=True, shell=True)
+    for k, v in params.items():
+        kk = '_'+k+'_'
+        if kk in kwargs:
+            params[k] = kwargs[kk]
+            del kwargs[kk]
     cmd_args = list(filter(None, []
                                  + ([] if args is None else list(args))
-                                 + flatten(kvargs.items(), flatten_tuple=True) if kvargs is not None else []
+                                 + flatten(kwargs.items(), flatten_tuple=True) if kwargs is not None else []
                            ))
-    full_cmd = ' '.join([cmd]+cmd_args)
-    log.info("Running cmd `%s`", full_cmd)
-    with os.popen(full_cmd) as subp:
-        if return_output:
-            output = subp.read()
-    if subp.close():
-        log.debug(output)
-        output_tail = tail(output, 25) if output else 'Unknown Error'
-        raise OSError("Error when running command `{cmd}`: {error}".format(cmd=full_cmd, error=output_tail))
-    return output
+    full_cmd = flatten([cmd])+cmd_args
+    log.info("Running cmd `%s`", ' '.join(full_cmd))
+    log.debug("Running cmd `%s` with input: %s", ' '.join(full_cmd), params['input_str'])
+    try:
+        completed = subprocess.run(full_cmd,
+                                   input=params['input_str'],
+                                   # stdin=subprocess.PIPE if input is not None else None,
+                                   stdout=subprocess.PIPE if params['capture_output'] else None,
+                                   stderr=subprocess.PIPE if params['capture_output'] else None,
+                                   shell=params['shell'],
+                                   check=True,
+                                   universal_newlines=True)
+        if completed.stdout:
+            log.debug(completed.stdout)
+        if completed.stderr:
+            log.error(completed.stderr)
+        return completed.stdout
+    except subprocess.CalledProcessError as e:
+        if e.stdout:
+            log.debug(e.stdout)
+        if e.stderr:
+            log.error(e.stderr)
+        # error_tail = tail(e.stderr, 25) if e.stderr else 'Unknown Error'
+        # raise subprocess.SubprocessError("Error when running command `{cmd}`: {error}".format(cmd=full_cmd, error=error_tail))
+        raise e
 
 
-def call_script_in_same_dir(caller_file, script_file, *args, **kvargs):
+def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     here = dir_of(caller_file)
     script = os.path.join(here, script_file)
     mod = os.stat(script).st_mode
     os.chmod(script, mod | stat.S_IEXEC)
-    output = run_cmd(script, True, *args, **kvargs)
+    output = run_cmd(script, *args, **kwargs)
     log.debug(output)
     return output
 

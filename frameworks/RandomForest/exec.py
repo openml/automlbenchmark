@@ -19,9 +19,9 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y, dataset.test.y
 
-    log.info('Running RandomForest with a maximum time of {}s on {} cores.'.format(config.max_runtime_seconds, config.cores))
-    log.warning('We completely ignore the requirement to stay within the time limit.')
-    log.warning('We completely ignore the advice to optimize towards metric: {}.'.format(config.metric))
+    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, config.cores))
+    log.warning("We completely ignore the requirement to stay within the time limit.")
+    log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
     rfc = estimator(n_jobs=config.cores,
@@ -29,13 +29,13 @@ def run(dataset: Dataset, config: TaskConfig):
 
     rfc.fit(X_train, y_train)
 
-    class_predictions = rfc.predict(X_test)
-    class_probabilities = rfc.predict_proba(X_test) if is_classification else None
+    predictions = rfc.predict(X_test)
+    probabilities = rfc.predict_proba(X_test) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
-                             class_probabilities=class_probabilities,
-                             class_predictions=class_predictions,
-                             class_truth=y_test,
-                             classes_are_encoded=False)
+                             probabilities=probabilities,
+                             predictions=predictions,
+                             truth=y_test,
+                             target_is_encoded=False)
 

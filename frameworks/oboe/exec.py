@@ -32,14 +32,14 @@ def run(dataset: Dataset, config: TaskConfig):
                          runtime_limit=config.max_runtime_seconds,
                          **config.framework_params)
     automl.fit(X_train, y_train)
-    class_predictions = automl.predict(X_test).reshape(len(X_test))
-    class_probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(class_predictions) if is_classification else None
+    predictions = automl.predict(X_test).reshape(len(X_test))
+    probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(predictions) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
-                             class_probabilities=class_probabilities,
-                             class_predictions=class_predictions,
-                             class_truth=y_test,
-                             classes_are_encoded=True)
+                             probabilities=probabilities,
+                             predictions=predictions,
+                             truth=y_test,
+                             target_is_encoded=True)
 
 
