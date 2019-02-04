@@ -132,7 +132,7 @@ class AWSBenchmark(Benchmark):
                 instance_type,
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
-                    benchmark="{}/input/{}.yaml".format(resources_root, self.benchmark_name),
+                    benchmark="{}/user/{}.yaml".format(resources_root, self.benchmark_name),
                     task_param='' if task_name is None else ('-t '+task_name),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
@@ -361,6 +361,11 @@ class AWSBenchmark(Benchmark):
                     },
                     {
                         'Effect': 'Allow',
+                        'Action': 's3:GetObject',   # S3 actions, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html
+                        'Resource': resource_prefix+'user/*'
+                    },
+                    {
+                        'Effect': 'Allow',
                         'Action': 's3:PutObject',
                         'Resource': resource_prefix+'output/*'   # technically, we could grant write access for each instance only to its own 'directory', but this is not necessary
                     }
@@ -468,6 +473,7 @@ runcmd:
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
+  - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
