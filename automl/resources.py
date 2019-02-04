@@ -47,9 +47,9 @@ class Resources:
         os.makedirs(self.config.logs_dir, exist_ok=True)
         log.debug("Using config:\n%s", self.config)
 
-        # allowing to load custom modules from user and input directories
-        sys.path.extend([self._common_dirs['user'], self._common_dirs['input']])
-        log.debug("Extended Python sys.path to user and input directories: %s.", sys.path)
+        # allowing to load custom modules from user directory
+        sys.path.append(self._common_dirs['user'])
+        log.debug("Extended Python sys.path to user directory: %s.", sys.path)
 
     def framework_definition(self, name):
         """

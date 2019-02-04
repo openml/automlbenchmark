@@ -91,17 +91,26 @@ class Namespace:
             return self.__ns[name]
         raise AttributeError(name)
 
-    def __setattr__(self, key, value):
-        if key.startswith(Namespace.mangled_prefix):
-            super().__setattr__(key, value)
+    def __setattr__(self, name, value):
+        if name.startswith(Namespace.mangled_prefix):
+            super().__setattr__(name, value)
         else:
-            self.__ns[key] = value
+            self.__ns[name] = value
+
+    def __delattr__(self, name):
+        if name in self.__ns:
+            del self.__ns[name]
+        else:
+            raise AttributeError(name)
 
     def __getitem__(self, item):
         return self.__ns.get(item)
 
     def __setitem__(self, key, value):
         self.__ns[key] = value
+
+    def __delitem__(self, key):
+        self.__ns.pop(key, None)
 
     def __iter__(self):
         return iter(self.__ns.items())
@@ -479,8 +488,8 @@ class TmpDir:
 
 
 def run_cmd(cmd, *args, **kwargs):
-    params = dict(input_str=None, capture_output=True, shell=True)
-    for k, v in params.items():
+    params = Namespace(input_str=None, capture_output=True, shell=True)
+    for k, v in params:
         kk = '_'+k+'_'
         if kk in kwargs:
             params[k] = kwargs[kk]
@@ -490,15 +499,16 @@ def run_cmd(cmd, *args, **kwargs):
                                  + flatten(kwargs.items(), flatten_tuple=True) if kwargs is not None else []
                            ))
     full_cmd = flatten([cmd])+cmd_args
-    log.info("Running cmd `%s`", ' '.join(full_cmd))
-    log.debug("Running cmd `%s` with input: %s", ' '.join(full_cmd), params['input_str'])
+    str_cmd = ' '.join(full_cmd)
+    log.info("Running cmd `%s`", str_cmd)
+    log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
     try:
-        completed = subprocess.run(full_cmd,
-                                   input=params['input_str'],
+        completed = subprocess.run(str_cmd if params.shell else full_cmd,
+                                   input=params.input_str,
                                    # stdin=subprocess.PIPE if input is not None else None,
-                                   stdout=subprocess.PIPE if params['capture_output'] else None,
-                                   stderr=subprocess.PIPE if params['capture_output'] else None,
-                                   shell=params['shell'],
+                                   stdout=subprocess.PIPE if params.capture_output else None,
+                                   stderr=subprocess.PIPE if params.capture_output else None,
+                                   shell=params.shell,
                                    check=True,
                                    universal_newlines=True)
         if completed.stdout:

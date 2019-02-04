@@ -1,0 +1,13 @@
+# put this file in your ~/.config/automlbenchmark directory
+# to override default configs
+---
+project_repository: https://github.com/seb-h2o/automlbenchmark
+
+aws:
+  iam:
+    role_name: {yourname}AutomlBenchmarkRole
+    s3_policy_name: {yourname}AutomlBenchmarkS3Policy
+    instance_profile_name: {yourname}AutomlBenchmarkProfile
+
+  s3:
+    bucket: {yourname}-automl-benchmark

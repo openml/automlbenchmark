@@ -104,13 +104,11 @@ class DockerBenchmark(Benchmark):
     def _start_docker(self, script_params=""):
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
-        local_user_dir = rconfig().user_dir
-        docker_user_dir = normalize_path(rget()._config.user_dir.replace('~', '/root'))
-        cmd = "docker run -v {input}:/input -v {output}:/output -v {user_local}:{user_docker} --rm {image} {params} -i /input -o /output -s skip".format(
+        custom_dir = rconfig().user_dir
+        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip".format(
             input=in_dir,
             output=out_dir,
-            user_local=local_user_dir,
-            user_docker=docker_user_dir,
+            custom=custom_dir,
             image=self._docker_image_name,
             params=script_params
         )
@@ -179,7 +177,7 @@ RUN $PIP install --upgrade pip=={pip_version}
 WORKDIR /bench
 VOLUME /input
 VOLUME /output
-RUN mkdir -p {user_dir}
+VOLUME /custom
 
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 ADD . /bench/
@@ -196,7 +194,6 @@ CMD ["{framework}", "test"]
 """.format(custom_commands=custom_commands,
            framework=self.framework_name,
            script=rconfig().script,
-           user_dir=rget()._config.user_dir,
            pip_version=rconfig().versions.pip)
 
         with open(self._docker_script, 'w') as file:

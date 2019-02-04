@@ -190,9 +190,12 @@ You will need your AWS Access Key ID, AWS Secret Access Key, and pick a default 
   - eu-west-1
   - eu-central-1
 
+You'll also need to specify some unique names and identifiers for the S3 bucket and IAM integration: simply copy the `config.yaml` from [examples/aws] to your user `~/.config/automlbenchmark` folder and replace the placeholders as you wish.
+_**NOTE:** Please do not try to set the `aws.s3.temporary` setting to `true` for now as it is not reliable yet_  
+
 To run a test to see if the benchmark framework is working on AWS, do the following:
 ```bash
-python3 benchmark.py RandomForest test -m aws
+python3 benchmark.py constantpredictor test -m aws
 ```
 This will create and start an EC2 instance for each benchmark job and run the 4 jobs (2 OpenML tasks * 2 folds) from the `test` benchmark sequentially, each job running for 1mn in this case (excluding setup time for the EC2 instances).
 
@@ -278,3 +281,4 @@ see [HOWTO.md]
 
 
 [HOWTO.md]: ./HOWTO.md
+[examples/aws]: ./examples/aws/config.yaml

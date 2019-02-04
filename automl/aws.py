@@ -243,16 +243,21 @@ class AWSBenchmark(Benchmark):
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
         # TODO: we may want to upload resources to a different path for each run (just in case we run multiple benchmarks in parallel and aws.s3.temporary=False)
-        #  for example: root_key+('/'.join(['input', self.uid, name]))
+        #  for example: root_key+('/'.join(['user', self.uid, name]))
         #  this also requires updating _delete_resources and _ec2_startup_script
-        dest_path = lambda name: root_key+('/'.join(['input', name]))
+
+        def dest_path(res_path):
+            name = os.path.basename(res_path)
+            dest = 'input' if res_path.startswith(rconfig().input_dir) else 'user'
+            return root_key+('/'.join([dest, name]))
+
         upload_files = [self.benchmark_path] + rconfig().aws.resource_files
         uploaded_resources = []
         for res in upload_files:
             if not os.path.isfile(res):
                 log.warning("Not uploading file `%s` as it doesn't exist.", res)
                 continue
-            upload_path = dest_path(os.path.basename(res))
+            upload_path = dest_path(res)
             log.info("Uploading `%s` to `%s` on s3 bucket %s.", res, upload_path, self.bucket.name)
             self.bucket.upload_file(res, upload_path)
             uploaded_resources.append(upload_path)
@@ -337,6 +342,7 @@ class AWSBenchmark(Benchmark):
                 AssumeRolePolicyDocument=ec2_role_trust_policy_json,
                 MaxSessionDuration=3600  # in seconds
             )
+            log.info("Role %s successfully created.", iamc.role_name)
 
         if iamc.s3_policy_name not in [p.name for p in irole.policies.all()]:
             resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=self.bucket.name, root_key=str_def(rconfig().aws.s3.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
@@ -374,6 +380,7 @@ class AWSBenchmark(Benchmark):
             log.info("Instance profile %s doesn't exist, creating it: %s.", iamc.instance_profile_name, str(e))
         if not iprofile:
             iprofile = self.iam.create_instance_profile(InstanceProfileName=iamc.instance_profile_name)
+            log.info("Instance profile %s successfully created.", iamc.instance_profile_name)
 
         if irole.name not in [r.name for r in iprofile.roles]:
             iprofile.add_role(RoleName=irole.name)
@@ -416,9 +423,11 @@ packages:
 runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
+  - mkdir -p /s3bucket/user
   - pip3 install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output --rm {image} {params} -i /input -o /output -s skip
+  - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
+  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -451,6 +460,7 @@ runcmd:
   - alias PY='/venvs/bench/bin/python3 -W ignore'
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
+  - mkdir -p /s3bucket/user
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
@@ -458,8 +468,8 @@ runcmd:
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -s only 
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -514,6 +524,7 @@ alias PY='/venvs/bench/bin/python3 -W ignore'
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
+mkdir -p /s3bucket/user
 mkdir ~/repo
 cd ~/repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
@@ -524,8 +535,9 @@ PIP install --no-cache-dir openml
 PIP install --upgrade awscli
 
 aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-PY {script} {params} -o /s3bucket -s only
-PY {script} {params} -o /s3bucket
+aws s3 cp {s3_base_url}user /s3bucket/user --recursive
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user
 aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"

@@ -7,7 +7,7 @@ import os
 import sys
 
 import automl
-from automl.utils import config_load, datetime_iso, str2bool
+from automl.utils import Namespace as ns, config_load, datetime_iso, str2bool
 from automl import log
 
 
@@ -19,7 +19,7 @@ parser.add_argument('benchmark', type=str, nargs='?', default='test',
                          "or the path to a benchmark description file. Defaults to `%(default)s`.")
 parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
-parser.add_argument('-t', '--task', metavar='task_id', default=None,
+parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
                     help="The specific task name (as defined in the benchmark file) to run. "
                          "If not provided, then all tasks from the benchmark will be run.")
 parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*',
@@ -29,7 +29,9 @@ parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
                     help="Folder where datasets are loaded by default. Defaults to `input_dir` as defined in resources/config.yaml")
 parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
                     help="Folder where all the outputs should be written. Defaults to `output_dir` as defined in resources/config.yaml")
-parser.add_argument('-p', '--parallel', metavar='jobs_count', type=int, default=1,
+parser.add_argument('-u', '--userdir', metavar='user_dir', default=None,
+                    help="Folder where all the customizations are stored. Defaults to `user_dir` as defined in resources/config.yaml")
+parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, default=1,
                     help="The number of jobs (i.e. tasks or folds) that can run in parallel. Defaults to %(default)s. "
                          "Currently supported only in docker and aws mode.")
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
@@ -66,19 +68,17 @@ log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.b
 log.debug("Script args: %s.", args)
 
 config = config_load("resources/config.yaml")
-config_input = None
-config.run_mode = args.mode
-config.script = os.path.basename(__file__)
-if args.indir:
-    config.input_dir = args.indir
-    # allowing config override from input_dir: useful for custom benchmarks executed on aws for example.
-    config_input = config_load(os.path.join(args.indir, "config.yaml"))
-if args.outdir:
-    config.output_dir = args.outdir
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(os.path.join(config.user_dir, "config.yaml"))
+config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
+# config listing properties set by command line
+config_args = ns(input_dir=args.indir,
+                 output_dir=args.outdir,
+                 user_dir=args.userdir,
+                 run_mode=args.mode,
+                 script=os.path.basename(__file__))
+config_args = ns({k: v for k, v in config_args if v is not None})
 # merging all configuration files
-automl.resources.from_configs(config, config_input, config_user)
+automl.resources.from_configs(config, config_user, config_args)
 
 try:
     if args.mode == 'local':
