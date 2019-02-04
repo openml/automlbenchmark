@@ -47,10 +47,11 @@ aws:
     role_name: AutomlBenchmarkRole
     s3_policy_name: AutomlBenchmarkS3Policy
     instance_profile_name: AutomlBenchmarkProfile
+    temporary: false    # if true, the IAM entities will be automatically recreated during setup and deleted at the end of the benchmark run.
 
   s3:
     bucket: automl-benchmark
-    temporary: false    # if true, the S3 bucket is created at the beginning of the main job and deleted at the end.
+    temporary: false    # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
                         # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
                         # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
     root_key: ec2/

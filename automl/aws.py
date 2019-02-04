@@ -74,17 +74,28 @@ class AWSBenchmark(Benchmark):
     def setup(self, mode):
         if mode == Benchmark.SetupMode.skip:
             log.warning("AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode))
-        self.iam = boto3.resource('iam', region_name=self.region)
+        # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
         self.uploaded_resources = self._upload_resources()
+
+        # IAM setup to secure exchanges between s3 and ec2 instances
+        self.iam = boto3.resource('iam', region_name=self.region)
+        if mode == Benchmark.SetupMode.force:
+            log.warning("Cleaning up previously created IAM entities if any.")
+            self._delete_instance_profile()
         self.instance_profile = self._create_instance_profile()
+
+        # EC2 setup to prepare creation of ec2 instances
         self.ec2 = boto3.resource("ec2", region_name=self.region)
 
     def cleanup(self):
         self._stop_all_instances()
         self._delete_resources()
-        self._delete_s3_bucket()
+        if rconfig().aws.iam.temporary is True:
+            self._delete_instance_profile()
+        if rconfig().aws.s3.temporary is True:
+            self._delete_s3_bucket()
 
     def run(self, save_scores=False):
         # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
@@ -237,7 +248,7 @@ class AWSBenchmark(Benchmark):
         return bucket
 
     def _delete_s3_bucket(self):
-        if self.bucket and rconfig().aws.s3.temporary:
+        if self.bucket:
             self.bucket.delete()
 
     def _upload_resources(self):
@@ -386,11 +397,36 @@ class AWSBenchmark(Benchmark):
         if not iprofile:
             iprofile = self.iam.create_instance_profile(InstanceProfileName=iamc.instance_profile_name)
             log.info("Instance profile %s successfully created.", iamc.instance_profile_name)
+            waiting_time, steps = 120, 12
+            for i in range(steps):
+                log.info("Waiting for new credentials propagation, time left = %ss.", round(waiting_time * (1 - i/steps)))
+                time.sleep(waiting_time / steps)
 
         if irole.name not in [r.name for r in iprofile.roles]:
             iprofile.add_role(RoleName=irole.name)
 
         return iprofile
+
+    def _delete_instance_profile(self):
+        iamc = rconfig().aws.iam
+        try:
+            self.iam.meta.client.get_role(RoleName=iamc.role_name)
+            irole = self.iam.Role(iamc.role_name)
+            for policy in irole.policies.all():
+                log.info("Deleting role policy %s from role %s.", policy.name, policy.role_name)
+                policy.delete()
+                log.info("Policy %s was successfully deleted.", policy.name)
+            for profile in irole.instance_profiles.all():
+                log.info("Removing instance profile %s from role %s.", profile.name, irole.name)
+                profile.remove_role(RoleName=irole.name)
+                log.info("Deleting instance profile %s.", profile.name)
+                profile.delete()
+                log.info("Instance profile %s was successfully deleted.", profile.name)
+            log.info("Deleting role %s.", irole.name)
+            irole.delete()
+            log.info("Role %s was successfully deleted.", irole.name)
+        except botocore.exceptions.ClientError as e:
+            log.info("Role %s doesn't exist, skipping its deletion", iamc.role_name, str(e))
 
     def _ec2_startup_script(self, instance_key, script_params="", timeout_secs=-1):
         """
