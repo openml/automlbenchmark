@@ -16,6 +16,7 @@ necessary to run a benchmark on EC2 instances:
 import io
 import json
 import logging
+import math
 import os
 import re
 import time
@@ -48,6 +49,7 @@ class AWSBenchmark(Benchmark):
         :param region:
         """
         super().__init__(framework_name, benchmark_name, parallel_jobs)
+        self.suid = datetime_iso(micros=True, no_sep=True)  # short uid for AWS entities whose name length is limited
         self.region = region if region \
             else rconfig().aws.region if rconfig().aws['region'] \
             else boto3.session.Session().region_name
@@ -83,7 +85,7 @@ class AWSBenchmark(Benchmark):
         self.iam = boto3.resource('iam', region_name=self.region)
         if mode == Benchmark.SetupMode.force:
             log.warning("Cleaning up previously created IAM entities if any.")
-            self._delete_instance_profile()
+            self._delete_iam_entities()
         self.instance_profile = self._create_instance_profile()
 
         # EC2 setup to prepare creation of ec2 instances
@@ -93,7 +95,7 @@ class AWSBenchmark(Benchmark):
         self._stop_all_instances()
         self._delete_resources()
         if rconfig().aws.iam.temporary is True:
-            self._delete_instance_profile()
+            self._delete_iam_entities()
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
@@ -229,27 +231,40 @@ class AWSBenchmark(Benchmark):
             self._stop_instance(id, terminate=rconfig().aws.ec2.terminate_instances)
 
     def _create_s3_bucket(self):
+        # cf. s3 restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
         bucket_name = rconfig().aws.s3.bucket
         if rconfig().aws.s3.temporary:
-            bucket_name += ('-' + self.uid)
+            bucket_name += ('-' + self.suid)
         try:
             self.s3.meta.client.head_bucket(Bucket=bucket_name)
             bucket = self.s3.Bucket(bucket_name)
         except botocore.exceptions.ClientError as e:
             error_code = int(e.response['Error']['Code'])
             if error_code == 404:
-                log.info("%s bucket doesn't exist in region %s, creating it.", bucket_name, self.region)
+                log.info("%s bucket doesn't exist, creating it in region %s.", bucket_name, self.region)
                 bucket = self.s3.create_bucket(
                     Bucket=bucket_name,
                     CreateBucketConfiguration=dict(
                         LocationConstraint=self.region
                     )
                 )
+                log.info("S3 bucket %s was successfully created.", bucket_name)
         return bucket
 
     def _delete_s3_bucket(self):
         if self.bucket:
+            # we can only delete 1000 objects at a time using this API,
+            # but this is intended only for temporary buckets, so no need for pagination
+            to_delete = list(map(lambda o: dict(Key=o.key, VersionId=o.Version('id')), self.bucket.objects.all()))
+            if len(to_delete) > 0:
+                log.info("Deleting objects from S3 bucket %s: %s", self.bucket.name, to_delete)
+                self.bucket.delete_objects(Delete=dict(
+                    Objects=to_delete,
+                    Quiet=True
+                ))
+            log.info("Deleting s3 bucket %s.", self.bucket.name)
             self.bucket.delete()
+            log.info("S3 bucket %s was successfully deleted.", self.bucket.name)
 
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
@@ -326,16 +341,23 @@ class AWSBenchmark(Benchmark):
     def _create_instance_profile(self):
         """
         see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
-        for steps defined here
+        for steps defined here.
+        for restrictions, cf. https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
         :return:
         """
         iamc = rconfig().aws.iam
+        role_name = iamc.role_name
+        profile_name = iamc.instance_profile_name
+        if iamc.temporary:
+            role_name += ('-' + self.suid)
+            profile_name += ('-' + self.suid)
+
         irole = None
         try:
-            self.iam.meta.client.get_role(RoleName=iamc.role_name)
-            irole = self.iam.Role(iamc.role_name)
+            self.iam.meta.client.get_role(RoleName=role_name)
+            irole = self.iam.Role(role_name)
         except botocore.exceptions.ClientError as e:
-            log.info("Role %s doesn't exist, creating it: %s.", iamc.role_name, str(e))
+            log.info("Role %s doesn't exist, creating it: [%s].", role_name, str(e))
 
         if not irole:
             ec2_role_trust_policy_json = json.dumps({   # trust role
@@ -349,11 +371,11 @@ class AWSBenchmark(Benchmark):
                 ]
             })
             irole = self.iam.create_role(
-                RoleName=iamc.role_name,
+                RoleName=role_name,
                 AssumeRolePolicyDocument=ec2_role_trust_policy_json,
-                MaxSessionDuration=3600  # in seconds
+                MaxSessionDuration=iamc.max_role_session_duration_secs
             )
-            log.info("Role %s successfully created.", iamc.role_name)
+            log.info("Role %s successfully created.", role_name)
 
         if iamc.s3_policy_name not in [p.name for p in irole.policies.all()]:
             resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=self.bucket.name, root_key=str_def(rconfig().aws.s3.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
@@ -368,12 +390,7 @@ class AWSBenchmark(Benchmark):
                     {
                         'Effect': 'Allow',
                         'Action': 's3:GetObject',   # S3 actions, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html
-                        'Resource': resource_prefix+'input/*'
-                    },
-                    {
-                        'Effect': 'Allow',
-                        'Action': 's3:GetObject',   # S3 actions, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html
-                        'Resource': resource_prefix+'user/*'
+                        'Resource': resource_prefix+'*'
                     },
                     {
                         'Effect': 'Allow',
@@ -390,14 +407,15 @@ class AWSBenchmark(Benchmark):
 
         iprofile = None
         try:
-            self.iam.meta.client.get_instance_profile(InstanceProfileName=iamc.instance_profile_name)
-            iprofile = self.iam.InstanceProfile(iamc.instance_profile_name)
+            self.iam.meta.client.get_instance_profile(InstanceProfileName=profile_name)
+            iprofile = self.iam.InstanceProfile(profile_name)
         except botocore.exceptions.ClientError as e:
-            log.info("Instance profile %s doesn't exist, creating it: %s.", iamc.instance_profile_name, str(e))
+            log.info("Instance profile %s doesn't exist, creating it: [%s].", profile_name, str(e))
         if not iprofile:
-            iprofile = self.iam.create_instance_profile(InstanceProfileName=iamc.instance_profile_name)
-            log.info("Instance profile %s successfully created.", iamc.instance_profile_name)
-            waiting_time, steps = 120, 12
+            iprofile = self.iam.create_instance_profile(InstanceProfileName=profile_name)
+            log.info("Instance profile %s successfully created.", profile_name)
+            waiting_time = iamc.credentials_propagation_waiting_time_secs
+            steps = math.ceil(waiting_time / 10)
             for i in range(steps):
                 log.info("Waiting for new credentials propagation, time left = %ss.", round(waiting_time * (1 - i/steps)))
                 time.sleep(waiting_time / steps)
@@ -407,11 +425,39 @@ class AWSBenchmark(Benchmark):
 
         return iprofile
 
-    def _delete_instance_profile(self):
+    def _delete_iam_entities(self):
+        iamc = rconfig().aws.iam
+        iprofile = self.instance_profile
+
+        if iprofile is None:
+            profile_name = iamc.instance_profile_name
+            if iamc.temporary:
+                profile_name += ('-' + self.suid)
+            try:
+                self.iam.meta.client.get_instance_profile(InstanceProfileName=profile_name)
+                iprofile = self.iam.InstanceProfile(profile_name)
+            except botocore.exceptions.ClientError as e:
+                log.info("Instance profile %s doesn't exist, nothing to delete: [%s]", profile_name, str(e))
+
+        if iprofile is not None:
+            for role in iprofile.roles:
+                log.info("Removing role %s from instance profile %s.", role.name, iprofile.name)
+                iprofile.remove_role(RoleName=role.name)
+                self._delete_iam_entities_from_role(role.name)
+            log.info("Deleting instance profile %s.", iprofile.name)
+            iprofile.delete()
+            log.info("Instance profile %s was successfully deleted.", iprofile.name)
+        else:
+            role_name = iamc.role_name
+            if iamc.temporary:
+                role_name += ('-' + self.suid)
+            self._delete_iam_entities_from_role(role_name)
+
+    def _delete_iam_entities_from_role(self, role_name):
         iamc = rconfig().aws.iam
         try:
-            self.iam.meta.client.get_role(RoleName=iamc.role_name)
-            irole = self.iam.Role(iamc.role_name)
+            self.iam.meta.client.get_role(RoleName=role_name)
+            irole = self.iam.Role(role_name)
             for policy in irole.policies.all():
                 log.info("Deleting role policy %s from role %s.", policy.name, policy.role_name)
                 policy.delete()
@@ -426,7 +472,7 @@ class AWSBenchmark(Benchmark):
             irole.delete()
             log.info("Role %s was successfully deleted.", irole.name)
         except botocore.exceptions.ClientError as e:
-            log.info("Role %s doesn't exist, skipping its deletion", iamc.role_name, str(e))
+            log.info("Role %s doesn't exist, skipping its deletion: [%s]", iamc.role_name, str(e))
 
     def _ec2_startup_script(self, instance_key, script_params="", timeout_secs=-1):
         """
@@ -508,6 +554,7 @@ runcmd:
   - PIP install --upgrade pip=={pip_version}
   - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
   - PIP install --no-cache-dir openml
+#  - until aws s3 ls {s3_base_url}; do echo "waiting for credentials"; sleep 10; done
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 

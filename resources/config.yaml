@@ -44,13 +44,21 @@ aws:
   region: ''      # read from ~/.aws/config by default
 
   iam:
-    role_name: AutomlBenchmarkRole
+    role_name: AutomlBenchmarkRole  # must be unique per AWS account, max 40 chars.
+                                    # if temporary is set to true, the generated role name will be `<role_name>-<now>`.
+                                    # cf. commplete restrictions: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
     s3_policy_name: AutomlBenchmarkS3Policy
-    instance_profile_name: AutomlBenchmarkProfile
+    instance_profile_name: AutomlBenchmarkProfile # must be unique per AWS account.
+                                                  # if temporary is set to true, the generated instance profile name will be `<instance_profile_name>-<now>`.
     temporary: false    # if true, the IAM entities will be automatically recreated during setup and deleted at the end of the benchmark run.
+    credentials_propagation_waiting_time_secs: 300  # time to wait before being able to start ec@ instances when using new or temporary credentials.
+    max_role_session_duration_secs: 7200  # the max duration (in seconds) during which the ec2 instance will have access to s3.
+                                          # This should be a number between 900 (15mn) to 43200 (12h).
 
   s3:
-    bucket: automl-benchmark
+    bucket: automl-benchmark  # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
+                              # if temporary is set to true, the generated bucket name will be `<bucket>-<now>`.
+                              # cf. complete restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
     temporary: false    # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
                         # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
                         # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
