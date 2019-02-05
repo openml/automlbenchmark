@@ -28,7 +28,6 @@ To run the benchmarks, you will need:
 * Python 3.5+.
 * PIP3: ensure you have a recent version, this has been tested with `pip3 18.1`: if necessary, upgrade your pip using `pip3 install --upgrade pip==18.1`.
 * the Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
-* the [OpenML](https://github.com/openml/openml-python). (The Python requirements currently fails installing if `openml` is included in `requirements.txt` when `numpy` is not already installed).
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
 ```bash
@@ -46,9 +45,10 @@ pyenv virtualenv ve-automl
 pyenv local ve-automl
 
 pip3 install -r requirements.txt
-pip3 install openml
 ```
 _**NOTE**: in case of issues when installing Python requirements, you may want to retry after enforcing `pip3` version above in your virtualenv._
+
+_You may also need to install the [OpenML](https://github.com/openml/openml-python) library separately (it sometimes fails with existing virtual environments if `numpy` is missing at the time of installation)._
 
 ## Quickstart
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
@@ -60,6 +60,7 @@ To run a benchmark call the `runbenchmark.py` script with at least the following
 Examples:
 ```bash
 python3 runbenchmark.py 
+python3 runbenchmark.py constantpredictor
 python3 runbenchmark.py tpot test
 python3 runbenchmark.py autosklearn test -m docker
 python3 runbenchmark.py h2oautoml validation -m aws
@@ -71,9 +72,10 @@ python3 runbenchmark.py --help
 ```
 
 ```text
-usage: runbenchmark.py [-h] [-m {local,docker,aws}] [-t task_id]
+usage: runbenchmark.py [-h] [-m {local,docker,aws}]
+                       [-t [task_id [task_id ...]]]
                        [-f [fold_num [fold_num ...]]] [-i input_dir]
-                       [-o output_dir] [-p jobs_count]
+                       [-o output_dir] [-u user_dir] [-p parallel_jobs]
                        [-s {auto,skip,force,only}] [-k [true|false]]
                        framework [benchmark]
 
@@ -89,7 +91,7 @@ optional arguments:
   -m {local,docker,aws}, --mode {local,docker,aws}
                         The mode that specifies how/where the benchmark tasks
                         will be running. Defaults to local.
-  -t task_id, --task task_id
+  -t [task_id [task_id ...]], --task [task_id [task_id ...]]
                         The specific task name (as defined in the benchmark
                         file) to run. If not provided, then all tasks from the
                         benchmark will be run.
@@ -104,7 +106,11 @@ optional arguments:
                         Folder where all the outputs should be written.
                         Defaults to `output_dir` as defined in
                         resources/config.yaml
-  -p jobs_count, --parallel jobs_count
+  -u user_dir, --userdir user_dir
+                        Folder where all the customizations are stored.
+                        Defaults to `user_dir` as defined in
+                        resources/config.yaml
+  -p parallel_jobs, --parallel parallel_jobs
                         The number of jobs (i.e. tasks or folds) that can run
                         in parallel. Defaults to 1. Currently supported only
                         in docker and aws mode.
@@ -159,15 +165,21 @@ python3 runbenchmark.py {framework} -m docker -s only
 ### In local environment
 If docker allows portability, it is still possible to run the benchmarks locally without container on some environments (currently Linux, and macOS for most frameworks).
 
-First, the framework needs to be set up locally, which may also take some time:
-```bash
-python3 runbenchmark.py {framework} -s only
-```
-You can then run the benchmarks as many times as you wish.
 A minimal example would be to run the test benchmarks with a random forest:
 ```bash
 python3 runbenchmark.py RandomForest test
 ```
+
+The majority of frameworks though require a `setup` step before being able to run a benchmark. Please note that this step may take some time depending on the framework.
+This setup is executed by default on first run of the framework, but in this case, it is not guaranteed that the benchmark run following immediately will manage to complete successfully (for most frameworks though, it does).
+
+In case of error, just run the benchmark one more time.
+
+If it still fails, you may need to rerun the setup step manually:
+```bash
+python3 runbenchmark.py {framework} -s only
+```
+You can then run the benchmarks as many times as you wish.
 
 When testing a framework or a new dataset, you may want to run only a single task and a specific fold:
 ```bash
