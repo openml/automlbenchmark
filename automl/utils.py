@@ -8,6 +8,7 @@ important
     and should have no dependency to any other **automl** module.
 """
 import datetime as dt
+import fnmatch
 from functools import reduce, wraps
 import json
 import logging
@@ -448,9 +449,31 @@ def dir_of(caller_file, rel_to_project_root=False):
     abs_path = os.path.dirname(os.path.realpath(caller_file))
     if rel_to_project_root:
         project_root = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
-        return os.path.relpath(abs_path, project_root)
+        return os.path.relpath(abs_path, start=project_root)
     else:
         return abs_path
+
+
+def list_all_files(paths, path_ignore=None):
+    all_files = []
+    paths = paths if isinstance(paths, list) else [paths]
+    for path in paths:
+        # path = normalize_path(path)
+        if os.path.isdir(path):
+            for root_dir, sub_dirs, files in os.walk(path):
+                for name in files:
+                    all_files.append(os.path.join(root_dir, name))
+        elif os.path.isfile(path):
+            all_files.append(path)
+        else:
+            log.warning("Skipping file `%s` as it doesn't exist.", path)
+    if path_ignore is not None:
+        path_ignore = path_ignore if isinstance(path_ignore, list) else [path_ignore]
+        ignored = []
+        for pattern in path_ignore:
+            ignored.extend(fnmatch.filter(all_files, pattern))
+        all_files = [file for file in all_files if file not in ignored]
+    return all_files
 
 
 def touch(file_path):

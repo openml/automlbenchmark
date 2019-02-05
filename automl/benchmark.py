@@ -53,7 +53,7 @@ class Benchmark:
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
         self.parallel_jobs = parallel_jobs
-        self.uid = "{}-{}-{}".format(framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)).lower()
+        self.uid = '-'.join([framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)]).lower()
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -303,7 +303,7 @@ class BenchmarkTask:
         def _run():
             self.load_data()
             return self.run(framework, framework_name)
-        job = Job("local_{}_{}_{}".format(self.task.name, self.fold, framework_name))
+        job = Job('_'.join(['local', self.task.name, str(self.fold), framework_name]))
         job._run = _run
         return job
         # return Namespace(run=lambda: self.run(framework))

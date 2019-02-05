@@ -4,10 +4,16 @@
 project_repository: https://github.com/seb-h2o/automlbenchmark
 
 aws:
+
   iam:
-    role_name: {yourname}AutomlBenchmarkRole
-    s3_policy_name: {yourname}AutomlBenchmarkS3Policy
-    instance_profile_name: {yourname}AutomlBenchmarkProfile
+    temporary: false  # set to true if you want IAM entities (credentials used by ec2 instances) being recreated for each benchamrk run.
+    credentials_propagation_waiting_time_secs: 360  # increase this waiting time if you encounter credentials issues on ec2 instances when using temporary IAM.
 
   s3:
-    bucket: {yourname}-automl-benchmark
+    bucket: automl-benchmark-REPLACEME  # ALWAYS SET this bucket name as it needs to be unique in entire S3 domain.
+                                        # (40 chars max as the app reserves some chars for temporary buckets)
+                                        # if you prefer using temporary s3 buckets (see below), you can comment out this property.
+    temporary: false  # set to true if you want a new s3-bucket being temporarily created/deleted for each benchmark run.
+
+  ec2:
+    terminate_instances: always  # see resources/config.yaml for explanations: you may want to switch this value to `success` if you want to investigate on benchmark failures.

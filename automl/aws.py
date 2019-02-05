@@ -29,7 +29,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig
 from .results import Scoreboard
-from .utils import backup_file, datetime_iso, str_def, tail
+from .utils import backup_file, datetime_iso, list_all_files, str_def, tail
 
 
 log = logging.getLogger(__name__)
@@ -65,6 +65,9 @@ class AWSBenchmark(Benchmark):
         self._validate2()
 
     def _validate(self):
+        if rconfig().aws.ec2.terminate_instances not in ['always', 'success', 'never', True, False]:
+            raise ValueError("`terminate_instances` setting should be one among ['always', 'success', 'never']")
+
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
             log.warning("Forcing parallelization to its upper limit: %s.", rconfig().max_parallel_jobs)
             self.parallel_jobs = rconfig().max_parallel_jobs
@@ -136,7 +139,7 @@ class AWSBenchmark(Benchmark):
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
 
-        job = Job("aws_{}_{}_{}_{}".format(self.benchmark_name, task_name if task_name else 'all', '.'.join(folds), self.framework_name))
+        job = Job('_'.join(['aws', self.benchmark_name, task_name if task_name else 'all', '.'.join(folds), self.framework_name]))
         job.instance_id = None
 
         def _run(job_self):
@@ -149,14 +152,18 @@ class AWSBenchmark(Benchmark):
                     task_param='' if task_name is None else ('-t '+task_name),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
-                instance_key="{}_{}".format(job.name, datetime_iso(micros=True, time_sep='.')),
+                instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
                 timeout_secs=timeout_secs
             )
             return self._wait_for_results(job_self)
 
         def _on_done(job_self):
-            self._download_results(job_self.instance_id)
-            self._stop_instance(job_self.instance_id, terminate=rconfig().aws.ec2.terminate_instances)
+            terminate = self._download_results(job_self.instance_id)
+            if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
+                log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
+                            "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
+                            job_self.instance_id)
+            self._stop_instance(job_self.instance_id, terminate=terminate)
 
         job._run = _run.__get__(job)
         job._on_done = _on_done.__get__(job)
@@ -214,21 +221,38 @@ class AWSBenchmark(Benchmark):
         log.info("Started EC2 instance %s.", instance.id)
         return instance.id
 
-    def _stop_instance(self, instance_id, terminate=False):
+    def _stop_instance(self, instance_id, terminate=None):
+        terminate_config = rconfig().aws.ec2.terminate_instances
+        if terminate_config in ['always', True]:
+            terminate = True
+        elif terminate_config in ['never', False]:
+            terminate = False
+        else:
+            terminate = False if terminate is None else terminate
+
         log.info("%s EC2 instances %s.", "Terminating" if terminate else "Stopping", instance_id)
         instance, _ = self.instances[instance_id]
         del self.instances[instance_id]
-        if terminate:
-            response = instance.terminate()
-        else:
-            response = instance.stop()
-        log.info("%s EC2 instances %s with response %s.", "Terminated" if terminate else "Stopped", instance_id, response)
-        log.info("Instance %s state: %s.", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
-        # TODO: error handling
+        try:
+            if terminate:
+                response = instance.terminate()
+            else:
+                response = instance.stop()
+            log.info("%s EC2 instances %s with response %s.", "Terminated" if terminate else "Stopped", instance_id, response)
+        except Exception as e:
+            log.error("ERROR: EC2 instance %s could not be %s!\n"
+                      "Even if the instance should stop by itself after a certain timeout, "
+                      "you may want to stop/terminate it manually:\n%s",
+                      instance_id, "terminated" if terminate else "stopped", str(e))
+        finally:
+            try:
+                log.info("Instance %s state: %s.", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
+            except:
+                pass
 
     def _stop_all_instances(self):
         for id in list(self.instances.keys()):
-            self._stop_instance(id, terminate=rconfig().aws.ec2.terminate_instances)
+            self._stop_instance(id)
 
     def _create_s3_bucket(self):
         # cf. s3 restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
@@ -255,7 +279,7 @@ class AWSBenchmark(Benchmark):
         if self.bucket:
             # we can only delete 1000 objects at a time using this API,
             # but this is intended only for temporary buckets, so no need for pagination
-            to_delete = list(map(lambda o: dict(Key=o.key, VersionId=o.Version('id')), self.bucket.objects.all()))
+            to_delete = [dict(Key=o.key) for o in self.bucket.objects.all()]
             if len(to_delete) > 0:
                 log.info("Deleting objects from S3 bucket %s: %s", self.bucket.name, to_delete)
                 self.bucket.delete_objects(Delete=dict(
@@ -273,16 +297,19 @@ class AWSBenchmark(Benchmark):
         #  this also requires updating _delete_resources and _ec2_startup_script
 
         def dest_path(res_path):
-            name = os.path.basename(res_path)
-            dest = 'input' if res_path.startswith(rconfig().input_dir) else 'user'
+            in_input_dir = res_path.startswith(rconfig().input_dir)
+            in_user_dir = res_path.startswith(rconfig().user_dir)
+            name = os.path.relpath(res_path, start=rconfig().input_dir) if in_input_dir \
+                else os.path.relpath(res_path, start=rconfig().user_dir) if in_user_dir \
+                else os.path.basename(res_path)
+            dest = 'input' if in_input_dir else 'user'
             return root_key+('/'.join([dest, name]))
 
-        upload_files = [self.benchmark_path] + rconfig().aws.resource_files
+        upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
+        upload_files = list_all_files(upload_paths, rconfig().aws.resource_ignore)
+        log.debug("Uploading files to S3: %s", upload_files)
         uploaded_resources = []
         for res in upload_files:
-            if not os.path.isfile(res):
-                log.warning("Not uploading file `%s` as it doesn't exist.", res)
-                continue
             upload_path = dest_path(res)
             log.info("Uploading `%s` to `%s` on s3 bucket %s.", res, upload_path, self.bucket.name)
             self.bucket.upload_file(res, upload_path)
@@ -301,42 +328,64 @@ class AWSBenchmark(Benchmark):
         )
 
     def _download_results(self, instance_id):
+        """
+        :param instance_id:
+        :return: True iff the main result/scoring file has been successfully downloaded. Other failures are only logged.
+        """
+        success = False
         instance, ikey = self.instances[instance_id]
         root_key = str_def(rconfig().aws.s3.root_key)
-        predictions_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
-        scores_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
-        logs_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'logs'])))]
 
-        for obj in predictions_objs:
-            # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
-            dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
-            backup_file(dest_path)
-            log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
-            obj.download_file(dest_path)
-
-        for obj in scores_objs:
-            basename = os.path.basename(obj.key)
-            # FIXME: bypassing the save_scores flag here, do we care?
-            board = Scoreboard.from_file(basename)
-            if board:
-                with io.BytesIO() as buffer:
-                    log.info("Downloading `%s` from s3 bucket %s in memory for merge to `%s`.", obj.key, self.bucket.name, board._score_file())
-                    obj.download_fileobj(buffer)
-                    with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
-                        df = Scoreboard.load_df(file)
-                df.loc[:,'mode'] = rconfig().run_mode
-                board.append(df).save()
-            else:
-                # TODO: test case when there are also backup files in the download
-                dest_path = os.path.join(rconfig().scores_dir, basename)
-                backup_file(dest_path)
+        def download_file(obj, dest, dest_path=None):
+            dest_path = dest if dest_path is None else dest_path
+            try:
                 log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
-                obj.download_file(dest_path)
+                if isinstance(dest, str):
+                    obj.download_file(dest)
+                else:
+                    obj.download_fileobj(dest)
+            except Exception as e:
+                log.error("Failed downloading `%s` from s3 bucket %s: %s", obj.key, self.bucket.name, str(e))
+                log.exception(e)
 
-        for obj in logs_objs:
-            dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
-            log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
-            obj.download_file(dest_path)
+        try:
+            predictions_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
+            scores_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
+            logs_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'logs'])))]
+
+            for obj in predictions_objs:
+                # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
+                dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
+                backup_file(dest_path)
+                download_file(obj, dest_path)
+
+            for obj in scores_objs:
+                basename = os.path.basename(obj.key)
+                # FIXME: bypassing the save_scores flag here, do we care?
+                board = Scoreboard.from_file(basename)
+                if board:
+                    with io.BytesIO() as buffer:
+                        download_file(obj, buffer, dest_path=board._score_file())
+                        with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
+                            df = Scoreboard.load_df(file)
+                    df.loc[:,'mode'] = rconfig().run_mode
+                    board.append(df).save()
+                    success = True
+                else:
+                    # TODO: test case when there are also backup files in the download
+                    dest_path = os.path.join(rconfig().scores_dir, basename)
+                    backup_file(dest_path)
+                    download_file(obj, dest_path)
+
+            for obj in logs_objs:
+                dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
+                download_file(obj, dest_path)
+
+        except Exception as e:
+            log.error("Failed downloading benchmark results from s3 bucket %s: %s", self.bucket.name, str(e))
+            log.exception(e)
+
+        return success
 
     def _create_instance_profile(self):
         """

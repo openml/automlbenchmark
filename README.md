@@ -189,9 +189,8 @@ You will need your AWS Access Key ID, AWS Secret Access Key, and pick a default 
   - us-west-1
   - eu-west-1
   - eu-central-1
-
-You'll also need to specify some unique names and identifiers for the S3 bucket and IAM integration: simply copy the `config.yaml` from [examples/aws] to your user `~/.config/automlbenchmark` folder and replace the placeholders as you wish.
-_**NOTE:** Please do not try to set the `aws.s3.temporary` setting to `true` for now as it is not reliable yet_  
+  
+On first use, it is recommended to simply copy the `config.yaml` from [examples/aws] to your user `~/.config/automlbenchmark` folder (or merge it if you already have a `config.yaml` in this user folder) and follow the instructions in that file.
 
 To run a test to see if the benchmark framework is working on AWS, do the following:
 ```bash

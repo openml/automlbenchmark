@@ -97,7 +97,7 @@ class DockerBenchmark(Benchmark):
             ))
             # TODO: would be nice to reload generated scores and return them
 
-        job = Job("docker_{}_{}_{}".format(task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name))
+        job = Job('_'.join(['docker', task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name]))
         job._run = _run
         return job
 
