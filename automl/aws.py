@@ -601,7 +601,7 @@ runcmd:
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - PIP install --upgrade pip=={pip_version}
-  - PIP install --no-cache-dir -r requirements.txt --process-dependency-links
+  - PIP install --no-cache-dir -r requirements.txt
   - PIP install --no-cache-dir openml
 #  - until aws s3 ls {s3_base_url}; do echo "waiting for credentials"; sleep 10; done
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
@@ -668,7 +668,7 @@ cd ~/repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
 PIP install --upgrade pip=={pip_version}
-PIP install --no-cache-dir -r requirements.txt --process-dependency-links
+PIP install --no-cache-dir -r requirements.txt
 PIP install --no-cache-dir openml
 PIP install --upgrade awscli
 

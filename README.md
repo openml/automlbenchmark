@@ -26,8 +26,9 @@ Future plans:
 ## Installation
 To run the benchmarks, you will need:
 * Python 3.5+.
-* PIP3: ensure you have a recent version, this has been tested with `pip3 18.1`: if necessary, upgrade your pip using `pip3 install --upgrade pip==18.1`.
+* PIP3: ensure you have a recent version, this has been tested with `pip3 18.1` and `pip3 19.0.1`. If necessary, upgrade your pip using `pip3 install --upgrade pip` or specify a working version with `pip3 install --upgrade pip==19.0.1` .
 * the Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
+* the [OpenML Python](https://github.com/openml/openml-python) client library. (The Python requirements currently fail installing in some environments if `openml` is included in `requirements.txt` when `numpy` is not already installed, that's why we need to install this one separately).
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
 ```bash
@@ -40,15 +41,18 @@ pip3 install virtualenv
 python3 -m virtualenv venv
 source venv/bin/activate
   [or using pyenv]
-pyenv install 3.6.8
+pyenv install {python_version: 3.7.2}
 pyenv virtualenv ve-automl
 pyenv local ve-automl
 
 pip3 install -r requirements.txt
+pip3 install openml
 ```
 _**NOTE**: in case of issues when installing Python requirements, you may want to retry after enforcing `pip3` version above in your virtualenv._
 
+<!--
 _You may also need to install the [OpenML](https://github.com/openml/openml-python) library separately (it sometimes fails with existing virtual environments if `numpy` is missing at the time of installation)._
+-->
 
 ## Quickstart
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
@@ -154,7 +158,7 @@ python3 runbenchmark.py RandomForest validation -m docker
 
 If the corresponding image already exists locally and you want it to be rebuilt before running the benchmark, then the setup needs to be forced:
 ```bash
-python3 runbenchmark.py RandomForest validation -m docker -s force
+python3 runbenchmark.py {framework} {benchmark} -m docker -s force
 ```
 
 The image can also be built without running any benchmark:
@@ -181,7 +185,7 @@ python3 runbenchmark.py {framework} -s only
 ```
 You can then run the benchmarks as many times as you wish.
 
-When testing a framework or a new dataset, you may want to run only a single task and a specific fold:
+When testing a framework or a new dataset, you may want to run only a single task and a specific fold, for example:
 ```bash
 python3 runbenchmark.py TPOT validation -t bioresponse -f 0
 ```
