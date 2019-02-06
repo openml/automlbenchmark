@@ -120,10 +120,15 @@ class Benchmark:
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
-            return SimpleJobRunner(jobs).start()
+            results = SimpleJobRunner(jobs).start()
         else:
-            # return ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs).start()
-            return MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
+            # results = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs).start()
+            results = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
+
+        for res in results:
+            if res.result is not None:
+                res.result.duration= "%.1f" % res.duration
+        return results
 
     def _benchmark_jobs(self):
         jobs = []

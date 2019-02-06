@@ -75,6 +75,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     finally:
         if h2o.connection():
+            h2o.remove_all()
             h2o.connection().close()
         # if h2o.cluster():
         #     h2o.cluster().shutdown()

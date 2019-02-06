@@ -111,7 +111,7 @@ class Scoreboard:
             # avoid dtype conversions during reindexing on empty frame
             return df
         # fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'utc'] # TODO: enable this?
-        fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc', 'info']
+        fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc', 'duration', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
