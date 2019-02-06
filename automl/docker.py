@@ -182,8 +182,7 @@ VOLUME /custom
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 ADD . /bench/
 
-RUN $PIP install --no-cache-dir -r requirements.txt
-RUN $PIP install --no-cache-dir openml
+RUN xargs -L 1 $PIP install --no-cache-dir < requirements.txt
 
 {custom_commands}
 
