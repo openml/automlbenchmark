@@ -16,6 +16,11 @@ __dummy_framework_with_defaults:
 constantpredictor:
   version: 'latest'
 
+constantpredictor_enc:
+  extends: constantpredictor
+  params:
+    encode: true
+
 autosklearn:
   version: '0.4.2'
   project: https://automl.github.io/auto-sklearn/stable/
