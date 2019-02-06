@@ -63,16 +63,16 @@ class DockerBenchmark(Benchmark):
         # TODO: remove generated docker script? anything else?
         pass
 
-    def run(self, save_scores=False):
+    def run(self):
         jobs = []
         if self.parallel_jobs == 1:
             jobs.append(self._make_job())
         else:
             jobs.extend(self._benchmark_jobs())
         results = self._run_jobs(jobs)
-        return self._process_results(results, save_scores=save_scores)
+        return self._process_results(results)
 
-    def run_one(self, task_name: str, fold, save_scores=False):
+    def run_one(self, task_name: str, fold):
         jobs = []
         if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
             jobs.append(self._make_job(task_name, fold))
@@ -80,7 +80,7 @@ class DockerBenchmark(Benchmark):
             task_def = self._get_task_def(task_name)
             jobs.extend(self._custom_task_jobs(task_def, fold))
         results = self._run_jobs(jobs)
-        return self._process_results(results, task_name=task_name, save_scores=save_scores)
+        return self._process_results(results, task_name=task_name)
 
     def _fold_job(self, task_def, fold: int):
         return self._make_job(task_def.name, [fold])

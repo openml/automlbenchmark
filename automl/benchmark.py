@@ -90,14 +90,14 @@ class Benchmark:
         # anything to do?
         pass
 
-    def run(self, save_scores=False):
+    def run(self):
         """
         runs the framework for every task in the benchmark definition
         """
         results = self._run_jobs(self._benchmark_jobs())
-        return self._process_results(results, save_scores=save_scores)
+        return self._process_results(results)
 
-    def run_one(self, task_name, fold, save_scores=False):
+    def run_one(self, task_name, fold):
         """
 
         :param task_name:
@@ -115,7 +115,7 @@ class Benchmark:
         log.info(results)
         for task_name in task_names:
             task_results = filter(lambda res: res.result.task == task_name, results)
-            scoreboard = self._process_results(task_results, task_name=task_name, save_scores=save_scores)
+            scoreboard = self._process_results(task_results, task_name=task_name)
         return scoreboard
 
     def _run_jobs(self, jobs):
@@ -180,7 +180,7 @@ class Benchmark:
             raise ValueError("Task {} is disabled, please enable it first.".format(task_name))
         return task_def
 
-    def _process_results(self, results, task_name=None, save_scores=False):
+    def _process_results(self, results, task_name=None):
         scores = flatten([res.result for res in results])
         if len(scores) == 0 or not any(scores):
             return None
@@ -188,7 +188,7 @@ class Benchmark:
         board = Scoreboard(scores, framework_name=self.framework_name, task_name=task_name) if task_name \
             else Scoreboard(scores, framework_name=self.framework_name, benchmark_name=self.benchmark_name)
 
-        if save_scores:
+        if rconfig().results.save:
             self._save(board)
 
         log.info("Summing up scores for current run:\n%s", board.as_data_frame().dropna(how='all', axis='columns').to_string())
@@ -265,10 +265,10 @@ class TaskConfig:
         log.info("Assigning %sMB (total=%sMB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.available:
-            log.warning("BEWARE! Assigned memory (%(assigned)sMB) exceeds system available memory (%(available)sMB / total=%(total)sMB)!",
+            log.warning("WARNING: Assigned memory (%(assigned)sMB) exceeds system available memory (%(available)sMB / total=%(total)sMB)!",
                         dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total))
         elif assigned_mem > sys_mem.total - os_recommended_mem:
-            log.warning("BEWARE! Assigned memory (%(assigned)sMB) is within %(buffer)sMB of system total memory (%(total)sMB): "
+            log.warning("WARNING: Assigned memory (%(assigned)sMB) is within %(buffer)sMB of system total memory (%(total)sMB): "
                         "We recommend a %(buffer)sMB buffer, otherwise OS memory usage might interfere with the benchmark task.",
                         dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total, buffer=os_recommended_mem))
 

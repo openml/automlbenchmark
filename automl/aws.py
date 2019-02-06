@@ -102,7 +102,7 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
-    def run(self, save_scores=False):
+    def run(self):
         # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
         #   than having a job per task. This depends on job duration especially
         jobs = []
@@ -114,9 +114,9 @@ class AWSBenchmark(Benchmark):
             results = self._run_jobs(jobs)
         finally:
             self.cleanup()
-        return self._process_results(results, save_scores=save_scores)
+        return self._process_results(results)
 
-    def run_one(self, task_name: str, fold: int, save_scores=False):
+    def run_one(self, task_name: str, fold: int):
         jobs = []
         if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
             jobs.append(self._make_job(task_name, fold))
@@ -127,7 +127,7 @@ class AWSBenchmark(Benchmark):
             results = self._run_jobs(jobs)
         finally:
             self.cleanup()
-        return self._process_results(results, task_name=task_name, save_scores=save_scores)
+        return self._process_results(results, task_name=task_name)
 
     def _fold_job(self, task_def, fold: int):
         return self._make_job(task_def.name, [fold])
@@ -213,7 +213,6 @@ class AWSBenchmark(Benchmark):
             IamInstanceProfile=dict(Name=self.instance_profile.name),
             UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
         )[0]
-        # TODO: error handling
         self.instances[instance.id] = (instance, inst_key)
         log.info("Started EC2 instance %s.", instance.id)
         return instance.id
@@ -358,21 +357,24 @@ class AWSBenchmark(Benchmark):
 
             for obj in scores_objs:
                 basename = os.path.basename(obj.key)
-                # FIXME: bypassing the save_scores flag here, do we care?
-                board = Scoreboard.from_file(basename)
-                if board:
-                    with io.BytesIO() as buffer:
-                        download_file(obj, buffer, dest_path=board._score_file())
-                        with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
-                            df = Scoreboard.load_df(file)
-                    df.loc[:,'mode'] = rconfig().run_mode
-                    board.append(df).save()
-                    success = True
-                else:
+                success_on_save = basename == Scoreboard.results_file
+                if rconfig().results.save:
+                    board = Scoreboard.from_file(basename)
                     # TODO: test case when there are also backup files in the download
-                    dest_path = os.path.join(rconfig().scores_dir, basename)
-                    backup_file(dest_path)
-                    download_file(obj, dest_path)
+                    if board:
+                        with io.BytesIO() as buffer:
+                            download_file(obj, buffer, dest_path=board._score_file())
+                            with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
+                                df = Scoreboard.load_df(file)
+                        df.loc[:,'mode'] = rconfig().run_mode
+                        board.append(df).save()
+                        success = success_on_save
+                    else:
+                        dest_path = os.path.join(rconfig().scores_dir, basename)
+                        backup_file(dest_path)
+                        download_file(obj, dest_path)
+                else:
+                    success = success_on_save
 
             for obj in logs_objs:
                 dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))

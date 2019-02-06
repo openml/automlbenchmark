@@ -26,6 +26,7 @@ benchmarks:
 
 results:
   error_max_length: 200
+  save:   # set by runbenchmark.py
 
 openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
@@ -38,7 +39,7 @@ docker:
   image_defaults:
     author: automlbenchmark
     image:    # set by docker.py based on framework name, lowercase
-    tag:  # set by docker.py based on framework version
+    tag:      # set by docker.py based on framework version
 
 aws:
   region: ''      # read from ~/.aws/config by default

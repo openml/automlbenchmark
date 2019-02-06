@@ -1,10 +1,10 @@
-# prevent asap other modules from defining the root logger using basicConfig
-import logging
-logging.basicConfig(handlers=[logging.NullHandler()])
-
 import argparse
+import logging
 import os
 import sys
+
+# prevent asap other modules from defining the root logger using basicConfig
+import automl.logger
 
 import automl
 from automl.utils import Namespace as ns, config_load, datetime_iso, str2bool
@@ -75,7 +75,8 @@ config_args = ns(input_dir=args.indir,
                  output_dir=args.outdir,
                  user_dir=args.userdir,
                  run_mode=args.mode,
-                 script=os.path.basename(__file__))
+                 script=os.path.basename(__file__),
+                 results=ns(save=args.keep_scores))
 config_args = ns({k: v for k, v in config_args if v is not None})
 # merging all configuration files
 automl.resources.from_configs(config, config_user, config_args)
@@ -102,9 +103,9 @@ try:
     bench.setup(automl.Benchmark.SetupMode[args.setup])
     if args.setup != 'only':
         if args.task is None:
-            res = bench.run(save_scores=args.keep_scores)
+            res = bench.run()
         else:
-            res = bench.run_one(args.task, args.fold, save_scores=args.keep_scores)
+            res = bench.run_one(args.task, args.fold)
 except ValueError as e:
     log.error('\nERROR:\n%s', e)
     sys.exit(1)

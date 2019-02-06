@@ -1,9 +1,8 @@
-# prevent asap other modules from defining the root logger using basicConfig
-import logging
-logging.basicConfig(handlers=[logging.NullHandler()])
-
 import argparse
 import os
+
+# prevent asap other modules from defining the root logger using basicConfig
+import automl.logger
 
 from ruamel import yaml
 

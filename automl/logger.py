@@ -6,6 +6,8 @@ import io
 import logging
 import sys
 
+# prevent asap other modules from defining the root logger using basicConfig
+logging.basicConfig(handlers=[logging.NullHandler()])
 
 app_logger = logging.getLogger('automl')
 frameworks_logger = logging.getLogger('frameworks')
