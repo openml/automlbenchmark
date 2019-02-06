@@ -172,7 +172,6 @@ class AWSBenchmark(Benchmark):
     def _wait_for_results(self, job):
         instance, _ = self.instances[job.instance_id]
         last_console_line = -1
-        results = []
 
         def log_console():
             nonlocal last_console_line
@@ -195,8 +194,6 @@ class AWSBenchmark(Benchmark):
                 log.info("EC2 instance %s is %s.", job.instance_id, instance.state['Name'])
                 break
             time.sleep(rconfig().aws.query_frequency_seconds)
-
-        return results
 
     def _start_instance(self, instance_type, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)

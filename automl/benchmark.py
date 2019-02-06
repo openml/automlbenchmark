@@ -127,7 +127,7 @@ class Benchmark:
 
         for res in results:
             if res.result is not None:
-                res.result.duration= "%.1f" % res.duration
+                res.result.duration = "%.1f" % res.duration
         return results
 
     def _benchmark_jobs(self):
