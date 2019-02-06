@@ -11,8 +11,9 @@ from automl.utils import Namespace as ns, TmpDir, dir_of, run_cmd, json_dumps, j
 
 log = logging.getLogger(__name__)
 
-# PYTHON = '~/venvs/bench/rf/bin/python3 -W ignore'
-PYTHON = 'python3 -W ignore'
+
+PYTHON = os.path.join(dir_of(__file__), 'venv/bin/python3 -W ignore')
+# PYTHON = 'python3 -W ignore'
 
 
 def run(dataset: Dataset, config: TaskConfig):

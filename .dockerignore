@@ -5,5 +5,5 @@ results
 **/libs
 **/.marker*
 **/__pycache__
+**/venv
 *.iml
-

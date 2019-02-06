@@ -594,6 +594,7 @@ runcmd:
   - python3 -m venv /venvs/bench
   - alias PIP='/venvs/bench/bin/pip3'
   - alias PY='/venvs/bench/bin/python3 -W ignore'
+  - alias PIP_REQ='xargs -L 1 /venvs/bench/bin/pip3 install --no-cache-dir'
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
@@ -601,7 +602,7 @@ runcmd:
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - PIP install --upgrade pip=={pip_version}
-  - xargs -L 1 PIP install --no-cache-dir < requirements.txt
+  - PIP_REQ < requirements.txt
 #  - until aws s3 ls {s3_base_url}; do echo "waiting for credentials"; sleep 10; done
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
