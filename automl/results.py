@@ -250,7 +250,7 @@ class TaskResult:
         result = self.get_result(framework_name) if result is None else result
         for metric in metrics:
             score = result.evaluate(metric)
-            scores[metric] = score
+            scores[metric] = "{:.6g}".format(score)
         scores.result = scores[metrics[0]]
         scores.info = result.info
         log.info("Metric scores: %s", scores)
