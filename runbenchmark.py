@@ -72,14 +72,17 @@ config = config_load("resources/config.yaml")
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
 config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
 # config listing properties set by command line
-config_args = ns(input_dir=args.indir,
-                 output_dir=args.outdir,
-                 user_dir=args.userdir,
-                 run_mode=args.mode,
-                 script=os.path.basename(__file__),
-                 results=ns(save=args.keep_scores),
-                 ) + ns.parse(extras)
+config_args = ns.parse(
+    {'results.save': args.keep_scores},
+    input_dir=args.indir,
+    output_dir=args.outdir,
+    user_dir=args.userdir,
+    run_mode=args.mode,
+    script=os.path.basename(__file__),
+    **extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
+print(str(config_args))
+raise ValueError()
 # merging all configuration files
 automl.resources.from_configs(config, config_user, config_args)
 

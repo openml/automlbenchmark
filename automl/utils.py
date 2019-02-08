@@ -43,7 +43,22 @@ class Namespace:
 
     @staticmethod
     def parse(*args, **kwargs):
-        return Namespace(*args, **kwargs)
+        raw = dict(*args, **kwargs)
+        parsed = Namespace()
+        dots, nodots = partition(raw.keys(), lambda s: '.' in s)
+        for k in nodots:
+            parsed[k] = raw[k]
+        sublevel = {}
+        for k in dots:
+            k1, k2 = k.split('.', 1)
+            entry = [(k2, raw[k])]
+            if k1 in sublevel:
+                sublevel[k1].update(entry)
+            else:
+                sublevel[k1] = dict(entry)
+        for k, v in sublevel.items():
+            parsed[k] = Namespace.parse(v)
+        return parsed
 
     @staticmethod
     def merge(*namespaces, deep=False):
@@ -149,6 +164,16 @@ def flatten(iterable, flatten_tuple=False, flatten_dict=False):
     return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
                                 else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
                                 else l.append(r)) or l, iterable, [])
+
+
+def partition(iterable, predicate=id):
+    truthy, falsy = [], []
+    for i in iterable:
+        if predicate(i):
+            truthy.append(i)
+        else:
+            falsy.append(i)
+    return truthy, falsy
 
 
 def str2bool(s):
