@@ -34,9 +34,8 @@ def run(dataset: Dataset, config: TaskConfig):
         log.warning("Performance metric %s not supported.", config.metric)
 
     # Set resources based on datasize
-    log.warning("Ignoring cores constraint of %s cores.", config.cores)
     log.info("Running auto-sklearn with a maximum time of %ss on %s cores with %sMB, optimizing %s.",
-             config.max_runtime_seconds, 'all', config.max_mem_size_mb, perf_metric)
+             config.max_runtime_seconds, config.cores, config.max_mem_size_mb, perf_metric)
 
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
@@ -47,6 +46,7 @@ def run(dataset: Dataset, config: TaskConfig):
     # TODO: do we need to set per_run_time_limit too?
     estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
+                             n_jobs=config.cores,
                              ml_memory_limit=config.max_mem_size_mb,
                              **config.framework_params)
     auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
