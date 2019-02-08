@@ -8,6 +8,7 @@ import math
 import os
 import re
 
+import numpy as np
 from numpy import NaN, sort
 
 from .data import Dataset, Feature
@@ -110,7 +111,7 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        # fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'utc'] # TODO: enable this?
+        # fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'utc', 'duration', 'info'] # TODO: enable this?
         fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc', 'duration', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
@@ -119,11 +120,19 @@ class Scoreboard:
         log.debug("Scores columns: %s.", df.columns)
         return df
 
+    @cached
+    def as_printable_data_frame(self):
+        df = self.as_data_frame()
+        df['duration'] = df['duration'].astype(np.float).map("{:.1f}".format)
+        for col in df.select_dtypes(include=[np.float]).columns:
+            df[col] = df[col].map("{:.6g}".format)
+        return df
+
     def _load(self):
         return self.load_df(self._score_file())
 
     def save(self, append=False):
-        self.save_df(self.as_data_frame(), path=self._score_file(), append=append)
+        self.save_df(self.as_printable_data_frame(), path=self._score_file(), append=append)
 
     def append(self, board_or_df):
         to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
@@ -244,13 +253,13 @@ class TaskResult:
             # params=str(framework_def.params), # TODO: enable this?
             task=self.task,
             fold=self.fold,
-            mode=rconfig().run_mode,  # FIXME: set correctly in local mode and a posteriori for aws mode, but not for docker mode
+            mode=rconfig().run_mode,
             utc=datetime_iso()
         )
         result = self.get_result(framework_name) if result is None else result
         for metric in metrics:
             score = result.evaluate(metric)
-            scores[metric] = "{:.6g}".format(score)
+            scores[metric] = score
         scores.result = scores[metrics[0]]
         scores.info = result.info
         log.info("Metric scores: %s", scores)

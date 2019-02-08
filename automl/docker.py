@@ -63,41 +63,38 @@ class DockerBenchmark(Benchmark):
         # TODO: remove generated docker script? anything else?
         pass
 
-    def run(self):
-        jobs = []
-        if self.parallel_jobs == 1:
-            jobs.append(self._make_job())
+    def run(self, task_name=None, fold=None):
+        if self.parallel_jobs > 1 or not rconfig().docker.minimize_instances:
+            return super().run(task_name, fold)
         else:
-            jobs.extend(self._benchmark_jobs())
-        results = self._run_jobs(jobs)
-        return self._process_results(results)
+            job = self._make_docker_job(task_name, fold)
+            try:
+                results = self._run_jobs([job])
+                return self._process_results(results, task_name=task_name)
+            finally:
+                self.cleanup()
 
-    def run_one(self, task_name: str, fold):
-        jobs = []
-        if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
-            jobs.append(self._make_job(task_name, fold))
-        else:
-            task_def = self._get_task_def(task_name)
-            jobs.extend(self._custom_task_jobs(task_def, fold))
-        results = self._run_jobs(jobs)
-        return self._process_results(results, task_name=task_name)
+    def _make_job(self, task_def, fold=int):
+        return self._make_docker_job([task_def.name], [fold])
 
-    def _fold_job(self, task_def, fold: int):
-        return self._make_job(task_def.name, [fold])
-
-    def _make_job(self, task_name=None, folds=None):
+    def _make_docker_job(self, task_names=None, folds=None):
+        task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
 
         def _run():
             self._start_docker("{framework} {benchmark} {task_param} {folds_param}".format(
                 framework=self.framework_name,
                 benchmark=self.benchmark_name,
-                task_param='' if task_name is None else ('-t '+task_name),
+                task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
             ))
             # TODO: would be nice to reload generated scores and return them
 
-        job = Job('_'.join(['docker', task_name if task_name else self.benchmark_name, ':'.join(folds), self.framework_name]))
+        job = Job('_'.join(['docker',
+                            self.benchmark_name,
+                            ':'.join(task_names) if len(task_names) > 0 else 'all',
+                            ':'.join(folds),
+                            self.framework_name]))
         job._run = _run
         return job
 
@@ -105,7 +102,7 @@ class DockerBenchmark(Benchmark):
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
-        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip".format(
+        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker".format(
             input=in_dir,
             output=out_dir,
             custom=custom_dir,

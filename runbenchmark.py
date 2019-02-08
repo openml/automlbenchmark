@@ -22,7 +22,7 @@ parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default=
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
                     help="The specific task name (as defined in the benchmark file) to run. "
                          "If not provided, then all tasks from the benchmark will be run.")
-parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*',
+parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*', default=None,
                     help="If task is provided, the specific fold(s) to run. "
                          "If fold is not provided, then all folds from the task definition will be run.")
 parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
@@ -40,6 +40,7 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
+parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
 # group = parser.add_mutually_exclusive_group()
 # group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
 #                    help="Set to true [default] to save/add scores in output directory")
@@ -52,7 +53,6 @@ parser.add_argument('--profiling', nargs='?', const=True, default=False, help=ar
 #                     help="The region on which to run the benchmark when using AWS.")
 
 args = parser.parse_args()
-
 script_name = os.path.splitext(os.path.basename(__file__))[0]
 log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
 os.makedirs(log_dir, exist_ok=True)
@@ -67,6 +67,7 @@ automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(s
 log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
 
+extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
 config = config_load("resources/config.yaml")
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
 config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
@@ -76,7 +77,8 @@ config_args = ns(input_dir=args.indir,
                  user_dir=args.userdir,
                  run_mode=args.mode,
                  script=os.path.basename(__file__),
-                 results=ns(save=args.keep_scores))
+                 results=ns(save=args.keep_scores),
+                 ) + ns.parse(extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
 # merging all configuration files
 automl.resources.from_configs(config, config_user, config_args)
@@ -102,10 +104,7 @@ try:
 
     bench.setup(automl.Benchmark.SetupMode[args.setup])
     if args.setup != 'only':
-        if args.task is None:
-            res = bench.run()
-        else:
-            res = bench.run_one(args.task, args.fold)
+        res = bench.run(args.task, args.fold)
 except ValueError as e:
     log.error('\nERROR:\n%s', e)
     sys.exit(1)

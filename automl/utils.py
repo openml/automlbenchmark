@@ -42,6 +42,10 @@ class Namespace:
     mangled_prefix = '_Namespace__'
 
     @staticmethod
+    def parse(*args, **kwargs):
+        return Namespace(*args, **kwargs)
+
+    @staticmethod
     def merge(*namespaces, deep=False):
         merged = Namespace()
         for ns in namespaces:

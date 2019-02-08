@@ -90,33 +90,30 @@ class Benchmark:
         # anything to do?
         pass
 
-    def run(self):
+    def run(self, task_name=None, fold=None):
         """
-        runs the framework for every task in the benchmark definition
+        :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
+        :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
-        results = self._run_jobs(self._benchmark_jobs())
-        return self._process_results(results)
+        task_defs = self._benchmark_tasks() if task_name is None \
+            else [self._get_task_def(name) for name in task_name] if isinstance(task_name, list) \
+            else [self._get_task_def(task_name)]
+        if len(task_defs) == 0:
+            raise ValueError("No task available.")
 
-    def run_one(self, task_name, fold):
-        """
-
-        :param task_name:
-        :param fold:
-        :param save_scores:
-        """
-        jobs = []
-        task_names = task_name if isinstance(task_name, list) else [task_name]
-        if len(task_names) == 0:
-            raise ValueError("No task was provided.")
-        for task_name in task_names:
-            task_def = self._get_task_def(task_name)
-            jobs.extend(self._custom_task_jobs(task_def, fold))
-        results = self._run_jobs(jobs)
-        log.info(results)
-        for task_name in task_names:
-            task_results = filter(lambda res: res.result.task == task_name, results)
-            scoreboard = self._process_results(task_results, task_name=task_name)
-        return scoreboard
+        jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
+        try:
+            results = self._run_jobs(jobs)
+            # log.info(results)
+            if task_name is None:
+                scoreboard = self._process_results(results)
+            else:
+                for task_def in task_defs:
+                    task_results = filter(lambda res: res.result.task == task_def.name, results)
+                    scoreboard = self._process_results(task_results, task_name=task_def.name)
+            return scoreboard
+        finally:
+            self.cleanup()
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
@@ -127,49 +124,11 @@ class Benchmark:
 
         for res in results:
             if res.result is not None:
-                res.result.duration = "{:.1f}".format(res.duration)
+                res.result.duration = res.duration
         return results
 
-    def _benchmark_jobs(self):
-        jobs = []
-        for task_def in self.benchmark_def:
-            if Benchmark._is_task_enabled(task_def):
-                jobs.extend(self._task_jobs(task_def))
-        return jobs
-
-    def _custom_task_jobs(self, task_def, folds):
-        jobs = []
-        if folds is None:
-            jobs.extend(self._task_jobs(task_def))
-        elif isinstance(folds, int):
-            jobs.append(self._fold_job(task_def, folds))
-        elif isinstance(folds, list) and all(isinstance(f, int) for f in folds):
-            for f in folds:
-                jobs.append(self._fold_job(task_def, f))
-        else:
-            raise ValueError("Fold value should be None, an int, or a list of ints.")
-        return jobs
-
-    def _task_jobs(self, task_def):
-        """
-        run the framework for every fold in the task definition
-        :param task_def:
-        """
-        jobs = []
-        for fold in range(task_def.folds):
-            jobs.append(self._fold_job(task_def, fold))
-        return jobs
-
-    def _fold_job(self, task_def, fold: int):
-        """
-        runs the framework against a given fold
-        :param task_def: the task to run
-        :param fold: the specific fold to use on this task
-        """
-        if fold < 0 or fold >= task_def.folds:
-            raise ValueError("Fold value {} is out of range for task {}.".format(fold, task_def.name))
-
-        return BenchmarkTask(task_def, fold).as_job(self.framework_module, self.framework_name)
+    def _benchmark_tasks(self):
+        return [task_def for task_def in self.benchmark_def if Benchmark._is_task_enabled(task_def)]
 
     def _get_task_def(self, task_name):
         try:
@@ -179,6 +138,26 @@ class Benchmark:
         if not Benchmark._is_task_enabled(task_def):
             raise ValueError("Task {} is disabled, please enable it first.".format(task_name))
         return task_def
+
+    def _task_jobs(self, task_def, folds=None):
+        folds = range(task_def.folds) if folds is None \
+            else folds if isinstance(folds, list) and all(isinstance(f, int) for f in folds) \
+            else [folds] if isinstance(folds, int) \
+            else None
+        if folds is None:
+            raise ValueError("Fold value should be None, an int, or a list of ints.")
+        return [self._make_job(task_def, f) for f in folds]
+
+    def _make_job(self, task_def, fold: int):
+        """
+        runs the framework against a given fold
+        :param task_def: the task to run
+        :param fold: the specific fold to use on this task
+        """
+        if fold < 0 or fold >= task_def.folds:
+            raise ValueError("Fold value {} is out of range for task {}.".format(fold, task_def.name))
+
+        return BenchmarkTask(task_def, fold).as_job(self.framework_module, self.framework_name)
 
     def _process_results(self, results, task_name=None):
         scores = flatten([res.result for res in results])
@@ -191,7 +170,7 @@ class Benchmark:
         if rconfig().results.save:
             self._save(board)
 
-        log.info("Summing up scores for current run:\n%s", board.as_data_frame().dropna(how='all', axis='columns').to_string())
+        log.info("Summing up scores for current run:\n%s", board.as_printable_data_frame().dropna(how='all', axis='columns').to_string())
         return board.as_data_frame()
 
     def _save(self, board):

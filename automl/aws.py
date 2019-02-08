@@ -102,44 +102,36 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
-    def run(self):
-        # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
-        #   than having a job per task. This depends on job duration especially
-        jobs = []
-        if self.parallel_jobs == 1:
-            jobs.append(self._make_job())
+    def run(self, task_name=None, fold=None):
+        if self.parallel_jobs > 1 or not rconfig().aws.minimize_instances:
+            # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
+            #   than having a job per task. This depends on job duration especially
+            return super().run(task_name, fold)
         else:
-            jobs.extend(self._benchmark_jobs())
-        try:
-            results = self._run_jobs(jobs)
-        finally:
-            self.cleanup()
-        return self._process_results(results)
+            job = self._make_aws_job(task_name, fold)
+            try:
+                results = self._run_jobs([job])
+                return self._process_results(results, task_name=task_name)
+            finally:
+                self.cleanup()
 
-    def run_one(self, task_name: str, fold: int):
-        jobs = []
-        if self.parallel_jobs == 1 and (fold is None or (isinstance(fold, list) and len(fold) > 1)):
-            jobs.append(self._make_job(task_name, fold))
-        else:
-            task_def = self._get_task_def(task_name)
-            jobs.extend(self._custom_task_jobs(task_def, fold))
-        try:
-            results = self._run_jobs(jobs)
-        finally:
-            self.cleanup()
-        return self._process_results(results, task_name=task_name)
+    def _make_job(self, task_def, fold=int):
+        return self._make_aws_job([task_def.name], [fold])
 
-    def _fold_job(self, task_def, fold: int):
-        return self._make_job(task_def.name, [fold])
-
-    def _make_job(self, task_name=None, folds=None):
+    def _make_aws_job(self, task_names=None, folds=None):
+        task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
-        instance_type = self._get_task_def(task_name).ec2_instance_type if task_name else rconfig().aws.ec2.instance_type
-        timeout_secs = self._get_task_def(task_name).max_runtime_seconds if task_name \
+        task_def = self._get_task_def(task_names[0]) if len(task_names) == 1 else None
+        instance_type = task_def.ec2_instance_type if task_def else rconfig().aws.ec2.instance_type
+        timeout_secs = task_def.max_runtime_seconds if task_def \
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
 
-        job = Job('_'.join(['aws', self.benchmark_name, task_name if task_name else 'all', '.'.join(folds), self.framework_name]))
+        job = Job('_'.join(['aws',
+                            self.benchmark_name,
+                            ':'.join(task_names) if len(task_names) > 0 else 'all',
+                            '.'.join(folds),
+                            self.framework_name]))
         job.instance_id = None
 
         def _run(job_self):
@@ -149,7 +141,7 @@ class AWSBenchmark(Benchmark):
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
                     benchmark="{}/user/{}.yaml".format(resources_root, self.benchmark_name),
-                    task_param='' if task_name is None else ('-t '+task_name),
+                    task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
                 instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
@@ -366,7 +358,7 @@ class AWSBenchmark(Benchmark):
                             download_file(obj, buffer, dest_path=board._score_file())
                             with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
                                 df = Scoreboard.load_df(file)
-                        df.loc[:,'mode'] = rconfig().run_mode
+                        # df.loc[:,'mode'] = rconfig().run_mode
                         board.append(df).save()
                         success = success_on_save
                     else:
@@ -562,7 +554,7 @@ runcmd:
   - pip3 install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
-  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip
+  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -606,7 +598,7 @@ runcmd:
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -688,7 +680,7 @@ shutdown -P +1 "I'm losing power"
         )
 
 
-class AWSRemoteBenchmark(DockerBenchmark):
+class AWSRemoteBenchmark(Benchmark):
 
     # TODO: idea is to handle results progressively on the remote side and push results as soon as they're generated
     #   this would allow to safely run multiple tasks on single AWS instance
