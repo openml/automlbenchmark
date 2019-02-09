@@ -7,6 +7,7 @@ important
     therefore, it should have as few external dependencies as possible,
     and should have no dependency to any other **automl** module.
 """
+from ast import literal_eval
 import datetime as dt
 import fnmatch
 from functools import reduce, wraps
@@ -47,7 +48,13 @@ class Namespace:
         parsed = Namespace()
         dots, nodots = partition(raw.keys(), lambda s: '.' in s)
         for k in nodots:
-            parsed[k] = raw[k]
+            v = raw[k]
+            try:
+                if isinstance(v, str):
+                    v = literal_eval(v)
+            except:
+                pass
+            parsed[k] = v
         sublevel = {}
         for k in dots:
             k1, k2 = k.split('.', 1)

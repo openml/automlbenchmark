@@ -81,8 +81,7 @@ config_args = ns.parse(
     script=os.path.basename(__file__),
     **extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
-print(str(config_args))
-raise ValueError()
+log.debug("Config args: %s.", config_args)
 # merging all configuration files
 automl.resources.from_configs(config, config_user, config_args)
 
