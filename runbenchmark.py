@@ -79,7 +79,7 @@ config_args = ns.parse(
     user_dir=args.userdir,
     run_mode=args.mode,
     script=os.path.basename(__file__),
-    **extras)
+) + ns.parse(extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
