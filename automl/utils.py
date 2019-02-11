@@ -444,7 +444,7 @@ class Timer:
 
 class InterruptTimer:
 
-    def __init__(self, timeout_secs, message=None, log_level=logging.WARNING):
+    def __init__(self, timeout_secs, message=None, log_level=logging.WARNING, kill_sub_processes=False):
 
         def interruption():
             nonlocal message
@@ -452,6 +452,12 @@ class InterruptTimer:
                 message = "Interrupting main thread after {}s timeout.".format(timeout_secs)
             log.log(log_level, message)
             _thread.interrupt_main()
+            if kill_sub_processes:
+                current = psutil.Process()
+                children = current.children(recursive=True)
+                for proc in children:
+                    log.warning("Terminating sub-process `%s [pid=%s]`.", proc.name(), proc.pid)
+                    proc.terminate()
 
         self.timer = threading.Timer(timeout_secs, interruption)
 

@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -7,6 +8,7 @@ from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
 from automl.utils import InterruptTimer, dir_of
 
+os.environ['OMP_NUM_THREADS'] = '1'
 sys.path.append("{}/libs/hyperopt-sklearn".format(dir_of(__file__)))
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 from hyperopt import tpe
@@ -60,7 +62,7 @@ def run(dataset: Dataset, config: TaskConfig):
                                   trial_timeout=config.max_runtime_seconds,
                                   **config.framework_params)
 
-    with InterruptTimer(config.max_runtime_seconds):
+    with InterruptTimer(config.max_runtime_seconds, kill_sub_processes=True):
         estimator.fit(X_train, y_train)
 
     predictions = estimator.predict(X_test)
