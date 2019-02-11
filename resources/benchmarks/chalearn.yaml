@@ -6,7 +6,7 @@
     - acc
     - logloss
   folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: jasmine
@@ -16,7 +16,7 @@
     - auc
     - logloss
   folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: christine
@@ -26,7 +26,7 @@
     - auc
     - logloss
   folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: sylvine
@@ -36,7 +36,7 @@
     - auc
     - logloss
   folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: dilbert
@@ -45,4 +45,4 @@
     - acc
     - logloss
   folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600

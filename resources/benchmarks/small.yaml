@@ -7,7 +7,7 @@
     - auc
     - logloss
   folds: 2
-  max_runtime_seconds: 300
+  max_runtime_seconds: 600
   cores: 2
 
 - name: car
@@ -16,7 +16,7 @@
     - acc
     - logloss
   folds: 2
-  max_runtime_seconds: 300
+  max_runtime_seconds: 600
   cores: 2
 
 - name: credit-g
@@ -26,6 +26,6 @@
     - auc
     - logloss
   folds: 2
-  max_runtime_seconds: 300
+  max_runtime_seconds: 600
   cores: 2
 

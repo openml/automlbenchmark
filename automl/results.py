@@ -73,7 +73,7 @@ class Scoreboard:
         log.debug("Loading scores from `%s`.", name)
         exists = isinstance(file, io.IOBase) or os.path.isfile(file)
         df = read_csv(file) if exists else to_data_frame({})
-        log.info("Loaded scores from `%s`.", name)
+        log.debug("Loaded scores from `%s`.", name)
         return df
 
     @staticmethod
