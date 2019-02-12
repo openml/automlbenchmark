@@ -109,7 +109,7 @@ class Benchmark:
                 scoreboard = self._process_results(results)
             else:
                 for task_def in task_defs:
-                    task_results = filter(lambda res: res.result.task == task_def.name, results)
+                    task_results = filter(lambda res: res.result is not None and res.result.task == task_def.name, results)
                     scoreboard = self._process_results(task_results, task_name=task_def.name)
             return scoreboard
         finally:
