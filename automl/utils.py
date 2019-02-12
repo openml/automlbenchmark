@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -421,12 +422,10 @@ class Timer:
     def _zero():
         return 0
 
-    def __init__(self, use_clock=False, enabled=True):
+    def __init__(self, clock=time.time, enabled=True):
         self.start = 0
         self.stop = 0
-        self._time = Timer._zero if not enabled \
-            else time.clock if use_clock \
-            else time.time
+        self._time = clock if enabled else Timer._zero
 
     def __enter__(self):
         self.start = self._time()
@@ -442,24 +441,10 @@ class Timer:
         return self._time() - self.start
 
 
-class InterruptTimer:
+class Timeout:
 
-    def __init__(self, timeout_secs, message=None, log_level=logging.WARNING, kill_sub_processes=False):
-
-        def interruption():
-            nonlocal message
-            if message is None:
-                message = "Interrupting main thread after {}s timeout.".format(timeout_secs)
-            log.log(log_level, message)
-            _thread.interrupt_main()
-            if kill_sub_processes:
-                current = psutil.Process()
-                children = current.children(recursive=True)
-                for proc in children:
-                    log.warning("Terminating sub-process `%s [pid=%s]`.", proc.name(), proc.pid)
-                    proc.terminate()
-
-        self.timer = threading.Timer(timeout_secs, interruption)
+    def __init__(self, timeout_secs, on_timeout=None):
+        self.timer = threading.Timer(timeout_secs, on_timeout)
 
     def __enter__(self):
         self.timer.start()
@@ -467,6 +452,30 @@ class InterruptTimer:
 
     def __exit__(self, *args):
         self.timer.cancel()
+
+
+class InterruptTimeout(Timeout):
+
+    def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
+                 interrupt='thread', sig=signal.SIGINT, ident=None, before_interrupt=None):
+        def interruption():
+            nonlocal message
+            if message is None:
+                desc = 'current' if ident is None else 'main' if ident == 0 else self.ident
+                message = "Interrupting {} {} after {}s timeout.".format(interrupt, desc, timeout_secs)
+            log.log(log_level, message)
+            if before_interrupt is not None:
+                before_interrupt()
+            if interrupt == 'thread':
+                # _thread.interrupt_main()
+                signal.pthread_kill(self.ident, sig)
+            elif interrupt == 'process':
+                os.kill(self.ident, sig)
+
+        super().__init__(timeout_secs, on_timeout=interruption)
+        if interrupt not in ['thread', 'process']:
+            raise ValueError("`interrupt` value should be one of ['thread', 'process'].")
+        self.ident = get_thread(ident).ident if interrupt == 'thread' else get_process(ident).pid
 
 
 """ FILE SYSTEM """
@@ -602,6 +611,38 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
 
 
 """ PROCESS """
+
+
+def get_thread(tid=None):
+    return threading.current_thread() if tid is None \
+        else threading.main_thread() if tid == 0 \
+        else next(filter(lambda t: t.ident == tid, threading.enumerate()))
+
+
+def get_process(pid=None):
+    pid = os.getpid() if pid is None \
+        else os.getppid() if pid == 0 \
+        else pid
+    return psutil.Process(pid) if psutil.pid_exists(pid) else None
+
+
+def kill_proc_tree(pid=None, include_parent=True, timeout=None, on_terminate=None):
+    def on_proc_terminated(proc):
+        log.info("Process %s terminated with exit code %s", proc, proc.returncode)
+        if on_terminate is not None:
+            on_terminate(proc)
+
+    parent = get_process(pid)
+    children = parent.children(recursive=True)
+    if include_parent:
+        children.append(parent)
+    for proc in children:
+        log.warning("Terminating process %s.", proc)
+        proc.terminate()
+    terminated, alive = psutil.wait_procs(children, timeout=timeout, callback=on_proc_terminated)
+    for proc in alive:
+        log.warning("Killing process %s.", proc)
+        proc.kill()
 
 
 def system_memory_mb():
