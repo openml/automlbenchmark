@@ -11,8 +11,7 @@ import re
 from .benchmark import Benchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
-from .results import Scoreboard
-from .utils import run_cmd, normalize_path
+from .utils import run_cmd
 
 
 log = logging.getLogger(__name__)
