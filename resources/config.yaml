@@ -1,0 +1,116 @@
+---
+project_repository: https://github.com/openml/automlbenchmark#stable      # this is also the url used to clone the repository on ec2 instances
+                                                                          # when running those without docker.
+                                                                          # to clone a specific branch/tag, add a url fragment, e.g.:
+                                                                          # https://github.com/openml/automlbenchmark#stable
+
+user_dir: ~/.config/automlbenchmark   # where to override settings with a custom config.yaml file and, for example, add custom frameworks, benchmark definitions or framework modules.
+input_dir: ~/.openml/cache            # where the datasets are loaded by default.
+output_dir: results                   # where logs and results are saved by default.
+script:     # set by runbenchmark.py
+
+max_parallel_jobs: 5
+seed: auto  # default global seed (used if not set in task definition), can be one of:
+            # `auto`: a global seed will be generated and passed to all jobs.
+            # `none`: no seed will be provided (seed left to framework's responsibility).
+            # any int32 to pass a fixed seed to the jobs.
+
+frameworks:
+  definition_file: resources/frameworks.yaml
+  root_module: frameworks
+
+benchmarks:
+  definition_dir: resources/benchmarks
+  os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
+  defaults:
+    folds: 10
+    max_runtime_seconds: 3600
+    cores: -1                 # default amount of cores used for each automl task. If <= 0, will try to use all cores.
+    max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
+
+results:
+  error_max_length: 200
+  save:   # set by runbenchmark.py
+
+openml:
+  apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
+
+versions:
+  pip: 19.0.2
+  python: 3.7.2  # should we also enforce the Python version in docker images/ec2 instances?
+
+docker:
+  minimize_instances: true
+  image_defaults:
+    author: automlbenchmark
+    image:    # set by docker.py based on framework name, lowercase
+    tag:      # set by docker.py based on framework version
+
+aws:
+  region: ''      # read from ~/.aws/config by default
+
+  iam:
+    role_name: AutomlBenchmarkRole  # must be unique per AWS account, max 40 chars.
+                                    # if temporary is set to true, the generated role name will be `<role_name>-<now>`.
+                                    # cf. commplete restrictions: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
+    s3_policy_name: AutomlBenchmarkS3Policy
+    instance_profile_name: AutomlBenchmarkProfile # must be unique per AWS account.
+                                                  # if temporary is set to true, the generated instance profile name will be `<instance_profile_name>-<now>`.
+    temporary: false    # if true, the IAM entities will be automatically recreated during setup and deleted at the end of the benchmark run.
+    credentials_propagation_waiting_time_secs: 360  # time to wait before being able to start ec2 instances when using new or temporary credentials.
+    max_role_session_duration_secs: 7200  # the max duration (in seconds) during which the ec2 instance will have access to s3.
+                                          # This should be a number between 900 (15mn) to 43200 (12h).
+
+  s3:
+    bucket: automl-benchmark  # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
+                              # if temporary is set to true, the generated bucket name will be `<bucket>-<now>`.
+                              # cf. complete restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
+    temporary: false    # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
+                        # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
+                        # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
+    root_key: ec2/
+
+  ec2:
+    terminate_instances: always     # if `always`, the EC2 instances are always terminated.
+                                    # if `success`, EC2 instances are terminated at the end of the main job iff it ended successfully (=the main results could be downloaded),
+                                    #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
+                                    #               (don't forget to delete the instance UserData before restarting it).
+                                    # if `never`, the instances are only stopped.
+    instance_type: m5.large
+    subnet_id: ''
+    regions:
+      us-east-1:
+        #ami: ami-0797482d7f93b830c  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
+        ami: ami-0ac019f4fcb7cb7e6
+        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+      us-west-1:
+        #ami: ami-0f27f14c7e0fffda9  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
+        ami: ami-063aa838bd7631e0b
+        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+      eu-west-1:
+        #ami: ami-0615f1e34f8d36362  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
+        ami: ami-00035f41c82244dab
+        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+      eu-central-1:
+        ami: ami-0bdf93799014acdc4
+        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+
+  max_timeout_seconds: 21600
+  overhead_time_seconds: 900   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
+  query_frequency_seconds: 15
+  resource_files: []    # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
+                        # Those files are actually uploaded to s3 bucket (precisely to s3://{s3.bucket}/{s3.root_key}/user),
+                        #  this folder being itself synchronized on each ec2 instance and used as user directory.
+                        # The possibility of adding resource_files is especially necessary to run custom frameworks.
+  resource_ignore:      # files ignored when listing `resource_files`, especially if those contain directories
+    - '*/venv/*'
+    - '*/__pycache__/*'
+    - '*/.marker_*'
+    - '*.swp'
+  minimize_instances: true
+  use_docker: false     # if true, EC2 instances will run benchmark tasks in a docker instance.
+                        # if false, it will run in local mode after cloning project_repository.
+                        # Note that using docker in AWS mode requires the docker image being
+                        # previously published in a public repository or using an AMI with the pre-downloaded image,
+                        # whereas the local mode is self-configured and framework agnostic (works with generic AMI).
+

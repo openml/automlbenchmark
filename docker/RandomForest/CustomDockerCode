@@ -1,5 +1,0 @@
-RUN pip3 install --no-cache-dir numpy==1.15.0
-RUN pip3 install --no-cache-dir scipy==1.1.0
-RUN pip3 install --no-cache-dir scikit-learn==0.19.2
-RUN pip3 install --no-cache-dir liac-arff==2.3
-ENV start_call="python3 run_randomforest.py"

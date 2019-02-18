@@ -1,0 +1,52 @@
+---
+#for doc purpose using <placeholder:default_value> syntax when it applies.
+
+#FORMAT: defaults are defined in config.yaml
+- name: __dummy-task
+  enabled: false  # actual default is `true` of course...
+  openml_task_id: 0
+  metric: # the first metric in the task list will be optimized against used for the main result, the other ones are optional and purely informative. Only the metrics annoted with (*) can be used a performance metric.
+    - # classification
+    - acc # (*) accuracy
+    - auc # (*) array under curve
+    - logloss # (*) log loss
+    - f1  # F1 score
+    - # regression
+    - mae  # (*) mean absolute error
+    - mse # (*) mean squared error
+    - rmse  # root mean squared error
+    - rmsle  # root mean squared log error
+    - r2  # R^2 score
+  folds: 1
+  max_runtime_seconds: 600
+  cores: 1
+  max_mem_size_mb: -1
+  ec2_instance_type: m5.large
+
+- name: iris
+  openml_task_id: 59
+  metric: [acc, logloss]
+  folds: 2
+  cores: 2
+  max_runtime_seconds: 60
+
+- name: kc2
+  openml_task_id: 3913
+  metric:
+    - acc
+    - auc
+  folds: 2
+  cores: 2
+  max_runtime_seconds: 60
+
+- name: cholesterol
+  enabled: false
+  openml_task_id: 2295
+  metric:
+    - mae
+    - mse
+    - rmse
+    - r2
+  folds: 2
+  cores: 2
+  max_runtime_seconds: 60

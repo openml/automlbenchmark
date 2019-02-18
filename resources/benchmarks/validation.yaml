@@ -1,0 +1,40 @@
+---
+- name: dresses-sales
+  openml_task_id: 125920
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: eucalyptus
+  openml_task_id: 2079
+  metric:
+    - logloss
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: internet-advertisements
+  openml_task_id: 167125
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: bioresponse
+  openml_task_id: 9910
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: micro-mass
+  openml_task_id: 9950
+  metric:
+    - logloss
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2

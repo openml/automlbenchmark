@@ -1,0 +1,69 @@
+---
+#for doc purpose using <placeholder:default_value> syntax when it applies.
+
+# FORMAT:
+__dummy_framework_with_defaults:
+  version: ''
+  module: # defaults to `framework name`
+  setup_args: ''
+  params: {}
+  project: http://url/to/project/repo
+  docker_image: # will result in built docker image `author/image:tag`
+    author: automlbenchmark
+    image:  # defaults to `framework name to lowercase`
+    tag:  # defaults to `framework version`
+
+constantpredictor:
+  version: 'latest'
+
+constantpredictor_enc:
+  extends: constantpredictor
+  params:
+    encode: true
+
+autosklearn:
+  version: '0.5.0'
+  project: https://automl.github.io/auto-sklearn/stable/
+
+AutoWEKA:
+  version: '2.6'
+  project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
+
+H2OAutoML:
+  version: '3.22.1.2'
+  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+
+hyperoptsklearn:
+  version: '0.0.3'
+  project: http://hyperopt.github.io/hyperopt-sklearn/
+  params:
+    max_evals: 1000
+#    verbose: true
+
+oboe:
+  version: 'latest'
+  project: https://github.com/udellgroup/oboe
+#  params:
+#    verbose: true
+
+RandomForest:
+  version: '0.19.2'
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  docker_image:
+    image: rf
+  params:
+    n_estimators: 2000
+#    verbose: true
+
+RandomForest_R:
+  version: '0.10.1'
+  project: https://github.com/imbs-hl/ranger
+  docker_image:
+    image: rfr
+
+TPOT:
+  version: '0.9.5'
+  project: https://github.com/EpistasisLab/tpot
+  params:
+    verbosity: 2
+

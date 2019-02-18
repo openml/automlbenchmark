@@ -1,3 +1,23 @@
+#build/run/local
+Dockerfile
+.marker*
+my_*
+
+# python env
 *.pyc
 __pycache__
-Dockerfile
+.python-version
+venv/
+
+# editors/IDEs
+.idea/
+*.iml
+*.swp
+
+# tmp files
+*.log
+*.csv
+*.arff
+libs/
+logs/
+results/

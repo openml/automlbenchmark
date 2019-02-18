@@ -1,8 +1,0 @@
-RUN apt-get update
-RUN apt-get -y install software-properties-common apt-transport-https libxml2-dev
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-RUN add-apt-repository 'deb [arch=amd64,i386] https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
-RUN apt-get update
-RUN apt-get -y install r-base r-base-dev
-RUN Rscript -e 'install.packages(c("mlr", "mlrCPO", "ranger", "farff"))'
-ENV start_call="Rscript run_randomForest.R"

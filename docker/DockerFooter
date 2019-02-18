@@ -1,3 +1,0 @@
-
-# https://docs.docker.com/engine/reference/builder/#entrypoint
-ENTRYPOINT ["/bin/bash", "-c", "./common/startup.sh -c \"$start_call\" $0 $*"]

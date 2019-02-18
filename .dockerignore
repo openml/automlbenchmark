@@ -1,0 +1,9 @@
+.git
+.idea
+logs
+results
+**/libs
+**/.marker*
+**/__pycache__
+**/venv
+*.iml
