@@ -7,6 +7,7 @@ from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
+from automl.utils import Timer, translate_dict
 
 
 log = logging.getLogger(__name__)
@@ -41,15 +42,12 @@ def run(dataset: Dataset, config: TaskConfig):
     estimator = TPOTClassifier if is_classification else TPOTRegressor
     tpot = estimator(n_jobs=config.cores,
                      max_time_mins=runtime_min,
-                     verbosity=2,
                      scoring=scoring_metric,
+                     random_state=config.seed,
                      **config.framework_params)
 
-    start_time = time.time()
-    tpot.fit(X_train, y_train)
-    actual_runtime_min = (time.time() - start_time)/60.0
-    log.debug('Requested training time: %sm.', runtime_min)
-    log.debug('Actual training time: %sm.', actual_runtime_min)
+    with Timer() as training:
+        tpot.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
     predictions = tpot.predict(X_test)
@@ -66,3 +64,7 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=is_classification)
 
+    return dict(
+        models_count=len(tpot.evaluated_individuals_),
+        training_duration=training.duration
+    )

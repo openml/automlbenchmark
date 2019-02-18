@@ -10,6 +10,10 @@ output_dir: results                   # where logs and results are saved by defa
 script:     # set by runbenchmark.py
 
 max_parallel_jobs: 5
+seed: auto  # default global seed (used if not set in task definition), can be one of:
+            # `auto`: a global seed will be generated and passed to all jobs.
+            # `none`: no seed will be provided (seed left to framework's responsibility).
+            # any int32 to pass a fixed seed to the jobs.
 
 frameworks:
   definition_file: resources/frameworks.yaml
@@ -19,8 +23,8 @@ benchmarks:
   definition_dir: resources/benchmarks
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   defaults:
-    folds: 1
-    max_runtime_seconds: 600
+    folds: 10
+    max_runtime_seconds: 3600
     cores: -1                 # default amount of cores used for each automl task. If <= 0, will try to use all cores.
     max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
 

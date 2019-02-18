@@ -8,7 +8,7 @@ from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
-from automl.utils import InterruptTimeout, dir_of, kill_proc_tree
+from automl.utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
 
 os.environ['OMP_NUM_THREADS'] = '1'
 sys.path.append("{}/libs/hyperopt-sklearn".format(dir_of(__file__)))
@@ -62,11 +62,13 @@ def run(dataset: Dataset, config: TaskConfig):
                                   loss_fn=loss_fn,
                                   continuous_loss_fn=continuous_loss_fn,
                                   trial_timeout=config.max_runtime_seconds,
+                                  seed=config.seed,
                                   **config.framework_params)
 
     with InterruptTimeout(config.max_runtime_seconds * 4/3, sig=signal.SIGQUIT):
         with InterruptTimeout(config.max_runtime_seconds, before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):
-            estimator.fit(X_train, y_train)
+            with Timer() as training:
+                estimator.fit(X_train, y_train)
 
     predictions = estimator.predict(X_test)
     probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(predictions) if is_classification else None
@@ -78,3 +80,7 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=True)
 
+    return dict(
+        models_count=len(estimator.trials),
+        training_duration=training.duration
+    )

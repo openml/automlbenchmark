@@ -5,6 +5,7 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
+from automl.utils import Timer
 
 
 log = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ def run(dataset: Dataset, config: TaskConfig):
     X_test = dataset.test.X_enc if encode else dataset.test.X
     y_test = dataset.test.y_enc if encode else dataset.test.y
 
-    predictor.fit(X_train, y_train)
+    with Timer() as training:
+        predictor.fit(X_train, y_train)
     predictions = predictor.predict(X_test)
     probabilities = predictor.predict_proba(X_test) if is_classification else None
 
@@ -33,3 +35,7 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=encode)
 
+    return dict(
+        models_count=1,
+        training_duration=training.duration
+    )

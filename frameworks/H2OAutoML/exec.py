@@ -7,6 +7,7 @@ from h2o.automl import H2OAutoML
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import NoResultError, save_predictions_to_file
+from automl.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -43,15 +44,14 @@ def run(dataset: Dataset, config: TaskConfig):
         log.info("Running model on task %s, fold %s.", config.name, config.fold)
         log.debug("Running H2O AutoML with a maximum time of %ss on %s core(s), optimizing %s.",
                   config.max_runtime_seconds, config.cores, sort_metric)
-        start_time = time.time()
 
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds,
                         sort_metric=sort_metric,
+                        seed=config.seed,
                         **config.framework_params)
-        aml.train(y=dataset.target.index, training_frame=train)
-        actual_runtime_min = (time.time() - start_time)/60.0
-        log.debug("Requested training time: %sm.", config.max_runtime_seconds/60.0)
-        log.debug("Actual training time: %sm.", actual_runtime_min)
+
+        with Timer() as training:
+            aml.train(y=dataset.target.index, training_frame=train)
 
         if not aml.leader:
             raise NoResultError("H2O could not produce any model in the requested time.")
@@ -72,6 +72,11 @@ def run(dataset: Dataset, config: TaskConfig):
                                  probabilities=probabilities,
                                  predictions=predictions,
                                  truth=y_truth.values)
+
+        return dict(
+            models_count=len(aml.leaderboard),
+            training_duration=training.duration
+        )
 
     finally:
         if h2o.connection():

@@ -4,7 +4,7 @@ from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import reorder_dataset
 from automl.results import save_predictions_to_file
-from automl.utils import dir_of, path_from_split, run_cmd, split_path
+from automl.utils import dir_of, path_from_split, run_cmd, split_path, Timer
 
 log = logging.getLogger(__name__)
 
@@ -45,10 +45,12 @@ def run(dataset: Dataset, config: TaskConfig):
         timeLimit=int(config.max_runtime_seconds/60),
         parallelRuns=config.cores,
         metric=metric,
+        seed=config.seed,
         **config.framework_params
     )
     cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
-    output = run_cmd(cmd)
+    with Timer() as training:
+        output = run_cmd(cmd)
     log.debug(output)
 
     # if target values are not sorted alphabetically in the ARFF file, then class probabilities are returned in the original order
@@ -63,10 +65,10 @@ def run(dataset: Dataset, config: TaskConfig):
             inst, actual, predicted, error, *distribution = line.split(',')
             pred_probabilities = [pred_probability.replace('*', '').replace('\n', '') for pred_probability in distribution]
             _, pred = predicted.split(':')
-            _, truth = actual.split(':')
+            _, tru = actual.split(':')
             probabilities.append(pred_probabilities)
             predictions.append(pred)
-            truth.append(truth)
+            truth.append(tru)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
@@ -74,3 +76,8 @@ def run(dataset: Dataset, config: TaskConfig):
                              predictions=predictions,
                              truth=truth,
                              probabilities_labels=probabilities_labels)
+
+    return dict(
+        training_duration=training.duration
+    )
+

@@ -27,7 +27,7 @@ import botocore.exceptions
 from .benchmark import Benchmark
 from .docker import DockerBenchmark
 from .job import Job
-from .resources import config as rconfig
+from .resources import config as rconfig, get as rget
 from .results import Scoreboard
 from .utils import backup_file, datetime_iso, list_all_files, str_def, tail
 
@@ -534,9 +534,6 @@ class AWSBenchmark(Benchmark):
         :param script_params: the custom params passed to the benchmark script, usually only task, fold params
         :return: the UserData for the new ec2 instance
         """
-        split_url = rconfig().project_repository.split('#', 2)
-        repo = split_url[0]
-        branch = 'master' if len(split_url) == 1 else split_url[1]
         cloud_config = """
 #cloud-config
 
@@ -598,7 +595,7 @@ runcmd:
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed}
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -612,14 +609,15 @@ power_state:
   condition: True
 """
         return cloud_config.format(
-            repo=repo,
-            branch=branch,
+            repo=rget().project_info.repo,
+            branch=rget().project_info.tag,
             image=DockerBenchmark.docker_image_name(self.framework_def),
             pip_version=rconfig().versions.pip,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
+            seed=rget().seed,
             timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds,
         )
 
@@ -636,9 +634,6 @@ power_state:
         :param script_params: the custom params passed to the benchmark script, usually only task, fold params
         :return: the UserData for the new ec2 instance
         """
-        split_url = rconfig().project_repository.split('#', 2)
-        repo = split_url[0]
-        branch = 'master' if len(split_url) == 1 else split_url[1]
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
@@ -670,8 +665,8 @@ aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
 """.format(
-            repo=repo,
-            branch=branch,
+            repo=rget().project_info.repo,
+            branch=rget().project_info.tag,
             pip_version=rconfig().versions.pip,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,

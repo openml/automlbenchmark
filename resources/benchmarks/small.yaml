@@ -3,29 +3,27 @@
 - name: kr-vs-kp
   openml_task_id: 3
   metric:
-    - acc
     - auc
+    - acc
     - logloss
-  folds: 2
-  max_runtime_seconds: 600
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: car
   openml_task_id: 146821
+  enabled: false
   metric:
-    - acc
     - logloss
-  folds: 2
-  max_runtime_seconds: 600
+    - acc
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: credit-g
   openml_task_id: 31
   metric:
-    - acc
     - auc
+    - acc
     - logloss
-  folds: 2
-  max_runtime_seconds: 600
+  max_runtime_seconds: 3600
   cores: 2
 

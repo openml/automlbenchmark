@@ -12,13 +12,14 @@ from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
 import logging
+import math
 import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
 from .resources import get as rget, config as rconfig
 from .results import NoResult, Scoreboard, TaskResult
-from .utils import datetime_iso, flatten, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
+from .utils import Namespace as ns, datetime_iso, flatten, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -123,7 +124,7 @@ class Benchmark:
             results = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
 
         for res in results:
-            if res.result is not None:
+            if res.result is not None and math.isnan(res.result.duration):
                 res.result.duration = res.duration
         return results
 
@@ -197,20 +198,21 @@ class Benchmark:
 class TaskConfig:
 
     @staticmethod
-    def from_def(task_def, fold, config):
+    def from_def(task_def, fold):
         return TaskConfig(
             name=task_def.name,
             fold=fold,
             metrics=task_def.metric,
+            seed=task_def.seed,
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
             max_mem_size_mb=task_def.max_mem_size_mb,
-            input_dir=config.input_dir,
-            output_dir=config.predictions_dir,
+            input_dir=rconfig().input_dir,
+            output_dir=rconfig().predictions_dir,
         )
 
-    def __init__(self, name, fold, metrics, max_runtime_seconds,
-                 cores, max_mem_size_mb,
+    def __init__(self, name, fold, metrics, seed,
+                 max_runtime_seconds, cores, max_mem_size_mb,
                  input_dir, output_dir):
         self.framework = None
         self.framework_params = None
@@ -219,6 +221,7 @@ class TaskConfig:
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
         self.metric = metrics[0] if isinstance(metrics, list) else metrics
+        self.seed = seed
         self.max_runtime_seconds = max_runtime_seconds
         self.cores = cores
         self.max_mem_size_mb = max_mem_size_mb
@@ -262,7 +265,7 @@ class BenchmarkTask:
         """
         self._task_def = task_def
         self.fold = fold
-        self.task = TaskConfig.from_def(self._task_def, self.fold, rconfig())
+        self.task = TaskConfig.from_def(self._task_def, self.fold)
         self._dataset = None
 
     @profile(logger=log)
@@ -272,13 +275,16 @@ class BenchmarkTask:
         :return: path to the dataset file
         """
         if hasattr(self._task_def, 'openml_task_id'):
+            self._task_def.id = "openml.org/t/{}".format(self._task_def.openml_task_id)
             self._dataset = Benchmark.task_loader.load(task_id=self._task_def.openml_task_id, fold=self.fold)
             log.debug("Loaded OpenML dataset for task_id %s.", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'openml_dataset_id'):
             # TODO
+            self._task_def.id = "openml.org/d/{}".format(self._task_def.openml_dataset_id)
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
             # TODO
+            self._task_def.id = None
             raise NotImplementedError("Raw dataset are not supported yet.")
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
@@ -299,25 +305,35 @@ class BenchmarkTask:
         :param framework:
         :return:
         """
-        results = TaskResult(task_name=self.task.name, fold=self.fold)
+        results = TaskResult(task_def=self._task_def, fold=self.fold)
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task)
         task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params
+
+        # allowing to pass framework parameters through command line, e.g.: -Xf.verbose=True -Xf.n_estimators=3000
+        if rconfig()['f'] is not None:
+            task_config.framework_params = ns.dict(ns(framework_def.params) + rconfig().f)
+        # allowing to override some  task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
+        if rconfig()['t'] is not None:
+            for c in ['max_runtime_seconds', 'metric', 'metrics', 'seed']:
+                if rconfig().t[c] is not None:
+                    setattr(task_config, c, rconfig().t[c])
+
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         task_config.estimate_system_params()
         try:
             log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))
-            framework.run(self._dataset, task_config)
+            meta_result = framework.run(self._dataset, task_config)
             self._dataset.release()
-            return results.compute_scores(framework_name, task_config.metrics)
+            return results.compute_scores(framework_name, task_config.metrics, meta_result=meta_result)
         except Exception as e:
             log.exception(e)
             msg = 'Error: '+str(e)
             max_len = rconfig().results.error_max_length
             msg = msg if len(msg) <= max_len else (msg[:max_len - 3] + '...')
-            return results.compute_scores(framework_name, task_config.metrics, NoResult(info=msg))
+            return results.compute_scores(framework_name, task_config.metrics, result=NoResult(info=msg))
         finally:
             self._dataset.release()
 

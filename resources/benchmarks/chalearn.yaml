@@ -3,46 +3,41 @@
 - name: fabert
   openml_task_id: 168760
   metric:
-    - acc
     - logloss
-  folds: 2
+    - acc
   max_runtime_seconds: 3600
   cores: 2
 
 - name: jasmine
   openml_task_id: 168764
   metric:
-    - acc
     - auc
+    - acc
     - logloss
-  folds: 2
   max_runtime_seconds: 3600
   cores: 2
 
 - name: christine
   openml_task_id: 168765
   metric:
-    - acc
     - auc
+    - acc
     - logloss
-  folds: 2
   max_runtime_seconds: 3600
   cores: 2
 
 - name: sylvine
   openml_task_id: 168761
   metric:
-    - acc
     - auc
+    - acc
     - logloss
-  folds: 2
   max_runtime_seconds: 3600
   cores: 2
 
 - name: dilbert
   openml_task_id: 168770
   metric:
-    - acc
     - logloss
-  folds: 2
+    - acc
   max_runtime_seconds: 3600

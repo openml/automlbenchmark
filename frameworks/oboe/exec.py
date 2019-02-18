@@ -5,7 +5,7 @@ from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
-from automl.utils import dir_of
+from automl.utils import Timer, dir_of
 
 sys.path.append("{}/libs/oboe/automl".format(dir_of(__file__)))
 from auto_learner import AutoLearner
@@ -27,12 +27,15 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info('Running oboe with a maximum time of {}s on {} cores.'.format(config.max_runtime_seconds, config.cores))
     log.warning('We completely ignore the advice to optimize towards metric: {}.'.format(config.metric))
 
-    automl = AutoLearner(p_type='classification' if is_classification else 'regression',
-                         n_cores=config.cores,
-                         runtime_limit=config.max_runtime_seconds,
-                         **config.framework_params)
-    automl.fit(X_train, y_train)
-    predictions = automl.predict(X_test).reshape(len(X_test))
+    aml = AutoLearner(p_type='classification' if is_classification else 'regression',
+                      n_cores=config.cores,
+                      runtime_limit=config.max_runtime_seconds,
+                      **config.framework_params)
+
+    with Timer() as training:
+        aml.fit(X_train, y_train)
+
+    predictions = aml.predict(X_test).reshape(len(X_test))
     probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(predictions) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
@@ -42,4 +45,7 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=True)
 
-
+    return dict(
+        models_count=len(aml.get_models()),
+        training_duration=training.duration
+    )

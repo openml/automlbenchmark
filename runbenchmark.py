@@ -109,4 +109,6 @@ try:
         res = bench.run(args.task, args.fold)
 except ValueError as e:
     log.error('\nERROR:\n%s', e)
+    if extras.get('verbose') is True:
+        log.exception(e)
     sys.exit(1)

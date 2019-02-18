@@ -4,8 +4,7 @@
   metric:
     - auc
     - acc
-  folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: eucalyptus
@@ -13,8 +12,7 @@
   metric:
     - logloss
     - acc
-  folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: internet-advertisements
@@ -22,8 +20,7 @@
   metric:
     - auc
     - acc
-  folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: bioresponse
@@ -31,8 +28,7 @@
   metric:
     - auc
     - acc
-  folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: micro-mass
@@ -40,6 +36,5 @@
   metric:
     - logloss
     - acc
-  folds: 2
-  max_runtime_seconds: 900
+  max_runtime_seconds: 3600
   cores: 2

@@ -5,6 +5,7 @@ as well as handy methods to access other resources like *automl frameworks* and 
 import copy
 import logging
 import os
+import random
 import re
 import sys
 
@@ -45,11 +46,29 @@ class Resources:
         os.makedirs(self.config.predictions_dir, exist_ok=True)
         os.makedirs(self.config.scores_dir, exist_ok=True)
         os.makedirs(self.config.logs_dir, exist_ok=True)
+        self.config.benchmarks.defaults.seed = self.seed
         log.debug("Using config:\n%s", self.config)
 
         # allowing to load custom modules from user directory
         sys.path.append(self._common_dirs['user'])
         log.debug("Extended Python sys.path to user directory: %s.", sys.path)
+
+    @lazy_property
+    def project_info(self):
+        split_url = self.config.project_repository.split('#', 2)
+        return Namespace(
+            repo=split_url[0],
+            tag='master' if len(split_url) == 1 else split_url[1]
+        )
+
+    @lazy_property
+    def seed(self):
+        if str(self.config.seed).lower() in ['none', '']:
+            return None
+        elif str(self.config.seed).lower() in ['auto']:
+            return random.randint(1, (1 << 32) - 1)  # limiting seed to int32
+        else:
+            return self.config.seed
 
     def framework_definition(self, name):
         """
@@ -174,7 +193,7 @@ class Resources:
         if len(missing) > 0:
             raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}.".format(missing=missing, taskdef=task))
 
-        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb']:
+        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'seed']:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
                 log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))

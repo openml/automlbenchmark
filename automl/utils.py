@@ -97,13 +97,15 @@ class Namespace:
 
     def __add__(self, other):
         """extends self with other (always overrides)"""
-        self.__ns.update(other)
+        if other is not None:
+            self.__ns.update(other)
         return self
 
     def __mod__(self, other):
         """extends self with other (adds only missing keys)"""
-        for k, v in other:
-            self.__ns.setdefault(k, v)
+        if other is not None:
+            for k, v in other:
+                self.__ns.setdefault(k, v)
         return self
 
     def __contains__(self, key):
@@ -182,6 +184,16 @@ def partition(iterable, predicate=id):
         else:
             falsy.append(i)
     return truthy, falsy
+
+
+def translate_dict(dic, translation_dict):
+    tr = dict()
+    for k, v in dic.items():
+        if k in translation_dict:
+            tr[translation_dict[k]] = v
+        else:
+            tr[k] = v
+    return tr
 
 
 def str2bool(s):

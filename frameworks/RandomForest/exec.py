@@ -6,6 +6,7 @@ from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import impute
 from automl.results import save_predictions_to_file
+from automl.utils import Timer, translate_dict
 
 log = logging.getLogger(__name__)
 
@@ -24,13 +25,15 @@ def run(dataset: Dataset, config: TaskConfig):
     log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
-    rfc = estimator(n_jobs=config.cores,
-                    **config.framework_params)
+    rf = estimator(n_jobs=config.cores,
+                   random_state=config.seed,
+                   **config.framework_params)
 
-    rfc.fit(X_train, y_train)
+    with Timer() as training:
+        rf.fit(X_train, y_train)
 
-    predictions = rfc.predict(X_test)
-    probabilities = rfc.predict_proba(X_test) if is_classification else None
+    predictions = rf.predict(X_test)
+    probabilities = rf.predict_proba(X_test) if is_classification else None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
@@ -39,3 +42,7 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=False)
 
+    return dict(
+        models_count=len(rf),
+        training_duration=training.duration
+    )

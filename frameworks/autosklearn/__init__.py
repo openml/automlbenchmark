@@ -7,7 +7,7 @@ def setup(*args):
 
 def run(*args, **kwargs):
     from .exec import run
-    run(*args, **kwargs)
+    return run(*args, **kwargs)
 
 
 def docker_commands():

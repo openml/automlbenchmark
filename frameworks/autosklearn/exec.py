@@ -7,6 +7,7 @@ import autosklearn.metrics as metrics
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
+from automl.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -48,8 +49,12 @@ def run(dataset: Dataset, config: TaskConfig):
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
                              n_jobs=config.cores,
                              ml_memory_limit=config.max_mem_size_mb,
+                             seed=config.seed,
                              **config.framework_params)
-    auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
+    with Timer() as training:
+        auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
+
+    log.debug("Trained Ensemble:\n%s", auto_sklearn.show_models())
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
@@ -64,3 +69,8 @@ def run(dataset: Dataset, config: TaskConfig):
                              predictions=predictions,
                              truth=y_test,
                              target_is_encoded=True)
+
+    return dict(
+        models_count=len(auto_sklearn.get_models_with_weights()),
+        training_duration=training.duration
+    )

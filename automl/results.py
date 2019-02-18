@@ -10,7 +10,7 @@ import os
 import re
 
 import numpy as np
-from numpy import NaN, sort
+from numpy import nan, sort
 
 from .data import Dataset, Feature
 from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
@@ -112,8 +112,8 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        # fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'utc', 'duration', 'info'] # TODO: enable this?
-        fixed_cols = ['task', 'framework', 'fold', 'result', 'mode', 'version', 'utc', 'duration', 'info']
+        # fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'tag', 'utc', 'duration', 'models', 'seed', 'info'] # TODO: enable this?
+        fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
@@ -123,10 +123,22 @@ class Scoreboard:
 
     @cached
     def as_printable_data_frame(self):
+        str_print = lambda val: '' if val in [None, '', 'None'] or (isinstance(val, float) and np.isnan(val)) else val
+        int_print = lambda val: int(val) if isinstance(val, float) and not np.isnan(val) else str_print(val)
         num_print = lambda fn, val: None if isinstance(val, str) else fn(val)
+
         df = self.as_data_frame()
-        df['duration'] = df['duration'].astype(np.float).map(partial(num_print, "{:.1f}".format)).astype(np.float)
-        for col in df.select_dtypes(include=[np.float]).columns:
+        force_str_cols = ['id']
+        nanable_int_cols = ['models', 'seed']
+        low_precision_float_cols = ['duration']
+        high_precision_float_cols = [col for col in df.select_dtypes(include=[np.float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
+        for col in force_str_cols:
+            df[col] = df[col].astype(np.object).map(str_print).astype(np.str)
+        for col in nanable_int_cols:
+            df[col] = df[col].astype(np.object).map(int_print).astype(np.str)
+        for col in low_precision_float_cols:
+            df[col] = df[col].astype(np.float).map(partial(num_print, "{:.1f}".format)).astype(np.float)
+        for col in high_precision_float_cols:
             df[col] = df[col].map(partial(num_print, "{:.6g}".format)).astype(np.float)
         return df
 
@@ -237,8 +249,8 @@ class TaskResult:
         task_result = cls(task_name, fold)
         return task_result.compute_scores(framework_name, result.metrics, result=result)
 
-    def __init__(self, task_name: str, fold: int, predictions_dir=None):
-        self.task = task_name
+    def __init__(self, task_def, fold: int, predictions_dir=None):
+        self.task = task_def
         self.fold = fold
         self.predictions_dir = predictions_dir if predictions_dir else rconfig().predictions_dir
 
@@ -247,16 +259,22 @@ class TaskResult:
         return self.load_predictions(self._predictions_file(framework_name))
 
     @profile(logger=log)
-    def compute_scores(self, framework_name, metrics, result=None):
+    def compute_scores(self, framework_name, metrics, result=None, meta_result=None):
         framework_def, _ = rget().framework_definition(framework_name)
+        meta_result = Namespace({} if meta_result is None else meta_result) % Namespace(models_count=nan, training_duration=nan)
         scores = Namespace(
+            id=self.task.id,
+            task=self.task.name,
             framework=framework_name,
             version=framework_def.version,
             # params=str(framework_def.params), # TODO: enable this?
-            task=self.task,
             fold=self.fold,
             mode=rconfig().run_mode,
-            utc=datetime_iso()
+            seed=self.task.seed,
+            tag=rget().project_info.tag,
+            utc=datetime_iso(),
+            duration=meta_result.training_duration,
+            models=meta_result.models_count
         )
         result = self.get_result(framework_name) if result is None else result
         for metric in metrics:
@@ -270,7 +288,7 @@ class TaskResult:
     def _predictions_file(self, framework_name):
         return os.path.join(self.predictions_dir, "{framework}_{task}_{fold}.csv").format(
             framework=framework_name.lower(),
-            task=self.task,
+            task=self.task.name,
             fold=self.fold
         )
 
@@ -290,7 +308,7 @@ class Result:
             return getattr(self, metric)()
         # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
         log.warning("Metric %s is not supported for %s!", metric, type=self.type)
-        return NaN
+        return nan
 
 
 class NoResult(Result):
@@ -317,11 +335,15 @@ class ClassificationResult(Result):
     def acc(self):
         return float(accuracy_score(self.truth, self.predictions))
 
+    def balacc(self):
+        # return float(balanced_accuracy_score(self.truth, self.predictions))
+        pass
+
     def auc(self):
         if self.type != 'binomial':
             # raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
             log.warning("AUC metric is only supported for binary classification: %s.", self.classes)
-            return NaN
+            return nan
         return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
 
     def cm(self):

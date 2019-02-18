@@ -102,12 +102,13 @@ class DockerBenchmark(Benchmark):
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
-        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker".format(
+        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker -Xseed={seed}".format(
             input=in_dir,
             output=out_dir,
             custom=custom_dir,
             image=self._docker_image_name,
-            params=script_params
+            params=script_params,
+            seed=rget().seed
         )
         log.info("Starting docker: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)

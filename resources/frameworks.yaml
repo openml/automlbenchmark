@@ -43,8 +43,8 @@ hyperoptsklearn:
 oboe:
   version: 'latest'
   project: https://github.com/udellgroup/oboe
-  params:
-    verbose: true
+#  params:
+#    verbose: true
 
 RandomForest:
   version: '0.19.2'
@@ -64,4 +64,6 @@ RandomForest_R:
 TPOT:
   version: '0.9.5'
   project: https://github.com/EpistasisLab/tpot
+  params:
+    verbosity: 2
 
