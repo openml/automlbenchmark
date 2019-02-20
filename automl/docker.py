@@ -29,7 +29,7 @@ class DockerBenchmark(Benchmark):
         return "{author}/{image}:{tag}".format(
             author=di.author,
             image=di.image if di.image else framework_def.name.lower(),
-            tag='-'.join([di.tag if di.tag else framework_def.version.lower(), rget().project_info.tag])
+            tag='-'.join([di.tag if di.tag else framework_def.version.lower(), rget().project_info.branch])
         )
 
     def __init__(self, framework_name, benchmark_name, parallel_jobs=1):
@@ -131,17 +131,17 @@ class DockerBenchmark(Benchmark):
 
     def _build_docker_image(self, cache=True):
         if rconfig().docker.force_branch:
-            tag = rget().project_info.tag
             status = run_cmd("git status -b --porcelain")
             if len(status.splitlines()) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
                 log.info("Branch status:\n%s", status)
                 raise InvalidStateError("Docker image can't be built as the current branch is not up-to-date. "
-                                        "Please switch to the expected up-to-date `{}` branch first.".format(tag or 'master'))
+                                        "Please switch to the expected up-to-date `{}` branch first.".format(rget().project_info.branch))
 
+            tag = rget().project_info.tag
             tags = run_cmd("git tag --points-at HEAD")
             if tag and not re.search(r'(?m)^{}$'.format(tag), tags):
                 raise InvalidStateError("Docker image can't be built as current branch is not tagged as required `{}`. "
-                                        "Please switch to the expected tagged branch first.".format(tag or 'master'))
+                                        "Please switch to the expected tagged branch first.".format(tag))
 
         log.info("Building docker image %s.", self._docker_image_name)
         output = run_cmd("docker build {options} -t {container} -f {script} .".format(

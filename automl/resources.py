@@ -56,9 +56,13 @@ class Resources:
     @lazy_property
     def project_info(self):
         split_url = self.config.project_repository.split('#', 2)
+        repo = split_url[0]
+        tag = None if len(split_url) == 1 else split_url[1]
+        branch = tag or 'master'
         return Namespace(
-            repo=split_url[0],
-            tag=None if len(split_url) == 1 else split_url[1]
+            repo=repo,
+            tag=tag,
+            branch=branch
         )
 
     @lazy_property
