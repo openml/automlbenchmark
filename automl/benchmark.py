@@ -337,3 +337,6 @@ class BenchmarkTask:
         finally:
             self._dataset.release()
 
+
+class InvalidStateError(Exception):
+    pass

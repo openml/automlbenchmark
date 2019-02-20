@@ -610,7 +610,7 @@ power_state:
 """
         return cloud_config.format(
             repo=rget().project_info.repo,
-            branch=rget().project_info.tag,
+            branch=rget().project_info.tag or "master",
             image=DockerBenchmark.docker_image_name(self.framework_def),
             pip_version=rconfig().versions.pip,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
@@ -666,7 +666,7 @@ rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
 """.format(
             repo=rget().project_info.repo,
-            branch=rget().project_info.tag,
+            branch=rget().project_info.tag or "master",
             pip_version=rconfig().versions.pip,
             s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
             script=rconfig().script,
