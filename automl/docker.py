@@ -134,6 +134,7 @@ class DockerBenchmark(Benchmark):
             tag = rget().project_info.tag
             status = run_cmd("git status -b --porcelain")
             if len(status.splitlines()) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
+                log.info("Branch status:\n%s", status)
                 raise InvalidStateError("Docker image can't be built as the current branch is not up-to-date. "
                                         "Please switch to the expected up-to-date `{}` branch first.".format(tag))
 
