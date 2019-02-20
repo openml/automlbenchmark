@@ -69,6 +69,8 @@ if [[ -z $parallel ]]; then
     fi
 fi
 
+extra_params="-o ./stable"
+
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 
 #identify the positional param if any
@@ -85,13 +87,13 @@ if [[ -z $benchmark && -z $framework ]]; then
     exit 1
 elif [[ -z $benchmark ]]; then
     for i in ${BENCHMARKS[*]}; do
-        python runbenchmark.py $framework $i -m $mode -p $parallel
+        python runbenchmark.py $framework $i -m $mode -p $parallel $extra_params
     done
 elif [[ -z $framework ]]; then
     for i in ${FRAMEWORKS[*]}; do
-        python runbenchmark.py $i $benchmark -m $mode -p $parallel
+        python runbenchmark.py $i $benchmark -m $mode -p $parallel $extra_params
     done
 else
-    python runbenchmark.py $framework $benchmark -m $mode -p $parallel
+    python runbenchmark.py $framework $benchmark -m $mode -p $parallel $extra_params
 fi
 
