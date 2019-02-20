@@ -100,6 +100,8 @@ class Resources:
             framework.name = name
             to_validate.append(framework)
 
+        # support for frameworks definition extending other definitions:
+        # useful when having multiple definitions with different params
         validated = []
         while len(to_validate) > 0:
             later = []
@@ -201,6 +203,13 @@ class Resources:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
                 log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
+
+        conf = 'id'
+        if task[conf] is None:
+            task[conf] = "openml.org/t/{}".format(task.openml_task_id) if task['openml_task_id'] is not None \
+                else "openml.org/d/{}".format(task.openml_dataset_id) if task['openml_dataset_id'] is not None \
+                else task.dataset if task['dataset'] is not None \
+                else None
 
         conf = 'ec2_instance_type'
         if task[conf] is None:

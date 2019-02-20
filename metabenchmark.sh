@@ -18,7 +18,7 @@ BENCHMARKS=(
 #test
 validation
 small
-#chalearn
+chalearn
 )
 
 MODE=(
