@@ -8,7 +8,7 @@ import automl.logger
 
 import automl
 from automl.utils import Namespace as ns, config_load, datetime_iso, str2bool
-from automl import log
+from automl import log, AutoMLError
 
 
 parser = argparse.ArgumentParser()
@@ -107,8 +107,11 @@ try:
     bench.setup(automl.Benchmark.SetupMode[args.setup])
     if args.setup != 'only':
         res = bench.run(args.task, args.fold)
-except ValueError as e:
+except (ValueError, AutoMLError) as e:
     log.error('\nERROR:\n%s', e)
     if extras.get('verbose') is True:
         log.exception(e)
     sys.exit(1)
+except Exception as e:
+    log.exception(e)
+    sys.exit(2)

@@ -8,7 +8,8 @@ import logging
 import os
 import re
 
-from .benchmark import Benchmark, InvalidStateError
+from .benchmark import Benchmark
+from .errors import InvalidStateError
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .utils import run_cmd
@@ -130,8 +131,13 @@ class DockerBenchmark(Benchmark):
 
     def _build_docker_image(self, cache=True):
         if rconfig().docker.force_branch:
-            tags = run_cmd("git tag --points-at HEAD")
             tag = rget().project_info.tag
+            status = run_cmd("git status -b --porcelain")
+            if len(status.splitlines()) > 1:
+                raise InvalidStateError("Docker image can't be built as current branch is not up-to-date. "
+                                        "Please switch to the expected up-to-date `{}` branch first.".format(tag))
+
+            tags = run_cmd("git tag --points-at HEAD")
             if tag and not re.search(r'(?m)^{}$'.format(tag), tags):
                 raise InvalidStateError("Docker image can't be built as current branch is not tagged as required `{}`. "
                                         "Please switch to the expected tagged branch first.".format(tag))
