@@ -4,7 +4,7 @@
 # FORMAT:
 __dummy_framework_with_defaults:
   version: ''
-  module: # defaults to `framework name`
+  module: # defaults to `frameworks.framework_name`
   setup_args: ''
   params: {}
   project: http://url/to/project/repo
@@ -13,14 +13,30 @@ __dummy_framework_with_defaults:
     image:  # defaults to `framework name to lowercase`
     tag:  # defaults to `framework version`
 
+
+### Non AutoML reference frameworks
 constantpredictor:
-  version: 'latest'
+  version: '0.19.2'
+  project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
 
 constantpredictor_enc:
   extends: constantpredictor
   params:
     encode: true
 
+DecisionTree:
+  version: '0.19.2'
+  project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
+
+RandomForest:
+  version: '0.19.2'
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  params:
+    n_estimators: 2000
+#    verbose: true
+
+
+### AutoML frameworks
 autosklearn:
   version: '0.5.0'
   project: https://automl.github.io/auto-sklearn/stable/
@@ -46,20 +62,9 @@ oboe:
 #  params:
 #    verbose: true
 
-RandomForest:
-  version: '0.19.2'
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
-  docker_image:
-    image: rf
-  params:
-    n_estimators: 2000
-#    verbose: true
-
-RandomForest_R:
+ranger:
   version: '0.10.1'
   project: https://github.com/imbs-hl/ranger
-  docker_image:
-    image: rfr
 
 TPOT:
   version: '0.9.5'

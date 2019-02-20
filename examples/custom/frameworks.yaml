@@ -54,7 +54,7 @@ Decision_Tree:
 
 RandomForest:
   version: '0.19.2'
-  module: frameworks.RandomForest_standalone
+  module: RandomForest_standalone
   params:
     n_estimators: 2000
 

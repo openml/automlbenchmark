@@ -40,6 +40,7 @@ versions:
   python: 3.7.2  # should we also enforce the Python version in docker images/ec2 instances?
 
 docker:
+  force_branch: true
   minimize_instances: true
   image_defaults:
     author: automlbenchmark
