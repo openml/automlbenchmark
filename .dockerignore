@@ -3,6 +3,9 @@
 # generated files/folders
 logs
 results
+**/logs
+**/predictions
+**/scores
 **/libs
 **/.marker*
 **/__pycache__
