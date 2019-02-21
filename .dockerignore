@@ -1,9 +1,19 @@
 .git
-.idea
+
+# generated files/folders
 logs
 results
 **/libs
 **/.marker*
 **/__pycache__
 **/venv
+
+# editors/IDEs
+.idea
 *.iml
+*.swp
+
+# tmp files
+**/*.log
+**/*.csv
+**/*.arff
