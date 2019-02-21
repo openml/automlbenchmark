@@ -135,12 +135,12 @@ class AWSBenchmark(Benchmark):
         job.instance_id = None
 
         def _run(job_self):
-            resources_root = "" if rconfig().aws.use_docker else "/s3bucket"
+            resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
             job_self.instance_id = self._start_instance(
                 instance_type,
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
-                    benchmark="{}/user/{}.yaml".format(resources_root, self.benchmark_name),
+                    benchmark="{}/{}.yaml".format(resources_root, self.benchmark_name),
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
