@@ -129,7 +129,7 @@ class Scoreboard:
 
         df = self.as_data_frame()
         force_str_cols = ['id']
-        nanable_int_cols = ['models', 'seed']
+        nanable_int_cols = ['fold', 'models', 'seed']
         low_precision_float_cols = ['duration']
         high_precision_float_cols = [col for col in df.select_dtypes(include=[np.float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
         for col in force_str_cols:

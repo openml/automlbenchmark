@@ -92,7 +92,7 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
             buf = buffer[buf_type]
             if buf is None:
                 buf = buffer[buf_type] = io.StringIO()
-            buf.write(sep.join([self, *args]))  # end added by logger
+            buf.write(sep.join(map(str, [self, *args])))  # end added by logger
             if end == nl:
                 with buf:
                     level = logging.ERROR if buf_type == 'err' else logging.INFO

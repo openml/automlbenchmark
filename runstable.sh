@@ -8,10 +8,10 @@ randomforest
 
 autosklearn
 h2oautoml
-hyperoptsklearn
 oboe
-ranger
 tpot
+hyperoptsklearn
+ranger
 )
 
 BENCHMARKS=(
@@ -69,7 +69,7 @@ if [[ -z $parallel ]]; then
     fi
 fi
 
-extra_params="-o ./stable"
+extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 

@@ -36,7 +36,7 @@ openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
 
 versions:
-  pip: 19.0.2
+  pip: 19.0.3
   python: 3.7.2  # should we also enforce the Python version in docker images/ec2 instances?
 
 docker:
