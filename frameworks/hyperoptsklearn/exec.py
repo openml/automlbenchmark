@@ -71,7 +71,12 @@ def run(dataset: Dataset, config: TaskConfig):
                 estimator.fit(X_train, y_train)
 
     predictions = estimator.predict(X_test)
-    probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(predictions) if is_classification else None
+
+    if is_classification:
+        target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
+        probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(predictions)
+    else:
+        probabilities = None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

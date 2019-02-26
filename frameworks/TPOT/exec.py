@@ -55,7 +55,8 @@ def run(dataset: Dataset, config: TaskConfig):
         probabilities = tpot.predict_proba(X_test) if is_classification else None
     except RuntimeError:
         # TPOT throws a RuntimeError if the optimized pipeline does not support `predict_proba`.
-        probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(predictions)
+        target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
+        probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(predictions)
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,

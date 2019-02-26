@@ -70,6 +70,7 @@ if [[ -z $parallel ]]; then
 fi
 
 extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15"
+#extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15 -Xaws.use_docker=True"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 

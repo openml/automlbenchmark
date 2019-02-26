@@ -8,11 +8,10 @@
 4. unit tests
 
 ### Features
-1. support regression tasks: done for autosklearn, H2OAutoML, hyperoptsklearn, TPOT, RandomForest, others don't support it.
+1. AWS mode "recovery": could save locally all jobs ids that have been started in a given benchmark, so that if losing connection, a script could still automatically fetch output files from s3 to download and merge them.
 2. meta-benchmark? benchmark a subset of configured frameworks:\
 `runbenchmark.py frameworks_list.yaml test`.
 3. visualizations for results.csv: can provide script generating simple plots using `matplotlib`.
-4. AWS mode "recovery": could save locally all jobs ids that have been started in a given benchmark, so that if losing connection, a script could still automatically fetch output files from s3 to download and merge them.
 4. progress bar?? fancy useless stuff.
 
 ### Bugs & Improvements

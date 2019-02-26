@@ -3,7 +3,7 @@ import sys
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import Encoder, impute
+from automl.datautils import Encoder, impute, to_data_frame
 from automl.results import save_predictions_to_file
 from automl.utils import Timer, dir_of
 
@@ -18,7 +18,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     is_classification = config.type == 'classification'
     if not is_classification:
-        # regression currently fails (as of 29.01.2019: still under development state by oboe team)
+        # regression currently fails (as of 26.02.2019: still under development state by oboe team)
         raise ValueError('Regression is not yet supported (under development).')
 
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
@@ -36,7 +36,12 @@ def run(dataset: Dataset, config: TaskConfig):
         aml.fit(X_train, y_train)
 
     predictions = aml.predict(X_test).reshape(len(X_test))
-    probabilities = Encoder('one-hot', target=False, encoded_type=float).fit_transform(predictions) if is_classification else None
+
+    if is_classification:
+        target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
+        probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(predictions)
+    else:
+        probabilities = None
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
