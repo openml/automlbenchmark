@@ -93,7 +93,7 @@ class DockerBenchmark(Benchmark):
         job = Job('_'.join(['docker',
                             self.benchmark_name,
                             ':'.join(task_names) if len(task_names) > 0 else 'all',
-                            ':'.join(folds),
+                            '.'.join(folds),
                             self.framework_name]))
         job._run = _run
         return job

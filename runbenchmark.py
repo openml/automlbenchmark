@@ -54,8 +54,8 @@ parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.
 
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
-log_dir = os.path.join(args.outdir if args.outdir else '.', 'logs')
-os.makedirs(log_dir, exist_ok=True)
+uid = '_'.join([args.mode, args.framework, args.benchmark, datetime_iso(date_sep='', time_sep='')]).lower()
+log_dir = automl.resources.create_output_dirs(args.outdir, session_id=uid, subdirs='logs').logs if args.outdir else 'logs'
 now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
@@ -79,6 +79,7 @@ config_args = ns.parse(
     user_dir=args.userdir,
     run_mode=args.mode,
     script=os.path.basename(__file__),
+    uid=uid,
 ) + ns.parse(extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)

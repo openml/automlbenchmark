@@ -25,11 +25,12 @@ import boto3
 import botocore.exceptions
 
 from .benchmark import Benchmark
+from .datautils import read_csv, write_csv
 from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import Scoreboard
-from .utils import backup_file, datetime_iso, list_all_files, str_def, tail
+from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, str_def, tail
 
 
 log = logging.getLogger(__name__)
@@ -206,6 +207,7 @@ class AWSBenchmark(Benchmark):
             UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
         )[0]
         self.instances[instance.id] = (instance, inst_key)
+        self.save_instances()
         log.info("Started EC2 instance %s.", instance.id)
         return instance.id
 
@@ -241,6 +243,11 @@ class AWSBenchmark(Benchmark):
     def _stop_all_instances(self):
         for id in list(self.instances.keys()):
             self._stop_instance(id)
+
+    def save_instances(self):
+        write_csv([(key, iid) for iid, (_, key) in self.instances],
+                  columns=["s3 key", "ec2 instance"],
+                  path=self.output_dirs.session)
 
     def _create_s3_bucket(self):
         # cf. s3 restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
@@ -321,7 +328,7 @@ class AWSBenchmark(Benchmark):
         :return: True iff the main result/scoring file has been successfully downloaded. Other failures are only logged.
         """
         success = False
-        instance, ikey = self.instances[instance_id]
+        _, ikey = self.instances[instance_id]
         root_key = str_def(rconfig().aws.s3.root_key)
 
         def download_file(obj, dest, dest_path=None):
@@ -337,17 +344,17 @@ class AWSBenchmark(Benchmark):
                 log.exception(e)
 
         try:
-            predictions_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'predictions'])))]
-            scores_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'scores'])))]
-            logs_objs = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, 'logs'])))]
+            objs = ns()
+            for t in ['predictions', 'scores', 'logs']:
+                objs[t] = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, t])))]
 
-            for obj in predictions_objs:
+            for obj in objs.predictions:
                 # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
-                dest_path = os.path.join(rconfig().predictions_dir, os.path.basename(obj.key))
+                dest_path = os.path.join(self.output_dirs.predictions, os.path.basename(obj.key))
                 backup_file(dest_path)
                 download_file(obj, dest_path)
 
-            for obj in scores_objs:
+            for obj in objs.scores:
                 basename = os.path.basename(obj.key)
                 success_on_save = basename == Scoreboard.results_file
                 if rconfig().results.save:
@@ -362,13 +369,13 @@ class AWSBenchmark(Benchmark):
                         board.append(df).save()
                         success = success_on_save
                     else:
-                        dest_path = os.path.join(rconfig().scores_dir, basename)
+                        dest_path = os.path.join(self.output_dirs.scores, basename)
                         backup_file(dest_path)
                         download_file(obj, dest_path)
                 else:
                     success = success_on_save
 
-            for obj in logs_objs:
+            for obj in objs.logs:
                 dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
                 download_file(obj, dest_path)
 
@@ -551,7 +558,7 @@ runcmd:
   - pip3 install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
-  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws+docker -Xseed={seed}
+  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker -Xseed={seed}
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 

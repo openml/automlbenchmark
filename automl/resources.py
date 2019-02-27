@@ -40,12 +40,6 @@ class Resources:
             user=normalize_path(config.user_dir)
         )
         self.config = Resources._normalize(config, replace=self._common_dirs)
-        self.config.predictions_dir = os.path.join(self.config.output_dir, 'predictions')
-        self.config.scores_dir = os.path.join(self.config.output_dir, 'scores')
-        self.config.logs_dir = os.path.join(self.config.output_dir, 'logs')
-        os.makedirs(self.config.predictions_dir, exist_ok=True)
-        os.makedirs(self.config.scores_dir, exist_ok=True)
-        os.makedirs(self.config.logs_dir, exist_ok=True)
         self.config.benchmarks.defaults.seed = self.seed
         log.debug("Using config:\n%s", self.config)
 
@@ -236,4 +230,21 @@ def get() -> Resources:
 
 def config():
     return __INSTANCE__.config
+
+
+def create_output_dirs(root, session_id=None, subdirs=None):
+    root = root if root is not None else '.'
+    dirs = Namespace(
+        root=root,
+        session=os.path.join(root, session_id) if session_id is not None else root
+    )
+
+    subdirs = [] if subdirs is None \
+        else [subdirs] if isinstance(subdirs, str) \
+        else subdirs
+
+    for d in subdirs:
+        dirs[d] = os.path.join(dirs.session, d)
+        os.makedirs(dirs[d], exist_ok=True)
+    return dirs
 

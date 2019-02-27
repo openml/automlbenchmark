@@ -17,9 +17,9 @@ import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
-from .resources import get as rget, config as rconfig
+from .resources import get as rget, config as rconfig, create_output_dirs
 from .results import NoResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, flatten, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
+from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
 
 
 log = logging.getLogger(__name__)
@@ -33,8 +33,8 @@ class Benchmark:
 
 
      we need to support:
-     - openml datasets
      - openml tasks
+     - openml datasets
      - openml studies (=benchmark suites)
      - user-defined (list of) datasets
     """
@@ -54,7 +54,8 @@ class Benchmark:
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
         self.parallel_jobs = parallel_jobs
-        self.uid = '-'.join([framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)]).lower()
+        self.uid = rconfig().uid if rconfig().uid is not None \
+            else '_'.join([rconfig().run_mode, framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)]).lower()
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -158,15 +159,21 @@ class Benchmark:
         if fold < 0 or fold >= task_def.folds:
             raise ValueError("Fold value {} is out of range for task {}.".format(fold, task_def.name))
 
-        return BenchmarkTask(task_def, fold).as_job(self.framework_module, self.framework_name)
+        return BenchmarkTask(self, task_def, fold).as_job(self.framework_module, self.framework_name)
 
     def _process_results(self, results, task_name=None):
         scores = flatten([res.result for res in results])
         if len(scores) == 0 or not any(scores):
             return None
 
-        board = Scoreboard(scores, framework_name=self.framework_name, task_name=task_name) if task_name \
-            else Scoreboard(scores, framework_name=self.framework_name, benchmark_name=self.benchmark_name)
+        board = Scoreboard(scores,
+                           framework_name=self.framework_name,
+                           task_name=task_name,
+                           scores_dir=self.output_dirs.scores) if task_name \
+            else Scoreboard(scores,
+                            framework_name=self.framework_name,
+                            benchmark_name=self.benchmark_name,
+                            scores_dir=self.output_dirs.scores)
 
         if rconfig().results.save:
             self._save(board)
@@ -177,6 +184,7 @@ class Benchmark:
     def _save(self, board):
         board.save(append=True)
         Scoreboard.all().append(board).save()
+        Scoreboard.all(rconfig().output_dir).append(board).save()
 
     def _setup_done(self, touch=False):
         marker_file = os.path.join(self._framework_dir, '.marker_setup_safe_to_delete')
@@ -185,6 +193,10 @@ class Benchmark:
             ftouch(marker_file)
             setup_done = True
         return setup_done
+
+    @lazy_property
+    def output_dirs(self):
+        return create_output_dirs(rconfig().output_dir, session_id=self.uid, subdirs=['predictions', 'scores'])
 
     @property
     def _framework_dir(self):
@@ -196,20 +208,6 @@ class Benchmark:
 
 
 class TaskConfig:
-
-    @staticmethod
-    def from_def(task_def, fold):
-        return TaskConfig(
-            name=task_def.name,
-            fold=fold,
-            metrics=task_def.metric,
-            seed=task_def.seed,
-            max_runtime_seconds=task_def.max_runtime_seconds,
-            cores=task_def.cores,
-            max_mem_size_mb=task_def.max_mem_size_mb,
-            input_dir=rconfig().input_dir,
-            output_dir=rconfig().predictions_dir,
-        )
 
     def __init__(self, name, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb,
@@ -257,15 +255,26 @@ class TaskConfig:
 
 class BenchmarkTask:
 
-    def __init__(self, task_def, fold):
+    def __init__(self, benchmark: Benchmark, task_def, fold):
         """
 
         :param task_def:
         :param fold:
         """
+        self.benchmark = benchmark
         self._task_def = task_def
         self.fold = fold
-        self.task = TaskConfig.from_def(self._task_def, self.fold)
+        self.task = TaskConfig(
+            name=task_def.name,
+            fold=fold,
+            metrics=task_def.metric,
+            seed=task_def.seed,
+            max_runtime_seconds=task_def.max_runtime_seconds,
+            cores=task_def.cores,
+            max_mem_size_mb=task_def.max_mem_size_mb,
+            input_dir=rconfig().input_dir,
+            output_dir=benchmark.output_dirs.session,
+        )
         self._dataset = None
 
     @profile(logger=log)
@@ -302,7 +311,7 @@ class BenchmarkTask:
         :param framework:
         :return:
         """
-        results = TaskResult(task_def=self._task_def, fold=self.fold)
+        results = TaskResult(task_def=self._task_def, fold=self.fold, predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task)
         task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'

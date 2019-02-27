@@ -14,7 +14,7 @@ from numpy import nan, sort
 
 from .data import Dataset, Feature
 from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
-from .resources import get as rget, config as rconfig
+from .resources import get as rget, config as rconfig, create_output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
 
 log = logging.getLogger(__name__)
@@ -100,7 +100,8 @@ class Scoreboard:
         self.framework_name = framework_name
         self.benchmark_name = benchmark_name
         self.task_name = task_name
-        self.scores_dir = scores_dir if scores_dir else rconfig().scores_dir
+        self.scores_dir = scores_dir if scores_dir \
+            else create_output_dirs(rconfig().output_dir, rconfig().uid, ['scores']).scores
         self.scores = scores if scores is not None else self._load()
 
     @cached
@@ -148,9 +149,11 @@ class Scoreboard:
     def save(self, append=False):
         self.save_df(self.as_printable_data_frame(), path=self._score_file(), append=append)
 
-    def append(self, board_or_df):
+    def append(self, board_or_df, no_duplicates=True):
         to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
         scores = self.as_data_frame().append(to_append, sort=False)
+        if no_duplicates:
+            scores = scores.drop_duplicates()
         return Scoreboard(scores=scores,
                           framework_name=self.framework_name,
                           benchmark_name=self.benchmark_name,
@@ -252,7 +255,8 @@ class TaskResult:
     def __init__(self, task_def, fold: int, predictions_dir=None):
         self.task = task_def
         self.fold = fold
-        self.predictions_dir = predictions_dir if predictions_dir else rconfig().predictions_dir
+        self.predictions_dir = predictions_dir if predictions_dir \
+            else create_output_dirs(rconfig().output_dir, rconfig().uid, ['predictions']).predictions
 
     @memoize
     def get_result(self, framework_name):

@@ -60,6 +60,7 @@ oboe:
   version: 'latest'
   project: https://github.com/udellgroup/oboe
 #  params:
+#    selection_method: random
 #    verbose: true
 
 ranger:
@@ -70,5 +71,7 @@ TPOT:
   version: '0.9.5'
   project: https://github.com/EpistasisLab/tpot
   params:
+#    max_eval_time_mins: 2
+#    population_size: 25
     verbosity: 2
 
