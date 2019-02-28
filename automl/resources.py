@@ -232,11 +232,11 @@ def config():
     return __INSTANCE__.config
 
 
-def create_output_dirs(root, session_id=None, subdirs=None):
+def create_output_dirs(root, session=None, subdirs=None):
     root = root if root is not None else '.'
     dirs = Namespace(
         root=root,
-        session=os.path.join(root, session_id) if session_id is not None else root
+        session=os.path.join(root, session) if session is not None else root
     )
 
     subdirs = [] if subdirs is None \

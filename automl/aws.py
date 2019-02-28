@@ -50,7 +50,7 @@ class AWSBenchmark(Benchmark):
         :param region:
         """
         super().__init__(framework_name, benchmark_name, parallel_jobs)
-        self.suid = datetime_iso(micros=True, no_sep=True)  # short uid for AWS entities whose name length is limited
+        self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
         self.region = region if region \
             else rconfig().aws.region if rconfig().aws['region'] \
             else boto3.session.Session().region_name
@@ -191,7 +191,7 @@ class AWSBenchmark(Benchmark):
     def _start_instance(self, instance_type, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)
         inst_key = instance_key.lower() if instance_key \
-            else "{}_p{}_i{}".format(self.uid,
+            else "{}_p{}_i{}".format(self.sid,
                                      re.sub(r"[\s-]", '', script_params),
                                      datetime_iso(micros=True, time_sep='.')).lower()
         # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
@@ -288,7 +288,7 @@ class AWSBenchmark(Benchmark):
     def _upload_resources(self):
         root_key = str_def(rconfig().aws.s3.root_key)
         # TODO: we may want to upload resources to a different path for each run (just in case we run multiple benchmarks in parallel and aws.s3.temporary=False)
-        #  for example: root_key+('/'.join(['user', self.uid, name]))
+        #  for example: root_key+('/'.join(['user', self.sid, name]))
         #  this also requires updating _delete_resources and _ec2_startup_script
 
         def dest_path(res_path):
@@ -558,7 +558,7 @@ runcmd:
   - pip3 install --upgrade awscli
   - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
   - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
-  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker -Xseed={seed}
+  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker -Xseed={seed} --session=
   - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 

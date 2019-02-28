@@ -101,7 +101,7 @@ class Scoreboard:
         self.benchmark_name = benchmark_name
         self.task_name = task_name
         self.scores_dir = scores_dir if scores_dir \
-            else create_output_dirs(rconfig().output_dir, rconfig().uid, ['scores']).scores
+            else create_output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores
         self.scores = scores if scores is not None else self._load()
 
     @cached
@@ -256,7 +256,7 @@ class TaskResult:
         self.task = task_def
         self.fold = fold
         self.predictions_dir = predictions_dir if predictions_dir \
-            else create_output_dirs(rconfig().output_dir, rconfig().uid, ['predictions']).predictions
+            else create_output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions
 
     @memoize
     def get_result(self, framework_name):

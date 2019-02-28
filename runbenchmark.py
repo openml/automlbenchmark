@@ -40,6 +40,7 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
+parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
 # group = parser.add_mutually_exclusive_group()
 # group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
@@ -54,8 +55,9 @@ parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.
 
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
-uid = '_'.join([args.mode, args.framework, args.benchmark, datetime_iso(date_sep='', time_sep='')]).lower()
-log_dir = automl.resources.create_output_dirs(args.outdir, session_id=uid, subdirs='logs').logs if args.outdir else 'logs'
+sid = args.session if args.session is not None \
+    else '_'.join([args.mode, args.framework, args.benchmark, datetime_iso(date_sep='', time_sep='')]).lower()
+log_dir = automl.resources.create_output_dirs(args.outdir, session=sid, subdirs='logs').logs if args.outdir else 'logs'
 now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
@@ -79,7 +81,7 @@ config_args = ns.parse(
     user_dir=args.userdir,
     run_mode=args.mode,
     script=os.path.basename(__file__),
-    uid=uid,
+    sid=sid,
 ) + ns.parse(extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)

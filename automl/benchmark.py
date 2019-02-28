@@ -54,7 +54,7 @@ class Benchmark:
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
         self.parallel_jobs = parallel_jobs
-        self.uid = rconfig().uid if rconfig().uid is not None \
+        self.sid = rconfig().sid if rconfig().sid is not None \
             else '_'.join([rconfig().run_mode, framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)]).lower()
 
         self._validate()
@@ -196,7 +196,7 @@ class Benchmark:
 
     @lazy_property
     def output_dirs(self):
-        return create_output_dirs(rconfig().output_dir, session_id=self.uid, subdirs=['predictions', 'scores'])
+        return create_output_dirs(rconfig().output_dir, session=self.sid, subdirs=['predictions', 'scores'])
 
     @property
     def _framework_dir(self):
