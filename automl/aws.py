@@ -18,8 +18,11 @@ import json
 import logging
 import math
 import os
+import queue
 import re
 import time
+import threading
+from urllib.parse import quote_plus as uenc
 
 import boto3
 import botocore.exceptions
@@ -63,6 +66,7 @@ class AWSBenchmark(Benchmark):
         self.instance_profile = None
         self.instances = {}
         self.jobs = []
+        self.exec = None
         self._validate2()
 
     def _validate(self):
@@ -97,13 +101,16 @@ class AWSBenchmark(Benchmark):
 
     def cleanup(self):
         self._stop_all_instances()
-        self._delete_resources()
+        self._exec_stop()
+        if rconfig().aws.s3.delete_resources is True:
+            self._delete_resources()
         if rconfig().aws.iam.temporary is True:
             self._delete_iam_entities()
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
     def run(self, task_name=None, fold=None):
+        self._exec_start()
         if self.parallel_jobs > 1 or not rconfig().aws.minimize_instances:
             # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
             #   than having a job per task. This depends on job duration especially
@@ -119,18 +126,47 @@ class AWSBenchmark(Benchmark):
     def _make_job(self, task_def, fold=int):
         return self._make_aws_job([task_def.name], [fold])
 
+    def _exec_start(self):
+        def worker():
+            while True:
+                exec_fn = self.exec.q.get()
+                if exec_fn is None:
+                    self.exec.q.task_done()
+                    break
+                exec_fn()
+                self.exec.q.task_done()
+
+        self.exec = ns(
+            q=queue.Queue(),
+            t=threading.Thread(name="master exec thread", target=worker, daemon=True)
+        )
+        self.exec.t.start()
+
+    def _exec_stop(self):
+        if self.exec is None:
+            return
+        try:
+            self.exec.q.put(None)
+            self.exec.q.join()
+            self.exec.t.join()
+        except:
+            pass
+
+    def _exec_send(self, fn):
+        self.exec.q.put(fn)
+
     def _make_aws_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
-        task_def = self._get_task_def(task_names[0]) if len(task_names) == 1 else None
-        instance_type = task_def.ec2_instance_type if task_def else rconfig().aws.ec2.instance_type
+        task_def = self._get_task_def(task_names[0]) if len(task_names) >= 1 else None
+        instance_type = task_def.ec2_instance_type if task_def else rconfig().aws.ec2.instance_type_map.default
         timeout_secs = task_def.max_runtime_seconds if task_def \
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
 
         job = Job('_'.join(['aws',
                             self.benchmark_name,
-                            ':'.join(task_names) if len(task_names) > 0 else 'all',
+                            '.'.join(task_names) if len(task_names) > 0 else 'all',
                             '.'.join(folds),
                             self.framework_name]))
         job.instance_id = None
@@ -145,7 +181,8 @@ class AWSBenchmark(Benchmark):
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
                 ),
-                instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
+                # instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
+                instance_key=job.name,
                 timeout_secs=timeout_secs
             )
             return self._wait_for_results(job_self)
@@ -163,7 +200,7 @@ class AWSBenchmark(Benchmark):
         return job
 
     def _wait_for_results(self, job):
-        instance, _ = self.instances[job.instance_id]
+        instance = self.instances[job.instance_id].instance
         last_console_line = -1
 
         def log_console():
@@ -181,10 +218,13 @@ class AWSBenchmark(Benchmark):
                 log.exception(e)
 
         while True:
-            log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, instance.state['Name'])
+            state = instance.state['Name']
+            log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, state)
             log_console()
+            self._update_instance(job.instance_id, status=state)
+
             if instance.state['Code'] > 16:     # ended instance
-                log.info("EC2 instance %s is %s.", job.instance_id, instance.state['Name'])
+                log.info("EC2 instance %s is %s.", job.instance_id, state)
                 break
             time.sleep(rconfig().aws.query_frequency_seconds)
 
@@ -197,21 +237,32 @@ class AWSBenchmark(Benchmark):
         # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
-        instance = self.ec2.create_instances(
-            ImageId=self.ami,
-            MinCount=1,
-            MaxCount=1,
-            InstanceType=instance_type,
-            SubnetId=rconfig().aws.ec2.subnet_id,
-            IamInstanceProfile=dict(Name=self.instance_profile.name),
-            UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
-        )[0]
-        self.instances[instance.id] = (instance, inst_key)
-        self.save_instances()
-        log.info("Started EC2 instance %s.", instance.id)
+        try:
+            instance = self.ec2.create_instances(
+                ImageId=self.ami,
+                MinCount=1,
+                MaxCount=1,
+                InstanceType=instance_type,
+                SubnetId=rconfig().aws.ec2.subnet_id,
+                IamInstanceProfile=dict(Name=self.instance_profile.name),
+                UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
+            )[0]
+            log.info("Started EC2 instance %s.", instance.id)
+            self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='')
+        except Exception as e:
+            fake_iid = "no_instance_{}".format(len(self.instances)+1)
+            self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False)
+            raise e
+        finally:
+            self._exec_send(lambda: self._save_instances())
         return instance.id
 
     def _stop_instance(self, instance_id, terminate=None):
+        instance = self.instances[instance_id].instance
+        self.instances[instance_id].instance = None
+        if instance is None:
+            return
+
         terminate_config = rconfig().aws.ec2.terminate_instances
         if terminate_config in ['always', True]:
             terminate = True
@@ -220,10 +271,8 @@ class AWSBenchmark(Benchmark):
         else:
             terminate = False if terminate is None else terminate
 
-        log.info("%s EC2 instances %s.", "Terminating" if terminate else "Stopping", instance_id)
-        instance, _ = self.instances[instance_id]
-        del self.instances[instance_id]
         try:
+            log.info("%s EC2 instances %s.", "Terminating" if terminate else "Stopping", instance_id)
             if terminate:
                 response = instance.terminate()
             else:
@@ -236,18 +285,64 @@ class AWSBenchmark(Benchmark):
                       instance_id, "terminated" if terminate else "stopped", str(e))
         finally:
             try:
-                log.info("Instance %s state: %s.", instance_id, response['TerminatingInstances'][0]['CurrentState']['Name'])
+                state = response['TerminatingInstances'][0]['CurrentState']['Name']
+                log.info("Instance %s state: %s.", instance_id, state)
+                self._update_instance(instance_id, status=state)
             except:
                 pass
 
-    def _stop_all_instances(self):
-        for id in list(self.instances.keys()):
-            self._stop_instance(id)
+    def _update_instance(self, instance_id, **kwargs):
+        do_save = False
+        if len(kwargs):
+            do_save = True
+        inst = self.instances[instance_id]
+        for k, v in kwargs.items():
+            if k in inst and inst[k] != v:
+                inst[k] = v
+                do_save = True
+        if do_save:
+            self._exec_send(lambda: self._save_instances())
 
-    def save_instances(self):
-        write_csv([(key, iid) for iid, (_, key) in self.instances],
-                  columns=["s3 key", "ec2 instance"],
-                  path=self.output_dirs.session)
+    def _stop_all_instances(self):
+        for iid in self.instances.keys():
+            self._stop_instance(iid)
+
+    def _save_instances(self):
+        write_csv([(iid,
+                    self.instances[iid].status,
+                    self.instances[iid].success,
+                    self._s3_user(absolute=True),
+                    self._s3_input(absolute=True),
+                    self._s3_output(iid, absolute=True)
+                    ) for iid in self.instances.keys()],
+                  columns=["ec2", "status", "success", "s3 user", "s3 input", "s3 output"],
+                  path=os.path.join(self.output_dirs.session, 'instances.csv'))
+
+    def _s3_key(self, main_dir, *subdirs, instance_key_or_id=None, absolute=False, encode=False):
+        root_key = str_def(rconfig().aws.s3.root_key)
+        if instance_key_or_id is None:
+            ikey = ''
+        elif instance_key_or_id in self.instances.keys():
+            ikey = self.instances[instance_key_or_id].key
+        else:
+            ikey = instance_key_or_id
+        tokens = [main_dir, ikey, *subdirs]
+        if encode:
+            tokens = map(uenc, tokens)
+        rel_key = os.path.join(root_key, *tokens)
+        return os.path.join('s3://', self.bucket.name, rel_key) if absolute else rel_key
+
+    def _s3_session(self, *subdirs, **kwargs):
+        return self._s3_key(self.sid, *subdirs, **kwargs)
+
+    def _s3_user(self, *subdirs, **kwargs):
+        return self._s3_key(self.sid, 'user', *subdirs, **kwargs)
+
+    def _s3_input(self, *subdirs, **kwargs):
+        return self._s3_key(self.sid, 'input', *subdirs, **kwargs)
+
+    def _s3_output(self, instance_key_or_id, *subdirs, **kwargs):
+        return self._s3_key(self.sid, 'output', *subdirs, instance_key_or_id=instance_key_or_id, **kwargs)
 
     def _create_s3_bucket(self):
         # cf. s3 restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
@@ -286,19 +381,13 @@ class AWSBenchmark(Benchmark):
             log.info("S3 bucket %s was successfully deleted.", self.bucket.name)
 
     def _upload_resources(self):
-        root_key = str_def(rconfig().aws.s3.root_key)
-        # TODO: we may want to upload resources to a different path for each run (just in case we run multiple benchmarks in parallel and aws.s3.temporary=False)
-        #  for example: root_key+('/'.join(['user', self.sid, name]))
-        #  this also requires updating _delete_resources and _ec2_startup_script
-
         def dest_path(res_path):
             in_input_dir = res_path.startswith(rconfig().input_dir)
             in_user_dir = res_path.startswith(rconfig().user_dir)
             name = os.path.relpath(res_path, start=rconfig().input_dir) if in_input_dir \
                 else os.path.relpath(res_path, start=rconfig().user_dir) if in_user_dir \
                 else os.path.basename(res_path)
-            dest = 'input' if in_input_dir else 'user'
-            return root_key+('/'.join([dest, name]))
+            return self._s3_input(name) if in_input_dir else self._s3_user(name)
 
         upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
         upload_files = list_all_files(upload_paths, rconfig().aws.resource_ignore)
@@ -314,7 +403,6 @@ class AWSBenchmark(Benchmark):
     def _delete_resources(self):
         if self.uploaded_resources is None:
             return
-        # TODO: do we still want to delete resources if concern in _upload_resources is fixed?
         log.info("Deleting uploaded resources `%s` from s3 bucket %s.", self.uploaded_resources, self.bucket.name)
         self.bucket.delete_objects(
             Delete=dict(
@@ -328,14 +416,13 @@ class AWSBenchmark(Benchmark):
         :return: True iff the main result/scoring file has been successfully downloaded. Other failures are only logged.
         """
         success = False
-        _, ikey = self.instances[instance_id]
-        root_key = str_def(rconfig().aws.s3.root_key)
 
         def download_file(obj, dest, dest_path=None):
             dest_path = dest if dest_path is None else dest_path
             try:
                 log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
                 if isinstance(dest, str):
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
                     obj.download_file(dest)
                 else:
                     obj.download_fileobj(dest)
@@ -344,45 +431,25 @@ class AWSBenchmark(Benchmark):
                 log.exception(e)
 
         try:
-            objs = ns()
-            for t in ['predictions', 'scores', 'logs']:
-                objs[t] = [o.Object() for o in self.bucket.objects.filter(Prefix=root_key+('/'.join(['output', ikey, t])))]
-
-            for obj in objs.predictions:
-                # it should be safe and good enough to simply save predictions file as usual (after backing up previous prediction)
-                dest_path = os.path.join(self.output_dirs.predictions, os.path.basename(obj.key))
-                backup_file(dest_path)
+            instance_output_key = self._s3_output(instance_id, encode=True)
+            objs = [o.Object() for o in self.bucket.objects.filter(Prefix=instance_output_key)]
+            session_key = self._s3_session(encode=True)
+            result_key = self._s3_output(instance_id, Scoreboard.results_file, encode=True)
+            for obj in objs:
+                rel_path = os.path.relpath(obj.key, start=session_key)
+                dest_path = os.path.join(self.output_dirs.session, rel_path)
                 download_file(obj, dest_path)
-
-            for obj in objs.scores:
-                basename = os.path.basename(obj.key)
-                success_on_save = basename == Scoreboard.results_file
-                if rconfig().results.save:
-                    board = Scoreboard.from_file(basename)
-                    # TODO: test case when there are also backup files in the download
-                    if board:
-                        with io.BytesIO() as buffer:
-                            download_file(obj, buffer, dest_path=board._score_file())
-                            with io.TextIOWrapper(io.BytesIO(buffer.getvalue())) as file:
-                                df = Scoreboard.load_df(file)
-                        # df.loc[:,'mode'] = rconfig().run_mode
-                        board.append(df).save()
-                        success = success_on_save
-                    else:
-                        dest_path = os.path.join(self.output_dirs.scores, basename)
-                        backup_file(dest_path)
-                        download_file(obj, dest_path)
-                else:
-                    success = success_on_save
-
-            for obj in objs.logs:
-                dest_path = os.path.join(rconfig().logs_dir, os.path.basename(obj.key))
-                download_file(obj, dest_path)
-
+                # if obj.key == result_key:
+                if os.path.basename(obj.key) == Scoreboard.results_file:
+                    if rconfig().results.save:
+                        self._exec_send(lambda: self._append(Scoreboard.load_df(dest_path)))
+                    success = True
         except Exception as e:
             log.error("Failed downloading benchmark results from s3 bucket %s: %s", self.bucket.name, str(e))
             log.exception(e)
 
+        log.info("Instance `%s` success=%s", instance_id, success)
+        self._update_instance(instance_id, success=success)
         return success
 
     def _create_instance_profile(self):
@@ -442,7 +509,7 @@ class AWSBenchmark(Benchmark):
                     {
                         'Effect': 'Allow',
                         'Action': 's3:PutObject',
-                        'Resource': resource_prefix+'output/*'   # technically, we could grant write access for each instance only to its own 'directory', but this is not necessary
+                        'Resource': resource_prefix+'*' # technically, we could grant write access for each instance only to its own 'directory', but this is not necessary
                     }
                 ]
             })
@@ -556,10 +623,10 @@ runcmd:
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
   - pip3 install --upgrade awscli
-  - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-  - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
+  - aws s3 cp '{s3_input}' /s3bucket/input --recursive
+  - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker -Xseed={seed} --session=
-  - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
+  - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
 final_message: "AutoML benchmark (docker) {ikey} completed after $UPTIME s"
@@ -598,12 +665,12 @@ runcmd:
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - PIP install --upgrade pip=={pip_version}
   - PIP_REQ < requirements.txt
-#  - until aws s3 ls {s3_base_url}; do echo "waiting for credentials"; sleep 10; done
-  - aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-  - aws s3 cp {s3_base_url}user /s3bucket/user --recursive
+#  - until aws s3 ls '{s3_base_url}'; do echo "waiting for credentials"; sleep 10; done
+  - aws s3 cp '{s3_input}' /s3bucket/input --recursive
+  - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch}
-  - aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
+  - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
 final_message: "AutoML benchmark {ikey} completed after $UPTIME s"
@@ -620,7 +687,10 @@ power_state:
             branch=rget().project_info.branch,
             image=DockerBenchmark.docker_image_name(self.framework_def),
             pip_version=rconfig().versions.pip,
-            s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
+            s3_base_url=self._s3_session(absolute=True, encode=True),
+            s3_user=self._s3_user(absolute=True, encode=True),
+            s3_input=self._s3_input(absolute=True, encode=True),
+            s3_output=self._s3_output(instance_key, absolute=True, encode=True),
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
@@ -664,21 +734,25 @@ PIP install --upgrade pip=={pip_version}
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
 PIP install --upgrade awscli
 
-aws s3 cp {s3_base_url}input /s3bucket/input --recursive
-aws s3 cp {s3_base_url}user /s3bucket/user --recursive
+aws s3 cp '{s3_input}' /s3bucket/input --recursive
+aws s3 cp '{s3_user}' /s3bucket/user --recursive
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user
-aws s3 cp /s3bucket/output {s3_base_url}output/{ikey} --recursive
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch}
+aws s3 cp /s3bucket/output '{s3_output}' --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
 """.format(
             repo=rget().project_info.repo,
             branch=rget().project_info.branch,
             pip_version=rconfig().versions.pip,
-            s3_base_url="s3://{bucket}/{root}".format(bucket=self.bucket.name, root=str_def(rconfig().aws.s3.root_key)),
+            s3_base_url=self._s3_session(absolute=True, encode=True),
+            s3_user=self._s3_user(absolute=True, encode=True),
+            s3_input=self._s3_input(absolute=True, encode=True),
+            s3_output=self._s3_output(instance_key, absolute=True, encode=True),
             script=rconfig().script,
             ikey=instance_key,
-            params=script_params
+            params=script_params,
+            seed=rget().seed,
         )
 
 

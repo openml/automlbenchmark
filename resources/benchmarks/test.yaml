@@ -5,7 +5,7 @@
 - name: __dummy-task
   enabled: false  # actual default is `true` of course...
   openml_task_id: 0
-  metric: # the first metric in the task list will be optimized against used for the main result, the other ones are optional and purely informative. Only the metrics annoted with (*) can be used a performance metric.
+  metric: # the first metric in the task list will be optimized against and used for the main result, the other ones are optional and purely informative. Only the metrics annotated with (*) can be used as a performance metric.
     - # classification
     - acc # (*) accuracy
     - auc # (*) array under curve

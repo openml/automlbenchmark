@@ -131,7 +131,7 @@ class SimpleJobRunner(JobRunner):
 
 class MultiThreadingJobRunner(JobRunner):
 
-    def __init__(self, jobs, parallel_jobs, done_async=False, delay_secs=0, use_daemons=False):
+    def __init__(self, jobs, parallel_jobs=1, done_async=True, delay_secs=0, use_daemons=False):
         super().__init__(jobs)
         self.parallel_jobs = parallel_jobs
         self._done_async = done_async

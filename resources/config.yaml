@@ -7,7 +7,10 @@ project_repository: https://github.com/openml/automlbenchmark#stable      # this
 user_dir: ~/.config/automlbenchmark   # where to override settings with a custom config.yaml file and, for example, add custom frameworks, benchmark definitions or framework modules.
 input_dir: ~/.openml/cache            # where the datasets are loaded by default.
 output_dir: results                   # where logs and results are saved by default.
-script:     # set by runbenchmark.py
+
+script:     # calling script: set by caller (runbenchmark.py)
+run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
+sid:        # session id: set by caller (runbenchmark.py)
 
 max_parallel_jobs: 5
 seed: auto  # default global seed (used if not set in task definition), can be one of:
@@ -70,6 +73,7 @@ aws:
                         # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
                         # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
     root_key: ec2/
+    delete_resources: false
 
   ec2:
     terminate_instances: always     # if `always`, the EC2 instances are always terminated.
@@ -77,7 +81,12 @@ aws:
                                     #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
                                     #               (don't forget to delete the instance UserData before restarting it).
                                     # if `never`, the instances are only stopped.
-    instance_type: m5.large
+    instance_type_map:      # map between num cores required and ec2 instance types
+      default: m5.large
+      '2': m5.large
+      '4': m5.xlarge
+      '8': m5.2xlarge
+      '16': m5.4xlarge
     subnet_id: ''
     regions:
       us-east-1:

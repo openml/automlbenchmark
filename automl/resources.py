@@ -207,8 +207,20 @@ class Resources:
 
         conf = 'ec2_instance_type'
         if task[conf] is None:
-            task[conf] = self.config.aws.ec2.instance_type
-            log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
+            imap = self.config.aws.ec2.instance_type_map
+            if str(task.cores) in imap:
+                task[conf] = imap[str(task.cores)]
+            elif task.cores > 0:
+                supported_cores = list(map(int, Namespace.dict(imap).keys() - {'default'}))
+                supported_cores.sort()
+                try:
+                    cores = next(c for c in supported_cores if c >= task.cores)
+                except StopIteration:
+                    cores = 'default'
+                task[conf] = imap[str(cores)]
+            else:
+                task[conf] = imap.default
+            log.debug("Config `{config}` not set for task {name}, using default selection `{value}`.".format(config=conf, name=task.name, value=task[conf]))
 
 
 __INSTANCE__: Resources = None

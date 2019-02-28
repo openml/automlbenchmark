@@ -183,6 +183,9 @@ class Benchmark:
 
     def _save(self, board):
         board.save(append=True)
+        self._append(board)
+
+    def _append(self, board):
         Scoreboard.all().append(board).save()
         Scoreboard.all(rconfig().output_dir).append(board).save()
 
@@ -196,7 +199,7 @@ class Benchmark:
 
     @lazy_property
     def output_dirs(self):
-        return create_output_dirs(rconfig().output_dir, session=self.sid, subdirs=['predictions', 'scores'])
+        return create_output_dirs(rconfig().output_dir, session=self.sid, subdirs=['predictions', 'scores', 'logs'])
 
     @property
     def _framework_dir(self):
