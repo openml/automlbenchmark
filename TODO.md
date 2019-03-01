@@ -15,9 +15,7 @@
 1. progress bar?? fancy useless stuff.
 
 ### Bugs & Improvements
-1. better naming/grouping of logs/predictions/scores: one main results file and the rest grouped by benchmark run.
 1. expose training_duration + count_models from ranger
-1. fix input file transfer to EC2 instances: current logic can cause issues when running multiple benchmarks at the same time if using the same S3 bucket.
 1. properly kill job threads on KeyInterruptError (mainly in AWS mode)
 1. AWS: reuse instances for faster startup, at least during a single benchmark, we could limit #instances = #parallel jobs.
 1. timeouts (already in place for AWS, but could be implemented for each job individually).

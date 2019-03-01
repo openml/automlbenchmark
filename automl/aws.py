@@ -440,7 +440,7 @@ class AWSBenchmark(Benchmark):
                 dest_path = os.path.join(self.output_dirs.session, rel_path)
                 download_file(obj, dest_path)
                 # if obj.key == result_key:
-                if os.path.basename(obj.key) == Scoreboard.results_file:
+                if not success and os.path.basename(obj.key) == Scoreboard.results_file:
                     if rconfig().results.save:
                         self._exec_send(lambda: self._append(Scoreboard.load_df(dest_path)))
                     success = True
@@ -668,8 +668,8 @@ runcmd:
 #  - until aws s3 ls '{s3_base_url}'; do echo "waiting for credentials"; sleep 10; done
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch}
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch} --session=
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -736,8 +736,8 @@ PIP install --upgrade awscli
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only 
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch}
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch} --session=
 aws s3 cp /s3bucket/output '{s3_output}' --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"

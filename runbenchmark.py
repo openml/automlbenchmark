@@ -55,8 +55,10 @@ parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.
 
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
+extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
+
 sid = args.session if args.session is not None \
-    else '_'.join([args.mode, args.framework, args.benchmark, datetime_iso(date_sep='', time_sep='')]).lower()
+    else '_'.join([extras.get('run_mode', args.mode), args.framework, args.benchmark, datetime_iso(date_sep='', time_sep='')]).lower()
 log_dir = automl.resources.create_output_dirs(args.outdir, session=sid, subdirs='logs').logs if args.outdir else 'logs'
 now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = datetime_iso(time=False, no_sep=True)
@@ -69,7 +71,6 @@ automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(s
 log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
 
-extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
 config = config_load("resources/config.yaml")
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
 config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
