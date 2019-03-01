@@ -33,7 +33,7 @@ benchmarks:
 
 results:
   error_max_length: 200
-  save:   # set by runbenchmark.py
+  save: true  # set by runbenchmark.py
 
 openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f

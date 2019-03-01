@@ -49,6 +49,13 @@ class Benchmark:
         :param benchmark_name:
         :param resources:
         """
+        if rconfig().run_mode == 'script':
+            self.framework_def, self.framework_name, self.framework_module = None, None, None
+            self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
+            self.parallel_jobs = 1
+            self.sid = None
+            return
+
         self.framework_def, self.framework_name = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s.", self.framework_def)
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)

@@ -33,7 +33,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import Scoreboard
-from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, str_def, tail, touch
+from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, normalize_path, str_def, str2bool, tail, touch
 
 
 log = logging.getLogger(__name__)
@@ -43,6 +43,21 @@ class AWSBenchmark(Benchmark):
     """AWSBenchmark
     an extension of Benchmark class, to run benchmarks on AWS
     """
+
+    @classmethod
+    def fetch_results(cls, instances_file, filter=None, force_update=False):
+        bench = cls(None, None)
+        bench._load_instances(normalize_path(instances_file))
+        inst = next(inst for inst in bench.instances.values())
+        bench.sid = inst.session
+        bucket_name = re.match(r's3://([\w\-.]+)/.*', inst.s3_dir).group(1)
+        bench.s3 = boto3.resource('s3', region_name=bench.region)
+        bench.bucket = bench._create_s3_bucket(bucket_name, auto_create=False)
+        filter = (lambda items: [k for k, v in items]) if filter is None else filter
+        for iid in filter(bench.instances.items()):
+            if force_update:
+                bench.instances[iid].success = False
+            bench._download_results(iid)
 
     def __init__(self, framework_name, benchmark_name, parallel_jobs=1, region=None):
         """
@@ -127,13 +142,17 @@ class AWSBenchmark(Benchmark):
         return self._make_aws_job([task_def.name], [fold])
 
     def _exec_start(self):
+        if self.exec is not None:
+            return
+
         def worker():
             while True:
-                exec_fn = self.exec.q.get()
-                if exec_fn is None:
+                fn = self.exec.q.get()
+                if fn is None:
                     self.exec.q.task_done()
                     break
-                exec_fn()
+                try: fn()
+                except: pass
                 self.exec.q.task_done()
 
         self.exec = ns(
@@ -151,9 +170,17 @@ class AWSBenchmark(Benchmark):
             self.exec.t.join()
         except:
             pass
+        finally:
+            self.exec = None
 
     def _exec_send(self, fn):
-        self.exec.q.put(fn)
+        if self.exec is not None:
+            self.exec.q.put(fn)
+        else:
+            log.warning("Sending exec function while exec queue is not started: executing the function in the calling thread.")
+            fn()
+            # try: fn()
+            # except: pass
 
     def _make_aws_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
@@ -311,12 +338,22 @@ class AWSBenchmark(Benchmark):
         write_csv([(iid,
                     self.instances[iid].status,
                     self.instances[iid].success,
-                    self._s3_user(absolute=True),
-                    self._s3_input(absolute=True),
-                    self._s3_output(iid, absolute=True)
+                    self.sid,
+                    self.instances[iid].key,
+                    self._s3_key(self.sid, instance_key_or_id=iid, absolute=True)
                     ) for iid in self.instances.keys()],
-                  columns=["ec2", "status", "success", "s3 user", "s3 input", "s3 output"],
+                  columns=['ec2', 'status', 'success', 'session', 'instance_key', 's3 dir'],
                   path=os.path.join(self.output_dirs.session, 'instances.csv'))
+
+    def _load_instances(self, instances_file):
+        df = read_csv(instances_file)
+        self.instances = {row['ec2']: ns(
+            status=row['status'],
+            success=row['success'],
+            session=row['session'],
+            key=row['instance_key'],
+            s3_dir=row['s3 dir'],
+        ) for idx, row in df.iterrows()}
 
     def _s3_key(self, main_dir, *subdirs, instance_key_or_id=None, absolute=False, encode=False):
         root_key = str_def(rconfig().aws.s3.root_key)
@@ -344,17 +381,18 @@ class AWSBenchmark(Benchmark):
     def _s3_output(self, instance_key_or_id, *subdirs, **kwargs):
         return self._s3_key(self.sid, 'output', *subdirs, instance_key_or_id=instance_key_or_id, **kwargs)
 
-    def _create_s3_bucket(self):
+    def _create_s3_bucket(self, bucket_name=None, auto_create=True):
         # cf. s3 restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
-        bucket_name = rconfig().aws.s3.bucket
-        if rconfig().aws.s3.temporary:
-            bucket_name += ('-' + self.suid)
+        if bucket_name is None:
+            bucket_name = rconfig().aws.s3.bucket
+            if rconfig().aws.s3.temporary:
+                bucket_name += ('-' + self.suid)
         try:
             self.s3.meta.client.head_bucket(Bucket=bucket_name)
             bucket = self.s3.Bucket(bucket_name)
         except botocore.exceptions.ClientError as e:
             error_code = int(e.response['Error']['Code'])
-            if error_code == 404:
+            if error_code == 404 and auto_create:
                 log.info("%s bucket doesn't exist, creating it in region %s.", bucket_name, self.region)
                 bucket = self.s3.create_bucket(
                     Bucket=bucket_name,
@@ -363,6 +401,8 @@ class AWSBenchmark(Benchmark):
                     )
                 )
                 log.info("S3 bucket %s was successfully created.", bucket_name)
+            else:
+                raise e
         return bucket
 
     def _delete_s3_bucket(self):
@@ -415,8 +455,6 @@ class AWSBenchmark(Benchmark):
         :param instance_id:
         :return: True iff the main result/scoring file has been successfully downloaded. Other failures are only logged.
         """
-        success = False
-
         def download_file(obj, dest, dest_display_path=None):
             dest_display_path = dest if dest_display_path is None else dest_display_path
             try:
@@ -430,11 +468,12 @@ class AWSBenchmark(Benchmark):
                 log.error("Failed downloading `%s` from s3 bucket %s: %s", obj.key, self.bucket.name, str(e))
                 log.exception(e)
 
+        success = self.instances[instance_id].success
         try:
             instance_output_key = self._s3_output(instance_id, encode=True)
             objs = [o.Object() for o in self.bucket.objects.filter(Prefix=instance_output_key)]
             session_key = self._s3_session(encode=True)
-            result_key = self._s3_output(instance_id, Scoreboard.results_file, encode=True)
+            # result_key = self._s3_output(instance_id, Scoreboard.results_file, encode=True)
             for obj in objs:
                 rel_path = os.path.relpath(obj.key, start=session_key)
                 dest_path = os.path.join(self.output_dirs.session, rel_path)

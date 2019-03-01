@@ -43,11 +43,11 @@ class Scoreboard:
         task_name = None
         patterns = [
             cls.results_file,
-            r"(?P<framework>[\w\-]+)_benchmark_(?P<benchmark>[\w\-]+).csv",
-            r"benchmark_(?P<benchmark>[\w\-]+).csv",
-            r"(?P<framework>[\w\-]+)_task_(?P<task>[\w\-]+).csv",
-            r"task_(?P<task>[\w\-]+).csv",
-            r"(?P<framework>[\w\-]+).csv",
+            r"(?P<framework>[\w\-]+)_benchmark_(?P<benchmark>[\w\-]+)\.csv",
+            r"benchmark_(?P<benchmark>[\w\-]+)\.csv",
+            r"(?P<framework>[\w\-]+)_task_(?P<task>[\w\-]+)\.csv",
+            r"task_(?P<task>[\w\-]+)\.csv",
+            r"(?P<framework>[\w\-]+)\.csv",
         ]
         found = False
         for pat in patterns:
