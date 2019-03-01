@@ -539,10 +539,15 @@ def list_all_files(paths, path_ignore=None):
     return all_files
 
 
-def touch(file_path):
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, 'a'):
-        os.utime(file_path, times=None)
+def touch(path, as_dir=False):
+    path = normalize_path(path)
+    if not os.path.exists(path):
+        dirname, basename = (path, '') if as_dir else os.path.split(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname, exist_ok=True)
+        if basename:
+            open(path, 'a').close()
+    os.utime(path, times=None)
 
 
 def backup_file(file_path):
@@ -553,7 +558,7 @@ def backup_file(file_path):
     mod_time = dt.datetime.utcfromtimestamp(os.path.getmtime(src_path))
     dest_name = ''.join([p.basename, '_', datetime_iso(mod_time, date_sep='', time_sep=''), p.extension])
     dest_dir = os.path.join(p.dirname, 'backup')
-    os.makedirs(dest_dir, exist_ok=True)
+    touch(dest_dir, as_dir=True)
     dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
     log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)

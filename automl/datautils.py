@@ -17,7 +17,7 @@ from sklearn.base import TransformerMixin
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score  # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
-from .utils import profile, path_from_split, split_path
+from .utils import profile, path_from_split, split_path, touch
 
 try:
     from sklearn.preprocessing import OrdinalEncoder    # from sklearn 0.20
@@ -73,6 +73,7 @@ def write_csv(data, path, header=True, columns=None, index=False, append=False):
     else:
         data_frame = to_data_frame(data, columns=columns)
         header = columns is not None
+    touch(path)
     data_frame.to_csv(path,
                       header=header,
                       index=index,

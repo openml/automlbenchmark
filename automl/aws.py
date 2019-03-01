@@ -33,7 +33,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import Scoreboard
-from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, str_def, tail
+from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, str_def, tail, touch
 
 
 log = logging.getLogger(__name__)
@@ -417,12 +417,12 @@ class AWSBenchmark(Benchmark):
         """
         success = False
 
-        def download_file(obj, dest, dest_path=None):
-            dest_path = dest if dest_path is None else dest_path
+        def download_file(obj, dest, dest_display_path=None):
+            dest_display_path = dest if dest_display_path is None else dest_display_path
             try:
-                log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_path)
+                log.info("Downloading `%s` from s3 bucket %s to `%s`.", obj.key, self.bucket.name, dest_display_path)
                 if isinstance(dest, str):
-                    os.makedirs(os.path.dirname(dest), exist_ok=True)
+                    touch(dest)
                     obj.download_file(dest)
                 else:
                     obj.download_fileobj(dest)

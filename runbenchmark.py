@@ -59,7 +59,7 @@ extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in 
 
 sid = args.session if args.session is not None \
     else '_'.join([extras.get('run_mode', args.mode), args.framework, args.benchmark, datetime_iso(date_sep='', time_sep='')]).lower()
-log_dir = automl.resources.create_output_dirs(args.outdir, session=sid, subdirs='logs').logs if args.outdir else 'logs'
+log_dir = automl.resources.output_dirs(args.outdir, session=sid, subdirs='logs', create=True).logs if args.outdir else 'logs'
 now_str = datetime_iso(date_sep='', time_sep='')
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:

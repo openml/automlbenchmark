@@ -17,9 +17,9 @@ import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
-from .resources import get as rget, config as rconfig, create_output_dirs
+from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import NoResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch as ftouch
+from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ class Benchmark:
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
 
-        self._setup_done(touch=True)
+        self._setup_done(mark=True)
 
     def cleanup(self):
         # anything to do?
@@ -189,17 +189,17 @@ class Benchmark:
         Scoreboard.all().append(board).save()
         Scoreboard.all(rconfig().output_dir).append(board).save()
 
-    def _setup_done(self, touch=False):
+    def _setup_done(self, mark=False):
         marker_file = os.path.join(self._framework_dir, '.marker_setup_safe_to_delete')
         setup_done = os.path.isfile(marker_file)
-        if touch and not setup_done:
-            ftouch(marker_file)
+        if mark and not setup_done:
+            touch(marker_file)
             setup_done = True
         return setup_done
 
     @lazy_property
     def output_dirs(self):
-        return create_output_dirs(rconfig().output_dir, session=self.sid, subdirs=['predictions', 'scores', 'logs'])
+        return routput_dirs(rconfig().output_dir, session=self.sid, subdirs=['predictions', 'scores', 'logs'])
 
     @property
     def _framework_dir(self):
@@ -331,6 +331,7 @@ class BenchmarkTask:
                     setattr(task_config, c, rconfig().t[c])
 
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
+        touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
         task_config.estimate_system_params()
         try:
             log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))

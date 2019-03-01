@@ -9,7 +9,7 @@ import random
 import re
 import sys
 
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path
+from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
 
 
 log = logging.getLogger(__name__)
@@ -244,7 +244,7 @@ def config():
     return __INSTANCE__.config
 
 
-def create_output_dirs(root, session=None, subdirs=None):
+def output_dirs(root, session=None, subdirs=None, create=False):
     root = root if root is not None else '.'
     dirs = Namespace(
         root=root,
@@ -257,6 +257,7 @@ def create_output_dirs(root, session=None, subdirs=None):
 
     for d in subdirs:
         dirs[d] = os.path.join(dirs.session, d)
-        os.makedirs(dirs[d], exist_ok=True)
+        if create and not os.path.exists(dirs[d]):
+            touch(dirs[d], as_dir=True)
     return dirs
 

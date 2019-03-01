@@ -14,7 +14,7 @@ from numpy import nan, sort
 
 from .data import Dataset, Feature
 from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
-from .resources import get as rget, config as rconfig, create_output_dirs
+from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
 
 log = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ class Scoreboard:
         self.benchmark_name = benchmark_name
         self.task_name = task_name
         self.scores_dir = scores_dir if scores_dir \
-            else create_output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores
+            else output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores
         self.scores = scores if scores is not None else self._load()
 
     @cached
@@ -256,7 +256,7 @@ class TaskResult:
         self.task = task_def
         self.fold = fold
         self.predictions_dir = predictions_dir if predictions_dir \
-            else create_output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions
+            else output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions
 
     @memoize
     def get_result(self, framework_name):
