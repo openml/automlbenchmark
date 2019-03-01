@@ -55,7 +55,7 @@ class Benchmark:
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
         self.parallel_jobs = parallel_jobs
         self.sid = rconfig().sid if rconfig().sid is not None \
-            else '_'.join([rconfig().run_mode, framework_name, benchmark_name, datetime_iso(micros=True, no_sep=True)]).lower()
+            else "{}_{}".format('_'.join([rconfig().run_mode, framework_name, benchmark_name]).lower(), datetime_iso(micros=True, no_sep=True))
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
