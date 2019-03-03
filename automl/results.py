@@ -186,7 +186,7 @@ class TaskResult:
     def load_predictions(predictions_file):
         log.info("Loading predictions from `%s`.", predictions_file)
         if os.path.isfile(predictions_file):
-            df = read_csv(predictions_file)
+            df = read_csv(predictions_file, dtype=object)
             log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
             if df.shape[1] > 2:
                 return ClassificationResult(df)

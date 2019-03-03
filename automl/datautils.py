@@ -50,7 +50,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True):
+def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None):
     """
     read csv file to DataFrame.
 
@@ -63,7 +63,8 @@ def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True):
     df = pd.read_csv(path,
                      nrows=nrows,
                      header=0 if header else None,
-                     index_col=0 if index else None)
+                     index_col=0 if index else None,
+                     dtype=dtype)
     return df if as_data_frame else df.values
 
 
