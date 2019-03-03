@@ -147,11 +147,12 @@ class AWSBenchmark(Benchmark):
 
         def worker():
             while True:
-                fn = self.exec.q.get()
-                if fn is None:
+                item = self.exec.q.get()
+                if item is None:
                     self.exec.q.task_done()
                     break
-                try: fn()
+                (fn, args, kwargs) = item
+                try: fn(*args, **kwargs)
                 except: pass
                 self.exec.q.task_done()
 
@@ -173,12 +174,12 @@ class AWSBenchmark(Benchmark):
         finally:
             self.exec = None
 
-    def _exec_send(self, fn):
+    def _exec_send(self, fn, *args, **kwargs):
         if self.exec is not None:
-            self.exec.q.put(fn)
+            self.exec.q.put((fn, args, kwargs))
         else:
             log.warning("Sending exec function while exec queue is not started: executing the function in the calling thread.")
-            fn()
+            fn(*args, **kwargs)
             # try: fn()
             # except: pass
 
@@ -481,7 +482,7 @@ class AWSBenchmark(Benchmark):
                 # if obj.key == result_key:
                 if not success and os.path.basename(obj.key) == Scoreboard.results_file:
                     if rconfig().results.save:
-                        self._exec_send(lambda: self._append(Scoreboard.load_df(dest_path)))
+                        self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
                     success = True
         except Exception as e:
             log.error("Failed downloading benchmark results from s3 bucket %s: %s", self.bucket.name, str(e))

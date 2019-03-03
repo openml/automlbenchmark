@@ -2,16 +2,17 @@
 
 FRAMEWORKS=(
 #constantpredictor
-constantpredictor_enc
-decisiontree
+#constantpredictor_enc
+#decisiontree
 randomforest
 
 autosklearn
 h2oautoml
 oboe
 tpot
-hyperoptsklearn
-ranger
+autoweka
+#hyperoptsklearn
+#ranger
 )
 
 BENCHMARKS=(
@@ -19,6 +20,7 @@ BENCHMARKS=(
 validation
 small
 chalearn
+small_selection
 )
 
 MODE=(
@@ -69,8 +71,8 @@ if [[ -z $parallel ]]; then
     fi
 fi
 
-extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15"
-#extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15 -Xaws.use_docker=True"
+#extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15"
+extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15 -Xaws.use_docker=True"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 

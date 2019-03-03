@@ -54,6 +54,7 @@
   cores: 2
 
 - name: kc1
+  enabled: false
   openml_task_id: 3917
   metric:
     - auc
@@ -126,6 +127,7 @@
   cores: 4
 
 - name: Helena
+  enabled: false
   openml_task_id: 168329
   metric:
   - logloss

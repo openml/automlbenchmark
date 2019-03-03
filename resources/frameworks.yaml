@@ -68,7 +68,7 @@ ranger:
   project: https://github.com/imbs-hl/ranger
 
 TPOT:
-  version: '0.9.5'
+  version: '0.9.6'
   project: https://github.com/EpistasisLab/tpot
   params:
 #    max_eval_time_mins: 2

@@ -1,2 +1,2 @@
-tpot[dask]==0.9.5
+tpot[dask]==0.9.6
 xgboost
