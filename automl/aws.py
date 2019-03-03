@@ -13,6 +13,7 @@ necessary to run a benchmark on EC2 instances:
 - merge downloaded results with existing/local results.
 - properly cleans up AWS resources (S3, EC2).
 """
+from concurrent.futures import ThreadPoolExecutor
 import io
 import json
 import logging
@@ -144,31 +145,13 @@ class AWSBenchmark(Benchmark):
     def _exec_start(self):
         if self.exec is not None:
             return
-
-        def worker():
-            while True:
-                item = self.exec.q.get()
-                if item is None:
-                    self.exec.q.task_done()
-                    break
-                (fn, args, kwargs) = item
-                try: fn(*args, **kwargs)
-                except: pass
-                self.exec.q.task_done()
-
-        self.exec = ns(
-            q=queue.Queue(),
-            t=threading.Thread(name="master exec thread", target=worker, daemon=True)
-        )
-        self.exec.t.start()
+        self.exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="exec_master_")
 
     def _exec_stop(self):
         if self.exec is None:
             return
         try:
-            self.exec.q.put(None)
-            self.exec.q.join()
-            self.exec.t.join()
+            self.exec.shutdown(wait=True)
         except:
             pass
         finally:
@@ -176,12 +159,13 @@ class AWSBenchmark(Benchmark):
 
     def _exec_send(self, fn, *args, **kwargs):
         if self.exec is not None:
-            self.exec.q.put((fn, args, kwargs))
+            self.exec.submit(fn, *args, **kwargs)
         else:
-            log.warning("Sending exec function while exec queue is not started: executing the function in the calling thread.")
-            fn(*args, **kwargs)
-            # try: fn()
-            # except: pass
+            log.warning("Sending exec function while executor is not started: executing the function in the calling thread.")
+            try:
+                fn(*args, **kwargs)
+            except:
+                pass
 
     def _make_aws_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
