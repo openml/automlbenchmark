@@ -45,7 +45,7 @@ def run(dataset: Dataset, config: TaskConfig):
         timeLimit=int(config.max_runtime_seconds/60),
         parallelRuns=config.cores,
         metric=metric,
-        seed=config.seed,
+        seed=config.seed % (1 << 16),   # weka accepts only int16 as seeds
         **config.framework_params
     )
     cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
