@@ -10,8 +10,8 @@
   cores: 2
 
 - name: car
-  openml_task_id: 146821
   enabled: false
+  openml_task_id: 146821
   metric:
     - logloss
     - acc
@@ -19,6 +19,7 @@
   cores: 2
 
 - name: credit-g
+  enabled: false
   openml_task_id: 31
   metric:
     - auc

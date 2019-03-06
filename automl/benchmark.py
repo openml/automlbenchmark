@@ -274,7 +274,7 @@ class BenchmarkTask:
         self.benchmark = benchmark
         self._task_def = task_def
         self.fold = fold
-        self.task = TaskConfig(
+        self.task_config = TaskConfig(
             name=task_def.name,
             fold=fold,
             metrics=task_def.metric,
@@ -285,6 +285,11 @@ class BenchmarkTask:
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
         )
+        # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
+        if rconfig()['t'] is not None:
+            for c in ['max_runtime_seconds', 'metric', 'metrics', 'seed']:
+                if rconfig().t[c] is not None:
+                    setattr(self.task_config, c, rconfig().t[c])
         self._dataset = None
 
     @profile(logger=log)
@@ -309,7 +314,8 @@ class BenchmarkTask:
         def _run():
             self.load_data()
             return self.run(framework, framework_name)
-        job = Job('_'.join(['local', self.task.name, str(self.fold), framework_name]))
+        job = Job(name='_'.join(['local', self.task_config.name, str(self.fold), framework_name]),
+                  timeout_secs=self.task_config.max_runtime_seconds * 2)  # this timeout is just to handle edge cases where framework never completes
         job._run = _run
         return job
         # return Namespace(run=lambda: self.run(framework))
@@ -323,7 +329,7 @@ class BenchmarkTask:
         """
         results = TaskResult(task_def=self._task_def, fold=self.fold, predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def, _ = rget().framework_definition(framework_name)
-        task_config = copy(self.task)
+        task_config = copy(self.task_config)
         task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params
@@ -331,17 +337,12 @@ class BenchmarkTask:
         # allowing to pass framework parameters through command line, e.g.: -Xf.verbose=True -Xf.n_estimators=3000
         if rconfig()['f'] is not None:
             task_config.framework_params = ns.dict(ns(framework_def.params) + rconfig().f)
-        # allowing to override some  task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
-        if rconfig()['t'] is not None:
-            for c in ['max_runtime_seconds', 'metric', 'metrics', 'seed']:
-                if rconfig().t[c] is not None:
-                    setattr(task_config, c, rconfig().t[c])
 
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
         task_config.estimate_system_params()
         try:
-            log.info("Running task %s on framework %s with config:\n%s", self.task.name, framework_name, repr_def(task_config))
+            log.info("Running task %s on framework %s with config:\n%s", task_config.name, framework_name, repr_def(task_config))
             meta_result = framework.run(self._dataset, task_config)
             self._dataset.release()
             return results.compute_scores(framework_name, task_config.metrics, meta_result=meta_result)

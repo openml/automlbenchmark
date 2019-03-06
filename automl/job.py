@@ -15,7 +15,7 @@ import signal
 import threading
 import time
 
-from .utils import Namespace, Timer
+from .utils import Namespace, Timer, InterruptTimeout
 
 log = logging.getLogger(__name__)
 
@@ -33,8 +33,9 @@ class CancelledError(Exception):
 
 class Job:
 
-    def __init__(self, name=""):
+    def __init__(self, name="", timeout_secs=None):
         self.name = name
+        self.timeout = timeout_secs
         self.state = State.created
 
     def start(self):
@@ -49,7 +50,8 @@ class Job:
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
             with Timer() as t:
-                result = self._run()
+                with InterruptTimeout(self.timeout):
+                    result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)
             return result, t.duration

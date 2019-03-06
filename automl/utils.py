@@ -170,6 +170,10 @@ def to_mb(size_in_bytes):
     return size_in_bytes / (1 << 20)
 
 
+def noop():
+    pass
+
+
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):
     return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
                                 else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
@@ -456,14 +460,21 @@ class Timer:
 class Timeout:
 
     def __init__(self, timeout_secs, on_timeout=None):
-        self.timer = threading.Timer(timeout_secs, on_timeout)
+        enabled = timeout_secs is not None and timeout_secs >= 0
+        self.timer = threading.Timer(timeout_secs, on_timeout) if enabled else None
+
+    @property
+    def active(self):
+        return self.timer and self.timer.is_alive()
 
     def __enter__(self):
-        self.timer.start()
+        if self.timer:
+            self.timer.start()
         return self
 
     def __exit__(self, *args):
-        self.timer.cancel()
+        if self.timer:
+            self.timer.cancel()
 
 
 class InterruptTimeout(Timeout):

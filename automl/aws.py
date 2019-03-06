@@ -643,10 +643,15 @@ packages:
   - docker.io
 
 runcmd:
+  - apt-get -y remove unattended-upgrades
+  - systemctl stop apt-daily.timer
+  - systemctl disable apt-daily.timer
+  - systemctl disable apt-daily.service
+  - systemctl daemon-reload
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
-  - pip3 install --upgrade awscli
+  - pip3 install -U awscli
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker -Xseed={seed} --session=
@@ -676,7 +681,12 @@ packages:
   - python3-venv
 
 runcmd:
-  - pip3 install --upgrade awscli
+  - apt-get -y remove unattended-upgrades
+  - systemctl stop apt-daily.timer
+  - systemctl disable apt-daily.timer
+  - systemctl disable apt-daily.service
+  - systemctl daemon-reload
+  - pip3 install -U awscli
   - python3 -m venv /venvs/bench
   - alias PIP='/venvs/bench/bin/pip3'
   - alias PY='/venvs/bench/bin/python3 -W ignore'
@@ -687,7 +697,7 @@ runcmd:
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
-  - PIP install --upgrade pip=={pip_version}
+  - PIP install -U pip=={pip_version}
   - PIP_REQ < requirements.txt
 #  - until aws s3 ls '{s3_base_url}'; do echo "waiting for credentials"; sleep 10; done
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
@@ -738,11 +748,11 @@ power_state:
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
-apt-get install -y curl wget unzip git
-apt-get install -y python3 python3-pip python3-venv
-#apt-get install -y docker.io
+apt-get -y install curl wget unzip git
+apt-get -y install python3 python3-pip python3-venv
+#apt-get -y install docker.io
 
-pip3 install --upgrade awscli
+pip3 install -U awscli
 python3 -m venv /venvs/bench
 alias PIP='/venvs/bench/bin/pip3'
 alias PY='/venvs/bench/bin/python3 -W ignore'
@@ -754,9 +764,9 @@ mkdir ~/repo
 cd ~/repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
-PIP install --upgrade pip=={pip_version}
+PIP install -U pip=={pip_version}
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
-PIP install --upgrade awscli
+PIP install -U awscli
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive

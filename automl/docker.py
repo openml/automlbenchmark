@@ -163,10 +163,10 @@ class DockerBenchmark(Benchmark):
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
-RUN apt-get install -y apt-utils dialog locales
-RUN apt-get install -y curl wget unzip git
-RUN apt-get install -y python3 python3-pip python3-venv
-RUN pip3 install --upgrade pip
+RUN apt-get -y install apt-utils dialog locales
+RUN apt-get -y install curl wget unzip git
+RUN apt-get -y install python3 python3-pip python3-venv
+RUN pip3 install -U pip
 
 # We create a virtual environment so that AutoML systems may use their preferred versions of 
 # packages that we need to data pre- and postprocessing without breaking it.
@@ -183,7 +183,7 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
 RUN $SPY -m venv /venvs/bench
-RUN $PIP install --upgrade pip=={pip_version}
+RUN $PIP install -U pip=={pip_version}
 
 WORKDIR /bench
 VOLUME /input
