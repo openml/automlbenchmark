@@ -15,9 +15,11 @@ venv/
 *.swp
 
 # tmp files
-*.log
-*.csv
-*.arff
+.ipynb_checkpoints/
 libs/
 logs/
 results/
+*.log
+*.csv
+*.arff
+*.png

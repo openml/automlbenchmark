@@ -1,6 +1,7 @@
 .git
 
 # generated files/folders
+.ipynb_checkpoints
 logs
 results
 **/logs
@@ -15,8 +16,10 @@ results
 .idea
 *.iml
 *.swp
+*.ipynb
 
 # tmp files
 **/*.log
 **/*.csv
 **/*.arff
+**/*.png
