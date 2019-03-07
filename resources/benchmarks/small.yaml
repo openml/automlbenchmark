@@ -1,11 +1,21 @@
 ---
+# all tasks listed here have a training dataset < 1MB
 
-- name: kr-vs-kp
-  openml_task_id: 3
+- name: Australian
+  openml_task_id: 146818
   metric:
     - auc
     - acc
-    - logloss
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: blood-transfusion
+  openml_task_id: 10101
+  metric:
+    - auc
+    - acc
+  folds: 10
   max_runtime_seconds: 3600
   cores: 2
 
@@ -19,7 +29,6 @@
   cores: 2
 
 - name: credit-g
-  enabled: false
   openml_task_id: 31
   metric:
     - auc
@@ -27,4 +36,41 @@
     - logloss
   max_runtime_seconds: 3600
   cores: 2
+
+- name: kr-vs-kp
+  openml_task_id: 3
+  metric:
+    - auc
+    - acc
+    - logloss
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: phoneme
+  openml_task_id: 9952
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: segment
+  openml_task_id: 146822
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: vehicle
+  openml_task_id: 53
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
 

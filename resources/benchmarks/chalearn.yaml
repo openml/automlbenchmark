@@ -1,4 +1,21 @@
 ---
+# various tasks from chalearn (http://automl.chalearn.org/) with datasets of various sizes: from 500 kB (sylvine) to 185 MB (dilbert)
+
+- name: christine
+  openml_task_id: 168765
+  metric:
+    - auc
+    - acc
+    - logloss
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: dilbert
+  openml_task_id: 168770
+  metric:
+    - logloss
+    - acc
+  max_runtime_seconds: 3600
 
 - name: fabert
   openml_task_id: 168760
@@ -17,15 +34,6 @@
   max_runtime_seconds: 3600
   cores: 2
 
-- name: christine
-  openml_task_id: 168765
-  metric:
-    - auc
-    - acc
-    - logloss
-  max_runtime_seconds: 3600
-  cores: 2
-
 - name: sylvine
   openml_task_id: 168761
   metric:
@@ -34,10 +42,3 @@
     - logloss
   max_runtime_seconds: 3600
   cores: 2
-
-- name: dilbert
-  openml_task_id: 168770
-  metric:
-    - logloss
-    - acc
-  max_runtime_seconds: 3600

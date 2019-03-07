@@ -1,4 +1,14 @@
 ---
+# a selection of tasks used to validate the benchmark app: various sizes, format (with/out nans, missing values...)
+
+- name: bioresponse
+  openml_task_id: 9910
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
 - name: dresses-sales
   openml_task_id: 125920
   metric:
@@ -17,14 +27,6 @@
 
 - name: internet-advertisements
   openml_task_id: 167125
-  metric:
-    - auc
-    - acc
-  max_runtime_seconds: 3600
-  cores: 2
-
-- name: bioresponse
-  openml_task_id: 9910
   metric:
     - auc
     - acc

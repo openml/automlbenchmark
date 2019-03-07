@@ -1,0 +1,77 @@
+---
+# all tasks listed here have a training set in [1 MB, 50 MB]
+
+- name: adult
+  openml_task_id: 7592
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 4
+
+- name: connect-4
+  openml_task_id: 146195
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 4
+
+- name: cnae-9
+  openml_task_id: 9981
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: Helena
+  enabled: false
+  openml_task_id: 168329
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 4
+
+- name: Jannis
+  openml_task_id: 168330
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 4
+
+- name: kc1
+  enabled: false
+  openml_task_id: 3917
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: mfeat-factors
+  openml_task_id: 12
+  metric:
+  - logloss
+  - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: nomao
+  openml_task_id: 9977
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 4
+
