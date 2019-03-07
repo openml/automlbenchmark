@@ -131,6 +131,7 @@ class DockerBenchmark(Benchmark):
 
     def _build_docker_image(self, cache=True):
         if rconfig().docker.force_branch:
+            run_cmd("git fetch")
             status = run_cmd("git status -b --porcelain")
             if len(status.splitlines()) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
                 log.info("Branch status:\n%s", status)
