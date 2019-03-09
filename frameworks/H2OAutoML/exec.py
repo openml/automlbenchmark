@@ -66,12 +66,13 @@ def run(dataset: Dataset, config: TaskConfig):
 
         predictions = y_pred.values
         probabilities = preds.iloc[:, 1:].values
+        truth = y_truth.values
 
         save_predictions_to_file(dataset=dataset,
                                  output_file=config.output_predictions_file,
                                  probabilities=probabilities,
                                  predictions=predictions,
-                                 truth=y_truth.values)
+                                 truth=truth)
 
         return dict(
             models_count=len(aml.leaderboard),

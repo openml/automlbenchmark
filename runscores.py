@@ -28,5 +28,5 @@ config.script = os.path.basename(__file__)
 automl.resources.from_config(config)
 
 scores = automl.TaskResult.score_from_predictions_file(args.predictions)
-log.info("\n\nScores computated from %s:\n%s", args.predictions, yaml.dump(dict(scores), default_flow_style=False))
+log.info("\n\nScores computed from %s:\n%s", args.predictions, yaml.dump(dict(scores), default_flow_style=False))
 
