@@ -29,7 +29,6 @@
   cores: 2
 
 - name: Helena
-  enabled: false
   openml_task_id: 168329
   metric:
     - logloss
@@ -46,16 +45,6 @@
   folds: 10
   max_runtime_seconds: 3600
   cores: 4
-
-- name: kc1
-  enabled: false
-  openml_task_id: 3917
-  metric:
-    - auc
-    - acc
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 2
 
 - name: mfeat-factors
   openml_task_id: 12

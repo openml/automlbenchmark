@@ -20,7 +20,6 @@
   cores: 2
 
 - name: car
-  enabled: false
   openml_task_id: 146821
   metric:
     - logloss
@@ -34,6 +33,15 @@
     - auc
     - acc
     - logloss
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: kc1
+  openml_task_id: 3917
+  metric:
+    - auc
+    - acc
+  folds: 10
   max_runtime_seconds: 3600
   cores: 2
 
