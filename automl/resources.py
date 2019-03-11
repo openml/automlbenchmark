@@ -193,7 +193,7 @@ class Resources:
         if len(missing) > 0:
             raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}.".format(missing=missing, taskdef=task))
 
-        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'seed']:
+        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'min_vol_size_mb', 'seed']:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
                 log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
@@ -221,6 +221,11 @@ class Resources:
             else:
                 task[conf] = imap.default
             log.debug("Config `{config}` not set for task {name}, using default selection `{value}`.".format(config=conf, name=task.name, value=task[conf]))
+
+        conf = 'ec2_volume_type'
+        if task[conf] is None:
+            task[conf] = self.config.aws.ec2.volume_type
+            log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
 
 
 __INSTANCE__: Resources = None

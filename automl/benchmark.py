@@ -19,7 +19,7 @@ from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecut
 from .openml import Openml
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import NoResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, touch
+from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -220,7 +220,7 @@ class Benchmark:
 class TaskConfig:
 
     def __init__(self, name, fold, metrics, seed,
-                 max_runtime_seconds, cores, max_mem_size_mb,
+                 max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
                  input_dir, output_dir):
         self.framework = None
         self.framework_params = None
@@ -233,6 +233,7 @@ class TaskConfig:
         self.max_runtime_seconds = max_runtime_seconds
         self.cores = cores
         self.max_mem_size_mb = max_mem_size_mb
+        self.min_vol_size_mb = min_vol_size_mb
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
@@ -252,15 +253,22 @@ class TaskConfig:
         assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0
                              else left_for_app_mem if left_for_app_mem > 0
                              else sys_mem.available)
-        log.info("Assigning %sMB (total=%sMB) for new %s task.", assigned_mem, sys_mem.total, self.name)
+        log.info("Assigning %.f MB (total=%.f MB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.available:
-            log.warning("WARNING: Assigned memory (%(assigned)sMB) exceeds system available memory (%(available)sMB / total=%(total)sMB)!",
+            log.warning("WARNING: Assigned memory (%(assigned).f MB) exceeds system available memory (%(available).f MB / total=%(total).f MB)!",
                         dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total))
         elif assigned_mem > sys_mem.total - os_recommended_mem:
-            log.warning("WARNING: Assigned memory (%(assigned)sMB) is within %(buffer)sMB of system total memory (%(total)sMB): "
-                        "We recommend a %(buffer)sMB buffer, otherwise OS memory usage might interfere with the benchmark task.",
+            log.warning("WARNING: Assigned memory (%(assigned).f MB) is within %(buffer)sMB of system total memory (%(total).f MB): "
+                        "We recommend a %(buffer).f MB buffer, otherwise OS memory usage might interfere with the benchmark task.",
                         dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total, buffer=os_recommended_mem))
+
+        if self.min_vol_size_mb > 0:
+            sys_vol = system_volume_mb()
+            os_recommended_vol = rconfig().benchmarks.os_vol_size_mb
+            if self.min_vol_size_mb > sys_vol.free:
+                log.warning("WARNING: Available volume memory (%(available).f MB / total=%(total).f MB) doesn't meet requirements (%(required).f MB)!",
+                            dict(required=self.min_vol_size_mb+os_recommended_vol, available=sys_vol.free, total=sys_vol.total))
 
 
 class BenchmarkTask:
@@ -282,6 +290,7 @@ class BenchmarkTask:
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
             max_mem_size_mb=task_def.max_mem_size_mb,
+            min_vol_size_mb=task_def.min_vol_size_mb,
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
         )
@@ -312,7 +321,6 @@ class BenchmarkTask:
 
     def as_job(self, framework, framework_name):
         def _run():
-            self.load_data()
             return self.run(framework, framework_name)
         job = Job(name='_'.join(['local', self.task_config.name, str(self.fold), framework_name]),
                   timeout_secs=self.task_config.max_runtime_seconds * 2)  # this timeout is just to handle edge cases where framework never completes
@@ -330,6 +338,8 @@ class BenchmarkTask:
         results = TaskResult(task_def=self._task_def, fold=self.fold, predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task_config)
+        task_config.estimate_system_params()
+        self.load_data()
         task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params
@@ -340,7 +350,6 @@ class BenchmarkTask:
 
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
-        task_config.estimate_system_params()
         try:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, framework_name, repr_def(task_config))
             meta_result = framework.run(self._dataset, task_config)

@@ -25,11 +25,13 @@ frameworks:
 benchmarks:
   definition_dir: resources/benchmarks
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
+  os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   defaults:
     folds: 10
     max_runtime_seconds: 3600
     cores: -1                 # default amount of cores used for each automl task. If <= 0, will try to use all cores.
     max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
+    min_vol_size_mb: -1       # default minimum amount of free space required on the volume. If <= 0, skips verification.
 
 results:
   error_max_length: 200
@@ -87,6 +89,8 @@ aws:
       '4': m5.xlarge
       '8': m5.2xlarge
       '16': m5.4xlarge
+    root_device_name: '/dev/sda1'
+    volume_type: standard         # one of gp2, io1, st1, sc1, or standard (default)
     subnet_id: ''
     regions:
       us-east-1:

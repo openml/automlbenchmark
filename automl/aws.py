@@ -171,7 +171,18 @@ class AWSBenchmark(Benchmark):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
         task_def = self._get_task_def(task_names[0]) if len(task_names) >= 1 else None
-        instance_type = task_def.ec2_instance_type if task_def else rconfig().aws.ec2.instance_type_map.default
+        instance_def = ns(
+            type=task_def.ec2_instance_type,
+            volume_type=task_def.ec2_volume_type,
+        ) if task_def else ns(
+            type=rconfig().aws.ec2.instance_type_map.default,
+            volume_type=rconfig().aws.ec2.volume_type,
+        )
+        if task_def.min_vol_size_mb > 0:
+            instance_def.volume_size = math.ceil((task_def.min_vol_size_mb + rconfig().benchmarks.os_vol_size_mb) / 1024.)
+        else:
+            instance_def.volume_size = None
+
         timeout_secs = task_def.max_runtime_seconds if task_def \
             else sum([task.max_runtime_seconds for task in self.benchmark_def])
         timeout_secs += rconfig().aws.overhead_time_seconds
@@ -186,7 +197,7 @@ class AWSBenchmark(Benchmark):
         def _run(job_self):
             resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
             job_self.instance_id = self._start_instance(
-                instance_type,
+                instance_def,
                 script_params="{framework} {benchmark} {task_param} {folds_param}".format(
                     framework=self.framework_name,
                     benchmark="{}/{}.yaml".format(resources_root, self.benchmark_name),
@@ -240,7 +251,7 @@ class AWSBenchmark(Benchmark):
                 break
             time.sleep(rconfig().aws.query_frequency_seconds)
 
-    def _start_instance(self, instance_type, script_params="", instance_key=None, timeout_secs=-1):
+    def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)
         inst_key = instance_key.lower() if instance_key \
             else "{}_p{}_i{}".format(self.sid,
@@ -250,13 +261,21 @@ class AWSBenchmark(Benchmark):
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
         try:
+            ebs = dict(VolumeType=instance_def.volume_type)
+            if instance_def.volume_size:
+                ebs['VolumeSize'] = instance_def.volume_size
+
             instance = self.ec2.create_instances(
+                BlockDeviceMappings=[dict(
+                    DeviceName=rconfig().aws.ec2.root_device_name,
+                    Ebs=ebs
+                )],
+                IamInstanceProfile=dict(Name=self.instance_profile.name),
                 ImageId=self.ami,
+                InstanceType=instance_def.type,
                 MinCount=1,
                 MaxCount=1,
-                InstanceType=instance_type,
                 SubnetId=rconfig().aws.ec2.subnet_id,
-                IamInstanceProfile=dict(Name=self.instance_profile.name),
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
             )[0]
             log.info("Started EC2 instance %s.", instance.id)

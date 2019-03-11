@@ -170,6 +170,10 @@ def to_mb(size_in_bytes):
     return size_in_bytes / (1 << 20)
 
 
+def to_gb(size_in_bytes):
+    return size_in_bytes / (1 << 30)
+
+
 def noop():
     pass
 
@@ -673,6 +677,10 @@ def kill_proc_tree(pid=None, include_parent=True, timeout=None, on_terminate=Non
         proc.kill()
 
 
+def system_cores():
+    return psutil.cpu_count()
+
+
 def system_memory_mb():
     vm = psutil.virtual_memory()
     return Namespace(
@@ -681,8 +689,14 @@ def system_memory_mb():
     )
 
 
-def system_cores():
-    return psutil.cpu_count()
+def system_volume_mb():
+    du = psutil.disk_usage('/')
+    return Namespace(
+        total=to_mb(du.total),
+        free=to_mb(du.free),
+        used=to_mb(du.used),
+        used_percentage=du.percent
+    )
 
 
 class MemoryMonitor:
