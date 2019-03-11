@@ -11,16 +11,16 @@ h2oautoml
 oboe
 tpot
 autoweka
-#hyperoptsklearn
+hyperoptsklearn
 #ranger
 )
 
 BENCHMARKS=(
 #test
 validation
-small
 chalearn
-small_selection
+small
+medium
 )
 
 MODE=(
@@ -72,7 +72,7 @@ if [[ -z $parallel ]]; then
 fi
 
 #extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15"
-extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15 -Xaws.use_docker=True"
+extra_params="-t kc1 -u /dev/null -o ./stable -Xmax_parallel_jobs=15 -Xaws.use_docker=True"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 
