@@ -259,7 +259,7 @@ class TaskConfig:
             log.warning("WARNING: Assigned memory (%(assigned).f MB) exceeds system available memory (%(available).f MB / total=%(total).f MB)!",
                         dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total))
         elif assigned_mem > sys_mem.total - os_recommended_mem:
-            log.warning("WARNING: Assigned memory (%(assigned).f MB) is within %(buffer)sMB of system total memory (%(total).f MB): "
+            log.warning("WARNING: Assigned memory (%(assigned).f MB) is within %(buffer).f MB of system total memory (%(total).f MB): "
                         "We recommend a %(buffer).f MB buffer, otherwise OS memory usage might interfere with the benchmark task.",
                         dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total, buffer=os_recommended_mem))
 
@@ -321,6 +321,7 @@ class BenchmarkTask:
 
     def as_job(self, framework, framework_name):
         def _run():
+            self.load_data()
             return self.run(framework, framework_name)
         job = Job(name='_'.join(['local', self.task_config.name, str(self.fold), framework_name]),
                   timeout_secs=self.task_config.max_runtime_seconds * 2)  # this timeout is just to handle edge cases where framework never completes
@@ -339,7 +340,6 @@ class BenchmarkTask:
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task_config)
         task_config.estimate_system_params()
-        self.load_data()
         task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params

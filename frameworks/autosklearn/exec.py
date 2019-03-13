@@ -49,6 +49,7 @@ def run(dataset: Dataset, config: TaskConfig):
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
                              n_jobs=config.cores,
                              ml_memory_limit=config.max_mem_size_mb,
+                             ensemble_memory_limit=config.max_mem_size_mb / 3,  # keeping default proportions
                              seed=config.seed,
                              **config.framework_params)
     with Timer() as training:
