@@ -5,6 +5,7 @@ It produces predictions based on a model trained with all of the data for the be
 """
 import logging
 import math
+import statistics
 
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import cross_val_score
@@ -37,7 +38,7 @@ def run(dataset: Dataset, config: TaskConfig):
     log.warning("We completely ignore the requirement to stay within the time limit.")
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
-    metric = dict(auc='roc_auc', logloss='neg_log_loss')[config.metric]
+    metric = dict(auc='roc_auc', logloss='neg_log_loss', acc='accuracy')[config.metric]
 
     n_features = X_train.shape[1]
     default_value = max(1, int(math.sqrt(n_features)))
@@ -48,14 +49,17 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("Evaluating multiple values for `max_features`.")
     log.warning("TODO: Incorporate imputation in fold evaluations.")
     max_feature_scores = []
-    for max_features_value in max_features_values:
+    for i, max_features_value in enumerate(max_features_values):
+        log.info("[{:2d}/{:2d}] Evaluating max_features={}"
+                 .format(i + 1, len(max_features_values), max_features_value))
         rf = estimator(n_jobs=config.cores,
                        random_state=config.seed,
                        max_features=max_features_value,
                        **config.framework_params)
-        score = cross_val_score(rf, X_train, y_train, scoring=metric, cv=5)
-        max_feature_scores.append((score, max_features_value))
+        scores = cross_val_score(rf, X_train, y_train, scoring=metric, cv=5)
+        max_feature_scores.append((statistics.mean(scores), max_features_value))
 
+    log.info(max_feature_scores)
     best_score, best_max_features_value = max(max_feature_scores)
     rf = estimator(n_jobs=config.cores,
                    random_state=config.seed,

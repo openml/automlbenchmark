@@ -35,6 +35,12 @@ RandomForest:
     n_estimators: 2000
 #    verbose: true
 
+TunedRandomForest:
+  version: '0.19.2'
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  params:
+    n_estimators: 2000
+
 
 ### AutoML frameworks
 autosklearn:
