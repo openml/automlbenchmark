@@ -1,14 +1,4 @@
 ---
-# all tasks listed here have a training set in [1 MB, 50 MB]
-
-- name: adult
-  openml_task_id: 7592
-  metric:
-    - auc
-    - acc
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 4
 
 - name: connect-4
   openml_task_id: 146195
@@ -16,17 +6,26 @@
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 4
 
-- name: cnae-9
-  openml_task_id: 9981
+- name: KDDCup09_appetency
+  openml_task_id: 3945
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: Fashion-MNIST
+  openml_task_id: 146825
   metric:
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
-  cores: 2
+  max_runtime_seconds: 14400
+  cores: 4
 
 - name: Helena
   openml_task_id: 168329
@@ -34,7 +33,7 @@
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 4
 #  min_vol_size_mb: 24
 
@@ -44,18 +43,9 @@
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 4
 #  min_vol_size_mb: 24
-
-- name: mfeat-factors
-  openml_task_id: 12
-  metric:
-  - logloss
-  - acc
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 2
 
 - name: nomao
   openml_task_id: 9977
@@ -63,6 +53,131 @@
     - auc
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 4
 
+- name: numerai28.6
+  openml_task_id: 167120
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: higgs
+  openml_task_id: 146606
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: Amazon_employee_access
+  openml_task_id: 34539
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: jungle_chess_2pcs_raw_endgame_complete
+  openml_task_id: 167119
+  metric:
+  - logloss
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: bank-marketing
+  openml_task_id: 14965
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: adult
+  openml_task_id: 7592
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: Volkert
+  openml_task_id: 168331
+  metric:
+  - logloss
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: Robert
+  openml_task_id: 168332
+  metric:
+  - logloss
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: Shuttle
+  openml_task_id: 146212
+  metric:
+  - logloss
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: guiellermo
+  openml_task_id: 168337
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: riccardo
+  openml_task_id: 168338
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: MiniBooNE
+  openml_task_id: 168335
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: APSFailure
+  openml_task_id: 168868
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
+
+- name: bank-marketing
+  openml_task_id: 14965
+  metric:
+  - auc
+  - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 4
