@@ -5,16 +5,19 @@ It produces predictions based on a model trained with all of the data for the be
 """
 import logging
 import math
+import random
 import statistics
 
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import impute
 from automl.results import save_predictions_to_file
-from automl.utils import Timer, translate_dict
+from automl.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -42,21 +45,29 @@ def run(dataset: Dataset, config: TaskConfig):
 
     n_features = X_train.shape[1]
     default_value = max(1, int(math.sqrt(n_features)))
-    below_default = pick_values_uniform(start=1, end=default_value, length=6)[:-1]
-    above_default = pick_values_uniform(start=default_value, end=n_features, length=11 - len(below_default))[1:]
-    max_features_values = below_default + [default_value] + above_default
+    below_default = pick_values_uniform(start=1, end=default_value, length=6)[1:-1]
+    above_default = pick_values_uniform(start=default_value, end=n_features, length=11 - len(below_default))[1:-1]
+    max_features_to_try = below_default + above_default
+    # Mix up the order of `max_features` to try, so that a fair range is tried even if we have too little time
+    # to try all possible values. Order: [sqrt(p), 1, p, random order for remaining values]
+    max_features_values = ([default_value, 1, n_features]
+                           + random.sample(max_features_to_try, k=len(max_features_to_try)))
 
     log.info("Evaluating multiple values for `max_features`.")
-    log.warning("TODO: Incorporate imputation in fold evaluations.")
     max_feature_scores = []
     for i, max_features_value in enumerate(max_features_values):
         log.info("[{:2d}/{:2d}] Evaluating max_features={}"
                  .format(i + 1, len(max_features_values), max_features_value))
-        rf = estimator(n_jobs=config.cores,
-                       random_state=config.seed,
-                       max_features=max_features_value,
-                       **config.framework_params)
-        scores = cross_val_score(rf, X_train, y_train, scoring=metric, cv=5)
+        imputation = SimpleImputer()
+        random_forest = estimator(n_jobs=config.cores,
+                                  random_state=config.seed,
+                                  max_features=max_features_value,
+                                  **config.framework_params)
+        pipeline = Pipeline(steps=[
+            ('preprocessing', imputation),
+            ('learning', random_forest)
+        ])
+        scores = cross_val_score(pipeline, dataset.train.X_enc, dataset.train.y, scoring=metric, cv=5)
         max_feature_scores.append((statistics.mean(scores), max_features_value))
 
     log.info(max_feature_scores)
