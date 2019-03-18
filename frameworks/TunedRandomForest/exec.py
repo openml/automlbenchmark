@@ -12,6 +12,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
+import stopit
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -37,8 +38,8 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y, dataset.test.y
 
-    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, config.cores))
-    log.warning("We completely ignore the requirement to stay within the time limit.")
+    log.info("Running RandomForest with a maximum time of {}s on {} cores."
+             .format(config.max_runtime_seconds, config.cores))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
     metric = dict(auc='roc_auc', logloss='neg_log_loss', acc='accuracy')[config.metric]
@@ -52,23 +53,26 @@ def run(dataset: Dataset, config: TaskConfig):
     # to try all possible values. Order: [sqrt(p), 1, p, random order for remaining values]
     max_features_values = ([default_value, 1, n_features]
                            + random.sample(max_features_to_try, k=len(max_features_to_try)))
-
-    log.info("Evaluating multiple values for `max_features`.")
-    max_feature_scores = []
-    for i, max_features_value in enumerate(max_features_values):
-        log.info("[{:2d}/{:2d}] Evaluating max_features={}"
-                 .format(i + 1, len(max_features_values), max_features_value))
-        imputation = SimpleImputer()
-        random_forest = estimator(n_jobs=config.cores,
-                                  random_state=config.seed,
-                                  max_features=max_features_value,
-                                  **config.framework_params)
-        pipeline = Pipeline(steps=[
-            ('preprocessing', imputation),
-            ('learning', random_forest)
-        ])
-        scores = cross_val_score(pipeline, dataset.train.X_enc, dataset.train.y, scoring=metric, cv=5)
-        max_feature_scores.append((statistics.mean(scores), max_features_value))
+    # Define up to how much of total time we spend 'optimizing' `max_features`.
+    # (the remainder if used for fitting the final model).
+    safety_factor = 0.85
+    with stopit.ThreadingTimeout(seconds=int(config.max_runtime_seconds * safety_factor)):
+        log.info("Evaluating multiple values for `max_features`.")
+        max_feature_scores = []
+        for i, max_features_value in enumerate(max_features_values):
+            log.info("[{:2d}/{:2d}] Evaluating max_features={}"
+                     .format(i + 1, len(max_features_values), max_features_value))
+            imputation = SimpleImputer()
+            random_forest = estimator(n_jobs=config.cores,
+                                      random_state=config.seed,
+                                      max_features=max_features_value,
+                                      **config.framework_params)
+            pipeline = Pipeline(steps=[
+                ('preprocessing', imputation),
+                ('learning', random_forest)
+            ])
+            scores = cross_val_score(pipeline, dataset.train.X_enc, dataset.train.y, scoring=metric, cv=5)
+            max_feature_scores.append((statistics.mean(scores), max_features_value))
 
     log.info(max_feature_scores)
     best_score, best_max_features_value = max(max_feature_scores)
