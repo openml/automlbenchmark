@@ -20,7 +20,8 @@ BENCHMARKS=(
 validation
 chalearn
 small
-medium
+medium-1
+medium-2
 )
 
 MODE=(

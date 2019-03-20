@@ -10,15 +10,6 @@
   max_runtime_seconds: 3600
   cores: 4
 
-- name: connect-4
-  openml_task_id: 146195
-  metric:
-    - logloss
-    - acc
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 4
-
 - name: cnae-9
   openml_task_id: 9981
   metric:
@@ -28,6 +19,15 @@
   max_runtime_seconds: 3600
   cores: 2
 
+- name: connect-4
+  openml_task_id: 146195
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 4
+
 - name: Helena
   openml_task_id: 168329
   metric:
@@ -36,7 +36,7 @@
   folds: 10
   max_runtime_seconds: 3600
   cores: 4
-#  min_vol_size_mb: 24
+#  min_vol_size_mb: 24576
 
 - name: Jannis
   openml_task_id: 168330
@@ -46,7 +46,7 @@
   folds: 10
   max_runtime_seconds: 3600
   cores: 4
-#  min_vol_size_mb: 24
+#  min_vol_size_mb: 24576
 
 - name: mfeat-factors
   openml_task_id: 12

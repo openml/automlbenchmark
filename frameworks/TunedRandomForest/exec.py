@@ -9,14 +9,13 @@ import random
 import statistics
 
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 import stopit
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import impute
+from automl.datautils import Imputer, impute
 from automl.results import save_predictions_to_file
 from automl.utils import Timer
 
@@ -36,7 +35,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     # Impute any missing data (can test using -t 146606)
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
-    y_train, y_test = dataset.train.y, dataset.test.y
+    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores."
              .format(config.max_runtime_seconds, config.cores))
@@ -59,10 +58,11 @@ def run(dataset: Dataset, config: TaskConfig):
     with stopit.ThreadingTimeout(seconds=int(config.max_runtime_seconds * safety_factor)):
         log.info("Evaluating multiple values for `max_features`.")
         max_feature_scores = []
+        tuning_durations = []
         for i, max_features_value in enumerate(max_features_values):
             log.info("[{:2d}/{:2d}] Evaluating max_features={}"
                      .format(i + 1, len(max_features_values), max_features_value))
-            imputation = SimpleImputer()
+            imputation = Imputer()
             random_forest = estimator(n_jobs=config.cores,
                                       random_state=config.seed,
                                       max_features=max_features_value,
@@ -71,17 +71,30 @@ def run(dataset: Dataset, config: TaskConfig):
                 ('preprocessing', imputation),
                 ('learning', random_forest)
             ])
-            scores = cross_val_score(pipeline, dataset.train.X_enc, dataset.train.y, scoring=metric, cv=5)
-            max_feature_scores.append((statistics.mean(scores), max_features_value))
+            with Timer() as cv_scoring:
+                try:
+                    scores = cross_val_score(estimator=pipeline,
+                                             X=dataset.train.X_enc,
+                                             y=dataset.train.y_enc,
+                                             scoring=metric,
+                                             cv=5)
+                    max_feature_scores.append((statistics.mean(scores), max_features_value))
+                except stopit.utils.TimeoutException as toe:
+                    log.error("Failed CV scoring for max_features=%s : Timeout", max_features_value)
+                    raise toe
+                except Exception as e:
+                    log.error("Failed CV scoring for max_features=%s :\n%s", max_features_value, e)
+                    log.debug("Exception:", exc_info=True)
+            tuning_durations.append(cv_scoring.duration)
 
-    log.info(max_feature_scores)
-    best_score, best_max_features_value = max(max_feature_scores)
+    log.info("Tuning scores:\n%s", max_feature_scores)
+    log.info("Tuning durations:\n%s", tuning_durations)
+    _, best_max_features_value = max(max_feature_scores) if len(max_feature_scores) > 0 else (math.nan, 'auto')
+    log.info("Training final model with `max_features={}`.".format(best_max_features_value))
     rf = estimator(n_jobs=config.cores,
                    random_state=config.seed,
                    max_features=best_max_features_value,
                    **config.framework_params)
-
-    log.info("Training final model with `max_features={}`.".format(best_max_features_value))
     with Timer() as training:
         rf.fit(X_train, y_train)
 
@@ -93,9 +106,9 @@ def run(dataset: Dataset, config: TaskConfig):
                              probabilities=probabilities,
                              predictions=predictions,
                              truth=y_test,
-                             target_is_encoded=False)
+                             target_is_encoded=True)
 
     return dict(
         models_count=len(rf),
-        training_duration=training.duration
+        training_duration=training.duration+sum(tuning_durations)
     )

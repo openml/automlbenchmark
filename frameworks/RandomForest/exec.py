@@ -16,9 +16,8 @@ def run(dataset: Dataset, config: TaskConfig):
 
     is_classification = config.type == 'classification'
 
-    # Impute any missing data (can test using -t 146606)
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
-    y_train, y_test = dataset.train.y, dataset.test.y
+    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, config.cores))
     log.warning("We completely ignore the requirement to stay within the time limit.")
@@ -40,7 +39,7 @@ def run(dataset: Dataset, config: TaskConfig):
                              probabilities=probabilities,
                              predictions=predictions,
                              truth=y_test,
-                             target_is_encoded=False)
+                             target_is_encoded=True)
 
     return dict(
         models_count=len(rf),
