@@ -274,7 +274,7 @@ class TaskResult:
             # params=str(framework_def.params), # TODO: enable this?
             fold=self.fold,
             mode=rconfig().run_mode,
-            seed=self.task.seed,
+            seed=rget().seed(self.fold),
             tag=rget().project_info.tag,
             utc=datetime_iso(),
             duration=meta_result.training_duration,

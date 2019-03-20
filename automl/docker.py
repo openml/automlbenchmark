@@ -82,11 +82,12 @@ class DockerBenchmark(Benchmark):
         folds = [] if folds is None else [str(f) for f in folds]
 
         def _run():
-            self._start_docker("{framework} {benchmark} {task_param} {folds_param}".format(
+            self._start_docker("{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
                 framework=self.framework_name,
                 benchmark=self.benchmark_name,
                 task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
-                folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
+                folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
+                seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
             ))
             # TODO: would be nice to reload generated scores and return them
 
@@ -102,13 +103,12 @@ class DockerBenchmark(Benchmark):
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
-        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker -Xseed={seed}".format(
+        cmd = "docker run -v {input}:/input -v {output}:/output -v {custom}:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker".format(
             input=in_dir,
             output=out_dir,
             custom=custom_dir,
             image=self._docker_image_name,
             params=script_params,
-            seed=rget().seed
         )
         log.info("Starting docker: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)

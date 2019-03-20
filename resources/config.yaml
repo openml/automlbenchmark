@@ -15,7 +15,6 @@ sid:        # session id: set by caller (runbenchmark.py)
 max_parallel_jobs: 5
 seed: auto  # default global seed (used if not set in task definition), can be one of:
             # `auto`: a global seed will be generated and passed to all jobs.
-            # `auto_fold`: a global seed will be generated and incremented by fold number.
             # `none`: no seed will be provided (seed left to framework's responsibility).
             # any int32 to pass a fixed seed to the jobs.
 

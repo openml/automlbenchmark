@@ -198,11 +198,12 @@ class AWSBenchmark(Benchmark):
             resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
             job_self.instance_id = self._start_instance(
                 instance_def,
-                script_params="{framework} {benchmark} {task_param} {folds_param}".format(
+                script_params="{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
                     benchmark="{}/{}.yaml".format(resources_root, self.benchmark_name),
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
-                    folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds)
+                    folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
+                    seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
                 ),
                 # instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
                 instance_key=job.name,
@@ -673,7 +674,7 @@ runcmd:
   - pip3 install -U awscli
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
-  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker -Xseed={seed} --session=
+  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker --session=
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -722,7 +723,7 @@ runcmd:
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch} --session=
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} --session=
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -747,7 +748,6 @@ power_state:
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
-            seed=rget().seed,
             timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds,
         )
 
@@ -790,7 +790,7 @@ PIP install -U awscli
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xseed={seed} -Xproject_repository={repo}#{branch} --session=
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} --session=
 aws s3 cp /s3bucket/output '{s3_output}' --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
@@ -805,7 +805,6 @@ shutdown -P +1 "I'm losing power"
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
-            seed=rget().seed,
         )
 
 

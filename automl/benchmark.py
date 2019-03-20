@@ -286,7 +286,7 @@ class BenchmarkTask:
             name=task_def.name,
             fold=fold,
             metrics=task_def.metric,
-            seed=task_def.seed,
+            seed=rget().seed(fold),
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
             max_mem_size_mb=task_def.max_mem_size_mb,
@@ -296,7 +296,7 @@ class BenchmarkTask:
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:
-            for c in ['max_runtime_seconds', 'metric', 'metrics', 'seed']:
+            for c in ['max_runtime_seconds', 'metric', 'metrics']:
                 if rconfig().t[c] is not None:
                     setattr(self.task_config, c, rconfig().t[c])
         self._dataset = None

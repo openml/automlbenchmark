@@ -40,7 +40,6 @@ class Resources:
             user=normalize_path(config.user_dir)
         )
         self.config = Resources._normalize(config, replace=self._common_dirs)
-        self.config.benchmarks.defaults.seed = self.seed
         log.debug("Using config:\n%s", self.config)
 
         # allowing to load custom modules from user directory
@@ -59,8 +58,14 @@ class Resources:
             branch=branch
         )
 
+    def seed(self, fold=None):
+        if isinstance(fold, int) and str(self.config.seed).lower() in ['auto']:
+            return fold+self._seed
+        else:
+            return self._seed
+
     @lazy_property
-    def seed(self):
+    def _seed(self):
         if str(self.config.seed).lower() in ['none', '']:
             return None
         elif str(self.config.seed).lower() in ['auto']:
@@ -193,7 +198,7 @@ class Resources:
         if len(missing) > 0:
             raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}.".format(missing=missing, taskdef=task))
 
-        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'min_vol_size_mb', 'seed']:
+        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'min_vol_size_mb']:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
                 log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
