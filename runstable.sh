@@ -66,7 +66,7 @@ done
 
 if [[ -z $parallel ]]; then
     if [[ $mode == "aws" ]]; then
-        parallel=5
+        parallel=10
     else
         parallel=1
     fi

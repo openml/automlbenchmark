@@ -126,10 +126,17 @@ class Benchmark:
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
-            results = SimpleJobRunner(jobs).start()
+            runner = SimpleJobRunner(jobs)
         else:
-            # results = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs).start()
-            results = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True).start()
+            # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
+            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True)
+
+        try:
+            runner.start()
+        except (KeyboardInterrupt, InterruptedError):
+            pass
+        finally:
+            results = runner.results
 
         for res in results:
             if res.result is not None and math.isnan(res.result.duration):
