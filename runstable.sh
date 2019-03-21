@@ -5,6 +5,7 @@ FRAMEWORKS=(
 #constantpredictor_enc
 #decisiontree
 randomforest
+tunedrandomforest
 
 autosklearn
 h2oautoml
