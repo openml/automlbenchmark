@@ -81,6 +81,7 @@ def run(dataset: Dataset, config: TaskConfig):
                     max_feature_scores.append((statistics.mean(scores), max_features_value))
                 except stopit.utils.TimeoutException as toe:
                     log.error("Failed CV scoring for max_features=%s : Timeout", max_features_value)
+                    tuning_durations.append(cv_scoring.duration)
                     raise toe
                 except Exception as e:
                     log.error("Failed CV scoring for max_features=%s :\n%s", max_features_value, e)

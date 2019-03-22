@@ -32,7 +32,6 @@
   metric:
     - auc
     - acc
-    - logloss
   max_runtime_seconds: 3600
   cores: 2
 
@@ -50,7 +49,6 @@
   metric:
     - auc
     - acc
-    - logloss
   max_runtime_seconds: 3600
   cores: 2
 

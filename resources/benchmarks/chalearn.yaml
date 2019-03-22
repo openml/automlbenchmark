@@ -6,11 +6,10 @@
   metric:
     - auc
     - acc
-    - logloss
   max_runtime_seconds: 3600
   cores: 2
 #  cores: 4
-#  min_vol_size_mb: 24
+#  min_vol_size_mb: 24576
 
 - name: dilbert
   openml_task_id: 168770
@@ -20,7 +19,7 @@
   max_runtime_seconds: 3600
   cores: 2
 #  cores: 8
-#  min_vol_size_mb: 24
+#  min_vol_size_mb: 24576
 
 - name: fabert
   openml_task_id: 168760
@@ -30,14 +29,13 @@
   max_runtime_seconds: 3600
   cores: 2
 #  cores: 4
-#  min_vol_size_mb: 24
+#  min_vol_size_mb: 24576
 
 - name: jasmine
   openml_task_id: 168764
   metric:
     - auc
     - acc
-    - logloss
   max_runtime_seconds: 3600
   cores: 2
 
@@ -46,6 +44,5 @@
   metric:
     - auc
     - acc
-    - logloss
   max_runtime_seconds: 3600
   cores: 2
