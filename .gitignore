@@ -23,3 +23,7 @@ results/
 *.csv
 *.arff
 *.png
+
+#whitelist
+!reports/*.csv
+!reports/*.png
