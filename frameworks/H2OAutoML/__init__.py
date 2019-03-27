@@ -1,4 +1,4 @@
-from automl.utils import call_script_in_same_dir, dir_of
+from automl.utils import as_cmd_args, call_script_in_same_dir, dir_of
 
 
 def setup(*args):
@@ -10,13 +10,17 @@ def run(*args, **kwargs):
     return run(*args, **kwargs)
 
 
-def docker_commands():
-    # FIXME: doesn't allow to build docker images for custom versions of h2o
+def docker_commands(*args, setup_cmd=None):
     return """
-RUN {here}/setup.sh
+RUN {here}/setup.sh {args}
+{cmd}
 EXPOSE 54321
 EXPOSE 54322
-""".format(here=dir_of(__file__, True))
+""".format(
+        here=dir_of(__file__, True),
+        args=' '.join(as_cmd_args(*args)),
+        cmd="RUN {}".format(setup_cmd) if setup_cmd is not None else ""
+    )
 
 
 __all__ = (setup, run, docker_commands)

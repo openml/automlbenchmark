@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 . $HERE/../shared/setup.sh
-TARGET_DIR="$HERE/libs/oboe"
+TARGET_DIR="$HERE/lib/oboe"
 if [[ ! -e "$TARGET_DIR" ]]; then
     git clone https://github.com/udellgroup/oboe.git $TARGET_DIR
 fi

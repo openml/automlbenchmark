@@ -10,7 +10,7 @@ def run(*args, **kwargs):
     return run(*args, **kwargs)
 
 
-def docker_commands():
+def docker_commands(*args, **kwargs):
     return """
 RUN {here}/setup.sh
 """.format(here=dir_of(__file__, True))

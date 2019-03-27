@@ -524,9 +524,9 @@ def path_from_split(split, real_path=True):
 
 
 def dir_of(caller_file, rel_to_project_root=False):
-    abs_path = os.path.dirname(os.path.realpath(caller_file))
+    abs_path = os.path.realpath(os.path.dirname(caller_file))
     if rel_to_project_root:
-        project_root = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
+        project_root = os.path.normpath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..'))
         return os.path.relpath(abs_path, start=project_root)
     else:
         return abs_path
@@ -593,6 +593,14 @@ class TmpDir:
         # pass
 
 
+def as_cmd_args(*args, **kwargs):
+    return list(filter(None,
+                       []
+                       + ([] if args is None else list(args))
+                       + flatten(kwargs.items(), flatten_tuple=True) if kwargs is not None else []
+                       ))
+
+
 def run_cmd(cmd, *args, **kwargs):
     params = Namespace(input_str=None, capture_output=True, shell=True)
     for k, v in params:
@@ -600,10 +608,7 @@ def run_cmd(cmd, *args, **kwargs):
         if kk in kwargs:
             params[k] = kwargs[kk]
             del kwargs[kk]
-    cmd_args = list(filter(None, []
-                                 + ([] if args is None else list(args))
-                                 + flatten(kwargs.items(), flatten_tuple=True) if kwargs is not None else []
-                           ))
+    cmd_args = as_cmd_args(*args, **kwargs)
     full_cmd = flatten([cmd])+cmd_args
     str_cmd = ' '.join(full_cmd)
     log.info("Running cmd `%s`", str_cmd)

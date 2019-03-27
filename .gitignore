@@ -16,9 +16,10 @@ venv/
 
 # tmp files
 .ipynb_checkpoints/
-libs/
+lib/
 logs/
 results/
+setup/
 *.log
 *.csv
 *.arff

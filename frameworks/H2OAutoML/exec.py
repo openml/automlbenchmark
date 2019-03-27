@@ -6,6 +6,7 @@ from h2o.automl import H2OAutoML
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
+from automl.datautils import to_data_frame
 from automl.results import NoResultError, save_predictions_to_file
 from automl.utils import Timer
 
@@ -58,11 +59,12 @@ def run(dataset: Dataset, config: TaskConfig):
 
         log.debug("Leaderboard:\n%s", str(aml.leaderboard.as_data_frame()))
 
-        preds = aml.predict(test).as_data_frame()
-        # predictions = h2o.get_model(aml.leaderboard[0][1, 0]).predict(test).as_data_frame()
-
+        h2o_preds = aml.predict(test).as_data_frame(use_pandas=False)
+        preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
         y_pred = preds.iloc[:, 0]
-        y_truth = test[:, dataset.target.index].as_data_frame(header=False)
+
+        h2o_truth = test[:, dataset.target.index].as_data_frame(use_pandas=False, header=False)
+        y_truth = to_data_frame(h2o_truth)
 
         predictions = y_pred.values
         probabilities = preds.iloc[:, 1:].values

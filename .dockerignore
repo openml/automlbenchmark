@@ -7,7 +7,7 @@ results
 **/logs
 **/predictions
 **/scores
-**/libs
+**/lib
 **/.marker*
 **/__pycache__
 **/venv

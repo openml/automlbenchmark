@@ -167,9 +167,14 @@ class Resources:
             framework.setup_args = None
 
         if framework['setup_cmd'] is None:
+            framework._setup_cmd = None
             framework.setup_cmd = None
         else:
-            framework.setup_cmd = framework.setup_cmd.format(**self._common_dirs)
+            framework._setup_cmd = framework.setup_cmd
+            framework.setup_cmd = framework.setup_cmd.format(**self._common_dirs,
+                                                             **dict(setup=os.path.join(framework.module, "setup"),
+                                                                    pip="PIP",
+                                                                    py="PY"))
 
         if framework['params'] is None:
             framework.params = dict()

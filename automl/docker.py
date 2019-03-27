@@ -12,7 +12,7 @@ from .benchmark import Benchmark
 from .errors import InvalidStateError
 from .job import Job
 from .resources import config as rconfig, get as rget
-from .utils import run_cmd
+from .utils import dir_of, run_cmd
 
 
 log = logging.getLogger(__name__)
@@ -53,7 +53,10 @@ class DockerBenchmark(Benchmark):
         if mode == Benchmark.SetupMode.auto and self._docker_image_exists():
             return
 
-        custom_commands = self.framework_module.docker_commands() if hasattr(self.framework_module, 'docker_commands') else ""
+        custom_commands = self.framework_module.docker_commands(
+            self.framework_def.setup_args,
+            setup_cmd=self.framework_def._setup_cmd
+        ) if hasattr(self.framework_module, 'docker_commands') else ""
         self._generate_docker_script(custom_commands)
         self._build_docker_image(cache=(mode != Benchmark.SetupMode.force))
         if upload:
@@ -202,11 +205,16 @@ RUN xargs -L 1 $PIP install --no-cache-dir < requirements.txt
 ENTRYPOINT ["/bin/bash", "-c", "$PY {script} $0 $*"]
 CMD ["{framework}", "test"]
 
-""".format(custom_commands=custom_commands,
-           framework=self.framework_name,
-           script=rconfig().script,
-           pip_version=rconfig().versions.pip)
-
+""".format(
+            custom_commands=custom_commands.format(**dict(setup=dir_of(os.path.join(self._framework_dir, "setup/"),
+                                                                       rel_to_project_root=True),
+                                                          pip="$PIP",
+                                                          py="$PY")),
+            framework=self.framework_name,
+            pip_version=rconfig().versions.pip,
+            script=rconfig().script,
+            user=rconfig().user_dir,
+        )
         with open(self._docker_script, 'w') as file:
             file.write(docker_content)
 
