@@ -1,14 +1,14 @@
 import logging
-import time
+import os
 
 import h2o
 from h2o.automl import H2OAutoML
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import to_data_frame
+from automl.datautils import to_data_frame, write_csv
 from automl.results import NoResultError, save_predictions_to_file
-from automl.utils import Timer
+from automl.utils import Timer, split_path, path_from_split
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +57,12 @@ def run(dataset: Dataset, config: TaskConfig):
         if not aml.leader:
             raise NoResultError("H2O could not produce any model in the requested time.")
 
-        log.debug("Leaderboard:\n%s", str(aml.leaderboard.as_data_frame()))
+        lb = aml.leaderboard.as_data_frame()
+        log.debug("Leaderboard:\n%s", lb.to_string())
+        lbf = split_path(config.output_predictions_file)
+        lbf.extension = '.leaderboard.csv'
+        lbf = path_from_split(lbf)
+        write_csv(lb, lbf)
 
         h2o_preds = aml.predict(test).as_data_frame(use_pandas=False)
         preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
