@@ -280,7 +280,8 @@ class AWSBenchmark(Benchmark):
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
             )[0]
             log.info("Started EC2 instance %s.", instance.id)
-            self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='')
+            self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='',
+                                             start_time=datetime_iso(), stop_time='')
         except Exception as e:
             fake_iid = "no_instance_{}".format(len(self.instances)+1)
             self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False)
@@ -319,7 +320,7 @@ class AWSBenchmark(Benchmark):
             try:
                 state = response['TerminatingInstances'][0]['CurrentState']['Name']
                 log.info("Instance %s state: %s.", instance_id, state)
-                self._update_instance(instance_id, status=state)
+                self._update_instance(instance_id, status=state, stop_time=datetime_iso())
             except:
                 pass
 
@@ -343,11 +344,13 @@ class AWSBenchmark(Benchmark):
         write_csv([(iid,
                     self.instances[iid].status,
                     self.instances[iid].success,
+                    self.instances[iid].start_time,
+                    self.instances[iid].stop_time,
                     self.sid,
                     self.instances[iid].key,
                     self._s3_key(self.sid, instance_key_or_id=iid, absolute=True)
                     ) for iid in self.instances.keys()],
-                  columns=['ec2', 'status', 'success', 'session', 'instance_key', 's3 dir'],
+                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3 dir'],
                   path=os.path.join(self.output_dirs.session, 'instances.csv'))
 
     def _load_instances(self, instances_file):
