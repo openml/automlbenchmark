@@ -284,7 +284,8 @@ class AWSBenchmark(Benchmark):
                                              start_time=datetime_iso(), stop_time='')
         except Exception as e:
             fake_iid = "no_instance_{}".format(len(self.instances)+1)
-            self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False)
+            self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False,
+                                          start_time=datetime_iso(), stop_time=datetime_iso())
             raise e
         finally:
             self._exec_send(lambda: self._save_instances())
