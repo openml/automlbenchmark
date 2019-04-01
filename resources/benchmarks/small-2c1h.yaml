@@ -1,5 +1,5 @@
 ---
-# all tasks listed here have a training dataset < 1MB
+# all tasks listed here have a training dataset < 10k instances, and were traing on 2 cores for 1h
 
 - name: Australian
   openml_task_id: 146818
@@ -27,8 +27,49 @@
   max_runtime_seconds: 3600
   cores: 2
 
+- name: christine
+  openml_task_id: 168765
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: cnae-9
+  openml_task_id: 9981
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
 - name: credit-g
   openml_task_id: 31
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: dilbert
+  openml_task_id: 168770
+  metric:
+    - logloss
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: fabert
+  openml_task_id: 168760
+  metric:
+    - logloss
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
+- name: jasmine
+  openml_task_id: 168764
   metric:
     - auc
     - acc
@@ -52,6 +93,15 @@
   max_runtime_seconds: 3600
   cores: 2
 
+- name: mfeat-factors
+  openml_task_id: 12
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 2
+
 - name: phoneme
   openml_task_id: 9952
   metric:
@@ -70,6 +120,14 @@
   max_runtime_seconds: 3600
   cores: 2
 
+- name: sylvine
+  openml_task_id: 168761
+  metric:
+    - auc
+    - acc
+  max_runtime_seconds: 3600
+  cores: 2
+
 - name: vehicle
   openml_task_id: 53
   metric:
@@ -78,5 +136,3 @@
   folds: 10
   max_runtime_seconds: 3600
   cores: 2
-
-

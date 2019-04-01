@@ -26,5 +26,5 @@ setup/
 *.png
 
 #whitelist
-!reports/*.csv
-!reports/*.png
+!reports/**/*.csv
+!reports/**/*.png

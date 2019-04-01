@@ -16,7 +16,7 @@ results
 .idea
 *.iml
 *.swp
-*.ipynb
+**/*.ipynb
 
 # tmp files
 **/*.log

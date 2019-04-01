@@ -1,5 +1,14 @@
 ---
-# all tasks listed here have a training set in [2 MB, 500 MB]
+# all tasks listed here have a training set > 50k and < 150k instances and were trained on 8 cores for 4h
+
+- name: adult
+  openml_task_id: 7592
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 8
 
 - name: Amazon_employee_access
   openml_task_id: 34539
@@ -8,7 +17,7 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
 
 - name: APSFailure
   openml_task_id: 168868
@@ -17,7 +26,7 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
 
 - name: bank-marketing
   openml_task_id: 14965
@@ -26,7 +35,16 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
+
+- name: connect-4
+  openml_task_id: 146195
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 8
 
 - name: Fashion-MNIST
   openml_task_id: 146825
@@ -35,7 +53,7 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
   min_vol_size_mb: 24576
 
 - name: guiellermo
@@ -45,7 +63,17 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
+  min_vol_size_mb: 24576
+
+- name: Helena
+  openml_task_id: 168329
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 8
   min_vol_size_mb: 24576
 
 - name: higgs
@@ -55,7 +83,17 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
+
+- name: Jannis
+  openml_task_id: 168330
+  metric:
+    - logloss
+    - acc
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 8
+  min_vol_size_mb: 24576
 
 - name: jungle_chess_2pcs_raw_endgame_complete
   openml_task_id: 167119
@@ -64,7 +102,7 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
 
 - name: KDDCup09_appetency
   openml_task_id: 3945
@@ -73,7 +111,7 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
 
 - name: MiniBooNE
   openml_task_id: 168335
@@ -82,17 +120,26 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
   min_vol_size_mb: 24576
+
+- name: nomao
+  openml_task_id: 9977
+  metric:
+    - auc
+    - acc
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 8
 
 - name: numerai28.6
   openml_task_id: 167120
   metric:
-  - auc
-  - acc
+    - auc
+    - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
 
 - name: riccardo
   openml_task_id: 168338
@@ -101,27 +148,27 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
   min_vol_size_mb: 24576
 
 - name: Robert
   openml_task_id: 168332
   metric:
-  - logloss
-  - acc
+    - logloss
+    - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
   min_vol_size_mb: 24576
 
 - name: Shuttle
   openml_task_id: 146212
   metric:
-  - logloss
-  - acc
+    - logloss
+    - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
 
 - name: Volkert
   openml_task_id: 168331
@@ -130,6 +177,6 @@
     - acc
   folds: 10
   max_runtime_seconds: 14400
-  cores: 4
+  cores: 8
   min_vol_size_mb: 24576
 

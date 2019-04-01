@@ -2591,3 +2591,93 @@ openml.org/t/168338,riccardo,H2OAutoML,6,0.995267,aws.docker,3.22.1.2,stable,201
 openml.org/t/168338,riccardo,H2OAutoML,7,0.992791,aws.docker,3.22.1.2,stable,2019-03-26T09:04:37,14408.2,4,3095261456,,0.9655,0.992791,
 openml.org/t/168338,riccardo,H2OAutoML,8,0.993485,aws.docker,3.22.1.2,stable,2019-03-26T09:34:43,14423.1,4,3095261457,,0.9675,0.993485,
 openml.org/t/168338,riccardo,H2OAutoML,9,0.991817,aws.docker,3.22.1.2,stable,2019-03-26T09:38:52,14425.1,4,3095261458,,0.965,0.991817,
+openml.org/t/168332,Robert,H2OAutoML,7,1.50662,aws.docker,3.22.1.2,stable,2019-03-26T17:23:17,14504.9,5,3987946362,,0.493,,1.50662
+openml.org/t/168332,Robert,H2OAutoML,4,1.49319,aws.docker,3.22.1.2,stable,2019-03-26T17:23:29,14487.7,5,3987946359,,0.455,,1.49319
+openml.org/t/168332,Robert,H2OAutoML,6,1.41566,aws.docker,3.22.1.2,stable,2019-03-26T17:23:38,14518.5,5,3987946361,,0.495,,1.41566
+openml.org/t/168332,Robert,H2OAutoML,1,1.53608,aws.docker,3.22.1.2,stable,2019-03-26T17:23:41,14521.8,5,3987946356,,0.47,,1.53608
+openml.org/t/168332,Robert,H2OAutoML,2,1.49962,aws.docker,3.22.1.2,stable,2019-03-26T17:23:39,14523.5,5,3987946357,,0.46,,1.49962
+openml.org/t/168332,Robert,H2OAutoML,3,1.51702,aws.docker,3.22.1.2,stable,2019-03-26T17:23:47,14495.5,5,3987946358,,0.465,,1.51702
+openml.org/t/168332,Robert,H2OAutoML,5,1.48687,aws.docker,3.22.1.2,stable,2019-03-26T17:23:49,14505.9,5,3987946360,,0.485,,1.48687
+openml.org/t/168332,Robert,H2OAutoML,9,1.48086,aws.docker,3.22.1.2,stable,2019-03-26T17:23:59,14504.9,5,3987946364,,0.476,,1.48086
+openml.org/t/168332,Robert,H2OAutoML,8,1.52882,aws.docker,3.22.1.2,stable,2019-03-26T17:24:04,14498.5,5,3987946363,,0.465,,1.52882
+openml.org/t/168332,Robert,H2OAutoML,0,1.49465,aws.docker,3.22.1.2,stable,2019-03-26T17:24:11,14534.3,5,3987946355,,0.478,,1.49465
+openml.org/t/146212,Shuttle,H2OAutoML,5,1.06839e-05,aws.docker,3.22.1.2,stable,2019-03-26T21:27:43,14408.7,32,3987946360,,1.0,,1.06839e-05
+openml.org/t/146212,Shuttle,H2OAutoML,4,0.000146886,aws.docker,3.22.1.2,stable,2019-03-26T21:29:22,14511.1,26,3987946359,,0.999828,,0.000146886
+openml.org/t/146212,Shuttle,H2OAutoML,3,0.000438216,aws.docker,3.22.1.2,stable,2019-03-26T21:32:18,14700.3,31,3987946358,,0.999828,,0.000438216
+openml.org/t/146212,Shuttle,H2OAutoML,2,2.06288e-05,aws.docker,3.22.1.2,stable,2019-03-26T21:32:48,14719.4,37,3987946357,,1.0,,2.06288e-05
+openml.org/t/146212,Shuttle,H2OAutoML,7,1.02065e-05,aws.docker,3.22.1.2,stable,2019-03-26T21:33:12,14722.3,29,3987946362,,1.0,,1.02065e-05
+openml.org/t/146212,Shuttle,H2OAutoML,8,0.00196186,aws.docker,3.22.1.2,stable,2019-03-26T21:33:40,14737.4,27,3987946363,,0.999655,,0.00196186
+openml.org/t/146212,Shuttle,H2OAutoML,0,0.000648396,aws.docker,3.22.1.2,stable,2019-03-26T21:33:50,14800.7,31,3987946355,,0.999828,,0.000648396
+openml.org/t/146212,Shuttle,H2OAutoML,1,0.00010416,aws.docker,3.22.1.2,stable,2019-03-26T21:36:24,14937.2,29,3987946356,,1.0,,0.00010416
+openml.org/t/146212,Shuttle,H2OAutoML,6,0.00019085,aws.docker,3.22.1.2,stable,2019-03-26T21:37:22,14972.2,32,3987946361,,0.999828,,0.00019085
+openml.org/t/146212,Shuttle,H2OAutoML,9,1.62545e-05,aws.docker,3.22.1.2,stable,2019-03-26T21:37:39,14975.1,33,3987946364,,1.0,,1.62545e-05
+openml.org/t/34539,Amazon_employee_access,TPOT,6,0.872974,aws.docker,0.9.6,stable,2019-03-27T02:17:42,14424.3,979,1840954685,,0.951785,0.872974,
+openml.org/t/34539,Amazon_employee_access,TPOT,5,0.862817,aws.docker,0.9.6,stable,2019-03-27T02:17:41,14425.8,954,1840954684,,0.948123,0.862817,
+openml.org/t/34539,Amazon_employee_access,TPOT,2,0.867056,aws.docker,0.9.6,stable,2019-03-27T02:18:19,14474.2,1153,1840954681,,0.949344,0.867056,
+openml.org/t/34539,Amazon_employee_access,TPOT,4,0.864372,aws.docker,0.9.6,stable,2019-03-27T02:18:24,14467.4,1005,1840954683,,0.954226,0.864372,
+openml.org/t/34539,Amazon_employee_access,TPOT,7,0.84235,aws.docker,0.9.6,stable,2019-03-27T02:18:34,14470.3,1073,1840954686,,0.95087,0.84235,
+openml.org/t/34539,Amazon_employee_access,TPOT,9,0.885991,aws.docker,0.9.6,stable,2019-03-27T02:18:29,14443.4,1211,1840954688,,0.952076,0.885991,
+openml.org/t/34539,Amazon_employee_access,TPOT,1,0.855727,aws.docker,0.9.6,stable,2019-03-27T02:18:30,14490.9,1468,1840954680,,0.95209,0.855727,
+openml.org/t/34539,Amazon_employee_access,TPOT,0,0.890854,aws.docker,0.9.6,stable,2019-03-27T02:18:55,14516.0,1058,1840954679,,0.946597,0.890854,
+openml.org/t/34539,Amazon_employee_access,TPOT,3,0.873291,aws.docker,0.9.6,stable,2019-03-27T02:18:58,14442.9,1186,1840954682,,0.949344,0.873291,
+openml.org/t/34539,Amazon_employee_access,TPOT,8,0.886078,aws.docker,0.9.6,stable,2019-03-27T02:19:01,14477.8,1291,1840954687,,0.948734,0.886078,
+openml.org/t/168868,APSFailure,TPOT,0,,aws.docker,0.9.6,stable,2019-03-27T02:22:22,61.2,,1840954679,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,1,,aws.docker,0.9.6,stable,2019-03-27T02:22:26,61.7,,1840954680,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,3,,aws.docker,0.9.6,stable,2019-03-27T02:22:51,59.8,,1840954682,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,5,,aws.docker,0.9.6,stable,2019-03-27T02:22:51,60.0,,1840954684,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,2,,aws.docker,0.9.6,stable,2019-03-27T02:22:48,61.1,,1840954681,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,4,,aws.docker,0.9.6,stable,2019-03-27T02:22:52,60.9,,1840954683,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,7,,aws.docker,0.9.6,stable,2019-03-27T02:23:17,61.2,,1840954686,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,6,,aws.docker,0.9.6,stable,2019-03-27T02:23:18,60.1,,1840954685,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,8,,aws.docker,0.9.6,stable,2019-03-27T02:23:20,60.0,,1840954687,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168868,APSFailure,TPOT,9,,aws.docker,0.9.6,stable,2019-03-27T02:23:39,59.8,,1840954688,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/14965,bank-marketing,TPOT,5,0.925907,aws.docker,0.9.6,stable,2019-03-27T06:26:55,14419.4,872,1840954684,,0.900686,0.925907,
+openml.org/t/14965,bank-marketing,TPOT,0,0.933503,aws.docker,0.9.6,stable,2019-03-27T06:26:55,14448.7,828,1840954679,,0.905352,0.933503,
+openml.org/t/14965,bank-marketing,TPOT,7,0.940352,aws.docker,0.9.6,stable,2019-03-27T06:27:38,14453.4,805,1840954686,,0.9071,0.940352,
+openml.org/t/14965,bank-marketing,TPOT,2,0.941549,aws.docker,0.9.6,stable,2019-03-27T06:28:04,14512.8,812,1840954681,,0.91263,0.941549,
+openml.org/t/14965,bank-marketing,TPOT,3,0.931643,aws.docker,0.9.6,stable,2019-03-27T06:27:47,14481.1,816,1840954682,,0.906879,0.931643,
+openml.org/t/14965,bank-marketing,TPOT,9,0.943141,aws.docker,0.9.6,stable,2019-03-27T06:28:23,14476.3,816,1840954688,,0.911745,0.943141,
+openml.org/t/14965,bank-marketing,TPOT,8,0.935648,aws.docker,0.9.6,stable,2019-03-27T06:29:46,14577.6,732,1840954687,,0.912851,0.935648,
+openml.org/t/14965,bank-marketing,TPOT,1,0.930494,aws.docker,0.9.6,stable,2019-03-27T06:30:05,14576.4,901,1840954680,,0.905773,0.930494,
+openml.org/t/14965,bank-marketing,TPOT,4,0.937147,aws.docker,0.9.6,stable,2019-03-27T06:30:42,14635.2,837,1840954683,,0.908206,0.937147,
+openml.org/t/14965,bank-marketing,TPOT,6,0.923376,aws.docker,0.9.6,stable,2019-03-27T06:31:13,14652.0,735,1840954685,,0.902455,0.923376,
+openml.org/t/146825,Fashion-MNIST,TPOT,0,,aws.docker,0.9.6,stable,2019-03-27T06:33:06,163.8,,1840954679,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,1,,aws.docker,0.9.6,stable,2019-03-27T06:33:21,163.9,,1840954680,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,2,,aws.docker,0.9.6,stable,2019-03-27T06:33:55,163.3,,1840954681,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,3,,aws.docker,0.9.6,stable,2019-03-27T06:34:06,165.1,,1840954682,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,4,,aws.docker,0.9.6,stable,2019-03-27T06:34:19,168.2,,1840954683,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,5,,aws.docker,0.9.6,stable,2019-03-27T06:34:21,165.5,,1840954684,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,6,,aws.docker,0.9.6,stable,2019-03-27T06:36:07,164.3,,1840954685,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,7,,aws.docker,0.9.6,stable,2019-03-27T06:36:10,162.5,,1840954686,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,8,,aws.docker,0.9.6,stable,2019-03-27T06:37:07,164.8,,1840954687,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146825,Fashion-MNIST,TPOT,9,,aws.docker,0.9.6,stable,2019-03-27T06:37:17,164.5,,1840954688,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,0,,aws.docker,0.9.6,stable,2019-03-27T06:58:08,1293.5,,1840954679,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,1,,aws.docker,0.9.6,stable,2019-03-27T06:58:30,1289.7,,1840954680,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,3,,aws.docker,0.9.6,stable,2019-03-27T06:59:08,1291.1,,1840954682,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,2,,aws.docker,0.9.6,stable,2019-03-27T06:59:01,1297.6,,1840954681,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,4,,aws.docker,0.9.6,stable,2019-03-27T06:59:16,1295.1,,1840954683,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,5,,aws.docker,0.9.6,stable,2019-03-27T06:59:31,1299.0,,1840954684,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,7,,aws.docker,0.9.6,stable,2019-03-27T07:00:59,1292.2,,1840954686,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,6,,aws.docker,0.9.6,stable,2019-03-27T07:01:18,1275.6,,1840954685,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,9,,aws.docker,0.9.6,stable,2019-03-27T07:01:58,1269.3,,1840954688,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/168337,guiellermo,TPOT,8,,aws.docker,0.9.6,stable,2019-03-27T07:02:24,1301.8,,1840954687,Error: A pipeline has not yet been optimized. Please call fit() first.,,,
+openml.org/t/146606,higgs,TPOT,3,0.807745,aws.docker,0.9.6,stable,2019-03-27T11:04:48,14511.5,340,1840954682,,0.726874,0.807745,
+openml.org/t/146606,higgs,TPOT,6,0.807752,aws.docker,0.9.6,stable,2019-03-27T11:07:53,14588.1,235,1840954685,,0.728098,0.807752,
+openml.org/t/146606,higgs,TPOT,0,0.801557,aws.docker,0.9.6,stable,2019-03-27T11:07:51,14745.5,330,1840954679,,0.721877,0.801557,
+openml.org/t/146606,higgs,TPOT,1,0.801893,aws.docker,0.9.6,stable,2019-03-27T11:08:06,14738.5,311,1840954680,,0.719327,0.801893,
+openml.org/t/146606,higgs,TPOT,2,0.804348,aws.docker,0.9.6,stable,2019-03-27T11:08:21,14700.7,292,1840954681,,0.728404,0.804348,
+openml.org/t/146606,higgs,TPOT,7,0.797121,aws.docker,0.9.6,stable,2019-03-27T11:08:46,14621.7,296,1840954686,,0.717899,0.797121,
+openml.org/t/146606,higgs,TPOT,4,0.803782,aws.docker,0.9.6,stable,2019-03-27T11:09:03,14745.9,329,1840954683,,0.723202,0.803782,
+openml.org/t/146606,higgs,TPOT,9,0.815812,aws.docker,0.9.6,stable,2019-03-27T11:10:12,14642.5,313,1840954688,,0.737073,0.815812,
+openml.org/t/146606,higgs,TPOT,8,0.793716,aws.docker,0.9.6,stable,2019-03-27T11:13:05,14831.7,353,1840954687,,0.717593,0.793716,
+openml.org/t/146606,higgs,TPOT,5,0.809676,aws.docker,0.9.6,stable,2019-03-27T11:14:04,15041.9,323,1840954684,,0.732075,0.809676,
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,0,0.142505,aws.docker,0.9.6,stable,2019-03-27T15:09:18,14450.9,838,1840954679,,0.948014,,0.142505
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,3,0.137207,aws.docker,0.9.6,stable,2019-03-27T15:12:45,14465.4,827,1840954682,,0.937528,,0.137207
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,6,0.118702,aws.docker,0.9.6,stable,2019-03-27T15:13:55,14454.2,718,1840954685,,0.95203,,0.118702
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,1,0.128197,aws.docker,0.9.6,stable,2019-03-27T15:14:01,14550.0,919,1840954680,,0.960286,,0.128197
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,5,0.17971,aws.docker,0.9.6,stable,2019-03-27T15:14:19,14520.7,720,1840954684,,0.921687,,0.17971
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,7,0.160171,aws.docker,0.9.6,stable,2019-03-27T15:16:33,14571.5,833,1840954686,,0.92905,,0.160171
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,2,0.110048,aws.docker,0.9.6,stable,2019-03-27T15:16:37,14699.5,887,1840954681,,0.952923,,0.110048
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,4,0.150791,aws.docker,0.9.6,stable,2019-03-27T15:17:43,14742.5,884,1840954683,,0.938197,,0.150791
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,8,0.168974,aws.docker,0.9.6,stable,2019-03-27T15:18:35,14515.5,854,1840954687,,0.940875,,0.168974
+openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,TPOT,9,0.16819,aws.docker,0.9.6,stable,2019-03-27T15:19:13,14483.7,792,1840954688,,0.927918,,0.16819

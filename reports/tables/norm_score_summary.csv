@@ -1,16 +1,16 @@
 type,task,autosklearn,autoweka,constantpredictor,h2oautoml,oboe,randomforest,tpot,tunedrandomforest
 binary,adult,1.04703,1.00114,0,0.944808 (1),nan,0.999656,1.04441,1
-binary,amazon_employee_access,nan,nan,0,nan,nan,1.00168,nan,1
+binary,amazon_employee_access,nan,nan,0,nan,nan,1.00168,1.01647,1
 binary,apsfailure,nan,nan,0,1.00198,nan,0.999524,nan,1
 binary,australian,0.904831 (1),0.986421,0,1.01771,0.588716 (3),1.00701,0.985855,1
-binary,bank-marketing,nan,nan,0,1.01585,nan,0.999876,nan,1
+binary,bank-marketing,nan,nan,0,1.01585,nan,0.999876,1.00812,1
 binary,bioresponse,0.983086,0.726846,0,1.00935,0.780105,0.998686,0.976529,1
 binary,blood-transfusion,1.44252,1.34591,0,1.48076,0.519831 (3),0.99529,1.28485,1
 binary,christine,0.982328,0.914613,0,1.05501,0.779939,1.00066,1.02592,1
 binary,credit-g,0.939243,0.850238,0,0.992533,0.520644 (1),0.989323,0.923558,1
 binary,dresses-sales,0.470358 (1),1.45402,0,1.88222,0.596185,1.02546,0.514544,1
 binary,guiellermo,nan,nan,0,0.951456,nan,1.00086,nan,1
-binary,higgs,nan,nan,0,1.03897,nan,0.999679,nan,1
+binary,higgs,nan,nan,0,1.03897,nan,0.999679,1.00415,1
 binary,internet-advertisements,0.98375,0.953313,0,0.988622,0.907112,0.99871,0.989632,1
 binary,jasmine,0.947724,0.906268,0,0.995765,0.806707,1.00143,0.990811,1
 binary,kc1,0.690575 (3),0.933095,0,nan,0.403608,0.987911,1.033,1
@@ -31,11 +31,11 @@ multiclass,fabert,0.906662 (1),-4.45607,0,1.03755,nan,0.995843,0.769992 (1),1
 multiclass,fashion-mnist,nan,nan,0,1.02161,nan,0.999774,nan,1
 multiclass,helena,nan,nan (1),,nan,nan,,nan,
 multiclass,jannis,1.02356,-9.49423,0,1.1244,nan,0.999696,0.95033,1
-multiclass,jungle_chess_2pcs_raw_endgame_complete,nan,nan,0,1.44986,nan,0.931149,nan,1
+multiclass,jungle_chess_2pcs_raw_endgame_complete,nan,nan,0,1.44986,nan,0.931149,1.47816,1
 multiclass,mfeat-factors,1.05056,0.875957 (1),0,1.05925,0.738884,0.992512,1.0411,1
 multiclass,micro-mass,1.05952,-0.493079,0,1.03849,-1.21283,0.932996,1.07538,1
-multiclass,robert,nan,nan,0,nan,nan,0.998564,nan,1
+multiclass,robert,nan,nan,0,1.31061,nan,0.998564,nan,1
 multiclass,segment,1.00592,0.822429,0,1.0128,0.629281,0.99198,1.00889,1
-multiclass,shuttle,nan,nan,0,nan,nan,0.999754,nan,1
+multiclass,shuttle,nan,nan,0,1.00038,nan,0.999754,nan,1
 multiclass,vehicle,0.981604 (1),-1.12767,0,1.14278,-5.79139 (2),0.985746,1.07564,1
 multiclass,volkert,nan,nan,0,nan,nan,1.00034,nan,1

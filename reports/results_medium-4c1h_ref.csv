@@ -1,0 +1,123 @@
+id,task,framework,fold,result,mode,version,tag,utc,duration,models,seed,info,acc,auc,logloss
+openml.org/t/7592,adult,RandomForest,0,0.911293,aws.docker,0.19.2,stable,2019-03-03T02:51:27,29.2,2000,3730448835,,0.864278,0.911293,
+openml.org/t/7592,adult,RandomForest,3,0.907411,aws.docker,0.19.2,stable,2019-03-03T02:53:12,28.9,2000,3730448835,,0.851351,0.907411,
+openml.org/t/7592,adult,RandomForest,2,0.9086,aws.docker,0.19.2,stable,2019-03-03T02:53:08,28.8,2000,3730448835,,0.859541,0.9086,
+openml.org/t/7592,adult,RandomForest,5,0.907002,aws.docker,0.19.2,stable,2019-03-03T02:53:14,28.8,2000,3730448835,,0.858722,0.907002,
+openml.org/t/7592,adult,RandomForest,4,0.907326,aws.docker,0.19.2,stable,2019-03-03T02:53:12,28.9,2000,3730448835,,0.860565,0.907326,
+openml.org/t/7592,adult,RandomForest,1,0.904583,aws.docker,0.19.2,stable,2019-03-03T02:53:09,28.9,2000,3730448835,,0.854862,0.904583,
+openml.org/t/7592,adult,RandomForest,6,0.904767,aws.docker,0.19.2,stable,2019-03-03T02:53:32,28.9,2000,3730448835,,0.855242,0.904767,
+openml.org/t/7592,adult,RandomForest,7,0.911983,aws.docker,0.19.2,stable,2019-03-03T02:53:33,28.9,2000,3730448835,,0.860565,0.911983,
+openml.org/t/7592,adult,RandomForest,8,0.917264,aws.docker,0.19.2,stable,2019-03-03T02:53:51,29.0,2000,3730448835,,0.862613,0.917264,
+openml.org/t/7592,adult,RandomForest,9,0.91202,aws.docker,0.19.2,stable,2019-03-03T02:54:00,28.9,2000,3730448835,,0.859132,0.91202,
+openml.org/t/146195,connect-4,RandomForest,0,0.493628,aws.docker,0.19.2,stable,2019-03-03T02:55:35,45.4,2000,3730448835,,0.818236,,0.493628
+openml.org/t/146195,connect-4,RandomForest,1,0.498917,aws.docker,0.19.2,stable,2019-03-03T02:56:56,42.1,2000,3730448835,,0.816015,,0.498917
+openml.org/t/146195,connect-4,RandomForest,3,0.496201,aws.docker,0.19.2,stable,2019-03-03T02:57:12,43.9,2000,3730448835,,0.819716,,0.496201
+openml.org/t/146195,connect-4,RandomForest,4,0.490615,aws.docker,0.19.2,stable,2019-03-03T02:57:14,43.5,2000,3730448835,,0.822084,,0.490615
+openml.org/t/146195,connect-4,RandomForest,2,0.486334,aws.docker,0.19.2,stable,2019-03-03T02:57:08,43.5,2000,3730448835,,0.822676,,0.486334
+openml.org/t/146195,connect-4,RandomForest,5,0.493721,aws.docker,0.19.2,stable,2019-03-03T02:57:25,47.0,2000,3730448835,,0.817792,,0.493721
+openml.org/t/146195,connect-4,RandomForest,6,0.500432,aws.docker,0.19.2,stable,2019-03-03T02:57:30,43.9,2000,3730448835,,0.815571,,0.500432
+openml.org/t/146195,connect-4,RandomForest,7,0.491131,aws.docker,0.19.2,stable,2019-03-03T02:57:37,44.3,2000,3730448835,,0.824278,,0.491131
+openml.org/t/146195,connect-4,RandomForest,8,0.495205,aws.docker,0.19.2,stable,2019-03-03T02:57:58,43.7,2000,3730448835,,0.81658,,0.495205
+openml.org/t/146195,connect-4,RandomForest,9,0.49532,aws.docker,0.19.2,stable,2019-03-03T02:58:12,45.2,2000,3730448835,,0.819837,,0.49532
+openml.org/t/9977,nomao,RandomForest,0,0.993981,aws.docker,0.19.2,stable,2019-03-03T02:59:14,31.5,2000,3730448835,,0.969249,0.993981,
+openml.org/t/9977,nomao,RandomForest,1,0.995092,aws.docker,0.19.2,stable,2019-03-03T03:00:41,31.2,2000,3730448835,,0.968088,0.995092,
+openml.org/t/9977,nomao,RandomForest,3,0.995619,aws.docker,0.19.2,stable,2019-03-03T03:00:58,31.9,2000,3730448835,,0.97244,0.995619,
+openml.org/t/9977,nomao,RandomForest,5,0.995333,aws.docker,0.19.2,stable,2019-03-03T03:01:04,31.6,2000,3730448835,,0.968369,0.995333,
+openml.org/t/9977,nomao,RandomForest,4,0.995511,aws.docker,0.19.2,stable,2019-03-03T03:01:07,32.2,2000,3730448835,,0.970409,0.995511,
+openml.org/t/9977,nomao,RandomForest,2,0.993996,aws.docker,0.19.2,stable,2019-03-03T03:00:54,31.8,2000,3730448835,,0.966928,0.993996,
+openml.org/t/9977,nomao,RandomForest,6,0.994629,aws.docker,0.19.2,stable,2019-03-03T03:01:14,32.3,2000,3730448835,,0.965177,0.994629,
+openml.org/t/9977,nomao,RandomForest,7,0.995966,aws.docker,0.19.2,stable,2019-03-03T03:01:23,32.0,2000,3730448835,,0.973012,0.995966,
+openml.org/t/9977,nomao,RandomForest,9,0.994646,aws.docker,0.19.2,stable,2019-03-03T03:02:00,32.0,2000,3730448835,,0.97011,0.994646,
+openml.org/t/9977,nomao,RandomForest,8,0.994578,aws.docker,0.19.2,stable,2019-03-03T03:02:00,32.6,2000,3730448835,,0.97011,0.994578,
+openml.org/t/168330,Jannis,RandomForest,0,0.730374,aws.docker,0.19.2,stable,2019-03-03T03:10:27,456.9,2000,3730448835,,0.706353,,0.730374
+openml.org/t/168330,Jannis,RandomForest,1,0.723086,aws.docker,0.19.2,stable,2019-03-03T03:12:02,464.5,2000,3730448835,,0.716742,,0.723086
+openml.org/t/168330,Jannis,RandomForest,2,0.727559,aws.docker,0.19.2,stable,2019-03-03T03:12:13,465.9,2000,3730448835,,0.71519,,0.727559
+openml.org/t/168330,Jannis,RandomForest,4,0.727846,aws.docker,0.19.2,stable,2019-03-03T03:12:18,461.5,2000,3730448835,,0.713126,,0.727846
+openml.org/t/168330,Jannis,RandomForest,3,0.721853,aws.docker,0.19.2,stable,2019-03-03T03:12:17,462.1,2000,3730448835,,0.707751,,0.721853
+openml.org/t/168330,Jannis,RandomForest,6,0.731959,aws.docker,0.19.2,stable,2019-03-03T03:12:29,456.9,2000,3730448835,,0.709543,,0.731959
+openml.org/t/168330,Jannis,RandomForest,5,0.729643,aws.docker,0.19.2,stable,2019-03-03T03:12:32,461.5,2000,3730448835,,0.713603,,0.729643
+openml.org/t/168330,Jannis,RandomForest,7,0.728025,aws.docker,0.19.2,stable,2019-03-03T03:12:56,465.4,2000,3730448835,,0.709781,,0.728025
+openml.org/t/168330,Jannis,RandomForest,9,0.742628,aws.docker,0.19.2,stable,2019-03-03T03:13:17,460.6,2000,3730448835,,0.701063,,0.742628
+openml.org/t/168330,Jannis,RandomForest,8,0.726023,aws.docker,0.19.2,stable,2019-03-03T03:13:12,461.7,2000,3730448835,,0.719694,,0.726023
+openml.org/t/168329,Helena,RandomForest,6,,aws.docker,0.19.2,stable,2019-03-03T03:18:24,165.4,,3730448835,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/168329,Helena,RandomForest,8,,aws.docker,0.19.2,stable,2019-03-03T03:23:11,420.2,,3730448835,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/7592,adult,constantpredictor_enc,0,0.5,local,0.19.2,stable,2019-03-06T15:57:48,0.0,1,2366507009,,0.760696,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,1,0.5,local,0.19.2,stable,2019-03-06T15:57:54,0.0,1,2366507009,,0.760696,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,2,0.5,local,0.19.2,stable,2019-03-06T15:58:00,0.0,1,2366507009,,0.760852,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,3,0.5,local,0.19.2,stable,2019-03-06T15:58:06,0.0,1,2366507009,,0.760852,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,4,0.5,local,0.19.2,stable,2019-03-06T15:58:12,0.0,1,2366507009,,0.760852,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,5,0.5,local,0.19.2,stable,2019-03-06T15:58:18,0.0,1,2366507009,,0.760647,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,6,0.5,local,0.19.2,stable,2019-03-06T15:58:24,0.0,1,2366507009,,0.760647,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,7,0.5,local,0.19.2,stable,2019-03-06T15:58:30,0.0,1,2366507009,,0.760647,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,8,0.5,local,0.19.2,stable,2019-03-06T15:58:36,0.0,1,2366507009,,0.760647,0.5,
+openml.org/t/7592,adult,constantpredictor_enc,9,0.5,local,0.19.2,stable,2019-03-06T15:58:42,0.0,1,2366507009,,0.760647,0.5,
+openml.org/t/146195,connect-4,constantpredictor_enc,0,0.844498,local,0.19.2,stable,2019-03-06T15:58:49,0.0,1,2366507009,,0.658378,,0.844498
+openml.org/t/146195,connect-4,constantpredictor_enc,1,0.844498,local,0.19.2,stable,2019-03-06T15:59:01,0.0,1,2366507009,,0.658378,,0.844498
+openml.org/t/146195,connect-4,constantpredictor_enc,2,0.844498,local,0.19.2,stable,2019-03-06T15:59:13,0.0,1,2366507009,,0.658378,,0.844498
+openml.org/t/146195,connect-4,constantpredictor_enc,3,0.844644,local,0.19.2,stable,2019-03-06T15:59:24,0.0,1,2366507009,,0.65823,,0.844644
+openml.org/t/146195,connect-4,constantpredictor_enc,4,0.844644,local,0.19.2,stable,2019-03-06T15:59:36,0.0,1,2366507009,,0.65823,,0.844644
+openml.org/t/146195,connect-4,constantpredictor_enc,5,0.844644,local,0.19.2,stable,2019-03-06T15:59:47,0.0,1,2366507009,,0.65823,,0.844644
+openml.org/t/146195,connect-4,constantpredictor_enc,6,0.844644,local,0.19.2,stable,2019-03-06T15:59:58,0.0,1,2366507009,,0.65823,,0.844644
+openml.org/t/146195,connect-4,constantpredictor_enc,7,0.844421,local,0.19.2,stable,2019-03-06T16:00:10,0.0,1,2366507009,,0.658327,,0.844421
+openml.org/t/146195,connect-4,constantpredictor_enc,8,0.844561,local,0.19.2,stable,2019-03-06T16:00:21,0.0,1,2366507009,,0.658327,,0.844561
+openml.org/t/146195,connect-4,constantpredictor_enc,9,0.844561,local,0.19.2,stable,2019-03-06T16:00:32,0.0,1,2366507009,,0.658327,,0.844561
+openml.org/t/9977,nomao,constantpredictor_enc,0,0.5,local,0.19.2,stable,2019-03-06T16:00:41,0.0,1,2366507009,,0.714534,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,1,0.5,local,0.19.2,stable,2019-03-06T16:00:56,0.0,1,2366507009,,0.714244,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,2,0.5,local,0.19.2,stable,2019-03-06T16:01:11,0.0,1,2366507009,,0.714244,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,3,0.5,local,0.19.2,stable,2019-03-06T16:01:27,0.0,1,2366507009,,0.714244,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,4,0.5,local,0.19.2,stable,2019-03-06T16:01:42,0.0,1,2366507009,,0.714244,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,5,0.5,local,0.19.2,stable,2019-03-06T16:01:57,0.0,1,2366507009,,0.714452,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,6,0.5,local,0.19.2,stable,2019-03-06T16:02:12,0.0,1,2366507009,,0.714452,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,7,0.5,local,0.19.2,stable,2019-03-06T16:02:28,0.0,1,2366507009,,0.714452,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,8,0.5,local,0.19.2,stable,2019-03-06T16:02:43,0.0,1,2366507009,,0.714452,0.5,
+openml.org/t/9977,nomao,constantpredictor_enc,9,0.5,local,0.19.2,stable,2019-03-06T16:02:59,0.0,1,2366507009,,0.714452,0.5,
+openml.org/t/168330,Jannis,constantpredictor_enc,0,1.10882,local,0.19.2,stable,2019-03-06T16:03:15,0.0,1,2366507009,,0.459995,,1.10882
+openml.org/t/168330,Jannis,constantpredictor_enc,1,1.10882,local,0.19.2,stable,2019-03-06T16:03:43,0.0,1,2366507009,,0.459995,,1.10882
+openml.org/t/168330,Jannis,constantpredictor_enc,2,1.10882,local,0.19.2,stable,2019-03-06T16:04:11,0.0,1,2366507009,,0.459995,,1.10882
+openml.org/t/168330,Jannis,constantpredictor_enc,3,1.10849,local,0.19.2,stable,2019-03-06T16:04:39,0.0,1,2366507009,,0.46005,,1.10849
+openml.org/t/168330,Jannis,constantpredictor_enc,4,1.10837,local,0.19.2,stable,2019-03-06T16:05:07,0.0,1,2366507009,,0.46017,,1.10837
+openml.org/t/168330,Jannis,constantpredictor_enc,5,1.10837,local,0.19.2,stable,2019-03-06T16:05:35,0.0,1,2366507009,,0.46017,,1.10837
+openml.org/t/168330,Jannis,constantpredictor_enc,6,1.10875,local,0.19.2,stable,2019-03-06T16:06:03,0.0,1,2366507009,,0.46005,,1.10875
+openml.org/t/168330,Jannis,constantpredictor_enc,7,1.10875,local,0.19.2,stable,2019-03-06T16:06:31,0.0,1,2366507009,,0.46005,,1.10875
+openml.org/t/168330,Jannis,constantpredictor_enc,8,1.10875,local,0.19.2,stable,2019-03-06T16:06:58,0.0,1,2366507009,,0.46005,,1.10875
+openml.org/t/168330,Jannis,constantpredictor_enc,9,1.10875,local,0.19.2,stable,2019-03-06T16:07:24,0.0,1,2366507009,,0.46005,,1.10875
+openml.org/t/168329,Helena,constantpredictor_enc,0,4.14242,local,0.19.2,stable,2019-03-06T18:11:42,0.0,1,2093605504,,0.0615031,,4.14242
+openml.org/t/168329,Helena,constantpredictor_enc,1,4.14412,local,0.19.2,stable,2019-03-06T18:11:55,0.0,1,2093605504,,0.0613497,,4.14412
+openml.org/t/168329,Helena,constantpredictor_enc,2,4.14381,local,0.19.2,stable,2019-03-06T18:12:08,0.0,1,2093605504,,0.0613497,,4.14381
+openml.org/t/168329,Helena,constantpredictor_enc,3,4.14411,local,0.19.2,stable,2019-03-06T18:12:21,0.0,1,2093605504,,0.0613497,,4.14411
+openml.org/t/168329,Helena,constantpredictor_enc,4,4.14401,local,0.19.2,stable,2019-03-06T18:12:35,0.0,1,2093605504,,0.0613497,,4.14401
+openml.org/t/168329,Helena,constantpredictor_enc,5,4.14407,local,0.19.2,stable,2019-03-06T18:12:50,0.0,1,2093605504,,0.0613497,,4.14407
+openml.org/t/168329,Helena,constantpredictor_enc,6,4.14336,local,0.19.2,stable,2019-03-06T18:13:05,0.0,1,2093605504,,0.0615125,,4.14336
+openml.org/t/168329,Helena,constantpredictor_enc,7,4.14266,local,0.19.2,stable,2019-03-06T18:13:19,0.0,1,2093605504,,0.0615125,,4.14266
+openml.org/t/168329,Helena,constantpredictor_enc,8,4.14324,local,0.19.2,stable,2019-03-06T18:13:33,0.0,1,2093605504,,0.0615125,,4.14324
+openml.org/t/168329,Helena,constantpredictor_enc,9,4.14231,local,0.19.2,stable,2019-03-06T18:13:48,0.0,1,2093605504,,0.0615125,,4.14231
+openml.org/t/168329,Helena,RandomForest,2,,aws.docker,0.19.2,stable,2019-03-09T01:47:36,166.7,,2021397385,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/168329,Helena,RandomForest,9,,aws.docker,0.19.2,stable,2019-03-09T01:48:10,166.7,,2021397385,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/168329,Helena,RandomForest,1,,aws.docker,0.19.2,stable,2019-03-09T01:51:41,413.9,,2021397385,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/168329,Helena,RandomForest,4,,aws.docker,0.19.2,stable,2019-03-09T01:51:57,417.4,,2021397385,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/168329,Helena,RandomForest,5,,aws.docker,0.19.2,stable,2019-03-09T01:47:55,172.6,,2021397385,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,
+openml.org/t/168329,Helena,RandomForest,3,,aws.docker,0.19.2,stable,2019-03-09T01:51:50,417.8,,2021397385,"Error: JoblibMemoryError
+___________________________________________________________________________
+Multiprocessing exception:
+........................................................................",,,

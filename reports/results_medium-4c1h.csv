@@ -1,0 +1,230 @@
+id,task,framework,fold,result,mode,version,tag,utc,duration,models,seed,info,acc,auc,logloss
+openml.org/t/7592,adult,autosklearn,0,0.931288,aws.docker,0.5.0,stable,2019-03-03T15:24:38,3596.8,15,578519140,,0.875537,0.931288,
+openml.org/t/7592,adult,autosklearn,1,0.925882,aws.docker,0.5.0,stable,2019-03-03T15:25:09,3597.3,6,578519140,,0.869806,0.925882,
+openml.org/t/7592,adult,autosklearn,2,0.928267,aws.docker,0.5.0,stable,2019-03-03T15:25:11,3596.0,7,578519140,,0.865479,0.928267,
+openml.org/t/7592,adult,autosklearn,3,0.923106,aws.docker,0.5.0,stable,2019-03-03T15:25:22,3596.9,12,578519140,,0.861998,0.923106,
+openml.org/t/7592,adult,autosklearn,4,0.92476,aws.docker,0.5.0,stable,2019-03-03T15:25:23,3597.0,10,578519140,,0.858722,0.92476,
+openml.org/t/7592,adult,autosklearn,6,0.92992,aws.docker,0.5.0,stable,2019-03-03T15:25:50,3597.3,11,578519140,,0.862408,0.92992,
+openml.org/t/7592,adult,autosklearn,5,0.922759,aws.docker,0.5.0,stable,2019-03-03T15:25:44,3598.3,9,578519140,,0.872236,0.922759,
+openml.org/t/7592,adult,autosklearn,7,0.93183,aws.docker,0.5.0,stable,2019-03-03T15:25:51,3596.5,11,578519140,,0.872236,0.93183,
+openml.org/t/7592,adult,autosklearn,8,0.937217,aws.docker,0.5.0,stable,2019-03-03T15:26:07,3595.5,9,578519140,,0.882473,0.937217,
+openml.org/t/7592,adult,autosklearn,9,0.931097,aws.docker,0.5.0,stable,2019-03-03T15:26:22,3597.1,8,578519140,,0.875102,0.931097,
+openml.org/t/146195,connect-4,autosklearn,0,0.449205,aws.docker,0.5.0,stable,2019-03-03T16:28:20,3617.5,4,578519140,,0.836294,,0.449205
+openml.org/t/146195,connect-4,autosklearn,1,0.474061,aws.docker,0.5.0,stable,2019-03-03T16:28:37,3598.8,5,578519140,,0.819272,,0.474061
+openml.org/t/146195,connect-4,autosklearn,3,0.573838,aws.docker,0.5.0,stable,2019-03-03T16:28:47,3601.2,3,578519140,,0.773239,,0.573838
+openml.org/t/146195,connect-4,autosklearn,4,0.476625,aws.docker,0.5.0,stable,2019-03-03T16:28:56,3600.6,4,578519140,,0.8209,,0.476625
+openml.org/t/146195,connect-4,autosklearn,2,0.435448,aws.docker,0.5.0,stable,2019-03-03T16:28:56,3616.1,4,578519140,,0.835406,,0.435448
+openml.org/t/146195,connect-4,autosklearn,5,0.483417,aws.docker,0.5.0,stable,2019-03-03T16:29:03,3599.1,6,578519140,,0.831113,,0.483417
+openml.org/t/146195,connect-4,autosklearn,7,0.440399,aws.docker,0.5.0,stable,2019-03-03T16:29:18,3609.6,3,578519140,,0.840266,,0.440399
+openml.org/t/146195,connect-4,autosklearn,6,0.448315,aws.docker,0.5.0,stable,2019-03-03T16:29:07,3601.8,3,578519140,,0.834962,,0.448315
+openml.org/t/146195,connect-4,autosklearn,8,0.469194,aws.docker,0.5.0,stable,2019-03-03T16:29:30,3609.6,3,578519140,,0.828423,,0.469194
+openml.org/t/146195,connect-4,autosklearn,9,0.443418,aws.docker,0.5.0,stable,2019-03-03T16:29:43,3613.3,3,578519140,,0.840563,,0.443418
+openml.org/t/9977,nomao,autosklearn,0,0.995693,aws.docker,0.5.0,stable,2019-03-03T17:31:41,3596.2,8,578519140,,0.9736,0.995693,
+openml.org/t/9977,nomao,autosklearn,1,0.995809,aws.docker,0.5.0,stable,2019-03-03T17:31:46,3596.2,10,578519140,,0.968378,0.995809,
+openml.org/t/9977,nomao,autosklearn,2,0.994148,aws.docker,0.5.0,stable,2019-03-03T17:32:06,3596.5,12,578519140,,0.966348,0.994148,
+openml.org/t/9977,nomao,autosklearn,4,0.995503,aws.docker,0.5.0,stable,2019-03-03T17:32:07,3596.6,7,578519140,,0.97215,0.995503,
+openml.org/t/9977,nomao,autosklearn,5,0.995377,aws.docker,0.5.0,stable,2019-03-03T17:32:22,3596.7,7,578519140,,0.972142,0.995377,
+openml.org/t/9977,nomao,autosklearn,6,0.99459,aws.docker,0.5.0,stable,2019-03-03T17:32:43,3597.2,7,578519140,,0.967789,0.99459,
+openml.org/t/9977,nomao,autosklearn,7,0.997055,aws.docker,0.5.0,stable,2019-03-03T17:32:37,3596.3,9,578519140,,0.975334,0.997055,
+openml.org/t/9977,nomao,autosklearn,3,0.996488,aws.docker,0.5.0,stable,2019-03-03T17:33:01,3596.5,8,578519140,,0.97418,0.996488,
+openml.org/t/9977,nomao,autosklearn,8,0.993124,aws.docker,0.5.0,stable,2019-03-03T17:33:01,3596.2,12,578519140,,0.968659,0.993124,
+openml.org/t/9977,nomao,autosklearn,9,0.995049,aws.docker,0.5.0,stable,2019-03-03T17:34:41,3596.6,11,578519140,,0.968659,0.995049,
+openml.org/t/168330,Jannis,autosklearn,0,0.731618,aws.docker,0.5.0,stable,2019-03-03T18:35:23,3603.0,5,578519140,,0.698352,,0.731618
+openml.org/t/168330,Jannis,autosklearn,1,0.721784,aws.docker,0.5.0,stable,2019-03-03T18:35:20,3607.3,6,578519140,,0.70695,,0.721784
+openml.org/t/168330,Jannis,autosklearn,3,0.707731,aws.docker,0.5.0,stable,2019-03-03T18:35:44,3599.1,4,578519140,,0.710259,,0.707731
+openml.org/t/168330,Jannis,autosklearn,2,0.707855,aws.docker,0.5.0,stable,2019-03-03T18:35:42,3604.2,6,578519140,,0.716623,,0.707855
+openml.org/t/168330,Jannis,autosklearn,4,0.714567,aws.docker,0.5.0,stable,2019-03-03T18:36:02,3604.8,5,578519140,,0.71014,,0.714567
+openml.org/t/168330,Jannis,autosklearn,6,0.72386,aws.docker,0.5.0,stable,2019-03-03T18:36:23,3603.6,5,578519140,,0.704168,,0.72386
+openml.org/t/168330,Jannis,autosklearn,5,0.709656,aws.docker,0.5.0,stable,2019-03-03T18:36:14,3602.6,3,578519140,,0.715753,,0.709656
+openml.org/t/168330,Jannis,autosklearn,8,0.722558,aws.docker,0.5.0,stable,2019-03-03T18:36:56,3606.9,6,578519140,,0.712528,,0.722558
+openml.org/t/168330,Jannis,autosklearn,9,0.731139,aws.docker,0.5.0,stable,2019-03-03T18:38:21,3598.9,6,578519140,,0.700346,,0.731139
+openml.org/t/168330,Jannis,autosklearn,7,0.727402,aws.docker,0.5.0,stable,2019-03-03T19:34:36,7069.0,5,578519140,,0.703332,,0.727402
+openml.org/t/7592,adult,H2OAutoML,0,0.931009,aws.docker,3.22.1.2,stable,2019-03-04T05:36:33,3283.9,40,2395652775,,0.870829,0.931009,
+openml.org/t/7592,adult,H2OAutoML,1,0.926875,aws.docker,3.22.1.2,stable,2019-03-04T05:42:59,3303.2,40,2395652775,,0.871648,0.926875,
+openml.org/t/7592,adult,H2OAutoML,2,0.930627,aws.docker,3.22.1.2,stable,2019-03-04T05:49:55,3298.7,40,2395652775,,0.871826,0.930627,
+openml.org/t/7592,adult,H2OAutoML,3,0.926171,aws.docker,3.22.1.2,stable,2019-03-04T05:50:08,3288.0,40,2395652775,,0.866503,0.926171,
+openml.org/t/7592,adult,H2OAutoML,4,0.926359,aws.docker,3.22.1.2,stable,2019-03-04T05:50:38,3299.1,40,2395652775,,0.863432,0.926359,
+openml.org/t/7592,adult,H2OAutoML,5,0.923884,aws.docker,3.22.1.2,stable,2019-03-04T05:51:56,3296.1,41,2395652775,,0.857699,0.923884,
+openml.org/t/7592,adult,H2OAutoML,6,0.930507,aws.docker,3.22.1.2,stable,2019-03-04T05:52:21,3305.1,40,2395652775,,0.861998,0.930507,
+openml.org/t/7592,adult,H2OAutoML,7,0.931252,aws.docker,3.22.1.2,stable,2019-03-04T05:52:58,3296.4,40,2395652775,,0.868346,0.931252,
+openml.org/t/7592,adult,H2OAutoML,8,0.938234,aws.docker,3.22.1.2,stable,2019-03-04T05:53:08,3294.5,41,2395652775,,0.879197,0.938234,
+openml.org/t/7592,adult,H2OAutoML,9,,aws.docker,3.22.1.2,stable,2019-03-04T05:54:39,3309.8,,2395652775,"Error: Job with key $03017f00000132d4ffffffff$_b17de169de8c8d23dc9d56a1604d48bb failed with an exception: DistributedException from /127.0.0.1:54321: 'Categorical value out of bounds, got 40, next ...",,,
+openml.org/t/146195,connect-4,H2OAutoML,0,0.416489,aws.docker,3.22.1.2,stable,2019-03-04T06:40:38,3637.9,5,2395652775,,0.837922,,0.416489
+openml.org/t/146195,connect-4,H2OAutoML,1,0.428101,aws.docker,3.22.1.2,stable,2019-03-04T06:46:58,3637.5,5,2395652775,,0.82534,,0.428101
+openml.org/t/146195,connect-4,H2OAutoML,2,0.406013,aws.docker,3.22.1.2,stable,2019-03-04T06:54:01,3637.0,5,2395652775,,0.84029,,0.406013
+openml.org/t/146195,connect-4,H2OAutoML,3,0.420109,aws.docker,3.22.1.2,stable,2019-03-04T06:54:06,3635.1,5,2395652775,,0.834221,,0.420109
+openml.org/t/146195,connect-4,H2OAutoML,4,0.424209,aws.docker,3.22.1.2,stable,2019-03-04T06:54:29,3635.1,5,2395652775,,0.833481,,0.424209
+openml.org/t/146195,connect-4,H2OAutoML,5,0.435049,aws.docker,3.22.1.2,stable,2019-03-04T06:56:06,3635.1,5,2395652775,,0.828893,,0.435049
+openml.org/t/146195,connect-4,H2OAutoML,6,0.425649,aws.docker,3.22.1.2,stable,2019-03-04T06:56:16,3636.1,5,2395652775,,0.831113,,0.425649
+openml.org/t/146195,connect-4,H2OAutoML,7,0.414557,aws.docker,3.22.1.2,stable,2019-03-04T06:56:59,3633.6,5,2395652775,,0.837306,,0.414557
+openml.org/t/146195,connect-4,H2OAutoML,8,0.429239,aws.docker,3.22.1.2,stable,2019-03-04T06:57:02,3635.2,5,2395652775,,0.828127,,0.429239
+openml.org/t/146195,connect-4,H2OAutoML,9,0.415052,aws.docker,3.22.1.2,stable,2019-03-04T06:58:32,3637.7,5,2395652775,,0.834049,,0.415052
+openml.org/t/9977,nomao,H2OAutoML,0,0.995658,aws.docker,3.22.1.2,stable,2019-03-04T07:41:49,3458.4,25,2395652775,,0.97389,0.995658,
+openml.org/t/9977,nomao,H2OAutoML,1,0.996076,aws.docker,3.22.1.2,stable,2019-03-04T07:48:24,3468.8,24,2395652775,,0.970989,0.996076,
+openml.org/t/9977,nomao,H2OAutoML,2,0.995008,aws.docker,3.22.1.2,stable,2019-03-04T07:55:32,3468.5,25,2395652775,,0.969829,0.995008,
+openml.org/t/9977,nomao,H2OAutoML,4,0.99587,aws.docker,3.22.1.2,stable,2019-03-04T07:55:34,3458.8,25,2395652775,,0.97418,0.99587,
+openml.org/t/9977,nomao,H2OAutoML,3,0.996725,aws.docker,3.22.1.2,stable,2019-03-04T07:55:50,3482.0,23,2395652775,,0.975921,0.996725,
+openml.org/t/9977,nomao,H2OAutoML,7,0.99685,aws.docker,3.22.1.2,stable,2019-03-04T07:57:39,3438.5,25,2395652775,,0.973012,0.99685,
+openml.org/t/9977,nomao,H2OAutoML,5,0.995255,aws.docker,3.22.1.2,stable,2019-03-04T07:57:38,3469.8,23,2395652775,,0.970981,0.995255,
+openml.org/t/9977,nomao,H2OAutoML,6,0.995457,aws.docker,3.22.1.2,stable,2019-03-04T07:57:34,3458.2,24,2395652775,,0.9704,0.995457,
+openml.org/t/9977,nomao,H2OAutoML,8,0.994967,aws.docker,3.22.1.2,stable,2019-03-04T07:57:58,3455.3,23,2395652775,,0.97011,0.994967,
+openml.org/t/9977,nomao,H2OAutoML,9,0.995963,aws.docker,3.22.1.2,stable,2019-03-04T07:59:45,3458.5,25,2395652775,,0.973302,0.995963,
+openml.org/t/168330,Jannis,H2OAutoML,0,0.681052,aws.docker,3.22.1.2,stable,2019-03-04T08:46:18,3659.1,7,2395652775,,0.720325,,0.681052
+openml.org/t/168330,Jannis,H2OAutoML,1,0.679279,aws.docker,3.22.1.2,stable,2019-03-04T08:53:03,3658.3,7,2395652775,,0.726057,,0.679279
+openml.org/t/168330,Jannis,H2OAutoML,2,0.676281,aws.docker,3.22.1.2,stable,2019-03-04T09:00:02,3649.7,7,2395652775,,0.727848,,0.676281
+openml.org/t/168330,Jannis,H2OAutoML,3,0.674886,aws.docker,3.22.1.2,stable,2019-03-04T09:00:46,3666.4,7,2395652775,,0.725546,,0.674886
+openml.org/t/168330,Jannis,H2OAutoML,4,0.684148,aws.docker,3.22.1.2,stable,2019-03-04T09:01:28,3708.5,7,2395652775,,0.724233,,0.684148
+openml.org/t/168330,Jannis,H2OAutoML,5,0.682808,aws.docker,3.22.1.2,stable,2019-03-04T09:02:23,3657.2,7,2395652775,,0.729607,,0.682808
+openml.org/t/168330,Jannis,H2OAutoML,7,0.683332,aws.docker,3.22.1.2,stable,2019-03-04T09:02:26,3661.9,7,2395652775,,0.722441,,0.683332
+openml.org/t/168330,Jannis,H2OAutoML,6,0.683963,aws.docker,3.22.1.2,stable,2019-03-04T09:02:38,3673.0,7,2395652775,,0.722083,,0.683963
+openml.org/t/168330,Jannis,H2OAutoML,8,0.676929,aws.docker,3.22.1.2,stable,2019-03-04T09:02:55,3671.1,7,2395652775,,0.732473,,0.676929
+openml.org/t/168330,Jannis,H2OAutoML,9,0.6927,aws.docker,3.22.1.2,stable,2019-03-04T09:04:26,3649.5,7,2395652775,,0.710737,,0.6927
+openml.org/t/7592,adult,TPOT,0,0.928697,aws.docker,0.9.6,stable,2019-03-05T19:18:23,3664.4,191,3678354726,,0.872467,0.928697,
+openml.org/t/7592,adult,TPOT,1,0.924884,aws.docker,0.9.6,stable,2019-03-05T19:18:29,3650.5,191,3678354726,,0.8739,0.924884,
+openml.org/t/7592,adult,TPOT,3,0.923386,aws.docker,0.9.6,stable,2019-03-05T19:18:49,3674.7,191,3678354726,,0.866912,0.923386,
+openml.org/t/7592,adult,TPOT,2,0.928118,aws.docker,0.9.6,stable,2019-03-05T19:18:59,3684.5,191,3678354726,,0.871417,0.928118,
+openml.org/t/7592,adult,TPOT,5,0.921325,aws.docker,0.9.6,stable,2019-03-05T19:19:46,3689.1,191,3678354726,,0.869984,0.921325,
+openml.org/t/7592,adult,TPOT,4,0.924203,aws.docker,0.9.6,stable,2019-03-05T19:19:55,3717.6,191,3678354726,,0.872441,0.924203,
+openml.org/t/7592,adult,TPOT,6,0.927414,aws.docker,0.9.6,stable,2019-03-05T19:20:32,3681.3,191,3678354726,,0.869574,0.927414,
+openml.org/t/7592,adult,TPOT,7,0.92935,aws.docker,0.9.6,stable,2019-03-05T19:21:24,3675.8,191,3678354726,,0.875717,0.92935,
+openml.org/t/7592,adult,TPOT,8,0.936452,aws.docker,0.9.6,stable,2019-03-05T19:22:38,3631.9,191,3678354726,,0.882064,0.936452,
+openml.org/t/7592,adult,TPOT,9,0.931576,aws.docker,0.9.6,stable,2019-03-05T19:24:39,3653.7,191,3678354726,,0.877764,0.931576,
+openml.org/t/146195,connect-4,TPOT,2,0.348227,aws.docker,0.9.6,stable,2019-03-05T20:25:23,3801.1,104,3678354726,,0.863973,,0.348227
+openml.org/t/146195,connect-4,TPOT,0,0.364092,aws.docker,0.9.6,stable,2019-03-05T20:26:01,3866.9,104,3678354726,,0.858052,,0.364092
+openml.org/t/146195,connect-4,TPOT,7,0.368335,aws.docker,0.9.6,stable,2019-03-05T20:27:25,3763.1,96,3678354726,,0.858031,,0.368335
+openml.org/t/146195,connect-4,TPOT,1,0.373144,aws.docker,0.9.6,stable,2019-03-05T20:28:50,4026.4,104,3678354726,,0.850059,,0.373144
+openml.org/t/9977,nomao,TPOT,0,0.995574,aws.docker,0.9.6,stable,2019-03-05T20:29:26,3688.2,104,3678354726,,0.97389,0.995574,
+openml.org/t/146195,connect-4,TPOT,3,0.373525,aws.docker,0.9.6,stable,2019-03-05T20:29:31,4034.0,104,3678354726,,0.85672,,0.373525
+openml.org/t/146195,connect-4,TPOT,5,0.377076,aws.docker,0.9.6,stable,2019-03-05T20:30:15,4023.9,104,3678354726,,0.850503,,0.377076
+openml.org/t/146195,connect-4,TPOT,4,0.368919,aws.docker,0.9.6,stable,2019-03-05T20:31:00,4078.6,104,3678354726,,0.856572,,0.368919
+openml.org/t/146195,connect-4,TPOT,8,0.373494,aws.docker,0.9.6,stable,2019-03-05T20:32:52,4026.8,104,3678354726,,0.851221,,0.373494
+openml.org/t/146195,connect-4,TPOT,9,0.371943,aws.docker,0.9.6,stable,2019-03-05T20:35:02,4067.1,104,3678354726,,0.85507,,0.371943
+openml.org/t/9977,nomao,TPOT,1,0.995564,aws.docker,0.9.6,stable,2019-03-05T21:29:21,3647.3,104,3678354726,,0.971279,0.995564,
+openml.org/t/9977,nomao,TPOT,2,0.994106,aws.docker,0.9.6,stable,2019-03-05T21:31:27,3730.8,104,3678354726,,0.970989,0.994106,
+openml.org/t/9977,nomao,TPOT,3,0.997099,aws.docker,0.9.6,stable,2019-03-05T21:32:28,3710.4,104,3678354726,,0.975051,0.997099,
+openml.org/t/9977,nomao,TPOT,4,0.995345,aws.docker,0.9.6,stable,2019-03-05T21:33:50,3702.4,104,3678354726,,0.970409,0.995345,
+openml.org/t/9977,nomao,TPOT,5,0.995314,aws.docker,0.9.6,stable,2019-03-05T21:34:16,3695.5,104,3678354726,,0.970981,0.995314,
+openml.org/t/9977,nomao,TPOT,7,0.995881,aws.docker,0.9.6,stable,2019-03-05T21:34:42,3671.1,104,3678354726,,0.974463,0.995881,
+openml.org/t/9977,nomao,TPOT,6,0.995047,aws.docker,0.9.6,stable,2019-03-05T21:35:16,3742.5,104,3678354726,,0.971561,0.995047,
+openml.org/t/9977,nomao,TPOT,8,0.994498,aws.docker,0.9.6,stable,2019-03-05T21:36:16,3724.4,104,3678354726,,0.971271,0.994498,
+openml.org/t/9977,nomao,TPOT,9,0.99545,aws.docker,0.9.6,stable,2019-03-05T21:38:05,3711.1,104,3678354726,,0.971851,0.99545,
+openml.org/t/7592,adult,oboe,0,,aws.docker,latest,stable,2019-03-06T20:47:31,3609.0,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,1,,aws.docker,latest,stable,2019-03-06T20:47:55,3608.9,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,2,,aws.docker,latest,stable,2019-03-06T20:49:18,3608.8,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,3,,aws.docker,latest,stable,2019-03-06T20:49:32,3609.1,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,5,,aws.docker,latest,stable,2019-03-06T20:50:20,3609.1,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,4,,aws.docker,latest,stable,2019-03-06T20:50:15,3609.0,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,6,,aws.docker,latest,stable,2019-03-06T20:51:54,3608.8,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,7,,aws.docker,latest,stable,2019-03-06T20:52:52,3609.1,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,8,,aws.docker,latest,stable,2019-03-06T20:53:23,3608.8,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,oboe,9,,aws.docker,latest,stable,2019-03-06T21:07:29,3608.8,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,0,,aws.docker,latest,stable,2019-03-06T21:50:50,3615.7,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,1,,aws.docker,latest,stable,2019-03-06T21:51:14,3614.7,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,2,,aws.docker,latest,stable,2019-03-06T21:52:27,3614.8,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,3,,aws.docker,latest,stable,2019-03-06T21:52:42,3614.8,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,4,,aws.docker,latest,stable,2019-03-06T21:53:30,3614.7,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,5,,aws.docker,latest,stable,2019-03-06T21:53:36,3614.9,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,6,,aws.docker,latest,stable,2019-03-06T21:54:54,3615.2,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,7,,aws.docker,latest,stable,2019-03-06T21:56:02,3614.7,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,8,,aws.docker,latest,stable,2019-03-06T21:56:42,3614.9,,1645502809,Error: list index out of range,,,
+openml.org/t/146195,connect-4,oboe,9,,aws.docker,latest,stable,2019-03-06T22:10:54,3614.6,,1645502809,Error: list index out of range,,,
+openml.org/t/9977,nomao,oboe,0,0.960687,aws.docker,latest,stable,2019-03-06T22:35:41,2489.6,2,1645502809,,0.966057,0.960687,
+openml.org/t/9977,nomao,oboe,1,0.9602,aws.docker,latest,stable,2019-03-06T22:36:08,2494.6,2,1645502809,,0.964897,0.9602,
+openml.org/t/9977,nomao,oboe,3,0.971266,aws.docker,latest,stable,2019-03-06T22:36:51,2459.3,2,1645502809,,0.97244,0.971266,
+openml.org/t/9977,nomao,oboe,2,0.953601,aws.docker,latest,stable,2019-03-06T22:37:47,2526.0,2,1645502809,,0.959385,0.953601,
+openml.org/t/9977,nomao,oboe,5,0.957327,aws.docker,latest,stable,2019-03-06T22:38:23,2477.7,2,1645502809,,0.965177,0.957327,
+openml.org/t/9977,nomao,oboe,4,0.962536,aws.docker,latest,stable,2019-03-06T22:40:25,2615.7,2,1645502809,,0.967798,0.962536,
+openml.org/t/9977,nomao,oboe,6,0.964442,aws.docker,latest,stable,2019-03-06T22:41:15,2576.8,2,1645502809,,0.968369,0.964442,
+openml.org/t/9977,nomao,oboe,8,0.965864,aws.docker,latest,stable,2019-03-06T22:41:30,2483.5,2,1645502809,,0.96953,0.965864,
+openml.org/t/9977,nomao,oboe,7,0.965659,aws.docker,latest,stable,2019-03-06T22:43:04,2612.2,2,1645502809,,0.970981,0.965659,
+openml.org/t/9977,nomao,oboe,9,0.957528,aws.docker,latest,stable,2019-03-06T22:56:05,2506.0,2,1645502809,,0.967208,0.957528,
+openml.org/t/168330,Jannis,oboe,0,,aws.docker,latest,stable,2019-03-06T23:39:07,3633.2,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,1,,aws.docker,latest,stable,2019-03-06T23:39:26,3633.1,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,2,,aws.docker,latest,stable,2019-03-06T23:40:23,3633.0,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,3,,aws.docker,latest,stable,2019-03-06T23:41:29,3632.4,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,4,,aws.docker,latest,stable,2019-03-06T23:41:57,3632.8,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,5,,aws.docker,latest,stable,2019-03-06T23:44:05,3632.6,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,6,,aws.docker,latest,stable,2019-03-06T23:44:42,3632.7,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,7,,aws.docker,latest,stable,2019-03-06T23:45:06,3632.7,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,8,,aws.docker,latest,stable,2019-03-06T23:46:27,3632.4,,1645502809,Error: list index out of range,,,
+openml.org/t/168330,Jannis,oboe,9,,aws.docker,latest,stable,2019-03-06T23:59:28,3632.9,,1645502809,Error: list index out of range,,,
+openml.org/t/7592,adult,AutoWEKA,2,0.90834,aws.docker,2.6,stable,2019-03-08T10:21:47,3230.0,,2670811960,,0.860565,0.90834,
+openml.org/t/7592,adult,AutoWEKA,3,0.907466,aws.docker,2.6,stable,2019-03-08T10:23:21,3320.3,,2670811960,,0.857903,0.907466,
+openml.org/t/7592,adult,AutoWEKA,1,0.905649,aws.docker,2.6,stable,2019-03-08T10:23:42,3348.9,,2670811960,,0.864893,0.905649,
+openml.org/t/7592,adult,AutoWEKA,8,0.918586,aws.docker,2.6,stable,2019-03-08T10:24:55,3387.6,,2670811960,,0.864865,0.918586,
+openml.org/t/7592,adult,AutoWEKA,6,0.90598,aws.docker,2.6,stable,2019-03-08T10:24:52,3398.6,,2670811960,,0.855446,0.90598,
+openml.org/t/7592,adult,AutoWEKA,5,0.901477,aws.docker,2.6,stable,2019-03-08T10:24:55,3405.5,,2670811960,,0.856675,0.901477,
+openml.org/t/7592,adult,AutoWEKA,0,0.90609,aws.docker,2.6,stable,2019-03-08T10:25:03,3434.3,,2670811960,,0.857932,0.90609,
+openml.org/t/7592,adult,AutoWEKA,4,0.904368,aws.docker,2.6,stable,2019-03-08T10:25:27,3441.8,,2670811960,,0.858518,0.904368,
+openml.org/t/7592,adult,AutoWEKA,7,0.926599,aws.docker,2.6,stable,2019-03-08T10:26:12,3466.0,,2670811960,,0.872441,0.926599,
+openml.org/t/7592,adult,AutoWEKA,9,0.91389,aws.docker,2.6,stable,2019-03-08T10:26:14,3466.6,,2670811960,,0.862408,0.91389,
+openml.org/t/146195,connect-4,AutoWEKA,0,0.738718,aws.docker,2.6,stable,2019-03-08T11:21:13,3377.2,,2670811960,,0.710628,,0.738718
+openml.org/t/146195,connect-4,AutoWEKA,1,0.752766,aws.docker,2.6,stable,2019-03-08T11:21:12,3276.6,,2670811960,,0.708555,,0.752766
+openml.org/t/146195,connect-4,AutoWEKA,7,0.706041,aws.docker,2.6,stable,2019-03-08T11:22:02,3206.5,,2670811960,,0.711029,,0.706041
+openml.org/t/146195,connect-4,AutoWEKA,2,0.740737,aws.docker,2.6,stable,2019-03-08T11:22:07,3301.0,,2670811960,,0.701303,,0.740737
+openml.org/t/146195,connect-4,AutoWEKA,4,0.72956,aws.docker,2.6,stable,2019-03-08T11:22:44,3267.6,,2670811960,,0.706187,,0.72956
+openml.org/t/146195,connect-4,AutoWEKA,5,0.742285,aws.docker,2.6,stable,2019-03-08T11:22:34,3251.4,,2670811960,,0.702635,,0.742285
+openml.org/t/146195,connect-4,AutoWEKA,6,0.759809,aws.docker,2.6,stable,2019-03-08T11:22:50,3268.7,,2670811960,,0.695826,,0.759809
+openml.org/t/146195,connect-4,AutoWEKA,9,0.735365,aws.docker,2.6,stable,2019-03-08T11:23:47,3254.1,,2670811960,,0.707624,,0.735365
+openml.org/t/146195,connect-4,AutoWEKA,3,0.734827,aws.docker,2.6,stable,2019-03-08T11:25:11,3428.1,,2670811960,,0.705595,,0.734827
+openml.org/t/146195,connect-4,AutoWEKA,8,0.759958,aws.docker,2.6,stable,2019-03-08T11:26:25,3404.5,,2670811960,,0.695633,,0.759958
+openml.org/t/168330,Jannis,AutoWEKA,4,10.2761,aws.docker,2.6,stable,2019-03-08T13:17:10,3317.2,,2670811960,,0.587961,,10.2761
+openml.org/t/168330,Jannis,AutoWEKA,2,11.4961,aws.docker,2.6,stable,2019-03-08T13:18:18,3448.7,,2670811960,,0.58813,,11.4961
+openml.org/t/168330,Jannis,AutoWEKA,3,2.07148,aws.docker,2.6,stable,2019-03-08T13:19:18,3476.5,,2670811960,,0.658545,,2.07148
+openml.org/t/168330,Jannis,AutoWEKA,0,2.12521,aws.docker,2.6,stable,2019-03-08T13:19:30,3606.7,,2670811960,,0.646167,,2.12521
+openml.org/t/168330,Jannis,AutoWEKA,1,2.16863,aws.docker,2.6,stable,2019-03-08T13:20:15,3581.7,,2670811960,,0.652854,,2.16863
+openml.org/t/168330,Jannis,AutoWEKA,5,2.17762,aws.docker,2.6,stable,2019-03-08T13:20:35,3512.8,,2670811960,,0.652693,,2.17762
+openml.org/t/168330,Jannis,AutoWEKA,6,10.3803,aws.docker,2.6,stable,2019-03-08T13:20:59,3510.2,,2670811960,,0.582587,,10.3803
+openml.org/t/168330,Jannis,AutoWEKA,7,2.08171,aws.docker,2.6,stable,2019-03-08T13:21:01,3480.5,,2670811960,,0.651021,,2.08171
+openml.org/t/168330,Jannis,AutoWEKA,8,2.28243,aws.docker,2.6,stable,2019-03-08T13:23:29,3522.4,,2670811960,,0.650782,,2.28243
+openml.org/t/168330,Jannis,AutoWEKA,9,2.15444,aws.docker,2.6,stable,2019-03-08T13:27:57,3549.2,,2670811960,,0.648035,,2.15444
+openml.org/t/9977,nomao,AutoWEKA,9,0.980003,aws.docker,2.6,stable,2019-03-08T23:12:58,3257.3,,854216257,,0.952409,0.980003,
+openml.org/t/9977,nomao,AutoWEKA,5,0.977673,aws.docker,2.6,stable,2019-03-08T23:14:47,3384.8,,854216257,,0.943993,0.977673,
+openml.org/t/9977,nomao,AutoWEKA,7,0.981662,aws.docker,2.6,stable,2019-03-08T23:15:37,3422.9,,854216257,,0.95415,0.981662,
+openml.org/t/9977,nomao,AutoWEKA,6,0.978579,aws.docker,2.6,stable,2019-03-08T23:15:55,3450.3,,854216257,,0.945734,0.978579,
+openml.org/t/9977,nomao,AutoWEKA,3,0.983885,aws.docker,2.6,stable,2019-03-08T23:16:09,3477.6,,854216257,,0.956774,0.983885,
+openml.org/t/9977,nomao,AutoWEKA,4,0.995363,aws.docker,2.6,stable,2019-03-08T23:18:06,3592.9,,854216257,,0.970119,0.995363,
+openml.org/t/9977,nomao,AutoWEKA,0,0.993872,aws.docker,2.6,stable,2019-03-08T23:18:35,3641.1,,854216257,,0.970989,0.993872,
+openml.org/t/9977,nomao,AutoWEKA,2,0.994312,aws.docker,2.6,stable,2019-03-08T23:18:35,3630.8,,854216257,,0.965767,0.994312,
+openml.org/t/9977,nomao,AutoWEKA,1,0.994783,aws.docker,2.6,stable,2019-03-08T23:19:20,3681.2,,854216257,,0.969829,0.994783,
+openml.org/t/9977,nomao,AutoWEKA,8,0.9948,aws.docker,2.6,stable,2019-03-08T23:20:21,3705.4,,854216257,,0.97011,0.9948,
+openml.org/t/168329,Helena,H2OAutoML,1,6.23317,aws.docker,3.22.1.2,stable,2019-03-09T03:08:06,3603.5,1,761085309,,0.366258,,6.23317
+openml.org/t/168329,Helena,H2OAutoML,2,6.28292,aws.docker,3.22.1.2,stable,2019-03-09T03:08:09,3606.2,1,761085309,,0.354294,,6.28292
+openml.org/t/168329,Helena,H2OAutoML,0,6.25545,aws.docker,3.22.1.2,stable,2019-03-09T03:08:08,3605.6,1,761085309,,0.36181,,6.25545
+openml.org/t/168329,Helena,H2OAutoML,4,5.98102,aws.docker,3.22.1.2,stable,2019-03-09T03:08:24,3609.6,1,761085309,,0.362117,,5.98102
+openml.org/t/168329,Helena,H2OAutoML,6,6.10423,aws.docker,3.22.1.2,stable,2019-03-09T03:08:34,3608.3,1,761085309,,0.356957,,6.10423
+openml.org/t/168329,Helena,H2OAutoML,3,6.12236,aws.docker,3.22.1.2,stable,2019-03-09T03:08:18,3613.5,1,761085309,,0.358282,,6.12236
+openml.org/t/168329,Helena,H2OAutoML,7,6.36709,aws.docker,3.22.1.2,stable,2019-03-09T03:08:29,3605.8,1,761085309,,0.351127,,6.36709
+openml.org/t/168329,Helena,H2OAutoML,5,6.00712,aws.docker,3.22.1.2,stable,2019-03-09T03:08:29,3609.9,1,761085309,,0.36089,,6.00712
+openml.org/t/168329,Helena,H2OAutoML,8,6.14748,aws.docker,3.22.1.2,stable,2019-03-09T03:08:37,3610.9,1,761085309,,0.361712,,6.14748
+openml.org/t/168329,Helena,H2OAutoML,9,6.14197,aws.docker,3.22.1.2,stable,2019-03-09T03:08:50,3612.4,1,761085309,,0.361252,,6.14197
+openml.org/t/168329,Helena,oboe,1,,aws.docker,latest,stable,2019-03-09T04:12:15,3616.5,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,0,,aws.docker,latest,stable,2019-03-09T04:12:14,3617.0,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,2,,aws.docker,latest,stable,2019-03-09T04:12:21,3616.3,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,3,,aws.docker,latest,stable,2019-03-09T04:12:33,3616.6,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,4,,aws.docker,latest,stable,2019-03-09T04:12:29,3616.2,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,7,,aws.docker,latest,stable,2019-03-09T04:12:48,3616.5,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,6,,aws.docker,latest,stable,2019-03-09T04:12:41,3616.6,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,5,,aws.docker,latest,stable,2019-03-09T04:12:37,3617.4,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,8,,aws.docker,latest,stable,2019-03-09T04:12:53,3616.6,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,oboe,9,,aws.docker,latest,stable,2019-03-09T04:12:56,3617.5,,2304675818,Error: list index out of range,,,
+openml.org/t/168329,Helena,AutoWEKA,4,16.3567,aws.docker,2.6,stable,2019-03-09T11:45:02,3422.0,,1938957035,,0.282515,,16.3567
+openml.org/t/168329,Helena,AutoWEKA,9,16.5114,aws.docker,2.6,stable,2019-03-09T11:47:24,3538.7,,1938957035,,0.27857,,16.5114
+openml.org/t/168329,Helena,AutoWEKA,1,16.6903,aws.docker,2.6,stable,2019-03-09T11:54:26,4001.6,,1938957035,,0.273006,,16.6903
+openml.org/t/168329,Helena,AutoWEKA,3,16.7556,aws.docker,2.6,stable,2019-03-09T11:55:07,4028.6,,1938957035,,0.270399,,16.7556
+openml.org/t/168329,Helena,AutoWEKA,5,16.8639,aws.docker,2.6,stable,2019-03-09T11:55:14,4028.7,,1938957035,,0.276534,,16.8639
+openml.org/t/168329,Helena,AutoWEKA,7,16.8846,aws.docker,2.6,stable,2019-03-09T11:55:24,4029.5,,1938957035,,0.267372,,16.8846
+openml.org/t/168329,Helena,AutoWEKA,2,16.9784,aws.docker,2.6,stable,2019-03-09T11:56:42,4131.9,,1938957035,,0.269785,,16.9784
+openml.org/t/168329,Helena,AutoWEKA,6,16.7159,aws.docker,2.6,stable,2019-03-09T11:57:31,4161.9,,1938957035,,0.270287,,16.7159
+openml.org/t/168329,Helena,AutoWEKA,0,16.6219,aws.docker,2.6,stable,2019-03-09T11:58:05,4225.1,,1938957035,,0.27316,,16.6219
+openml.org/t/168329,Helena,AutoWEKA,8,,aws.docker,2.6,stable,2019-03-09T11:58:09,4206.8,,1938957035,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Helena_8.weka_pred.csv',,,
+openml.org/t/168330,Jannis,TPOT,0,0.747973,aws.docker,0.9.6,stable,2019-03-12T00:53:02,3670.5,72,1110989978,,0.690829,,0.747973
+openml.org/t/168330,Jannis,TPOT,1,0.74567,aws.docker,0.9.6,stable,2019-03-12T00:54:17,3718.5,72,1110989978,,0.703487,,0.74567
+openml.org/t/168330,Jannis,TPOT,2,0.74374,aws.docker,0.9.6,stable,2019-03-12T00:54:29,3711.6,72,1110989978,,0.697994,,0.74374
+openml.org/t/168330,Jannis,TPOT,3,0.740583,aws.docker,0.9.6,stable,2019-03-12T00:55:31,3692.9,72,1110989978,,0.694972,,0.740583
+openml.org/t/168330,Jannis,TPOT,6,0.752701,aws.docker,0.9.6,stable,2019-03-12T00:56:51,3654.2,72,1110989978,,0.689717,,0.752701
+openml.org/t/168330,Jannis,TPOT,5,0.747867,aws.docker,0.9.6,stable,2019-03-12T00:56:52,3661.5,72,1110989978,,0.697122,,0.747867
+openml.org/t/168330,Jannis,TPOT,4,0.748101,aws.docker,0.9.6,stable,2019-03-12T00:57:02,3723.4,72,1110989978,,0.697719,,0.748101
+openml.org/t/168330,Jannis,TPOT,7,0.750171,aws.docker,0.9.6,stable,2019-03-12T00:57:36,3680.5,72,1110989978,,0.693897,,0.750171
+openml.org/t/168330,Jannis,TPOT,8,0.744388,aws.docker,0.9.6,stable,2019-03-12T00:58:02,3680.6,72,1110989978,,0.69963,,0.744388
+openml.org/t/168330,Jannis,TPOT,9,0.755411,aws.docker,0.9.6,stable,2019-03-12T00:58:57,3734.2,72,1110989978,,0.687328,,0.755411
