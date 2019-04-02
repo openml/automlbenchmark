@@ -154,7 +154,14 @@ class Resources:
 
         log.info("Loading benchmark definitions from %s.", benchmark_file)
         tasks = config_load(benchmark_file)
+        try:
+            defaults = next(task for task in tasks if task.name == '__defaults__')
+            tasks = [task for task in tasks if task is not defaults]
+        except StopIteration:
+            defaults = None
+
         for task in tasks:
+            task % defaults   # add missing keys from local defaults
             self._validate_task(task)
         log.debug("Using benchmark definition:\n%s", tasks)
         return tasks, benchmark_name, benchmark_file
@@ -217,19 +224,21 @@ class Resources:
 
         conf = 'ec2_instance_type'
         if task[conf] is None:
-            imap = self.config.aws.ec2.instance_type_map
-            if str(task.cores) in imap:
-                task[conf] = imap[str(task.cores)]
+            i_series = self.config.aws.ec2.instance_type.series
+            i_map = self.config.aws.ec2.instance_type.map
+            if str(task.cores) in i_map:
+                i_size = i_map[str(task.cores)]
             elif task.cores > 0:
-                supported_cores = list(map(int, Namespace.dict(imap).keys() - {'default'}))
+                supported_cores = list(map(int, Namespace.dict(i_map).keys() - {'default'}))
                 supported_cores.sort()
                 try:
                     cores = next(c for c in supported_cores if c >= task.cores)
                 except StopIteration:
                     cores = 'default'
-                task[conf] = imap[str(cores)]
+                i_size = i_map[str(cores)]
             else:
-                task[conf] = imap.default
+                i_size = i_map.default
+            task[conf] = '.'.join([i_series, i_size])
             log.debug("Config `{config}` not set for task {name}, using default selection `{value}`.".format(config=conf, name=task.name, value=task[conf]))
 
         conf = 'ec2_volume_type'

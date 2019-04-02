@@ -83,12 +83,15 @@ aws:
                                     #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
                                     #               (don't forget to delete the instance UserData before restarting it).
                                     # if `never`, the instances are only stopped.
-    instance_type_map:      # map between num cores required and ec2 instance types
-      default: m5.large
-      '2': m5.large
-      '4': m5.xlarge
-      '8': m5.2xlarge
-      '16': m5.4xlarge
+    instance_type:
+      series: m5
+      map:      # map between num cores required and ec2 instance type sizes
+        default: large
+        '1': small
+        '2': large
+        '4': xlarge
+        '8': 2xlarge
+        '16': 4xlarge
     root_device_name: '/dev/sda1'
     volume_type: standard         # one of gp2, io1, st1, sc1, or standard (default)
     subnet_id: ''

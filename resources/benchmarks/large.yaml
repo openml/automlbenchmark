@@ -1,21 +1,20 @@
 ---
 # all tasks listed here have a training set > 400k  instances and were trained on ?????
 
+- name: __defaults__
+  folds: 10
+  max_runtime_seconds: 28800
+  cores: 8
+
 - name: Albert
   openml_task_id: 41147
   metric:
     - auc
     - acc
-  folds: 10
-#  max_runtime_seconds: 14400
-#  cores: 8
 
 - name: Dionis
   openml_task_id: 41167
   metric:
     - logloss
     - acc
-  folds: 10
-#  max_runtime_seconds: 14400
-#  cores: 8
 

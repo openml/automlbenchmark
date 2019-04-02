@@ -175,7 +175,7 @@ class AWSBenchmark(Benchmark):
             type=task_def.ec2_instance_type,
             volume_type=task_def.ec2_volume_type,
         ) if task_def else ns(
-            type=rconfig().aws.ec2.instance_type_map.default,
+            type='.'.join([rconfig().aws.ec2.instance_type.series, rconfig().aws.ec2.instance_type.map.default]),
             volume_type=rconfig().aws.ec2.volume_type,
         )
         if task_def.min_vol_size_mb > 0:
