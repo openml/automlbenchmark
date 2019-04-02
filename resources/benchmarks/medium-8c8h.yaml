@@ -6,6 +6,7 @@
   max_runtime_seconds: 28800
   cores: 8
   min_vol_size_mb: 16384
+  ec2_instance_type: c5.2xlarge
 
 - name: adult
   openml_task_id: 7592
@@ -102,14 +103,12 @@
   metric:
     - auc
     - acc
-  min_vol_size_mb: 16384
 
 - name: Robert
   openml_task_id: 168332
   metric:
     - logloss
     - acc
-  min_vol_size_mb: 16384
 
 - name: Shuttle
   openml_task_id: 146212
