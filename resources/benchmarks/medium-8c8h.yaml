@@ -1,5 +1,5 @@
 ---
-# all tasks listed here have a training set > 50k and < 150k instances and were trained on 8 cores for 4h
+# all tasks listed here have a training set > 50k and < 150k instances and were trained on 8 cores for 8h
 
 - name: __defaults__
   folds: 10
