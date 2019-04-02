@@ -12,17 +12,17 @@ h2oautoml
 oboe
 tpot
 autoweka
-hyperoptsklearn
+#autoxgboost
+#hyperoptsklearn
 #ranger
 )
 
 BENCHMARKS=(
 #test
-validation
-chalearn
-small
-medium-1
-medium-2
+#validation
+small-2c1h
+#medium-4c1h
+medium-8c8h
 )
 
 MODE=(

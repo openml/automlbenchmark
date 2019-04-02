@@ -146,12 +146,12 @@ class Benchmark:
     def _benchmark_tasks(self):
         return [task_def for task_def in self.benchmark_def if Benchmark._is_task_enabled(task_def)]
 
-    def _get_task_def(self, task_name):
+    def _get_task_def(self, task_name, include_disabled=False):
         try:
             task_def = next(task for task in self.benchmark_def if task.name == task_name)
         except StopIteration:
             raise ValueError("Incorrect task name: {}.".format(task_name))
-        if not Benchmark._is_task_enabled(task_def):
+        if not include_disabled and not Benchmark._is_task_enabled(task_def):
             raise ValueError("Task {} is disabled, please enable it first.".format(task_name))
         return task_def
 

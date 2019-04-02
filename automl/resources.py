@@ -163,6 +163,10 @@ class Resources:
         for task in tasks:
             task % defaults   # add missing keys from local defaults
             self._validate_task(task)
+
+        self._validate_task(defaults, lenient=True)
+        defaults.enabled = False
+        tasks.append(defaults)
         log.debug("Using benchmark definition:\n%s", tasks)
         return tasks, benchmark_name, benchmark_file
 
@@ -202,12 +206,12 @@ class Resources:
         if framework.docker_image.tag is None:
             framework.docker_image.tag = framework.version.lower()
 
-    def _validate_task(self, task):
+    def _validate_task(self, task, lenient=False):
         missing = []
         for conf in ['name', 'openml_task_id', 'metric']:
             if task[conf] is None:
                 missing.append(conf)
-        if len(missing) > 0:
+        if not lenient and len(missing) > 0:
             raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}.".format(missing=missing, taskdef=task))
 
         for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'min_vol_size_mb']:
