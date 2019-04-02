@@ -178,7 +178,7 @@ class AWSBenchmark(Benchmark):
             type='.'.join([rconfig().aws.ec2.instance_type.series, rconfig().aws.ec2.instance_type.map.default]),
             volume_type=rconfig().aws.ec2.volume_type,
         )
-        if task_def.min_vol_size_mb > 0:
+        if task_def and task_def.min_vol_size_mb > 0:
             instance_def.volume_size = math.ceil((task_def.min_vol_size_mb + rconfig().benchmarks.os_vol_size_mb) / 1024.)
         else:
             instance_def.volume_size = None
