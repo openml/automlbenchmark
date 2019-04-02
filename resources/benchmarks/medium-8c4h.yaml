@@ -43,7 +43,7 @@
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 8
 
 - name: Fashion-MNIST
@@ -54,7 +54,7 @@
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: guiellermo
   openml_task_id: 168337
@@ -64,7 +64,7 @@
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: Helena
   openml_task_id: 168329
@@ -72,9 +72,9 @@
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: higgs
   openml_task_id: 146606
@@ -91,9 +91,9 @@
     - logloss
     - acc
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: jungle_chess_2pcs_raw_endgame_complete
   openml_task_id: 167119
@@ -121,7 +121,7 @@
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: nomao
   openml_task_id: 9977
@@ -149,7 +149,7 @@
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: Robert
   openml_task_id: 168332
@@ -159,7 +159,7 @@
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
 - name: Shuttle
   openml_task_id: 146212
@@ -178,5 +178,5 @@
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 24576
+  min_vol_size_mb: 16384
 
