@@ -44,7 +44,7 @@ TunedRandomForest:
 
 ### AutoML frameworks
 autosklearn:
-  version: '0.5.0'
+  version: '0.5.1'
   project: https://automl.github.io/auto-sklearn/stable/
 
 AutoWEKA:

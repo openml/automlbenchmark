@@ -1,1 +1,1 @@
-auto-sklearn==0.5.0
+auto-sklearn==0.5.1

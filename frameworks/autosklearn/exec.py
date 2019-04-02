@@ -6,8 +6,9 @@ import autosklearn.metrics as metrics
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
+from automl.datautils import write_csv
 from automl.results import save_predictions_to_file
-from automl.utils import Timer
+from automl.utils import Timer, path_from_split, split_path
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +56,13 @@ def run(dataset: Dataset, config: TaskConfig):
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
 
-    log.debug("Trained Ensemble:\n%s", auto_sklearn.show_models())
+    models_repr = auto_sklearn.show_models()
+    log.debug("Trained Ensemble:\n%s", models_repr)
+    models_file = split_path(config.output_predictions_file)
+    models_file.extension = '.models.txt'
+    models_file = path_from_split(models_file)
+    with open(models_file, 'w') as f:
+        f.write(models_repr)
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
