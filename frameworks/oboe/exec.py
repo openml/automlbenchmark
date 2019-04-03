@@ -7,7 +7,7 @@ from automl.datautils import Encoder, impute, to_data_frame
 from automl.results import save_predictions_to_file
 from automl.utils import Timer, dir_of
 
-sys.path.append("{}/libs/oboe/automl".format(dir_of(__file__)))
+sys.path.append("{}/lib/oboe/automl".format(dir_of(__file__)))
 from auto_learner import AutoLearner
 
 log = logging.getLogger(__name__)

@@ -36,7 +36,7 @@ def run(dataset: Dataset, config: TaskConfig):
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
     weka_file = path_from_split(f)
-    cmd_root = "java -cp {here}/libs/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier ".format(here=dir_of(__file__))
+    cmd_root = "java -cp {here}/lib/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier ".format(here=dir_of(__file__))
     cmd_params = dict(
         t=train_file,
         T=test_file,
