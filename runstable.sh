@@ -67,14 +67,14 @@ done
 
 if [[ -z $parallel ]]; then
     if [[ $mode == "aws" ]]; then
-        parallel=10
+        parallel=40
     else
         parallel=1
     fi
 fi
 
-#extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15"
-extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=15 -Xaws.use_docker=True"
+#extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40"
+extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=True"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 
