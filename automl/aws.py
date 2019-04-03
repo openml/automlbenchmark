@@ -243,15 +243,23 @@ class AWSBenchmark(Benchmark):
                 log.exception(e)
 
         while True:
-            state = instance.state['Name']
-            log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, state)
-            log_console()
-            self._update_instance(job.instance_id, status=state)
+            exit_loop = False
+            try:
+                state = instance.state['Name']
+                log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, state)
+                log_console()
+                self._update_instance(job.instance_id, status=state)
 
-            if instance.state['Code'] > 16:     # ended instance
-                log.info("EC2 instance %s is %s.", job.instance_id, state)
-                break
-            time.sleep(rconfig().aws.query_frequency_seconds)
+                if instance.state['Code'] > 16:     # ended instance
+                    log.info("EC2 instance %s is %s.", job.instance_id, state)
+                    exit_loop = True
+            except Exception as e:
+                log.exception(e)
+            finally:
+                if exit_loop:
+                    break
+                time.sleep(rconfig().aws.query_frequency_seconds)
+
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)
