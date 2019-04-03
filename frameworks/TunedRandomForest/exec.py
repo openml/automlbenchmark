@@ -25,13 +25,17 @@ log = logging.getLogger(__name__)
 def pick_values_uniform(start: int, end: int, length: int):
     d = (end - start) / (length - 1)
     uniform_floats = [start + i * d for i in range(length)]
-    return list(set([int(f) for f in uniform_floats]))
+    return sorted(set([int(f) for f in uniform_floats]))
 
 
 def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** Tuned Random Forest (sklearn) ****\n")
 
     is_classification = config.type == 'classification'
+
+    tuning_params = (config.framework_params['tuning'] if 'tuning' in config.framework_params
+                     else config.framework_params)
+    training_params = {k: v for k, v in config.framework_params.items() if k != 'tuning'}
 
     # Impute any missing data (can test using -t 146606)
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
@@ -45,18 +49,19 @@ def run(dataset: Dataset, config: TaskConfig):
 
     n_features = X_train.shape[1]
     default_value = max(1, int(math.sqrt(n_features)))
-    below_default = pick_values_uniform(start=1, end=default_value, length=6)[1:-1]
-    above_default = pick_values_uniform(start=default_value, end=n_features, length=11 - len(below_default))[1:-1]
-    max_features_to_try = below_default + above_default
+    below_default = pick_values_uniform(start=1, end=default_value, length=5+1)[:-1]   # 5 below
+    above_default = pick_values_uniform(start=default_value, end=n_features, length=10+1 - len(below_default))[1:]  # 5 above
     # Mix up the order of `max_features` to try, so that a fair range is tried even if we have too little time
     # to try all possible values. Order: [sqrt(p), 1, p, random order for remaining values]
-    max_features_values = ([default_value, 1, n_features]
-                           + random.sample(max_features_to_try, k=len(max_features_to_try)))
+    # max_features_to_try = below_default[1:] + above_default[:-1]
+    # max_features_values = ([default_value, 1, n_features]
+    #                        + random.sample(max_features_to_try, k=len(max_features_to_try)))
+    max_features_values = [default_value] + below_default + above_default
     # Define up to how much of total time we spend 'optimizing' `max_features`.
     # (the remainder if used for fitting the final model).
     safety_factor = 0.85
     with stopit.ThreadingTimeout(seconds=int(config.max_runtime_seconds * safety_factor)):
-        log.info("Evaluating multiple values for `max_features`.")
+        log.info("Evaluating multiple values for `max_features`: %s.", max_features_values)
         max_feature_scores = []
         tuning_durations = []
         for i, max_features_value in enumerate(max_features_values):
@@ -66,7 +71,7 @@ def run(dataset: Dataset, config: TaskConfig):
             random_forest = estimator(n_jobs=config.cores,
                                       random_state=config.seed,
                                       max_features=max_features_value,
-                                      **config.framework_params)
+                                      **tuning_params)
             pipeline = Pipeline(steps=[
                 ('preprocessing', imputation),
                 ('learning', random_forest)
@@ -81,21 +86,21 @@ def run(dataset: Dataset, config: TaskConfig):
                     max_feature_scores.append((statistics.mean(scores), max_features_value))
                 except stopit.utils.TimeoutException as toe:
                     log.error("Failed CV scoring for max_features=%s : Timeout", max_features_value)
-                    tuning_durations.append(cv_scoring.duration)
+                    tuning_durations.append((max_features_value, cv_scoring.duration))
                     raise toe
                 except Exception as e:
                     log.error("Failed CV scoring for max_features=%s :\n%s", max_features_value, e)
                     log.debug("Exception:", exc_info=True)
-            tuning_durations.append(cv_scoring.duration)
+            tuning_durations.append((max_features_value, cv_scoring.duration))
 
-    log.info("Tuning scores:\n%s", max_feature_scores)
-    log.info("Tuning durations:\n%s", tuning_durations)
+    log.info("Tuning scores:\n%s", sorted(max_feature_scores))
+    log.info("Tuning durations:\n%s", sorted(tuning_durations))
     _, best_max_features_value = max(max_feature_scores) if len(max_feature_scores) > 0 else (math.nan, 'auto')
     log.info("Training final model with `max_features={}`.".format(best_max_features_value))
     rf = estimator(n_jobs=config.cores,
                    random_state=config.seed,
                    max_features=best_max_features_value,
-                   **config.framework_params)
+                   **training_params)
     with Timer() as training:
         rf.fit(X_train, y_train)
 
@@ -111,5 +116,5 @@ def run(dataset: Dataset, config: TaskConfig):
 
     return dict(
         models_count=len(rf),
-        training_duration=training.duration+sum(tuning_durations)
+        training_duration=training.duration+sum(map(lambda t: t[1], tuning_durations))
     )

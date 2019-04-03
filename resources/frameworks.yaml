@@ -40,7 +40,8 @@ TunedRandomForest:
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000
-
+#    tuning:
+#      n_estimators: 500
 
 ### AutoML frameworks
 autosklearn:
