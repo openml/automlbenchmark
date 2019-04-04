@@ -18,7 +18,8 @@ venv/
 .ipynb_checkpoints/
 lib/
 logs/
-results/
+predictions/
+scores/
 setup/
 *.log
 *.csv
