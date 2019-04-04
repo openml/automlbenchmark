@@ -1,11 +1,11 @@
 ---
-# all tasks listed here have a training set > 50k and < 150k instances and were trained on 8 cores for 8h
+# all tasks listed here have a training set > 50k and < 150k instances and were trained on 8 cores for 4h
 
 - name: __defaults__
   folds: 10
-  max_runtime_seconds: 28800
+  max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 65536
+  min_vol_size_mb: 32768
   ec2_instance_type: c5.2xlarge
 
 - name: adult

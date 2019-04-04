@@ -1,10 +1,12 @@
 ---
-# all tasks listed here have a training dataset < 10k instances, and were trained on 2 cores for 1h
+# all tasks listed here have a training dataset < 10k instances, and were trained on 8 cores for 1h
 
 - name: __defaults__
   folds: 10
   max_runtime_seconds: 3600
-  cores: 2
+  cores: 8
+  min_vol_size_mb: 16384
+  ec2_instance_type: c5.2xlarge
 
 - name: Australian
   openml_task_id: 146818
