@@ -284,7 +284,7 @@ class TaskResult:
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
-        scores.result = scores[metrics[0]]
+        scores.result = scores[metrics[0]] if len(metrics) > 0 else None
         scores.info = result.info
         log.info("Metric scores: %s", scores)
         return scores
@@ -323,6 +323,15 @@ class NoResult(Result):
 
     def evaluate(self, metric):
         return self.missing_result
+
+
+class ErrorResult(NoResult):
+
+    def __init__(self, error):
+        msg = 'Error: '+str(error)
+        max_len = rconfig().results.error_max_length
+        msg = msg if len(msg) <= max_len else (msg[:max_len - 3] + '...')
+        super().__init__(msg)
 
 
 class ClassificationResult(Result):

@@ -83,6 +83,13 @@ aws:
                                     #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
                                     #               (don't forget to delete the instance UserData before restarting it).
                                     # if `never`, the instances are only stopped.
+    monitoring:
+      cpu:
+        period_minutes: 5
+        delta_minutes: 30
+        threshold: 2
+        abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
+        query_frequency_seconds: 300
     instance_type:
       series: m5
       map:      # map between num cores required and ec2 instance type sizes
@@ -97,15 +104,12 @@ aws:
     subnet_id: ''
     regions:
       us-east-1:
-        #ami: ami-0797482d7f93b830c  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
         ami: ami-0ac019f4fcb7cb7e6
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
       us-west-1:
-        #ami: ami-0f27f14c7e0fffda9  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
         ami: ami-063aa838bd7631e0b
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
       eu-west-1:
-        #ami: ami-0615f1e34f8d36362  # legacy AMI, may not be relevant anymore, should now work with generic AMI, cf. eu-central-1.
         ami: ami-00035f41c82244dab
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
       eu-central-1:
@@ -113,8 +117,8 @@ aws:
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
 
   max_timeout_seconds: 21600
-  overhead_time_seconds: 900   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
-  query_frequency_seconds: 15
+  overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
+  query_frequency_seconds: 30
   resource_files: []    # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
                         # Those files are actually uploaded to s3 bucket (precisely to s3://{s3.bucket}/{s3.root_key}/user),
                         #  this folder being itself synchronized on each ec2 instance and used as user directory.

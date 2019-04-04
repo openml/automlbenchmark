@@ -18,7 +18,7 @@ import os
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
-from .results import NoResult, Scoreboard, TaskResult
+from .results import ErrorResult, Scoreboard, TaskResult
 from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
@@ -176,8 +176,8 @@ class Benchmark:
         return BenchmarkTask(self, task_def, fold).as_job(self.framework_module, self.framework_name)
 
     def _process_results(self, results, task_name=None):
-        scores = flatten([res.result for res in results])
-        if len(scores) == 0 or not any(scores):
+        scores = list(filter(None, flatten([res.result for res in results])))
+        if len(scores) == 0:
             return None
 
         board = Scoreboard(scores,
@@ -256,7 +256,7 @@ class TaskConfig:
         sys_mem = system_memory_mb()
         os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
         # os is already using mem, so leaving half of recommended mem
-        left_for_app_mem = int(sys_mem.available - os_recommended_mem / 2)
+        left_for_app_mem = int(sys_mem.available - os_recommended_mem)
         assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0
                              else left_for_app_mem if left_for_app_mem > 0
                              else sys_mem.available)
@@ -364,10 +364,7 @@ class BenchmarkTask:
             return results.compute_scores(framework_name, task_config.metrics, meta_result=meta_result)
         except Exception as e:
             log.exception(e)
-            msg = 'Error: '+str(e)
-            max_len = rconfig().results.error_max_length
-            msg = msg if len(msg) <= max_len else (msg[:max_len - 3] + '...')
-            return results.compute_scores(framework_name, task_config.metrics, result=NoResult(info=msg))
+            return results.compute_scores(framework_name, task_config.metrics, result=ErrorResult(e))
         finally:
             self._dataset.release()
 

@@ -14,10 +14,12 @@ necessary to run a benchmark on EC2 instances:
 - properly cleans up AWS resources (S3, EC2).
 """
 from concurrent.futures import ThreadPoolExecutor
+import datetime as dt
 import io
 import json
 import logging
 import math
+import operator as op
 import os
 import queue
 import re
@@ -33,7 +35,7 @@ from .datautils import read_csv, write_csv
 from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
-from .results import Scoreboard
+from .results import ErrorResult, Scoreboard, TaskResult
 from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, normalize_path, str_def, str2bool, tail, touch
 
 
@@ -68,12 +70,14 @@ class AWSBenchmark(Benchmark):
         :param parallel_jobs:
         :param region:
         """
+        raise Exception('disabled')
         super().__init__(framework_name, benchmark_name, parallel_jobs)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
         self.region = region if region \
             else rconfig().aws.region if rconfig().aws['region'] \
             else boto3.session.Session().region_name
         self.ami = rconfig().aws.ec2.regions[self.region].ami
+        self.cloudwatch = None
         self.ec2 = None
         self.iam = None
         self.s3 = None
@@ -83,6 +87,7 @@ class AWSBenchmark(Benchmark):
         self.instances = {}
         self.jobs = []
         self.exec = None
+        self.monitoring = None
         self._validate2()
 
     def _validate(self):
@@ -113,10 +118,12 @@ class AWSBenchmark(Benchmark):
         self.instance_profile = self._create_instance_profile()
 
         # EC2 setup to prepare creation of ec2 instances
-        self.ec2 = boto3.resource("ec2", region_name=self.region)
+        self.ec2 = boto3.resource('ec2', region_name=self.region)
+        self.cloudwatch = boto3.resource('cloudwatch', region_name=self.region)
 
     def cleanup(self):
         self._stop_all_instances()
+        self._monitoring_stop()
         self._exec_stop()
         if rconfig().aws.s3.delete_resources is True:
             self._delete_resources()
@@ -127,6 +134,7 @@ class AWSBenchmark(Benchmark):
 
     def run(self, task_name=None, fold=None):
         self._exec_start()
+        self._monitoring_start()
         if self.parallel_jobs > 1 or not rconfig().aws.minimize_instances:
             # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
             #   than having a job per task. This depends on job duration especially
@@ -210,7 +218,13 @@ class AWSBenchmark(Benchmark):
                 instance_key=job.name,
                 timeout_secs=timeout_secs
             )
-            return self._wait_for_results(job_self)
+            try:
+                return self._wait_for_results(job_self)
+            except Exception as e:
+                fold = int(folds[0]) if len(folds) > 0 else -1
+                results = TaskResult(task_def=task_def, fold=fold)
+                return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
+
 
         def _on_done(job_self):
             terminate = self._download_results(job_self.instance_id)
@@ -244,6 +258,11 @@ class AWSBenchmark(Benchmark):
 
         while True:
             exit_loop = False
+            if job.instance_id in self.instances:
+                inst_desc = self.instances[job.instance_id]
+                if inst_desc['abort']:
+                    self._update_instance(job.instance_id, status='aborted')
+                    raise Exception("Aborting instance {} for job {}.".format(job.instance_id, job.name))
             try:
                 state = instance.state['Name']
                 log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, state)
@@ -251,7 +270,7 @@ class AWSBenchmark(Benchmark):
                 self._update_instance(job.instance_id, status=state)
 
                 if instance.state['Code'] > 16:     # ended instance
-                    log.info("EC2 instance %s is %s.", job.instance_id, state)
+                    log.info("EC2 instance %s is %s: %s", job.instance_id, state, instance.state_reason['Message'])
                     exit_loop = True
             except Exception as e:
                 log.exception(e)
@@ -260,6 +279,62 @@ class AWSBenchmark(Benchmark):
                     break
                 time.sleep(rconfig().aws.query_frequency_seconds)
 
+    def _get_cpu_activity(self, iid, delta_minutes=60, period_minutes=5):
+        now = dt.datetime.utcnow()
+        resp = self.cloudwatch.meta.client.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='CPUUtilization',
+            Dimensions=[dict(Name='InstanceId', Value=iid)],
+            StartTime=now - dt.timedelta(minutes=delta_minutes),
+            EndTime=now,
+            Period=60*period_minutes,
+            Statistics=['Average'],
+            Unit='Percent'
+        )
+        return [activity['Average'] for activity in sorted(resp['Datapoints'], key=op.itemgetter('Timestamp'), reverse=True)]
+
+    def _is_hanging(self, iid):
+        cpu_config = rconfig().aws.ec2.monitoring.cpu
+        activity = self._get_cpu_activity(iid,
+                                          delta_minutes=cpu_config.delta_minutes,
+                                          period_minutes=cpu_config.period_minutes)
+        threshold = cpu_config.threshold
+        min_activity_len = int(cpu_config.delta_minutes / cpu_config.period_minutes)
+        return len(activity) >= min_activity_len and all([a < threshold for a in activity])
+
+    def _monitoring_start(self):
+        if self.monitoring is not None:
+            return
+
+        def cpu_monitor():
+            cpu_config = rconfig().aws.ec2.monitoring.cpu
+            while True:
+                try:
+                    hanging_instances = list(filter(self._is_hanging, self.instances.keys()))
+                    for inst in hanging_instances:
+                        if inst in self.instances:
+                            inst_desc = self.instances[inst]
+                            log.warning("WARN: Instance %s (%s) has no CPU activity in the last %s minutes.", inst, inst_desc.key, cpu_config.delta_minutes)
+                            if cpu_config.abort_inactive_instances:
+                                inst_desc.abort = True
+                except Exception as e:
+                    log.exception(e)
+                finally:
+                    time.sleep(cpu_config.query_frequency_seconds)
+
+
+        self.monitoring = ThreadPoolExecutor(max_workers=1, thread_name_prefix="exec_monitoring_")
+        self.monitoring.submit(cpu_monitor)
+
+    def _monitoring_stop(self):
+        if self.monitoring is None:
+            return
+        try:
+            self.monitoring.shutdown(wait=True)
+        except:
+            pass
+        finally:
+            self.monitoring = None
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)
@@ -297,7 +372,7 @@ class AWSBenchmark(Benchmark):
                                           start_time=datetime_iso(), stop_time=datetime_iso())
             raise e
         finally:
-            self._exec_send(lambda: self._save_instances())
+            self._exec_send(self._save_instances)
         return instance.id
 
     def _stop_instance(self, instance_id, terminate=None):
@@ -486,7 +561,7 @@ class AWSBenchmark(Benchmark):
                 log.error("Failed downloading `%s` from s3 bucket %s: %s", obj.key, self.bucket.name, str(e))
                 log.exception(e)
 
-        success = self.instances[instance_id].success
+        success = self.instances[instance_id].success is True
         try:
             instance_output_key = self._s3_output(instance_id, encode=True)
             objs = [o.Object() for o in self.bucket.objects.filter(Prefix=instance_output_key)]
