@@ -19,7 +19,8 @@ from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecut
 from .openml import Openml
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
+from .utils import Namespace as ns, OSMonitoring, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, \
+    str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -132,7 +133,9 @@ class Benchmark:
             runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True)
 
         try:
-            runner.start()
+            with OSMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+                              statistics=rconfig().monitoring.statistics):
+                runner.start()
         except (KeyboardInterrupt, InterruptedError):
             pass
         finally:

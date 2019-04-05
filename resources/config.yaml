@@ -13,6 +13,9 @@ run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.
 sid:        # session id: set by caller (runbenchmark.py)
 
 max_parallel_jobs: 5
+monitoring:
+  frequency_seconds: 300  # set <= 0 to disable
+  statistics: ['cpu', 'memory', 'volume']
 seed: auto  # default global seed (used if not set in task definition), can be one of:
             # `auto`: a global seed will be generated and passed to all jobs.
             # `none`: no seed will be provided (seed left to framework's responsibility).
@@ -89,7 +92,7 @@ aws:
         delta_minutes: 30
         threshold: 2
         abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
-        query_frequency_seconds: 300
+        query_frequency_seconds: 300     # set to <= 0 to disable
     instance_type:
       series: m5
       map:      # map between num cores required and ec2 instance type sizes

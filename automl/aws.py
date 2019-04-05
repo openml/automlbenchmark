@@ -70,7 +70,6 @@ class AWSBenchmark(Benchmark):
         :param parallel_jobs:
         :param region:
         """
-        raise Exception('disabled')
         super().__init__(framework_name, benchmark_name, parallel_jobs)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
         self.region = region if region \
@@ -225,7 +224,6 @@ class AWSBenchmark(Benchmark):
                 results = TaskResult(task_def=task_def, fold=fold)
                 return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
 
-
         def _on_done(job_self):
             terminate = self._download_results(job_self.instance_id)
             if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
@@ -308,6 +306,8 @@ class AWSBenchmark(Benchmark):
 
         def cpu_monitor():
             cpu_config = rconfig().aws.ec2.monitoring.cpu
+            if cpu_config.query_frequency_seconds <= 0:
+                return
             while True:
                 try:
                     hanging_instances = list(filter(self._is_hanging, self.instances.keys()))
@@ -321,7 +321,6 @@ class AWSBenchmark(Benchmark):
                     log.exception(e)
                 finally:
                     time.sleep(cpu_config.query_frequency_seconds)
-
 
         self.monitoring = ThreadPoolExecutor(max_workers=1, thread_name_prefix="exec_monitoring_")
         self.monitoring.submit(cpu_monitor)

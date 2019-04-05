@@ -8,6 +8,7 @@ important
     and should have no dependency to any other **automl** module.
 """
 from ast import literal_eval
+from concurrent.futures import ThreadPoolExecutor
 import datetime as dt
 import fnmatch
 from functools import reduce, wraps
@@ -690,7 +691,8 @@ def system_memory_mb():
     vm = psutil.virtual_memory()
     return Namespace(
         total=to_mb(vm.total),
-        available=to_mb(vm.available)
+        available=to_mb(vm.available),
+        used_percentage=vm.percent
     )
 
 
@@ -704,7 +706,111 @@ def system_volume_mb():
     )
 
 
-class MemoryMonitor:
+class Monitoring:
+
+    def __init__(self, frequency_seconds=300, thread_prefix="monitoring_"):
+        self._exec = None
+        self._frequency = frequency_seconds
+        self._thread_prefix = thread_prefix
+        self._running = False
+
+    def __enter__(self):
+        if self._frequency > 0:
+            self._running = True
+            self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self._thread_prefix)
+            self._exec.submit(self._monitor)
+        return self
+
+    def __exit__(self, *args):
+        if self._exec is not None:
+            self._running = False
+            self._exec.shutdown(wait=False)
+            self._exec = None
+
+    def _monitor(self):
+        while self._running:
+            try:
+                self._check_state()
+            except Exception as e:
+                log.exception(e)
+            finally:
+                time.sleep(self._frequency)
+
+    def _check_state(self):
+        pass
+
+
+class CPUMonitoring(Monitoring):
+
+    def __init__(self, frequency_seconds=300, use_interval=False, per_cpu=False, verbose=False, log_level=logging.INFO):
+        super().__init__(frequency_seconds=0 if use_interval else frequency_seconds,
+                         thread_prefix="cpu_monitoring_")
+        self._interval = frequency_seconds if use_interval else None
+        self._per_cpu = per_cpu
+        self._verbose = verbose
+        self._log_level = log_level
+
+    def _check_state(self):
+        if self._verbose:
+            percent = psutil.cpu_times_percent(interval=self._interval, percpu=self._per_cpu)
+            log.log(self._log_level, "CPU Utilization (in percent):\n%s", percent)
+        else:
+            percent = psutil.cpu_percent(interval=self._interval, percpu=self._per_cpu)
+            log.log(self._log_level, "CPU Utilization = %s%%", percent)
+
+
+class MemoryMonitoring(Monitoring):
+
+    def __init__(self, frequency_seconds=300, verbose=False, log_level=logging.INFO):
+        super().__init__(frequency_seconds=frequency_seconds,
+                         thread_prefix="memory_monitoring_")
+        self._verbose = verbose
+        self._log_level = log_level
+
+    def _check_state(self):
+        if self._verbose:
+            mem = psutil.virtual_memory()
+            log.log(self._log_level, "Memory Usage (in Bytes): %s", mem)
+        else:
+            mem = system_memory_mb()
+            log.log(self._log_level, "Memory Usage (in MB): %s", mem)
+
+
+class VolumeMonitoring(Monitoring):
+
+    def __init__(self, frequency_seconds=300, verbose=False, log_level=logging.INFO):
+        super().__init__(frequency_seconds=frequency_seconds,
+                         thread_prefix="volume_monitoring_")
+        self._verbose = verbose
+        self._log_level = log_level
+
+    def _check_state(self):
+        if self._verbose:
+            du = psutil.disk_usage('/')
+            log.log(self._log_level, "Disk Usage (in Bytes): %s", du)
+        else:
+            du = system_volume_mb()
+            log.log(self._log_level, "Disk Usage (in MB): %s", du)
+
+
+class OSMonitoring(Monitoring):
+
+    def __init__(self, frequency_seconds=300, statistics=('cpu', 'memory', 'volume'), verbose=False, log_level=logging.INFO):
+        super().__init__(frequency_seconds=frequency_seconds)
+        self.monitors = []
+        if 'cpu' in statistics:
+            self.monitors.append(CPUMonitoring(frequency_seconds=frequency_seconds, verbose=verbose, log_level=log_level))
+        if 'memory' in statistics:
+            self.monitors.append(MemoryMonitoring(frequency_seconds=frequency_seconds, verbose=verbose, log_level=log_level))
+        if 'volume' in statistics:
+            self.monitors.append(VolumeMonitoring(frequency_seconds=frequency_seconds, verbose=verbose, log_level=log_level))
+
+    def _check_state(self):
+        for monitor in self.monitors:
+            monitor._check_state()
+
+
+class MemoryProfiler:
 
     def __init__(self, process=psutil.Process(), enabled=True):
         self.ps = process if enabled else None
@@ -750,7 +856,7 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
             if not logger.isEnabledFor(log_level):
                 return fn(*args, **kwargs)
 
-            with Timer(enabled=duration) as t, MemoryMonitor(enabled=memory) as m:
+            with Timer(enabled=duration) as t, MemoryProfiler(enabled=memory) as m:
                 ret = fn(*args, **kwargs)
             name = fn_name(fn)
             if duration:
