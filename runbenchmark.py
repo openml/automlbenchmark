@@ -76,10 +76,7 @@ config = config_load("resources/config.yaml")
 config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
 # config listing properties set by command line
 config_args = ns.parse(
-    {
-        'monitoring.frequency_seconds': None if args.mode == 'local' else 0,
-        'results.save': args.keep_scores
-    },
+    {'results.save': args.keep_scores},
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,
@@ -87,6 +84,8 @@ config_args = ns.parse(
     script=os.path.basename(__file__),
     sid=sid,
 ) + ns.parse(extras)
+if args.mode != 'local':
+    config_args + ns.parse({'monitoring.frequency_seconds': 0})
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
