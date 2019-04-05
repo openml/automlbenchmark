@@ -712,29 +712,29 @@ class Monitoring:
         self._exec = None
         self._frequency = frequency_seconds
         self._thread_prefix = thread_prefix
-        self._running = False
+        self._interrupt = threading.Event()
 
     def __enter__(self):
         if self._frequency > 0:
-            self._running = True
+            self._interrupt.clear()
             self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self._thread_prefix)
             self._exec.submit(self._monitor)
         return self
 
     def __exit__(self, *args):
         if self._exec is not None:
-            self._running = False
+            self._interrupt.set()
             self._exec.shutdown(wait=False)
             self._exec = None
 
     def _monitor(self):
-        while self._running:
+        while not self._interrupt.is_set():
             try:
                 self._check_state()
             except Exception as e:
                 log.exception(e)
             finally:
-                time.sleep(self._frequency)
+                self._interrupt.wait(self._frequency)
 
     def _check_state(self):
         pass

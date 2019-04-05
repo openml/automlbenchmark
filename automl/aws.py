@@ -22,6 +22,7 @@ import operator as op
 import os
 import re
 import time
+import threading
 from urllib.parse import quote_plus as uenc
 
 import boto3
@@ -149,7 +150,7 @@ class AWSBenchmark(Benchmark):
     def _exec_start(self):
         if self.exec is not None:
             return
-        self.exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="exec_master_")
+        self.exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="aws_exec_")
 
     def _exec_stop(self):
         if self.exec is None:
@@ -251,8 +252,8 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.exception(e)
 
-        while True:
-            exit_loop = False
+        interrupt = threading.Event()
+        while not interrupt.is_set():
             if job.instance_id in self.instances:
                 inst_desc = self.instances[job.instance_id]
                 if inst_desc['abort']:
@@ -266,13 +267,11 @@ class AWSBenchmark(Benchmark):
 
                 if instance.state['Code'] > 16:     # ended instance
                     log.info("EC2 instance %s is %s: %s", job.instance_id, state, instance.state_reason['Message'])
-                    exit_loop = True
+                    interrupt.set()
             except Exception as e:
                 log.exception(e)
             finally:
-                if exit_loop:
-                    break
-                time.sleep(rconfig().aws.query_frequency_seconds)
+                interrupt.wait(rconfig().aws.query_frequency_seconds)
 
     def _get_cpu_activity(self, iid, delta_minutes=60, period_minutes=5):
         now = dt.datetime.utcnow()
@@ -301,11 +300,13 @@ class AWSBenchmark(Benchmark):
         if self.monitoring is not None:
             return
 
+        interrupt = threading.Event()
+
         def cpu_monitor():
             cpu_config = rconfig().aws.ec2.monitoring.cpu
             if cpu_config.query_frequency_seconds <= 0:
                 return
-            while True:
+            while not interrupt.is_set():
                 try:
                     hanging_instances = list(filter(self._is_hanging, self.instances.keys()))
                     for inst in hanging_instances:
@@ -317,16 +318,18 @@ class AWSBenchmark(Benchmark):
                 except Exception as e:
                     log.exception(e)
                 finally:
-                    time.sleep(cpu_config.query_frequency_seconds)
+                    interrupt.wait(cpu_config.query_frequency_seconds)
 
-        self.monitoring = ThreadPoolExecutor(max_workers=1, thread_name_prefix="exec_monitoring_")
-        self.monitoring.submit(cpu_monitor)
+        self.monitoring = ns(executor=ThreadPoolExecutor(max_workers=1, thread_name_prefix="aws_monitoring_"),
+                             interrupt=interrupt)
+        self.monitoring.executor.submit(cpu_monitor)
 
     def _monitoring_stop(self):
         if self.monitoring is None:
             return
         try:
-            self.monitoring.shutdown(wait=True)
+            self.monitoring.interrupt.set()
+            self.monitoring.executor.shutdown(wait=False)
         except:
             pass
         finally:
