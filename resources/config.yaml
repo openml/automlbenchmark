@@ -89,7 +89,7 @@ aws:
     monitoring:
       cpu:
         period_minutes: 5
-        delta_minutes: 30
+        delta_minutes: 15
         threshold: 2
         abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
         query_frequency_seconds: 300     # set to <= 0 to disable
