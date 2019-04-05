@@ -4,8 +4,8 @@ FRAMEWORKS=(
 #constantpredictor
 #constantpredictor_enc
 #decisiontree
-randomforest
-tunedrandomforest
+#randomforest
+#tunedrandomforest
 
 autosklearn
 h2oautoml
@@ -20,9 +20,13 @@ autoweka
 BENCHMARKS=(
 #test
 #validation
-small-2c1h
+#small-2c1h
 #medium-4c1h
-medium-8c8h
+small-8c1h
+medium-8c1h
+small-8c4h
+medium-8c4h
+#medium-8c8h
 )
 
 MODE=(
@@ -74,7 +78,7 @@ if [[ -z $parallel ]]; then
 fi
 
 #extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40"
-extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=True"
+extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 
