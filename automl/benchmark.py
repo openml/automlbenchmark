@@ -360,14 +360,14 @@ class BenchmarkTask:
 
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
+        result = meta_result = None
         try:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, framework_name, repr_def(task_config))
             meta_result = framework.run(self._dataset, task_config)
-            self._dataset.release()
-            return results.compute_scores(framework_name, task_config.metrics, meta_result=meta_result)
         except Exception as e:
             log.exception(e)
-            return results.compute_scores(framework_name, task_config.metrics, result=ErrorResult(e))
+            result = ErrorResult(e)
         finally:
             self._dataset.release()
+            return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
 

@@ -58,6 +58,7 @@ class AutoTask(oml.OpenMLTask):
         # TODO: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
         pass
 
+
 class OpenmlDataset(Dataset):
 
     def __init__(self, oml_task: oml.OpenMLTask, oml_dataset: oml.OpenMLDataset, fold=0):
