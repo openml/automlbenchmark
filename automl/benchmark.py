@@ -134,6 +134,7 @@ class Benchmark:
 
         try:
             with OSMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+                              check_on_exit=True,
                               statistics=rconfig().monitoring.statistics):
                 runner.start()
         except (KeyboardInterrupt, InterruptedError):

@@ -708,11 +708,12 @@ def system_volume_mb():
 
 class Monitoring:
 
-    def __init__(self, frequency_seconds=300, thread_prefix="monitoring_"):
+    def __init__(self, frequency_seconds=300, check_on_exit=False, thread_prefix="monitoring_"):
         self._exec = None
         self._frequency = frequency_seconds
         self._thread_prefix = thread_prefix
         self._interrupt = threading.Event()
+        self._check_on_exit = check_on_exit
 
     def __enter__(self):
         if self._frequency > 0:
@@ -725,6 +726,8 @@ class Monitoring:
         if self._exec is not None:
             self._interrupt.set()
             self._exec.shutdown(wait=False)
+            if self._check_on_exit:
+                self._check_state()
             self._exec = None
 
     def _monitor(self):
@@ -742,8 +745,10 @@ class Monitoring:
 
 class CPUMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, use_interval=False, per_cpu=False, verbose=False, log_level=logging.INFO):
+    def __init__(self, frequency_seconds=300, check_on_exit=False,
+                 use_interval=False, per_cpu=False, verbose=False, log_level=logging.INFO):
         super().__init__(frequency_seconds=0 if use_interval else frequency_seconds,
+                         check_on_exit=check_on_exit,
                          thread_prefix="cpu_monitoring_")
         self._interval = frequency_seconds if use_interval else None
         self._per_cpu = per_cpu
@@ -761,8 +766,10 @@ class CPUMonitoring(Monitoring):
 
 class MemoryMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, verbose=False, log_level=logging.INFO):
+    def __init__(self, frequency_seconds=300, check_on_exit=False,
+                 verbose=False, log_level=logging.INFO):
         super().__init__(frequency_seconds=frequency_seconds,
+                         check_on_exit=check_on_exit,
                          thread_prefix="memory_monitoring_")
         self._verbose = verbose
         self._log_level = log_level
@@ -778,8 +785,10 @@ class MemoryMonitoring(Monitoring):
 
 class VolumeMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, verbose=False, log_level=logging.INFO):
+    def __init__(self, frequency_seconds=300, check_on_exit=False,
+                 verbose=False, log_level=logging.INFO):
         super().__init__(frequency_seconds=frequency_seconds,
+                         check_on_exit=check_on_exit,
                          thread_prefix="volume_monitoring_")
         self._verbose = verbose
         self._log_level = log_level
@@ -795,8 +804,9 @@ class VolumeMonitoring(Monitoring):
 
 class OSMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, statistics=('cpu', 'memory', 'volume'), verbose=False, log_level=logging.INFO):
-        super().__init__(frequency_seconds=frequency_seconds)
+    def __init__(self, frequency_seconds=300, check_on_exit=False,
+                 statistics=('cpu', 'memory', 'volume'), verbose=False, log_level=logging.INFO):
+        super().__init__(frequency_seconds=frequency_seconds, check_on_exit=check_on_exit)
         self.monitors = []
         if 'cpu' in statistics:
             self.monitors.append(CPUMonitoring(frequency_seconds=frequency_seconds, verbose=verbose, log_level=log_level))
