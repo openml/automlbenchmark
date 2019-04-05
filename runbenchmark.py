@@ -76,7 +76,10 @@ config = config_load("resources/config.yaml")
 config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
 # config listing properties set by command line
 config_args = ns.parse(
-    {'results.save': args.keep_scores},
+    {
+        'monitoring.frequency_seconds': None if args.mode == 'local' else 0,
+        'results.save': args.keep_scores
+    },
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,
