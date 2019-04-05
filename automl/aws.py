@@ -15,16 +15,13 @@ necessary to run a benchmark on EC2 instances:
 """
 from concurrent.futures import ThreadPoolExecutor
 import datetime as dt
-import io
 import json
 import logging
 import math
 import operator as op
 import os
-import queue
 import re
 import time
-import threading
 from urllib.parse import quote_plus as uenc
 
 import boto3
@@ -36,7 +33,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, backup_file, datetime_iso, list_all_files, normalize_path, str_def, str2bool, tail, touch
+from .utils import Namespace as ns, datetime_iso, list_all_files, normalize_path, str_def, tail, touch
 
 
 log = logging.getLogger(__name__)
