@@ -50,8 +50,7 @@ def run(dataset: Dataset, config: TaskConfig):
     )
     cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
     with Timer() as training:
-        output = run_cmd(cmd)
-    log.debug(output)
+        run_cmd(cmd)
 
     # if target values are not sorted alphabetically in the ARFF file, then class probabilities are returned in the original order
     # interestingly, other frameworks seem to always sort the target values first

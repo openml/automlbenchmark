@@ -116,8 +116,7 @@ class DockerBenchmark(Benchmark):
         log.info("Starting docker: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)
         log.info("Generated files will be available in folder %s.", out_dir)
-        output = run_cmd(cmd)
-        log.debug(output)
+        run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
 
     @property
     def _docker_script(self):
@@ -128,14 +127,14 @@ class DockerBenchmark(Benchmark):
         return DockerBenchmark.docker_image_name(self.framework_def)
 
     def _docker_image_exists(self):
-        output = run_cmd("docker images -q {image}".format(image=self._docker_image_name))
+        output, _ = run_cmd("docker images -q {image}".format(image=self._docker_image_name))
         log.debug("docker image id: %s", output)
         return re.match(r'^[0-9a-f]+$', output.strip())
 
     def _build_docker_image(self, cache=True):
         if rconfig().docker.force_branch:
             run_cmd("git fetch")
-            status = run_cmd("git status -b --porcelain")
+            status, _ = run_cmd("git status -b --porcelain")
             if len(status.splitlines()) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
                 log.info("Branch status:\n%s", status)
                 raise InvalidStateError("Docker image can't be built as the current branch is not up-to-date. "
@@ -148,19 +147,17 @@ class DockerBenchmark(Benchmark):
                                         "Please switch to the expected tagged branch first.".format(tag))
 
         log.info("Building docker image %s.", self._docker_image_name)
-        output = run_cmd("docker build {options} -t {container} -f {script} .".format(
+        run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
             container=self._docker_image_name,
             script=self._docker_script
         ))
         log.info("Successfully built docker image %s.", self._docker_image_name)
-        log.debug(output)
 
     def _upload_docker_image(self):
         log.info("Publishing docker image %s.", self._docker_image_name)
-        output = run_cmd("docker login && docker push {}".format(self._docker_image_name))
+        run_cmd("docker login && docker push {}".format(self._docker_image_name))
         log.info("Successfully published docker image %s.", self._docker_image_name)
-        log.debug(output)
 
     def _generate_docker_script(self, custom_commands):
         docker_content = """FROM ubuntu:18.04

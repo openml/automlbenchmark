@@ -89,8 +89,7 @@ class Benchmark:
         log.info("Setting up framework {}.".format(self.framework_name))
         self.framework_module.setup(self.framework_def.setup_args)
         if self.framework_def.setup_cmd is not None:
-            output = run_cmd(self.framework_def.setup_cmd)
-            log.debug(output)
+            run_cmd(self.framework_def.setup_cmd)
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
 

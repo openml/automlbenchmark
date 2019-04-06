@@ -603,7 +603,14 @@ def as_cmd_args(*args, **kwargs):
 
 
 def run_cmd(cmd, *args, **kwargs):
-    params = Namespace(input_str=None, capture_output=True, shell=True)
+    params = Namespace(
+        input_str=None,
+        capture_output=True,
+        capture_error=True,
+        output_level=logging.DEBUG,
+        error_level=logging.ERROR,
+        shell=True
+    )
     for k, v in params:
         kk = '_'+k+'_'
         if kk in kwargs:
@@ -619,20 +626,20 @@ def run_cmd(cmd, *args, **kwargs):
                                    input=params.input_str,
                                    # stdin=subprocess.PIPE if input is not None else None,
                                    stdout=subprocess.PIPE if params.capture_output else None,
-                                   stderr=subprocess.PIPE if params.capture_output else None,
+                                   stderr=subprocess.PIPE if params.capture_error else None,
                                    shell=params.shell,
                                    check=True,
                                    universal_newlines=True)
         if completed.stdout:
-            log.debug(completed.stdout)
+            log.log(params.output_level, completed.stdout)
         if completed.stderr:
-            log.error(completed.stderr)
-        return completed.stdout
+            log.log(params.error_level, completed.stderr)
+        return completed.stdout, completed.stderr
     except subprocess.CalledProcessError as e:
         if e.stdout:
-            log.debug(e.stdout)
+            log.log(params.output_level, e.stdout)
         if e.stderr:
-            log.error(e.stderr)
+            log.log(params.error_level, e.stderr)
         # error_tail = tail(e.stderr, 25) if e.stderr else 'Unknown Error'
         # raise subprocess.SubprocessError("Error when running command `{cmd}`: {error}".format(cmd=full_cmd, error=error_tail))
         raise e
@@ -643,9 +650,7 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     script = os.path.join(here, script_file)
     mod = os.stat(script).st_mode
     os.chmod(script, mod | stat.S_IEXEC)
-    output = run_cmd(script, *args, **kwargs)
-    log.debug(output)
-    return output
+    return run_cmd(script, *args, **kwargs)
 
 
 """ PROCESS """

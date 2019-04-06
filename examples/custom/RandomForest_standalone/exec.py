@@ -36,7 +36,7 @@ def run(dataset: Dataset, config: TaskConfig):
         config.result_token = str(uuid.uuid1())
         config.result_dir = tmpdir
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
-        output = run_cmd('{python} {here}/exec_proc.py'.format(python=PYTHON, here=dir_of(__file__)), _input_str_=params)
+        output, err = run_cmd('{python} {here}/exec_proc.py'.format(python=PYTHON, here=dir_of(__file__)), _input_str_=params)
         out = io.StringIO(output)
         res = ns()
         for line in out:

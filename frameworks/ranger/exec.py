@@ -17,13 +17,12 @@ def run(dataset: Dataset, config: TaskConfig):
         raise ValueError('Regression is not supported.')
 
     here = dir_of(__file__)
-    output = run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', '{output}', {cores})" """.format(
+    run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', '{output}', {cores})" """.format(
         script=os.path.join(here, 'exec.R'),
         train=dataset.train.path,
         test=dataset.test.path,
         output=config.output_predictions_file,
         cores=config.cores
     ))
-    log.debug(output)
 
     log.info("Predictions saved to %s", config.output_predictions_file)
