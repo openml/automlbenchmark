@@ -141,7 +141,7 @@ class DockerBenchmark(Benchmark):
                                         "Please switch to the expected up-to-date `{}` branch first.".format(rget().project_info.branch))
 
             tag = rget().project_info.tag
-            tags = run_cmd("git tag --points-at HEAD")
+            tags, _ = run_cmd("git tag --points-at HEAD")
             if tag and not re.search(r'(?m)^{}$'.format(tag), tags):
                 raise InvalidStateError("Docker image can't be built as current branch is not tagged as required `{}`. "
                                         "Please switch to the expected tagged branch first.".format(tag))
