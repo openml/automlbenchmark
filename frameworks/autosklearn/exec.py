@@ -46,13 +46,17 @@ def run(dataset: Dataset, config: TaskConfig):
     # log.info("finite=%s", np.isfinite(X_train))
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
+    safety_memory_mb = 1024
+    ensemble_memory_mb = 1024  # keeping defaults
+    job_memory_limit_mb = int((config.max_mem_size_mb - ensemble_memory_mb - safety_memory_mb) / (config.cores - 1))
+
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
     estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
                              n_jobs=config.cores,
-                             ml_memory_limit=config.max_mem_size_mb,
-                             ensemble_memory_limit=config.max_mem_size_mb / 3,  # keeping default proportions
+                             ml_memory_limit=job_memory_limit_mb,
+                             ensemble_memory_limit=ensemble_memory_mb,
                              seed=config.seed,
                              **config.framework_params)
     with Timer() as training:
