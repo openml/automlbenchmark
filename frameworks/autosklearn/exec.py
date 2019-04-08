@@ -46,19 +46,27 @@ def run(dataset: Dataset, config: TaskConfig):
     # log.info("finite=%s", np.isfinite(X_train))
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
-    safety_memory_mb = 1024
-    ensemble_memory_mb = 1024  # keeping defaults
-    job_memory_limit_mb = int((config.max_mem_size_mb - ensemble_memory_mb - safety_memory_mb) / (config.cores - 1))
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+
+    cores = config.framework_params.get('_cores', config.cores)
+    safety_memory_mb = config.framework_params.get('_safety_memory_mb', 0)  # 1024 (we already leave 2GB for OS)
+    ensemble_memory_limit_mb = config.framework_params.get('_ensemble_memory_limit_mb', 1024)  # keeping defaults
+    ml_memory_limit_mb = config.max_mem_size_mb.get('_ml_memory_limit_mb', 'auto')
+    if ml_memory_limit_mb == 'auto':
+        ml_memory_limit_mb = int((config.max_mem_size_mb - ensemble_memory_limit_mb - safety_memory_mb) / (cores - 1))
+    elif ml_memory_limit_mb == 'max':
+        ml_memory_limit_mb = config.max_mem_size_mb
+    log.info("Using %sM memory per ML job and %sM for ensemble job on a total of %s cores", ml_memory_limit_mb, ensemble_memory_limit_mb, cores)
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
     estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
-                             n_jobs=config.cores,
-                             ml_memory_limit=job_memory_limit_mb,
-                             ensemble_memory_limit=ensemble_memory_mb,
+                             n_jobs=cores,
+                             ml_memory_limit=ml_memory_limit_mb,
+                             ensemble_memory_limit=ensemble_memory_limit_mb,
                              seed=config.seed,
-                             **config.framework_params)
+                             **training_params)
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
 
