@@ -33,6 +33,9 @@ def run(dataset: Dataset, config: TaskConfig):
         train_file = reorder_dataset(dataset.train.path, target_src=dataset.target.index)
         test_file = reorder_dataset(dataset.test.path, target_src=dataset.target.index)
 
+    safety_memory_mb = 1024
+    classifier_memory_limit_mb = int((config.max_mem_size_mb - safety_memory_mb) / config.cores)
+
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
     weka_file = path_from_split(f)
@@ -40,7 +43,7 @@ def run(dataset: Dataset, config: TaskConfig):
     cmd_params = dict(
         t=train_file,
         T=test_file,
-        memLimit=config.max_mem_size_mb,
+        memLimit=classifier_memory_limit_mb,
         classifications='"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {}"'.format(weka_file),
         timeLimit=int(config.max_runtime_seconds/60),
         parallelRuns=config.cores,
