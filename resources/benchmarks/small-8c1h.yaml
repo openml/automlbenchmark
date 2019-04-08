@@ -27,7 +27,8 @@
     - acc
 
 - name: christine
-  openml_task_id: 168765
+  enabled: false
+  openml_task_id: 168855
   metric:
     - auc
     - acc
@@ -45,19 +46,22 @@
     - acc
 
 - name: dilbert
-  openml_task_id: 168770
+  enabled: false
+  openml_task_id: 168858
   metric:
     - logloss
     - acc
 
 - name: fabert
-  openml_task_id: 168760
+  enabled: false
+  openml_task_id: 168852
   metric:
     - logloss
     - acc
 
 - name: jasmine
-  openml_task_id: 168764
+  enabled: false
+  openml_task_id: 168854
   metric:
     - auc
     - acc
@@ -93,7 +97,8 @@
     - acc
 
 - name: sylvine
-  openml_task_id: 168761
+  enabled: false
+  openml_task_id: 168853
   metric:
     - auc
     - acc
