@@ -739,6 +739,7 @@ class AWSBenchmark(Benchmark):
         :param script_params: the custom params passed to the benchmark script, usually only task, fold params
         :return: the UserData for the new ec2 instance
         """
+        script_extra_params = "--session="
         cloud_config = """
 #cloud-config
 
@@ -761,7 +762,7 @@ runcmd:
   - pip3 install -U awscli
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
-  - docker run -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker --session=
+  - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -810,7 +811,7 @@ runcmd:
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
-  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} --session=
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 
@@ -835,6 +836,8 @@ power_state:
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
+            extra_params=script_extra_params,
+            docker_options=rconfig().docker.run_extra_options,
             timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds,
         )
 
@@ -851,6 +854,7 @@ power_state:
         :param script_params: the custom params passed to the benchmark script, usually only task, fold params
         :return: the UserData for the new ec2 instance
         """
+        script_extra_params = "--session="
         return """#!/bin/bash
 apt-get update
 #apt-get -y upgrade
@@ -877,7 +881,7 @@ PIP install -U awscli
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} --session=
+PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
 aws s3 cp /s3bucket/output '{s3_output}' --recursive
 rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
@@ -892,6 +896,7 @@ shutdown -P +1 "I'm losing power"
             script=rconfig().script,
             ikey=instance_key,
             params=script_params,
+            extra_params=script_extra_params,
         )
 
 
