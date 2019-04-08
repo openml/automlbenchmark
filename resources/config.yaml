@@ -16,6 +16,7 @@ max_parallel_jobs: 5
 monitoring:
   frequency_seconds: 120  # set <= 0 to disable
   statistics: ['cpu', 'memory', 'volume']
+  verbosity: 0
 seed: auto  # default global seed (used if not set in task definition), can be one of:
             # `auto`: a global seed will be generated and passed to all jobs.
             # `none`: no seed will be provided (seed left to framework's responsibility).
