@@ -5,9 +5,12 @@ It produces predictions based on a model trained with all of the data for the be
 """
 import logging
 import math
+import os
 import random
 import statistics
+import tempfile as tmp
 
+os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score

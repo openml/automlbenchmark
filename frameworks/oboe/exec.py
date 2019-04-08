@@ -3,7 +3,7 @@ import sys
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import Encoder, impute, to_data_frame
+from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
 from automl.utils import Timer, dir_of
 

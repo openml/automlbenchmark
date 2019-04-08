@@ -1,12 +1,14 @@
 import logging
+import os
+import tempfile as tmp
 import warnings
 
+os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import write_csv
 from automl.results import save_predictions_to_file
 from automl.utils import Timer, path_from_split, split_path
 

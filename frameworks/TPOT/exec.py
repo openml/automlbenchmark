@@ -1,13 +1,15 @@
 import logging
-import time
+import os
+import tempfile as tmp
 
+os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 from tpot import TPOTClassifier, TPOTRegressor
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import Encoder, impute
 from automl.results import save_predictions_to_file
-from automl.utils import Timer, translate_dict
+from automl.utils import Timer
 
 
 log = logging.getLogger(__name__)
