@@ -14,7 +14,7 @@ sid:        # session id: set by caller (runbenchmark.py)
 
 max_parallel_jobs: 5
 monitoring:
-  frequency_seconds: 300  # set <= 0 to disable
+  frequency_seconds: 120  # set <= 0 to disable
   statistics: ['cpu', 'memory', 'volume']
 seed: auto  # default global seed (used if not set in task definition), can be one of:
             # `auto`: a global seed will be generated and passed to all jobs.
@@ -50,6 +50,7 @@ versions:
 docker:
   force_branch: true
   minimize_instances: true
+  run_extra_options: '--shm-size=256M'
   image_defaults:
     author: automlbenchmark
     image:    # set by docker.py based on framework name, lowercase
@@ -89,8 +90,8 @@ aws:
     monitoring:
       cpu:
         period_minutes: 5
-        delta_minutes: 15
-        threshold: 2
+        delta_minutes: 30
+        threshold: 15
         abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
         query_frequency_seconds: 300     # set to <= 0 to disable
     instance_type:
