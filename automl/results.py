@@ -284,7 +284,7 @@ class TaskResult:
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
-        scores.result = scores[metrics[0]] if len(metrics) > 0 else None
+        scores.result = scores[metrics[0]] if len(metrics) > 0 else result.evaluate('NA')
         scores.info = result.info
         log.info("Metric scores: %s", scores)
         return scores
