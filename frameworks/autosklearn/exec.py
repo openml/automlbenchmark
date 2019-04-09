@@ -51,11 +51,7 @@ def run(dataset: Dataset, config: TaskConfig):
     cores = config.framework_params.get('_cores', config.cores)
     safety_memory_mb = config.framework_params.get('_safety_memory_mb', 0)  # 1024 (we already leave 2GB for OS)
     ensemble_memory_limit_mb = config.framework_params.get('_ensemble_memory_limit_mb', 1024)  # keeping defaults
-    ml_memory_limit_mb = config.framework_params.get('_ml_memory_limit_mb', 'auto')
-    if ml_memory_limit_mb == 'auto':
-        ml_memory_limit_mb = int((config.max_mem_size_mb - ensemble_memory_limit_mb - safety_memory_mb) / (cores - 1))
-    elif ml_memory_limit_mb == 'max':
-        ml_memory_limit_mb = config.max_mem_size_mb
+    ml_memory_limit_mb = config.framework_params.get('_ml_memory_limit_mb', config.max_mem_size_mb) - safety_memory_mb
     log.info("Using %sM memory per ML job and %sM for ensemble job on a total of %s cores", ml_memory_limit_mb, ensemble_memory_limit_mb, cores)
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
