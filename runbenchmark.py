@@ -2,6 +2,12 @@ import argparse
 import logging
 import os
 import sys
+import tempfile as tmp
+
+os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
 # prevent asap other modules from defining the root logger using basicConfig
 import automl.logger
