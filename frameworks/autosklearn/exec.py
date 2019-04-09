@@ -4,6 +4,9 @@ import tempfile as tmp
 import warnings
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 
