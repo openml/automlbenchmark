@@ -51,7 +51,7 @@ versions:
 docker:
   force_branch: true
   minimize_instances: true
-  run_extra_options: '--shm-size=256M'
+  run_extra_options: '--shm-size=1024M'
   image_defaults:
     author: automlbenchmark
     image:    # set by docker.py based on framework name, lowercase

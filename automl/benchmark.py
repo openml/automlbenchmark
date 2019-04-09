@@ -259,7 +259,6 @@ class TaskConfig:
 
         sys_mem = system_memory_mb()
         os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
-        # os is already using mem, so leaving half of recommended mem
         left_for_app_mem = int(sys_mem.available - os_recommended_mem)
         assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0
                              else left_for_app_mem if left_for_app_mem > 0
