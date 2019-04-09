@@ -14,6 +14,7 @@ import fnmatch
 from functools import reduce, wraps
 import json
 import logging
+import multiprocessing as mp
 import os
 import shutil
 import signal
@@ -686,6 +687,40 @@ def kill_proc_tree(pid=None, include_parent=True, timeout=None, on_terminate=Non
     for proc in alive:
         log.warning("Killing process %s.", proc)
         proc.kill()
+
+
+def run_subp(target, *args, env=None, **kwargs):
+    restore_env = dict()
+    if env is not None:
+        for k, v in env.items():
+            if k in os.environ:
+                restore_env[k] = os.environ[k]
+            else:
+                restore_env[k] = None
+            os.environ[k] = str(v)
+
+    def run_sub(q, *args, **kwargs):
+        result = target(*args, **kwargs)
+        q.put_nowait(result)
+
+    q = mp.Queue(maxsize=1)
+    p = mp.Process(target=run_sub, args=(q, *args), kwargs=kwargs)
+    try:
+        p.start()
+        p.join()
+        return q.get_nowait()
+    except Exception as e:
+        try:
+            p.terminate()
+        except:
+            pass
+        raise e
+    finally:
+        for k, v in restore_env.items():
+            if v is None:
+                del os.environ[k]
+            else:
+                os.environ[k] = v
 
 
 def system_cores():

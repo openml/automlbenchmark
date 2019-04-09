@@ -1,4 +1,4 @@
-from automl.utils import call_script_in_same_dir, dir_of
+from automl.utils import call_script_in_same_dir, dir_of, run_subp
 
 
 def setup(*args):
@@ -6,8 +6,11 @@ def setup(*args):
 
 
 def run(*args, **kwargs):
-    from .exec import run
-    return run(*args, **kwargs)
+    def exec_run(*args, **kwargs):
+        from .exec import run
+        return run(*args, **kwargs)
+
+    return run_subp(exec_run, *args, env=None, **kwargs)
 
 
 def docker_commands(*args, **kwargs):
