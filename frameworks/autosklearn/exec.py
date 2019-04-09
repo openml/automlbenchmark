@@ -40,6 +40,7 @@ def run(dataset: Dataset, config: TaskConfig):
     # Set resources based on datasize
     log.info("Running auto-sklearn with a maximum time of %ss on %s cores with %sMB, optimizing %s.",
              config.max_runtime_seconds, config.cores, config.max_mem_size_mb, perf_metric)
+    log.info("Environment: %s", os.environ)
 
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
