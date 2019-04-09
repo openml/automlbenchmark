@@ -12,7 +12,6 @@ from automl.results import save_predictions_to_file
 from automl.utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
-os.environ['OMP_NUM_THREADS'] = '1'
 sys.path.append("{}/lib/hyperopt-sklearn".format(dir_of(__file__)))
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 from hyperopt import tpe
