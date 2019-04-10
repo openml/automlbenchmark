@@ -3,6 +3,9 @@ import os
 import tempfile as tmp
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 from tpot import TPOTClassifier, TPOTRegressor
 
 from automl.benchmark import TaskConfig

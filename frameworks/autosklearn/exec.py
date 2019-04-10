@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import tempfile as tmp
 import warnings
@@ -13,7 +14,7 @@ import autosklearn.metrics as metrics
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
-from automl.utils import Timer, path_from_split, split_path
+from automl.utils import Timer, path_from_split, split_path, system_memory_mb
 
 log = logging.getLogger(__name__)
 
@@ -53,10 +54,21 @@ def run(dataset: Dataset, config: TaskConfig):
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
     cores = config.framework_params.get('_cores', config.cores)
-    safety_memory_mb = config.framework_params.get('_safety_memory_mb', 0)  # 1024 (we already leave 2GB for OS)
-    ensemble_memory_limit_mb = config.framework_params.get('_ensemble_memory_limit_mb', 1024)  # keeping defaults
-    ml_memory_limit_mb = config.framework_params.get('_ml_memory_limit_mb', config.max_mem_size_mb) - safety_memory_mb
-    log.info("Using %sM memory per ML job and %sM for ensemble job on a total of %s cores", ml_memory_limit_mb, ensemble_memory_limit_mb, cores)
+    safety_memory_mb = config.framework_params.get('_safety_memory_mb', 0)  # (we already leave 2GB for OS)
+    ml_memory_limit_mb = config.framework_params.get('_ml_memory_limit_mb', 'auto')
+    ensemble_memory_limit_mb = config.framework_params.get('_ensemble_memory_limit_mb', 'auto')
+
+    # when memory is large enough, we should have:
+    # (cores - 1) * ml_memory_limit_mb + ensemble_memory_limit_mb = config.max_mem_size_mb
+    total_memory_mb = system_memory_mb().total
+    if ml_memory_limit_mb == 'auto':
+        ml_memory_limit_mb = max(min(config.max_mem_size_mb, math.ceil(total_memory_mb / cores)),
+                                 3072)  # 3072 is autosklearn defaults
+    if ensemble_memory_limit_mb == 'auto':
+        ensemble_memory_limit_mb = max(ml_memory_limit_mb - (total_memory_mb - config.max_mem_size_mb - safety_memory_mb),
+                                       math.ceil(ml_memory_limit_mb / 3),  # default proportions
+                                       1024)  # 1024 is autosklearn defaults
+    log.info("Using %sMB memory per ML job and %sMB for ensemble job on a total of %s cores", ml_memory_limit_mb, ensemble_memory_limit_mb, cores)
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
