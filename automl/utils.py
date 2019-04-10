@@ -691,21 +691,26 @@ def kill_proc_tree(pid=None, include_parent=True, timeout=None, on_terminate=Non
 
 def call_in_subprocess(target, *args, **kwargs):
     def call_target(q, *args, **kwargs):
-        result = target(*args, **kwargs)
-        q.put_nowait(result)
+        try:
+            result = target(*args, **kwargs)
+            q.put_nowait(result)
+        except BaseException as e:
+            q.put_nowait(e)
 
     q = mp.Queue(maxsize=1)
     p = mp.Process(target=call_target, args=(q, *args), kwargs=kwargs)
     try:
         p.start()
         p.join()
-        return q.get_nowait()
-    except Exception as e:
+        result = q.get_nowait()
+        if isinstance(result, BaseException):
+            raise result
+    except BaseException:
         try:
-            p.terminate()
+            kill_proc_tree(p.pid)
         except:
             pass
-        raise e
+        raise
 
 
 def system_cores():
