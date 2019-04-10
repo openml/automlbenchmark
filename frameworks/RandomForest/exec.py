@@ -25,14 +25,17 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
-    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, config.cores))
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    cores = config.framework_params.get('_cores', config.cores)
+
+    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, cores))
     log.warning("We completely ignore the requirement to stay within the time limit.")
     log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
-    rf = estimator(n_jobs=config.cores,
+    rf = estimator(n_jobs=cores,
                    random_state=config.seed,
-                   **config.framework_params)
+                   **training_params)
 
     with Timer() as training:
         rf.fit(X_train, y_train)

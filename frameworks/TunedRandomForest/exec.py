@@ -38,9 +38,8 @@ def run(dataset: Dataset, config: TaskConfig):
 
     is_classification = config.type == 'classification'
 
-    tuning_params = (config.framework_params['tuning'] if 'tuning' in config.framework_params
-                     else config.framework_params)
-    training_params = {k: v for k, v in config.framework_params.items() if k != 'tuning'}
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    tuning_params = config.framework_params.get('_tuning', training_params)
 
     # Impute any missing data (can test using -t 146606)
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
