@@ -16,6 +16,7 @@ import json
 import logging
 import multiprocessing as mp
 import os
+import queue
 import shutil
 import signal
 import stat
@@ -705,6 +706,8 @@ def call_in_subprocess(target, *args, **kwargs):
         result = q.get_nowait()
         if isinstance(result, BaseException):
             raise result
+    except queue.Empty:
+        raise Exception("Subprocess running {} died abruptly.".format(target.__name__))
     except BaseException:
         try:
             kill_proc_tree(p.pid)
