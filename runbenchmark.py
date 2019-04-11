@@ -66,7 +66,7 @@ if args.profiling:
     logging.TRACE = logging.INFO
 automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
                     root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
-                    root_level='DEBUG', console_level='INFO', print_to_log=True)
+                    root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
 
 log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
