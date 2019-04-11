@@ -33,6 +33,7 @@ RandomForest:
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000
+#    _n_jobs: 1   # faster, fitter, happier (running OoM on some datasets when using multiprocessing)
 #    verbose: true
 
 TunedRandomForest:
@@ -40,6 +41,7 @@ TunedRandomForest:
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000
+#    _n_jobs: 1  # cf. RandomForest
 #    _tuning:
 #      n_estimators: 500
 
@@ -67,6 +69,7 @@ oboe:
   version: 'latest'
   project: https://github.com/udellgroup/oboe
 #  params:
+#    build_ensemble: false
 #    selection_method: random
 #    verbose: true
 
