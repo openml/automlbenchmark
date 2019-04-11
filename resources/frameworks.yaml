@@ -80,7 +80,7 @@ ranger:
 TPOT:
   version: '0.9.6'
   project: https://github.com/EpistasisLab/tpot
-  params:
+#  params:
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
