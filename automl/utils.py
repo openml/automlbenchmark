@@ -706,6 +706,8 @@ def call_in_subprocess(target, *args, **kwargs):
         result = q.get_nowait()
         if isinstance(result, BaseException):
             raise result
+        else:
+            return result
     except queue.Empty:
         raise Exception("Subprocess running {} died abruptly.".format(target.__name__))
     except BaseException:
