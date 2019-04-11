@@ -4,7 +4,7 @@ import sys
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import Encoder, impute
-from automl.results import save_predictions_to_file
+from automl.results import NoResultError, save_predictions_to_file
 from automl.utils import Timer, dir_of
 
 sys.path.append("{}/lib/oboe/automl".format(dir_of(__file__)))
@@ -32,8 +32,16 @@ def run(dataset: Dataset, config: TaskConfig):
                       runtime_limit=config.max_runtime_seconds,
                       **config.framework_params)
 
+    aml_models = lambda: [aml.ensemble, *aml.ensemble.base_learners] if len(aml.ensemble.base_learners) > 0 else []
+
     with Timer() as training:
-        aml.fit(X_train, y_train)
+        try:
+            aml.fit(X_train, y_train)
+        except IndexError as e:
+            print(aml_models())
+            if len(aml_models()) == 0:  # incorrect handling of some IndexError in oboe if ensemble is empty
+                raise NoResultError("Oboe could not produce any model in the requested time.") from e
+            raise e
 
     predictions = aml.predict(X_test).reshape(len(X_test))
 
@@ -51,6 +59,6 @@ def run(dataset: Dataset, config: TaskConfig):
                              target_is_encoded=True)
 
     return dict(
-        models_count=len(aml.get_models()),
+        models_count=len(aml_models()),
         training_duration=training.duration
     )
