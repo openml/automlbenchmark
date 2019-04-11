@@ -83,5 +83,5 @@ TPOT:
   params:
 #    max_eval_time_mins: 2
 #    population_size: 25
-    verbosity: 2
+#    verbosity: 2
 

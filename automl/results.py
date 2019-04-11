@@ -113,8 +113,8 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        # fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'tag', 'utc', 'duration', 'models', 'seed', 'info'] # TODO: enable this?
-        fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
+        fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
+        # fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
@@ -271,7 +271,7 @@ class TaskResult:
             task=self.task.name,
             framework=framework_name,
             version=framework_def.version,
-            # params=str(framework_def.params), # TODO: enable this?
+            params=str(framework_def.params) if len(framework_def.params) > 0 else '',
             fold=self.fold,
             mode=rconfig().run_mode,
             seed=rget().seed(self.fold),
