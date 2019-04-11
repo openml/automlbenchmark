@@ -6,7 +6,6 @@
   max_runtime_seconds: 14400
   cores: 8
   min_vol_size_mb: 65536
-  ec2_instance_type: c5.2xlarge
 
 - name: adult
   openml_task_id: 7592
