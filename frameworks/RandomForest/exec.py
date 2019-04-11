@@ -26,14 +26,14 @@ def run(dataset: Dataset, config: TaskConfig):
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
-    cores = config.framework_params.get('_cores', config.cores)
+    n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
-    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, cores))
+    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, n_jobs))
     log.warning("We completely ignore the requirement to stay within the time limit.")
     log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
-    rf = estimator(n_jobs=cores,
+    rf = estimator(n_jobs=n_jobs,
                    random_state=config.seed,
                    **training_params)
 
