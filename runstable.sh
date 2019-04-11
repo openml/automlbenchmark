@@ -92,15 +92,20 @@ extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=T
 
 #run the benchmarks
 if [[ -z $benchmark && -z $framework ]]; then
-    usage
-    exit 1
+#    usage
+#    exit 1
+    for b in ${BENCHMARKS[*]}; do
+        for f in ${FRAMEWORKS[*]}; do
+            python runbenchmark.py $f $b -m $mode -p $parallel $extra_params
+        done
+    done
 elif [[ -z $benchmark ]]; then
-    for i in ${BENCHMARKS[*]}; do
-        python runbenchmark.py $framework $i -m $mode -p $parallel $extra_params
+    for b in ${BENCHMARKS[*]}; do
+        python runbenchmark.py $framework $b -m $mode -p $parallel $extra_params
     done
 elif [[ -z $framework ]]; then
-    for i in ${FRAMEWORKS[*]}; do
-        python runbenchmark.py $i $benchmark -m $mode -p $parallel $extra_params
+    for f in ${FRAMEWORKS[*]}; do
+        python runbenchmark.py $f $benchmark -m $mode -p $parallel $extra_params
     done
 else
     python runbenchmark.py $framework $benchmark -m $mode -p $parallel $extra_params
