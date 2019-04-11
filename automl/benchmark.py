@@ -152,11 +152,11 @@ class Benchmark:
 
     def _get_task_def(self, task_name, include_disabled=False):
         try:
-            task_def = next(task for task in self.benchmark_def if task.name == task_name)
+            task_def = next(task for task in self.benchmark_def if task.name.lower() == task_name.lower())
         except StopIteration:
             raise ValueError("Incorrect task name: {}.".format(task_name))
         if not include_disabled and not Benchmark._is_task_enabled(task_def):
-            raise ValueError("Task {} is disabled, please enable it first.".format(task_name))
+            raise ValueError("Task {} is disabled, please enable it first.".format(task_def.name))
         return task_def
 
     def _task_jobs(self, task_def, folds=None):

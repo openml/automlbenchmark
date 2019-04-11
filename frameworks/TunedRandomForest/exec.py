@@ -6,11 +6,13 @@ It produces predictions based on a model trained with all of the data for the be
 import logging
 import math
 import os
-import random
 import statistics
 import tempfile as tmp
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
@@ -36,16 +38,16 @@ def run(dataset: Dataset, config: TaskConfig):
 
     is_classification = config.type == 'classification'
 
-    tuning_params = (config.framework_params['tuning'] if 'tuning' in config.framework_params
-                     else config.framework_params)
-    training_params = {k: v for k, v in config.framework_params.items() if k != 'tuning'}
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    tuning_params = config.framework_params.get('_tuning', training_params)
+    n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
     # Impute any missing data (can test using -t 146606)
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores."
-             .format(config.max_runtime_seconds, config.cores))
+             .format(config.max_runtime_seconds, n_jobs))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
     metric = dict(auc='roc_auc', logloss='neg_log_loss', acc='accuracy')[config.metric]
@@ -71,7 +73,7 @@ def run(dataset: Dataset, config: TaskConfig):
             log.info("[{:2d}/{:2d}] Evaluating max_features={}"
                      .format(i + 1, len(max_features_values), max_features_value))
             imputation = Imputer()
-            random_forest = estimator(n_jobs=config.cores,
+            random_forest = estimator(n_jobs=n_jobs,
                                       random_state=config.seed,
                                       max_features=max_features_value,
                                       **tuning_params)
@@ -100,7 +102,7 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("Tuning durations:\n%s", sorted(tuning_durations))
     _, best_max_features_value = max(max_feature_scores) if len(max_feature_scores) > 0 else (math.nan, 'auto')
     log.info("Training final model with `max_features={}`.".format(best_max_features_value))
-    rf = estimator(n_jobs=config.cores,
+    rf = estimator(n_jobs=n_jobs,
                    random_state=config.seed,
                    max_features=best_max_features_value,
                    **training_params)

@@ -1,4 +1,5 @@
 import logging
+import math
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
@@ -33,8 +34,13 @@ def run(dataset: Dataset, config: TaskConfig):
         train_file = reorder_dataset(dataset.train.path, target_src=dataset.target.index)
         test_file = reorder_dataset(dataset.test.path, target_src=dataset.target.index)
 
-    safety_memory_mb = 1024
-    classifier_memory_limit_mb = int((config.max_mem_size_mb - safety_memory_mb) / config.cores)
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+
+    safety_memory_mb = config.framework_params.get('_safety_memory_mb', 0)
+    run_memory_limit_mb = config.framework_params.get('_run_memory_limit_mb', 'auto')
+    if run_memory_limit_mb == 'auto':
+        run_memory_limit_mb = max(math.ceil((config.max_mem_size_mb - safety_memory_mb) / config.cores),
+                                  2048)  # need min 2GB per process
 
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
@@ -43,13 +49,13 @@ def run(dataset: Dataset, config: TaskConfig):
     cmd_params = dict(
         t=train_file,
         T=test_file,
-        memLimit=classifier_memory_limit_mb,
+        memLimit=run_memory_limit_mb,
         classifications='"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {}"'.format(weka_file),
         timeLimit=int(config.max_runtime_seconds/60),
         parallelRuns=config.cores,
         metric=metric,
         seed=config.seed % (1 << 16),   # weka accepts only int16 as seeds
-        **config.framework_params
+        **training_params
     )
     cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
     with Timer() as training:

@@ -14,7 +14,9 @@ import fnmatch
 from functools import reduce, wraps
 import json
 import logging
+import multiprocessing as mp
 import os
+import queue
 import shutil
 import signal
 import stat
@@ -686,6 +688,34 @@ def kill_proc_tree(pid=None, include_parent=True, timeout=None, on_terminate=Non
     for proc in alive:
         log.warning("Killing process %s.", proc)
         proc.kill()
+
+
+def call_in_subprocess(target, *args, **kwargs):
+    def call_target(q, *args, **kwargs):
+        try:
+            result = target(*args, **kwargs)
+            q.put_nowait(result)
+        except BaseException as e:
+            q.put_nowait(e)
+
+    q = mp.Queue(maxsize=1)
+    p = mp.Process(target=call_target, args=(q, *args), kwargs=kwargs)
+    try:
+        p.start()
+        p.join()
+        result = q.get_nowait()
+        if isinstance(result, BaseException):
+            raise result
+        else:
+            return result
+    except queue.Empty:
+        raise Exception("Subprocess running {} died abruptly.".format(target.__name__))
+    except BaseException:
+        try:
+            kill_proc_tree(p.pid)
+        except:
+            pass
+        raise
 
 
 def system_cores():

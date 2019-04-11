@@ -1,16 +1,20 @@
 import logging
+import math
 import os
 import tempfile as tmp
 import warnings
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.results import save_predictions_to_file
-from automl.utils import Timer, path_from_split, split_path
+from automl.utils import Timer, path_from_split, split_path, system_memory_mb
 
 log = logging.getLogger(__name__)
 
@@ -40,25 +44,41 @@ def run(dataset: Dataset, config: TaskConfig):
     # Set resources based on datasize
     log.info("Running auto-sklearn with a maximum time of %ss on %s cores with %sMB, optimizing %s.",
              config.max_runtime_seconds, config.cores, config.max_mem_size_mb, perf_metric)
+    log.info("Environment: %s", os.environ)
 
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
     # log.info("finite=%s", np.isfinite(X_train))
     predictors_type = ['Categorical' if p.is_categorical() else 'Numerical' for p in dataset.predictors]
 
-    safety_memory_mb = 1024
-    ensemble_memory_mb = 1024  # keeping defaults
-    job_memory_limit_mb = int((config.max_mem_size_mb - ensemble_memory_mb - safety_memory_mb) / (config.cores - 1))
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+
+    n_jobs = config.framework_params.get('_n_jobs', config.cores)
+    safety_memory = config.framework_params.get('_safety_memory', 0)  # (we already leave 2GB for OS)
+    ml_memory_limit = config.framework_params.get('_ml_memory_limit', 'auto')
+    ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
+
+    # when memory is large enough, we should have:
+    # (cores - 1) * ml_memory_limit_mb + ensemble_memory_limit_mb = config.max_mem_size_mb
+    total_memory_mb = system_memory_mb().total
+    if ml_memory_limit == 'auto':
+        ml_memory_limit = max(min(config.max_mem_size_mb, math.ceil(total_memory_mb / n_jobs)),
+                              3072)  # 3072 is autosklearn defaults
+    if ensemble_memory_limit == 'auto':
+        ensemble_memory_limit = max(ml_memory_limit - (total_memory_mb - config.max_mem_size_mb - safety_memory),
+                                    math.ceil(ml_memory_limit / 3),  # default proportions
+                                    1024)  # 1024 is autosklearn defaults
+    log.info("Using %sMB memory per ML job and %sMB for ensemble job on a total of %s cores", ml_memory_limit, ensemble_memory_limit, n_jobs)
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
     estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
-                             n_jobs=config.cores,
-                             ml_memory_limit=job_memory_limit_mb,
-                             ensemble_memory_limit=ensemble_memory_mb,
+                             n_jobs=n_jobs,
+                             ml_memory_limit=ml_memory_limit,
+                             ensemble_memory_limit=ensemble_memory_limit,
                              seed=config.seed,
-                             **config.framework_params)
+                             **training_params)
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
 
