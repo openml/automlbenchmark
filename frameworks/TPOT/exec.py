@@ -1,7 +1,10 @@
 import logging
 import os
+import sys
 import tempfile as tmp
 
+if sys.platform == 'darwin':
+    os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -40,16 +43,19 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
+
     log.info('Running TPOT with a maximum time of %ss on %s cores, optimizing %s.',
-             config.max_runtime_seconds, config.cores, scoring_metric)
+             config.max_runtime_seconds, n_jobs, scoring_metric)
     runtime_min = (config.max_runtime_seconds/60)
 
     estimator = TPOTClassifier if is_classification else TPOTRegressor
-    tpot = estimator(n_jobs=config.cores,
+    tpot = estimator(n_jobs=n_jobs,
                      max_time_mins=runtime_min,
                      scoring=scoring_metric,
                      random_state=config.seed,
-                     **config.framework_params)
+                     **training_params)
 
     with Timer() as training:
         tpot.fit(X_train, y_train)
