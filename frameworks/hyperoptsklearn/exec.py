@@ -46,6 +46,8 @@ def run(dataset: Dataset, config: TaskConfig):
     if loss_fn is default:
         loss_fn = None
 
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+
     log.warning("Ignoring cores constraint of %s cores.", config.cores)
     log.info("Running hyperopt-sklearn with a maximum time of %ss on %s cores, optimizing %s.",
              config.max_runtime_seconds, 'all', config.metric)
@@ -67,7 +69,7 @@ def run(dataset: Dataset, config: TaskConfig):
                                   continuous_loss_fn=continuous_loss_fn,
                                   trial_timeout=config.max_runtime_seconds,
                                   seed=config.seed,
-                                  **config.framework_params)
+                                  **training_params)
 
     with InterruptTimeout(config.max_runtime_seconds * 4/3, sig=signal.SIGQUIT):
         with InterruptTimeout(config.max_runtime_seconds, before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):

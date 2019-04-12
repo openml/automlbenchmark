@@ -30,8 +30,11 @@ def run(dataset: Dataset, config: TaskConfig):
         log.warning("Performance metric %s not supported, defaulting to AUTO.", config.metric)
 
     try:
-        log.info("Starting H2O cluster with %s cores, %smb memory.", config.cores, config.max_mem_size_mb)
-        h2o.init(nthreads=config.cores, max_mem_size=str(config.max_mem_size_mb) + "M")
+        training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+        nthreads = config.framework_params.get('_nthreads', config.cores)
+
+        log.info("Starting H2O cluster with %s cores, %sMB memory.", nthreads, config.max_mem_size_mb)
+        h2o.init(nthreads=nthreads, max_mem_size=str(config.max_mem_size_mb)+"M")
 
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from %s.", dataset.train.path)
@@ -48,7 +51,7 @@ def run(dataset: Dataset, config: TaskConfig):
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds,
                         sort_metric=sort_metric,
                         seed=config.seed,
-                        **config.framework_params)
+                        **training_params)
 
         with Timer() as training:
             aml.train(y=dataset.target.index, training_frame=train)

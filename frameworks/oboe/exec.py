@@ -24,13 +24,16 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
-    log.info('Running oboe with a maximum time of {}s on {} cores.'.format(config.max_runtime_seconds, config.cores))
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    n_cores = config.framework_params.get('_n_cores', config.cores)
+
+    log.info('Running oboe with a maximum time of {}s on {} cores.'.format(config.max_runtime_seconds, n_cores))
     log.warning('We completely ignore the advice to optimize towards metric: {}.'.format(config.metric))
 
     aml = AutoLearner(p_type='classification' if is_classification else 'regression',
-                      n_cores=config.cores,
+                      n_cores=n_cores,
                       runtime_limit=config.max_runtime_seconds,
-                      **config.framework_params)
+                      **training_params)
 
     aml_models = lambda: [aml.ensemble, *aml.ensemble.base_learners] if len(aml.ensemble.base_learners) > 0 else []
 
