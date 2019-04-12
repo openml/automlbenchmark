@@ -26,6 +26,7 @@ import tempfile
 import time
 import threading
 import _thread
+import traceback
 
 import psutil
 from ruamel import yaml
@@ -696,6 +697,7 @@ def call_in_subprocess(target, *args, **kwargs):
             result = target(*args, **kwargs)
             q.put_nowait(result)
         except BaseException as e:
+            log.exception(e)
             q.put_nowait(e)
 
     q = mp.Queue(maxsize=1)
