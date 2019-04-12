@@ -67,6 +67,7 @@ class DockerBenchmark(Benchmark):
         pass
 
     def run(self, task_name=None, fold=None):
+        self._get_task_defs(task_name)  # validates tasks
         if self.parallel_jobs > 1 or not rconfig().docker.minimize_instances:
             return super().run(task_name, fold)
         else:

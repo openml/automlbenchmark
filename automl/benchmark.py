@@ -104,12 +104,7 @@ class Benchmark:
         :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
         :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
-        task_defs = self._benchmark_tasks() if task_name is None \
-            else [self._get_task_def(name) for name in task_name] if isinstance(task_name, list) \
-            else [self._get_task_def(task_name)]
-        if len(task_defs) == 0:
-            raise ValueError("No task available.")
-
+        task_defs = self._get_task_defs(task_name)
         jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
             results = self._run_jobs(jobs)
@@ -149,6 +144,14 @@ class Benchmark:
 
     def _benchmark_tasks(self):
         return [task_def for task_def in self.benchmark_def if Benchmark._is_task_enabled(task_def)]
+
+    def _get_task_defs(self, task_name):
+        task_defs = self._benchmark_tasks() if task_name is None \
+            else [self._get_task_def(name) for name in task_name] if isinstance(task_name, list) \
+            else [self._get_task_def(task_name)]
+        if len(task_defs) == 0:
+            raise ValueError("No task available.")
+        return task_defs
 
     def _get_task_def(self, task_name, include_disabled=False):
         try:

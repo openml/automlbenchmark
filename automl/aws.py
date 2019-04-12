@@ -130,6 +130,7 @@ class AWSBenchmark(Benchmark):
             self._delete_s3_bucket()
 
     def run(self, task_name=None, fold=None):
+        self._get_task_defs(task_name)  # validates tasks
         self._exec_start()
         self._monitoring_start()
         if self.parallel_jobs > 1 or not rconfig().aws.minimize_instances:
@@ -137,8 +138,8 @@ class AWSBenchmark(Benchmark):
             #   than having a job per task. This depends on job duration especially
             return super().run(task_name, fold)
         else:
-            job = self._make_aws_job(task_name, fold)
             try:
+                job = self._make_aws_job(task_name, fold)
                 results = self._run_jobs([job])
                 return self._process_results(results, task_name=task_name)
             finally:
