@@ -284,7 +284,7 @@ class TaskResult:
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
-        scores.result = scores[metrics[0]] if len(metrics) > 0 else result.evaluate('NA')
+        scores.result = scores[metrics[0]] if len(metrics) > 0 else result.evaluate('')
         scores.info = result.info
         log.info("Metric scores: %s", scores)
         return scores
@@ -319,7 +319,7 @@ class NoResult(Result):
 
     def __init__(self, info=None):
         super().__init__(None, info)
-        self.missing_result = 'NA'
+        self.missing_result = np.nan
 
     def evaluate(self, metric):
         return self.missing_result
