@@ -54,7 +54,6 @@ def run(dataset: Dataset, config: TaskConfig):
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
     n_jobs = config.framework_params.get('_n_jobs', config.cores)
-    safety_memory = config.framework_params.get('_safety_memory', 0)  # (we already leave 2GB for OS)
     ml_memory_limit = config.framework_params.get('_ml_memory_limit', 'auto')
     ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
 
@@ -66,10 +65,10 @@ def run(dataset: Dataset, config: TaskConfig):
                                   math.ceil(total_memory_mb / n_jobs)),
                               3072)  # 3072 is autosklearn defaults
     if ensemble_memory_limit == 'auto':
-        ensemble_memory_limit = max(math.ceil(ml_memory_limit - (total_memory_mb - config.max_mem_size_mb - safety_memory)),
+        ensemble_memory_limit = max(math.ceil(ml_memory_limit - (total_memory_mb - config.max_mem_size_mb)),
                                     math.ceil(ml_memory_limit / 3),  # default proportions
                                     1024)  # 1024 is autosklearn defaults
-    log.info("Using %sMB memory per ML job and %sMB for ensemble job on a total of %s cores", ml_memory_limit, ensemble_memory_limit, n_jobs)
+    log.info("Using %sMB memory per ML job and %sMB for ensemble job on a total of %s jobs.", ml_memory_limit, ensemble_memory_limit, n_jobs)
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?

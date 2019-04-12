@@ -35,12 +35,14 @@ def run(dataset: Dataset, config: TaskConfig):
         test_file = reorder_dataset(dataset.test.path, target_src=dataset.target.index)
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    parallelRuns = config.framework_params.get('_parallelRuns', config.cores)
 
-    safety_memory_mb = config.framework_params.get('_safety_memory_mb', 0)
-    run_memory_limit_mb = config.framework_params.get('_run_memory_limit_mb', 'auto')
-    if run_memory_limit_mb == 'auto':
-        run_memory_limit_mb = max(math.ceil((config.max_mem_size_mb - safety_memory_mb) / config.cores),
-                                  2048)  # need min 2GB per process
+    memLimit = config.framework_params.get('_memLimit', 'auto')
+    if memLimit == 'auto':
+        memLimit = max(min(config.max_mem_size_mb,
+                           math.ceil(config.max_mem_size_mb / parallelRuns)),
+                       1024)  # AutoWEKA default memLimit
+    log.info("Using %sMB memory per run on %s parallel runs.", memLimit, parallelRuns)
 
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
@@ -49,10 +51,10 @@ def run(dataset: Dataset, config: TaskConfig):
     cmd_params = dict(
         t=train_file,
         T=test_file,
-        memLimit=run_memory_limit_mb,
+        memLimit=memLimit,
         classifications='"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {}"'.format(weka_file),
         timeLimit=int(config.max_runtime_seconds/60),
-        parallelRuns=config.cores,
+        parallelRuns=parallelRuns,
         metric=metric,
         seed=config.seed % (1 << 16),   # weka accepts only int16 as seeds
         **training_params
