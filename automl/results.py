@@ -328,7 +328,7 @@ class NoResult(Result):
 class ErrorResult(NoResult):
 
     def __init__(self, error):
-        msg = 'Error: '+str(error)
+        msg = "{}: {}".format(type(error).__qualname__ if error is not None else "Error", error)
         max_len = rconfig().results.error_max_length
         msg = msg if len(msg) <= max_len else (msg[:max_len - 3] + '...')
         super().__init__(msg)
