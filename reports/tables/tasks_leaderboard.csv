@@ -1,41 +1,36 @@
 type,task,autosklearn,autoweka,constantpredictor,h2oautoml,oboe,randomforest,tpot,tunedrandomforest
-binary,adult,1.000000,3.000000,7.000000,6.000000 (1),nan,5.000000,2.000000,4.000000
-binary,amazon_employee_access,nan,nan,4.000000,nan,nan,2.000000,1.000000,3.000000
-binary,apsfailure,nan,nan,4.000000,1.000000,nan,3.000000,nan,2.000000
-binary,australian,6.000000 (1),4.000000,8.000000,1.000000,7.000000 (3),2.000000,5.000000,3.000000
-binary,bank-marketing,nan,nan,5.000000,1.000000,nan,4.000000,2.000000,3.000000
-binary,bioresponse,4.000000,7.000000,8.000000,1.000000,6.000000,3.000000,5.000000,2.000000
-binary,blood-transfusion,2.000000,3.000000,8.000000,1.000000,7.000000 (3),6.000000,4.000000,5.000000
-binary,christine,5.000000,6.000000,8.000000,1.000000,7.000000,3.000000,2.000000,4.000000
-binary,credit-g,4.000000,6.000000,8.000000,2.000000,7.000000 (1),3.000000,5.000000,1.000000
-binary,dresses-sales,2.000000 (1),3.000000,8.000000,1.000000,7.000000,4.000000,5.000000,6.000000
-binary,guiellermo,nan,nan,4.000000,3.000000,nan,1.000000,nan,2.000000
-binary,higgs,nan,nan,5.000000,1.000000,nan,4.000000,2.000000,3.000000
-binary,internet-advertisements,5.000000,6.000000,8.000000,4.000000,7.000000,2.000000,3.000000,1.000000
-binary,jasmine,5.000000,6.000000,8.000000,3.000000,7.000000,1.000000,4.000000,2.000000
-binary,kc1,5.000000 (3),4.000000,7.000000,nan,6.000000,3.000000,1.000000,2.000000
-binary,kddcup09_appetency,nan,nan,3.000000,nan,nan,1.000000,nan,2.000000
-binary,kr-vs-kp,1.000000,7.000000,8.000000,2.000000,6.000000,5.000000,3.000000,4.000000
-binary,miniboone,nan,nan,4.000000,1.000000,nan,2.000000,nan,3.000000
-binary,nomao,3.000000,6.000000,8.000000,1.000000,7.000000,5.000000,2.000000,4.000000
-binary,numerai28.6,nan,nan,4.000000,1.000000,nan,2.000000,nan,3.000000
-binary,phoneme,5.000000,6.000000,8.000000,1.000000,7.000000,2.000000,4.000000,3.000000
-binary,riccardo,nan,nan,4.000000,3.000000,nan,1.000000,nan,2.000000
-binary,sylvine,1.000000,6.000000,8.000000,3.000000,7.000000,5.000000,2.000000,4.000000
-multiclass,car,3.000000,7.000000,8.000000,2.000000,5.000000,6.000000,1.000000,4.000000
-multiclass,cnae-9,5.000000 (1),6.000000,8.000000,1.000000,7.000000,4.000000,2.000000,3.000000
-multiclass,connect-4,3.000000,6.000000,7.000000,2.000000,nan,5.000000,1.000000 (1),4.000000
-multiclass,dilbert,2.000000,5.000000,7.000000,1.000000,6.000000,3.000000,nan,4.000000
-multiclass,eucalyptus,5.000000 (1),7.000000,6.000000,1.000000,8.000000,3.000000,4.000000,2.000000
-multiclass,fabert,4.000000 (1),7.000000,6.000000,1.000000,nan,3.000000,5.000000 (1),2.000000
-multiclass,fashion-mnist,nan,nan,4.000000,1.000000,nan,3.000000,nan,2.000000
-multiclass,helena,nan,3.000000 (1),1.000000,2.000000,nan,nan,nan,nan
-multiclass,jannis,2.000000,7.000000,6.000000,1.000000,nan,4.000000,5.000000,3.000000
-multiclass,jungle_chess_2pcs_raw_endgame_complete,nan,nan,5.000000,2.000000,nan,4.000000,1.000000,3.000000
-multiclass,mfeat-factors,2.000000,6.000000 (1),8.000000,1.000000,7.000000,5.000000,3.000000,4.000000
-multiclass,micro-mass,2.000000,7.000000,6.000000,3.000000,8.000000,5.000000,1.000000,4.000000
-multiclass,robert,nan,nan,4.000000,1.000000,nan,3.000000,nan,2.000000
-multiclass,segment,3.000000,6.000000,8.000000,1.000000,7.000000,5.000000,2.000000,4.000000
-multiclass,shuttle,nan,nan,4.000000,1.000000,nan,3.000000,nan,2.000000
-multiclass,vehicle,5.000000 (1),7.000000,6.000000,1.000000,8.000000 (2),4.000000,2.000000,3.000000
-multiclass,volkert,nan,nan,3.000000,nan,nan,1.000000,nan,2.000000
+binary,adult,1,5,6,3,nan,4,2,nan
+binary,amazon_employee_access,4 (1),5,6,1,nan,3,2,nan
+binary,apsfailure,3,4,6,1,nan,2,5 (1),nan
+binary,australian,3,6,8,1,7,2,5,4
+binary,bank-marketing,4 (2),5,6,3,nan,2,1,nan
+binary,blood-transfusion,3 (1),2,8,1,7 (2),6,4 (1),5
+binary,christine,6 (1),5,8,1,7,4,2,3
+binary,credit-g,5,6,8,3,7 (2),2,4,1
+binary,guiellermo,nan,3,5,1,nan,2,4,nan
+binary,higgs,3,5,6,4 (1),nan,1,2,nan
+binary,jasmine,5,6,8,3,7,2,4,1
+binary,kc1,6 (3),5,8,3,7 (8),4,2,1
+binary,kddcup09_appetency,1,5 (6),6,2,nan,3,4 (2),nan
+binary,kr-vs-kp,2,7,8,1,6,5,3,4
+binary,miniboone,2,4,6,1,nan,3,5 (1),nan
+binary,nomao,2,5,7,1,6,3,4,nan
+binary,numerai28.6,2 (1),5 (1),6,1,nan,4,3,nan
+binary,phoneme,5,6,8,2,7,4,1,3
+binary,riccardo,nan,nan,5,1,3,2,4,nan
+binary,sylvine,2,6,8,3,7,5,1,4
+multiclass,car,4 (1),6 (1),8,2,7,5,1,3
+multiclass,cnae-9,2,6 (2),8,1,7,5,3,4
+multiclass,connect-4,3,5 (1),6,1,nan,4,2,nan
+multiclass,dilbert,2,8,7,1,6,4,3,5
+multiclass,fabert,2,7,6,1,nan,4,5 (2),3
+multiclass,fashion-mnist,2,4,6,1,nan,3,5 (4),nan
+multiclass,helena,2,5 (1),4,3 (5),nan,nan,1 (1),nan
+multiclass,jannis,1,6 (1),5,3 (2),nan,2,4 (1),nan
+multiclass,jungle_chess_2pcs_raw_endgame_complete,3 (1),6,5,2,nan,4,1,nan
+multiclass,mfeat-factors,1,6,8,2,7,5,3,4
+multiclass,robert,4 (1),nan,3,1,nan,2,5 (2),nan
+multiclass,segment,3,6,8,1,7,5,2,4
+multiclass,shuttle,2,4,5,1,nan,3,6,nan
+multiclass,vehicle,4 (1),7,6,1,8,5,2,3
+multiclass,volkert,5 (9),3,6,1,nan,2,4 (1),nan

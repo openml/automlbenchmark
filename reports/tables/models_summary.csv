@@ -1,41 +1,36 @@
 type,task,autosklearn,autoweka,constantpredictor,h2oautoml,oboe,randomforest,tpot,tunedrandomforest
-binary,adult,10,nan,1,40 (1),nan,2000,191,2000
-binary,amazon_employee_access,nan,nan,1,nan,nan,2000,1138,2000
-binary,apsfailure,nan,nan,1,32,nan,2000,nan,2000
-binary,australian,13 (1),nan,1,74,2 (3),2000,6452,2000
-binary,bank-marketing,nan,nan,1,122,nan,2000,815,2000
-binary,bioresponse,13,nan,1,30,2,2000,82,2000
-binary,blood-transfusion,15,nan,1,63,2 (3),2000,7848,2000
-binary,christine,6,nan,1,20,2,2000,30,2000
-binary,credit-g,13,nan,1,75,2 (1),2000,4183,2000
-binary,dresses-sales,14 (1),nan,1,48,2,2000,7803,2000
-binary,guiellermo,nan,nan,1,4,nan,2000,nan,2000
-binary,higgs,nan,nan,1,61,nan,2000,312,2000
-binary,internet-advertisements,11,nan,1,22,2,2000,130,2000
-binary,jasmine,9,nan,1,59,2,2000,464,2000
-binary,kc1,15 (3),nan,1,nan,2,2000,1918,2000
-binary,kddcup09_appetency,nan,nan,1,nan,nan,2000,nan,2000
-binary,kr-vs-kp,16,nan,1,83,2,2000,1280,2000
-binary,miniboone,nan,nan,1,29,nan,2000,nan,2000
-binary,nomao,9,nan,1,24,2,2000,104,2000
-binary,numerai28.6,nan,nan,1,45,nan,2000,nan,2000
-binary,phoneme,10,nan,1,162,2,2000,660,2000
-binary,riccardo,nan,nan,1,4,nan,2000,nan,2000
-binary,sylvine,10,nan,1,116,2,2000,706,2000
-multiclass,car,2,nan,1,130,2,2000,1787,2000
-multiclass,cnae-9,6 (1),nan,1,43,2,2000,173,2000
-multiclass,connect-4,4,nan,1,5,nan,2000,103 (1),2000
-multiclass,dilbert,2,nan,1,5,2,2000,nan,2000
-multiclass,eucalyptus,7 (1),nan,1,55,2,2000,1578,2000
-multiclass,fabert,5 (1),nan,1,9,nan,2000,40 (1),2000
-multiclass,fashion-mnist,nan,nan,1,5,nan,2000,nan,2000
-multiclass,helena,nan,nan (1),1,1,nan,,nan,
-multiclass,jannis,5,nan,1,7,nan,2000,72,2000
-multiclass,jungle_chess_2pcs_raw_endgame_complete,nan,nan,1,47,nan,2000,827,2000
-multiclass,mfeat-factors,9,nan (1),1,28,2,2000,184,2000
-multiclass,micro-mass,7,nan,1,11,2,2000,183,2000
-multiclass,robert,nan,nan,1,5,nan,2000,nan,2000
-multiclass,segment,6,nan,1,48,2,2000,738,2000
-multiclass,shuttle,nan,nan,1,31,nan,2000,nan,2000
-multiclass,vehicle,7 (1),nan,1,108,2 (2),2000,855,2000
-multiclass,volkert,nan,nan,1,nan,nan,2000,nan,2000
+binary,adult,10,nan,1,74,nan,2000,388,
+binary,amazon_employee_access,10 (1),nan,1,79,nan,2000,524,
+binary,apsfailure,9,nan,1,25,nan,2000,80 (1),
+binary,australian,11,nan,1,86,7,2000,12789,2000
+binary,bank-marketing,12 (2),nan,1,72,nan,2000,368,
+binary,blood-transfusion,16 (1),nan,1,61,4 (2),2000,16783 (1),2000
+binary,christine,10 (1),nan,1,36,7,2000,107,2000
+binary,credit-g,17,nan,1,80,7 (2),2000,8151,2000
+binary,guiellermo,nan,nan,1,6,nan,2000,79,
+binary,higgs,6,nan,1,36 (1),nan,2000,127,
+binary,jasmine,11,nan,1,59,10,2000,670,2000
+binary,kc1,16 (3),nan,1,68,4 (8),2000,2943,2000
+binary,kddcup09_appetency,11,nan (6),1,30,nan,2000,104 (2),
+binary,kr-vs-kp,16,nan,1,178,7,2000,2076,2000
+binary,miniboone,10,nan,1,24,nan,2000,98 (1),
+binary,nomao,13,nan,1,28,5,2000,177,
+binary,numerai28.6,8 (1),nan (1),1,38,nan,2000,159,
+binary,phoneme,10,nan,1,358,4,2000,1591,2000
+binary,riccardo,nan,nan,1,4,2,2000,74,
+binary,sylvine,10,nan,1,218,8,2000,1235,2000
+multiclass,car,1 (1),nan (1),1,321,7,2000,3741,2000
+multiclass,cnae-9,6,nan (2),1,66,11,2000,371,2000
+multiclass,connect-4,5,nan (1),1,5,nan,2000,167,
+multiclass,dilbert,3,nan,1,4,15,2000,108,2000
+multiclass,fabert,7,nan,1,17,nan,2000,134 (2),2000
+multiclass,fashion-mnist,5,nan,1,1,nan,2000,43 (4),
+multiclass,helena,1,nan (1),1,1 (5),nan,,59 (1),
+multiclass,jannis,5,nan (1),1,18 (2),nan,2000,109 (1),
+multiclass,jungle_chess_2pcs_raw_endgame_complete,6 (1),nan,1,43,nan,2000,429,
+multiclass,mfeat-factors,8,nan,1,46,9,2000,375,2000
+multiclass,robert,1 (1),nan,1,2,nan,2000,42 (2),
+multiclass,segment,6,nan,1,105,9,2000,1455,2000
+multiclass,shuttle,2,nan,1,41,nan,2000,303,
+multiclass,vehicle,8 (1),nan,1,118,6,2000,1885,2000
+multiclass,volkert,3 (9),nan,1,4,nan,2000,74 (1),
