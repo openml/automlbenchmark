@@ -523,7 +523,7 @@ class AWSBenchmark(Benchmark):
             return self._s3_input(name) if in_input_dir else self._s3_user(name)
 
         upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
-        upload_files = list_all_files(upload_paths, rconfig().aws.resource_ignore)
+        upload_files = list_all_files(upload_paths, exclude=rconfig().aws.resource_ignore)
         log.debug("Uploading files to S3: %s", upload_files)
         uploaded_resources = []
         for res in upload_files:

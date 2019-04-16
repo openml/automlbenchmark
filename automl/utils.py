@@ -536,7 +536,7 @@ def dir_of(caller_file, rel_to_project_root=False):
         return abs_path
 
 
-def list_all_files(paths, path_ignore=None):
+def list_all_files(paths, include=None, exclude=None):
     all_files = []
     paths = paths if isinstance(paths, list) else [paths]
     for path in paths:
@@ -549,12 +549,21 @@ def list_all_files(paths, path_ignore=None):
             all_files.append(path)
         else:
             log.warning("Skipping file `%s` as it doesn't exist.", path)
-    if path_ignore is not None:
-        path_ignore = path_ignore if isinstance(path_ignore, list) else [path_ignore]
-        ignored = []
-        for pattern in path_ignore:
-            ignored.extend(fnmatch.filter(all_files, pattern))
-        all_files = [file for file in all_files if file not in ignored]
+
+    if include is not None:
+        include = include if isinstance(include, list) else [include]
+        included = []
+        for pattern in include:
+            included.extend(fnmatch.filter(all_files, pattern))
+        all_files = [file for file in all_files if file in included]
+
+    if exclude is not None:
+        exclude = exclude if isinstance(exclude, list) else [exclude]
+        excluded = []
+        for pattern in exclude:
+            excluded.extend(fnmatch.filter(all_files, pattern))
+        all_files = [file for file in all_files if file not in excluded]
+
     return all_files
 
 
