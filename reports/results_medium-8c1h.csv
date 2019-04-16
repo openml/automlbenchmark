@@ -278,6 +278,7 @@ openml.org/t/146606,higgs,H2OAutoML,8,0.801769,aws.docker,3.24.0.1,,stable,2019-
 openml.org/t/146606,higgs,H2OAutoML,1,0.808756,aws.docker,3.24.0.1,,stable,2019-04-14T01:54:39,3353.6,39,3357421672,,0.705456,0.808756,
 openml.org/t/146606,higgs,H2OAutoML,9,0.822321,aws.docker,3.24.0.1,,stable,2019-04-14T01:55:28,3336.3,33,3357421680,,0.721265,0.822321,
 openml.org/t/146606,higgs,H2OAutoML,4,0.81715,aws.docker,3.24.0.1,,stable,2019-04-14T01:56:02,3389.6,34,3357421675,,0.715655,0.81715,
+openml.org/t/146606,higgs,H2OAutoML,6,0.820293,aws.docker,3.24.0.1,,stable,2019-04-16T15:48:58,3309.0,34,457696236,,0.732993,0.820293
 openml.org/t/168330,Jannis,H2OAutoML,0,0.675809,aws.docker,3.24.0.1,,stable,2019-04-14T02:03:15,3667.2,17,3357421671,,0.732267,,0.675809
 openml.org/t/168330,Jannis,H2OAutoML,1,0.700266,aws.docker,3.24.0.1,,stable,2019-04-14T02:03:50,3701.1,18,3357421672,,0.729639,,0.700266
 openml.org/t/168330,Jannis,H2OAutoML,6,0.681684,aws.docker,3.24.0.1,,stable,2019-04-14T02:04:57,3667.5,19,3357421677,,0.72889,,0.681684
@@ -286,7 +287,8 @@ openml.org/t/168330,Jannis,H2OAutoML,4,0.680713,aws.docker,3.24.0.1,,stable,2019
 openml.org/t/168330,Jannis,H2OAutoML,3,0.672654,aws.docker,3.24.0.1,,stable,2019-04-14T02:05:11,3707.5,17,3357421674,,0.729965,,0.672654
 openml.org/t/168330,Jannis,H2OAutoML,5,0.680782,aws.docker,3.24.0.1,,stable,2019-04-14T02:05:00,3697.8,23,3357421676,,0.73319,,0.680782
 openml.org/t/168330,Jannis,H2OAutoML,7,0.679204,aws.docker,3.24.0.1,,stable,2019-04-14T02:06:17,3693.3,17,3357421678,,0.729488,,0.679204
-openml.org/t/168330,Jannis,H2OAutoML,8,,aws,3.24.0.1,,stable,2019-04-14T01:34:09,1993.8,,3357421679,Error: Aborting instance i-04526a97b149c875c for job aws_medium-8c1h_Jannis_8_H2OAutoML.,,,
+openml.org/t/168330,Jannis,H2OAutoML,9,0.689133,aws.docker,3.24.0.1,,stable,2019-04-16T16:55:42,3693.0,19,1231117800,,0.713364,0.689133
+openml.org/t/168330,Jannis,H2OAutoML,8,0.675342,aws.docker,3.24.0.1,,stable,2019-04-16T16:57:16,3692.8,19,1231117799,,0.731399,0.675342
 openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,H2OAutoML,0,0.193126,aws.docker,3.24.0.1,,stable,2019-04-14T02:01:41,3493.7,41,3357421671,,0.923249,,0.193126
 openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,H2OAutoML,3,0.172802,aws.docker,3.24.0.1,,stable,2019-04-14T02:03:17,3517.1,42,3357421674,,0.93552,,0.172802
 openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,H2OAutoML,1,0.310676,aws.docker,3.24.0.1,,stable,2019-04-14T02:03:41,3554.3,42,3357421672,,0.879741,,0.310676
