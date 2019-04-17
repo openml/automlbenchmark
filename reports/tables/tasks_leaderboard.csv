@@ -10,14 +10,14 @@ binary,credit-g,4,7,3,6 (4),1,5,2
 binary,guiellermo,nan,5,1,nan,3,4,2
 binary,higgs,2,5,1,nan,nan,3,4
 binary,jasmine,5 (1),7,2,6,4,1,3
-binary,kc1,5 (6),7,3,6 (7),4,1,2
+binary,kc1,3,7,4,6 (7),5,1,2
 binary,kddcup09_appetency,1,6,2,nan,4,3 (6),5
-binary,kr-vs-kp,nan,6,1,5,4,3,2
+binary,kr-vs-kp,2,7,1,6,5,4,3
 binary,miniboone,2,6,1,nan,5,3,4
 binary,nomao,1,7,2,6,5,3,4
-binary,numerai28.6,1,5,nan,nan,3,2,4
-binary,phoneme,nan,5,1,4,3,nan,2
-binary,riccardo,nan,5,nan,3 (1),2,4,1
+binary,numerai28.6,2,6,1,nan,4,3,5
+binary,phoneme,4,6,1,5,3,nan,2
+binary,riccardo,nan,6,1,4 (1),3,5,2
 binary,sylvine,1 (1),6,2,5,4,nan,3
 multiclass,car,3 (1),7,2,6,5,1,4
 multiclass,cnae-9,2,7,1,6,5,3,4
@@ -26,11 +26,11 @@ multiclass,dilbert,2,7,1,6,5,3,4
 multiclass,fabert,2,6,1,nan,4,3 (4),5
 multiclass,fashion-mnist,3,6,1,nan,4,5 (1),2
 multiclass,helena,3,4,1,nan,nan,2,nan
-multiclass,jannis,2 (6),6,1,nan,5,4 (1),3 (2)
+multiclass,jannis,3 (6),6,2,nan,5,4 (1),1
 multiclass,jungle_chess_2pcs_raw_endgame_complete,2 (1),6,3,nan,5,1,4
-multiclass,mfeat-factors,nan,6,1,5,4,2 (4),3
+multiclass,mfeat-factors,1,7,2,6,5,3 (4),4
 multiclass,robert,6,5,1,7,2,4,3
-multiclass,segment,2 (2),6,1,5,4,nan,3
+multiclass,segment,1,6,2,5,4,nan,3
 multiclass,shuttle,2 (1),7,3,6,5,1,4
 multiclass,vehicle,2 (2),5,1,6 (1),4,nan,3
 multiclass,volkert,3 (3),6,1,nan,4,5 (4),2
