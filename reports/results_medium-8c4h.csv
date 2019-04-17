@@ -59,16 +59,16 @@ openml.org/t/146825,Fashion-MNIST,autosklearn,3,0.370752,aws.docker,0.5.1,,stabl
 openml.org/t/146825,Fashion-MNIST,autosklearn,4,0.362964,aws.docker,0.5.1,,stable,2019-04-16T06:55:19,14419.5,6,1255626261,,0.886143,,0.362964
 openml.org/t/146825,Fashion-MNIST,autosklearn,8,0.365438,aws.docker,0.5.1,,stable,2019-04-16T06:56:21,14436.1,2,1255626265,,0.879286,,0.365438
 openml.org/t/146825,Fashion-MNIST,autosklearn,9,0.371904,aws.docker,0.5.1,,stable,2019-04-16T06:57:30,14399.3,4,1255626266,,0.879,,0.371904
-openml.org/t/168337,guiellermo,autosklearn,0,,aws.docker,0.5.1,,stable,2019-04-16T07:16:02,1257.4,,1255626257,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,7,,aws.docker,0.5.1,,stable,2019-04-16T07:16:20,1214.6,,1255626264,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,1,,aws.docker,0.5.1,,stable,2019-04-16T07:16:08,1268.9,,1255626258,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,2,,aws.docker,0.5.1,,stable,2019-04-16T07:16:24,1272.5,,1255626259,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,4,,aws.docker,0.5.1,,stable,2019-04-16T07:16:24,1237.3,,1255626261,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,5,,aws.docker,0.5.1,,stable,2019-04-16T07:16:52,1251.8,,1255626262,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,6,,aws.docker,0.5.1,,stable,2019-04-16T07:17:09,1274.1,,1255626263,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,3,,aws.docker,0.5.1,,stable,2019-04-16T07:17:41,1253.3,,1255626260,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,8,,aws.docker,0.5.1,,stable,2019-04-16T07:18:14,1283.6,,1255626265,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
-openml.org/t/168337,guiellermo,autosklearn,9,,aws.docker,0.5.1,,stable,2019-04-16T07:19:36,1273.7,,1255626266,"Error: Dummy prediction failed: {'error': 'Memout (used more than 3922 MB).', 'configuration_origin': 'DUMMY'} ",,,
+openml.org/t/168337,guiellermo,autosklearn,0,0.910974,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:09:59,14397.2,13,185123237,,0.852,0.910974
+openml.org/t/168337,guiellermo,autosklearn,6,0.908746,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:32,14397.2,12,185123243,,0.852,0.908746
+openml.org/t/168337,guiellermo,autosklearn,9,0.916698,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:41,14397.1,16,185123246,,0.8495,0.916698
+openml.org/t/168337,guiellermo,autosklearn,1,0.885776,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:40,14396.3,17,185123238,,0.8145,0.885776
+openml.org/t/168337,guiellermo,autosklearn,2,0.917909,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:36,14397.2,14,185123239,,0.852,0.917909
+openml.org/t/168337,guiellermo,autosklearn,3,0.90664,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:38,14396.9,12,185123240,,0.844,0.90664
+openml.org/t/168337,guiellermo,autosklearn,4,0.904002,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:11:09,14398.9,8,185123241,,0.8425,0.904002
+openml.org/t/168337,guiellermo,autosklearn,5,0.908447,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:11:26,14397.6,14,185123242,,0.852,0.908447
+openml.org/t/168337,guiellermo,autosklearn,7,0.894853,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:52,14396.8,10,185123244,,0.829,0.894853
+openml.org/t/168337,guiellermo,autosklearn,8,0.893516,aws.docker,0.5.1,{'_n_jobs': 4},stable,2019-04-17T17:10:39,14396.6,10,185123245,,0.8435,0.893516
 openml.org/t/168329,Helena,autosklearn,2,3.48704,aws.docker,0.5.1,,stable,2019-04-16T10:59:05,14397.1,1,1255626259,,0.310583,,3.48704
 openml.org/t/168329,Helena,autosklearn,1,4.17017,aws.docker,0.5.1,,stable,2019-04-16T10:58:48,14397.5,1,1255626258,,0.0616564,,4.17017
 openml.org/t/168329,Helena,autosklearn,0,3.78899,aws.docker,0.5.1,,stable,2019-04-16T10:58:46,14396.8,1,1255626257,,0.147239,,3.78899
