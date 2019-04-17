@@ -5,6 +5,7 @@
   folds: 10
   max_runtime_seconds: 28800
   cores: 8
+  min_vol_size_mb: 65536
 
 - name: Airlines
   openml_task_id: 189354
@@ -13,7 +14,7 @@
     - acc
 
 - name: Albert
-  openml_task_id: 41147
+  openml_task_id: 189356
   metric:
     - auc
     - acc
@@ -25,7 +26,7 @@
     - acc
 
 - name: Dionis
-  openml_task_id: 41167
+  openml_task_id: 189355
   metric:
     - logloss
     - acc
