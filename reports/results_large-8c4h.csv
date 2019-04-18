@@ -1,0 +1,21 @@
+id,task,framework,fold,result,mode,version,params,tag,utc,duration,models,seed,info,acc,auc
+openml.org/t/189354,Airlines,H2OAutoML,2,0.731722,aws.docker,3.24.0.1,,stable,2019-04-18T03:33:54,26079.8,82,2720569640,,0.600345,0.731722
+openml.org/t/189354,Airlines,H2OAutoML,0,0.733466,aws.docker,3.24.0.1,,stable,2019-04-18T03:34:43,26160.2,76,2720569638,,0.628117,0.733466
+openml.org/t/189354,Airlines,H2OAutoML,5,0.728769,aws.docker,3.24.0.1,,stable,2019-04-18T03:34:59,26120.1,87,2720569643,,0.595702,0.728769
+openml.org/t/189354,Airlines,H2OAutoML,3,0.73279,aws.docker,3.24.0.1,,stable,2019-04-18T03:36:26,26235.0,93,2720569641,,0.617246,0.73279
+openml.org/t/189354,Airlines,H2OAutoML,7,0.730912,aws.docker,3.24.0.1,,stable,2019-04-18T03:38:13,26306.0,79,2720569645,,0.60208,0.730912
+openml.org/t/189354,Airlines,H2OAutoML,4,0.730001,aws.docker,3.24.0.1,,stable,2019-04-18T03:39:03,26362.5,91,2720569642,,0.61884,0.730001
+openml.org/t/189354,Airlines,H2OAutoML,1,0.733404,aws.docker,3.24.0.1,,stable,2019-04-18T03:40:24,26458.9,78,2720569639,,0.608558,0.733404
+openml.org/t/189354,Airlines,H2OAutoML,9,0.734383,aws.docker,3.24.0.1,,stable,2019-04-18T03:40:38,26461.2,78,2720569647,,0.60996,0.734383
+openml.org/t/189354,Airlines,H2OAutoML,8,0.731071,aws.docker,3.24.0.1,,stable,2019-04-18T03:41:31,26519.6,75,2720569646,,0.619378,0.731071
+openml.org/t/189354,Airlines,H2OAutoML,6,0.729655,aws.docker,3.24.0.1,,stable,2019-04-18T03:42:06,26559.4,67,2720569644,,0.615892,0.729655
+openml.org/t/189356,Albert,H2OAutoML,3,,aws.docker,3.24.0.1,,stable,2019-04-18T07:39:27,14345.8,,2720569641,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,0,,aws.docker,3.24.0.1,,stable,2019-04-18T08:34:20,17764.0,,2720569638,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,8,,aws.docker,3.24.0.1,,stable,2019-04-18T09:27:43,20478.9,,2720569646,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,6,,aws.docker,3.24.0.1,,stable,2019-04-18T10:06:41,22930.2,,2720569644,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,2,,aws.docker,3.24.0.1,,stable,2019-04-18T10:07:39,23283.5,,2720569640,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,4,,aws.docker,3.24.0.1,,stable,2019-04-18T10:08:36,23152.7,,2720569642,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,5,,aws.docker,3.24.0.1,,stable,2019-04-18T10:46:51,25399.8,,2720569643,Error: Local server has died unexpectedly. RIP.,,
+openml.org/t/189356,Albert,H2OAutoML,1,0.76503,aws.docker,3.24.0.1,,stable,2019-04-18T11:47:03,28847.2,12,2720569639,,0.671527,0.76503
+openml.org/t/189356,Albert,H2OAutoML,7,0.770443,aws.docker,3.24.0.1,,stable,2019-04-18T11:52:28,28847.5,12,2720569645,,0.669246,0.770443
+openml.org/t/189356,Albert,H2OAutoML,9,0.763476,aws.docker,3.24.0.1,,stable,2019-04-18T11:53:59,28848.5,12,2720569647,,0.664966,0.763476
