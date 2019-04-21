@@ -259,25 +259,16 @@ openml.org/t/168337,guiellermo,RandomForest,5,0.900989,aws.docker,0.19.2,{'n_est
 openml.org/t/168337,guiellermo,RandomForest,7,0.894203,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T08:20:42,225.6,2000,3235246750,,0.8165,0.894203,
 openml.org/t/168337,guiellermo,RandomForest,9,0.909212,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T08:21:48,227.2,2000,3235246752,,0.826,0.909212,
 openml.org/t/168337,guiellermo,RandomForest,8,0.893968,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T08:21:22,225.7,2000,3235246751,,0.819,0.893968,
-openml.org/t/168329,Helena,RandomForest,0,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T08:30:37,416.3,,3235246743,"Error: JoblibMemoryError
-___________________________________________________________________________
-Multiprocessing exception:
-........................................................................",,,
-openml.org/t/168329,Helena,RandomForest,2,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:38:46,8044.5,,3235246745,Missing predictions.,,,
-openml.org/t/168329,Helena,RandomForest,1,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:42:15,8259.7,,3235246744,Missing predictions.,,,
-openml.org/t/168329,Helena,RandomForest,3,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:42:57,8254.6,,3235246746,Missing predictions.,,,
-openml.org/t/168329,Helena,RandomForest,4,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:42:50,8242.4,,3235246747,Missing predictions.,,,
-openml.org/t/168329,Helena,RandomForest,6,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:49:38,419.6,,3235246749,"Error: JoblibMemoryError
-___________________________________________________________________________
-Multiprocessing exception:
-........................................................................",,,
-openml.org/t/168329,Helena,RandomForest,7,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:52:47,419.0,,3235246750,"Error: JoblibMemoryError
-___________________________________________________________________________
-Multiprocessing exception:
-........................................................................",,,
-openml.org/t/168329,Helena,RandomForest,5,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T11:00:42,8698.8,,3235246748,Missing predictions.,,,
-openml.org/t/168329,Helena,RandomForest,8,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T11:04:33,998.1,,3235246751,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,RandomForest,9,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T12:54:13,7661.4,,3235246752,Missing predictions.,,,
+openml.org/t/168329,Helena,RandomForest,0,3.50484,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:40:41,482.9,500,2184650182,,0.377761,,3.50484
+openml.org/t/168329,Helena,RandomForest,1,3.6222,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:40:43,482.6,500,2184650183,,0.377301,,3.6222
+openml.org/t/168329,Helena,RandomForest,2,3.56749,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:40:44,483.6,500,2184650184,,0.371012,,3.56749
+openml.org/t/168329,Helena,RandomForest,3,3.39889,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:40:54,487.2,500,2184650185,,0.374693,,3.39889
+openml.org/t/168329,Helena,RandomForest,4,3.55928,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:40:57,481.0,500,2184650186,,0.383589,,3.55928
+openml.org/t/168329,Helena,RandomForest,5,3.59412,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:41:05,483.8,500,2184650187,,0.372086,,3.59412
+openml.org/t/168329,Helena,RandomForest,6,3.56928,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:41:07,484.0,500,2184650188,,0.368155,,3.56928
+openml.org/t/168329,Helena,RandomForest,7,3.65345,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:41:12,484.2,500,2184650189,,0.366927,,3.65345
+openml.org/t/168329,Helena,RandomForest,8,3.50661,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:41:11,482.3,500,2184650190,,0.373217,,3.50661
+openml.org/t/168329,Helena,RandomForest,9,3.52317,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T11:41:18,483.0,500,2184650191,,0.375825,,3.52317
 openml.org/t/146606,higgs,RandomForest,0,0.805739,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T10:57:12,165.6,2000,3235246743,,0.727384,0.805739,
 openml.org/t/146606,higgs,RandomForest,1,0.798293,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T11:00:10,161.2,2000,3235246744,,0.720755,0.798293,
 openml.org/t/146606,higgs,RandomForest,2,0.803028,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-13T11:04:10,163.5,2000,3235246745,,0.721979,0.803028,
@@ -458,16 +449,16 @@ openml.org/t/168337,guiellermo,TunedRandomForest,4,0.905916,aws.docker,0.19.2,{'
 openml.org/t/168337,guiellermo,TunedRandomForest,5,0.899262,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-15T20:56:06,3299.8,2000,3535241603,,0.8225,0.899262,
 openml.org/t/168337,guiellermo,TunedRandomForest,7,0.893958,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-15T20:56:32,3293.9,2000,3535241605,,0.8185,0.893958,
 openml.org/t/168337,guiellermo,TunedRandomForest,8,0.894222,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-15T20:56:52,3290.3,2000,3535241606,,0.817,0.894222,
-openml.org/t/168329,Helena,TunedRandomForest,0,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T06:42:46,156.4,,3535241598,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,TunedRandomForest,1,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T06:48:29,487.4,,3535241599,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,TunedRandomForest,2,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T06:50:13,580.8,,3535241600,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,TunedRandomForest,3,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T06:57:34,982.5,,3535241601,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,TunedRandomForest,7,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T06:58:52,975.2,,3535241605,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,TunedRandomForest,4,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T07:04:50,1390.4,,3535241602,Error: Subprocess running exec_run died abruptly.,,,
-openml.org/t/168329,Helena,TunedRandomForest,5,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T08:47:22,7528.8,,3535241603,Missing predictions.,,,
-openml.org/t/168329,Helena,TunedRandomForest,9,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T08:49:11,7429.7,,3535241607,Missing predictions.,,,
-openml.org/t/168329,Helena,TunedRandomForest,8,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T08:56:44,8027.4,,3535241606,Missing predictions.,,,
-openml.org/t/168329,Helena,TunedRandomForest,6,,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-16T09:00:28,8301.0,,3535241604,Missing predictions.,,,
+openml.org/t/168329,Helena,TunedRandomForest,0,3.5715,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:08,3186.2,500,1417149114,,0.35,,3.5715
+openml.org/t/168329,Helena,TunedRandomForest,1,3.51737,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:03,3190.0,500,1417149115,,0.353374,,3.51737
+openml.org/t/168329,Helena,TunedRandomForest,2,3.59683,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:13,3190.1,500,1417149116,,0.351227,,3.59683
+openml.org/t/168329,Helena,TunedRandomForest,3,3.51526,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:22,3191.4,500,1417149117,,0.352147,,3.51526
+openml.org/t/168329,Helena,TunedRandomForest,4,3.60596,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:16,3189.4,500,1417149118,,0.359663,,3.60596
+openml.org/t/168329,Helena,TunedRandomForest,5,3.54339,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:19,3188.4,500,1417149119,,0.353988,,3.54339
+openml.org/t/168329,Helena,TunedRandomForest,6,3.55068,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:34,3189.7,500,1417149120,,0.350974,,3.55068
+openml.org/t/168329,Helena,TunedRandomForest,8,3.55512,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:42,3190.6,500,1417149122,,0.351894,,3.55512
+openml.org/t/168329,Helena,TunedRandomForest,9,3.54952,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:41:44,3191.3,500,1417149123,,0.354349,,3.54952
+openml.org/t/168329,Helena,TunedRandomForest,7,3.58287,aws.docker,0.19.2,"{'n_estimators': 500, '_n_jobs': 1}",stable,2019-04-19T12:43:27,3189.9,500,1417149121,,0.344992,,3.58287
 openml.org/t/146606,higgs,TunedRandomForest,3,0.805119,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-15T21:53:38,3222.5,2000,3535241601,,0.725854,0.805119,
 openml.org/t/146606,higgs,TunedRandomForest,6,0.805768,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-15T21:53:54,3223.0,2000,3535241604,,0.726874,0.805768,
 openml.org/t/146606,higgs,TunedRandomForest,7,0.793353,aws.docker,0.19.2,{'n_estimators': 2000},stable,2019-04-15T21:53:58,3223.3,2000,3535241605,,0.716369,0.793353,

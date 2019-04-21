@@ -1,5 +1,7 @@
 type,task,autosklearn,autoweka,constantpredictor,h2oautoml,oboe,randomforest,tpot,tunedrandomforest
 binary,adult,3 (1),4,7,1,nan,5,2,6
+binary,airlines,2,4,7,1,nan,6,3 (1),5
+binary,albert,2 (7),nan,5,1,nan,3,4 (5),nan
 binary,amazon_employee_access,5 (2),6 (1),7,1,nan,3,2,4
 binary,apsfailure,5,6,7,2,nan,3,1 (2),4
 binary,australian,4,1,8,6,7,3,2,5
@@ -8,7 +10,7 @@ binary,blood-transfusion,2,3,8,1,7 (2),6,4,5
 binary,christine,1,5,8,2,7,6,3 (1),4
 binary,credit-g,4,6,8,3,7 (4),1,5,2
 binary,guiellermo,2,5,7,1,nan,4,6,3
-binary,higgs,2,5,6,1,nan,nan,3,4
+binary,higgs,2 (1),6,7,1,nan,5,3,4
 binary,jasmine,5 (1),6,8,2,7,4,1,3
 binary,kc1,3,6,8,4,7 (7),5,1,2
 binary,kddcup09_appetency,1,4,7,2,nan,5,3 (2),6
@@ -22,10 +24,12 @@ binary,sylvine,2 (1),6,8,3,7,5,1,4
 multiclass,car,3 (1),5,8,2,7,6,1,4
 multiclass,cnae-9,2,6,8,1,7,5,3,4
 multiclass,connect-4,3 (2),7,6,1,nan,5,2,4
+multiclass,covertype,2 (1),7,6,5,nan,3,4 (3),1
 multiclass,dilbert,2,7,8,1,6,5,3,4
+multiclass,dionis,4 (1),3 (3),5,nan,nan,2,nan,1
 multiclass,fabert,2,7,6,1,nan,4,3 (4),5
 multiclass,fashion-mnist,3,6,7,1,nan,4,5 (1),2
-multiclass,helena,3,5,4,1,nan,nan,2,nan
+multiclass,helena,5,7 (1),6,1 (4),nan,4,2 (3),3
 multiclass,jannis,1,7,6,3,nan,5,4 (1),2
 multiclass,jungle_chess_2pcs_raw_endgame_complete,2 (1),7,6,3,nan,5,1,4
 multiclass,mfeat-factors,1,6,8,2,7,5,3 (4),4
