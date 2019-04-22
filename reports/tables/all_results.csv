@@ -1937,16 +1937,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.726262,0.814225,14397.5,6,autosklearn,openml.org/t/146606,,,aws.docker,13,,0.814225,1.25563e+09,stable,higgs,2019-04-16T11:23:13,0.5.1,binary,0.814225,0.814225,0.814225,1.02567
 0.720857,0.796838,14400.1,8,autosklearn,openml.org/t/146606,,,aws.docker,6,,0.796838,1.25563e+09,stable,higgs,2019-04-16T11:24:04,0.5.1,binary,0.796838,0.796838,0.796838,1.01255
 0.738195,0.820275,14398.6,9,autosklearn,openml.org/t/146606,,,aws.docker,17,,0.820275,1.25563e+09,stable,higgs,2019-04-16T11:25:48,0.5.1,binary,0.820275,0.820275,0.820275,1.02833
-0.716026,0.694362,14402.2,0,autosklearn,openml.org/t/168330,,,aws.docker,7,{'_n_jobs': 4},0.694362,3.57495e+09,stable,jannis,2019-04-17T23:19:46,0.5.1,multiclass,0.694362,0.694362,0.694362,4.6558
-0.721638,0.683094,14399.8,1,autosklearn,openml.org/t/168330,,,aws.docker,10,{'_n_jobs': 4},0.683094,3.57495e+09,stable,jannis,2019-04-17T23:19:55,0.5.1,multiclass,0.683094,0.683094,0.683094,4.55758
-0.725937,0.679355,14398.8,2,autosklearn,openml.org/t/168330,,,aws.docker,5,{'_n_jobs': 4},0.679355,3.57495e+09,stable,jannis,2019-04-17T23:19:46,0.5.1,multiclass,0.679355,0.679355,0.679355,4.55063
-0.721486,0.676816,14401.9,3,autosklearn,openml.org/t/168330,,,aws.docker,12,{'_n_jobs': 4},0.676816,3.57495e+09,stable,jannis,2019-04-17T23:20:15,0.5.1,multiclass,0.676816,0.676816,0.676816,4.47
-0.727099,0.685255,14400.1,5,autosklearn,openml.org/t/168330,,,aws.docker,6,{'_n_jobs': 4},0.685255,3.57495e+09,stable,jannis,2019-04-17T23:20:16,0.5.1,multiclass,0.685255,0.685255,0.685255,4.60921
-0.719217,0.694153,14400.1,7,autosklearn,openml.org/t/168330,,,aws.docker,5,{'_n_jobs': 4},0.694153,3.57495e+09,stable,jannis,2019-04-17T23:20:16,0.5.1,multiclass,0.694153,0.694153,0.694153,4.60073
-0.732115,0.68618,14398.3,8,autosklearn,openml.org/t/168330,,,aws.docker,7,{'_n_jobs': 4},0.68618,3.57495e+09,stable,jannis,2019-04-17T23:20:21,0.5.1,multiclass,0.68618,0.68618,0.68618,0.984292
-0.715634,0.685796,14400.4,9,autosklearn,openml.org/t/168330,,,aws.docker,9,{'_n_jobs': 4},0.685796,3.57495e+09,stable,jannis,2019-04-17T23:20:31,0.5.1,multiclass,0.685796,0.685796,0.685796,0.978864
-0.720053,0.683791,14404,4,autosklearn,openml.org/t/168330,,,aws.docker,11,{'_n_jobs': 4},0.683791,3.57495e+09,stable,jannis,2019-04-17T23:20:40,0.5.1,multiclass,0.683791,0.683791,0.683791,4.60649
-0.723277,0.683397,14399.1,6,autosklearn,openml.org/t/168330,,,aws.docker,8,{'_n_jobs': 4},0.683397,3.57495e+09,stable,jannis,2019-04-17T23:20:46,0.5.1,multiclass,0.683397,0.683397,0.683397,4.61777
+0.716026,,14402.2,0,autosklearn,openml.org/t/168330,,0.694362,aws.docker,7,{'_n_jobs': 4},0.694362,3.57495e+09,stable,jannis,2019-04-17T23:19:46,0.5.1,multiclass,-0.694362,0.694362,-0.694362,1.07013
+0.721638,,14399.8,1,autosklearn,openml.org/t/168330,,0.683094,aws.docker,10,{'_n_jobs': 4},0.683094,3.57495e+09,stable,jannis,2019-04-17T23:19:55,0.5.1,multiclass,-0.683094,0.683094,-0.683094,1.0828
+0.725937,,14398.8,2,autosklearn,openml.org/t/168330,,0.679355,aws.docker,5,{'_n_jobs': 4},0.679355,3.57495e+09,stable,jannis,2019-04-17T23:19:46,0.5.1,multiclass,-0.679355,0.679355,-0.679355,1.09292
+0.721486,,14401.9,3,autosklearn,openml.org/t/168330,,0.676816,aws.docker,12,{'_n_jobs': 4},0.676816,3.57495e+09,stable,jannis,2019-04-17T23:20:15,0.5.1,multiclass,-0.676816,0.676816,-0.676816,1.08081
+0.727099,,14400.1,5,autosklearn,openml.org/t/168330,,0.685255,aws.docker,6,{'_n_jobs': 4},0.685255,3.57495e+09,stable,jannis,2019-04-17T23:20:16,0.5.1,multiclass,-0.685255,0.685255,-0.685255,1.08731
+0.719217,,14400.1,7,autosklearn,openml.org/t/168330,,0.694153,aws.docker,5,{'_n_jobs': 4},0.694153,3.57495e+09,stable,jannis,2019-04-17T23:20:16,0.5.1,multiclass,-0.694153,0.694153,-0.694153,1.05799
+0.732115,,14398.3,8,autosklearn,openml.org/t/168330,,0.68618,aws.docker,7,{'_n_jobs': 4},0.68618,3.57495e+09,stable,jannis,2019-04-17T23:20:21,0.5.1,multiclass,-0.68618,0.68618,-0.68618,0.231726
+0.715634,,14400.4,9,autosklearn,openml.org/t/168330,,0.685796,aws.docker,9,{'_n_jobs': 4},0.685796,3.57495e+09,stable,jannis,2019-04-17T23:20:31,0.5.1,multiclass,-0.685796,0.685796,-0.685796,0.230707
+0.720053,,14404,4,autosklearn,openml.org/t/168330,,0.683791,aws.docker,11,{'_n_jobs': 4},0.683791,3.57495e+09,stable,jannis,2019-04-17T23:20:40,0.5.1,multiclass,-0.683791,0.683791,-0.683791,1.09132
+0.723277,,14399.1,6,autosklearn,openml.org/t/168330,,0.683397,aws.docker,8,{'_n_jobs': 4},0.683397,3.57495e+09,stable,jannis,2019-04-17T23:20:46,0.5.1,multiclass,-0.683397,0.683397,-0.683397,1.09599
 0.944891,,14409.1,0,autosklearn,openml.org/t/167119,,0.145296,aws.docker,8,,0.145296,1.25563e+09,stable,jungle_chess_2pcs_raw_endgame_complete,2019-04-16T15:25:27,0.5.1,multiclass,-0.145296,0.145296,-0.145296,1.47792
 0.942883,,14410.1,4,autosklearn,openml.org/t/167119,,0.157624,aws.docker,10,,0.157624,1.25563e+09,stable,jungle_chess_2pcs_raw_endgame_complete,2019-04-16T15:26:16,0.5.1,multiclass,-0.157624,0.157624,-0.157624,1.44036
 0.875056,,14416.9,1,autosklearn,openml.org/t/167119,,0.256795,aws.docker,4,,0.256795,1.25563e+09,stable,jungle_chess_2pcs_raw_endgame_complete,2019-04-16T15:26:22,0.5.1,multiclass,-0.256795,0.256795,-0.256795,1.30505
@@ -2027,16 +2027,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 1,,27399.6,1,autosklearn,openml.org/t/146212,,4.21568e-05,aws.docker,1,,4.21568e-05,1.25563e+09,stable,shuttle,2019-04-17T07:23:04,0.5.1,multiclass,-4.21568e-05,4.21568e-05,-4.21568e-05,1.00073
 1,,24103.7,9,autosklearn,openml.org/t/146212,,0.000135121,aws.docker,1,,0.000135121,1.25563e+09,stable,shuttle,2019-04-17T07:33:32,0.5.1,multiclass,-0.000135121,0.000135121,-0.000135121,1.00045
 ,,26896.6,8,autosklearn,openml.org/t/146212,Exception: Aborting instance i-04b75df9a24551a4b for job aws_medium-8c4h_Shuttle_8_autosklearn.,,aws,,,,1.25563e+09,stable,shuttle,2019-04-17T07:37:20,0.5.1,multiclass,,0.00145956,-0.00145956,0.999476
-0.671583,0.923556,14399.6,0,autosklearn,openml.org/t/168331,,,aws.docker,4,{'_n_jobs': 4},0.923556,3.57495e+09,stable,volkert,2019-04-17T23:20:54,0.5.1,multiclass,0.923556,0.923556,0.923556,2.66153
-0.680158,0.938837,14398.9,1,autosklearn,openml.org/t/168331,,,aws.docker,5,{'_n_jobs': 4},0.938837,3.57495e+09,stable,volkert,2019-04-17T23:20:58,0.5.1,multiclass,0.938837,0.938837,0.938837,2.65827
-0.688218,0.937461,14399,2,autosklearn,openml.org/t/168331,,,aws.docker,5,{'_n_jobs': 4},0.937461,3.57495e+09,stable,volkert,2019-04-17T23:21:05,0.5.1,multiclass,0.937461,0.937461,0.937461,2.64756
-0.689419,0.89737,14400,6,autosklearn,openml.org/t/168331,,,aws.docker,7,{'_n_jobs': 4},0.89737,3.57495e+09,stable,volkert,2019-04-17T23:21:29,0.5.1,multiclass,0.89737,0.89737,0.89737,2.5863
-0.690619,0.921424,14399.5,8,autosklearn,openml.org/t/168331,,,aws.docker,5,{'_n_jobs': 4},0.921424,3.57495e+09,stable,volkert,2019-04-17T23:21:22,0.5.1,multiclass,0.921424,0.921424,0.921424,2.64067
-0.688218,0.897003,14398.8,3,autosklearn,openml.org/t/168331,,,aws.docker,4,{'_n_jobs': 4},0.897003,3.57495e+09,stable,volkert,2019-04-17T23:21:24,0.5.1,multiclass,0.897003,0.897003,0.897003,2.65033
-0.698851,0.915395,14398.7,4,autosklearn,openml.org/t/168331,,,aws.docker,4,{'_n_jobs': 4},0.915395,3.57495e+09,stable,volkert,2019-04-17T23:21:38,0.5.1,multiclass,0.915395,0.915395,0.915395,2.62251
-0.684274,0.947874,14399.5,5,autosklearn,openml.org/t/168331,,,aws.docker,5,{'_n_jobs': 4},0.947874,3.57495e+09,stable,volkert,2019-04-17T23:21:53,0.5.1,multiclass,0.947874,0.947874,0.947874,2.67694
-0.68273,0.948598,14399.7,7,autosklearn,openml.org/t/168331,,,aws.docker,4,{'_n_jobs': 4},0.948598,3.57495e+09,stable,volkert,2019-04-17T23:21:35,0.5.1,multiclass,0.948598,0.948598,0.948598,2.66174
-0.69645,0.917604,14400.1,9,autosklearn,openml.org/t/168331,,,aws.docker,4,{'_n_jobs': 4},0.917604,3.57495e+09,stable,volkert,2019-04-17T23:22:01,0.5.1,multiclass,0.917604,0.917604,0.917604,2.64117
+0.671583,,14399.6,0,autosklearn,openml.org/t/168331,,0.923556,aws.docker,4,{'_n_jobs': 4},0.923556,3.57495e+09,stable,volkert,2019-04-17T23:20:54,0.5.1,multiclass,-0.923556,0.923556,-0.923556,1.00962
+0.680158,,14398.9,1,autosklearn,openml.org/t/168331,,0.938837,aws.docker,5,{'_n_jobs': 4},0.938837,3.57495e+09,stable,volkert,2019-04-17T23:20:58,0.5.1,multiclass,-0.938837,0.938837,-0.938837,0.989534
+0.688218,,14399,2,autosklearn,openml.org/t/168331,,0.937461,aws.docker,5,{'_n_jobs': 4},0.937461,3.57495e+09,stable,volkert,2019-04-17T23:21:05,0.5.1,multiclass,-0.937461,0.937461,-0.937461,0.987275
+0.689419,,14400,6,autosklearn,openml.org/t/168331,,0.89737,aws.docker,7,{'_n_jobs': 4},0.89737,3.57495e+09,stable,volkert,2019-04-17T23:21:29,0.5.1,multiclass,-0.89737,0.89737,-0.89737,1.01291
+0.690619,,14399.5,8,autosklearn,openml.org/t/168331,,0.921424,aws.docker,5,{'_n_jobs': 4},0.921424,3.57495e+09,stable,volkert,2019-04-17T23:21:22,0.5.1,multiclass,-0.921424,0.921424,-0.921424,1.00443
+0.688218,,14398.8,3,autosklearn,openml.org/t/168331,,0.897003,aws.docker,4,{'_n_jobs': 4},0.897003,3.57495e+09,stable,volkert,2019-04-17T23:21:24,0.5.1,multiclass,-0.897003,0.897003,-0.897003,1.03822
+0.698851,,14398.7,4,autosklearn,openml.org/t/168331,,0.915395,aws.docker,4,{'_n_jobs': 4},0.915395,3.57495e+09,stable,volkert,2019-04-17T23:21:38,0.5.1,multiclass,-0.915395,0.915395,-0.915395,1.00496
+0.684274,,14399.5,5,autosklearn,openml.org/t/168331,,0.947874,aws.docker,5,{'_n_jobs': 4},0.947874,3.57495e+09,stable,volkert,2019-04-17T23:21:53,0.5.1,multiclass,-0.947874,0.947874,-0.947874,0.985707
+0.68273,,14399.7,7,autosklearn,openml.org/t/168331,,0.948598,aws.docker,4,{'_n_jobs': 4},0.948598,3.57495e+09,stable,volkert,2019-04-17T23:21:35,0.5.1,multiclass,-0.948598,0.948598,-0.948598,0.979233
+0.69645,,14400.1,9,autosklearn,openml.org/t/168331,,0.917604,aws.docker,4,{'_n_jobs': 4},0.917604,3.57495e+09,stable,volkert,2019-04-17T23:22:01,0.5.1,multiclass,-0.917604,0.917604,-0.917604,1.00931
 0.861384,0.932011,10670.4,9,h2oautoml,openml.org/t/7592,,,aws.docker,97,,0.932011,3.39191e+09,stable,adult,2019-04-15T21:51:35,3.24.0.1,binary,0.932011,0.932011,0.932011,1.04848
 0.873055,0.937397,10886.6,8,h2oautoml,openml.org/t/7592,,,aws.docker,101,,0.937397,3.39191e+09,stable,adult,2019-04-15T21:55:14,3.24.0.1,binary,0.937397,0.937397,0.937397,1.0479
 0.858108,0.926522,11162,4,h2oautoml,openml.org/t/7592,,,aws.docker,116,,0.926522,3.39191e+09,stable,adult,2019-04-15T21:59:20,3.24.0.1,binary,0.926522,0.926522,0.926522,1.0476
