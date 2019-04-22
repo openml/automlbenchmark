@@ -26,7 +26,7 @@ multiclass,cnae-9,2,6,8,1,7,5,3,4
 multiclass,connect-4,3 (2),7,6,1,nan,5,2,4
 multiclass,covertype,2 (1),7,6,5,nan,3,4 (3),1
 multiclass,dilbert,2,7,8,1,6,5,3,4
-multiclass,dionis,4 (1),3 (3),5,nan,nan,2,nan,1
+multiclass,dionis,4 (1),3 (3),5,nan,nan,1,nan,2
 multiclass,fabert,2,7,6,1,nan,4,3 (4),5
 multiclass,fashion-mnist,3,6,7,1,nan,4,5 (1),2
 multiclass,helena,5,7 (1),6,1 (4),nan,4,2 (3),3

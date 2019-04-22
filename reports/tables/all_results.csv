@@ -2851,16 +2851,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.959347,,2386.2,7,randomforest,openml.org/t/7593,,0.160936,aws.docker,2000,"{'n_estimators': 2000, '_n_jobs': 1}",0.160936,9.62456e+08,stable,covertype,2019-04-18T08:31:44,0.19.2,multiclass,-0.160936,0.160936,-0.160936,0.944341
 0.959433,,2332.1,8,randomforest,openml.org/t/7593,,0.161149,aws.docker,2000,"{'n_estimators': 2000, '_n_jobs': 1}",0.161149,9.62456e+08,stable,covertype,2019-04-18T09:14:18,0.19.2,multiclass,-0.161149,0.161149,-0.161149,0.943094
 0.959794,,2391,9,randomforest,openml.org/t/7593,,0.161447,aws.docker,2000,"{'n_estimators': 2000, '_n_jobs': 1}",0.161447,9.62456e+08,stable,covertype,2019-04-18T09:19:03,0.19.2,multiclass,-0.161447,0.161447,-0.161447,0.944457
-0.910185,1.04314,606.5,0,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.04314,1.67806e+09,stable,dionis,2019-04-19T12:58:22,0.19.2,multiclass,1.04314,1.04314,1.04314,0.999948
-0.908071,1.10312,609.9,1,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.10312,1.67806e+09,stable,dionis,2019-04-19T12:58:34,0.19.2,multiclass,1.10312,1.10312,1.10312,1.00083
-0.906581,1.09129,609.8,3,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.09129,1.67806e+09,stable,dionis,2019-04-19T12:58:31,0.19.2,multiclass,1.09129,1.09129,1.09129,0.997099
-0.907038,1.08182,609.8,2,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.08182,1.67806e+09,stable,dionis,2019-04-19T12:58:32,0.19.2,multiclass,1.08182,1.08182,1.08182,1.00077
-0.908647,1.06052,616,4,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.06052,1.67806e+09,stable,dionis,2019-04-19T12:58:53,0.19.2,multiclass,1.06052,1.06052,1.06052,0.996501
-0.905668,1.11409,600.4,5,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.11409,1.67806e+09,stable,dionis,2019-04-19T12:58:35,0.19.2,multiclass,1.11409,1.11409,1.11409,1.00188
-0.908623,1.07384,611.1,6,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.07384,1.67806e+09,stable,dionis,2019-04-19T12:58:54,0.19.2,multiclass,1.07384,1.07384,1.07384,0.996998
-0.907831,1.10881,609.8,7,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.10881,1.67806e+09,stable,dionis,2019-04-19T12:58:54,0.19.2,multiclass,1.10881,1.10881,1.10881,0.998819
-0.907924,1.04365,611.6,9,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.04365,1.67806e+09,stable,dionis,2019-04-19T12:59:27,0.19.2,multiclass,1.04365,1.04365,1.04365,0.9946
-0.908405,1.0561,609.3,8,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.0561,1.67806e+09,stable,dionis,2019-04-19T12:58:59,0.19.2,multiclass,1.0561,1.0561,1.0561,0.999172
+0.910185,1.04314,606.5,0,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.04314,1.67806e+09,stable,dionis,2019-04-19T12:58:22,0.19.2,multiclass,1.04314,1.04314,1.04314,1.43347
+0.908071,1.10312,609.9,1,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.10312,1.67806e+09,stable,dionis,2019-04-19T12:58:34,0.19.2,multiclass,1.10312,1.10312,1.10312,1.46228
+0.906581,1.09129,609.8,3,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.09129,1.67806e+09,stable,dionis,2019-04-19T12:58:31,0.19.2,multiclass,1.09129,1.09129,1.09129,1.46415
+0.907038,1.08182,609.8,2,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.08182,1.67806e+09,stable,dionis,2019-04-19T12:58:32,0.19.2,multiclass,1.08182,1.08182,1.08182,1.45145
+0.908647,1.06052,616,4,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.06052,1.67806e+09,stable,dionis,2019-04-19T12:58:53,0.19.2,multiclass,1.06052,1.06052,1.06052,1.44951
+0.905668,1.11409,600.4,5,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.11409,1.67806e+09,stable,dionis,2019-04-19T12:58:35,0.19.2,multiclass,1.11409,1.11409,1.11409,1.4657
+0.908623,1.07384,611.1,6,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.07384,1.67806e+09,stable,dionis,2019-04-19T12:58:54,0.19.2,multiclass,1.07384,1.07384,1.07384,1.45532
+0.907831,1.10881,609.8,7,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.10881,1.67806e+09,stable,dionis,2019-04-19T12:58:54,0.19.2,multiclass,1.10881,1.10881,1.10881,1.46955
+0.907924,1.04365,611.6,9,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.04365,1.67806e+09,stable,dionis,2019-04-19T12:59:27,0.19.2,multiclass,1.04365,1.04365,1.04365,1.44486
+0.908405,1.0561,609.3,8,randomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.0561,1.67806e+09,stable,dionis,2019-04-19T12:58:59,0.19.2,multiclass,1.0561,1.0561,1.0561,1.44165
 0.622147,0.661508,4202.6,1,tunedrandomforest,openml.org/t/189354,,,aws.docker,500,"{'n_estimators': 500, '_n_jobs': 4}",0.661508,1.76266e+08,stable,airlines,2019-04-19T11:33:25,0.19.2,binary,0.661508,0.661508,0.661508,1
 0.621739,0.659272,4295.9,0,tunedrandomforest,openml.org/t/189354,,,aws.docker,500,"{'n_estimators': 500, '_n_jobs': 4}",0.659272,1.76266e+08,stable,airlines,2019-04-19T11:34:59,0.19.2,binary,0.659272,0.659272,0.659272,1
 0.624143,0.660107,4283,8,tunedrandomforest,openml.org/t/189354,,,aws.docker,500,"{'n_estimators': 500, '_n_jobs': 4}",0.660107,1.76266e+08,stable,airlines,2019-04-19T11:35:27,0.19.2,binary,0.660107,0.660107,0.660107,1
@@ -2881,16 +2881,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.971481,,12818.6,2,tunedrandomforest,openml.org/t/7593,,0.0994015,aws.docker,500,"{'n_estimators': 500, '_n_jobs': 4}",0.0994015,1.76266e+08,stable,covertype,2019-04-19T14:00:00,0.19.2,multiclass,-0.0994015,0.0994015,-0.0994015,1
 0.971877,,12820.2,3,tunedrandomforest,openml.org/t/7593,,0.0986744,aws.docker,500,"{'n_estimators': 500, '_n_jobs': 4}",0.0986744,1.76266e+08,stable,covertype,2019-04-19T14:00:11,0.19.2,multiclass,-0.0986744,0.0986744,-0.0986744,1
 0.972049,,12835.4,7,tunedrandomforest,openml.org/t/7593,,0.0993888,aws.docker,500,"{'n_estimators': 500, '_n_jobs': 4}",0.0993888,1.76266e+08,stable,covertype,2019-04-19T14:00:21,0.19.2,multiclass,-0.0993888,0.0993888,-0.0993888,1
-0.907542,1.09734,12841,1,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.09734,3.33082e+09,stable,dionis,2019-04-19T17:01:23,0.19.2,multiclass,1.09734,1.09734,1.09734,1
-0.910954,1.0435,12869.8,0,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.0435,3.33082e+09,stable,dionis,2019-04-19T17:02:02,0.19.2,multiclass,1.0435,1.0435,1.0435,1
-0.906749,1.0765,12858.5,2,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.0765,3.33082e+09,stable,dionis,2019-04-19T17:01:57,0.19.2,multiclass,1.0765,1.0765,1.0765,1
-0.906869,1.11151,12855,3,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.11151,3.33082e+09,stable,dionis,2019-04-19T17:02:16,0.19.2,multiclass,1.11151,1.11151,1.11151,1
-0.904851,1.10098,12853.1,5,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.10098,3.33082e+09,stable,dionis,2019-04-19T17:02:07,0.19.2,multiclass,1.10098,1.10098,1.10098,1
-0.907951,1.09471,12854.5,6,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.09471,3.33082e+09,stable,dionis,2019-04-19T17:02:09,0.19.2,multiclass,1.09471,1.09471,1.09471,1
-0.908167,1.11705,12863,7,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.11705,3.33082e+09,stable,dionis,2019-04-19T17:02:23,0.19.2,multiclass,1.11705,1.11705,1.11705,1
-0.90903,1.08112,12865.4,9,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.08112,3.33082e+09,stable,dionis,2019-04-19T17:02:47,0.19.2,multiclass,1.08112,1.08112,1.08112,1
-0.907638,1.08481,12867.8,4,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.08481,3.33082e+09,stable,dionis,2019-04-19T17:02:25,0.19.2,multiclass,1.08481,1.08481,1.08481,1
-0.908838,1.06183,12876.9,8,tunedrandomforest,openml.org/t/189355,,,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.06183,3.33082e+09,stable,dionis,2019-04-19T17:02:48,0.19.2,multiclass,1.06183,1.06183,1.06183,1
+0.907542,,12841,1,tunedrandomforest,openml.org/t/189355,,1.09734,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.09734,3.33082e+09,stable,dionis,2019-04-19T17:01:23,0.19.2,multiclass,-1.09734,1.09734,-1.09734,1
+0.910954,,12869.8,0,tunedrandomforest,openml.org/t/189355,,1.0435,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.0435,3.33082e+09,stable,dionis,2019-04-19T17:02:02,0.19.2,multiclass,-1.0435,1.0435,-1.0435,1
+0.906749,,12858.5,2,tunedrandomforest,openml.org/t/189355,,1.0765,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.0765,3.33082e+09,stable,dionis,2019-04-19T17:01:57,0.19.2,multiclass,-1.0765,1.0765,-1.0765,1
+0.906869,,12855,3,tunedrandomforest,openml.org/t/189355,,1.11151,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.11151,3.33082e+09,stable,dionis,2019-04-19T17:02:16,0.19.2,multiclass,-1.11151,1.11151,-1.11151,1
+0.904851,,12853.1,5,tunedrandomforest,openml.org/t/189355,,1.10098,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.10098,3.33082e+09,stable,dionis,2019-04-19T17:02:07,0.19.2,multiclass,-1.10098,1.10098,-1.10098,1
+0.907951,,12854.5,6,tunedrandomforest,openml.org/t/189355,,1.09471,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.09471,3.33082e+09,stable,dionis,2019-04-19T17:02:09,0.19.2,multiclass,-1.09471,1.09471,-1.09471,1
+0.908167,,12863,7,tunedrandomforest,openml.org/t/189355,,1.11705,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.11705,3.33082e+09,stable,dionis,2019-04-19T17:02:23,0.19.2,multiclass,-1.11705,1.11705,-1.11705,1
+0.90903,,12865.4,9,tunedrandomforest,openml.org/t/189355,,1.08112,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.08112,3.33082e+09,stable,dionis,2019-04-19T17:02:47,0.19.2,multiclass,-1.08112,1.08112,-1.08112,1
+0.907638,,12867.8,4,tunedrandomforest,openml.org/t/189355,,1.08481,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.08481,3.33082e+09,stable,dionis,2019-04-19T17:02:25,0.19.2,multiclass,-1.08481,1.08481,-1.08481,1
+0.908838,,12876.9,8,tunedrandomforest,openml.org/t/189355,,1.06183,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.06183,3.33082e+09,stable,dionis,2019-04-19T17:02:48,0.19.2,multiclass,-1.06183,1.06183,-1.06183,1
 0.672519,0.729177,14398.7,1,autosklearn,openml.org/t/189354,,,aws.docker,10,{'_n_jobs': 4},0.729177,2.7378e+09,stable,airlines,2019-04-19T01:38:55,0.5.1,binary,0.729177,0.729177,0.729177,1.41898
 0.671419,0.726055,14410.3,3,autosklearn,openml.org/t/189354,,,aws.docker,13,{'_n_jobs': 4},0.726055,2.7378e+09,stable,airlines,2019-04-19T01:40:03,0.5.1,binary,0.726055,0.726055,0.726055,1.38887
 0.668162,0.723957,14435.3,2,autosklearn,openml.org/t/189354,,,aws.docker,9,{'_n_jobs': 4},0.723957,2.7378e+09,stable,airlines,2019-04-19T01:39:42,0.5.1,binary,0.723957,0.723957,0.723957,1.37438
@@ -2921,16 +2921,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.965199,,14796.4,1,autosklearn,openml.org/t/7593,,0.128225,aws.docker,3,{'_n_jobs': 4},0.128225,2.7378e+09,stable,covertype,2019-04-19T05:52:47,0.5.1,multiclass,-0.128225,0.128225,-0.128225,0.974672
 ,,14947.6,5,autosklearn,openml.org/t/7593,Error: Subprocess running exec_run died abruptly.,,aws.docker,,{'_n_jobs': 4},,2.7378e+09,stable,covertype,2019-04-19T05:53:06,0.5.1,multiclass,,0.162621,-0.162621,0.943716
 0.968056,,14851.5,3,autosklearn,openml.org/t/7593,,0.116569,aws.docker,3,{'_n_jobs': 4},0.116569,2.7378e+09,stable,covertype,2019-04-19T05:54:10,0.5.1,multiclass,-0.116569,0.116569,-0.116569,0.983828
-0.590427,,14387.6,1,autosklearn,openml.org/t/189355,,4.01934,aws.docker,1,{'_n_jobs': 4},4.01934,2.7378e+09,stable,dionis,2019-04-19T05:53:14,0.5.1,multiclass,-4.01934,4.01934,-4.01934,0.264284
-0.00458936,,14386.9,8,autosklearn,openml.org/t/189355,,5.87212,aws.docker,1,{'_n_jobs': 4},5.87212,2.7378e+09,stable,dionis,2019-04-19T05:54:09,0.5.1,multiclass,-5.87212,5.87212,-5.87212,-0.00213175
-0.790769,,14386.7,5,autosklearn,openml.org/t/189355,,5.20947,aws.docker,1,{'_n_jobs': 4},5.20947,2.7378e+09,stable,dionis,2019-04-19T05:54:04,0.5.1,multiclass,-5.20947,5.20947,-5.20947,0.0931229
-0.661853,,14386.7,9,autosklearn,openml.org/t/189355,,1.94141,aws.docker,1,{'_n_jobs': 4},1.94141,2.7378e+09,stable,dionis,2019-04-19T06:00:22,0.5.1,multiclass,-1.94141,1.94141,-1.94141,0.564382
-0.515486,,14387.3,3,autosklearn,openml.org/t/189355,,2.51849,aws.docker,1,{'_n_jobs': 4},2.51849,2.7378e+09,stable,dionis,2019-04-19T05:53:52,0.5.1,multiclass,-2.51849,2.51849,-2.51849,0.479116
-0.559072,,14385.8,2,autosklearn,openml.org/t/189355,,2.95607,aws.docker,1,{'_n_jobs': 4},2.95607,2.7378e+09,stable,dionis,2019-04-19T05:53:08,0.5.1,multiclass,-2.95607,2.95607,-2.95607,0.418424
-0.606766,,14386.8,7,autosklearn,openml.org/t/189355,,2.32859,aws.docker,1,{'_n_jobs': 4},2.32859,2.7378e+09,stable,dionis,2019-04-19T05:53:58,0.5.1,multiclass,-2.32859,2.32859,-2.32859,0.505965
-0.56503,,14386.6,4,autosklearn,openml.org/t/189355,,2.65699,aws.docker,1,{'_n_jobs': 4},2.65699,2.7378e+09,stable,dionis,2019-04-19T05:53:54,0.5.1,multiclass,-2.65699,2.65699,-2.65699,0.461006
-0.569331,,14386.1,6,autosklearn,openml.org/t/189355,,2.33534,aws.docker,1,{'_n_jobs': 4},2.33534,2.7378e+09,stable,dionis,2019-04-19T05:54:07,0.5.1,multiclass,-2.33534,2.33534,-2.33534,0.506621
-,,16644.1,0,autosklearn,openml.org/t/189355,Exception: Aborting instance i-0347210fbb5f413ad for job aws_large-8c4h_Dionis_0_autosklearn.,,aws,,{'_n_jobs': 4},,2.7378e+09,stable,dionis,2019-04-19T06:24:51,0.5.1,multiclass,,1.04314,1.04314,0.999948
+0.590427,,14387.6,1,autosklearn,openml.org/t/189355,,4.01934,aws.docker,1,{'_n_jobs': 4},4.01934,2.7378e+09,stable,dionis,2019-04-19T05:53:14,0.5.1,multiclass,-4.01934,4.01934,-4.01934,0.386136
+0.00458936,,14386.9,8,autosklearn,openml.org/t/189355,,5.87212,aws.docker,1,{'_n_jobs': 4},5.87212,2.7378e+09,stable,dionis,2019-04-19T05:54:09,0.5.1,multiclass,-5.87212,5.87212,-5.87212,-0.00307577
+0.790769,,14386.7,5,autosklearn,openml.org/t/189355,,5.20947,aws.docker,1,{'_n_jobs': 4},5.20947,2.7378e+09,stable,dionis,2019-04-19T05:54:04,0.5.1,multiclass,-5.20947,5.20947,-5.20947,0.136233
+0.661853,,14386.7,9,autosklearn,openml.org/t/189355,,1.94141,aws.docker,1,{'_n_jobs': 4},1.94141,2.7378e+09,stable,dionis,2019-04-19T06:00:22,0.5.1,multiclass,-1.94141,1.94141,-1.94141,0.819881
+0.515486,,14387.3,3,autosklearn,openml.org/t/189355,,2.51849,aws.docker,1,{'_n_jobs': 4},2.51849,2.7378e+09,stable,dionis,2019-04-19T05:53:52,0.5.1,multiclass,-2.51849,2.51849,-2.51849,0.703538
+0.559072,,14385.8,2,autosklearn,openml.org/t/189355,,2.95607,aws.docker,1,{'_n_jobs': 4},2.95607,2.7378e+09,stable,dionis,2019-04-19T05:53:08,0.5.1,multiclass,-2.95607,2.95607,-2.95607,0.606855
+0.606766,,14386.8,7,autosklearn,openml.org/t/189355,,2.32859,aws.docker,1,{'_n_jobs': 4},2.32859,2.7378e+09,stable,dionis,2019-04-19T05:53:58,0.5.1,multiclass,-2.32859,2.32859,-2.32859,0.744422
+0.56503,,14386.6,4,autosklearn,openml.org/t/189355,,2.65699,aws.docker,1,{'_n_jobs': 4},2.65699,2.7378e+09,stable,dionis,2019-04-19T05:53:54,0.5.1,multiclass,-2.65699,2.65699,-2.65699,0.67058
+0.569331,,14386.1,6,autosklearn,openml.org/t/189355,,2.33534,aws.docker,1,{'_n_jobs': 4},2.33534,2.7378e+09,stable,dionis,2019-04-19T05:54:07,0.5.1,multiclass,-2.33534,2.33534,-2.33534,0.739513
+,,16644.1,0,autosklearn,openml.org/t/189355,Exception: Aborting instance i-0347210fbb5f413ad for job aws_large-8c4h_Dionis_0_autosklearn.,,aws,,{'_n_jobs': 4},,2.7378e+09,stable,dionis,2019-04-19T06:24:51,0.5.1,multiclass,,1.04314,1.04314,1.43347
 0.616307,0.73169,13178.9,0,h2oautoml,openml.org/t/189354,,,aws.docker,49,,0.73169,4.18214e+09,stable,airlines,2019-04-18T20:22:41,3.24.0.1,binary,0.73169,0.73169,0.73169,1.45468
 0.608391,0.733391,13223.9,1,h2oautoml,openml.org/t/189354,,,aws.docker,47,,0.733391,4.18214e+09,stable,airlines,2019-04-18T20:23:24,3.24.0.1,binary,0.733391,0.733391,0.733391,1.44507
 0.617264,0.731151,13231.6,7,h2oautoml,openml.org/t/189354,,,aws.docker,42,,0.731151,4.18214e+09,stable,airlines,2019-04-18T20:23:53,3.24.0.1,binary,0.731151,0.731151,0.731151,1.44224
@@ -3041,16 +3041,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.682794,,13811.3,7,autoweka,openml.org/t/7593,,2.62914,aws.docker,,,2.62914,3.00888e+09,stable,covertype,2019-04-19T05:14:48,2.6,multiclass,-2.62914,2.62914,-2.62914,-1.28775
 0.658612,,14233.1,8,autoweka,openml.org/t/7593,,3.18266,aws.docker,,,3.18266,3.00888e+09,stable,covertype,2019-04-19T05:29:43,2.6,multiclass,-3.18266,3.18266,-3.18266,-1.78632
 0.667476,,17913.8,9,autoweka,openml.org/t/7593,,1.53695,aws.docker,,,1.53695,3.00888e+09,stable,covertype,2019-04-19T06:32:58,2.6,multiclass,-1.53695,1.53695,-1.53695,-0.300249
-,,13990.8,1,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_1.weka_pred.csv',,aws.docker,,,,3.00887e+09,stable,dionis,2019-04-19T08:44:31,2.6,multiclass,,1.10312,1.10312,1.00083
-0.885437,,14873.8,2,autoweka,openml.org/t/189355,,2.16223,aws.docker,,,2.16223,3.00887e+09,stable,dionis,2019-04-19T09:08:30,2.6,multiclass,-2.16223,2.16223,-2.16223,0.532911
-0.725222,,14861.7,4,autoweka,openml.org/t/189355,,6.8446,aws.docker,,,6.8446,3.00888e+09,stable,dionis,2019-04-19T09:10:01,2.6,multiclass,-6.8446,6.8446,-6.8446,-0.142206
-,,14893.3,7,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_7.weka_pred.csv',,aws.docker,,,,3.00888e+09,stable,dionis,2019-04-19T09:26:44,2.6,multiclass,,1.10881,1.10881,0.998819
-0.780893,,15519.3,6,autoweka,openml.org/t/189355,,4.34547,aws.docker,,,4.34547,3.00888e+09,stable,dionis,2019-04-19T09:34:09,2.6,multiclass,-4.34547,4.34547,-4.34547,0.217483
-0.781302,,16363.5,3,autoweka,openml.org/t/189355,,4.3456,aws.docker,,,4.3456,3.00887e+09,stable,dionis,2019-04-19T09:34:59,2.6,multiclass,-4.3456,4.3456,-4.3456,0.216936
-0.373627,,18019.9,0,autoweka,openml.org/t/189355,,3.08421,aws.docker,,,3.08421,3.00887e+09,stable,dionis,2019-04-19T09:36:33,2.6,multiclass,-3.08421,3.08421,-3.08421,0.401854
-,,16572.8,5,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_5.weka_pred.csv',,aws.docker,,,,3.00888e+09,stable,dionis,2019-04-19T09:42:51,2.6,multiclass,,1.11409,1.11409,1.00188
-0.086453,,14889,8,autoweka,openml.org/t/189355,,4.2098,aws.docker,,,4.2098,3.00888e+09,stable,dionis,2019-04-19T09:50:49,2.6,multiclass,-4.2098,4.2098,-4.2098,0.238116
-0.88529,,15886,9,autoweka,openml.org/t/189355,,2.1239,aws.docker,,,2.1239,3.00888e+09,stable,dionis,2019-04-19T11:11:35,2.6,multiclass,-2.1239,2.1239,-2.1239,0.53808
+,,13990.8,1,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_1.weka_pred.csv',,aws.docker,,,,3.00887e+09,stable,dionis,2019-04-19T08:44:31,2.6,multiclass,,1.10312,1.10312,1.46228
+0.885437,,14873.8,2,autoweka,openml.org/t/189355,,2.16223,aws.docker,,,2.16223,3.00887e+09,stable,dionis,2019-04-19T09:08:30,2.6,multiclass,-2.16223,2.16223,-2.16223,0.772901
+0.725222,,14861.7,4,autoweka,openml.org/t/189355,,6.8446,aws.docker,,,6.8446,3.00888e+09,stable,dionis,2019-04-19T09:10:01,2.6,multiclass,-6.8446,6.8446,-6.8446,-0.206853
+,,14893.3,7,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_7.weka_pred.csv',,aws.docker,,,,3.00888e+09,stable,dionis,2019-04-19T09:26:44,2.6,multiclass,,1.10881,1.10881,1.46955
+0.780893,,15519.3,6,autoweka,openml.org/t/189355,,4.34547,aws.docker,,,4.34547,3.00888e+09,stable,dionis,2019-04-19T09:34:09,2.6,multiclass,-4.34547,4.34547,-4.34547,0.31746
+0.781302,,16363.5,3,autoweka,openml.org/t/189355,,4.3456,aws.docker,,,4.3456,3.00887e+09,stable,dionis,2019-04-19T09:34:59,2.6,multiclass,-4.3456,4.3456,-4.3456,0.318551
+0.373627,,18019.9,0,autoweka,openml.org/t/189355,,3.08421,aws.docker,,,3.08421,3.00887e+09,stable,dionis,2019-04-19T09:36:33,2.6,multiclass,-3.08421,3.08421,-3.08421,0.576074
+,,16572.8,5,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_5.weka_pred.csv',,aws.docker,,,,3.00888e+09,stable,dionis,2019-04-19T09:42:51,2.6,multiclass,,1.11409,1.11409,1.4657
+0.086453,,14889,8,autoweka,openml.org/t/189355,,4.2098,aws.docker,,,4.2098,3.00888e+09,stable,dionis,2019-04-19T09:50:49,2.6,multiclass,-4.2098,4.2098,-4.2098,0.343563
+0.88529,,15886,9,autoweka,openml.org/t/189355,,2.1239,aws.docker,,,2.1239,3.00888e+09,stable,dionis,2019-04-19T11:11:35,2.6,multiclass,-2.1239,2.1239,-2.1239,0.781673
 ,,,0,oboe,,missing,,,,,,,,airlines,,,binary,,,,
 ,,,1,oboe,,missing,,,,,,,,airlines,,,binary,,,,
 ,,,2,oboe,,missing,,,,,,,,airlines,,,binary,,,,
