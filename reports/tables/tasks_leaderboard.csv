@@ -1,7 +1,7 @@
 type,task,autosklearn,autoweka,constantpredictor,h2oautoml,oboe,randomforest,tpot,tunedrandomforest
 binary,adult,3 (1),4,7,1,nan,5,2,6
 binary,airlines,2,4,7,1,nan,6,3 (1),5
-binary,albert,2 (7),nan,5,1,nan,3,4 (5),nan
+binary,albert,2 (7),nan,6,1,nan,3,5 (5),4
 binary,amazon_employee_access,5 (2),6 (1),7,1,nan,3,2,4
 binary,apsfailure,5,6,7,2,nan,3,1 (2),4
 binary,australian,4,1,8,6,7,3,2,5
