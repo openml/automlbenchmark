@@ -30,6 +30,7 @@ benchmarks:
   definition_dir: resources/benchmarks
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
+  overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
   defaults:
     folds: 10
     max_runtime_seconds: 3600
