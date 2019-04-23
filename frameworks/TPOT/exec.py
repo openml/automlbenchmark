@@ -1,5 +1,6 @@
 import logging
 import os
+import pprint
 import sys
 import tempfile as tmp
 
@@ -13,9 +14,9 @@ from tpot import TPOTClassifier, TPOTRegressor
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
-from automl.datautils import Encoder, impute
+from automl.datautils import Encoder, impute, write_csv
 from automl.results import save_predictions_to_file
-from automl.utils import Timer
+from automl.utils import Timer, split_path, path_from_split
 
 
 log = logging.getLogger(__name__)
@@ -59,6 +60,20 @@ def run(dataset: Dataset, config: TaskConfig):
 
     with Timer() as training:
         tpot.fit(X_train, y_train)
+
+    log.debug("All individuals :\n%s", list(tpot.evaluated_individuals_.items()))
+    models = tpot.pareto_front_fitted_pipelines_
+    hall_of_fame = list(zip(reversed(tpot._pareto_front.keys), tpot._pareto_front.items))
+    models_file = split_path(config.output_predictions_file)
+    models_file.extension = '.models.txt'
+    models_file = path_from_split(models_file)
+    with open(models_file, 'w') as f:
+        for m in hall_of_fame:
+            pprint.pprint(dict(
+                fitness=str(m[0]),
+                model=str(m[1]),
+                pipeline=models[str(m[1])],
+            ), stream=f)
 
     log.info('Predicting on the test set.')
     predictions = tpot.predict(X_test)

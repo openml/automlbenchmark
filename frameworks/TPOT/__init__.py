@@ -1,3 +1,5 @@
+import sys
+
 from automl.utils import call_in_subprocess, call_script_in_same_dir, dir_of
 
 
@@ -11,7 +13,8 @@ def run(*args, **kwargs):
         from .exec import run
         return run(*args, **kwargs)
 
-    return call_in_subprocess(exec_run, *args, **kwargs)
+    return exec_run(*args, **kwargs) if sys.platform == 'darwin' \
+        else call_in_subprocess(exec_run, *args, **kwargs)
 
 
 def docker_commands(*args, **kwargs):
