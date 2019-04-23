@@ -38,7 +38,7 @@ openml.org/t/14965,bank-marketing,autosklearn,8,,aws.docker,0.5.1,,stable,2019-0
 openml.org/t/14965,bank-marketing,autosklearn,5,0.930634,aws.docker,0.5.1,,stable,2019-04-13T22:31:00,3597.5,12,1739835402,,0.900464,0.930634,
 openml.org/t/14965,bank-marketing,autosklearn,0,0.938157,aws.docker,0.5.1,,stable,2019-04-13T22:31:02,3597.2,10,1739835397,,0.910659,0.938157,
 openml.org/t/14965,bank-marketing,autosklearn,7,0.944368,aws.docker,0.5.1,,stable,2019-04-13T22:31:26,3598.7,13,1739835404,,0.914399,0.944368,
-openml.org/t/14965,bank-marketing,autosklearn,9,0.945603,aws.docker,0.5.1,,stable,2019-04-15T14:22:46,3597.2,11,441406000,,0.913957,0.945603
+openml.org/t/14965,bank-marketing,autosklearn,9,0.945603,aws.docker,0.5.1,,stable,2019-04-15T14:22:46,3597.2,11,441406000,,0.913957,0.945603,
 openml.org/t/146195,connect-4,autosklearn,1,0.424152,aws.docker,0.5.1,,stable,2019-04-14T23:50:01,3598.0,5,2109291094,,0.830669,,0.424152
 openml.org/t/146195,connect-4,autosklearn,0,0.445004,aws.docker,0.5.1,,stable,2019-04-14T23:49:58,3597.8,3,2109291093,,0.827265,,0.445004
 openml.org/t/146195,connect-4,autosklearn,2,0.436785,aws.docker,0.5.1,,stable,2019-04-14T23:50:04,3598.5,5,2109291095,,0.836146,,0.436785
@@ -278,7 +278,7 @@ openml.org/t/146606,higgs,H2OAutoML,8,0.801769,aws.docker,3.24.0.1,,stable,2019-
 openml.org/t/146606,higgs,H2OAutoML,1,0.808756,aws.docker,3.24.0.1,,stable,2019-04-14T01:54:39,3353.6,39,3357421672,,0.705456,0.808756,
 openml.org/t/146606,higgs,H2OAutoML,9,0.822321,aws.docker,3.24.0.1,,stable,2019-04-14T01:55:28,3336.3,33,3357421680,,0.721265,0.822321,
 openml.org/t/146606,higgs,H2OAutoML,4,0.81715,aws.docker,3.24.0.1,,stable,2019-04-14T01:56:02,3389.6,34,3357421675,,0.715655,0.81715,
-openml.org/t/146606,higgs,H2OAutoML,6,0.820293,aws.docker,3.24.0.1,,stable,2019-04-16T15:48:58,3309.0,34,457696236,,0.732993,0.820293
+openml.org/t/146606,higgs,H2OAutoML,6,0.820293,aws.docker,3.24.0.1,,stable,2019-04-16T15:48:58,3309.0,34,457696236,,0.732993,0.820293,
 openml.org/t/168330,Jannis,H2OAutoML,0,0.675809,aws.docker,3.24.0.1,,stable,2019-04-14T02:03:15,3667.2,17,3357421671,,0.732267,,0.675809
 openml.org/t/168330,Jannis,H2OAutoML,1,0.700266,aws.docker,3.24.0.1,,stable,2019-04-14T02:03:50,3701.1,18,3357421672,,0.729639,,0.700266
 openml.org/t/168330,Jannis,H2OAutoML,6,0.681684,aws.docker,3.24.0.1,,stable,2019-04-14T02:04:57,3667.5,19,3357421677,,0.72889,,0.681684
