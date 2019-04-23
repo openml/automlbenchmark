@@ -41,7 +41,6 @@ def run(dataset: Dataset, config: TaskConfig):
         try:
             aml.fit(X_train, y_train)
         except IndexError as e:
-            print(aml_models())
             if len(aml_models()) == 0:  # incorrect handling of some IndexError in oboe if ensemble is empty
                 raise NoResultError("Oboe could not produce any model in the requested time.") from e
             raise e
