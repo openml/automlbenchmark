@@ -1,4 +1,5 @@
 import logging
+import os
 
 import h2o
 from h2o.automl import H2OAutoML
@@ -34,7 +35,9 @@ def run(dataset: Dataset, config: TaskConfig):
         nthreads = config.framework_params.get('_nthreads', config.cores)
 
         log.info("Starting H2O cluster with %s cores, %sMB memory.", nthreads, config.max_mem_size_mb)
-        h2o.init(nthreads=nthreads, max_mem_size=str(config.max_mem_size_mb)+"M")
+        h2o.init(nthreads=nthreads,
+                 max_mem_size=str(config.max_mem_size_mb)+"M",
+                 log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold)))
 
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from %s.", dataset.train.path)
