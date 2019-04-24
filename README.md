@@ -208,13 +208,13 @@ On first use, it is recommended to simply copy the `config.yaml` from [examples/
 
 To run a test to see if the benchmark framework is working on AWS, do the following:
 ```bash
-python3 benchmark.py constantpredictor test -m aws
+python3 runbenchmark.py constantpredictor test -m aws
 ```
 This will create and start an EC2 instance for each benchmark job and run the 4 jobs (2 OpenML tasks * 2 folds) from the `test` benchmark sequentially, each job running for 1mn in this case (excluding setup time for the EC2 instances).
 
 For longer benchmarks, you'll probably want to run multiple jobs in parallel and distribute the work to several EC2 instances, for example:
 ```bash
-python3 benchmark.py AUTOWEKA validation -m aws -p 4
+python3 runbenchmark.py AUTOWEKA validation -m aws -p 4
 ```
 will keep 4 EC2 instances running, monitor them in a dedicated thread, and finally collect all outputs from s3.
 
