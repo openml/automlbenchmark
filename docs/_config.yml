@@ -3,10 +3,24 @@ repository: openml/automlbenchmark
 remote_theme: fongandrew/hydeout
 markdown: kramdown
 
-include: ["README.md"]
-
 title: AutoML Benchmark
 #description: config description
 
-sidebar_home_link: true
-version: 0.1.0
+#sidebar_home_link: true
+version: 0.9
+
+hydeout:
+  repo: https://github.com/openml/automlbenchmark
+  version: master
+
+defaults:
+  -
+    scope:
+      path: README.md
+    values:
+      title: ''
+  -
+    scope:
+      path: HOWTO.md
+    values:
+      title: ''

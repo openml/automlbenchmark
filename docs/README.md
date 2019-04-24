@@ -1,5 +1,4 @@
 ---
-title: ''
 ---
 # AutoML Benchmarking
 
@@ -13,7 +12,7 @@ Automatic Machine Learning (AutoML) systems automatically build machine learning
 
 This toolkit aims to address these problems by setting up standardized environments for in-depth experimentation with a wide range of AutoML systems.
 
-Documentation: https://openml.github.io/automlbenchmark/
+Documentation: <https://openml.github.io/automlbenchmark/>
 
 ### Features:
 * Curated suites of benchmarking datasets from OpenML (TODO: add study link)
@@ -283,10 +282,10 @@ By default, a benchmark run creates the following subdirectories and files in th
 ## Advanced configuration
 
 ### Running a custom benchmark
-see [HOWTO.md]
+see [HOWTO]
 
 ### Running a custom framework
-see [HOWTO.md]
+see [HOWTO]
 
 ### Benchmark constraints
 ##### Time limits
@@ -296,5 +295,5 @@ see [HOWTO.md]
 ### AWS config
 
 
-[HOWTO.md]: ./HOWTO.md
-[examples/aws]: ./examples/aws/config.yaml
+[HOWTO]: ./HOWTO.md
+[examples/aws]: ../examples/aws/config.yaml

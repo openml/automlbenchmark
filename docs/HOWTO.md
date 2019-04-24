@@ -1,10 +1,9 @@
 ---
-title: ''
 ---
 # HOW-TO
 
 ## Run a benchmark
-see [README.md]
+see [README]
 
 ### Verify a dataset
 
@@ -30,4 +29,4 @@ see [README.md]
 ### Python library version conflict 
 TODO: write an example
 
-[README.md]: ./README.md
+[README]: ./README.md
