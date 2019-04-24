@@ -1,6 +1,14 @@
 repository: openml.github.io/automlbenchmark
+#theme: jekyll-theme-slate
 remote_theme: fongandrew/hydeout
 markdown: kramdown
+
+#source: ..
+#destination: ./_site
+#exclude: ["automl/", "resources/", "frameworks/", "examples/", "*.py", "*.ipynb", "*.sh", "*.log*", "*.csv", "*.txt"]
+#include: ["docs/*"]
+#keep_files: ["reports/"]
+#keep_files: ["../README.md", "../HOWTO.md"]
 
 title: AutoML Benchmark
 #description: config description
@@ -8,5 +16,5 @@ title: AutoML Benchmark
 #sidebar_home_link: true
 version: 0.1.0
 
-github:
-  repo:	https://github.com/openml/automlbenchmark
+#github:
+#  repo:	https://github.com/openml/automlbenchmark
