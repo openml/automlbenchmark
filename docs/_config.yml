@@ -7,14 +7,13 @@ markdown: kramdown
 #destination: ./_site
 #exclude: ["automl/", "resources/", "frameworks/", "examples/", "*.py", "*.ipynb", "*.sh", "*.log*", "*.csv", "*.txt"]
 #include: ["docs/*"]
+include: ["README.md"]
 #keep_files: ["reports/"]
 #keep_files: ["../README.md", "../HOWTO.md"]
+safe: false
 
 title: AutoML Benchmark
 #description: config description
 
 #sidebar_home_link: true
 version: 0.1.0
-
-#github:
-#  repo: https://github.com/openml/automlbenchmark
