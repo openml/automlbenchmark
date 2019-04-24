@@ -11,7 +11,7 @@ version: 0.9
 
 hydeout:
   repo: https://github.com/openml/automlbenchmark
-  version: master
+  version: 0.9
 
 defaults:
   -
