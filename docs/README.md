@@ -1,3 +1,6 @@
+---
+title: ''
+---
 # AutoML Benchmarking
 
 _**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._

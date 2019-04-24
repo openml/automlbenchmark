@@ -21,6 +21,8 @@ logs/
 predictions/
 scores/
 setup/
+_site/
+*.lock
 *.log
 *.csv
 *.arff
