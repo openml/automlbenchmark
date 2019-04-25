@@ -36,6 +36,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
         log.info("Starting H2O cluster with %s cores, %sMB memory.", nthreads, config.max_mem_size_mb)
         h2o.init(nthreads=nthreads,
+                 min_mem_size=str(config.max_mem_size_mb)+"M",
                  max_mem_size=str(config.max_mem_size_mb)+"M",
                  log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold)))
 
