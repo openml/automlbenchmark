@@ -27,13 +27,13 @@ Some other frameworks worth mentioning are, again in alphabetical order:
 
 - [autoxgboost](#autoxgboost)
 - [hyperopt-sklearn](#hyperopt-sklearn)
-- [ML-Plan](#ML-Plan)
+- [ML-Plan](#ml-plan)
 
 For completeness, the baseline methods are also described:
 
-- [Constant Predictor](#Constant Predictor)
-- [Random Forest](#Random Forest)
-- [Tuned Random Forest](#Tuned Random Forest)
+- [Constant Predictor](#constant-predictor)
+- [Random Forest](#random-forest)
+- [Tuned Random Forest](#tuned-random-forest)
 
 ##### Statement To Authors
 We did our best to provide a reasonable description which highlights some unique or important aspects of each package.
