@@ -1,40 +1,40 @@
-type,task,autosklearn,autoweka,constantpredictor,h2oautoml,oboe,randomforest,tpot,tunedrandomforest
-binary,adult,8 (1),nan,1,150,nan,2000,1406,2000
-binary,airlines,10,nan,1,47,nan,500,295 (1),500
-binary,albert,7 (7),nan,1,12,nan,2000,128 (5),2000
-binary,amazon_employee_access,10 (2),nan (1),1,263,nan,2000,1501,2000
-binary,apsfailure,9,nan,1,45,nan,2000,216 (2),2000
-binary,australian,15,nan,1,102,9,2000,47655,2000
-binary,bank-marketing,11 (2),nan,1,196,nan,2000,1298,2000
-binary,blood-transfusion,14,nan,1,54,5 (2),2000,55350,2000
-binary,christine,12,nan,1,63,14,2000,400 (1),2000
-binary,credit-g,16,nan,1,124,6 (4),2000,35938,2000
-binary,guiellermo,13,nan,1,13,nan,2000,252,2000
-binary,higgs,14 (1),nan,1,99,nan,2000,519,2000
-binary,jasmine,12 (1),nan,1,91,10,2000,2909,2000
-binary,kc1,15,nan,1,85,4 (7),2000,11566,2000
-binary,kddcup09_appetency,10,nan,1,114,nan,2000,312 (2),2000
-binary,kr-vs-kp,16,nan,1,528,6,2000,10768,2000
-binary,miniboone,13,nan,1,41,nan,2000,374,2000
-binary,nomao,14,nan,1,59,5,2000,660,2000
-binary,numerai28.6,7,nan,1,49,nan,2000,711,2000
-binary,phoneme,12,nan,1,457,4,2000,7933,2000
-binary,riccardo,10,nan,1,9,5 (1),2000,268,2000
-binary,sylvine,9 (1),nan,1,323,8,2000,4885,2000
-multiclass,car,2 (1),nan,1,1129,6,2000,13101,2000
-multiclass,cnae-9,6,nan,1,232,11,2000,1409,2000
-multiclass,connect-4,7 (2),nan,1,30,nan,2000,591,2000
-multiclass,covertype,2 (1),nan,1,1,nan,2000,127 (3),500
-multiclass,dilbert,5,nan,1,10,15,2000,425,2000
-multiclass,dionis,1 (1),nan (3),1,nan,nan,50,nan,50
-multiclass,fabert,10,nan,1,46,nan,2000,427 (4),2000
-multiclass,fashion-mnist,5,nan,1,4,nan,2000,97 (1),2000
-multiclass,helena,1,nan (1),1,1 (4),nan,500,176 (3),500
-multiclass,jannis,8,nan,1,36,nan,2000,395 (1),2000
-multiclass,jungle_chess_2pcs_raw_endgame_complete,6 (1),nan,1,103,nan,2000,1136,2000
-multiclass,mfeat-factors,7,nan,1,129,8,2000,1269 (4),2000
-multiclass,robert,1,nan,1,4,9,2000,172,2000
-multiclass,segment,6,nan,1,287,10,2000,6039,2000
-multiclass,shuttle,2 (1),nan,1,58,8,2000,947,2000
-multiclass,vehicle,8 (2),nan,1,159,8 (1),2000,5410,2000
-multiclass,volkert,5,nan,1,11,nan,2000,152,2000
+type,task,autosklearn,autoweka,constantpredictor,h2oautoml,randomforest,tpot,tunedrandomforest
+binary,adult,8 (1),nan,1,150,2000,1406,2000
+binary,airlines,10,nan,1,47,500,295 (1),500
+binary,albert,7 (7),nan,1,12,2000,128 (5),2000
+binary,amazon_employee_access,10 (2),nan (1),1,263,2000,1501,2000
+binary,apsfailure,9,nan,1,45,2000,216 (2),2000
+binary,australian,15,nan,1,102,2000,47655,2000
+binary,bank-marketing,11 (2),nan,1,196,2000,1298,2000
+binary,blood-transfusion,14,nan,1,54,2000,55350,2000
+binary,christine,12,nan,1,63,2000,400 (1),2000
+binary,credit-g,16,nan,1,124,2000,35938,2000
+binary,guiellermo,13,nan,1,13,2000,252,2000
+binary,higgs,14 (1),nan,1,99,2000,519,2000
+binary,jasmine,12 (1),nan,1,91,2000,2909,2000
+binary,kc1,15,nan,1,85,2000,11566,2000
+binary,kddcup09_appetency,10,nan,1,114,2000,312 (2),2000
+binary,kr-vs-kp,16,nan,1,528,2000,10768,2000
+binary,miniboone,13,nan,1,41,2000,374,2000
+binary,nomao,14,nan,1,59,2000,660,2000
+binary,numerai28.6,7,nan,1,49,2000,711,2000
+binary,phoneme,12,nan,1,457,2000,7933,2000
+binary,riccardo,10,nan,1,9,2000,268,2000
+binary,sylvine,9 (1),nan,1,323,2000,4885,2000
+multiclass,car,2 (1),nan,1,1129,2000,13101,2000
+multiclass,cnae-9,6,nan,1,232,2000,1409,2000
+multiclass,connect-4,7 (2),nan,1,30,2000,591,2000
+multiclass,covertype,2 (1),nan,1,1,2000,127 (3),500
+multiclass,dilbert,5,nan,1,10,2000,425,2000
+multiclass,dionis,1 (1),nan (3),1,nan,50,nan,50
+multiclass,fabert,10,nan,1,46,2000,427 (4),2000
+multiclass,fashion-mnist,5,nan,1,4,2000,97 (1),2000
+multiclass,helena,1,nan (1),1,1 (4),500,176 (3),500
+multiclass,jannis,8,nan,1,36,2000,395 (1),2000
+multiclass,jungle_chess_2pcs_raw_endgame_complete,6 (1),nan,1,103,2000,1136,2000
+multiclass,mfeat-factors,7,nan,1,129,2000,1269 (4),2000
+multiclass,robert,1,nan,1,4,2000,172,2000
+multiclass,segment,6,nan,1,287,2000,6039,2000
+multiclass,shuttle,2 (1),nan,1,58,2000,947,2000
+multiclass,vehicle,8 (2),nan,1,159,2000,5410,2000
+multiclass,volkert,5,nan,1,11,2000,152,2000

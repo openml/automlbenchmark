@@ -1,5 +1,5 @@
-type,task,autosklearn,autoweka,constantpredictor,h2oautoml,randomforest,tpot,tunedrandomforest
-binary,airlines,3 (1),4,7,1,6,2,5
-binary,albert,2 (7),nan,6,1 (2),4,5 (4),3
-multiclass,covertype,1,7,6,5,4,2,3
-multiclass,dionis,6,5 (1),7,4 (7),2,3 (9),1
+type,task,autosklearn,autoweka,h2oautoml,tpot,tunedrandomforest
+binary,airlines,3 (1),4,1,2,5
+binary,albert,2 (7),nan,1 (2),4 (4),3
+multiclass,covertype,1,5,4,2,3
+multiclass,dionis,5,4 (1),3 (7),2 (9),1
