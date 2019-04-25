@@ -225,5 +225,5 @@ Felix Mohr, Marcel Wever and Eyke Hüllermeier (2018).
 *Machine Learning  107(8):1495–1515*
 
 Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
-[Automated Multi-Label Classification based on ML-Plan](Automated Multi-Label Classification based on ML-Plan)
+[Automated Multi-Label Classification based on ML-Plan](https://arxiv.org/abs/1811.04060)
 *arXiv preprint*
