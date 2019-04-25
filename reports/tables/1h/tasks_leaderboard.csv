@@ -4,29 +4,29 @@ binary,amazon_employee_access,4,5,1,2,3
 binary,apsfailure,2,5,1,4,3
 binary,australian,2,5,1,4,3
 binary,bank-marketing,1,5,2,3,4
-binary,blood-transfusion,1 (1),3,2,4 (1),5
+binary,blood-transfusion,1,3,2,4,5
 binary,christine,1 (1),5,2,3,4
 binary,credit-g,4,5,2,3,1
 binary,guiellermo,3,4,1,5,2
 binary,higgs,4,5,1,3,2
 binary,jasmine,4,5,2,3,1
-binary,kc1,1 (3),5,4,3,2
+binary,kc1,1 (1),5,4,3,2
 binary,kddcup09_appetency,1,4 (6),2,3 (1),5
 binary,kr-vs-kp,2,5,1,3,4
 binary,miniboone,2,5,1,4,3
 binary,nomao,2,5,1,4,3
-binary,numerai28.6,2,4 (1),1,3,5
+binary,numerai28.6,2,5,1,3,4
 binary,phoneme,4,5,2,1,3
 binary,riccardo,2,nan,1,4,3
 binary,sylvine,2,5,3,1,4
-multiclass,car,3 (1),5 (1),2,1,4
-multiclass,cnae-9,2,5 (2),1,3,4
-multiclass,connect-4,3,5 (1),1,2,4
+multiclass,car,3,5,2,1,4
+multiclass,cnae-9,2,5,1,3,4
+multiclass,connect-4,3,5,1,2,4
 multiclass,dilbert,2,5,1,3,4
-multiclass,fabert,2,5,1,4 (2),3
+multiclass,fabert,2,5,1,4,3
 multiclass,fashion-mnist,2,4,1,5,3
 multiclass,helena,3,5 (1),1 (5),2,4
-multiclass,jannis,2,5 (1),1,4,3
+multiclass,jannis,2,5,1,4,3
 multiclass,jungle_chess_2pcs_raw_endgame_complete,3,5,2,1,4
 multiclass,mfeat-factors,1,5,2,3,4
 multiclass,robert,3,nan,1,4,2
