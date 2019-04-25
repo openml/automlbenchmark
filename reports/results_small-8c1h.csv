@@ -18,7 +18,7 @@ openml.org/t/10101,blood-transfusion,autosklearn,6,0.743177,aws.docker,0.5.1,,st
 openml.org/t/10101,blood-transfusion,autosklearn,7,0.767544,aws.docker,0.5.1,,stable,2019-04-12T19:42:48,3633.0,23,3310621370,,0.826667,0.767544,
 openml.org/t/10101,blood-transfusion,autosklearn,8,0.71517,aws.docker,0.5.1,,stable,2019-04-12T19:42:43,3629.2,4,3310621371,,0.77027,0.71517,
 openml.org/t/10101,blood-transfusion,autosklearn,9,0.770382,aws.docker,0.5.1,,stable,2019-04-12T19:43:00,3642.9,27,3310621372,,0.662162,0.770382,
-openml.org/t/10101,blood-transfusion,autosklearn,0,,aws,0.5.1,,stable,2019-04-12T20:14:13,5690.6,,3310621363,Error: Aborting instance i-0fed256060bb8a03b for job aws_small-8c1h_blood-transfusion_0_autosklearn.,,,
+openml.org/t/10101,blood-transfusion,autosklearn,0,0.763645,aws.docker,0.5.1,{'_attempt': 2},stable,2019-04-25T21:39:05,3633.5,8,189408138,,0.746667,0.763645,
 openml.org/t/146821,car,autosklearn,0,0.00113497,aws.docker,0.5.1,,stable,2019-04-12T19:42:40,3621.2,1,3310621363,,1.0,,0.00113497
 openml.org/t/146821,car,autosklearn,1,0.00221243,aws.docker,0.5.1,,stable,2019-04-12T19:42:38,3613.3,1,3310621364,,1.0,,0.00221243
 openml.org/t/146821,car,autosklearn,2,0.0100689,aws.docker,0.5.1,,stable,2019-04-12T19:42:55,3628.1,1,3310621365,,0.99422,,0.0100689
@@ -28,7 +28,7 @@ openml.org/t/146821,car,autosklearn,6,0.00191356,aws.docker,0.5.1,,stable,2019-0
 openml.org/t/146821,car,autosklearn,7,0.00417197,aws.docker,0.5.1,,stable,2019-04-12T19:43:20,3618.0,1,3310621370,,1.0,,0.00417197
 openml.org/t/146821,car,autosklearn,8,0.00268388,aws.docker,0.5.1,,stable,2019-04-12T19:43:19,3610.1,1,3310621371,,1.0,,0.00268388
 openml.org/t/146821,car,autosklearn,9,0.0124252,aws.docker,0.5.1,,stable,2019-04-12T19:43:26,3607.4,2,3310621372,,0.994186,,0.0124252
-openml.org/t/146821,car,autosklearn,5,,aws,0.5.1,,stable,2019-04-12T20:14:19,5621.1,,3310621368,Error: Aborting instance i-04cd1bcd47098ca4a for job aws_small-8c1h_car_5_autosklearn.,,,
+openml.org/t/146821,car,autosklearn,5,0.0503944,aws.docker,0.5.1,{'_attempt': 2},stable,2019-04-25T21:40:32,3611.7,5,2060826814,,0.982659,,0.0503944
 openml.org/t/168908,christine,autosklearn,0,0.846366,aws.docker,0.5.1,,stable,2019-04-12T19:44:10,3595.2,9,3310621363,,0.752768,0.846366,
 openml.org/t/168908,christine,autosklearn,1,0.841669,aws.docker,0.5.1,,stable,2019-04-12T19:44:21,3596.1,9,3310621364,,0.778598,0.841669,
 openml.org/t/168908,christine,autosklearn,2,0.835147,aws.docker,0.5.1,,stable,2019-04-12T19:44:13,3596.1,17,3310621365,,0.773063,0.835147,
@@ -91,14 +91,14 @@ openml.org/t/168911,jasmine,autosklearn,7,0.871177,aws.docker,0.5.1,,stable,2019
 openml.org/t/168911,jasmine,autosklearn,9,0.890816,aws.docker,0.5.1,,stable,2019-04-12T21:50:18,3598.2,13,3310621372,,0.808725,0.890816,
 openml.org/t/3917,kc1,autosklearn,2,0.869675,aws.docker,0.5.1,,stable,2019-04-12T21:50:18,3607.1,16,3310621365,,0.853081,0.869675,
 openml.org/t/3917,kc1,autosklearn,5,0.835036,aws.docker,0.5.1,,stable,2019-04-12T21:50:58,3608.6,16,3310621368,,0.862559,0.835036,
-openml.org/t/3917,kc1,autosklearn,6,,aws.docker,0.5.1,,stable,2019-04-12T21:50:58,3604.4,,3310621369,"Error: found prediction probability value outside of [0, 1]!",,,
 openml.org/t/3917,kc1,autosklearn,1,0.84375,aws.docker,0.5.1,,stable,2019-04-12T21:50:25,3608.2,14,3310621364,,0.876777,0.84375,
 openml.org/t/3917,kc1,autosklearn,0,0.833013,aws.docker,0.5.1,,stable,2019-04-12T21:50:25,3611.7,21,3310621363,,0.862559,0.833013,
-openml.org/t/3917,kc1,autosklearn,3,,aws.docker,0.5.1,,stable,2019-04-12T21:50:32,3612.8,,3310621366,"Error: found prediction probability value outside of [0, 1]!",,,
 openml.org/t/3917,kc1,autosklearn,4,0.790773,aws.docker,0.5.1,,stable,2019-04-12T21:50:35,3607.5,17,3310621367,,0.862559,0.790773,
 openml.org/t/3917,kc1,autosklearn,7,0.865509,aws.docker,0.5.1,,stable,2019-04-12T21:51:18,3607.2,13,3310621370,,0.85782,0.865509,
-openml.org/t/3917,kc1,autosklearn,8,,aws.docker,0.5.1,,stable,2019-04-12T21:51:49,3613.7,,3310621371,"Error: found prediction probability value outside of [0, 1]!",,,
 openml.org/t/3917,kc1,autosklearn,9,0.793452,aws.docker,0.5.1,,stable,2019-04-12T21:52:18,3604.8,17,3310621372,,0.861905,0.793452,
+openml.org/t/3917,kc1,autosklearn,3,0.831205,aws.docker,0.5.1,{'_attempt': 2},stable,2019-04-25T20:30:20,3609.6,18,488502024,,0.872038,0.831205,
+openml.org/t/3917,kc1,autosklearn,6,,aws.docker,0.5.1,{'_attempt': 2},stable,2019-04-25T20:30:31,3604.8,,488502027,"Error: found prediction probability value outside of [0, 1]!",,,
+openml.org/t/3917,kc1,autosklearn,8,0.900238,aws.docker,0.5.1,{'_attempt': 2},stable,2019-04-25T20:30:35,3610.2,21,488502029,,0.895735,0.900238,
 openml.org/t/3,kr-vs-kp,autosklearn,3,1.0,aws.docker,0.5.1,,stable,2019-04-12T21:52:56,3598.1,14,3310621366,,1.0,1.0,
 openml.org/t/3,kr-vs-kp,autosklearn,0,0.999961,aws.docker,0.5.1,,stable,2019-04-12T21:52:32,3596.4,13,3310621363,,0.996875,0.999961,
 openml.org/t/3,kr-vs-kp,autosklearn,1,0.999648,aws.docker,0.5.1,,stable,2019-04-12T21:52:47,3598.1,21,3310621364,,0.9875,0.999648,
@@ -338,7 +338,7 @@ openml.org/t/10101,blood-transfusion,TPOT,3,0.707115,aws.docker,0.9.6,,stable,20
 openml.org/t/10101,blood-transfusion,TPOT,4,0.612573,aws.docker,0.9.6,,stable,2019-04-13T07:40:01,3607.3,14451,612832447,,0.786667,0.612573,
 openml.org/t/10101,blood-transfusion,TPOT,6,0.742203,aws.docker,0.9.6,,stable,2019-04-13T07:39:53,3609.6,13441,612832449,,0.826667,0.742203,
 openml.org/t/10101,blood-transfusion,TPOT,7,0.758772,aws.docker,0.9.6,,stable,2019-04-13T07:39:51,3602.2,11923,612832450,,0.8,0.758772,
-openml.org/t/10101,blood-transfusion,TPOT,5,,aws.docker,0.9.6,,stable,2019-04-13T08:39:34,7200.2,,612832448,Missing predictions.,,,
+openml.org/t/10101,blood-transfusion,TPOT,5,0.731481,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T20:10:31,3602.2,15938,1699482355,,0.76,0.731481,
 openml.org/t/146821,car,TPOT,3,0.000300792,aws.docker,0.9.6,,stable,2019-04-13T07:40:30,3609.6,3067,612832446,,1.0,,0.000300792
 openml.org/t/146821,car,TPOT,6,0.00045102,aws.docker,0.9.6,,stable,2019-04-13T07:40:39,3606.9,4550,612832449,,1.0,,0.00045102
 openml.org/t/146821,car,TPOT,1,0.00023558,aws.docker,0.9.6,,stable,2019-04-13T07:40:16,3608.1,2794,612832444,,1.0,,0.00023558
@@ -397,8 +397,8 @@ openml.org/t/168910,fabert,TPOT,2,0.814496,aws.docker,0.9.6,,stable,2019-04-13T0
 openml.org/t/168910,fabert,TPOT,8,0.877606,aws.docker,0.9.6,,stable,2019-04-13T09:10:49,3656.8,157,612832451,,0.675577,,0.877606
 openml.org/t/168910,fabert,TPOT,1,0.817872,aws.docker,0.9.6,,stable,2019-04-13T09:28:10,5947.3,80,612832444,,0.696602,,0.817872
 openml.org/t/168910,fabert,TPOT,9,0.829983,aws.docker,0.9.6,,stable,2019-04-13T09:47:35,3813.8,158,612832452,,0.705954,,0.829983
-openml.org/t/168910,fabert,TPOT,5,,aws,0.9.6,,stable,2019-04-13T08:58:01,4047.9,,612832448,Error: Aborting instance i-06837a60ae292cdf0 for job aws_small-8c1h_fabert_5_TPOT.,,,
-openml.org/t/168910,fabert,TPOT,7,,aws,0.9.6,,stable,2019-04-13T09:23:31,5498.6,,612832450,Error: Aborting instance i-0588abec35b74a9b5 for job aws_small-8c1h_fabert_7_TPOT.,,,
+openml.org/t/168910,fabert,TPOT,5,0.779688,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T20:09:34,3692.8,119,2524401074,,0.716019,,0.779688
+openml.org/t/168910,fabert,TPOT,7,0.802801,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T20:18:45,4213.6,142,2524401076,,0.708384,,0.802801
 openml.org/t/168911,jasmine,TPOT,0,0.878658,aws.docker,0.9.6,,stable,2019-04-13T09:46:44,3633.9,865,612832443,,0.816054,0.878658,
 openml.org/t/168911,jasmine,TPOT,3,0.873781,aws.docker,0.9.6,,stable,2019-04-13T09:47:52,3644.7,689,612832446,,0.829431,0.873781,
 openml.org/t/168911,jasmine,TPOT,7,0.863294,aws.docker,0.9.6,,stable,2019-04-13T09:48:41,3655.1,505,612832450,,0.812081,0.863294,
@@ -668,6 +668,7 @@ openml.org/t/146821,car,AutoWEKA,3,0.00182226,aws.docker,2.6,,stable,2019-04-13T
 openml.org/t/146821,car,AutoWEKA,8,0.602421,aws.docker,2.6,,stable,2019-04-13T13:10:48,4036.8,,583067828,,0.982558,,0.602421
 openml.org/t/146821,car,AutoWEKA,4,3.21066e-15,aws.docker,2.6,,stable,2019-04-13T13:13:49,4279.3,,583067824,,1.0,,3.21066e-15
 openml.org/t/146821,car,AutoWEKA,9,1.00409,aws.docker,2.6,,stable,2019-04-13T13:21:36,4710.2,,583067829,,0.97093,,1.00409
+openml.org/t/146821,car,AutoWEKA,6,0.0227857,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T19:54:28,3112.0,,3105495176,,0.99422,,0.0227857
 openml.org/t/168908,christine,AutoWEKA,3,0.814402,aws.docker,2.6,,stable,2019-04-13T13:02:26,3497.1,,583067823,,0.743542,0.814402,
 openml.org/t/168908,christine,AutoWEKA,5,0.819413,aws.docker,2.6,,stable,2019-04-13T13:03:11,3536.9,,583067825,,0.760148,0.819413,
 openml.org/t/168908,christine,AutoWEKA,4,0.768528,aws.docker,2.6,,stable,2019-04-13T13:02:46,3506.3,,583067824,,0.673432,0.768528,
@@ -686,8 +687,8 @@ openml.org/t/9981,cnae-9,AutoWEKA,2,0.21743,aws.docker,2.6,,stable,2019-04-13T13
 openml.org/t/9981,cnae-9,AutoWEKA,0,0.718121,aws.docker,2.6,,stable,2019-04-13T13:54:33,3573.0,,583067820,,0.87037,,0.718121
 openml.org/t/9981,cnae-9,AutoWEKA,3,0.907628,aws.docker,2.6,,stable,2019-04-13T13:55:35,3540.0,,583067823,,0.796296,,0.907628
 openml.org/t/9981,cnae-9,AutoWEKA,9,0.786949,aws.docker,2.6,,stable,2019-04-13T13:58:09,3457.1,,583067829,,0.888889,,0.786949
-openml.org/t/9981,cnae-9,AutoWEKA,6,,aws.docker,2.6,,stable,2019-04-13T16:49:56,13878.8,,583067826,Missing predictions.,,,
-openml.org/t/9981,cnae-9,AutoWEKA,8,,aws.docker,2.6,,stable,2019-04-13T17:57:53,17919.7,,583067828,Missing predictions.,,,
+openml.org/t/9981,cnae-9,AutoWEKA,8,0.593996,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:08:52,3261.4,,3193433931,,0.805556,,0.593996
+openml.org/t/9981,cnae-9,AutoWEKA,6,0.472215,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:09:53,3404.9,,3193433929,,0.787037,,0.472215
 openml.org/t/31,credit-g,AutoWEKA,2,0.755714,aws.docker,2.6,,stable,2019-04-13T13:56:00,3275.3,,583067822,,0.76,0.755714,
 openml.org/t/31,credit-g,AutoWEKA,3,0.747143,aws.docker,2.6,,stable,2019-04-13T13:58:59,3396.0,,583067823,,0.69,0.747143,
 openml.org/t/31,credit-g,AutoWEKA,8,0.618095,aws.docker,2.6,,stable,2019-04-13T14:00:36,3288.6,,583067828,,0.68,0.618095,

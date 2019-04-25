@@ -783,7 +783,7 @@ openml.org/t/146195,connect-4,AutoWEKA,7,0.727122,aws.docker,2.6,,stable,2019-04
 openml.org/t/146195,connect-4,AutoWEKA,9,0.732009,aws.docker,2.6,,stable,2019-04-14T19:11:17,4548.9,,1869378489,,0.708512,,0.732009
 openml.org/t/146195,connect-4,AutoWEKA,6,0.746455,aws.docker,2.6,,stable,2019-04-14T19:04:27,4667.3,,1869378486,,0.695382,,0.746455
 openml.org/t/146195,connect-4,AutoWEKA,5,0.747637,aws.docker,2.6,,stable,2019-04-14T19:25:12,5791.6,,1869378485,,0.702635,,0.747637
-openml.org/t/146195,connect-4,AutoWEKA,0,,aws.docker,2.6,,stable,2019-04-14T20:14:56,8965.1,,1869378480,Missing predictions.,,,
+openml.org/t/146195,connect-4,AutoWEKA,0,0.738718,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:12:00,3332.9,,528130103,,0.710628,,0.738718
 openml.org/t/146825,Fashion-MNIST,AutoWEKA,0,0.568411,aws.docker,2.6,,stable,2019-04-14T18:57:28,4084.5,,1869378480,,0.864714,,0.568411
 openml.org/t/146825,Fashion-MNIST,AutoWEKA,1,0.52652,aws.docker,2.6,,stable,2019-04-14T18:57:02,4053.6,,1869378481,,0.865714,,0.52652
 openml.org/t/146825,Fashion-MNIST,AutoWEKA,3,0.504421,aws.docker,2.6,,stable,2019-04-14T18:56:57,3956.8,,1869378483,,0.862571,,0.504421
@@ -812,8 +812,8 @@ openml.org/t/168329,Helena,AutoWEKA,0,8.76637,aws.docker,2.6,,stable,2019-04-14T
 openml.org/t/168329,Helena,AutoWEKA,4,16.3567,aws.docker,2.6,,stable,2019-04-14T18:58:51,3740.8,,1869378484,,0.282515,,16.3567
 openml.org/t/168329,Helena,AutoWEKA,6,16.7159,aws.docker,2.6,,stable,2019-04-14T19:00:22,3607.8,,1869378486,,0.270287,,16.7159
 openml.org/t/168329,Helena,AutoWEKA,7,16.8846,aws.docker,2.6,,stable,2019-04-14T19:03:02,3724.3,,1869378487,,0.267372,,16.8846
-openml.org/t/168329,Helena,AutoWEKA,8,,aws.docker,2.6,,stable,2019-04-14T19:06:11,3562.8,,1869378488,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Helena_8.weka_pred.csv',,,
 openml.org/t/168329,Helena,AutoWEKA,9,16.5114,aws.docker,2.6,,stable,2019-04-14T19:40:51,3420.0,,1869378489,,0.27857,,16.5114
+openml.org/t/168329,Helena,AutoWEKA,8,,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:17:53,3618.2,,1420621088,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Helena_8.weka_pred.csv',,,
 openml.org/t/146606,higgs,AutoWEKA,1,0.640405,aws.docker,2.6,,stable,2019-04-14T19:45:18,3429.1,,1869378481,,0.60051,0.640405,
 openml.org/t/146606,higgs,AutoWEKA,0,0.643377,aws.docker,2.6,,stable,2019-04-14T19:47:34,3704.6,,1869378480,,0.603774,0.643377,
 openml.org/t/146606,higgs,AutoWEKA,3,0.639956,aws.docker,2.6,,stable,2019-04-14T19:55:03,4003.5,,1869378483,,0.60408,0.639956,
@@ -833,6 +833,7 @@ openml.org/t/168330,Jannis,AutoWEKA,8,10.719,aws.docker,2.6,,stable,2019-04-14T2
 openml.org/t/168330,Jannis,AutoWEKA,4,2.72821,aws.docker,2.6,,stable,2019-04-14T20:32:14,5326.6,,1869378484,,0.60934,,2.72821
 openml.org/t/168330,Jannis,AutoWEKA,1,10.5281,aws.docker,2.6,,stable,2019-04-14T20:32:39,5440.8,,1869378481,,0.603893,,10.5281
 openml.org/t/168330,Jannis,AutoWEKA,6,10.9723,aws.docker,2.6,,stable,2019-04-14T20:38:21,5618.2,,1869378486,,0.594888,,10.9723
+openml.org/t/168330,Jannis,AutoWEKA,7,2.08171,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T19:09:33,3699.0,,1570515942,,0.651021,,2.08171
 openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,AutoWEKA,0,0.966914,aws.docker,2.6,,stable,2019-04-14T20:11:49,3863.9,,1869378480,,0.784471,,0.966914
 openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,AutoWEKA,1,0.649348,aws.docker,2.6,,stable,2019-04-14T20:12:07,3820.1,,1869378481,,0.783579,,0.649348
 openml.org/t/167119,jungle_chess_2pcs_raw_endgame_complete,AutoWEKA,3,1.20258,aws.docker,2.6,,stable,2019-04-14T20:13:03,3702.4,,1869378483,,0.844489,,1.20258
@@ -849,10 +850,10 @@ openml.org/t/3945,KDDCup09_appetency,AutoWEKA,2,0.800033,aws.docker,2.6,,stable,
 openml.org/t/3945,KDDCup09_appetency,AutoWEKA,7,0.818644,aws.docker,2.6,,stable,2019-04-14T20:36:15,3677.1,,1869378487,,0.9822,0.818644,
 openml.org/t/3945,KDDCup09_appetency,AutoWEKA,9,,aws.docker,2.6,,stable,2019-04-14T20:54:57,3981.9,,1869378489,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_KDDCup09_appetency_9.weka_pred.csv',,,
 openml.org/t/3945,KDDCup09_appetency,AutoWEKA,1,,aws,2.6,,stable,2019-04-14T20:56:54,5752.4,,1869378481,Error: Aborting instance i-0a34139c4d882fe05 for job aws_medium-8c1h_KDDCup09_appetency_1_AutoWEKA.,,,
-openml.org/t/3945,KDDCup09_appetency,AutoWEKA,4,,aws,2.6,,stable,2019-04-14T21:02:37,5993.0,,1869378484,Error: Aborting instance i-00a0df32532217312 for job aws_medium-8c1h_KDDCup09_appetency_4_AutoWEKA.,,,
 openml.org/t/3945,KDDCup09_appetency,AutoWEKA,5,,aws,2.6,,stable,2019-04-14T21:07:39,6294.1,,1869378485,Error: Aborting instance i-06a5385104a2e61f9 for job aws_medium-8c1h_KDDCup09_appetency_5_AutoWEKA.,,,
 openml.org/t/3945,KDDCup09_appetency,AutoWEKA,6,,aws,2.6,,stable,2019-04-14T21:12:42,6537.5,,1869378486,Error: Aborting instance i-0572f89de2265e615 for job aws_medium-8c1h_KDDCup09_appetency_6_AutoWEKA.,,,
 openml.org/t/3945,KDDCup09_appetency,AutoWEKA,8,,aws,2.6,,stable,2019-04-14T21:27:44,6295.6,,1869378488,Error: Aborting instance i-022f2cec70ef675c5 for job aws_medium-8c1h_KDDCup09_appetency_8_AutoWEKA.,,,
+openml.org/t/3945,KDDCup09_appetency,AutoWEKA,4,,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:13:08,3701.9,,270040750,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_KDDCup09_appetency_4.weka_pred.csv',,,
 openml.org/t/168335,MiniBooNE,AutoWEKA,0,0.954941,aws.docker,2.6,,stable,2019-04-14T20:50:31,3522.2,,1869378480,,0.901361,0.954941,
 openml.org/t/168335,MiniBooNE,AutoWEKA,2,0.961032,aws.docker,2.6,,stable,2019-04-14T20:58:25,3458.4,,1869378482,,0.906589,0.961032,
 openml.org/t/168335,MiniBooNE,AutoWEKA,1,0.958727,aws.docker,2.6,,stable,2019-04-14T20:59:20,3560.4,,1869378481,,0.906896,0.958727,
@@ -882,7 +883,7 @@ openml.org/t/167120,numerai28.6,AutoWEKA,5,0.528384,aws.docker,2.6,,stable,2019-
 openml.org/t/167120,numerai28.6,AutoWEKA,6,0.517822,aws.docker,2.6,,stable,2019-04-14T21:33:52,3475.1,,1869378486,,0.51412,0.517822,
 openml.org/t/167120,numerai28.6,AutoWEKA,8,0.532537,aws.docker,2.6,,stable,2019-04-14T21:37:13,3405.5,,1869378488,,0.527409,0.532537,
 openml.org/t/167120,numerai28.6,AutoWEKA,9,0.518388,aws.docker,2.6,,stable,2019-04-14T21:40:51,3500.7,,1869378489,,0.51765,0.518388,
-openml.org/t/167120,numerai28.6,AutoWEKA,7,,aws.docker,2.6,,stable,2019-04-14T23:19:05,9698.4,,1869378487,Missing predictions.,,,
+openml.org/t/167120,numerai28.6,AutoWEKA,7,0.520989,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:32:10,3478.3,,1299647604,,0.514743,0.520989,
 openml.org/t/168338,riccardo,AutoWEKA,0,,aws.docker,2.6,,stable,2019-04-14T22:41:35,7200.1,,1869378480,Missing predictions.,,,
 openml.org/t/168338,riccardo,AutoWEKA,1,,aws.docker,2.6,,stable,2019-04-14T22:48:52,7200.1,,1869378481,Missing predictions.,,,
 openml.org/t/168338,riccardo,AutoWEKA,2,,aws.docker,2.6,,stable,2019-04-14T22:49:18,7200.1,,1869378482,Missing predictions.,,,

@@ -398,6 +398,7 @@ openml.org/t/168910,fabert,TPOT,6,0.776752,aws.docker,0.9.6,,stable,2019-04-16T1
 openml.org/t/168910,fabert,TPOT,9,0.796815,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T01:24:13,14634.5,456,1904093685,,0.713244,,0.796815
 openml.org/t/168910,fabert,TPOT,8,0.857824,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T02:12:08,17542.2,461,1904093684,,0.692588,,0.857824
 openml.org/t/168910,fabert,TPOT,4,,aws,0.9.6,{'_attempt': 2},stable,2019-04-24T23:32:09,8111.6,,1904093680,Exception: Aborting instance i-00de2117ad27088a1 for job aws_small-8c4h_fabert_4_TPOT.,,,
+openml.org/t/168910,fabert,TPOT,7,0.759176,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T21:28:54,14536.0,588,499780611,,0.72904,,0.759176
 openml.org/t/168911,jasmine,TPOT,0,0.881253,aws.docker,0.9.6,,stable,2019-04-16T18:11:55,14445.6,3144,948913241,,0.816054,0.881253,
 openml.org/t/168911,jasmine,TPOT,1,0.895436,aws.docker,0.9.6,,stable,2019-04-16T18:23:08,14502.1,2888,948913242,,0.826087,0.895436,
 openml.org/t/168911,jasmine,TPOT,2,0.911812,aws.docker,0.9.6,,stable,2019-04-16T20:58:16,14447.1,3208,948913243,,0.862876,0.911812,
@@ -437,6 +438,7 @@ openml.org/t/12,mfeat-factors,TPOT,9,0.16856,aws.docker,0.9.6,,stable,2019-04-17
 openml.org/t/12,mfeat-factors,TPOT,1,0.0862985,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T01:22:12,14516.1,1219,1606307341,,0.975,,0.0862985
 openml.org/t/12,mfeat-factors,TPOT,2,0.0586234,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T13:15:58,14414.4,1668,200093451,,0.98,,0.0586234
 openml.org/t/12,mfeat-factors,TPOT,0,0.108333,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T13:21:45,14748.5,1418,200093449,,0.975,,0.108333
+openml.org/t/12,mfeat-factors,TPOT,6,0.0860616,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T21:27:32,14421.6,1150,2277987397,,0.97,,0.0860616
 openml.org/t/9952,phoneme,TPOT,0,0.971937,aws.docker,0.9.6,,stable,2019-04-17T10:13:09,14575.6,9731,948913241,,0.914972,0.971937,
 openml.org/t/9952,phoneme,TPOT,1,0.980753,aws.docker,0.9.6,,stable,2019-04-17T10:17:53,14555.9,12719,948913242,,0.927911,0.980753,
 openml.org/t/9952,phoneme,TPOT,2,0.966479,aws.docker,0.9.6,,stable,2019-04-17T13:37:37,14446.9,6906,948913243,,0.90573,0.966479,

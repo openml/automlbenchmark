@@ -778,6 +778,7 @@ openml.org/t/34539,Amazon_employee_access,AutoWEKA,6,0.800627,aws.docker,2.6,,st
 openml.org/t/34539,Amazon_employee_access,AutoWEKA,4,0.833712,aws.docker,2.6,,stable,2019-04-17T05:29:11,16773.6,,2317173909,,0.94202,0.833712,
 openml.org/t/34539,Amazon_employee_access,AutoWEKA,1,0.728864,aws.docker,2.6,,stable,2019-04-17T05:35:43,17225.1,,2317173906,,0.94202,0.728864,
 openml.org/t/34539,Amazon_employee_access,AutoWEKA,9,0.859553,aws.docker,2.6,,stable,2019-04-17T05:42:57,17211.5,,2317173914,,0.945665,0.859553,
+openml.org/t/34539,Amazon_employee_access,AutoWEKA,7,0.824763,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T21:03:19,13350.1,,2800660313,,0.945987,0.824763,
 openml.org/t/168868,APSFailure,AutoWEKA,0,0.992608,aws.docker,2.6,,stable,2019-04-17T05:07:34,14429.2,,2317173905,,0.991447,0.992608,
 openml.org/t/168868,APSFailure,AutoWEKA,1,0.989543,aws.docker,2.6,,stable,2019-04-17T08:34:34,14281.0,,2317173906,,0.989605,0.989543,
 openml.org/t/168868,APSFailure,AutoWEKA,2,0.987665,aws.docker,2.6,,stable,2019-04-17T08:39:21,14211.4,,2317173907,,0.991447,0.987665,

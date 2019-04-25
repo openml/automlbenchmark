@@ -87,17 +87,17 @@ openml.org/t/189354,Airlines,TPOT,7,0.721184,aws.docker,0.9.6,,stable,2019-04-19
 openml.org/t/189354,Airlines,TPOT,1,0.723559,aws.docker,0.9.6,,stable,2019-04-19T03:13:22,20687.4,210,1011540367,,0.669961,0.723559,
 openml.org/t/189354,Airlines,TPOT,0,0.722324,aws.docker,0.9.6,,stable,2019-04-19T03:16:22,20867.1,246,1011540366,,0.668663,0.722324,
 openml.org/t/189354,Airlines,TPOT,4,0.721402,aws.docker,0.9.6,,stable,2019-04-19T04:33:26,25472.0,399,1011540370,,0.669027,0.721402,
-openml.org/t/189354,Airlines,TPOT,9,,aws,0.9.6,,stable,2019-04-18T23:26:28,7236.5,,1011540375,Exception: Aborting instance i-00fbed90cd6c670c8 for job aws_large-8c4h_Airlines_9_TPOT.,,,
+openml.org/t/189354,Airlines,TPOT,9,0.726524,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T20:34:22,22922.2,295,155463730,,0.672791,0.726524,
 openml.org/t/189356,Albert,TPOT,5,0.730778,aws.docker,0.9.6,,stable,2019-04-19T01:56:26,15605.7,240,1011540371,,0.667388,0.730778,
 openml.org/t/189356,Albert,TPOT,3,0.736057,aws.docker,0.9.6,,stable,2019-04-19T02:08:06,16291.2,194,1011540369,,0.672679,0.736057,
 openml.org/t/189356,Albert,TPOT,1,0.722882,aws.docker,0.9.6,,stable,2019-04-19T02:12:35,16575.5,80,1011540367,,0.662732,0.722882,
 openml.org/t/189356,Albert,TPOT,2,0.711829,aws.docker,0.9.6,,stable,2019-04-19T02:41:55,18343.2,48,1011540368,,0.658358,0.711829,
 openml.org/t/189356,Albert,TPOT,4,0.744055,aws.docker,0.9.6,,stable,2019-04-19T02:47:17,18629.2,80,1011540370,,0.678605,0.744055,
-openml.org/t/189356,Albert,TPOT,7,,aws,0.9.6,,stable,2019-04-19T00:16:38,10206.8,,1011540373,Exception: Aborting instance i-0f84e7407e4f5145e for job aws_large-8c4h_Albert_7_TPOT.,,,
-openml.org/t/189356,Albert,TPOT,8,,aws,0.9.6,,stable,2019-04-19T02:17:51,17474.7,,1011540374,Exception: Aborting instance i-08d5ea014be34d2cf for job aws_large-8c4h_Albert_8_TPOT.,,,
 openml.org/t/189356,Albert,TPOT,6,0.727189,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T18:20:19,14511.5,175,1869743395,,0.668493,0.727189,
 openml.org/t/189356,Albert,TPOT,9,0.728995,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T18:23:37,14698.2,109,1869743398,,0.667882,0.728995,
 openml.org/t/189356,Albert,TPOT,0,0.712814,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T18:33:28,15320.8,96,1869743389,,0.657041,0.712814,
+openml.org/t/189356,Albert,TPOT,8,0.714732,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T18:47:22,16130.1,48,1869743397,,0.659087,0.714732,
+openml.org/t/189356,Albert,TPOT,7,0.713364,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T20:01:59,20613.6,173,1869743396,,0.658358,0.713364,
 openml.org/t/7593,Covertype,TPOT,1,0.143251,aws.docker,0.9.6,,stable,2019-04-19T04:27:15,14729.7,145,1011540367,,0.967488,,0.143251
 openml.org/t/7593,Covertype,TPOT,3,0.105844,aws.docker,0.9.6,,stable,2019-04-19T05:32:56,15686.7,130,1011540369,,0.966283,,0.105844
 openml.org/t/7593,Covertype,TPOT,2,0.597809,aws.docker,0.9.6,,stable,2019-04-19T05:33:39,17547.3,32,1011540368,,0.739884,,0.597809
@@ -105,9 +105,9 @@ openml.org/t/7593,Covertype,TPOT,4,0.102072,aws.docker,0.9.6,,stable,2019-04-19T
 openml.org/t/7593,Covertype,TPOT,6,0.096253,aws.docker,0.9.6,,stable,2019-04-19T05:55:42,15089.6,189,1011540372,,0.97346,,0.096253
 openml.org/t/7593,Covertype,TPOT,7,0.0996283,aws.docker,0.9.6,,stable,2019-04-19T06:31:12,17223.0,185,1011540373,,0.971395,,0.0996283
 openml.org/t/7593,Covertype,TPOT,8,0.105688,aws.docker,0.9.6,,stable,2019-04-19T07:40:34,21194.5,48,1011540374,,0.968038,,0.105688
-openml.org/t/7593,Covertype,TPOT,5,,aws.docker,0.9.6,,stable,2019-04-19T09:38:48,28800.3,,1011540371,Missing predictions.,,,
 openml.org/t/7593,Covertype,TPOT,0,0.100314,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T18:23:23,14993.5,187,2694281819,,0.969554,,0.100314
 openml.org/t/7593,Covertype,TPOT,9,0.120653,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T18:28:20,15348.5,188,2694281828,,0.962668,,0.120653
+openml.org/t/7593,Covertype,TPOT,5,0.106186,aws.docker,0.9.6,{'_attempt': 2},stable,2019-04-25T19:48:30,20166.5,64,2694281824,,0.966989,,0.106186
 openml.org/t/189355,Dionis,TPOT,0,,aws.docker,0.9.6,,stable,2019-04-19T10:00:16,28800.2,,1011540366,Missing predictions.,,,
 openml.org/t/189355,Dionis,TPOT,1,,aws.docker,0.9.6,,stable,2019-04-19T10:12:20,28800.2,,1011540367,Missing predictions.,,,
 openml.org/t/189355,Dionis,TPOT,2,,aws.docker,0.9.6,,stable,2019-04-19T10:17:20,28800.1,,1011540368,Missing predictions.,,,

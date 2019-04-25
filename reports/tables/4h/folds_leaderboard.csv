@@ -18,7 +18,7 @@ binary,airlines,5,2.0,6.0,7.0,1.0,5.0,3.0,4.0
 binary,airlines,6,2.0,6.0,7.0,1.0,5.0,3.0,4.0
 binary,airlines,7,2.0,6.0,7.0,1.0,5.0,3.0,4.0
 binary,airlines,8,3.0,6.0,7.0,1.0,5.0,2.0,4.0
-binary,airlines,9,2.0,5.0,6.0,1.0,4.0,,3.0
+binary,airlines,9,2.0,6.0,7.0,1.0,5.0,3.0,4.0
 binary,albert,0,2.0,,6.0,1.0,3.0,5.0,4.0
 binary,albert,1,,,5.0,1.0,2.0,4.0,3.0
 binary,albert,2,2.0,,6.0,1.0,3.0,5.0,4.0
@@ -26,8 +26,8 @@ binary,albert,3,2.0,,6.0,1.0,3.0,5.0,4.0
 binary,albert,4,2.0,,6.0,1.0,5.0,3.0,4.0
 binary,albert,5,,,5.0,1.0,3.0,4.0,2.0
 binary,albert,6,2.0,,6.0,1.0,4.0,5.0,3.0
-binary,albert,7,,,4.0,1.0,2.0,,3.0
-binary,albert,8,2.0,,5.0,1.0,4.0,,3.0
+binary,albert,7,,,5.0,1.0,2.0,4.0,3.0
+binary,albert,8,2.0,,6.0,1.0,4.0,5.0,3.0
 binary,albert,9,1.0,,6.0,2.0,3.0,5.0,4.0
 binary,amazon_employee_access,0,5.0,6.0,7.0,1.0,4.0,3.0,2.0
 binary,amazon_employee_access,1,5.0,6.0,7.0,1.0,3.0,2.0,4.0
@@ -36,7 +36,7 @@ binary,amazon_employee_access,3,5.0,6.0,7.0,1.0,3.0,4.0,2.0
 binary,amazon_employee_access,4,2.0,6.0,7.0,1.0,3.0,5.0,4.0
 binary,amazon_employee_access,5,5.0,6.0,7.0,1.0,2.0,4.0,3.0
 binary,amazon_employee_access,6,5.0,6.0,7.0,2.0,4.0,1.0,3.0
-binary,amazon_employee_access,7,5.0,,6.0,1.0,3.0,2.0,4.0
+binary,amazon_employee_access,7,6.0,5.0,7.0,1.0,3.0,2.0,4.0
 binary,amazon_employee_access,8,5.0,6.0,7.0,1.0,3.0,2.0,4.0
 binary,amazon_employee_access,9,5.0,6.0,7.0,1.0,4.0,2.0,3.0
 binary,apsfailure,0,2.0,1.0,7.0,4.0,5.0,3.0,6.0
@@ -254,7 +254,7 @@ multiclass,covertype,1,2.0,6.0,7.0,5.0,4.0,3.0,1.0
 multiclass,covertype,2,2.0,6.0,7.0,4.0,3.0,5.0,1.0
 multiclass,covertype,3,3.0,6.0,7.0,5.0,4.0,2.0,1.0
 multiclass,covertype,4,3.0,6.0,7.0,5.0,4.0,2.0,1.0
-multiclass,covertype,5,2.0,6.0,5.0,4.0,3.0,,1.0
+multiclass,covertype,5,3.0,7.0,6.0,5.0,4.0,2.0,1.0
 multiclass,covertype,6,3.0,7.0,6.0,5.0,4.0,1.0,2.0
 multiclass,covertype,7,3.0,7.0,6.0,5.0,4.0,2.0,1.0
 multiclass,covertype,8,3.0,7.0,6.0,5.0,4.0,2.0,1.0
@@ -286,7 +286,7 @@ multiclass,fabert,3,5.0,7.0,6.0,2.0,4.0,1.0,3.0
 multiclass,fabert,4,2.0,6.0,5.0,1.0,3.0,,4.0
 multiclass,fabert,5,2.0,7.0,6.0,1.0,5.0,3.0,4.0
 multiclass,fabert,6,3.0,7.0,6.0,2.0,4.0,1.0,5.0
-multiclass,fabert,7,2.0,6.0,5.0,1.0,3.0,,4.0
+multiclass,fabert,7,2.0,7.0,6.0,1.0,4.0,3.0,5.0
 multiclass,fabert,8,2.0,7.0,6.0,1.0,3.0,4.0,5.0
 multiclass,fabert,9,3.0,7.0,6.0,1.0,4.0,2.0,5.0
 multiclass,fashion-mnist,0,3.0,6.0,7.0,1.0,4.0,5.0,2.0
@@ -335,7 +335,7 @@ multiclass,mfeat-factors,2,2.0,6.0,7.0,3.0,5.0,1.0,4.0
 multiclass,mfeat-factors,3,1.0,6.0,7.0,3.0,5.0,2.0,4.0
 multiclass,mfeat-factors,4,2.0,6.0,7.0,1.0,4.0,3.0,5.0
 multiclass,mfeat-factors,5,2.0,6.0,7.0,3.0,5.0,1.0,4.0
-multiclass,mfeat-factors,6,2.0,5.0,6.0,1.0,4.0,,3.0
+multiclass,mfeat-factors,6,2.0,6.0,7.0,1.0,5.0,3.0,4.0
 multiclass,mfeat-factors,7,2.0,6.0,7.0,3.0,5.0,1.0,4.0
 multiclass,mfeat-factors,8,2.0,6.0,7.0,1.0,4.0,5.0,3.0
 multiclass,mfeat-factors,9,2.0,4.0,7.0,1.0,6.0,3.0,5.0

@@ -1,8 +1,8 @@
 type,task,autosklearn,autoweka,h2oautoml,tpot,tunedrandomforest
 binary,adult,1,4,2,3,5
-binary,airlines,2,4,1,3 (1),5
-binary,albert,2 (3),nan,1,4 (2),3
-binary,amazon_employee_access,4,5 (1),1,2,3
+binary,airlines,2,4,1,3,5
+binary,albert,2 (3),nan,1,4,3
+binary,amazon_employee_access,4,5,1,2,3
 binary,apsfailure,4,5,1,2,3
 binary,australian,4,1,3,2,5
 binary,bank-marketing,2,5,1,3,4
@@ -24,15 +24,15 @@ binary,sylvine,2,5,3,1,4
 multiclass,car,3,5,2,1,4
 multiclass,cnae-9,2,5,1,3,4
 multiclass,connect-4,3,5,1,2,4
-multiclass,covertype,2,5,4,3 (1),1
+multiclass,covertype,2,5,4,3,1
 multiclass,dilbert,2,5,1,3,4
 multiclass,dionis,3,2 (3),nan,nan,1
-multiclass,fabert,2,5,1,3 (2),4
+multiclass,fabert,2,5,1,3 (1),4
 multiclass,fashion-mnist,3,5,1,4,2
 multiclass,helena,4,5 (1),1 (1),2,3
 multiclass,jannis,1,5,2,4,3
 multiclass,jungle_chess_2pcs_raw_endgame_complete,3,5,1,2,4
-multiclass,mfeat-factors,1,5,2,3 (1),4
+multiclass,mfeat-factors,1,5,2,3,4
 multiclass,robert,4,nan,1,3,2
 multiclass,segment,3,5,1,2,4
 multiclass,shuttle,2,5,3,1,4
