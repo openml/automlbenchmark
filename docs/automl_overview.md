@@ -4,24 +4,30 @@ title: AutoML Systems
 sidebar_sort_order: 2
 ---
 
-List of AutoML systems in the benchmark, in alphabetical order:
-
-- [auto-sklearn](#auto-sklearn)
-- [Auto-WEKA](#auto-weka)
-- [H2O AutoML](#h2o-automl)
-- [hyperopt-sklearn](#hyperopt-sklearn)
-- [oboe](#oboe)
-- [TPOT](#tpot)
-
 There is more to an AutoML system than just its performance.
-An AutoML system may only be available through an API for a specific programming language, while others can work stand-alone.
+An AutoML framework may only be available through an API for a specific programming language, while others can work stand-alone.
 Some systems might output models which can be used without further dependency on the AutoML package,
 in other cases the AutoML system is still required to use the model.
 Some systems might be developed with a specific domain in mind. 
 When choosing an AutoML system, it is essential to consider things that are important to you.
 
-
 On this page a brief description and further references for the AutoML systems in the benchmark is provided.
+
+List of AutoML systems in the benchmark, in alphabetical order:
+
+- [auto-sklearn](#auto-sklearn)
+- [Auto-WEKA](#auto-weka)
+- [H2O AutoML](#h2o-automl)
+- [oboe](#oboe)
+- [TPOT](#tpot)
+
+There are many more AutoML frameworks, and unfortunately we could not yet evaluate them all.
+While we hope to cover them in the comparison in the future, for now we will
+Some other frameworks worth mentioning are, again in alphabetical order:
+
+- [autoxgboost](#autoxgboost)
+- [hyperopt-sklearn](#hyperopt-sklearn)
+- [ML-Plan](#ML-Plan)
 
 ##### Statement To Authors
 We did our best to provide a reasonable description which highlights some unique or important aspects of each package.
@@ -29,6 +35,9 @@ If you want to change or add to the description and references of your AutoML pa
 
 The description needs to be kept brief and factual.
 The goal is to get an impression, based on which the reader can delve more in-depth in the provided documentation.
+
+If your AutoML framework is not on this page and feel it should be, please open a PR with the proposed addition.
+Keep the formatting consistent with the rest of the page.
 
 ## auto-sklearn
 [source](https://github.com/automl/auto-sklearn) |
@@ -47,8 +56,6 @@ in 2017-2018.
 It provides a scikit-learn-like interface in Python and uses Bayesian optimization to find good machine learning pipelines.
 
 It features automatic ensemble construction.
-Unfortunately, multiprocessing is not supported out of the box, but there is a 
-[work-around](http://automl.github.io/auto-sklearn/stable/examples/example_parallel.html).
 Meta-learning is used to warm-start the search procedure, this means that the search is more likely to start with good pipelines.
 
 #### Papers
@@ -107,25 +114,6 @@ On the other hand, as a free user your concerns might be overshadowed by users o
 #### Papers
 The booklets?
 
-## hyperopt-sklearn 
-[source](https://github.com/hyperopt/hyperopt-sklearn) |
-[documentation](http://hyperopt.github.io/hyperopt-sklearn/) |
-Python |
-Optimization: Random Search, various SMBO |
-3-clause BSD
-
-> Hyperopt-sklearn is Hyperopt-based model selection among machine learning algorithms in scikit-learn.
-
-Hyperopt-sklearn allows for different search strategies through a scikit-learn-like interface.
-Besides random search, various sequential model based optimization (SMBO) techniques are available.
-Amongst these are Tree of Parzen Estimators (TPE), Annealing and Gaussian Process Trees.
-
-#### Papers
-
-Komer, Brent, James Bergstra, and Chris Eliasmith (2014).
-[Hyperopt-sklearn: automatic hyperparameter configuration for scikit-learn.](http://compneuro.uwaterloo.ca/files/publications/komer.2014b.pdf)
-*ICML workshop on AutoML 2014*.
-
 ## OBOE 
 [source](https://github.com/udellgroup/oboe) |
 [documentation](https://github.com/udellgroup/oboe) |
@@ -177,3 +165,65 @@ Randal S. Olson, Nathan Bartley, Ryan J. Urbanowicz, and Jason H. Moore (2016).
 [Evaluation of a Tree-based Pipeline Optimization Tool for Automating Data Science](http://doi.acm.org/10.1145/2908812.2908918).
 *Proceedings of GECCO 2016*, pages 485-492.  
 
+
+
+# Other AutoML frameworks
+
+## autoxgboost
+[source](https://github.com/ja-thomas/autoxgboost) |
+[documentation](https://github.com/ja-thomas/autoxgboost/blob/master/poster_2018.pdf) |
+R |
+Optimization: Bayesian Optimization | -
+
+> autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO.
+
+Autoxgboost is different from most frameworks on this page in that it does not search over multiple learning algorithms.
+Instead, it restricts itself to finding a good hyperparameter configuration for xgboost.
+The exception to this is a preprocessing step for categorical variables, where the specific encoding strategy to use is tuned as well.
+
+#### Papers
+
+Janek Thomas, Stefan Coors and Bernd Bischl (2018). 
+[Automatic Gradient Boosting](https://arxiv.org/pdf/1807.03873v2.pdf)
+*International Workshop on Automatic Machine Learning at ICML 2018*
+
+## hyperopt-sklearn 
+[source](https://github.com/hyperopt/hyperopt-sklearn) |
+[documentation](http://hyperopt.github.io/hyperopt-sklearn/) |
+Python |
+Optimization: Random Search, various SMBO |
+3-clause BSD
+
+> Hyperopt-sklearn is Hyperopt-based model selection among machine learning algorithms in scikit-learn.
+
+Hyperopt-sklearn allows for different search strategies through a scikit-learn-like interface.
+Besides random search, various sequential model based optimization (SMBO) techniques are available.
+Amongst these are Tree of Parzen Estimators (TPE), Annealing and Gaussian Process Trees.
+
+#### Papers
+
+Komer, Brent, James Bergstra, and Chris Eliasmith (2014).
+[Hyperopt-sklearn: automatic hyperparameter configuration for scikit-learn.](http://compneuro.uwaterloo.ca/files/publications/komer.2014b.pdf)
+*ICML workshop on AutoML 2014*.
+
+## ML-Plan
+[source](https://github.com/fmohr/AILibs/tree/master/softwareconfiguration/mlplan) |
+[documentation](https://github.com/fmohr/AILibs/tree/dev/softwareconfiguration/mlplan/docs/javadoc) |
+Java |
+Optimization: Hierachical Task Planning | -
+
+> Author Quote
+
+ML-Plan is a new AutoML framework based on Hierarchical Task Planning.
+It can optimize with both a WEKA and scikit-learn backend.
+ML-Plan is under active development.
+
+#### Papers
+
+Felix Mohr, Marcel Wever and Eyke Hüllermeier (2018).
+[ML-Plan: Automated machine learning via hierarchical planning](https://link.springer.com/article/10.1007/s10994-018-5735-z)
+*Machine Learning  107(8):1495–1515*
+
+Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
+[Automated Multi-Label Classification based on ML-Plan](Automated Multi-Label Classification based on ML-Plan)
+*arXiv preprint*
