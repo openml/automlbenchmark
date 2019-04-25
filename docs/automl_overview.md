@@ -29,6 +29,12 @@ Some other frameworks worth mentioning are, again in alphabetical order:
 - [hyperopt-sklearn](#hyperopt-sklearn)
 - [ML-Plan](#ML-Plan)
 
+For completeness, the baseline methods are also described:
+
+- [Constant Predictor](#Constant Predictor)
+- [Random Forest](#Random Forest)
+- [Tuned Random Forest](#Tuned Random Forest)
+
 ##### Statement To Authors
 We did our best to provide a reasonable description which highlights some unique or important aspects of each package.
 If you want to change or add to the description and references of your AutoML package, please submit a pull request with your proposed changes. 
@@ -38,6 +44,10 @@ The goal is to get an impression, based on which the reader can delve more in-de
 
 If your AutoML framework is not on this page and feel it should be, please open a PR with the proposed addition.
 Keep the formatting consistent with the rest of the page.
+
+-----
+
+# Included AutoML Frameworks
 
 ## auto-sklearn
 [source](https://github.com/automl/auto-sklearn) |
@@ -112,7 +122,8 @@ On the other hand, as a free user your concerns might be overshadowed by users o
 -->
 
 #### Papers
-The booklets?
+
+\-
 
 ## OBOE 
 [source](https://github.com/udellgroup/oboe) |
@@ -167,7 +178,7 @@ Randal S. Olson, Nathan Bartley, Ryan J. Urbanowicz, and Jason H. Moore (2016).
 
 
 
-# Other AutoML frameworks
+# Other AutoML Frameworks
 
 ## autoxgboost
 [source](https://github.com/ja-thomas/autoxgboost) |
@@ -227,3 +238,29 @@ Felix Mohr, Marcel Wever and Eyke Hüllermeier (2018).
 Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
 [Automated Multi-Label Classification based on ML-Plan](https://arxiv.org/abs/1811.04060)
 *arXiv preprint*
+
+
+## Baselines
+
+We compare the performance of AutoML frameworks not only to each other, but also to three baseline methods, these are:
+
+## Constant Predictor 
+[source](https://github.com/openml/automlbenchmark/tree/master/frameworks/constantpredictor)
+
+Always predicts the class probabilities according to their occurrence in the dataset.
+ 
+## Random Forest 
+[source](https://github.com/openml/automlbenchmark/tree/master/frameworks/RandomForest)
+  
+The [Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html) of scikit-learn 0.20. 
+All hyperparameters are set to their default value, except for the number of estimators, which is set to *2000*.
+ 
+## Tuned Random Forest 
+[source](https://github.com/openml/automlbenchmark/tree/master/frameworks/TunedRandomForest)
+
+Uses the Random Forest setup as described above, but first optimizes the hyperparameter `max_features`.
+It tries up to *11* different values of `max_features`. 
+Five values uniformly picked from `[1, sqrt(p))`, five values from `(sqrt(p), p]` and finally `sqrt(p)`, where `p` if the number of features in the dataset.
+
+It first evaluates `max_features=sqrt(p)` and then evaluates the other values in ascending order, until it completes them all or runs out of time.
+Finally the model is fit to the entire training dataset with the best value for `max_features` according to the above cross-validation results.
