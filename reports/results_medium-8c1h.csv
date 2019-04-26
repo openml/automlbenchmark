@@ -228,7 +228,7 @@ openml.org/t/14965,bank-marketing,H2OAutoML,6,0.925062,aws.docker,3.24.0.1,,stab
 openml.org/t/14965,bank-marketing,H2OAutoML,7,0.941815,aws.docker,3.24.0.1,,stable,2019-04-13T23:52:41,3261.7,83,3357421678,,0.905773,0.941815,
 openml.org/t/14965,bank-marketing,H2OAutoML,8,0.939409,aws.docker,3.24.0.1,,stable,2019-04-13T23:53:06,3289.5,69,3357421679,,0.914399,0.939409,
 openml.org/t/14965,bank-marketing,H2OAutoML,9,0.945427,aws.docker,3.24.0.1,,stable,2019-04-13T23:54:45,3375.0,71,3357421680,,0.913294,0.945427,
-openml.org/t/14965,bank-marketing,H2OAutoML,5,0.926268,aws.docker,3.24.0.1,{'_attempt': 2},stable,2019-04-23T17:45:54,3278.9,77,3357421676,,0.901792,0.926268
+openml.org/t/14965,bank-marketing,H2OAutoML,5,0.926268,aws.docker,3.24.0.1,{'_attempt': 2},stable,2019-04-23T17:45:54,3278.9,77,3357421676,,0.901792,0.926268,
 openml.org/t/146195,connect-4,H2OAutoML,0,0.34459,aws.docker,3.24.0.1,,stable,2019-04-14T00:54:27,3633.2,5,3357421671,,0.867229,,0.34459
 openml.org/t/146195,connect-4,H2OAutoML,2,0.330409,aws.docker,3.24.0.1,,stable,2019-04-14T00:54:36,3631.4,5,3357421673,,0.87241,,0.330409
 openml.org/t/146195,connect-4,H2OAutoML,3,0.345081,aws.docker,3.24.0.1,,stable,2019-04-14T00:54:46,3631.6,5,3357421674,,0.867229,,0.345081
