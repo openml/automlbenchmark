@@ -148,13 +148,13 @@ openml.org/t/7593,Covertype,AutoWEKA,6,3.23643,aws.docker,2.6,,stable,2019-04-19
 openml.org/t/7593,Covertype,AutoWEKA,7,2.62914,aws.docker,2.6,,stable,2019-04-19T05:14:48,13811.3,,3008875003,,0.682794,,2.62914
 openml.org/t/7593,Covertype,AutoWEKA,8,3.18266,aws.docker,2.6,,stable,2019-04-19T05:29:43,14233.1,,3008875004,,0.658612,,3.18266
 openml.org/t/7593,Covertype,AutoWEKA,9,1.53695,aws.docker,2.6,,stable,2019-04-19T06:32:58,17913.8,,3008875005,,0.667476,,1.53695
-openml.org/t/189355,Dionis,AutoWEKA,1,,aws.docker,2.6,,stable,2019-04-19T08:44:31,13990.8,,3008874997,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_1.weka_pred.csv',,,
 openml.org/t/189355,Dionis,AutoWEKA,2,2.16223,aws.docker,2.6,,stable,2019-04-19T09:08:30,14873.8,,3008874998,,0.885437,,2.16223
 openml.org/t/189355,Dionis,AutoWEKA,4,6.8446,aws.docker,2.6,,stable,2019-04-19T09:10:01,14861.7,,3008875000,,0.725222,,6.8446
-openml.org/t/189355,Dionis,AutoWEKA,7,,aws.docker,2.6,,stable,2019-04-19T09:26:44,14893.3,,3008875003,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_7.weka_pred.csv',,,
 openml.org/t/189355,Dionis,AutoWEKA,6,4.34547,aws.docker,2.6,,stable,2019-04-19T09:34:09,15519.3,,3008875002,,0.780893,,4.34547
 openml.org/t/189355,Dionis,AutoWEKA,3,4.3456,aws.docker,2.6,,stable,2019-04-19T09:34:59,16363.5,,3008874999,,0.781302,,4.3456
 openml.org/t/189355,Dionis,AutoWEKA,0,3.08421,aws.docker,2.6,,stable,2019-04-19T09:36:33,18019.9,,3008874996,,0.373627,,3.08421
-openml.org/t/189355,Dionis,AutoWEKA,5,,aws.docker,2.6,,stable,2019-04-19T09:42:51,16572.8,,3008875001,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_5.weka_pred.csv',,,
 openml.org/t/189355,Dionis,AutoWEKA,8,4.2098,aws.docker,2.6,,stable,2019-04-19T09:50:49,14889.0,,3008875004,,0.086453,,4.2098
 openml.org/t/189355,Dionis,AutoWEKA,9,2.1239,aws.docker,2.6,,stable,2019-04-19T11:11:35,15886.0,,3008875005,,0.88529,,2.1239
+openml.org/t/189355,Dionis,AutoWEKA,7,6.04654,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T22:54:24,17570.2,,947298023,,0.801989,,6.04654
+openml.org/t/189355,Dionis,AutoWEKA,5,2.80882,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T23:10:34,18528.0,,947298021,,0.862539,,2.80882
+openml.org/t/189355,Dionis,AutoWEKA,1,2.81627,aws.docker,2.6,{'_attempt': 2},stable,2019-04-25T23:29:57,19700.3,,947298017,,0.862058,,2.81627

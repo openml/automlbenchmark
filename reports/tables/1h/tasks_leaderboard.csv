@@ -5,7 +5,7 @@ binary,apsfailure,2,5,1,4,3
 binary,australian,2,5,1,4,3
 binary,bank-marketing,1,5,2,3,4
 binary,blood-transfusion,1,3,2,4,5
-binary,christine,1 (1),5,2,3,4
+binary,christine,1,5,2,3,4
 binary,credit-g,4,5,2,3,1
 binary,guiellermo,3,4,1,5,2
 binary,higgs,4,5,1,3,2
@@ -32,5 +32,5 @@ multiclass,mfeat-factors,1,5,2,3,4
 multiclass,robert,3,nan,1,4,2
 multiclass,segment,3,5,1,2,4
 multiclass,shuttle,3,4,1,5,2
-multiclass,vehicle,2 (1),5,1,3,4
+multiclass,vehicle,2,5,1,3,4
 multiclass,volkert,2,5,1,4,3

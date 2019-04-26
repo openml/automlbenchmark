@@ -119,16 +119,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.910522,,25971.5,4,tunedrandomforest,openml.org/t/189355,,1.02479,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.02479,3.40635e+09,stable,dionis,2019-04-22T06:02:48,0.19.2,multiclass,-1.02479,1.02479,-1.02479,1
 0.911723,,25982,0,tunedrandomforest,openml.org/t/189355,,0.98246,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",0.98246,3.40635e+09,stable,dionis,2019-04-22T06:02:35,0.19.2,multiclass,-0.98246,0.98246,-0.98246,1
 0.909296,,25968.2,7,tunedrandomforest,openml.org/t/189355,,1.03325,aws.docker,50,"{'n_estimators': 50, '_n_jobs': 1}",1.03325,3.40635e+09,stable,dionis,2019-04-22T06:02:58,0.19.2,multiclass,-1.03325,1.03325,-1.03325,1
-,,29259.3,0,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T21:13:54,0.5.1,binary,,0.736557,0.736557,1
-,,29251.3,1,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T21:13:55,0.5.1,binary,,0.737513,0.737513,0.998587
-,,29244.9,4,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T21:13:48,0.5.1,binary,,0.740135,0.740135,0.999592
-,,29260.6,9,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T21:15:04,0.5.1,binary,,0.734692,0.734692,0.9996
-,,29243.3,7,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T21:14:27,0.5.1,binary,,0.743411,0.743411,1.0005
 0.679687,0.747412,28837.2,5,autosklearn,openml.org/t/189356,,,aws.docker,7,{'_n_jobs': 4},0.747412,1.07238e+09,stable,albert,2019-04-18T21:15:17,0.5.1,binary,0.747412,0.747412,0.747412,1.04614
 0.685683,0.755012,28855.2,8,autosklearn,openml.org/t/189356,,,aws.docker,4,{'_n_jobs': 4},0.755012,1.07238e+09,stable,albert,2019-04-18T21:15:38,0.5.1,binary,0.755012,0.755012,0.755012,1.06833
 0.681121,0.748616,29143.7,3,autosklearn,openml.org/t/189356,,,aws.docker,11,{'_n_jobs': 4},0.748616,1.07238e+09,stable,albert,2019-04-18T21:20:56,0.5.1,binary,0.748616,0.748616,0.748616,1.04404
-,,18075.2,2,autosklearn,openml.org/t/189356,Exception: Aborting instance i-0015ef422633d6de0 for job aws_large-8c4h_Albert_2_autosklearn.,,aws,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T18:05:13,0.5.1,binary,,0.739577,0.739577,1.00054
-,,24677.8,6,autosklearn,openml.org/t/189356,Exception: Aborting instance i-0f73ff30c4795a35d for job aws_large-8c4h_Albert_6_autosklearn.,,aws,,{'_n_jobs': 4},,1.07238e+09,stable,albert,2019-04-18T19:55:36,0.5.1,binary,,0.737124,0.737124,0.997707
+,,29251.9,2,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,"{'_attempt': 2, '_n_jobs': 4}",,5.33633e+08,stable,albert,2019-04-26T05:42:23,0.5.1,binary,,0.739577,0.739577,1.00054
+,,29256.4,1,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,"{'_attempt': 2, '_n_jobs': 4}",,5.33633e+08,stable,albert,2019-04-26T05:42:39,0.5.1,binary,,0.737513,0.737513,0.998587
+,,29243.3,4,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,"{'_attempt': 2, '_n_jobs': 4}",,5.33633e+08,stable,albert,2019-04-26T05:42:21,0.5.1,binary,,0.740135,0.740135,0.999592
+,,29248.9,6,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,"{'_attempt': 2, '_n_jobs': 4}",,5.33633e+08,stable,albert,2019-04-26T05:42:38,0.5.1,binary,,0.737124,0.737124,0.997707
+,,29244.1,7,autosklearn,openml.org/t/189356,Error: None,,aws.docker,,"{'_attempt': 2, '_n_jobs': 4}",,5.33633e+08,stable,albert,2019-04-26T05:42:52,0.5.1,binary,,0.743411,0.743411,1.0005
+0.674772,0.739485,29050.4,9,autosklearn,openml.org/t/189356,,,aws.docker,5,"{'_attempt': 2, '_n_jobs': 4}",0.739485,5.33633e+08,stable,albert,2019-04-26T05:47:25,0.5.1,binary,0.739485,0.739485,0.739485,1.02001
+0.66901,0.72902,29171.4,0,autosklearn,openml.org/t/189356,,,aws.docker,6,"{'_attempt': 2, '_n_jobs': 4}",0.72902,5.33633e+08,stable,albert,2019-04-26T05:49:54,0.5.1,binary,0.72902,0.72902,0.72902,0.968139
 0.668193,0.72073,28830.5,7,autosklearn,openml.org/t/189354,,,aws.docker,8,{'_n_jobs': 4},0.72073,7.88461e+08,stable,airlines,2019-04-18T21:09:53,0.5.1,binary,0.72073,0.72073,0.72073,1.37755
 0.670758,0.728792,28861,0,autosklearn,openml.org/t/189354,,,aws.docker,13,{'_n_jobs': 4},0.728792,7.88461e+08,stable,airlines,2019-04-18T21:10:08,0.5.1,binary,0.728792,0.728792,0.728792,1.43594
 0.668922,0.723234,28887.5,2,autosklearn,openml.org/t/189354,,,aws.docker,9,{'_n_jobs': 4},0.723234,7.88461e+08,stable,airlines,2019-04-18T21:10:33,0.5.1,binary,0.723234,0.723234,0.723234,1.36946
@@ -138,6 +138,7 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.666821,0.72328,28815.1,4,autosklearn,openml.org/t/189354,,,aws.docker,13,{'_n_jobs': 4},0.72328,7.88461e+08,stable,airlines,2019-04-18T21:10:27,0.5.1,binary,0.72328,0.72328,0.72328,1.40503
 0.666543,0.720539,28869,5,autosklearn,openml.org/t/189354,,,aws.docker,14,{'_n_jobs': 4},0.720539,7.88461e+08,stable,airlines,2019-04-18T21:10:53,0.5.1,binary,0.720539,0.720539,0.720539,1.38353
 0.668582,0.723525,28832.9,8,autosklearn,openml.org/t/189354,,,aws.docker,11,{'_n_jobs': 4},0.723525,7.88461e+08,stable,airlines,2019-04-18T21:10:47,0.5.1,binary,0.723525,0.723525,0.723525,1.39719
+0.671017,0.726875,28953.6,1,autosklearn,openml.org/t/189354,,,aws.docker,14,"{'_attempt': 2, '_n_jobs': 4}",0.726875,1.04965e+09,stable,airlines,2019-04-26T05:33:48,0.5.1,binary,0.726875,0.726875,0.726875,1.40462
 0.964441,,29018.2,2,autosklearn,openml.org/t/7593,,0.0992331,aws.docker,3,{'_n_jobs': 4},0.0992331,1.07238e+09,stable,covertype,2019-04-18T21:14:10,0.5.1,multiclass,-0.0992331,0.0992331,-0.0992331,1.0595
 0.958899,,29051.3,9,autosklearn,openml.org/t/7593,,0.103974,aws.docker,2,{'_n_jobs': 4},0.103974,1.07238e+09,stable,covertype,2019-04-18T21:14:36,0.5.1,multiclass,-0.103974,0.103974,-0.103974,1.05508
 0.971326,,29060.6,3,autosklearn,openml.org/t/7593,,0.0815467,aws.docker,3,{'_n_jobs': 4},0.0815467,1.07238e+09,stable,covertype,2019-04-18T21:14:33,0.5.1,multiclass,-0.0815467,0.0815467,-0.0815467,1.07504
@@ -168,8 +169,6 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.60996,0.734383,26461.2,9,h2oautoml,openml.org/t/189354,,,aws.docker,78,,0.734383,2.72057e+09,stable,airlines,2019-04-18T03:40:38,3.24.0.1,binary,0.734383,0.734383,0.734383,1.43589
 0.619378,0.731071,26519.6,8,h2oautoml,openml.org/t/189354,,,aws.docker,75,,0.731071,2.72057e+09,stable,airlines,2019-04-18T03:41:31,3.24.0.1,binary,0.731071,0.731071,0.731071,1.44436
 0.615892,0.729655,26559.4,6,h2oautoml,openml.org/t/189354,,,aws.docker,67,,0.729655,2.72057e+09,stable,airlines,2019-04-18T03:42:06,3.24.0.1,binary,0.729655,0.729655,0.729655,1.39941
-,,24924.3,1,h2oautoml,openml.org/t/189356,Error: Local server has died unexpectedly. RIP.,,aws.docker,,{'_nthreads': 4},,4.16497e+09,stable,albert,2019-04-18T19:57:37,3.24.0.1,binary,,0.737513,0.737513,0.998587
-,,28354.7,5,h2oautoml,openml.org/t/189356,Error: Local server has died unexpectedly. RIP.,,aws.docker,,{'_nthreads': 4},,4.16497e+09,stable,albert,2019-04-18T20:55:21,3.24.0.1,binary,,0.736168,0.736168,0.998596
 0.666118,0.764131,28906.3,8,h2oautoml,openml.org/t/189356,,,aws.docker,12,{'_nthreads': 4},0.764131,4.16497e+09,stable,albert,2019-04-18T21:11:18,3.24.0.1,binary,0.764131,0.764131,0.764131,1.10653
 0.670868,0.770063,28907.1,7,h2oautoml,openml.org/t/189356,,,aws.docker,12,{'_nthreads': 4},0.770063,4.16497e+09,stable,albert,2019-04-18T21:11:22,3.24.0.1,binary,0.770063,0.770063,0.770063,1.11005
 0.671856,0.768702,32039.9,4,h2oautoml,openml.org/t/189356,,,aws.docker,13,{'_nthreads': 4},0.768702,4.16497e+09,stable,albert,2019-04-18T22:09:06,3.24.0.1,binary,0.768702,0.768702,0.768702,1.11851
@@ -178,6 +177,8 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.667364,0.763396,32032.5,3,h2oautoml,openml.org/t/189356,,,aws.docker,13,{'_nthreads': 4},0.763396,4.16497e+09,stable,albert,2019-04-18T22:09:18,3.24.0.1,binary,0.763396,0.763396,0.763396,1.10611
 0.666612,0.763271,32063.2,6,h2oautoml,openml.org/t/189356,,,aws.docker,13,{'_nthreads': 4},0.763271,4.16497e+09,stable,albert,2019-04-18T22:10:04,3.24.0.1,binary,0.763271,0.763271,0.763271,1.10772
 0.66633,0.767405,32092.3,2,h2oautoml,openml.org/t/189356,,,aws.docker,13,{'_nthreads': 4},0.767405,4.16497e+09,stable,albert,2019-04-18T22:09:57,3.24.0.1,binary,0.767405,0.767405,0.767405,1.11676
+0.669881,0.765101,32154.9,1,h2oautoml,openml.org/t/189356,,,aws.docker,13,"{'_attempt': 2, '_nthreads': 4}",0.765101,3.90151e+07,stable,albert,2019-04-26T06:47:03,3.24.0.1,binary,0.765101,0.765101,0.765101,1.11458
+,,1544.4,5,h2oautoml,openml.org/t/189356,Exception: Aborting instance i-0414179c350afedc4 for job aws_large-8c8h_Albert_5_H2OAutoML.,,aws,,"{'_attempt': 2, '_nthreads': 4}",,3.90151e+07,stable,albert,2019-04-25T22:01:54,3.24.0.1,binary,,0.736168,0.736168,0.998596
 0.946439,,29697.5,0,h2oautoml,openml.org/t/7593,,0.156644,aws.docker,4,,0.156644,2.72057e+09,stable,covertype,2019-04-18T16:02:58,3.24.0.1,multiclass,-0.156644,0.156644,-0.156644,1.00544
 0.930261,,28807.5,1,h2oautoml,openml.org/t/7593,,0.207604,aws.docker,1,,0.207604,2.72057e+09,stable,covertype,2019-04-18T16:40:40,3.24.0.1,multiclass,-0.207604,0.207604,-0.207604,0.956205
 0.948004,,29746.5,2,h2oautoml,openml.org/t/7593,,0.161433,aws.docker,4,,0.161433,2.72057e+09,stable,covertype,2019-04-18T17:49:14,3.24.0.1,multiclass,-0.161433,0.161433,-0.161433,0.999908
@@ -188,16 +189,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.94704,,29689.3,7,h2oautoml,openml.org/t/7593,,0.153498,aws.docker,4,,0.153498,2.72057e+09,stable,covertype,2019-04-18T20:08:13,3.24.0.1,multiclass,-0.153498,0.153498,-0.153498,1.00717
 0.947264,,29758.1,8,h2oautoml,openml.org/t/7593,,0.164975,aws.docker,4,,0.164975,2.72057e+09,stable,covertype,2019-04-18T20:14:40,3.24.0.1,multiclass,-0.164975,0.164975,-0.164975,0.996199
 0.948383,,29750.7,9,h2oautoml,openml.org/t/7593,,0.158295,aws.docker,4,,0.158295,2.72057e+09,stable,covertype,2019-04-18T20:17:32,3.24.0.1,multiclass,-0.158295,0.158295,-0.158295,1.00303
-,,29020,0,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T00:11:13,3.24.0.1,multiclass,,1.04314,-1.04314,0.987553
-,,29980.5,1,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T01:04:22,3.24.0.1,multiclass,,1.10312,-1.10312,0.984555
 0.702588,,29719.7,2,h2oautoml,openml.org/t/189355,,3.08992,aws.docker,1,,3.08992,2.72057e+09,stable,dionis,2019-04-19T02:12:27,3.24.0.1,multiclass,-3.08992,3.08992,-3.08992,0.575103
-,,28958.8,4,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T02:36:15,3.24.0.1,multiclass,,1.06052,-1.06052,0.992606
-,,28988.2,5,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T02:36:39,3.24.0.1,multiclass,,1.11409,-1.11409,0.981985
 0.731132,,29499.6,3,h2oautoml,openml.org/t/189355,,2.89984,aws.docker,1,,2.89984,2.72057e+09,stable,dionis,2019-04-19T02:46:19,3.24.0.1,multiclass,-2.89984,2.89984,-2.89984,0.612897
-,,29339.9,6,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T03:23:32,3.24.0.1,multiclass,,1.07384,-1.07384,0.981603
 0.703614,,29118.7,8,h2oautoml,openml.org/t/189355,,3.08085,aws.docker,1,,3.08085,2.72057e+09,stable,dionis,2019-04-19T04:27:52,3.24.0.1,multiclass,-3.08085,3.08085,-3.08085,0.570528
-,,29982.3,7,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T04:32:35,3.24.0.1,multiclass,,1.10881,-1.10881,0.984337
-,,29487.7,9,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,,,2.72057e+09,stable,dionis,2019-04-19T04:33:32,3.24.0.1,multiclass,,1.04365,-1.04365,0.994412
+,,29026.1,5,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81328e+07,stable,dionis,2019-04-26T05:48:16,3.24.0.1,multiclass,,1.11409,-1.11409,0.981985
+,,29042.8,1,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81327e+07,stable,dionis,2019-04-26T05:48:48,3.24.0.1,multiclass,,1.10312,-1.10312,0.984555
+,,29048.7,9,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81328e+07,stable,dionis,2019-04-26T05:49:04,3.24.0.1,multiclass,,1.04365,-1.04365,0.994412
+,,29075.6,6,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81328e+07,stable,dionis,2019-04-26T05:50:09,3.24.0.1,multiclass,,1.07384,-1.07384,0.981603
+,,29187.5,7,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81328e+07,stable,dionis,2019-04-26T05:51:06,3.24.0.1,multiclass,,1.10881,-1.10881,0.984337
+,,29423.3,0,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81327e+07,stable,dionis,2019-04-26T05:54:38,3.24.0.1,multiclass,,1.04314,-1.04314,0.987553
+,,30076.9,4,h2oautoml,openml.org/t/189355,Error: H2O could not produce any model in the requested time.,,aws.docker,,{'_attempt': 2},,5.81328e+07,stable,dionis,2019-04-26T06:05:39,3.24.0.1,multiclass,,1.06052,-1.06052,0.992606
 0.671759,0.725485,28994.3,1,tpot,openml.org/t/189354,,,aws.docker,955,,0.725485,2.41717e+08,stable,airlines,2019-04-18T04:20:41,0.9.6,binary,0.725485,0.725485,0.725485,1.39601
 0.669831,0.722502,29192,0,tpot,openml.org/t/189354,,,aws.docker,532,,0.722502,2.41717e+08,stable,airlines,2019-04-18T04:23:58,0.9.6,binary,0.722502,0.722502,0.722502,1.39646
 0.667952,0.720553,29206.3,5,tpot,openml.org/t/189354,,,aws.docker,877,,0.720553,2.41717e+08,stable,airlines,2019-04-18T04:24:59,0.9.6,binary,0.720553,0.720553,0.720553,1.38362
@@ -214,9 +215,10 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.676747,0.742429,29065.8,8,tpot,openml.org/t/189356,,,aws.docker,411,,0.742429,2.41717e+08,stable,albert,2019-04-18T14:59:44,0.9.6,binary,0.742429,0.742429,0.742429,1.01561
 0.673878,0.738379,34987,7,tpot,openml.org/t/189356,,,aws.docker,156,,0.738379,2.41717e+08,stable,albert,2019-04-18T15:29:49,0.9.6,binary,0.738379,0.738379,0.738379,0.979814
 0.672256,0.73684,29439.7,9,tpot,openml.org/t/189356,,,aws.docker,222,,0.73684,2.41717e+08,stable,albert,2019-04-18T15:37:04,0.9.6,binary,0.73684,0.73684,0.73684,1.00875
-,,22802.7,1,tpot,openml.org/t/189356,Exception: Aborting instance i-0dab9909c13291ca3 for job aws_large-8c4h_Albert_1_TPOT.,,aws,,,,2.41717e+08,stable,albert,2019-04-18T10:45:36,0.9.6,binary,,0.737513,0.737513,0.998587
-,,23644.5,2,tpot,openml.org/t/189356,Exception: Aborting instance i-0ea6aa54eba2b5171 for job aws_large-8c4h_Albert_2_TPOT.,,aws,,,,2.41717e+08,stable,albert,2019-04-18T11:00:56,0.9.6,binary,,0.739577,0.739577,1.00054
-,,26007.6,0,tpot,openml.org/t/189356,Exception: Aborting instance i-04cafd612753608e5 for job aws_large-8c4h_Albert_0_TPOT.,,aws,,,,2.41717e+08,stable,albert,2019-04-18T11:35:59,0.9.6,binary,,0.736557,0.736557,1
+0.679734,0.745747,30540.4,1,tpot,openml.org/t/189356,,,aws.docker,226,{'_attempt': 2},0.745747,1.23064e+09,stable,albert,2019-04-26T06:07:50,0.9.6,binary,0.745747,0.745747,0.745747,1.03321
+,,4248,0,tpot,openml.org/t/189356,Exception: Aborting instance i-096296674aa858c7a for job aws_large-8c8h_Albert_0_TPOT.,,aws,,{'_attempt': 2},,1.23064e+09,stable,albert,2019-04-25T22:39:04,0.9.6,binary,,0.736557,0.736557,1
+,,21043,2,tpot,openml.org/t/189356,Exception: Aborting instance i-0341f63778391ca02 for job aws_large-8c8h_Albert_2_TPOT.,,aws,,{'_attempt': 2},,1.23064e+09,stable,albert,2019-04-26T03:19:10,0.9.6,binary,,0.739577,0.739577,1.00054
+,,21961.2,5,tpot,openml.org/t/189356,Exception: Aborting instance i-0f641682b21727e1e for job aws_large-8c8h_Albert_5_TPOT.,,aws,,{'_attempt': 2},,1.23064e+09,stable,albert,2019-04-26T03:34:33,0.9.6,binary,,0.736168,0.736168,0.998596
 0.971533,,30869.4,1,tpot,openml.org/t/7593,,0.103426,aws.docker,144,,0.103426,2.41717e+08,stable,covertype,2019-04-18T19:40:29,0.9.6,multiclass,-0.103426,0.103426,-0.103426,1.05606
 0.960397,,31875.1,0,tpot,openml.org/t/7593,,0.120413,aws.docker,112,,0.120413,2.41717e+08,stable,covertype,2019-04-18T19:41:53,0.9.6,multiclass,-0.120413,0.120413,-0.120413,1.04018
 0.966214,,29985.6,4,tpot,openml.org/t/7593,,0.102942,aws.docker,211,,0.102942,2.41717e+08,stable,covertype,2019-04-18T21:28:52,0.9.6,multiclass,-0.102942,0.102942,-0.102942,1.05555
@@ -276,6 +278,4 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.863043,,35099.5,7,autoweka,openml.org/t/189355,,2.83656,aws.docker,,,2.83656,4.0729e+08,stable,dionis,2019-04-18T22:38:20,2.6,multiclass,-2.83656,2.83656,-2.83656,0.626194
 0.863692,,35575.2,4,autoweka,openml.org/t/189355,,2.80376,aws.docker,,,2.80376,4.0729e+08,stable,dionis,2019-04-18T22:46:10,2.6,multiclass,-2.80376,2.80376,-2.80376,0.631881
 0.862371,,35844.8,1,autoweka,openml.org/t/189355,,2.85195,aws.docker,,,2.85195,4.0729e+08,stable,dionis,2019-04-18T22:50:04,2.6,multiclass,-2.85195,2.85195,-2.85195,0.622389
-,,57600,9,autoweka,openml.org/t/189355,Missing predictions.,,aws.docker,,,,4.0729e+08,stable,dionis,2019-04-19T04:50:13,2.6,multiclass,,1.04365,-1.04365,0.994412
-,,,1,autosklearn,,missing,,,,,,,,airlines,,,binary,,0.660983,0.660983,0.996669
-,,,5,tpot,,missing,,,,,,,,albert,,,binary,,0.736168,0.736168,0.998596
+0.0502667,,31744.4,9,autoweka,openml.org/t/189355,,4.90577,aws.docker,,{'_attempt': 2},4.90577,2.54119e+09,stable,dionis,2019-04-26T06:38:02,2.6,multiclass,-4.90577,4.90577,-4.90577,0.196579

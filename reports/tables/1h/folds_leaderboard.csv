@@ -62,7 +62,7 @@ binary,blood-transfusion,9,2.0,3.0,7.0,4.0,6.0,1.0,5.0
 binary,christine,0,1.0,6.0,7.0,2.0,5.0,3.0,4.0
 binary,christine,1,1.0,6.0,7.0,2.0,5.0,4.0,3.0
 binary,christine,2,1.0,6.0,7.0,2.0,5.0,3.0,4.0
-binary,christine,3,,2.0,6.0,1.0,5.0,3.0,4.0
+binary,christine,3,2.0,3.0,7.0,1.0,6.0,4.0,5.0
 binary,christine,4,1.0,6.0,7.0,2.0,4.0,3.0,5.0
 binary,christine,5,1.0,3.0,7.0,2.0,6.0,4.0,5.0
 binary,christine,6,1.0,3.0,7.0,2.0,6.0,4.0,5.0
@@ -336,7 +336,7 @@ multiclass,vehicle,3,3.0,6.0,7.0,1.0,5.0,2.0,4.0
 multiclass,vehicle,4,3.0,6.0,7.0,1.0,5.0,2.0,4.0
 multiclass,vehicle,5,2.0,6.0,7.0,1.0,5.0,3.0,4.0
 multiclass,vehicle,6,2.0,7.0,6.0,1.0,5.0,3.0,4.0
-multiclass,vehicle,7,,5.0,6.0,1.0,3.0,2.0,4.0
+multiclass,vehicle,7,3.0,6.0,7.0,1.0,4.0,2.0,5.0
 multiclass,vehicle,8,3.0,7.0,6.0,1.0,5.0,2.0,4.0
 multiclass,vehicle,9,1.0,6.0,7.0,2.0,4.0,3.0,5.0
 multiclass,volkert,0,2.0,6.0,7.0,1.0,3.0,5.0,4.0

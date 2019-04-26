@@ -5,7 +5,7 @@ binary,apsfailure,9,nan,1,25,2000,81,2000
 binary,australian,11,nan,1,86,2000,12789,2000
 binary,bank-marketing,12,nan,1,72,2000,368,2000
 binary,blood-transfusion,15,nan,1,61,2000,16698,2000
-binary,christine,10 (1),nan,1,36,2000,107,2000
+binary,christine,11,nan,1,36,2000,107,2000
 binary,credit-g,17,nan,1,80,2000,8151,2000
 binary,guiellermo,7,nan,1,6,2000,79,2000
 binary,higgs,6,nan,1,36,2000,127,2000
@@ -32,5 +32,5 @@ multiclass,mfeat-factors,8,nan,1,46,2000,375,2000
 multiclass,robert,1,nan,1,2,2000,43,2000
 multiclass,segment,6,nan,1,105,2000,1455,2000
 multiclass,shuttle,2,nan,1,41,2000,303,2000
-multiclass,vehicle,8 (1),nan,1,118,2000,1885,2000
+multiclass,vehicle,8,nan,1,118,2000,1885,2000
 multiclass,volkert,3,nan,1,4,2000,76,2000

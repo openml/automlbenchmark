@@ -2336,9 +2336,9 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.270399,,17060.5,3,autoweka,openml.org/t/168329,,16.7556,aws.docker,,,16.7556,2.31717e+09,stable,helena,2019-04-18T06:25:30,2.6,multiclass,-16.7556,16.7556,-16.7556,-21.111
 0.270287,,13866.5,6,autoweka,openml.org/t/168329,,16.7159,aws.docker,,,16.7159,2.31717e+09,stable,helena,2019-04-18T06:39:58,2.6,multiclass,-16.7159,16.7159,-16.7159,-21.0493
 0.276534,,16304.4,5,autoweka,openml.org/t/168329,,16.8639,aws.docker,,,16.8639,2.31717e+09,stable,helena,2019-04-18T06:47:20,2.6,multiclass,-16.8639,16.8639,-16.8639,-20.1973
-,,13841.2,8,autoweka,openml.org/t/168329,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Helena_8.weka_pred.csv',,aws.docker,,,,2.31717e+09,stable,helena,2019-04-18T06:59:35,2.6,multiclass,,3.50661,-3.50661,1.03327
 0.27857,,14208.5,9,autoweka,openml.org/t/168329,,16.5114,aws.docker,,,16.5114,2.31717e+09,stable,helena,2019-04-18T07:08:55,2.6,multiclass,-16.5114,16.5114,-16.5114,-20.497
 0.267372,,16598.2,7,autoweka,openml.org/t/168329,,16.8846,aws.docker,,,16.8846,2.31717e+09,stable,helena,2019-04-18T07:39:19,2.6,multiclass,-16.8846,16.8846,-16.8846,-21.6534
+,,16839.7,8,autoweka,openml.org/t/168329,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Helena_8.weka_pred.csv',,aws.docker,,{'_attempt': 2},,1.27139e+09,stable,helena,2019-04-25T22:36:37,2.6,multiclass,,3.50661,-3.50661,1.03327
 0.726772,0.804977,14308.9,0,autoweka,openml.org/t/146606,,,aws.docker,,,0.804977,2.31717e+09,stable,higgs,2019-04-18T07:29:48,2.6,binary,0.804977,0.804977,0.804977,0.996029
 0.718511,0.799116,14331.6,1,autoweka,openml.org/t/146606,,,aws.docker,,,0.799116,2.31717e+09,stable,higgs,2019-04-18T08:53:01,2.6,binary,0.799116,0.799116,0.799116,0.998441
 0.725854,0.804849,15070.5,3,autoweka,openml.org/t/146606,,,aws.docker,,,0.804849,2.31717e+09,stable,higgs,2019-04-18T09:50:13,2.6,binary,0.804849,0.804849,0.804849,0.995933
@@ -2708,16 +2708,16 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.682794,,13811.3,7,autoweka,openml.org/t/7593,,2.62914,aws.docker,,,2.62914,3.00888e+09,stable,covertype,2019-04-19T05:14:48,2.6,multiclass,-2.62914,2.62914,-2.62914,-1.28775
 0.658612,,14233.1,8,autoweka,openml.org/t/7593,,3.18266,aws.docker,,,3.18266,3.00888e+09,stable,covertype,2019-04-19T05:29:43,2.6,multiclass,-3.18266,3.18266,-3.18266,-1.78632
 0.667476,,17913.8,9,autoweka,openml.org/t/7593,,1.53695,aws.docker,,,1.53695,3.00888e+09,stable,covertype,2019-04-19T06:32:58,2.6,multiclass,-1.53695,1.53695,-1.53695,-0.300249
-,,13990.8,1,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_1.weka_pred.csv',,aws.docker,,,,3.00887e+09,stable,dionis,2019-04-19T08:44:31,2.6,multiclass,,1.10312,-1.10312,0.998786
 0.885437,,14873.8,2,autoweka,openml.org/t/189355,,2.16223,aws.docker,,,2.16223,3.00887e+09,stable,dionis,2019-04-19T09:08:30,2.6,multiclass,-2.16223,2.16223,-2.16223,0.772901
 0.725222,,14861.7,4,autoweka,openml.org/t/189355,,6.8446,aws.docker,,,6.8446,3.00888e+09,stable,dionis,2019-04-19T09:10:01,2.6,multiclass,-6.8446,6.8446,-6.8446,-0.206853
-,,14893.3,7,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_7.weka_pred.csv',,aws.docker,,,,3.00888e+09,stable,dionis,2019-04-19T09:26:44,2.6,multiclass,,1.10881,-1.10881,1.00174
 0.780893,,15519.3,6,autoweka,openml.org/t/189355,,4.34547,aws.docker,,,4.34547,3.00888e+09,stable,dionis,2019-04-19T09:34:09,2.6,multiclass,-4.34547,4.34547,-4.34547,0.31746
 0.781302,,16363.5,3,autoweka,openml.org/t/189355,,4.3456,aws.docker,,,4.3456,3.00887e+09,stable,dionis,2019-04-19T09:34:59,2.6,multiclass,-4.3456,4.3456,-4.3456,0.318551
 0.373627,,18019.9,0,autoweka,openml.org/t/189355,,3.08421,aws.docker,,,3.08421,3.00887e+09,stable,dionis,2019-04-19T09:36:33,2.6,multiclass,-3.08421,3.08421,-3.08421,0.576074
-,,16572.8,5,autoweka,openml.org/t/189355,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_Dionis_5.weka_pred.csv',,aws.docker,,,,3.00888e+09,stable,dionis,2019-04-19T09:42:51,2.6,multiclass,,1.11409,-1.11409,0.997244
 0.086453,,14889,8,autoweka,openml.org/t/189355,,4.2098,aws.docker,,,4.2098,3.00888e+09,stable,dionis,2019-04-19T09:50:49,2.6,multiclass,-4.2098,4.2098,-4.2098,0.343563
 0.88529,,15886,9,autoweka,openml.org/t/189355,,2.1239,aws.docker,,,2.1239,3.00888e+09,stable,dionis,2019-04-19T11:11:35,2.6,multiclass,-2.1239,2.1239,-2.1239,0.781673
+0.801989,,17570.2,7,autoweka,openml.org/t/189355,,6.04654,aws.docker,,{'_attempt': 2},6.04654,9.47298e+08,stable,dionis,2019-04-25T22:54:24,2.6,multiclass,-6.04654,6.04654,-6.04654,-0.0398912
+0.862539,,18528,5,autoweka,openml.org/t/189355,,2.80882,aws.docker,,{'_attempt': 2},2.80882,9.47298e+08,stable,dionis,2019-04-25T23:10:34,2.6,multiclass,-2.80882,2.80882,-2.80882,0.640945
+0.862058,,19700.3,1,autoweka,openml.org/t/189355,,2.81627,aws.docker,,{'_attempt': 2},2.81627,9.47298e+08,stable,dionis,2019-04-25T23:29:57,2.6,multiclass,-2.81627,2.81627,-2.81627,0.638881
 ,,,5,autosklearn,,missing,,,,,,,,albert,,,binary,,0.736168,0.736168,0.999374
 ,,,0,autoweka,,missing,,,,,,,,robert,,,multiclass,,,,
 ,,,1,autoweka,,missing,,,,,,,,robert,,,multiclass,,,,

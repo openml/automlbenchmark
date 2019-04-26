@@ -512,13 +512,13 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.752768,0.846366,3595.2,0,autosklearn,openml.org/t/168908,,,aws.docker,9,,0.846366,3.31062e+09,stable,christine,2019-04-12T19:44:10,0.5.1,binary,0.846366,0.846366,0.846366,1.05436
 0.778598,0.841669,3596.1,1,autosklearn,openml.org/t/168908,,,aws.docker,9,,0.841669,3.31062e+09,stable,christine,2019-04-12T19:44:21,0.5.1,binary,0.841669,0.841669,0.841669,1.06216
 0.773063,0.835147,3596.1,2,autosklearn,openml.org/t/168908,,,aws.docker,17,,0.835147,3.31062e+09,stable,christine,2019-04-12T19:44:13,0.5.1,binary,0.835147,0.835147,0.835147,1.06962
-,,3646.4,3,autosklearn,openml.org/t/168908,Error: Expecting value: line 1 column 1 (char 0),,aws.docker,,,,3.31062e+09,stable,christine,2019-04-12T19:44:33,0.5.1,binary,,0.797899,0.797899,0.98399
 0.774908,0.834398,3597.1,5,autosklearn,openml.org/t/168908,,,aws.docker,10,,0.834398,3.31062e+09,stable,christine,2019-04-12T19:44:37,0.5.1,binary,0.834398,0.834398,0.834398,1.05915
 0.739852,0.816587,3596,4,autosklearn,openml.org/t/168908,,,aws.docker,13,,0.816587,3.31062e+09,stable,christine,2019-04-12T19:44:23,0.5.1,binary,0.816587,0.816587,0.816587,1.05263
 0.773063,0.838905,3595.6,6,autosklearn,openml.org/t/168908,,,aws.docker,12,,0.838905,3.31062e+09,stable,christine,2019-04-12T19:44:35,0.5.1,binary,0.838905,0.838905,0.838905,1.08081
 0.743542,0.827957,3595.9,7,autosklearn,openml.org/t/168908,,,aws.docker,7,,0.827957,3.31062e+09,stable,christine,2019-04-12T19:44:44,0.5.1,binary,0.827957,0.827957,0.827957,1.03318
 0.750462,0.826186,3595.9,8,autosklearn,openml.org/t/168908,,,aws.docker,10,,0.826186,3.31062e+09,stable,christine,2019-04-12T19:44:48,0.5.1,binary,0.826186,0.826186,0.826186,1.0714
 0.728281,0.80384,3595.3,9,autosklearn,openml.org/t/168908,,,aws.docker,7,,0.80384,3.31062e+09,stable,christine,2019-04-12T19:44:50,0.5.1,binary,0.80384,0.80384,0.80384,1.09356
+0.747232,0.826418,3595.8,3,autosklearn,openml.org/t/168908,,,aws.docker,17,{'_attempt': 2},0.826418,3.1156e+09,stable,christine,2019-04-25T22:21:47,0.5.1,binary,0.826418,0.826418,0.826418,1.07819
 0.972222,,3597.3,2,autosklearn,openml.org/t/9981,,0.14609,aws.docker,6,,0.14609,3.31062e+09,stable,cnae-9,2019-04-12T20:45:23,0.5.1,multiclass,-0.14609,0.14609,-0.14609,1.03769
 0.944444,,3597.7,6,autosklearn,openml.org/t/9981,,0.20233,aws.docker,5,,0.20233,3.31062e+09,stable,cnae-9,2019-04-12T20:45:43,0.5.1,multiclass,-0.20233,0.20233,-0.20233,1.0287
 0.944444,,3598.1,7,autosklearn,openml.org/t/9981,,0.129401,aws.docker,5,,0.129401,3.31062e+09,stable,cnae-9,2019-04-12T20:45:41,0.5.1,multiclass,-0.129401,0.129401,-0.129401,1.10244
@@ -636,9 +636,9 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.835294,,3620,4,autosklearn,openml.org/t/53,,0.402776,aws.docker,7,,0.402776,3.31062e+09,stable,vehicle,2019-04-12T22:58:36,0.5.1,multiclass,-0.402776,0.402776,-0.402776,1.06216
 0.833333,,3622.7,6,autosklearn,openml.org/t/53,,0.361604,aws.docker,7,,0.361604,3.31062e+09,stable,vehicle,2019-04-12T22:58:55,0.5.1,multiclass,-0.361604,0.361604,-0.361604,1.12113
 0.858824,,3618.5,5,autosklearn,openml.org/t/53,,0.341633,aws.docker,8,,0.341633,3.31062e+09,stable,vehicle,2019-04-12T22:58:50,0.5.1,multiclass,-0.341633,0.341633,-0.341633,1.15861
-,,3612.6,7,autosklearn,openml.org/t/53,Error: Expecting value: line 1 column 1 (char 0),,aws.docker,,,,3.31062e+09,stable,vehicle,2019-04-12T22:58:47,0.5.1,multiclass,,0.456213,-0.456213,1.0268
 0.785714,,3619.9,9,autosklearn,openml.org/t/53,,0.441332,aws.docker,9,,0.441332,3.31062e+09,stable,vehicle,2019-04-12T23:25:59,0.5.1,multiclass,-0.441332,0.441332,-0.441332,1.15564
 0.761905,,3625.8,8,autosklearn,openml.org/t/53,,0.440961,aws.docker,7,,0.440961,3.31062e+09,stable,vehicle,2019-04-12T23:25:57,0.5.1,multiclass,-0.440961,0.440961,-0.440961,1.03067
+0.797619,,3609,7,autosklearn,openml.org/t/53,,0.420701,aws.docker,8,{'_attempt': 2},0.420701,1.70834e+09,stable,vehicle,2019-04-25T22:21:41,0.5.1,multiclass,-0.420701,0.420701,-0.420701,1.066
 0.826087,0.924448,1822.7,1,h2oautoml,openml.org/t/146818,,,aws.docker,61,,0.924448,1.02288e+09,stable,australian,2019-04-13T00:00:42,3.24.0.1,binary,0.924448,0.924448,0.924448,1.03306
 0.898551,0.945299,2383.5,7,h2oautoml,openml.org/t/146818,,,aws.docker,71,,0.945299,1.02288e+09,stable,australian,2019-04-13T00:10:38,3.24.0.1,binary,0.945299,0.945299,0.945299,1.02357
 0.884058,0.951613,2431,0,h2oautoml,openml.org/t/146818,,,aws.docker,94,,0.951613,1.02288e+09,stable,australian,2019-04-13T00:10:51,3.24.0.1,binary,0.951613,0.951613,0.951613,1.01527
@@ -2373,12 +2373,12 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.9822,0.803722,3777.9,3,autoweka,openml.org/t/3945,,,aws.docker,,,0.803722,1.86938e+09,stable,kddcup09_appetency,2019-04-14T20:27:41,2.6,binary,0.803722,0.803722,0.803722,1.07811
 0.9822,0.800033,3899.3,2,autoweka,openml.org/t/3945,,,aws.docker,,,0.800033,1.86938e+09,stable,kddcup09_appetency,2019-04-14T20:28:41,2.6,binary,0.800033,0.800033,0.800033,1.04183
 0.9822,0.818644,3677.1,7,autoweka,openml.org/t/3945,,,aws.docker,,,0.818644,1.86938e+09,stable,kddcup09_appetency,2019-04-14T20:36:15,2.6,binary,0.818644,0.818644,0.818644,0.994457
-,,3981.9,9,autoweka,openml.org/t/3945,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_KDDCup09_appetency_9.weka_pred.csv',,aws.docker,,,,1.86938e+09,stable,kddcup09_appetency,2019-04-14T20:54:57,2.6,binary,,0.766609,0.766609,1.01106
-,,5752.4,1,autoweka,openml.org/t/3945,Error: Aborting instance i-0a34139c4d882fe05 for job aws_medium-8c1h_KDDCup09_appetency_1_AutoWEKA.,,aws,,,,1.86938e+09,stable,kddcup09_appetency,2019-04-14T20:56:54,2.6,binary,,0.777406,0.777406,0.992636
-,,6294.1,5,autoweka,openml.org/t/3945,Error: Aborting instance i-06a5385104a2e61f9 for job aws_medium-8c1h_KDDCup09_appetency_5_AutoWEKA.,,aws,,,,1.86938e+09,stable,kddcup09_appetency,2019-04-14T21:07:39,2.6,binary,,0.771319,0.771319,1.00686
-,,6537.5,6,autoweka,openml.org/t/3945,Error: Aborting instance i-0572f89de2265e615 for job aws_medium-8c1h_KDDCup09_appetency_6_AutoWEKA.,,aws,,,,1.86938e+09,stable,kddcup09_appetency,2019-04-14T21:12:42,2.6,binary,,0.777329,0.777329,0.983335
-,,6295.6,8,autoweka,openml.org/t/3945,Error: Aborting instance i-022f2cec70ef675c5 for job aws_medium-8c1h_KDDCup09_appetency_8_AutoWEKA.,,aws,,,,1.86938e+09,stable,kddcup09_appetency,2019-04-14T21:27:44,2.6,binary,,0.776123,0.776123,1.0205
 ,,3701.9,4,autoweka,openml.org/t/3945,Error: [Errno 2] No such file or directory: '/output/predictions/autoweka_KDDCup09_appetency_4.weka_pred.csv',,aws.docker,,{'_attempt': 2},,2.70041e+08,stable,kddcup09_appetency,2019-04-25T21:13:08,2.6,binary,,0.806435,0.806435,0.980903
+,,5680.6,9,autoweka,openml.org/t/3945,Exception: Aborting instance i-0109ce74539f20452 for job aws_medium-8c1h_KDDCup09_appetency_9_AutoWEKA.,,aws,,{'_attempt': 2},,2.70041e+08,stable,kddcup09_appetency,2019-04-25T21:44:06,2.6,binary,,0.766609,0.766609,1.01106
+,,5741.6,5,autoweka,openml.org/t/3945,Exception: Aborting instance i-01341417fc5f74e12 for job aws_medium-8c1h_KDDCup09_appetency_5_AutoWEKA.,,aws,,{'_attempt': 2},,2.70041e+08,stable,kddcup09_appetency,2019-04-25T21:44:52,2.6,binary,,0.771319,0.771319,1.00686
+,,5739.9,8,autoweka,openml.org/t/3945,Exception: Aborting instance i-06625951e38530a8b for job aws_medium-8c1h_KDDCup09_appetency_8_AutoWEKA.,,aws,,{'_attempt': 2},,2.70041e+08,stable,kddcup09_appetency,2019-04-25T21:45:00,2.6,binary,,0.776123,0.776123,1.0205
+,,6346.5,1,autoweka,openml.org/t/3945,Exception: Aborting instance i-06a7cc441857a714b for job aws_medium-8c1h_KDDCup09_appetency_1_AutoWEKA.,,aws,,{'_attempt': 2},,2.70041e+08,stable,kddcup09_appetency,2019-04-25T21:54:47,2.6,binary,,0.777406,0.777406,0.992636
+,,6346.6,6,autoweka,openml.org/t/3945,Exception: Aborting instance i-0f9facba31882294d for job aws_medium-8c1h_KDDCup09_appetency_6_AutoWEKA.,,aws,,{'_attempt': 2},,2.70041e+08,stable,kddcup09_appetency,2019-04-25T21:55:02,2.6,binary,,0.777329,0.777329,0.983335
 0.901361,0.954941,3522.2,0,autoweka,openml.org/t/168335,,,aws.docker,,,0.954941,1.86938e+09,stable,miniboone,2019-04-14T20:50:31,2.6,binary,0.954941,0.954941,0.954941,0.947859
 0.906589,0.961032,3458.4,2,autoweka,openml.org/t/168335,,,aws.docker,,,0.961032,1.86938e+09,stable,miniboone,2019-04-14T20:58:25,2.6,binary,0.961032,0.961032,0.961032,0.958403
 0.906896,0.958727,3560.4,1,autoweka,openml.org/t/168335,,,aws.docker,,,0.958727,1.86938e+09,stable,miniboone,2019-04-14T20:59:20,2.6,binary,0.958727,0.958727,0.958727,0.953449
