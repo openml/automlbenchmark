@@ -1,5 +1,5 @@
 type,task,autosklearn,autoweka,constantpredictor,h2oautoml,randomforest,tpot,tunedrandomforest
-binary,airlines,1.35219 (1),1.17852,0,1.4365,0.996988,1.3841,1
-binary,albert,1.0155 (7),nan,0,1.09059 (2),0.999328,0.994292 (4),1
+binary,airlines,1.39298,1.17852,0,1.4365,0.996988,1.3841,1
+binary,albert,1.01436 (5),,0,1.10219 (1),0.999328,0.997754 (3),1
 multiclass,covertype,1.0548,-2.57688,0,0.998776,0.999976,1.05187,1
-multiclass,dionis,0.359285,0.694212 (1),0,0.866558 (7),0.987372,0.929189 (9),1
+multiclass,dionis,0.359285,0.614428,0,0.866558 (7),0.987372,0.929189 (9),1

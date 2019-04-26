@@ -178,7 +178,6 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.666612,0.763271,32063.2,6,h2oautoml,openml.org/t/189356,,,aws.docker,13,{'_nthreads': 4},0.763271,4.16497e+09,stable,albert,2019-04-18T22:10:04,3.24.0.1,binary,0.763271,0.763271,0.763271,1.10772
 0.66633,0.767405,32092.3,2,h2oautoml,openml.org/t/189356,,,aws.docker,13,{'_nthreads': 4},0.767405,4.16497e+09,stable,albert,2019-04-18T22:09:57,3.24.0.1,binary,0.767405,0.767405,0.767405,1.11676
 0.669881,0.765101,32154.9,1,h2oautoml,openml.org/t/189356,,,aws.docker,13,"{'_attempt': 2, '_nthreads': 4}",0.765101,3.90151e+07,stable,albert,2019-04-26T06:47:03,3.24.0.1,binary,0.765101,0.765101,0.765101,1.11458
-,,1544.4,5,h2oautoml,openml.org/t/189356,Exception: Aborting instance i-0414179c350afedc4 for job aws_large-8c8h_Albert_5_H2OAutoML.,,aws,,"{'_attempt': 2, '_nthreads': 4}",,3.90151e+07,stable,albert,2019-04-25T22:01:54,3.24.0.1,binary,,0.736168,0.736168,0.998596
 0.946439,,29697.5,0,h2oautoml,openml.org/t/7593,,0.156644,aws.docker,4,,0.156644,2.72057e+09,stable,covertype,2019-04-18T16:02:58,3.24.0.1,multiclass,-0.156644,0.156644,-0.156644,1.00544
 0.930261,,28807.5,1,h2oautoml,openml.org/t/7593,,0.207604,aws.docker,1,,0.207604,2.72057e+09,stable,covertype,2019-04-18T16:40:40,3.24.0.1,multiclass,-0.207604,0.207604,-0.207604,0.956205
 0.948004,,29746.5,2,h2oautoml,openml.org/t/7593,,0.161433,aws.docker,4,,0.161433,2.72057e+09,stable,covertype,2019-04-18T17:49:14,3.24.0.1,multiclass,-0.161433,0.161433,-0.161433,0.999908
@@ -279,3 +278,4 @@ acc,auc,duration,fold,framework,id,info,logloss,mode,models,params,result,seed,t
 0.863692,,35575.2,4,autoweka,openml.org/t/189355,,2.80376,aws.docker,,,2.80376,4.0729e+08,stable,dionis,2019-04-18T22:46:10,2.6,multiclass,-2.80376,2.80376,-2.80376,0.631881
 0.862371,,35844.8,1,autoweka,openml.org/t/189355,,2.85195,aws.docker,,,2.85195,4.0729e+08,stable,dionis,2019-04-18T22:50:04,2.6,multiclass,-2.85195,2.85195,-2.85195,0.622389
 0.0502667,,31744.4,9,autoweka,openml.org/t/189355,,4.90577,aws.docker,,{'_attempt': 2},4.90577,2.54119e+09,stable,dionis,2019-04-26T06:38:02,2.6,multiclass,-4.90577,4.90577,-4.90577,0.196579
+,,,5,h2oautoml,,missing,,,,,,,,albert,,,binary,,0.736168,0.736168,0.998596
