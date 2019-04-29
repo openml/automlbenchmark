@@ -9,8 +9,8 @@ FRAMEWORKS=(
 
 autosklearn
 h2oautoml
-oboe
 tpot
+oboe
 autoweka
 #autoxgboost
 #hyperoptsklearn
@@ -27,6 +27,8 @@ medium-8c1h
 small-8c4h
 medium-8c4h
 #medium-8c8h
+large-8c4h
+large-8c8h
 )
 
 MODE=(
@@ -78,7 +80,8 @@ if [[ -z $parallel ]]; then
 fi
 
 #extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40"
-extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
+extra_params="-u ~/dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
+#extra_params="-u ~/.config/automlbenchmark/stable -o ./stable -Xmax_parallel_jobs=20 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
 
 #echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 
