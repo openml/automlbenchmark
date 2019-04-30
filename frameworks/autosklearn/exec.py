@@ -14,7 +14,7 @@ import autosklearn.metrics as metrics
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.results import save_predictions_to_file
-from amlb.utils import Timer, path_from_split, split_path, system_memory_mb
+from amlb.utils import Timer, system_memory_mb, touch
 
 log = logging.getLogger(__name__)
 
@@ -82,14 +82,6 @@ def run(dataset: Dataset, config: TaskConfig):
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
 
-    models_repr = auto_sklearn.show_models()
-    log.debug("Trained Ensemble:\n%s", models_repr)
-    models_file = split_path(config.output_predictions_file)
-    models_file.extension = '.models.txt'
-    models_file = path_from_split(models_file)
-    with open(models_file, 'w') as f:
-        f.write(models_repr)
-
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
     X_test= dataset.test.X_enc
@@ -104,7 +96,28 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=True)
 
+    save_artifacts(auto_sklearn, config)
+
     return dict(
         models_count=len(auto_sklearn.get_models_with_weights()),
         training_duration=training.duration
     )
+
+
+def make_subdir(name, config):
+    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
+    touch(subdir, as_dir=True)
+    return subdir
+
+
+def save_artifacts(estimator, config):
+    try:
+        models_repr = estimator.show_models()
+        log.debug("Trained Ensemble:\n%s", models_repr)
+        artifacts = config.framework_params.get('_saved_artifacts', [])
+        if 'models' in artifacts:
+            models_file = os.path.join(make_subdir('models', config), 'models.txt')
+            with open(models_file, 'w') as f:
+                f.write(models_repr)
+    except:
+        log.debug("Error when saving artifacts.", exc_info=True)
