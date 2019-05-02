@@ -5,6 +5,10 @@ sidebar_link: true
 sidebar_sort_order: 1
 ---
 
+### Complete Results
+[Complete results][reports] are also available in [csv] format or as simple [visualizations] for now.
+We hope to provide interactive visualization in the future.
+
 ### Binary Results
 A sample of the results obtained by running each framework over 10 folds for 4h each: for binary tasks, the plotted metric is AUC.
 ![Binary Results Stripplot][binary_4h]
@@ -12,10 +16,6 @@ A sample of the results obtained by running each framework over 10 folds for 4h 
 ### Multiclass Results
 A sample of the results obtained by running each framework over 10 folds for 4h each: for multiclass tasks, the plotted metric is logloss.
 ![Multiclass Results Stripplot][multiclass_4h]
-
-### Complete Results
-[Complete results][reports] are also available in [csv] format or as simple [visualizations] for now.
-
 
 [binary_4h]:https://raw.github.com/openml/automlbenchmark/master/reports/graphics/4h/binary_results_stripplot.png
 [multiclass_4h]:https://raw.github.com/openml/automlbenchmark/master/reports/graphics/4h/multiclass_results_stripplot.png
