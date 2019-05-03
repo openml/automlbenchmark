@@ -18,7 +18,7 @@ but also to include problem-specific metrics (e.g. have a false negative incur a
 
 ## Open Science
 Open science is important to us.
-This is a transparent benchmark: no favorites, no cheating<sup>3</sup>.
+This is a transparent benchmark: no favorites, no cheating.
 We require that all evaluated AutoML systems are open-source and all data to be freely available on [OpenML](https://www.openml.org/).
 All the code required to run the benchmark is available on [Github](https://github.com/openml/automlbenchmark).
 
@@ -48,7 +48,3 @@ But other qualities, such as ease of use or level of support can also be importa
 
 ---
 <sup>1</sup> Due to the high (computational) cost involved, we need to find a balance here.
-
-<sup>2</sup> Frequency to be established, partially because of footnote 1.
-
-<sup>3</sup> Word on meta-learning (could involve benchmark data)?
