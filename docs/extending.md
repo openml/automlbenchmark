@@ -63,7 +63,7 @@ Finally commit your changes and set up a pull request.
 In your PR include:
  - a link to the task and dataset on OpenML, where the OpenML dataset has meaningful meta-data (e.g. description)
  - a motivation as to why this is an interesting addition to the benchmark. 
- Preferably address the points from the [What makes a good dataset](#What-makes-a-good-dataset) section.
+ Preferably address the points from the [What makes a good dataset](#what-makes-a-good-dataset) section.
  The higher quality your motivation, the better we can come to a conclusion on whether to include the dataset or not.
 
 
