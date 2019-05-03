@@ -79,6 +79,8 @@ Note that, as can be seen in the TPOT example, imputing the data before passing 
 The data is available in its regular form, but also in a numeric-only form (where string values are encoded with integers).
 
 Finally, add your framework to the [`framework.yaml`](https://github.com/openml/automlbenchmark/blob/master/resources/frameworks.yaml) file.
+If at any point you run into issues or questions that aren't answered by the benchmark's documentation, 
+please open an [issue](https://github.com/openml/automlbenchmark/issues), the title of the issue should start with '[FW ADD]'.
 
 ### Testing an AutoML framework
 
@@ -88,4 +90,9 @@ This benchmark has tasks with a variety of interesting properties (e.g. missing 
 
 
 ### Adding it to the real thing
-If everything seems to work correctly and want your additions to be incorporated in the benchmark, open a pull request.
+If everything seems to work correctly, you're almost ready to set up a pull request.
+But first, make sure you all documentation is up-to-date with your latest additions.
+In particular, add or update the section on your AutoML framework in [the AutoML overview](https://github.com/openml/automlbenchmark/blob/master/docs/automl_overview.md).
+
+The title of your pull request when adding a new framework should be 'Add FRAMEWORK' where 'FRAMEWORK' should be replaced by the name of your framework.
+If you are updating a framework, please title the pull request 'Update FRAMEWORK' similarly.
