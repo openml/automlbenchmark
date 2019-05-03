@@ -1,3 +1,7 @@
+---
+title: Extending the benchmark
+---
+
 Whether you want to add a dataset or a framework to the benchmark, you will first have to [fork our repository](https://help.github.com/en/articles/fork-a-repo).
 By forking our repository, you can make and test changes without affecting the benchmark.
 If you feel your changes should be included in the benchmark, set up a [pull request](https://help.github.com/en/articles/about-pull-requests).
