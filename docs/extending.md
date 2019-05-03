@@ -1,5 +1,3 @@
-# Extending the benchmark
-
 Whether you want to add a dataset or a framework to the benchmark, you will first have to [fork our repository](https://help.github.com/en/articles/fork-a-repo).
 By forking our repository, you can make and test changes without affecting the benchmark.
 If you feel your changes should be included in the benchmark, set up a [pull request](https://help.github.com/en/articles/about-pull-requests).
@@ -53,9 +51,10 @@ and title the issue '[DATA HELP] DATASETNAME', replacing 'DATASETNAME' with the 
 If you've made sure everything works, modify one of the existing benchmark or create a new one with your task.
 When extending an existing benchmark, make sure not to modify any of the existing problems for the task.
 Finally commit your changes and set up a pull request.
-___
+
+
 **Please make sure the PR does not include the changes made to `example.yaml`**
-___
+
 
 In your PR include:
  - a link to the task and dataset on OpenML, where the OpenML dataset has meaningful meta-data (e.g. description)
