@@ -115,12 +115,6 @@ Apache-2.0
 H2O AutoML performs Random Search followed by a stacking stage.
 By default it uses the H2O machine learning package, which supports distributed training.
 
-*Maybe mention something similar to the following? see source*
-<!-- H2O AutoML is developed by the company H2O.
-This means that the package features frequent updates and is less likely to be abandoned.
-On the other hand, as a free user your concerns might be overshadowed by users of their alternative, pay-to-use, driverless AI.
--->
-
 #### Papers
 
 \-
@@ -223,7 +217,7 @@ Komer, Brent, James Bergstra, and Chris Eliasmith (2014).
 Java |
 Optimization: Hierachical Task Planning | -
 
-> Author Quote
+> a new approach to AutoML based on hierarchical planning
 
 ML-Plan is a new AutoML framework based on Hierarchical Task Planning.
 It can optimize with both a WEKA and scikit-learn backend.
