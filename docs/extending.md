@@ -68,4 +68,24 @@ In your PR include:
 
 
 ## Adding an AutoML framework
-TODO.
+
+To add a new framework, create a new folder in the [frameworks folder](https://github.com/openml/automlbenchmark/tree/master/frameworks) (`/frameworks`).
+In the package include at least a `__init__.py` file which exposes the method `run(Dataset, TaskConfig)` and optionally also `setup(*args)` and/or  `docker_commands()` as documented [here](https://github.com/openml/automlbenchmark/blob/master/frameworks/__init__.py).
+
+For an example using a python-based AutoML tool, see e.g. the [TPOT](https://github.com/openml/automlbenchmark/tree/master/frameworks/TPOT) folder.
+For an example using a non-python-based AutoML tool, see e.g. the [Auto-WEKA](https://github.com/openml/automlbenchmark/tree/master/frameworks/AutoWEKA) folder.
+
+Note that, as can be seen in the TPOT example, imputing the data before passing it to the framework is (currently) allowed.
+The data is available in its regular form, but also in a numeric-only form (where string values are encoded with integers).
+
+Finally, add your framework to the [`framework.yaml`](https://github.com/openml/automlbenchmark/blob/master/resources/frameworks.yaml) file.
+
+### Testing an AutoML framework
+
+To test if the implementation is successful, it is recommended to run the validation benchmark:
+`python runbenchmark.py your_framework validation`.
+This benchmark has tasks with a variety of interesting properties (e.g. missing values, different data types).
+
+
+### Adding it to the real thing
+If everything seems to work correctly and want your additions to be incorporated in the benchmark, open a pull request.
