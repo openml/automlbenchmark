@@ -1,7 +1,7 @@
 ---
 title: About
 layout: category
-sidebar_sort_order: 5
+sidebar_sort_order: 10
 ---
 
 ## Goals

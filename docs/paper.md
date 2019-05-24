@@ -1,7 +1,7 @@
 ---
 layout: category
 title: Paper
-sidebar_sort_order: 3
+sidebar_sort_order: 9
 ---
 [PDF](https://arxiv.org/) \| [BibTeX](meaningful.bib) \| [doi](https://www.doi.org/)
 
