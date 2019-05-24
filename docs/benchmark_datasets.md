@@ -11,10 +11,10 @@ We also want to prevent AutoML tools from overfitting to our benchmark.
 For this reason, we plan to change the selection of benchmark problems over time.
 This should help prevent (some of the) bias that can be introduced by static benchmarks.
 
-
 In our selection for the [paper](#paper.md), we drew datasets from [OpenML100](https://www.openml.org/s/14), [OpenML-CC18](https://www.openml.org/s/98) and [AutoML Challenges](http://automl.chalearn.org/data).
 However, we did not include all datasets.
 One reason was that some did not meet our criteria (more on that below), another that we wanted to keep some datasets of the future.
+There are also a few datasets which we wanted to include, but could not include in the paper due to time constraints.
 
 ## Criteria
 As stated before, we did not adopt all proposed datasets but made a selection.
@@ -50,7 +50,7 @@ because we want to eventually replace datasets in the benchmark.*
 
 
 ## Final List
-The first iteration of our benchmark as presented in the paper, contained 39 classification datasets.
+The first iteration of our benchmark as presented in the paper contained 39 classification datasets.
 For the full list of datasets and their characteristics see [OpenML Study 218](https://www.openml.org/s/218) or its [table view](https://www.openml.org/search?q=tags.tag%3Astudy_218&type=data&table=1&size=39).
 
 ## The Future
