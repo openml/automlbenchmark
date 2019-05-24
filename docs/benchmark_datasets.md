@@ -4,7 +4,7 @@ title: Benchmark Datasets
 sidebar_sort_order: 3
 ---
 
-For the benchmark, we are looking for datasets that represent real-world data science problems.
+The benchmark aims to consist of datasets that represent real-world data science problems.
 This means we want to include datasets of all sizes (including *big* ones), of different problem domains and with various levels of difficulty.
 
 We also want to prevent AutoML tools from overfitting to our benchmark.
