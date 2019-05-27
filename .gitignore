@@ -19,6 +19,7 @@ venv/
 lib/
 logs/
 predictions/
+results/
 scores/
 setup/
 _site/
