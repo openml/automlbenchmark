@@ -139,12 +139,12 @@ class DockerBenchmark(Benchmark):
         log.debug("docker image id: %s", output)
         if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
-        else:
-            try:
-                output, _ = run_cmd("docker pull {image}".format(image=self._docker_image_name))
-                return True
-            except:
-                return False
+        try:
+            output, _ = run_cmd("docker pull {image}".format(image=self._docker_image_name))
+            return True
+        except:
+            pass
+        return False
 
     def _build_docker_image(self, cache=True):
         if rconfig().docker.force_branch:
