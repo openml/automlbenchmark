@@ -137,7 +137,14 @@ class DockerBenchmark(Benchmark):
     def _docker_image_exists(self):
         output, _ = run_cmd("docker images -q {image}".format(image=self._docker_image_name))
         log.debug("docker image id: %s", output)
-        return re.match(r'^[0-9a-f]+$', output.strip())
+        if re.match(r'^[0-9a-f]+$', output.strip()):
+            return True
+        try:
+            run_cmd("docker pull {image}".format(image=self._docker_image_name))
+            return True
+        except:
+            pass
+        return False
 
     def _build_docker_image(self, cache=True):
         if rconfig().docker.force_branch:

@@ -110,6 +110,9 @@ class Resources:
                     if parent is None:
                         log.warning("Removing framework %s as parent %s doesn't exist.", framework.name, framework.extends)
                         continue
+                    elif parent == framework:
+                        log.warning("Framework %s extends itself: removing extension.", framework.name)
+                        framework.extends = None
                     elif parent not in validated:
                         later.append(framework)
                         continue
