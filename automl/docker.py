@@ -135,6 +135,10 @@ class DockerBenchmark(Benchmark):
         return DockerBenchmark.docker_image_name(self.framework_def)
 
     def _docker_image_exists(self):
+        try:
+            output, _ = run_cmd("docker pull {image}".format(image=self._docker_image_name))
+        except:
+            pass
         output, _ = run_cmd("docker images -q {image}".format(image=self._docker_image_name))
         log.debug("docker image id: %s", output)
         return re.match(r'^[0-9a-f]+$', output.strip())
