@@ -140,7 +140,7 @@ class DockerBenchmark(Benchmark):
         if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
         try:
-            output, _ = run_cmd("docker pull {image}".format(image=self._docker_image_name))
+            run_cmd("docker pull {image}".format(image=self._docker_image_name))
             return True
         except:
             pass
