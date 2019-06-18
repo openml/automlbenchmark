@@ -496,6 +496,13 @@ class AWSBenchmark(Benchmark):
                 )
                 log.info("S3 bucket %s was successfully created.", bucket_name)
             else:
+                if error_code == 403:
+                    log.error("You don't have access rights to S3 bucket %s.\n"
+                              "Please ensure that you specified a unique `aws.s3.bucket` in your config file"
+                              " or verify that your AWS account is correctly configured"
+                              " (cf. docs/README.md for more details).", bucket_name)
+                elif error_code == 404:
+                    log.error("S3 bucket %s does not exist and auto-creation is disabled", bucket_name)
                 raise e
         return bucket
 

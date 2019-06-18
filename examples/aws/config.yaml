@@ -1,12 +1,12 @@
 # put this file in your ~/.config/automlbenchmark directory
 # to override default configs
 ---
-project_repository: https://github.com/seb-h2o/automlbenchmark
+project_repository: https://github.com/openml/automlbenchmark
 
 aws:
 
   iam:
-    temporary: false  # set to true if you want IAM entities (credentials used by ec2 instances) being recreated for each benchamrk run.
+    temporary: false  # set to true if you want IAM entities (credentials used by ec2 instances) being recreated for each benchmark run.
     credentials_propagation_waiting_time_secs: 360  # increase this waiting time if you encounter credentials issues on ec2 instances when using temporary IAM.
 
   s3:
