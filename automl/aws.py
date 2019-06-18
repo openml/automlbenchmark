@@ -502,7 +502,7 @@ class AWSBenchmark(Benchmark):
                               " or verify that your AWS account is correctly configured"
                               " (cf. docs/README.md for more details).", bucket_name)
                 elif error_code == 404:
-                    log.error("S3 bucket %s does not exist and auto-creation is disabled", bucket_name)
+                    log.error("S3 bucket %s does not exist and auto-creation is disabled.", bucket_name)
                 raise e
         return bucket
 
