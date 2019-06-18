@@ -20,6 +20,7 @@ import logging
 import math
 import operator as op
 import os
+from posixpath import join as url_join, relpath as url_relpath
 import re
 import time
 import threading
@@ -459,8 +460,8 @@ class AWSBenchmark(Benchmark):
         tokens = [main_dir, ikey, *subdirs]
         if encode:
             tokens = map(uenc, tokens)
-        rel_key = os.path.join(root_key, *tokens)
-        return os.path.join('s3://', self.bucket.name, rel_key) if absolute else rel_key
+        rel_key = url_join(root_key, *tokens)
+        return url_join('s3://', self.bucket.name, rel_key) if absolute else rel_key
 
     def _s3_session(self, *subdirs, **kwargs):
         return self._s3_key(self.sid, *subdirs, **kwargs)
@@ -568,7 +569,7 @@ class AWSBenchmark(Benchmark):
             session_key = self._s3_session(encode=True)
             # result_key = self._s3_output(instance_id, Scoreboard.results_file, encode=True)
             for obj in objs:
-                rel_path = os.path.relpath(obj.key, start=session_key)
+                rel_path = url_relpath(obj.key, start=session_key)
                 dest_path = os.path.join(self.output_dirs.session, rel_path)
                 download_file(obj, dest_path)
                 # if obj.key == result_key:
