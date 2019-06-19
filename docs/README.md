@@ -24,27 +24,38 @@ Future plans:
 * More benchmark datasets, and datasets of other types (e.g. regression).
 
 ## Installation
+### Pre-requisites
 To run the benchmarks, you will need:
 * Python 3.5+.
 * PIP3: ensure you have a recent version, this has been tested with `pip3 18.1` and `pip3 19.0.1`. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
-* the Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
+* The Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
+### Setup
+Clone the repo:
 ```bash
 git clone https://github.com/openml/automlbenchmark.git
 cd automlbenchmark
+```
+Optional: create a Python3 virtual environment 
 
-[optional: create a Python3 virtualenv]
-  [using virtualenv]
+using virtualenv:
+```bash
 pip3 install virtualenv
 python3 -m virtualenv venv
 source venv/bin/activate
 # remember to call `deactivate` once you're done using the application
-  [or using pyenv]
+```
+
+or using pyenv:
+```bash
 pyenv install {python_version: 3.7.2}
 pyenv virtualenv ve-automl
 pyenv local ve-automl
+```
+Then pip install the dependencies:
 
+```bash
 pip3 install -r requirements.txt
 ```
 _**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
