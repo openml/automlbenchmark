@@ -20,6 +20,7 @@ import logging
 import math
 import operator as op
 import os
+from posixpath import join as url_join, relpath as url_relpath
 import re
 import time
 import threading
@@ -459,8 +460,8 @@ class AWSBenchmark(Benchmark):
         tokens = [main_dir, ikey, *subdirs]
         if encode:
             tokens = map(uenc, tokens)
-        rel_key = os.path.join(root_key, *tokens)
-        return os.path.join('s3://', self.bucket.name, rel_key) if absolute else rel_key
+        rel_key = url_join(root_key, *tokens)
+        return url_join('s3://', self.bucket.name, rel_key) if absolute else rel_key
 
     def _s3_session(self, *subdirs, **kwargs):
         return self._s3_key(self.sid, *subdirs, **kwargs)
@@ -495,6 +496,13 @@ class AWSBenchmark(Benchmark):
                 )
                 log.info("S3 bucket %s was successfully created.", bucket_name)
             else:
+                if error_code == 403:
+                    log.error("You don't have access rights to S3 bucket %s.\n"
+                              "Please ensure that you specified a unique `aws.s3.bucket` in your config file"
+                              " or verify that your AWS account is correctly configured"
+                              " (cf. docs/README.md for more details).", bucket_name)
+                elif error_code == 404:
+                    log.error("S3 bucket %s does not exist and auto-creation is disabled.", bucket_name)
                 raise e
         return bucket
 
@@ -568,7 +576,7 @@ class AWSBenchmark(Benchmark):
             session_key = self._s3_session(encode=True)
             # result_key = self._s3_output(instance_id, Scoreboard.results_file, encode=True)
             for obj in objs:
-                rel_path = os.path.relpath(obj.key, start=session_key)
+                rel_path = url_relpath(obj.key, start=session_key)
                 dest_path = os.path.join(self.output_dirs.session, rel_path)
                 download_file(obj, dest_path)
                 # if obj.key == result_key:
@@ -591,7 +599,9 @@ class AWSBenchmark(Benchmark):
         for restrictions, cf. https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
         :return:
         """
+        s3c = rconfig().aws.s3
         iamc = rconfig().aws.iam
+        bucket_prefix = (s3c.bucket+'-') if (s3c.temporary and not iamc.temporary) else self.bucket.name
         role_name = iamc.role_name
         profile_name = iamc.instance_profile_name
         if iamc.temporary:
@@ -624,14 +634,14 @@ class AWSBenchmark(Benchmark):
             log.info("Role %s successfully created.", role_name)
 
         if iamc.s3_policy_name not in [p.name for p in irole.policies.all()]:
-            resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=self.bucket.name, root_key=str_def(rconfig().aws.s3.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
+            resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=bucket_prefix, root_key=str_def(s3c.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
             s3_policy_json = json.dumps({
                 'Version': '2012-10-17',
                 'Statement': [
                     {
                         'Effect': 'Allow',
                         'Action': 's3:List*',
-                        'Resource': 'arn:aws:s3:::{}*'.format(self.bucket.name)
+                        'Resource': 'arn:aws:s3:::{}*'.format(bucket_prefix)
                     },
                     {
                         'Effect': 'Allow',

@@ -1,7 +1,7 @@
 # put this file in custom input dir or in ~/.config/automlbenchmark directory
 # in order to have a custom setup, allowing to add custom frameworks definitions (in our case, creating a benchmark for various H2O versions)
 ---
-project_repository: https://github.com/seb-h2o/automlbenchmark
+project_repository: https://github.com/openml/automlbenchmark
 
 frameworks:
   definition_file:
