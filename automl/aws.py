@@ -599,7 +599,9 @@ class AWSBenchmark(Benchmark):
         for restrictions, cf. https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
         :return:
         """
+        s3c = rconfig().aws.s3
         iamc = rconfig().aws.iam
+        bucket_prefix = (s3c.bucket+'-') if (s3c.temporary and not iamc.temporary) else self.bucket.name
         role_name = iamc.role_name
         profile_name = iamc.instance_profile_name
         if iamc.temporary:
@@ -632,14 +634,14 @@ class AWSBenchmark(Benchmark):
             log.info("Role %s successfully created.", role_name)
 
         if iamc.s3_policy_name not in [p.name for p in irole.policies.all()]:
-            resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=self.bucket.name, root_key=str_def(rconfig().aws.s3.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
+            resource_prefix="arn:aws:s3:::{bucket}*/{root_key}".format(bucket=bucket_prefix, root_key=str_def(s3c.root_key))  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
             s3_policy_json = json.dumps({
                 'Version': '2012-10-17',
                 'Statement': [
                     {
                         'Effect': 'Allow',
                         'Action': 's3:List*',
-                        'Resource': 'arn:aws:s3:::{}*'.format(self.bucket.name)
+                        'Resource': 'arn:aws:s3:::{}*'.format(bucket_prefix)
                     },
                     {
                         'Effect': 'Allow',
