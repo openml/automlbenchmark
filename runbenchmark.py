@@ -60,7 +60,10 @@ extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in 
 now_str = datetime_iso(date_sep='', time_sep='')
 sid = args.session if args.session is not None \
     else "{}_{}".format('_'.join([extras.get('run_mode', args.mode), args.framework, args.benchmark]).lower(), now_str)
-log_dir = automl.resources.output_dirs(args.outdir, session=sid, subdirs='logs', create=True).logs if args.outdir else 'logs'
+log_dir = automl.resources.output_dirs(args.outdir or os.getcwd(),
+                                       session=sid if args.outdir else None,
+                                       subdirs='logs',
+                                       create=True).logs
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
     logging.TRACE = logging.INFO
