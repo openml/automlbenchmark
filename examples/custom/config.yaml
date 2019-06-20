@@ -5,13 +5,13 @@ project_repository: https://github.com/openml/automlbenchmark
 
 frameworks:
   definition_file:
-    - resources/frameworks.yaml
+    - '{root}/resources/frameworks.yaml'
     - '{user}/frameworks.yaml'
 
 benchmarks:
   definition_dir:
     - '{user}'
-    - resources/benchmarks
+    - '{root}/resources/benchmarks'
   defaults:
     cores: 2
 

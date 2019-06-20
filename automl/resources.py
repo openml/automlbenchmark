@@ -37,7 +37,8 @@ class Resources:
         self._common_dirs = dict(
             input=normalize_path(config.input_dir),
             output=normalize_path(config.output_dir),
-            user=normalize_path(config.user_dir)
+            user=normalize_path(config.user_dir),
+            root=normalize_path(config.root_dir),
         )
         self.config = Resources._normalize(config, replace=self._common_dirs)
         log.debug("Using config:\n%s", self.config)
