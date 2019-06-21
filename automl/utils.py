@@ -16,6 +16,7 @@ import json
 import logging
 import multiprocessing as mp
 import os
+import pprint
 import queue
 import shutil
 import signal
@@ -44,6 +45,8 @@ log = logging.getLogger(__name__)
 
 
 class Namespace:
+
+    printer = pprint.PrettyPrinter(indent=2)
 
     @staticmethod
     def parse(*args, **kwargs):
@@ -116,20 +119,6 @@ class Namespace:
     def __len__(self):
         return len(self.__dict__)
 
-    def __getattr__(self, name):
-        if name in self.__dict__:
-            return self.__dict__[name]
-        raise AttributeError(name)
-
-    def __setattr__(self, name, value):
-            self.__dict__[name] = value
-
-    def __delattr__(self, name):
-        if name in self.__dict__:
-            del self.__dict__[name]
-        else:
-            raise AttributeError(name)
-
     def __getitem__(self, item):
         return self.__dict__.get(item)
 
@@ -149,7 +138,7 @@ class Namespace:
         return list(self.__dict__.keys())
 
     def __str__(self):
-        return str(self.__dict__)
+        return Namespace.printer.pformat(Namespace.dict(self))
 
     def __repr__(self):
         return repr(self.__dict__)
