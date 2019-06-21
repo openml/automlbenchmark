@@ -45,8 +45,6 @@ log = logging.getLogger(__name__)
 
 class Namespace:
 
-    mangled_prefix = '_Namespace__'
-
     @staticmethod
     def parse(*args, **kwargs):
         raw = dict(*args, **kwargs)
@@ -97,72 +95,66 @@ class Namespace:
         return dic
 
     def __init__(self, *args, **kwargs):
-        self.__ns = dict(*args, **kwargs)
+        self.__dict__.update(dict(*args, **kwargs))
 
     def __add__(self, other):
         """extends self with other (always overrides)"""
         if other is not None:
-            self.__ns.update(other)
+            self.__dict__.update(other)
         return self
 
     def __mod__(self, other):
         """extends self with other (adds only missing keys)"""
         if other is not None:
             for k, v in other:
-                self.__ns.setdefault(k, v)
+                self.__dict__.setdefault(k, v)
         return self
 
     def __contains__(self, key):
-        return key in self.__ns
+        return key in self.__dict__
 
     def __len__(self):
-        return len(self.__ns)
+        return len(self.__dict__)
 
     def __getattr__(self, name):
-        if name.startswith(Namespace.mangled_prefix):
-            return super().__getattr__(name)
-        elif name in self.__ns:
-            return self.__ns[name]
+        if name in self.__dict__:
+            return self.__dict__[name]
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        if name.startswith(Namespace.mangled_prefix):
-            super().__setattr__(name, value)
-        else:
-            self.__ns[name] = value
+            self.__dict__[name] = value
 
     def __delattr__(self, name):
-        if name in self.__ns:
-            del self.__ns[name]
+        if name in self.__dict__:
+            del self.__dict__[name]
         else:
             raise AttributeError(name)
 
     def __getitem__(self, item):
-        return self.__ns.get(item)
+        return self.__dict__.get(item)
 
     def __setitem__(self, key, value):
-        self.__ns[key] = value
+        self.__dict__[key] = value
 
     def __delitem__(self, key):
-        self.__ns.pop(key, None)
+        self.__dict__.pop(key, None)
 
     def __iter__(self):
-        return iter(self.__ns.items())
+        return iter(self.__dict__.items())
 
     def __copy__(self):
-        return Namespace(self.__ns.copy())
+        return Namespace(self.__dict__.copy())
 
     def __dir__(self):
-        return list(self.__ns.keys())
+        return list(self.__dict__.keys())
 
     def __str__(self):
-        return str(self.__ns)
+        return str(self.__dict__)
 
     def __repr__(self):
-        return repr(self.__ns)
+        return repr(self.__dict__)
 
     def __json__(self):
-        # return self.__ns
         return Namespace.dict(self)
 
 
