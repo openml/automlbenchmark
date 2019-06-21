@@ -53,6 +53,7 @@ parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.
 # parser.add_argument('-r', '--region', metavar='aws_region', default=None,
 #                     help="The region on which to run the benchmark when using AWS.")
 
+root_dir = os.path.dirname(__file__)
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
 extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
@@ -74,7 +75,7 @@ automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(s
 log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
 
-config = config_load("resources/config.yaml")
+config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
 config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
 # config listing properties set by command line
@@ -83,8 +84,9 @@ config_args = ns.parse(
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,
-    run_mode=args.mode,
+    root_dir=root_dir,
     script=os.path.basename(__file__),
+    run_mode=args.mode,
     sid=sid,
 ) + ns.parse(extras)
 if args.mode != 'local':

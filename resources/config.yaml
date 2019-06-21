@@ -8,6 +8,7 @@ user_dir: ~/.config/automlbenchmark   # where to override settings with a custom
 input_dir: ~/.openml/cache            # where the datasets are loaded by default.
 output_dir: results                   # where logs and results are saved by default.
 
+root_dir:   # app root dir: set by caller (runbenchamrk.py)
 script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
@@ -23,11 +24,11 @@ seed: auto  # default global seed (used if not set in task definition), can be o
             # any int32 to pass a fixed seed to the jobs.
 
 frameworks:
-  definition_file: resources/frameworks.yaml
+  definition_file: '{root}/resources/frameworks.yaml'
   root_module: frameworks
 
 benchmarks:
-  definition_dir: resources/benchmarks
+  definition_dir: '{root}/resources/benchmarks'
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
