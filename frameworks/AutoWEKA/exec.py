@@ -1,10 +1,11 @@
 import logging
 import math
+import os
 
 from automl.benchmark import TaskConfig
 from automl.data import Dataset
 from automl.datautils import reorder_dataset
-from automl.results import save_predictions_to_file
+from automl.results import NoResultError, save_predictions_to_file
 from automl.utils import dir_of, path_from_split, run_cmd, split_path, Timer
 
 log = logging.getLogger(__name__)
@@ -49,10 +50,10 @@ def run(dataset: Dataset, config: TaskConfig):
     weka_file = path_from_split(f)
     cmd_root = "java -cp {here}/lib/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier ".format(here=dir_of(__file__))
     cmd_params = dict(
-        t=train_file,
-        T=test_file,
+        t='"{}"'.format(train_file),
+        T='"{}"'.format(test_file),
         memLimit=memLimit,
-        classifications='"weka.classifiers.evaluation.output.prediction.CSV -distribution -file {}"'.format(weka_file),
+        classifications='"weka.classifiers.evaluation.output.prediction.CSV -distribution -file \\\"{}\\\""'.format(weka_file),
         timeLimit=int(config.max_runtime_seconds/60),
         parallelRuns=parallelRuns,
         metric=metric,
@@ -67,6 +68,8 @@ def run(dataset: Dataset, config: TaskConfig):
     # interestingly, other frameworks seem to always sort the target values first
     # that's why we need to specify the probabilities labels here: sorting+formatting is done in saving function
     probabilities_labels = dataset.target.values
+    if not os.path.exists(weka_file):
+        raise NoResultError("AutoWEKA failed producing any prediction.")
     with open(weka_file, 'r') as weka_file:
         probabilities = []
         predictions = []
