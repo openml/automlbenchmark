@@ -108,11 +108,13 @@ class DockerBenchmark(Benchmark):
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
         script_extra_params = ""
+        inst_name = self.sid
         cmd = (
-            "docker run {options} "
+            "docker run --name {name} {options} "
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
+            name=inst_name,
             options=rconfig().docker.run_extra_options,
             input=in_dir,
             output=out_dir,
@@ -124,7 +126,15 @@ class DockerBenchmark(Benchmark):
         log.info("Starting docker: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)
         log.info("Generated files will be available in folder %s.", out_dir)
-        run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
+        try:
+            run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
+        except:  # also want to handle KeyboardInterrupt
+            try:
+                run_cmd("docker kill {}".format(inst_name))
+            except:
+                pass
+            finally:
+                raise
 
     @property
     def _docker_script(self):
