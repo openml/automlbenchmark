@@ -3,16 +3,7 @@ layout: category
 title: Paper
 sidebar_sort_order: 9
 ---
-[PDF](https://www.automl.org/wp-content/uploads/2019/06/automlws2019_Paper45.pdf) \| [arXiv](https://arxiv.org/abs/1907.00909) \| <details><summary>BibTeX</summary>
-> @article{amlb2019,
-  title={An Open Source AutoML Benchmark},
-  author={Gijsbers, P. and LeDell, E. and Porier, S. and Thomas, J. and Bischl, B. and Vanschoren, J.},
-  journal={arXiv preprint arXiv:1907.00909 [cs.LG]},
-  url={https://arxiv.org/abs/1907.00909},
-  note={Accepted at AutoML Workshop at ICML 2019},
-  year={2019}
-}
-</details>
+[PDF](https://www.automl.org/wp-content/uploads/2019/06/automlws2019_Paper45.pdf) \| [arXiv](https://arxiv.org/abs/1907.00909) \| [BibTeX](bib_workshop.md)
 
 > First look of the benchmark submitted to [AutoML Workshop at ICML 2019](https://sites.google.com/view/automl2019icml).
 
