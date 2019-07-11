@@ -29,7 +29,6 @@
   folds: 2
   cores: 2
   max_runtime_seconds: 60
-  ec2_instance_type: t3.small
 
 - name: iris
   openml_task_id: 59
