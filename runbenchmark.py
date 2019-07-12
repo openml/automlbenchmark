@@ -59,8 +59,12 @@ script_name = os.path.splitext(os.path.basename(__file__))[0]
 extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
 
 now_str = datetime_iso(date_sep='', time_sep='')
-sid = args.session if args.session is not None \
-    else "{}_{}".format('_'.join([extras.get('run_mode', args.mode), args.framework, args.benchmark]).lower(), now_str)
+sid = (args.session if args.session is not None
+       else "{}_{}".format('_'.join([extras.get('run_mode', args.mode),
+                                     args.framework,
+                                     os.path.splitext(os.path.basename(args.benchmark))[0]])
+                              .lower(),
+                           now_str))
 log_dir = automl.resources.output_dirs(args.outdir or os.getcwd(),
                                        session=sid if args.outdir else None,
                                        subdirs='logs',
