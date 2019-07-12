@@ -208,7 +208,7 @@ class AWSBenchmark(Benchmark):
                 instance_def,
                 script_params="{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
-                    benchmark="{}/{}.yaml".format(resources_root, self.benchmark_name),
+                    benchmark=self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir) else "{}/{}.yaml".format(resources_root, self.benchmark_name),
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                     seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
