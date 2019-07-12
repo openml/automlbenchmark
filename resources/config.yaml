@@ -131,6 +131,7 @@ aws:
                         #  this folder being itself synchronized on each ec2 instance and used as user directory.
                         # The possibility of adding resource_files is especially necessary to run custom frameworks.
   resource_ignore:      # files ignored when listing `resource_files`, especially if those contain directories
+    - '*/lib/*'
     - '*/venv/*'
     - '*/__pycache__/*'
     - '*/.marker_*'

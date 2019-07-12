@@ -208,7 +208,7 @@ class AWSBenchmark(Benchmark):
                 instance_def,
                 script_params="{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
-                    benchmark="{}/{}.yaml".format(resources_root, self.benchmark_name),
+                    benchmark=self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir) else "{}/{}.yaml".format(resources_root, self.benchmark_name),
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                     seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
@@ -523,11 +523,14 @@ class AWSBenchmark(Benchmark):
 
     def _upload_resources(self):
         def dest_path(res_path):
+            in_app_dir = res_path.startswith(rconfig().root_dir)
+            if in_app_dir:
+                return None
             in_input_dir = res_path.startswith(rconfig().input_dir)
             in_user_dir = res_path.startswith(rconfig().user_dir)
-            name = os.path.relpath(res_path, start=rconfig().input_dir) if in_input_dir \
-                else os.path.relpath(res_path, start=rconfig().user_dir) if in_user_dir \
-                else os.path.basename(res_path)
+            name = (os.path.relpath(res_path, start=rconfig().input_dir) if in_input_dir
+                    else os.path.relpath(res_path, start=rconfig().user_dir) if in_user_dir
+                    else os.path.basename(res_path))
             return self._s3_input(name) if in_input_dir else self._s3_user(name)
 
         upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
@@ -536,6 +539,9 @@ class AWSBenchmark(Benchmark):
         uploaded_resources = []
         for res in upload_files:
             upload_path = dest_path(res)
+            if upload_path is None:
+                log.debug("Skipping upload of `%s` to s3 bucket.", res)
+                continue
             log.info("Uploading `%s` to `%s` on s3 bucket %s.", res, upload_path, self.bucket.name)
             self.bucket.upload_file(res, upload_path)
             uploaded_resources.append(upload_path)
