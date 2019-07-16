@@ -65,10 +65,10 @@ sid = (args.session if args.session is not None
                                      os.path.splitext(os.path.basename(args.benchmark))[0]])
                               .lower(),
                            now_str))
-log_dir = automl.resources.output_dirs(args.outdir or os.getcwd(),
-                                       session=sid if args.outdir else None,
-                                       subdirs='logs',
-                                       create=True).logs
+log_dir = automl.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
+                                       session=sid,
+                                       subdirs='logs' if args.outdir else '',
+                                       create=True)['logs' if args.outdir else 'session']
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
     logging.TRACE = logging.INFO
