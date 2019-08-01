@@ -10,6 +10,7 @@ import warnings
 
 import openml
 import pandas as pd
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 # a local directory with all files from the automlbenchmark s3 bucket.
 local_bucket_directory: str = r'D:\data\amlb\ec2'
@@ -24,6 +25,11 @@ results_to_match: str = r'..\reports\results_medium-8c4h.csv'
 
 amlb_flows = dict(
     autosklearn=15509,
+    h2oautoml=16115,
+    tpot=16114,
+    autoweka=16116,
+    randomforest=16118,
+    tunedrandomforest=16119,
 )
 
 
@@ -81,7 +87,7 @@ def parse_resource_parameters(benchmark_string: str) -> Tuple[str, str, str]:
     # benchmark_string is e.g. 'medium-8c4h'
     _, parameters = benchmark_string.split('-')
     n_cores, remainder = parameters.split('c')
-    time = remainder[1:-1]
+    time = remainder[:-1]
     memory = '32'  # Currently all experiments are run on 32Gb machines
     return n_cores, memory, time
 
@@ -156,6 +162,7 @@ def create_run(benchmark: str, framework: str, task_id: int, predictions: Dict[i
         parameter_settings=parameters,
         setup_string=benchmark_command,
         data_content=predictions,
+        tags=['study_218']
     )
 
 
@@ -185,12 +192,27 @@ if __name__ == '__main__':
         task_id = int(row.id.split('/')[-1])
         predictions_mapping[(row.framework, task_id)][row.fold] = find_predictions(benchmark, row)
 
+    uploaded_tasks = [34539,
+    168868,
+    14965,
+    146195,
+    146825,
+    168337,
+    168329,
+    146606,
+    168330,
+    167119,
+    3945,
+    168335,
+    9977,
+    167120,
+    168338
+    ]
     for (framework, task), predictions in predictions_mapping.items():
         if len(predictions) != 10:
             print(f'Task {task} does not have predictions for 10 folds (has {predictions.items()}).')
         else:
+            if framework == 'autosklearn' and task in uploaded_tasks:
+                continue
             run = create_run(benchmark, framework, task, predictions)
-
-    z=3
-
-    #print(list(find_output_directories('autosklearn', 'adult', '2', 'medium-8c4h')))
+            print(f'{framework} {task}: {run.publish().run_id}')
