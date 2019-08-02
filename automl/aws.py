@@ -135,10 +135,10 @@ class AWSBenchmark(Benchmark):
         self._exec_start()
         self._monitoring_start()
         if self.parallel_jobs > 1:
-            if rconfig().aws.minimize_instances and fold is None:
+            if rconfig().aws.minimize_instances:
                 # use one instance per task: all folds executed on same instance
                 try:
-                    jobs = flatten([self._make_aws_job([task_def.name], None) for task_def in task_defs])
+                    jobs = flatten([self._make_aws_job([task_def.name], fold) for task_def in task_defs])
                     results = self._run_jobs(jobs)
                     return self._process_results(results, task_name=task_name)
                 finally:
