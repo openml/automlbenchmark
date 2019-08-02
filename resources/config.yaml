@@ -136,7 +136,7 @@ aws:
     - '*/__pycache__/*'
     - '*/.marker_*'
     - '*.swp'
-  minimize_instances: true
+  minimize_instances: false
   use_docker: false     # if true, EC2 instances will run benchmark tasks in a docker instance.
                         # if false, it will run in local mode after cloning project_repository.
                         # Note that using docker in AWS mode requires the docker image being

@@ -35,7 +35,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, list_all_files, normalize_path, str_def, tail, touch
+from .utils import Namespace as ns, datetime_iso, flatten, list_all_files, normalize_path, str_def, tail, touch
 
 
 log = logging.getLogger(__name__)
@@ -131,16 +131,26 @@ class AWSBenchmark(Benchmark):
             self._delete_s3_bucket()
 
     def run(self, task_name=None, fold=None):
-        self._get_task_defs(task_name)  # validates tasks
+        task_defs = self._get_task_defs(task_name)  # validates tasks
         self._exec_start()
         self._monitoring_start()
-        if self.parallel_jobs > 1 or not rconfig().aws.minimize_instances:
-            # TODO: parallelization improvement -> in many situations, creating a job for each fold may end up being much slower
-            #   than having a job per task. This depends on job duration especially
-            return super().run(task_name, fold)
+        if self.parallel_jobs > 1:
+            if rconfig().aws.minimize_instances:
+                # use one instance per task: all folds executed on same instance
+                try:
+                    jobs = flatten([self._make_aws_job([task_def.name], fold) for task_def in task_defs])
+                    results = self._run_jobs(jobs)
+                    return self._process_results(results, task_name=task_name)
+                finally:
+                    self.cleanup()
+            else:
+                # use one instance per fold per task
+                return super().run(task_name, fold)
         else:
+            # use one instance for all
             try:
-                job = self._make_aws_job(task_name, fold)
+                task_names = None if task_name is None else [task_def.name for task_def in task_defs]
+                job = self._make_aws_job(task_names, fold)
                 results = self._run_jobs([job])
                 return self._process_results(results, task_name=task_name)
             finally:
