@@ -1,3 +1,7 @@
+library(mlr)
+library(autoxgboost)
+library(farff)
+
 run = function(train_file, test_file, output_predictions_file, cores) {
   library(autoxgboost)
   train = farff::readARFF(train_file)
