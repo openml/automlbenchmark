@@ -2,14 +2,13 @@ library(mlr)
 library(autoxgboost)
 library(farff)
 
-run = function(train_file, test_file, output_predictions_file, cores) {
-  library(autoxgboost)
+run = function(train_file, test_file, output_predictions_file, cores, time.budget) {
   train = farff::readARFF(train_file)
   colnames(train) = make.names(colnames(train))
   target = colnames(train)[ncol(train)]
   train = makeClassifTask(data = train, target = target)
 
-  lrn = makeLearner("classif.autoxgboost", nthread = cores, predict.type = "prob")
+  lrn = makeLearner("classif.autoxgboost", time.budget = time.budget, nthread = cores, predict.type = "prob")
 
   mod = train(lrn, train)
 
