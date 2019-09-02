@@ -94,8 +94,9 @@ def setup(log_file=None, root_file=None, root_level=logging.WARNING, app_level=N
             buf = buffer[buf_type]
             if buf is None:
                 buf = buffer[buf_type] = io.StringIO()
-            buf.write(sep.join(map(str, [self, *args])))  # end added by logger
-            if end == nl:
+            line = sep.join(map(str, [self, *args]))
+            buf.write(line)  # "end" newline always added by logger
+            if end == nl or line.endswith(nl):  # flush buffer for every line
                 with buf:
                     level = logging.ERROR if buf_type == 'err' else logging.INFO
                     print_logger.log(level, buf.getvalue())

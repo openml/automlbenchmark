@@ -23,6 +23,6 @@ def run(dataset: Dataset, config: TaskConfig):
         test=dataset.test.path,
         output=config.output_predictions_file,
         cores=config.cores
-    ))
+    ), _live_output_=True)
 
     log.info("Predictions saved to %s", config.output_predictions_file)
