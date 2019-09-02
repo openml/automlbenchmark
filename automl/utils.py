@@ -672,7 +672,8 @@ def run_cmd(cmd, *args, **kwargs):
                 print(re.sub(r'\n$', '', line, count=1))
             elif mode == 'block':
                 print(line, end='')
-        print('\n')  # ensure that the log buffer is flushed at the end
+        print()  # ensure that the log buffer is flushed at the end
+        return None, ''.join(map(str, iter(process.stderr.readline, ''))) if process.stderr else None
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
