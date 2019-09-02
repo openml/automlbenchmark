@@ -3,7 +3,7 @@
 
 - name: __defaults__
   folds: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 100
   cores: 2
 
 - name: bioresponse
@@ -34,4 +34,23 @@
   openml_task_id: 9950
   metric:
     - logloss
+    - acc
+
+# kc1 target classes are (true, false).
+# This causes issues if the framework is using Pandas when obtaining predictions:
+#   pandas will automatically convert ("true", "false") strings to (True, False) booleans which will then be reconverted to ("True", "False") when saved to csv.
+# for those cases, Pandas should be avoided at that particular time or string type/conversion should be enforced for target predictions column.
+# cf. H2OAutoML where pandas could be avoided when reading predictions.
+- name: kc1
+  openml_task_id: 3917
+  metric:
+    - auc
+    - acc
+
+# APSFailure doesn't have its target as last column by default.
+# cf. AutoWEKA for an example to handle this case if the framework requires the target in a specific position.
+- name: APSFailure
+  openml_task_id: 168868
+  metric:
+    - auc
     - acc
