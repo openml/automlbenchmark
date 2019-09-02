@@ -3,7 +3,7 @@
 
 - name: __defaults__
   folds: 10
-  max_runtime_seconds: 100
+  max_runtime_seconds: 3600
   cores: 2
 
 - name: bioresponse
