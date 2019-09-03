@@ -4,7 +4,7 @@ HERE=$(dirname "$0")
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev
-    SUDO apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+    SUDO apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
     SUDO add-apt-repository 'deb [arch=amd64,i386] https://cran.rstudio.com/bin/linux/ubuntu bionic-cran35/'
     SUDO apt-get update
     SUDO apt-get install -y r-base r-base-dev

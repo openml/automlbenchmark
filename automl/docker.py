@@ -176,7 +176,7 @@ class DockerBenchmark(Benchmark):
             options="" if cache else "--no-cache",
             container=self._docker_image_name,
             script=self._docker_script
-        ))
+        ), _live_output_=True)
         log.info("Successfully built docker image %s.", self._docker_image_name)
 
     def _upload_docker_image(self):

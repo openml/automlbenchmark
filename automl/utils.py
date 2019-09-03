@@ -18,6 +18,7 @@ import multiprocessing as mp
 import os
 import pprint
 import queue
+import re
 import shutil
 import signal
 import stat
@@ -587,6 +588,50 @@ class TmpDir:
         # pass
 
 
+""" PROCESS """
+
+
+def run_subprocess(*popenargs, input=None, timeout=None, check=False, communicate_fn=None, **kwargs):
+    """
+    a clone of :function:`subprocess.run` which allows custom handling of communication
+    :param popenargs:
+    :param input:
+    :param timeout:
+    :param check:
+    :param communicate_fn:
+    :param kwargs:
+    :return:
+    """
+    if input is not None:
+        if 'stdin' in kwargs:
+            raise ValueError('stdin and input arguments may not both be used.')
+        kwargs['stdin'] = subprocess.PIPE
+
+    def communicate(process, input=None, timeout=None):
+        if communicate_fn:
+            out, err = communicate_fn(process, input=input, timeout=timeout)
+            process.wait()  # safety, in case not done by communicate_fn
+            return out, err
+        else:
+            return process.communicate(input=input, timeout=timeout)
+
+    with subprocess.Popen(*popenargs, **kwargs) as process:
+        try:
+            stdout, stderr = communicate(process, input, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = communicate(process)
+            raise subprocess.TimeoutExpired(process.args, timeout, output=stdout, stderr=stderr)
+        except:
+            process.kill()
+            process.wait()
+            raise
+        retcode = process.poll()
+        if check and retcode:
+            raise subprocess.CalledProcessError(retcode, process.args, output=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
+
+
 def as_cmd_args(*args, **kwargs):
     return list(filter(None,
                        []
@@ -600,9 +645,11 @@ def run_cmd(cmd, *args, **kwargs):
         input_str=None,
         capture_output=True,
         capture_error=True,
+        live_output=False,  # one of (True, 'line', 'block', False)
         output_level=logging.DEBUG,
         error_level=logging.ERROR,
-        shell=True
+        shell=True,
+        timeout=None,
     )
     for k, v in params:
         kk = '_'+k+'_'
@@ -614,14 +661,30 @@ def run_cmd(cmd, *args, **kwargs):
     str_cmd = ' '.join(full_cmd)
     log.info("Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
+
+    def live_output(process, **ignored):
+        mode = params.live_output
+        if mode is True:
+            mode = 'line'
+
+        for line in iter(process.stdout.readline, ''):
+            if mode == 'line':
+                print(re.sub(r'\n$', '', line, count=1))
+            elif mode == 'block':
+                print(line, end='')
+        print()  # ensure that the log buffer is flushed at the end
+        return None, ''.join(map(str, iter(process.stderr.readline, ''))) if process.stderr else None
+
     try:
-        completed = subprocess.run(str_cmd if params.shell else full_cmd,
+        completed = run_subprocess(str_cmd if params.shell else full_cmd,
                                    input=params.input_str,
+                                   timeout=params.timeout,
+                                   check=True,
+                                   communicate_fn=live_output if params.live_output and params.capture_output else None,
                                    # stdin=subprocess.PIPE if input is not None else None,
                                    stdout=subprocess.PIPE if params.capture_output else None,
                                    stderr=subprocess.PIPE if params.capture_error else None,
                                    shell=params.shell,
-                                   check=True,
                                    universal_newlines=True)
         if completed.stdout:
             log.log(params.output_level, completed.stdout)
@@ -644,9 +707,6 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     mod = os.stat(script).st_mode
     os.chmod(script, mod | stat.S_IEXEC)
     return run_cmd(script, *args, **kwargs)
-
-
-""" PROCESS """
 
 
 def get_thread(tid=None):
