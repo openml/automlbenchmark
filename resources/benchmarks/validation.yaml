@@ -1,11 +1,6 @@
 ---
 # a selection of tasks used to validate the benchmark app: various sizes, format (with/out nans, missing values...)
 
-- name: __defaults__
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 2
-
 - name: bioresponse
   openml_task_id: 9910
   metric:

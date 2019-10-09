@@ -1,10 +1,4 @@
 ---
-# all tasks listed here have a training dataset < 10k instances, and were trained on 2 cores for 1h
-
-- name: __defaults__
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 2
 
 - name: Australian
   openml_task_id: 146818
@@ -25,7 +19,7 @@
     - acc
 
 - name: christine
-  openml_task_id: 168765
+  openml_task_id: 168908
   metric:
     - auc
     - acc
@@ -43,19 +37,19 @@
     - acc
 
 - name: dilbert
-  openml_task_id: 168770
+  openml_task_id: 168909
   metric:
     - logloss
     - acc
 
 - name: fabert
-  openml_task_id: 168760
+  openml_task_id: 168910
   metric:
     - logloss
     - acc
 
 - name: jasmine
-  openml_task_id: 168764
+  openml_task_id: 168911
   metric:
     - auc
     - acc
@@ -91,7 +85,7 @@
     - acc
 
 - name: sylvine
-  openml_task_id: 168761
+  openml_task_id: 168912
   metric:
     - auc
     - acc
