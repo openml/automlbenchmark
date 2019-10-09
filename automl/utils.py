@@ -649,6 +649,7 @@ def run_cmd(cmd, *args, **kwargs):
         output_level=logging.DEBUG,
         error_level=logging.ERROR,
         shell=True,
+        executable=None,
         timeout=None,
     )
     for k, v in params:
@@ -685,7 +686,8 @@ def run_cmd(cmd, *args, **kwargs):
                                    stdout=subprocess.PIPE if params.capture_output else None,
                                    stderr=subprocess.PIPE if params.capture_error else None,
                                    shell=params.shell,
-                                   universal_newlines=True)
+                                   universal_newlines=True,
+                                   executable=params.executable)
         if completed.stdout:
             log.log(params.output_level, completed.stdout)
         if completed.stderr:
