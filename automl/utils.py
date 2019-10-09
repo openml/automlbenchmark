@@ -703,12 +703,16 @@ def run_cmd(cmd, *args, **kwargs):
         raise e
 
 
+def run_script(script_path, *args, **kwargs):
+    mod = os.stat(script_path).st_mode
+    os.chmod(script_path, mod | stat.S_IEXEC)
+    return run_cmd(script_path, *args, **kwargs)
+
+
 def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     here = dir_of(caller_file)
-    script = os.path.join(here, script_file)
-    mod = os.stat(script).st_mode
-    os.chmod(script, mod | stat.S_IEXEC)
-    return run_cmd(script, *args, **kwargs)
+    script_path = os.path.join(here, script_file)
+    return run_script(script_path, *args, **kwargs)
 
 
 def get_thread(tid=None):
