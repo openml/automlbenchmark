@@ -1,4 +1,4 @@
-from automl.utils import as_cmd_args, call_script_in_same_dir, dir_of
+from amlb.utils import as_cmd_args, call_script_in_same_dir, dir_of
 
 
 def setup(*args):

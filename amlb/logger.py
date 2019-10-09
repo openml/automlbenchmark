@@ -9,7 +9,7 @@ import sys
 # prevent asap other modules from defining the root logger using basicConfig
 logging.basicConfig(handlers=[logging.NullHandler()])
 
-app_logger = logging.getLogger('automl')
+app_logger = logging.getLogger('amlb')
 frameworks_logger = logging.getLogger('frameworks')
 
 logging.TRACE = logging.TRACE if hasattr(logging, 'TRACE') else 5

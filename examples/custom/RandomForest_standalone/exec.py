@@ -3,11 +3,11 @@ import logging
 import os
 import uuid
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.datautils import write_csv, read_csv
-from automl.results import save_predictions_to_file
-from automl.utils import Namespace as ns, TmpDir, dir_of, run_cmd, json_dumps, json_loads
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.datautils import write_csv, read_csv
+from amlb.results import save_predictions_to_file
+from amlb.utils import Namespace as ns, TmpDir, dir_of, run_cmd, json_dumps, json_loads
 
 log = logging.getLogger(__name__)
 

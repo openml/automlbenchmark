@@ -1,9 +1,9 @@
 import logging
 import os
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.utils import dir_of, run_cmd
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.utils import dir_of, run_cmd
 
 log = logging.getLogger(__name__)
 
