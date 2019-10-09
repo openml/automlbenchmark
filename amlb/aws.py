@@ -61,15 +61,15 @@ class AWSBenchmark(Benchmark):
                 bench.instances[iid].success = False
             bench._download_results(iid)
 
-    def __init__(self, framework_name, benchmark_name, parallel_jobs=1, region=None):
+    def __init__(self, framework_name, benchmark_name, execution_name, region=None):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param parallel_jobs:
+        :param execution_name:
         :param region:
         """
-        super().__init__(framework_name, benchmark_name, parallel_jobs)
+        super().__init__(framework_name, benchmark_name, execution_name)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
         self.region = region if region \
             else rconfig().aws.region if rconfig().aws['region'] \
@@ -207,6 +207,7 @@ class AWSBenchmark(Benchmark):
 
         job = Job('_'.join(['aws',
                             self.benchmark_name,
+                            self.execution_name,
                             '.'.join(task_names) if len(task_names) > 0 else 'all',
                             '.'.join(folds),
                             self.framework_name]))
@@ -216,9 +217,10 @@ class AWSBenchmark(Benchmark):
             resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
             job_self.instance_id = self._start_instance(
                 instance_def,
-                script_params="{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
+                script_params="{framework} {benchmark} {execution} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
                     benchmark=self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir) else "{}/{}.yaml".format(resources_root, self.benchmark_name),
+                    execution=self.execution_name,
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                     seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
@@ -932,12 +934,12 @@ class AWSRemoteBenchmark(Benchmark):
     # TODO: idea is to handle results progressively on the remote side and push results as soon as they're generated
     #   this would allow to safely run multiple tasks on single AWS instance
 
-    def __init__(self, framework_name, benchmark_name, parallel_jobs=1, region=None):
+    def __init__(self, framework_name, benchmark_name, execution_name, region=None):
         self.region = region
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._init_bucket()
         self._download_resources()
-        super().__init__(framework_name, benchmark_name, parallel_jobs)
+        super().__init__(framework_name, benchmark_name, execution_name)
 
     def run(self, save_scores=False):
         super().run(save_scores)

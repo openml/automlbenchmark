@@ -1,8 +1,5 @@
 ---
 
-- name: default
-  alias: test
-
 - name: test
   folds: 1
   max_runtime_seconds: 600

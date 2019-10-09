@@ -123,7 +123,7 @@ class Resources:
                 validated.append(framework)
             to_validate = later
 
-        log.debug("Using framework definitions:\n%s", frameworks)
+        log.debug("Available framework definitions:\n%s", frameworks)
 
         frameworks_lookup = Namespace()
         for framework in validated:
@@ -131,9 +131,35 @@ class Resources:
         return frameworks_lookup
 
     @memoize
-    def benchmark_definition(self, name):
+    def execution_resources(self, name):
+        """
+        :param name: name of the benchmark execution config as defined in the executions config file
+        :return: a Namespace object with the execution config (folds, cores, max_runtime_seconds, ...)
+        """
+        exec_config = self._executions[name.lower()]
+        if not exec_config:
+            raise ValueError("Incorrect execution resources `{}`: not listed in {}.".format(name, self.config.benchmarks.executions_file))
+        return exec_config, exec_config.name
+
+    @lazy_property
+    def _executions(self):
+        executions_file = self.config.benchmarks.executions_file
+        log.info("Loading benchmark executions resources from %s.", executions_file)
+        if not isinstance(executions_file, list):
+            executions_file = [executions_file]
+
+        executions = Namespace()
+        for ff in executions_file:
+            executions + config_load(ff)
+
+        log.debug("Available benchmark execution resources:\n%s", executions)
+        return executions
+
+    @memoize
+    def benchmark_definition(self, name, defaults=None):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
+        :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
         benchmark_name = name
@@ -158,11 +184,8 @@ class Resources:
 
         log.info("Loading benchmark definitions from %s.", benchmark_file)
         tasks = config_load(benchmark_file)
-        try:
-            defaults = next(task for task in tasks if task.name == '__defaults__')
-            tasks = [task for task in tasks if task is not defaults]
-        except StopIteration:
-            defaults = None
+        defaults = next((task for task in tasks if task.name == '__defaults__'), defaults)
+        tasks = [task for task in tasks if task is not defaults]
 
         for task in tasks:
             task % defaults   # add missing keys from local defaults
@@ -171,7 +194,7 @@ class Resources:
         self._validate_task(defaults, lenient=True)
         defaults.enabled = False
         tasks.append(defaults)
-        log.debug("Using benchmark definition:\n%s", tasks)
+        log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_file
 
     def _validate_framework(self, framework):
@@ -247,10 +270,7 @@ class Resources:
             elif task.cores > 0:
                 supported_cores = list(map(int, Namespace.dict(i_map).keys() - {'default'}))
                 supported_cores.sort()
-                try:
-                    cores = next(c for c in supported_cores if c >= task.cores)
-                except StopIteration:
-                    cores = 'default'
+                cores = next((c for c in supported_cores if c >= task.cores), 'default')
                 i_size = i_map[str(cores)]
             else:
                 i_size = i_map.default

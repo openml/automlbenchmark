@@ -32,14 +32,14 @@ class DockerBenchmark(Benchmark):
             tag='-'.join([di.tag if di.tag else framework_def.version.lower(), rget().project_info.branch])
         )
 
-    def __init__(self, framework_name, benchmark_name, parallel_jobs=1):
+    def __init__(self, framework_name, benchmark_name, execution_name):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param parallel_jobs:
+        :param execution_name:
         """
-        super().__init__(framework_name, benchmark_name, parallel_jobs)
+        super().__init__(framework_name, benchmark_name, execution_name)
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
@@ -86,9 +86,10 @@ class DockerBenchmark(Benchmark):
         folds = [] if folds is None else [str(f) for f in folds]
 
         def _run():
-            self._start_docker("{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
+            self._start_docker("{framework} {benchmark} {execution} {task_param} {folds_param} -Xseed={seed}".format(
                 framework=self.framework_name,
                 benchmark=self.benchmark_name,
+                execution=self.execution_name,
                 task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                 seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
@@ -97,6 +98,7 @@ class DockerBenchmark(Benchmark):
 
         job = Job('_'.join(['docker',
                             self.benchmark_name,
+                            self.execution_name,
                             '.'.join(task_names) if len(task_names) > 0 else 'all',
                             '.'.join(folds),
                             self.framework_name]))
