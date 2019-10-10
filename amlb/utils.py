@@ -649,6 +649,7 @@ def run_cmd(cmd, *args, **kwargs):
         output_level=logging.DEBUG,
         error_level=logging.ERROR,
         shell=True,
+        executable=None,
         timeout=None,
     )
     for k, v in params:
@@ -685,7 +686,8 @@ def run_cmd(cmd, *args, **kwargs):
                                    stdout=subprocess.PIPE if params.capture_output else None,
                                    stderr=subprocess.PIPE if params.capture_error else None,
                                    shell=params.shell,
-                                   universal_newlines=True)
+                                   universal_newlines=True,
+                                   executable=params.executable)
         if completed.stdout:
             log.log(params.output_level, completed.stdout)
         if completed.stderr:
@@ -701,12 +703,16 @@ def run_cmd(cmd, *args, **kwargs):
         raise e
 
 
+def run_script(script_path, *args, **kwargs):
+    mod = os.stat(script_path).st_mode
+    os.chmod(script_path, mod | stat.S_IEXEC)
+    return run_cmd(script_path, *args, **kwargs)
+
+
 def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     here = dir_of(caller_file)
-    script = os.path.join(here, script_file)
-    mod = os.stat(script).st_mode
-    os.chmod(script, mod | stat.S_IEXEC)
-    return run_cmd(script, *args, **kwargs)
+    script_path = os.path.join(here, script_file)
+    return run_script(script_path, *args, **kwargs)
 
 
 def get_thread(tid=None):
