@@ -4,11 +4,11 @@ import os
 import sys
 
 # prevent asap other modules from defining the root logger using basicConfig
-import automl.logger
+import amlb.logger
 
-import automl
-from automl.utils import Namespace as ns, config_load, datetime_iso, str2bool
-from automl import log, AutoMLError
+import amlb
+from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool
+from amlb import log, AutoMLError
 
 
 parser = argparse.ArgumentParser()
@@ -65,16 +65,16 @@ sid = (args.session if args.session is not None
                                      os.path.splitext(os.path.basename(args.benchmark))[0]])
                               .lower(),
                            now_str))
-log_dir = automl.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
-                                       session=sid,
-                                       subdirs='logs' if args.outdir else '',
-                                       create=True)['logs' if args.outdir else 'session']
+log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
+                                     session=sid,
+                                     subdirs='logs' if args.outdir else '',
+                                     create=True)['logs' if args.outdir else 'session']
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
     logging.TRACE = logging.INFO
-automl.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
-                    root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
-                    root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
+amlb.logger.setup(log_file=os.path.join(log_dir, '{script}_{now}.log'.format(script=script_name, now=now_str)),
+                  root_file=os.path.join(log_dir, '{script}_{now}_full.log'.format(script=script_name, now=now_str)),
+                  root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
 
 log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
@@ -98,18 +98,18 @@ if args.mode != 'local':
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
-automl.resources.from_configs(config, config_user, config_args)
+amlb.resources.from_configs(config, config_user, config_args)
 
 try:
     if args.mode == 'local':
-        bench = automl.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+        bench = amlb.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
     elif args.mode == 'docker':
-        bench = automl.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+        bench = amlb.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
     elif args.mode == 'aws':
-        bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
-        # bench = automl.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+        bench = amlb.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+        # bench = amlb.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     # elif args.mode == "aws-remote":
-    #     bench = automl.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+    #     bench = amlb.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
     else:
         raise ValueError("`mode` must be one of 'aws', 'docker' or 'local'.")
 
@@ -119,7 +119,7 @@ try:
     if not args.keep_scores and args.mode != 'local':
         log.warning("`keep_scores` parameter is currently ignored in %s mode, scores are always saved in this mode.", args.mode)
 
-    bench.setup(automl.Benchmark.SetupMode[args.setup])
+    bench.setup(amlb.Benchmark.SetupMode[args.setup])
     if args.setup != 'only':
         res = bench.run(args.task, args.fold)
 except (ValueError, AutoMLError) as e:

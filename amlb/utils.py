@@ -5,7 +5,7 @@
 important
     This module can be imported by any other module (especially framework integration modules),
     therefore, it should have as few external dependencies as possible,
-    and should have no dependency to any other **automl** module.
+    and should have no dependency to any other **amlb** module.
 """
 from ast import literal_eval
 from concurrent.futures import ThreadPoolExecutor

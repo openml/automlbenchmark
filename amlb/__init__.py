@@ -1,5 +1,5 @@
 """
-automl entrypoint package.
+amlb entrypoint package.
 """
 
 from .logger import app_logger as log

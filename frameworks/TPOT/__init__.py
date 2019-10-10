@@ -1,6 +1,6 @@
 import sys
 
-from automl.utils import call_in_subprocess, call_script_in_same_dir, dir_of
+from amlb.utils import call_in_subprocess, call_script_in_same_dir, dir_of
 
 
 def setup(*args):

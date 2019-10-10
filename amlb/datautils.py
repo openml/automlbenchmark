@@ -5,7 +5,7 @@ important
     This is (and should remain) the only non-framework module with dependencies to libraries like pandas or sklearn
     until replacement by simpler/lightweight versions to avoid potential version conflicts with libraries imported by benchmark frameworks.
     Also, this module is intended to be imported by frameworks integration modules,
-    therefore, it should have no dependency to any other **automl** module outside **utils**.
+    therefore, it should have no dependency to any other **amlb** module outside **utils**.
 """
 import logging
 import os

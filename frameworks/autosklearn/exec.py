@@ -11,10 +11,10 @@ os.environ['MKL_NUM_THREADS'] = '1'
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.results import save_predictions_to_file
-from automl.utils import Timer, path_from_split, split_path, system_memory_mb
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.results import save_predictions_to_file
+from amlb.utils import Timer, path_from_split, split_path, system_memory_mb
 
 log = logging.getLogger(__name__)
 

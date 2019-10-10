@@ -1,11 +1,11 @@
 import logging
 import sys
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.datautils import Encoder, impute
-from automl.results import NoResultError, save_predictions_to_file
-from automl.utils import Timer, dir_of
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.datautils import Encoder, impute
+from amlb.results import NoResultError, save_predictions_to_file
+from amlb.utils import Timer, dir_of
 
 sys.path.append("{}/lib/oboe/automl".format(dir_of(__file__)))
 from auto_learner import AutoLearner
