@@ -19,8 +19,8 @@ from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecut
 from .openml import Openml
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, datetime_iso, flatten, lazy_property, profile, repr_def, run_cmd, \
-    str2bool, system_cores, system_memory_mb, system_volume_mb, touch
+from .utils import Namespace as ns, OSMonitoring, datetime_iso, flatten, lazy_property, profile, repr_def, \
+    run_cmd, run_script, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -80,16 +80,22 @@ class Benchmark:
         Delegates specific setup to the framework module
         """
         Benchmark.task_loader = Openml(api_key=rconfig().openml.apikey, cache_dir=rconfig().input_dir)
-        if mode == Benchmark.SetupMode.skip or not hasattr(self.framework_module, 'setup'):
-            return
 
-        if mode == Benchmark.SetupMode.auto and self._setup_done():
+        if mode == Benchmark.SetupMode.skip or mode == Benchmark.SetupMode.auto and self._setup_done():
             return
 
         log.info("Setting up framework {}.".format(self.framework_name))
-        self.framework_module.setup(self.framework_def.setup_args)
+
+        if hasattr(self.framework_module, 'setup'):
+            self.framework_module.setup(self.framework_def.setup_args)
+
+        if self.framework_def.setup_script is not None:
+            run_script(self.framework_def.setup_script, _live_output_=True)
+
         if self.framework_def.setup_cmd is not None:
-            run_cmd(self.framework_def.setup_cmd, _live_output_=True)
+            print(self.framework_def.setup_cmd)
+            run_cmd('\n'.join(self.framework_def.setup_cmd), _executable_="/bin/bash", _live_output_=True)
+
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
 

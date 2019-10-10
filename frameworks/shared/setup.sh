@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
-shopt -s expand_aliases
+#shopt -s expand_aliases
+
+SUDO() {
+  if [[ $EUID == 0 ]]; then
+      "$@"
+  else
+      sudo "$@"
+  fi
+}
+
 if [[ -x "$(command -v /venvs/bench/bin/pip3)" ]]; then
-    alias PIP='/venvs/bench/bin/pip3'
+    pip_exec=/venvs/bench/bin/pip3
 else
-    alias PIP='pip3'
+    pip_exec=pip3
 fi
 
-if [[ $EUID == 0 ]]; then
-    alias SUDO=''
-else
-    alias SUDO='sudo'
-fi
+PIP() {
+  $pip_exec "$@"
+}
 
 #if [[ -x "$(command -v /venvs/bench/bin/activate)" ]]; then
 #    /venvs/bench/bin/activate
 #fi
-echo "$(command -v PIP)"
+#command -v PIP
+echo "PIP=$pip_exec"
 PIP install --no-cache-dir -r requirements.txt
