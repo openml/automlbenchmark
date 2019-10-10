@@ -2,25 +2,13 @@
 
 - name: Airlines
   openml_task_id: 189354
-  metric:
-    - auc
-    - acc
 
 - name: Albert
   openml_task_id: 189356
-  metric:
-    - auc
-    - acc
 
 - name: Covertype
   openml_task_id: 7593
-  metric:
-    - logloss
-    - acc
 
 - name: Dionis
   openml_task_id: 189355
-  metric:
-    - logloss
-    - acc
 

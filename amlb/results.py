@@ -12,7 +12,7 @@ import re
 import numpy as np
 from numpy import nan, sort
 
-from .data import Dataset, Feature
+from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
@@ -250,7 +250,8 @@ class TaskResult:
         fold = int(d['fold'])
         result = cls.load_predictions(path)
         task_result = cls(task_name, fold)
-        return task_result.compute_scores(framework_name, result.metrics, result=result)
+        metrics = rconfig().benchmarks.metrics.get(result.type.name)
+        return task_result.compute_scores(framework_name, metrics, result=result)
 
     def __init__(self, task_def, fold: int, predictions_dir=None):
         self.task = task_def
@@ -341,7 +342,7 @@ class ClassificationResult(Result):
         self.classes = self.df.columns[:-2].values.astype(str, copy=False)
         self.probabilities = self.df.iloc[:, :-2].values.astype(float, copy=False)
         self.target = Feature(0, 'class', 'categorical', self.classes, is_target=True)
-        self.type = 'binomial' if len(self.classes) == 2 else 'multinomial'
+        self.type = DatasetType.binary if len(self.classes) == 2 else DatasetType.multiclass
         self.truth = self._autoencode(self.truth.astype(str, copy=False))
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))
 
@@ -353,7 +354,7 @@ class ClassificationResult(Result):
         pass
 
     def auc(self):
-        if self.type != 'binomial':
+        if self.type != DatasetType.binary:
             # raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
             log.warning("AUC metric is only supported for binary classification: %s.", self.classes)
             return nan
@@ -380,7 +381,7 @@ class RegressionResult(Result):
         super().__init__(predictions_df, info)
         self.truth = self.truth.astype(float, copy=False)
         self.target = Feature(0, 'target', 'real', is_target=True)
-        self.type = 'regression'
+        self.type = DatasetType.regression
 
     def mae(self):
         return float(mean_absolute_error(self.truth, self.predictions))

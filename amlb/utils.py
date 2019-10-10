@@ -8,6 +8,7 @@ important
     and should have no dependency to any other **amlb** module.
 """
 from ast import literal_eval
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 import datetime as dt
 import fnmatch
@@ -162,6 +163,14 @@ def to_gb(size_in_bytes):
 
 def noop():
     pass
+
+
+def as_list(*args):
+    if len(args) == 0:
+        return list()
+    elif len(args) == 1 and isinstance(args[0], Iterable):
+        return list(args[0])
+    return list(args)
 
 
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):

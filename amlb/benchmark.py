@@ -17,9 +17,10 @@ import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
+from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, datetime_iso, flatten, lazy_property, profile, repr_def, \
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
     run_cmd, run_script, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
@@ -367,7 +368,7 @@ class BenchmarkTask:
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task_config)
         task_config.estimate_system_params()
-        task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
+        task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params
 
@@ -377,6 +378,10 @@ class BenchmarkTask:
 
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
+        if task_config.metrics is None:
+            task_config.metrics = as_list(rconfig().benchmarks.metrics[self._dataset.type.name])
+            task_config.metric = task_config.metrics[0]
+
         result = meta_result = None
         try:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, framework_name, repr_def(task_config))

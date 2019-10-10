@@ -149,13 +149,19 @@ class Resources:
             executions_file = [executions_file]
 
         executions = Namespace()
-        for ff in executions_file:
-            executions + config_load(ff)
+        for ef in executions_file:
+            executions + config_load(ef)
+
+        for name, ex in executions:
+            ex.name = name
 
         log.debug("Available benchmark execution resources:\n%s", executions)
-        return executions
+        ex_lookup = Namespace()
+        for name, ex in executions:
+            ex_lookup[name.lower()] = ex
+        return ex_lookup
 
-    @memoize
+    # @memoize
     def benchmark_definition(self, name, defaults=None):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
@@ -243,7 +249,7 @@ class Resources:
 
     def _validate_task(self, task, lenient=False):
         missing = []
-        for conf in ['name', 'openml_task_id', 'metric']:
+        for conf in ['name', 'openml_task_id']:
             if task[conf] is None:
                 missing.append(conf)
         if not lenient and len(missing) > 0:
@@ -260,6 +266,10 @@ class Resources:
                 else "openml.org/d/{}".format(task.openml_dataset_id) if task['openml_dataset_id'] is not None \
                 else task.dataset if task['dataset'] is not None \
                 else None
+
+        conf = 'metric'
+        if task[conf] is None:
+            task[conf] = None
 
         conf = 'ec2_instance_type'
         if task[conf] is None:

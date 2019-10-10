@@ -1,28 +1,28 @@
 ---
 
-- name: test
+test:
   folds: 1
   max_runtime_seconds: 600
   cores: 4
 
-- name: 1h4c
+1h4c:
   folds: 10
   max_runtime_seconds: 3600
   cores: 4
 
-- name: 1h8c
+1h8c:
   folds: 10
   max_runtime_seconds: 3600
   cores: 8
   min_vol_size_mb: 16384
 
-- name: 4h8c
+4h8c:
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
   min_vol_size_mb: 65536
 
-- name: 8h8c
+8h8c:
   folds: 10
   max_runtime_seconds: 28800
   cores: 8

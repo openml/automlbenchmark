@@ -2,6 +2,3 @@
 
 - name: credit-g
   openml_task_id: 31
-  metric:
-    - auc
-    - acc

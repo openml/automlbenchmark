@@ -11,6 +11,7 @@
 - **Feature** provides metadata for a given feature/column as well as encoding functions.
 """
 from abc import ABC, abstractmethod
+from enum import Enum
 import logging
 from typing import List
 
@@ -143,10 +144,21 @@ class Datasplit(ABC):
         clear_cache(self, properties)
 
 
+DatasetType = Enum('DatasetType', 'binary multiclass regression')
+
 class Dataset(ABC):
 
     def __init__(self):
         super().__init__()
+
+    @property
+    @abstractmethod
+    def type(self) -> DatasetType:
+        """
+
+        :return:
+        """
+        pass
 
     @property
     @abstractmethod
