@@ -8,6 +8,7 @@ import logging
 import math
 import os
 import re
+import statistics
 
 import numpy as np
 from numpy import nan, sort
@@ -362,6 +363,17 @@ class ClassificationResult(Result):
 
     def cm(self):
         return confusion_matrix(self.truth, self.predictions)
+
+    def _per_class_errors(self):
+        return [(s-d)/s for s, d in ((sum(r), r[i]) for i, r in enumerate(self.cm()))]
+
+    def mean_pce(self):
+        """mean per class error"""
+        return statistics.mean(self._per_class_errors())
+
+    def max_pce(self):
+        """max per class error"""
+        return max(self._per_class_errors())
 
     def f1(self):
         return float(f1_score(self.truth, self.predictions))
