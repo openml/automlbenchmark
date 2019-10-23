@@ -24,8 +24,9 @@ There are many more AutoML frameworks, and unfortunately we could not yet evalua
 While we hope to cover them in the comparison in the future, for now we will
 Some other frameworks worth mentioning are, again in alphabetical order:
 
-- [oboe](#oboe)
 - [autoxgboost](#autoxgboost)
+- [GAMA](#gama)
+- [oboe](#oboe)
 - [hyperopt-sklearn](#hyperopt-sklearn)
 - [ML-Plan](#ml-plan)
 
@@ -153,6 +154,46 @@ Randal S. Olson, Nathan Bartley, Ryan J. Urbanowicz, and Jason H. Moore (2016).
 
 # Other AutoML Frameworks
 
+## autoxgboost
+[source](https://github.com/ja-thomas/autoxgboost) |
+[documentation](https://github.com/ja-thomas/autoxgboost/blob/master/poster_2018.pdf) |
+R |
+Optimization: Bayesian Optimization | -
+
+> autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO.
+
+Autoxgboost is different from most frameworks on this page in that it does not search over multiple learning algorithms.
+Instead, it restricts itself to finding a good hyperparameter configuration for xgboost.
+The exception to this is a preprocessing step for categorical variables, where the specific encoding strategy to use is tuned as well.
+
+#### Papers
+
+Janek Thomas, Stefan Coors and Bernd Bischl (2018). 
+[Automatic Gradient Boosting](https://arxiv.org/pdf/1807.03873v2.pdf)
+*International Workshop on Automatic Machine Learning at ICML 2018*
+
+## GAMA 
+[source](https://github.com/PGijsbers/gama) |
+[documentation](https://pgijsbers.github.io/gama/) |
+Python |
+Optimization: Configurable |
+License MIT
+
+> GAMA is an AutoML tool for end-users and AutoML researchers with a configurable AutoML pipeline.
+
+GAMA is a new framework under active development.
+GAMA supports AutoML researchers through a configurable AutoML pipeline, extensive logging and visualization of the logs.
+The configurable AutoML pipeline allows selection of the optimization and post-processing algorithms.
+
+By default GAMA searches over linear machine learning pipelines and create an ensemble of them as a post-processing step.
+Currently pipelines can be optimized with an asynchronous evolutionary algorithm or [ASHA](https://arxiv.org/abs/1810.05934).
+
+#### Papers
+
+Pieter Gijsbers, Joaquin Vanschoren (2019).
+[GAMA: Genetic Automated Machine learning Assistant](https://joss.theoj.org/papers/10.21105/joss.01132).
+*Journal of Open Source Software, 4(33), 1132*
+
 ## OBOE 
 [source](https://github.com/udellgroup/oboe) |
 [documentation](https://github.com/udellgroup/oboe) |
@@ -174,24 +215,6 @@ With collaborative filtering they estimate which algorithms are likely to do wel
 Chengrun Yang, Yuji Akimoto, Dae Won Kim, Madeleine Udell (2018).
 [OBOE: Collaborative Filtering for AutoML Initialization](https://arxiv.org/pdf/1808.03233.pdf).
 *arXiv preprint*.
-
-## autoxgboost
-[source](https://github.com/ja-thomas/autoxgboost) |
-[documentation](https://github.com/ja-thomas/autoxgboost/blob/master/poster_2018.pdf) |
-R |
-Optimization: Bayesian Optimization | -
-
-> autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO.
-
-Autoxgboost is different from most frameworks on this page in that it does not search over multiple learning algorithms.
-Instead, it restricts itself to finding a good hyperparameter configuration for xgboost.
-The exception to this is a preprocessing step for categorical variables, where the specific encoding strategy to use is tuned as well.
-
-#### Papers
-
-Janek Thomas, Stefan Coors and Bernd Bischl (2018). 
-[Automatic Gradient Boosting](https://arxiv.org/pdf/1807.03873v2.pdf)
-*International Workshop on Automatic Machine Learning at ICML 2018*
 
 ## hyperopt-sklearn 
 [source](https://github.com/hyperopt/hyperopt-sklearn) |
