@@ -26,9 +26,9 @@ Some other frameworks worth mentioning are, again in alphabetical order:
 
 - [autoxgboost](#autoxgboost)
 - [GAMA](#gama)
-- [oboe](#oboe)
 - [hyperopt-sklearn](#hyperopt-sklearn)
 - [ML-Plan](#ml-plan)
+- [oboe](#oboe)
 
 For completeness, the baseline methods are also described:
 
@@ -194,28 +194,6 @@ Pieter Gijsbers, Joaquin Vanschoren (2019).
 [GAMA: Genetic Automated Machine learning Assistant](https://joss.theoj.org/papers/10.21105/joss.01132).
 *Journal of Open Source Software, 4(33), 1132*
 
-## OBOE 
-[source](https://github.com/udellgroup/oboe) |
-[documentation](https://github.com/udellgroup/oboe) |
-Python |
-Optimization: Collaborative Filtering |
-License N/A
-
-> Oboe is a data-driven Python algorithmic system for automated machine learning, and is based on matrix factorization and classical experiment design. 
-
-OBOE is still in early stages of development.
-It focuses on finding a good initial set of pipelines from which to start further optimization.
-The focus is on time-constrained model selection and hyperparameter tuning, using meta-learning to find good pipelines.
-
-OBOE searches for a good set of algorithm configurations to create an ensemble from, using meta-learning.
-With collaborative filtering they estimate which algorithms are likely to do well on the new dataset.
-
-#### Papers
-
-Chengrun Yang, Yuji Akimoto, Dae Won Kim, Madeleine Udell (2018).
-[OBOE: Collaborative Filtering for AutoML Initialization](https://arxiv.org/pdf/1808.03233.pdf).
-*arXiv preprint*.
-
 ## hyperopt-sklearn 
 [source](https://github.com/hyperopt/hyperopt-sklearn) |
 [documentation](http://hyperopt.github.io/hyperopt-sklearn/) |
@@ -256,6 +234,28 @@ Felix Mohr, Marcel Wever and Eyke Hüllermeier (2018).
 Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
 [Automated Multi-Label Classification based on ML-Plan](https://arxiv.org/abs/1811.04060)
 *arXiv preprint*
+
+## OBOE 
+[source](https://github.com/udellgroup/oboe) |
+[documentation](https://github.com/udellgroup/oboe) |
+Python |
+Optimization: Collaborative Filtering |
+License N/A
+
+> Oboe is a data-driven Python algorithmic system for automated machine learning, and is based on matrix factorization and classical experiment design. 
+
+OBOE is still in early stages of development.
+It focuses on finding a good initial set of pipelines from which to start further optimization.
+The focus is on time-constrained model selection and hyperparameter tuning, using meta-learning to find good pipelines.
+
+OBOE searches for a good set of algorithm configurations to create an ensemble from, using meta-learning.
+With collaborative filtering they estimate which algorithms are likely to do well on the new dataset.
+
+#### Papers
+
+Chengrun Yang, Yuji Akimoto, Dae Won Kim, Madeleine Udell (2018).
+[OBOE: Collaborative Filtering for AutoML Initialization](https://arxiv.org/pdf/1808.03233.pdf).
+*arXiv preprint*.
 
 
 ## Baselines
