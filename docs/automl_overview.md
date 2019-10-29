@@ -24,10 +24,11 @@ There are many more AutoML frameworks, and unfortunately we could not yet evalua
 While we hope to cover them in the comparison in the future, for now we will
 Some other frameworks worth mentioning are, again in alphabetical order:
 
-- [oboe](#oboe)
 - [autoxgboost](#autoxgboost)
+- [GAMA](#gama)
 - [hyperopt-sklearn](#hyperopt-sklearn)
 - [ML-Plan](#ml-plan)
+- [oboe](#oboe)
 
 For completeness, the baseline methods are also described:
 
@@ -153,28 +154,6 @@ Randal S. Olson, Nathan Bartley, Ryan J. Urbanowicz, and Jason H. Moore (2016).
 
 # Other AutoML Frameworks
 
-## OBOE 
-[source](https://github.com/udellgroup/oboe) |
-[documentation](https://github.com/udellgroup/oboe) |
-Python |
-Optimization: Collaborative Filtering |
-License N/A
-
-> Oboe is a data-driven Python algorithmic system for automated machine learning, and is based on matrix factorization and classical experiment design. 
-
-OBOE is still in early stages of development.
-It focuses on finding a good initial set of pipelines from which to start further optimization.
-The focus is on time-constrained model selection and hyperparameter tuning, using meta-learning to find good pipelines.
-
-OBOE searches for a good set of algorithm configurations to create an ensemble from, using meta-learning.
-With collaborative filtering they estimate which algorithms are likely to do well on the new dataset.
-
-#### Papers
-
-Chengrun Yang, Yuji Akimoto, Dae Won Kim, Madeleine Udell (2018).
-[OBOE: Collaborative Filtering for AutoML Initialization](https://arxiv.org/pdf/1808.03233.pdf).
-*arXiv preprint*.
-
 ## autoxgboost
 [source](https://github.com/ja-thomas/autoxgboost) |
 [documentation](https://github.com/ja-thomas/autoxgboost/blob/master/poster_2018.pdf) |
@@ -192,6 +171,28 @@ The exception to this is a preprocessing step for categorical variables, where t
 Janek Thomas, Stefan Coors and Bernd Bischl (2018). 
 [Automatic Gradient Boosting](https://arxiv.org/pdf/1807.03873v2.pdf)
 *International Workshop on Automatic Machine Learning at ICML 2018*
+
+## GAMA 
+[source](https://github.com/PGijsbers/gama) |
+[documentation](https://pgijsbers.github.io/gama/) |
+Python |
+Optimization: Configurable |
+License MIT
+
+> GAMA is an AutoML tool for end-users and AutoML researchers with a configurable AutoML pipeline.
+
+GAMA is a new framework under active development.
+GAMA supports AutoML researchers through a configurable AutoML pipeline, extensive logging and visualization of the logs.
+The configurable AutoML pipeline allows selection of the optimization and post-processing algorithms.
+
+By default GAMA searches over linear machine learning pipelines and create an ensemble of them as a post-processing step.
+Currently pipelines can be optimized with an asynchronous evolutionary algorithm or [ASHA](https://arxiv.org/abs/1810.05934).
+
+#### Papers
+
+Pieter Gijsbers, Joaquin Vanschoren (2019).
+[GAMA: Genetic Automated Machine learning Assistant](https://joss.theoj.org/papers/10.21105/joss.01132).
+*Journal of Open Source Software, 4(33), 1132*
 
 ## hyperopt-sklearn 
 [source](https://github.com/hyperopt/hyperopt-sklearn) |
@@ -233,6 +234,28 @@ Felix Mohr, Marcel Wever and Eyke Hüllermeier (2018).
 Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
 [Automated Multi-Label Classification based on ML-Plan](https://arxiv.org/abs/1811.04060)
 *arXiv preprint*
+
+## OBOE 
+[source](https://github.com/udellgroup/oboe) |
+[documentation](https://github.com/udellgroup/oboe) |
+Python |
+Optimization: Collaborative Filtering |
+License N/A
+
+> Oboe is a data-driven Python algorithmic system for automated machine learning, and is based on matrix factorization and classical experiment design. 
+
+OBOE is still in early stages of development.
+It focuses on finding a good initial set of pipelines from which to start further optimization.
+The focus is on time-constrained model selection and hyperparameter tuning, using meta-learning to find good pipelines.
+
+OBOE searches for a good set of algorithm configurations to create an ensemble from, using meta-learning.
+With collaborative filtering they estimate which algorithms are likely to do well on the new dataset.
+
+#### Papers
+
+Chengrun Yang, Yuji Akimoto, Dae Won Kim, Madeleine Udell (2018).
+[OBOE: Collaborative Filtering for AutoML Initialization](https://arxiv.org/pdf/1808.03233.pdf).
+*arXiv preprint*.
 
 
 ## Baselines

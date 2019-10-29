@@ -1,4 +1,4 @@
-from automl.utils import call_in_subprocess
+from amlb.utils import call_in_subprocess
 
 
 def run(*args, **kwargs):

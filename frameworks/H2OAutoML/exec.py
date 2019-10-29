@@ -4,11 +4,11 @@ import os
 import h2o
 from h2o.automl import H2OAutoML
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.datautils import to_data_frame, write_csv
-from automl.results import NoResultError, save_predictions_to_file
-from automl.utils import Timer, split_path, path_from_split
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.datautils import to_data_frame, write_csv
+from amlb.results import NoResultError, save_predictions_to_file
+from amlb.utils import Timer, split_path, path_from_split
 
 log = logging.getLogger(__name__)
 

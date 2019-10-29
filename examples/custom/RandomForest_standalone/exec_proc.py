@@ -7,8 +7,8 @@ import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
 sys.path.append(".")
-from automl.datautils import impute, read_csv, write_csv
-from automl.utils import json_dumps, json_loads, Namespace as ns
+from amlb.datautils import impute, read_csv, write_csv
+from amlb.utils import json_dumps, json_loads, Namespace as ns
 
 log = logging.getLogger(__name__)
 

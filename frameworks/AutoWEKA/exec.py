@@ -2,11 +2,11 @@ import logging
 import math
 import os
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.datautils import reorder_dataset
-from automl.results import NoResultError, save_predictions_to_file
-from automl.utils import dir_of, path_from_split, run_cmd, split_path, Timer
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.datautils import reorder_dataset
+from amlb.results import NoResultError, save_predictions_to_file
+from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
 
 log = logging.getLogger(__name__)
 

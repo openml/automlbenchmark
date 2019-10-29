@@ -18,11 +18,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.datautils import Imputer, impute
-from automl.results import save_predictions_to_file
-from automl.utils import Timer
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.datautils import Imputer, impute
+from amlb.results import save_predictions_to_file
+from amlb.utils import Timer
 
 log = logging.getLogger(__name__)
 

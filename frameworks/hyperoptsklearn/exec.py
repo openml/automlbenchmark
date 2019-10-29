@@ -5,11 +5,11 @@ import signal
 import sys
 import tempfile as tmp
 
-from automl.benchmark import TaskConfig
-from automl.data import Dataset
-from automl.datautils import Encoder, impute
-from automl.results import save_predictions_to_file
-from automl.utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
+from amlb.benchmark import TaskConfig
+from amlb.data import Dataset
+from amlb.datautils import Encoder, impute
+from amlb.results import save_predictions_to_file
+from amlb.utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
