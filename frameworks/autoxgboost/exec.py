@@ -27,7 +27,7 @@ def run(dataset: Dataset, config: TaskConfig):
         output = config.output_predictions_file,
         cores = config.cores,
         time_budget = config.max_runtime_seconds
-      ))
+      ), _live_output_=True)
 
     log.info("Predictions saved to %s", config.output_predictions_file)
 
