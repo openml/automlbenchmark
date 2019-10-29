@@ -1,4 +1,4 @@
-from amlbl.utils import call_script_in_same_dir, dir_of
+from ambl.utils import call_script_in_same_dir, dir_of
 
 
 def setup(*args):
