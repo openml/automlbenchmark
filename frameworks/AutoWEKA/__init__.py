@@ -1,8 +1,8 @@
 from amlb.utils import call_script_in_same_dir, dir_of
 
 
-def setup(*args):
-    call_script_in_same_dir(__file__, "setup.sh", *args)
+def setup(*args, **kwargs):
+    call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
 
 
 def run(*args, **kwargs):

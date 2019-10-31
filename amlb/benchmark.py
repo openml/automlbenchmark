@@ -87,7 +87,7 @@ class Benchmark:
         log.info("Setting up framework {}.".format(self.framework_name))
 
         if hasattr(self.framework_module, 'setup'):
-            self.framework_module.setup(self.framework_def.setup_args)
+            self.framework_module.setup(self.framework_def.setup_args, _live_output_=True)
 
         if self.framework_def.setup_script is not None:
             run_script(self.framework_def.setup_script, _live_output_=True)
