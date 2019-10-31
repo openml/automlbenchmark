@@ -85,3 +85,11 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
+GAMA:
+  version: '19.8.0'
+  project: https://github.com/PGijsbers/gama
+#  params:
+#    max_eval_time_mins: 2
+#    population_size: 25
+#    verbosity: 2
+
