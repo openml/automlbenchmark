@@ -131,35 +131,35 @@ class Resources:
         return frameworks_lookup
 
     @memoize
-    def execution_resources(self, name):
+    def constraint_definition(self, name):
         """
-        :param name: name of the benchmark execution config as defined in the executions config file
-        :return: a Namespace object with the execution config (folds, cores, max_runtime_seconds, ...)
+        :param name: name of the benchmark constraint definition as defined in the constraints file
+        :return: a Namespace object with the constraint config (folds, cores, max_runtime_seconds, ...) for the current benchmamk run.
         """
-        exec_config = self._executions[name.lower()]
-        if not exec_config:
-            raise ValueError("Incorrect execution resources `{}`: not listed in {}.".format(name, self.config.benchmarks.executions_file))
-        return exec_config, exec_config.name
+        constraint_config = self._constraints[name.lower()]
+        if not constraint_config:
+            raise ValueError("Incorrect constraint definition `{}`: not listed in {}.".format(name, self.config.benchmarks.constraints_file))
+        return constraint_config, constraint_config.name
 
     @lazy_property
-    def _executions(self):
-        executions_file = self.config.benchmarks.executions_file
-        log.info("Loading benchmark executions resources from %s.", executions_file)
-        if not isinstance(executions_file, list):
-            executions_file = [executions_file]
+    def _constraints(self):
+        constraints_file = self.config.benchmarks.constraints_file
+        log.info("Loading benchmark constraint definitions from %s.", constraints_file)
+        if not isinstance(constraints_file, list):
+            constraints_file = [constraints_file]
 
-        executions = Namespace()
-        for ef in executions_file:
-            executions + config_load(ef)
+        constraints = Namespace()
+        for ef in constraints_file:
+            constraints + config_load(ef)
 
-        for name, ex in executions:
-            ex.name = name
+        for name, c in constraints:
+            c.name = name
 
-        log.debug("Available benchmark execution resources:\n%s", executions)
-        ex_lookup = Namespace()
-        for name, ex in executions:
-            ex_lookup[name.lower()] = ex
-        return ex_lookup
+        log.debug("Available benchmark constraints:\n%s", constraints)
+        constraints_lookup = Namespace()
+        for name, c in constraints:
+            constraints_lookup[name.lower()] = c
+        return constraints_lookup
 
     # @memoize
     def benchmark_definition(self, name, defaults=None):

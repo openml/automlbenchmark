@@ -30,7 +30,7 @@ frameworks:
 
 benchmarks:
   definition_dir: '{root}/resources/benchmarks'
-  executions_file: '{root}/resources/executions.yaml'
+  constraints_file: '{root}/resources/constraints.yaml'
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal

@@ -44,17 +44,17 @@ class Benchmark:
     task_loader = None
     SetupMode = Enum('SetupMode', 'auto skip force only')
 
-    def __init__(self, framework_name: str, benchmark_name: str, execution_name: str):
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param execution_name:
+        :param constraint_name:
         """
         if rconfig().run_mode == 'script':
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
-            self.execution_def, self.execution_name = None, None
+            self.constraint_def, self.constraint_name = None, None
             self.parallel_jobs = 1
             self.sid = None
             return
@@ -62,15 +62,15 @@ class Benchmark:
         self.framework_def, self.framework_name = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s.", self.framework_def)
 
-        self.execution_def, self.execution_name = rget().execution_resources(execution_name)
-        log.debug("Using execution resources: %s.", self.execution_def)
+        self.constraint_def, self.constraint_name = rget().constraint_definition(constraint_name)
+        log.debug("Using constraint definition: %s.", self.constraint_def)
 
-        self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name, self.execution_def)
+        self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name, self.constraint_def)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
 
         self.parallel_jobs = rconfig().parallel_jobs
         self.sid = rconfig().sid if rconfig().sid is not None \
-            else "{}_{}".format('_'.join([framework_name, benchmark_name, execution_name, rconfig().run_mode]).lower(),
+            else "{}_{}".format('_'.join([framework_name, benchmark_name, constraint_name, rconfig().run_mode]).lower(),
                                 datetime_iso(micros=True, no_sep=True))
 
         self._validate()

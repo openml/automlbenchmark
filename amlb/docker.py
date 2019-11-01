@@ -35,14 +35,14 @@ class DockerBenchmark(Benchmark):
                        '-'.join([di.tag if di.tag else framework_def.version.lower(), branch]))
         )
 
-    def __init__(self, framework_name, benchmark_name, execution_name):
+    def __init__(self, framework_name, benchmark_name, constraint_name):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param execution_name:
+        :param constraint_name:
         """
-        super().__init__(framework_name, benchmark_name, execution_name)
+        super().__init__(framework_name, benchmark_name, constraint_name)
         self._custom_image_name = rconfig().docker.image
 
     def _validate(self):
@@ -90,10 +90,10 @@ class DockerBenchmark(Benchmark):
         folds = [] if folds is None else [str(f) for f in folds]
 
         def _run():
-            self._start_docker("{framework} {benchmark} {execution} {task_param} {folds_param} -Xseed={seed}".format(
+            self._start_docker("{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                 framework=self.framework_name,
                 benchmark=self.benchmark_name,
-                execution=self.execution_name,
+                constraint=self.constraint_name,
                 task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                 seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
@@ -102,7 +102,7 @@ class DockerBenchmark(Benchmark):
 
         job = Job('_'.join(['docker',
                             self.benchmark_name,
-                            self.execution_name,
+                            self.constraint_name,
                             '.'.join(task_names) if len(task_names) > 0 else 'all',
                             '.'.join(folds),
                             self.framework_name]))
