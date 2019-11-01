@@ -167,11 +167,13 @@ class Benchmark:
             raise ValueError("No task available.")
         return task_defs
 
-    def _get_task_def(self, task_name, include_disabled=False):
+    def _get_task_def(self, task_name, include_disabled=False, fail_on_missing=True):
         try:
             task_def = next(task for task in self.benchmark_def if task.name.lower() == task_name.lower())
         except StopIteration:
-            raise ValueError("Incorrect task name: {}.".format(task_name))
+            if fail_on_missing:
+                raise ValueError("Incorrect task name: {}.".format(task_name))
+            return None
         if not include_disabled and not Benchmark._is_task_enabled(task_def):
             raise ValueError("Task {} is disabled, please enable it first.".format(task_def.name))
         return task_def

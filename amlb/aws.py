@@ -188,7 +188,7 @@ class AWSBenchmark(Benchmark):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
         task_def = self._get_task_def(task_names[0]) if len(task_names) >= 1 \
-            else self._get_task_def('__defaults__', include_disabled=True)
+            else self._get_task_def('__defaults__', include_disabled=True, fail_on_missing=False)
         instance_def = ns(
             type=task_def.ec2_instance_type,
             volume_type=task_def.ec2_volume_type,

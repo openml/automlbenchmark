@@ -190,11 +190,12 @@ class Resources:
 
         log.info("Loading benchmark definitions from %s.", benchmark_file)
         tasks = config_load(benchmark_file)
-        defaults = next((task for task in tasks if task.name == '__defaults__'), defaults)
-        tasks = [task for task in tasks if task is not defaults]
+        hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
+        tasks = [task for task in tasks if task is not hard_defaults]
 
+        defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:
-            task % defaults   # add missing keys from local defaults
+            task % defaults   # add missing keys from hard defaults + defaults
             self._validate_task(task)
 
         self._validate_task(defaults, lenient=True)
