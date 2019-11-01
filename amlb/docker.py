@@ -43,6 +43,7 @@ class DockerBenchmark(Benchmark):
         :param execution_name:
         """
         super().__init__(framework_name, benchmark_name, execution_name)
+        self._custom_image_name = rconfig().docker.image
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
@@ -147,7 +148,7 @@ class DockerBenchmark(Benchmark):
 
     @property
     def _docker_image_name(self):
-        return DockerBenchmark.docker_image_name(self.framework_def)
+        return self._custom_image_name or DockerBenchmark.docker_image_name(self.framework_def)
 
     def _docker_image_exists(self):
         output, _ = run_cmd("docker images -q {image}".format(image=self._docker_image_name))
@@ -162,7 +163,6 @@ class DockerBenchmark(Benchmark):
         return False
 
     def _build_docker_image(self, cache=True):
-        image_name = self._docker_image_name
         if rconfig().docker.force_branch:
             run_cmd("git fetch")
             current_branch = run_cmd("git rev-parse --abbrev-ref HEAD")[0].strip()
@@ -187,25 +187,27 @@ Do you still want to build the docker image? (y/[n]) """).lower() or 'n'
                     force = input(f"""Branch `{current_branch}` isn't tagged as `{tag}` (as required by config.project_repository).
 Do you still want to build the docker image? (y/[n]) """).lower() or 'n'
                 if force == 'y':
-                    image_name = DockerBenchmark.docker_image_name(self.framework_def, current_branch)
+                    self._custom_image_name = self._custom_image_name or DockerBenchmark.docker_image_name(self.framework_def, current_branch)
                 else:
                     raise InvalidStateError(
                         "Docker image can't be built as current branch is not tagged as required `{}`. "
                         "Please switch to the expected tagged branch before building the docker image.".format(tag)
                     )
 
-        log.info("Building docker image %s.", image_name)
+        image = self._docker_image_name
+        log.info("Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
-            container=image_name,
+            container=image,
             script=self._docker_script
         ), _live_output_=True)
-        log.info("Successfully built docker image %s.", image_name)
+        log.info("Successfully built docker image {image}.")
 
     def _upload_docker_image(self):
-        log.info("Publishing docker image %s.", self._docker_image_name)
-        run_cmd("docker login && docker push {}".format(self._docker_image_name))
-        log.info("Successfully published docker image %s.", self._docker_image_name)
+        image = self._docker_image_name
+        log.info(f"Publishing docker image {image}.")
+        run_cmd(f"docker login && docker push {image}")
+        log.info(f"Successfully published docker image {image}.")
 
     def _generate_docker_script(self, custom_commands):
         docker_content = """FROM ubuntu:18.04

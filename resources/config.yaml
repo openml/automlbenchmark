@@ -60,6 +60,7 @@ docker:
   force_branch: true  # set to true if docker image can only be built from a clean branch, wth same tag as defined in `project_repository`.
   minimize_instances: true
   run_extra_options: '--shm-size=1024M'
+  image:      # set this value through -Xdocker.image=my-docker-image to run benchmark with a specific image
   image_defaults:
     author: automlbenchmark
     image:    # set by docker.py based on framework name, lowercase

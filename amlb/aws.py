@@ -856,7 +856,7 @@ power_state:
         return cloud_config.format(
             repo=rget().project_info.repo,
             branch=rget().project_info.branch,
-            image=DockerBenchmark.docker_image_name(self.framework_def),
+            image=rconfig().docker.image or DockerBenchmark.docker_image_name(self.framework_def),
             pip_version=rconfig().versions.pip,
             s3_base_url=self._s3_session(absolute=True, encode=True),
             s3_user=self._s3_user(absolute=True, encode=True),
