@@ -62,9 +62,10 @@ extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in 
 
 now_str = datetime_iso(date_sep='', time_sep='')
 sid = (args.session if args.session is not None
-       else "{}_{}".format('_'.join([extras.get('run_mode', args.mode),
-                                     args.framework,
-                                     os.path.splitext(os.path.basename(args.benchmark))[0]])
+       else "{}_{}".format('_'.join([args.framework,
+                                     os.path.splitext(os.path.basename(args.benchmark))[0],
+                                     args.execution,
+                                     extras.get('run_mode', args.mode)])
                               .lower(),
                            now_str))
 log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),

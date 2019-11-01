@@ -70,7 +70,8 @@ class Benchmark:
 
         self.parallel_jobs = rconfig().parallel_jobs
         self.sid = rconfig().sid if rconfig().sid is not None \
-            else "{}_{}".format('_'.join([rconfig().run_mode, framework_name, benchmark_name]).lower(), datetime_iso(micros=True, no_sep=True))
+            else "{}_{}".format('_'.join([framework_name, benchmark_name, execution_name, rconfig().run_mode]).lower(),
+                                datetime_iso(micros=True, no_sep=True))
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)

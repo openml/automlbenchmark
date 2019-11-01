@@ -24,12 +24,15 @@ class DockerBenchmark(Benchmark):
     """
 
     @staticmethod
-    def docker_image_name(framework_def):
+    def docker_image_name(framework_def, branch=None):
         di = framework_def.docker_image
+        if branch is None:
+            branch = rget().project_info.branch
         return "{author}/{image}:{tag}".format(
             author=di.author,
             image=di.image if di.image else framework_def.name.lower(),
-            tag='-'.join([di.tag if di.tag else framework_def.version.lower(), rget().project_info.branch])
+            tag=re.sub(r"([^\w.-])", '.',
+                       '-'.join([di.tag if di.tag else framework_def.version.lower(), branch]))
         )
 
     def __init__(self, framework_name, benchmark_name, execution_name):
@@ -159,27 +162,45 @@ class DockerBenchmark(Benchmark):
         return False
 
     def _build_docker_image(self, cache=True):
+        image_name = self._docker_image_name
         if rconfig().docker.force_branch:
             run_cmd("git fetch")
+            current_branch = run_cmd("git rev-parse --abbrev-ref HEAD")[0].strip()
             status, _ = run_cmd("git status -b --porcelain")
             if len(status.splitlines()) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
                 log.info("Branch status:\n%s", status)
-                raise InvalidStateError("Docker image can't be built as the current branch is not up-to-date. "
-                                        "Please switch to the expected up-to-date `{}` branch first.".format(rget().project_info.branch))
+                force = None
+                while force not in ['y', 'n']:
+                    force = input(f"""Branch `{current_branch}` is not clean or up-to-date.
+Do you still want to build the docker image? (y/[n]) """).lower() or 'n'
+                if force == 'n':
+                    raise InvalidStateError(
+                        "Docker image can't be built as the current branch is not clean or up-to-date. "
+                        "Please switch to the expected `{}` branch, and ensure that it is clean before building the docker image.".format(rget().project_info.branch)
+                    )
 
             tag = rget().project_info.tag
             tags, _ = run_cmd("git tag --points-at HEAD")
             if tag and not re.search(r'(?m)^{}$'.format(tag), tags):
-                raise InvalidStateError("Docker image can't be built as current branch is not tagged as required `{}`. "
-                                        "Please switch to the expected tagged branch first.".format(tag))
+                force = None
+                while force not in ['y', 'n']:
+                    force = input(f"""Branch `{current_branch}` isn't tagged as `{tag}` (as required by config.project_repository).
+Do you still want to build the docker image? (y/[n]) """).lower() or 'n'
+                if force == 'y':
+                    image_name = DockerBenchmark.docker_image_name(self.framework_def, current_branch)
+                else:
+                    raise InvalidStateError(
+                        "Docker image can't be built as current branch is not tagged as required `{}`. "
+                        "Please switch to the expected tagged branch before building the docker image.".format(tag)
+                    )
 
-        log.info("Building docker image %s.", self._docker_image_name)
+        log.info("Building docker image %s.", image_name)
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
-            container=self._docker_image_name,
+            container=image_name,
             script=self._docker_script
         ), _live_output_=True)
-        log.info("Successfully built docker image %s.", self._docker_image_name)
+        log.info("Successfully built docker image %s.", image_name)
 
     def _upload_docker_image(self):
         log.info("Publishing docker image %s.", self._docker_image_name)
