@@ -9,8 +9,8 @@ import numpy as np
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
-from amlb.results import save_predictions_to_file
-from amlb.utils import Namespace as ns, TmpDir, dir_of, run_cmd, json_dumps, json_loads
+from amlb.results import NoResultError, save_predictions_to_file
+from amlb.utils import Namespace as ns, Timer, TmpDir, dir_of, run_cmd, json_dumps, json_loads
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def run_python_script_in_same_module(caller_file, script_file: str, *args,
                                      python_exec=None):
     here = dir_of(caller_file)
     if python_exec is None:  # use local virtual env by default
-        python_exec = os.path.join(here, 'venv/bin/python3 -W ignore')
+        python_exec = os.path.join(here, 'venv/bin/python -W ignore')
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
     with TmpDir() as tmpdir:
@@ -43,11 +43,12 @@ def run_python_script_in_same_module(caller_file, script_file: str, *args,
         config.result_dir = tmpdir
 
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
-        output, err = run_cmd(cmd, *args,
-                              _input_str_=params,
-                              _live_output_=True,
-                              _env_=dict(PYTHONPATH=rconfig().root_dir)
-                              )
+        with Timer() as proc_timer:
+            output, err = run_cmd(cmd, *args,
+                                  _input_str_=params,
+                                  _live_output_=True,
+                                  _env_=dict(PYTHONPATH=rconfig().root_dir)
+                                  )
 
         out = io.StringIO(output)
         res = ns()
@@ -56,6 +57,9 @@ def run_python_script_in_same_module(caller_file, script_file: str, *args,
             if li == config.result_token:
                 res = json_loads(out.readline(), as_namespace=True)
                 break
+
+        if res.error_message is not None:
+            raise NoResultError(res.error_message)
 
         for name in ['predictions', 'truth', 'probabilities']:
             res[name] = np.load(res[name], allow_pickle=True) if res[name] is not None else None
@@ -68,3 +72,7 @@ def run_python_script_in_same_module(caller_file, script_file: str, *args,
                                  probabilities=res.probabilities,
                                  target_is_encoded=res.target_is_encoded)
 
+        return dict(
+            models_count=res.models_count if res.models_count is not None else 1,
+            training_duration=res.training_duration if res.training_duration is not None else proc_timer.duration
+        )

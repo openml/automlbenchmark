@@ -6,23 +6,21 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+
+import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import impute
-from amlb.results import save_predictions_to_file
-from amlb.utils import Timer
+from frameworks.shared.callee import call_run, result, Timer
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(os.path.basename(__file__))
 
 
-def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** Random Forest (sklearn) ****\n")
+def run(dataset, config):
+    log.info("\n**** Random Forest (sklearn %s) ****\n", sklearn.__version__)
 
     is_classification = config.type == 'classification'
 
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
@@ -43,14 +41,14 @@ def run(dataset: Dataset, config: TaskConfig):
     predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=y_test,
-                             target_is_encoded=True)
+    return result(output_file=config.output_predictions_file,
+                  predictions=predictions,
+                  truth=y_test,
+                  probabilities=probabilities,
+                  target_is_encoded=True,
+                  models_count=len(rf),
+                  training_duration=training.duration)
 
-    return dict(
-        models_count=len(rf),
-        training_duration=training.duration
-    )
+
+if __name__ == '__main__':
+    call_run(run)
