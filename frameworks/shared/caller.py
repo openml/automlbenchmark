@@ -8,6 +8,7 @@ import numpy as np
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
+from amlb.resources import config as rconfig
 from amlb.results import save_predictions_to_file
 from amlb.utils import Namespace as ns, TmpDir, dir_of, run_cmd, json_dumps, json_loads
 
@@ -16,7 +17,14 @@ log = logging.getLogger(__name__)
 vector_keys = re.compile("^y(_.+)?$")
 
 
-def call_process(cmd: str, send_data: ns, dataset: Dataset, config: TaskConfig):
+def run_python_script_in_same_module(caller_file, script_file: str, *args,
+                                     input_data: ns, dataset: Dataset, config: TaskConfig,
+                                     python_exec=None):
+    here = dir_of(caller_file)
+    if python_exec is None:  # use local virtual env by default
+        python_exec = os.path.join(here, 'venv/bin/python3 -W ignore')
+    script_path = os.path.join(here, script_file)
+    cmd = f"{python_exec} {script_path}"
     with TmpDir() as tmpdir:
 
         def make_path(k, v, parents=None):
@@ -28,15 +36,18 @@ def call_process(cmd: str, send_data: ns, dataset: Dataset, config: TaskConfig):
                 return k, path
             return k, v
 
-        ds = ns.walk_apply(send_data, make_path)
+        ds = ns.walk(input_data, make_path)
         dataset.release()
-        print(ds)
 
         config.result_token = str(uuid.uuid1())
         config.result_dir = tmpdir
 
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
-        output, err = run_cmd(cmd, _input_str_=params, _live_output_=True)
+        output, err = run_cmd(cmd, *args,
+                              _input_str_=params,
+                              _live_output_=True,
+                              _env_=dict(PYTHONPATH=rconfig().root_dir)
+                              )
 
         out = io.StringIO(output)
         res = ns()

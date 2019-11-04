@@ -1,32 +1,41 @@
 import logging
 import os
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import impute
-from amlb.utils import Namespace as ns, dir_of
+import sklearn
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from .caller import call_process
+from frameworks.shared.callee import call_run, result
 
-log = logging.getLogger(__name__)
-PYTHON = os.path.join(dir_of(__file__), 'venv/bin/python3 -W ignore')
+log = logging.getLogger(os.path.basename(__file__))
 
 
-def run(dataset: Dataset, config: TaskConfig):
-    X_train_enc, X_test_enc = impute(dataset.train.X_enc, dataset.test.X_enc)
-    data = ns(
-        train=ns(
-            X_enc=X_train_enc,
-            y=dataset.train.y
-        ),
-        test=ns(
-            X_enc=X_test_enc,
-            y=dataset.test.y
-        )
-    )
+def run(dataset, config):
+    log.info("\n**** Random Forest (sklearn %s) ****\n", sklearn.__version__)
 
-    return call_process("{python} {here}/exec_proc.py".format(python=PYTHON, here=dir_of(__file__)),
-                        send_data=data,
-                        dataset=dataset,
-                        config=config)
+    is_classification = config.type == 'classification'
 
+    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
+    y_train, y_test = dataset.train.y, dataset.test.y
+
+    log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, config.cores))
+    log.warning("We completely ignore the requirement to stay within the time limit.")
+    log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
+
+    estimator = RandomForestClassifier if is_classification else RandomForestRegressor
+    rfc = estimator(n_jobs=config.cores,
+                    **config.framework_params)
+
+    rfc.fit(X_train, y_train)
+
+    predictions = rfc.predict(X_test)
+    probabilities = rfc.predict_proba(X_test) if is_classification else None
+
+    return result(output_file=config.output_predictions_file,
+                  predictions=predictions,
+                  truth=y_test,
+                  probabilities=probabilities,
+                  target_is_encoded=False)
+
+
+if __name__ == '__main__':
+    call_run(run)

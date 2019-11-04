@@ -74,19 +74,19 @@ class Namespace:
         return ns
 
     @staticmethod
-    def walk_apply(namespace, fn, inplace=False):
-        def walk(namespace, fn, parents=None, inplace=inplace):
+    def walk(namespace, fn, inplace=False):
+        def _walk(namespace, fn, parents=None, inplace=inplace):
             parents = [] if parents is None else parents
             ns = namespace if inplace else Namespace()
             for k, v in namespace:
                 nk, nv = fn(k, v, parents=parents)
                 if nk is not None:
                     if v is nv and isinstance(v, Namespace):
-                        nv = walk(nv, fn, parents=parents+[k])
+                        nv = _walk(nv, fn, parents=parents+[k], inplace=inplace)
                     ns[nk] = nv
             return ns
 
-        return walk(namespace, fn, inplace=inplace)
+        return _walk(namespace, fn, inplace=inplace)
 
     def __init__(self, *args, **kwargs):
         self.__dict__.update(dict(*args, **kwargs))

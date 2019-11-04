@@ -82,6 +82,8 @@ def run_cmd(cmd, *args, **kwargs):
         error_level=logging.ERROR,
         shell=True,
         executable=None,
+        env=None,
+        preexec_fn=None,
         timeout=None,
     )
     for k, v in params:
@@ -130,7 +132,9 @@ def run_cmd(cmd, *args, **kwargs):
                                    stderr=subprocess.PIPE if params.capture_error else None,
                                    shell=params.shell,
                                    universal_newlines=True,
-                                   executable=params.executable)
+                                   executable=params.executable,
+                                   env=params.env,
+                                   preexec_fn=params.preexec_fn)
         if completed.stdout:
             log.log(params.output_level, completed.stdout)
         if completed.stderr:
