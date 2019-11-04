@@ -17,14 +17,16 @@ log = logging.getLogger(__name__)
 vector_keys = re.compile("^y(_.+)?$")
 
 
-def run_python_script_in_same_module(caller_file, script_file: str, *args,
-                                     input_data: ns, dataset: Dataset, config: TaskConfig,
-                                     python_exec=None):
+def run_in_venv(caller_file, script_file: str, *args,
+                input_data: ns, dataset: Dataset, config: TaskConfig,
+                python_exec=None):
+
     here = dir_of(caller_file)
     if python_exec is None:  # use local virtual env by default
         python_exec = os.path.join(here, 'venv/bin/python -W ignore')
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
+
     with TmpDir() as tmpdir:
 
         def make_path(k, v, parents=None):

@@ -10,7 +10,7 @@ def setup(*args, **kwargs):
 
 def run(dataset: Dataset, config: TaskConfig):
     from amlb.datautils import impute
-    from frameworks.shared.caller import run_python_script_in_same_module
+    from frameworks.shared.caller import run_in_venv
 
     X_train_enc, X_test_enc = impute(dataset.train.X_enc, dataset.test.X_enc)
     data = ns(
@@ -24,8 +24,8 @@ def run(dataset: Dataset, config: TaskConfig):
         )
     )
 
-    return run_python_script_in_same_module(__file__, "exec.py",
-                                            input_data=data, dataset=dataset, config=config)
+    return run_in_venv(__file__, "exec.py",
+                       input_data=data, dataset=dataset, config=config)
 
 
 __all__ = (run)
