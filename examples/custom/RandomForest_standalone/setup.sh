@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+shopt -s expand_aliases
 HERE=$(dirname "$0")
-. $HERE/../shared/setup.sh
+ROOT_DIR="$1"
+. $ROOT_DIR/frameworks/shared/setup.sh
 RF_VENV=$HERE/venv
 alias PY_RF="$RF_VENV/bin/python3 -W ignore"
 if [[ ! -f "$RF_VENV/bin/python3" ]]; then
