@@ -123,7 +123,7 @@ class Resources:
                 validated.append(framework)
             to_validate = later
 
-        log.debug("Using framework definitions:\n%s", frameworks)
+        log.debug("Available framework definitions:\n%s", frameworks)
 
         frameworks_lookup = Namespace()
         for framework in validated:
@@ -131,9 +131,41 @@ class Resources:
         return frameworks_lookup
 
     @memoize
-    def benchmark_definition(self, name):
+    def constraint_definition(self, name):
+        """
+        :param name: name of the benchmark constraint definition as defined in the constraints file
+        :return: a Namespace object with the constraint config (folds, cores, max_runtime_seconds, ...) for the current benchmamk run.
+        """
+        constraint_config = self._constraints[name.lower()]
+        if not constraint_config:
+            raise ValueError("Incorrect constraint definition `{}`: not listed in {}.".format(name, self.config.benchmarks.constraints_file))
+        return constraint_config, constraint_config.name
+
+    @lazy_property
+    def _constraints(self):
+        constraints_file = self.config.benchmarks.constraints_file
+        log.info("Loading benchmark constraint definitions from %s.", constraints_file)
+        if not isinstance(constraints_file, list):
+            constraints_file = [constraints_file]
+
+        constraints = Namespace()
+        for ef in constraints_file:
+            constraints + config_load(ef)
+
+        for name, c in constraints:
+            c.name = name
+
+        log.debug("Available benchmark constraints:\n%s", constraints)
+        constraints_lookup = Namespace()
+        for name, c in constraints:
+            constraints_lookup[name.lower()] = c
+        return constraints_lookup
+
+    # @memoize
+    def benchmark_definition(self, name, defaults=None):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
+        :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
         benchmark_name = name
@@ -158,20 +190,18 @@ class Resources:
 
         log.info("Loading benchmark definitions from %s.", benchmark_file)
         tasks = config_load(benchmark_file)
-        try:
-            defaults = next(task for task in tasks if task.name == '__defaults__')
-            tasks = [task for task in tasks if task is not defaults]
-        except StopIteration:
-            defaults = None
+        hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
+        tasks = [task for task in tasks if task is not hard_defaults]
 
+        defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:
-            task % defaults   # add missing keys from local defaults
+            task % defaults   # add missing keys from hard defaults + defaults
             self._validate_task(task)
 
         self._validate_task(defaults, lenient=True)
         defaults.enabled = False
         tasks.append(defaults)
-        log.debug("Using benchmark definition:\n%s", tasks)
+        log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_file
 
     def _validate_framework(self, framework):
@@ -220,7 +250,7 @@ class Resources:
 
     def _validate_task(self, task, lenient=False):
         missing = []
-        for conf in ['name', 'openml_task_id', 'metric']:
+        for conf in ['name', 'openml_task_id']:
             if task[conf] is None:
                 missing.append(conf)
         if not lenient and len(missing) > 0:
@@ -238,6 +268,10 @@ class Resources:
                 else task.dataset if task['dataset'] is not None \
                 else None
 
+        conf = 'metric'
+        if task[conf] is None:
+            task[conf] = None
+
         conf = 'ec2_instance_type'
         if task[conf] is None:
             i_series = self.config.aws.ec2.instance_type.series
@@ -247,10 +281,7 @@ class Resources:
             elif task.cores > 0:
                 supported_cores = list(map(int, Namespace.dict(i_map).keys() - {'default'}))
                 supported_cores.sort()
-                try:
-                    cores = next(c for c in supported_cores if c >= task.cores)
-                except StopIteration:
-                    cores = 'default'
+                cores = next((c for c in supported_cores if c >= task.cores), 'default')
                 i_size = i_map[str(cores)]
             else:
                 i_size = i_map.default

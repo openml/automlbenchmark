@@ -32,13 +32,9 @@
 
 - name: iris
   openml_task_id: 59
-  metric: [logloss, acc]
 
 - name: kc2
   openml_task_id: 3913
-  metric:
-    - auc
-    - acc
 
 - name: cholesterol
   enabled: false

@@ -61,15 +61,15 @@ class AWSBenchmark(Benchmark):
                 bench.instances[iid].success = False
             bench._download_results(iid)
 
-    def __init__(self, framework_name, benchmark_name, parallel_jobs=1, region=None):
+    def __init__(self, framework_name, benchmark_name, constraint_name, region=None):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param parallel_jobs:
+        :param constraint_name:
         :param region:
         """
-        super().__init__(framework_name, benchmark_name, parallel_jobs)
+        super().__init__(framework_name, benchmark_name, constraint_name)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
         self.region = region if region \
             else rconfig().aws.region if rconfig().aws['region'] \
@@ -188,7 +188,7 @@ class AWSBenchmark(Benchmark):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
         task_def = self._get_task_def(task_names[0]) if len(task_names) >= 1 \
-            else self._get_task_def('__defaults__', include_disabled=True)
+            else self._get_task_def('__defaults__', include_disabled=True, fail_on_missing=False)
         instance_def = ns(
             type=task_def.ec2_instance_type,
             volume_type=task_def.ec2_volume_type,
@@ -207,6 +207,7 @@ class AWSBenchmark(Benchmark):
 
         job = Job('_'.join(['aws',
                             self.benchmark_name,
+                            self.constraint_name,
                             '.'.join(task_names) if len(task_names) > 0 else 'all',
                             '.'.join(folds),
                             self.framework_name]))
@@ -216,9 +217,10 @@ class AWSBenchmark(Benchmark):
             resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
             job_self.instance_id = self._start_instance(
                 instance_def,
-                script_params="{framework} {benchmark} {task_param} {folds_param} -Xseed={seed}".format(
+                script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
                     benchmark=self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir) else "{}/{}.yaml".format(resources_root, self.benchmark_name),
+                    constraint=self.constraint_name,
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                     seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
@@ -854,7 +856,7 @@ power_state:
         return cloud_config.format(
             repo=rget().project_info.repo,
             branch=rget().project_info.branch,
-            image=DockerBenchmark.docker_image_name(self.framework_def),
+            image=rconfig().docker.image or DockerBenchmark.docker_image_name(self.framework_def),
             pip_version=rconfig().versions.pip,
             s3_base_url=self._s3_session(absolute=True, encode=True),
             s3_user=self._s3_user(absolute=True, encode=True),
@@ -932,12 +934,12 @@ class AWSRemoteBenchmark(Benchmark):
     # TODO: idea is to handle results progressively on the remote side and push results as soon as they're generated
     #   this would allow to safely run multiple tasks on single AWS instance
 
-    def __init__(self, framework_name, benchmark_name, parallel_jobs=1, region=None):
+    def __init__(self, framework_name, benchmark_name, constraint_name, region=None):
         self.region = region
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._init_bucket()
         self._download_resources()
-        super().__init__(framework_name, benchmark_name, parallel_jobs)
+        super().__init__(framework_name, benchmark_name, constraint_name)
 
     def run(self, save_scores=False):
         super().run(save_scores)

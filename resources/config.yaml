@@ -13,6 +13,7 @@ script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
 
+parallel_jobs: 1
 max_parallel_jobs: 5
 monitoring:
   frequency_seconds: 120  # set <= 0 to disable
@@ -29,9 +30,14 @@ frameworks:
 
 benchmarks:
   definition_dir: '{root}/resources/benchmarks'
+  constraints_file: '{root}/resources/constraints.yaml'
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
+  metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType)
+    binary: ['auc', 'acc']
+    multiclass: ['logloss', 'acc']
+    regression: ['rmse', 'r2']
   defaults:
     folds: 10
     max_runtime_seconds: 3600
@@ -47,13 +53,14 @@ openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
 
 versions:
-  pip: 19.0.3
-  python: 3.7.2  # should we also enforce the Python version in docker images/ec2 instances?
+  pip: 19.3.1
+  python: 3.7.4  # should we also enforce the Python version in docker images/ec2 instances?
 
 docker:
-  force_branch: true
+  force_branch: true  # set to true if docker image can only be built from a clean branch, wth same tag as defined in `project_repository`.
   minimize_instances: true
   run_extra_options: '--shm-size=1024M'
+  image:      # set this value through -Xdocker.image=my-docker-image to run benchmark with a specific image
   image_defaults:
     author: automlbenchmark
     image:    # set by docker.py based on framework name, lowercase

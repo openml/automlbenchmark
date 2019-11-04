@@ -1,40 +1,20 @@
 ---
 # a selection of tasks used to validate the benchmark app: various sizes, format (with/out nans, missing values...)
 
-- name: __defaults__
-  folds: 10
-  max_runtime_seconds: 3600
-  cores: 2
-
 - name: bioresponse
   openml_task_id: 9910
-  metric:
-    - auc
-    - acc
 
 - name: dresses-sales
   openml_task_id: 125920
-  metric:
-    - auc
-    - acc
 
 - name: eucalyptus
   openml_task_id: 2079
-  metric:
-    - logloss
-    - acc
 
 - name: internet-advertisements
   openml_task_id: 167125
-  metric:
-    - auc
-    - acc
 
 - name: micro-mass
   openml_task_id: 9950
-  metric:
-    - logloss
-    - acc
 
 # kc1 target classes are (true, false).
 # This causes issues if the framework is using Pandas when obtaining predictions:
@@ -43,14 +23,8 @@
 # cf. H2OAutoML where pandas could be avoided when reading predictions.
 - name: kc1
   openml_task_id: 3917
-  metric:
-    - auc
-    - acc
 
 # APSFailure doesn't have its target as last column by default.
 # cf. AutoWEKA for an example to handle this case if the framework requires the target in a specific position.
 - name: APSFailure
   openml_task_id: 168868
-  metric:
-    - auc
-    - acc
