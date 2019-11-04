@@ -36,7 +36,7 @@ def call_process(cmd: str, send_data: ns, dataset: Dataset, config: TaskConfig):
         config.result_dir = tmpdir
 
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
-        output, err = run_cmd(cmd, _input_str_=params, _live_output_=False)
+        output, err = run_cmd(cmd, _input_str_=params, _live_output_=True)
 
         out = io.StringIO(output)
         res = ns()
@@ -52,8 +52,8 @@ def call_process(cmd: str, send_data: ns, dataset: Dataset, config: TaskConfig):
         log.debug("Result from subprocess:\n%s", res)
         save_predictions_to_file(dataset=dataset,
                                  output_file=res.output_file,
-                                 predictions=res.predictions.reshape(-1, 1),
-                                 truth=res.truth.reshape(-1, 1),
+                                 predictions=res.predictions.reshape(-1, 1) if res.predictions is not None else None,
+                                 truth=res.truth.reshape(-1, 1) if res.truth is not None else None,
                                  probabilities=res.probabilities,
                                  target_is_encoded=res.target_is_encoded)
 

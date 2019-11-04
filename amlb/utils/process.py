@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from functools import reduce, wraps
+import io
 import logging
 import multiprocessing as mp
 import os
@@ -94,18 +95,29 @@ def run_cmd(cmd, *args, **kwargs):
     log.info("Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
-    def live_output(process, **ignored):
+    def live_output(process, input=None, **ignored):
         mode = params.live_output
         if mode is True:
             mode = 'line'
 
+        if input is not None:
+            try:
+                with process.stdin as stream:
+                    stream.write(input)
+            except BrokenPipeError:
+                pass
+            except:
+                raise
+
+        out = io.StringIO()
         for line in iter(process.stdout.readline, ''):
+            out.write(line)
             if mode == 'line':
                 print(re.sub(r'\n$', '', line, count=1))
             elif mode == 'block':
                 print(line, end='')
         print()  # ensure that the log buffer is flushed at the end
-        return None, ''.join(map(str, iter(process.stderr.readline, ''))) if process.stderr else None
+        return out.getvalue(), ''.join(map(str, iter(process.stderr.readline, ''))) if process.stderr else None
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
