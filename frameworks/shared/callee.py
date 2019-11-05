@@ -16,6 +16,8 @@ def setup_logger():
 
 setup_logger()
 
+log = logging.getLogger(__name__)
+
 
 class NS:
 
@@ -123,6 +125,7 @@ def call_run(run_fn):
                 res[name] = os.path.join(config.result_dir, '.'.join([name, 'npy']))
                 np.save(res[name], arr, allow_pickle=True)
     except Exception as e:
+        log.exception(e)
         res = dict(
             error_message=str(e),
             models_count=0

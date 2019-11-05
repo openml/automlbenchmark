@@ -2,6 +2,7 @@ import io
 import logging
 import os
 import re
+from typing import Union
 import uuid
 
 import numpy as np
@@ -18,7 +19,7 @@ vector_keys = re.compile("^y(_.+)?$")
 
 
 def run_in_venv(caller_file, script_file: str, *args,
-                input_data: ns, dataset: Dataset, config: TaskConfig,
+                input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
                 python_exec=None):
 
     here = dir_of(caller_file)
@@ -27,6 +28,7 @@ def run_in_venv(caller_file, script_file: str, *args,
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
+    input_data = ns.from_dict(input_data)
     with TmpDir() as tmpdir:
 
         def make_path(k, v, parents=None):
