@@ -20,7 +20,7 @@ fi
 
 if [[ -n "$PY_VENV" ]]; then
     py_exec="$PY_VENV/bin/python"
-    if [[ ! -f py_exec ]]; then
+    if [[ ! -x py_exec ]]; then
         python3 -m venv "$PY_VENV"
         $py_exec -m pip install -U pip
     fi

@@ -1,7 +1,7 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
-from amlb.utils import call_script_in_same_dir
+from amlb.utils import call_script_in_same_dir, dir_of
 
 
 def setup(*args, **kwargs):
@@ -28,4 +28,10 @@ def run(dataset: Dataset, config: TaskConfig):
                        input_data=data, dataset=dataset, config=config)
 
 
-__all__ = (run)
+def docker_commands(*args, **kwargs):
+    return """
+RUN {here}/setup.sh {amlb_dir}
+""".format(here=dir_of(__file__, True), amlb_dir=rconfig().root_dir)
+
+
+__all__ = (setup, run, docker_commands())
