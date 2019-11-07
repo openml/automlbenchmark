@@ -52,9 +52,3 @@ Decision_Tree:
   module: Decision_Tree
   version: 'local'
 
-RandomForest:
-  version: '0.19.2'
-  module: RandomForest_standalone
-  params:
-    n_estimators: 2000
-

@@ -18,7 +18,7 @@
 - name: Fashion-MNIST
   openml_task_id: 146825
 
-- name: guiellermo
+- name: guillermo
   openml_task_id: 168337
 
 - name: Helena

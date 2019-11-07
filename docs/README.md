@@ -37,12 +37,15 @@ Clone the repo:
 git clone https://github.com/openml/automlbenchmark.git
 cd automlbenchmark
 ```
-Optional: create a Python3 virtual environment 
+Optional: create a Python3 virtual environment.
 
-using virtualenv:
+- _**NOTE**: we don't recommend to create your virtual environment with `virtualenv` library here as the application may create additional virtual environments for some frameworks to run in isolation._
+_Those virtual environments are created internally using `python -m venv` and we encountered issues with `pip` when `venv` is used on top of a `virtualenv` environment._
+_Therefore, we rather suggest one of the method below:_ 
+
+using venv:
 ```bash
-pip3 install virtualenv
-python3 -m virtualenv venv
+python3 -m venv ./venv
 source venv/bin/activate
 # remember to call `deactivate` once you're done using the application
 ```
@@ -58,9 +61,10 @@ Then pip install the dependencies:
 ```bash
 pip3 install -r requirements.txt
 ```
-_**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
-- _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 pip install < requirements.txt`.
-- _enforce the `pip3` version above in your virtualenv:_ `pip3 install --upgrade pip==19.3.1`.
+
+- _**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
+    - _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 pip install < requirements.txt`.
+    - _enforce the `pip3` version above in your virtualenv:_ `pip3 install --upgrade pip==19.3.1`.
 
 
 ## Quickstart
