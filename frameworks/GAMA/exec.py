@@ -59,12 +59,12 @@ def run(dataset, config):
                             **training_params)
 
     with Timer() as training:
-        gama_automl.fit_arff(dataset['train_path'], dataset['target'])
+        gama_automl.fit_arff(dataset.train_path, dataset.target)
 
     log.info('Predicting on the test set.')
-    predictions = gama_automl.predict_arff(dataset['test_path'], dataset['target'])
+    predictions = gama_automl.predict_arff(dataset.test_path, dataset.target)
     if is_classification is not None:
-        probabilities = gama_automl.predict_proba_arff(dataset['test_path'], dataset['target'])
+        probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target)
     else:
         probabilities = None
 
@@ -72,7 +72,7 @@ def run(dataset, config):
         output_file=config.output_predictions_file,
         predictions=predictions,
         probabilities=probabilities,
-        target_is_encoded=True,
+        target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
         training_duration=training.duration
     )
