@@ -17,6 +17,8 @@ parser.add_argument('framework', type=str,
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
                     help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml "
                          "or the path to a benchmark description file. Defaults to `%(default)s`.")
+parser.add_argument('constraint', type=str, nargs='?', default='test',
+                    help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
 parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
@@ -60,9 +62,10 @@ extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in 
 
 now_str = datetime_iso(date_sep='', time_sep='')
 sid = (args.session if args.session is not None
-       else "{}_{}".format('_'.join([extras.get('run_mode', args.mode),
-                                     args.framework,
-                                     os.path.splitext(os.path.basename(args.benchmark))[0]])
+       else "{}_{}".format('_'.join([args.framework,
+                                     os.path.splitext(os.path.basename(args.benchmark))[0],
+                                     args.constraint,
+                                     extras.get('run_mode', args.mode)])
                               .lower(),
                            now_str))
 log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
@@ -91,6 +94,7 @@ config_args = ns.parse(
     root_dir=root_dir,
     script=os.path.basename(__file__),
     run_mode=args.mode,
+    parallel_jobs=args.parallel,
     sid=sid,
 ) + ns.parse(extras)
 if args.mode != 'local':
@@ -102,14 +106,14 @@ amlb.resources.from_configs(config, config_user, config_args)
 
 try:
     if args.mode == 'local':
-        bench = amlb.Benchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+        bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
     elif args.mode == 'docker':
-        bench = amlb.DockerBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
+        bench = amlb.DockerBenchmark(args.framework, args.benchmark, args.constraint)
     elif args.mode == 'aws':
-        bench = amlb.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel)
-        # bench = amlb.AWSBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+        bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint)
+        # bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
     # elif args.mode == "aws-remote":
-    #     bench = amlb.AWSRemoteBenchmark(args.framework, args.benchmark, parallel_jobs=args.parallel, region=args.region)
+    #     bench = amlb.AWSRemoteBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
     else:
         raise ValueError("`mode` must be one of 'aws', 'docker' or 'local'.")
 

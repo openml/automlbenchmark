@@ -23,8 +23,8 @@ aws:
     temporary: false
   
   ec2:
-  #  instance_type: c5.xlarge
-    instance_type: t3.small
+    instance_type:
+      series: t3
 
   resource_files:
     - '{user}/config.yaml'

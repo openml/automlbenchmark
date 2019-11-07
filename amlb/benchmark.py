@@ -17,9 +17,10 @@ import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .openml import Openml
+from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, datetime_iso, flatten, lazy_property, profile, repr_def, \
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
     run_cmd, run_script, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
@@ -43,27 +44,34 @@ class Benchmark:
     task_loader = None
     SetupMode = Enum('SetupMode', 'auto skip force only')
 
-    def __init__(self, framework_name: str, benchmark_name: str, parallel_jobs=1):
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
 
         :param framework_name:
         :param benchmark_name:
-        :param resources:
+        :param constraint_name:
         """
         if rconfig().run_mode == 'script':
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
+            self.constraint_def, self.constraint_name = None, None
             self.parallel_jobs = 1
             self.sid = None
             return
 
         self.framework_def, self.framework_name = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s.", self.framework_def)
-        self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name)
+
+        self.constraint_def, self.constraint_name = rget().constraint_definition(constraint_name)
+        log.debug("Using constraint definition: %s.", self.constraint_def)
+
+        self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name, self.constraint_def)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
-        self.parallel_jobs = parallel_jobs
+
+        self.parallel_jobs = rconfig().parallel_jobs
         self.sid = rconfig().sid if rconfig().sid is not None \
-            else "{}_{}".format('_'.join([rconfig().run_mode, framework_name, benchmark_name]).lower(), datetime_iso(micros=True, no_sep=True))
+            else "{}_{}".format('_'.join([framework_name, benchmark_name, constraint_name, rconfig().run_mode]).lower(),
+                                datetime_iso(micros=True, no_sep=True))
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -159,11 +167,13 @@ class Benchmark:
             raise ValueError("No task available.")
         return task_defs
 
-    def _get_task_def(self, task_name, include_disabled=False):
+    def _get_task_def(self, task_name, include_disabled=False, fail_on_missing=True):
         try:
             task_def = next(task for task in self.benchmark_def if task.name.lower() == task_name.lower())
         except StopIteration:
-            raise ValueError("Incorrect task name: {}.".format(task_name))
+            if fail_on_missing:
+                raise ValueError("Incorrect task name: {}.".format(task_name))
+            return None
         if not include_disabled and not Benchmark._is_task_enabled(task_def):
             raise ValueError("Task {} is disabled, please enable it first.".format(task_def.name))
         return task_def
@@ -361,7 +371,7 @@ class BenchmarkTask:
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task_config)
         task_config.estimate_system_params()
-        task_config.type = 'classification' if self._dataset.target.is_categorical() else 'regression'
+        task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
         task_config.framework = framework_name
         task_config.framework_params = framework_def.params
 
@@ -371,6 +381,10 @@ class BenchmarkTask:
 
         task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
+        if task_config.metrics is None:
+            task_config.metrics = as_list(rconfig().benchmarks.metrics[self._dataset.type.name])
+            task_config.metric = task_config.metrics[0]
+
         result = meta_result = None
         try:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, framework_name, repr_def(task_config))

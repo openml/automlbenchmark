@@ -10,7 +10,7 @@ import openml as oml
 import arff
 import numpy as np
 
-from .data import Dataset, Datasplit, Feature
+from .data import Dataset, DatasetType, Datasplit, Feature
 from .utils import lazy_property, obj_size, profile, to_mb
 
 
@@ -70,6 +70,16 @@ class OpenmlDataset(Dataset):
         self._test = None
         self._attributes = None
         self._unique_values = {}
+
+    @property
+    def type(self):
+        nclasses = self._oml_dataset.qualities.get('NumberOfClasses', 0)
+        if nclasses > 2:
+            return DatasetType.multiclass
+        elif nclasses == 2:
+            return DatasetType.binary
+        else:
+            return DatasetType.regression
 
     @property
     @profile(logger=log)

@@ -27,7 +27,7 @@ Future plans:
 ### Pre-requisites
 To run the benchmarks, you will need:
 * Python 3.5+.
-* PIP3: ensure you have a recent version, this has been tested with `pip3 18.1` and `pip3 19.0.1`. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
+* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
 * The Python libraries listed in [requirements.txt](requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
@@ -37,19 +37,22 @@ Clone the repo:
 git clone https://github.com/openml/automlbenchmark.git
 cd automlbenchmark
 ```
-Optional: create a Python3 virtual environment 
+Optional: create a Python3 virtual environment.
 
-using virtualenv:
+- _**NOTE**: we don't recommend to create your virtual environment with `virtualenv` library here as the application may create additional virtual environments for some frameworks to run in isolation._
+_Those virtual environments are created internally using `python -m venv` and we encountered issues with `pip` when `venv` is used on top of a `virtualenv` environment._
+_Therefore, we rather suggest one of the method below:_ 
+
+using venv:
 ```bash
-pip3 install virtualenv
-python3 -m virtualenv venv
+python3 -m venv ./venv
 source venv/bin/activate
 # remember to call `deactivate` once you're done using the application
 ```
 
 or using pyenv:
 ```bash
-pyenv install {python_version: 3.7.2}
+pyenv install {python_version: 3.7.4}
 pyenv virtualenv ve-automl
 pyenv local ve-automl
 ```
@@ -58,9 +61,10 @@ Then pip install the dependencies:
 ```bash
 pip3 install -r requirements.txt
 ```
-_**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
-- _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 pip install < requirements.txt`.
-- _enforce one of the `pip3` version above in your virtualenv:_ `pip3 install --upgrade pip==19.0.1`.
+
+- _**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
+    - _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 pip install < requirements.txt`.
+    - _enforce the `pip3` version above in your virtualenv:_ `pip3 install --upgrade pip==19.3.1`.
 
 
 ## Quickstart
@@ -76,7 +80,7 @@ python3 runbenchmark.py
 python3 runbenchmark.py constantpredictor
 python3 runbenchmark.py tpot test
 python3 runbenchmark.py autosklearn test -m docker
-python3 runbenchmark.py h2oautoml validation -m aws
+python3 runbenchmark.py h2oautoml validation 1h4c -m aws
 ```
 
 For the complete list of supported arguments, run:
@@ -90,7 +94,7 @@ usage: runbenchmark.py [-h] [-m {local,docker,aws}]
                        [-f [fold_num [fold_num ...]]] [-i input_dir]
                        [-o output_dir] [-u user_dir] [-p parallel_jobs]
                        [-s {auto,skip,force,only}] [-k [true|false]]
-                       framework [benchmark]
+                       framework [benchmark] [constraint]
 
 positional arguments:
   framework             The framework to evaluate as defined by default in
@@ -98,6 +102,8 @@ positional arguments:
   benchmark             The benchmark type to run as defined by default in
                         resources/benchmarks/{benchmark}.yaml or the path to a
                         benchmark description file. Defaults to `test`.
+  constraint            The constraint definition to use as defined by default in
+                        resources/constraints.yaml. Defaults to `test`.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -160,19 +166,24 @@ Especially, it will need to download and install all the dependencies when build
 
 The generated image is usually named `automlbenchmark/{framework}:{tag}`, but this is customizable per framework: cf. `resources/frameworks.yaml` for details.
 
-For example, this will build a Docker image for the `RandomForest` framework and then immediately start a container to run the `validation` benchmark:
+For example, this will build a Docker image for the `RandomForest` framework and then immediately start a container to run the `validation` benchmark, using all folds, allocating 1h and 4 cores for each task:
 ```bash
-python3 runbenchmark.py RandomForest validation -m docker
+python3 runbenchmark.py RandomForest validation 1h4c -m docker
 ```
 
 If the corresponding image already exists locally and you want it to be rebuilt before running the benchmark, then the setup needs to be forced:
 ```bash
-python3 runbenchmark.py {framework} {benchmark} -m docker -s force
+python3 runbenchmark.py {framework} {benchmark} {constraint} -m docker -s force
 ```
 
 The image can also be built without running any benchmark:
 ```bash
 python3 runbenchmark.py {framework} -m docker -s only
+```
+
+In rare cases, mainly for development, you may want to specify the docker image:
+```bash
+python3 runbenchmark.py {framework} {benchmark} {constraint} -m docker -Xdocker.image={image}
 ```
 
 ### In local environment
@@ -225,7 +236,7 @@ This will create and start an EC2 instance for each benchmark job and run the 4 
 
 For longer benchmarks, you'll probably want to run multiple jobs in parallel and distribute the work to several EC2 instances, for example:
 ```bash
-python3 runbenchmark.py AUTOWEKA validation -m aws -p 4
+python3 runbenchmark.py AUTOWEKA validation 1h4c -m aws -p 4
 ```
 will keep 4 EC2 instances running, monitor them in a dedicated thread, and finally collect all outputs from s3.
 
@@ -278,7 +289,7 @@ Deleting uploaded resources `['ec2/input/validation.yaml', 'ec2/input/config.yam
 ```
 
 ### Output
-By default, a benchmark run creates the following subdirectories and files in the output directory (by default `./results`):
+By default, a benchmark run creates the following subdirectories and files in the output directory (by default a subdirectory of `./results` with unique name identifying the benchmark run):
 * `scores`: this subdirectory contains
     * `results.csv`: a global scoreboard, keeping scores from all benchmark runs. 
        For safety reasons, this file is automatically backed up to `scores/backup/results_{currentdate}.csv` by the application before any modification. 

@@ -1,13 +1,4 @@
 ---
 
-- name: __defaults__
-  folds: 10
-  max_runtime_seconds: 300
-  cores: 8
-  min_vol_size_mb: 131072
-
 - name: credit-g
   openml_task_id: 31
-  metric:
-    - auc
-    - acc

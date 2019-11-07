@@ -1,0 +1,14 @@
+---
+
+- name: Airlines
+  openml_task_id: 189354
+
+- name: Albert
+  openml_task_id: 189356
+
+- name: Covertype
+  openml_task_id: 7593
+
+- name: Dionis
+  openml_task_id: 189355
+

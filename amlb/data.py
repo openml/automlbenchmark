@@ -11,11 +11,11 @@
 - **Feature** provides metadata for a given feature/column as well as encoding functions.
 """
 from abc import ABC, abstractmethod
+from enum import Enum
 import logging
 from typing import List
 
 import numpy as np
-from numpy import ndarray
 
 from .datautils import Encoder
 from .utils import clear_cache, lazy_property, profile, repr_def
@@ -88,7 +88,7 @@ class Datasplit(ABC):
 
     @property
     @abstractmethod
-    def data(self) -> ndarray:
+    def data(self) -> np.ndarray:
         """
 
         :return:
@@ -97,7 +97,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def X(self) -> ndarray:
+    def X(self) -> np.ndarray:
         """
 
         :return:
@@ -107,7 +107,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def y(self) -> ndarray:
+    def y(self) -> np.ndarray:
         """
 
         :return:
@@ -116,7 +116,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def data_enc(self) -> ndarray:
+    def data_enc(self) -> np.ndarray:
         encoded_cols = [f.label_encoder.transform(self.data[:, f.index]) for f in self.dataset.features]
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
@@ -125,7 +125,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def X_enc(self) -> ndarray:
+    def X_enc(self) -> np.ndarray:
         # TODO: should we use one_hot_encoder here instead?
         # encoded_cols = [p.label_encoder.transform(self.data[:, p.index]) for p in self.dataset.predictors]
         # return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
@@ -134,7 +134,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def y_enc(self) -> ndarray:
+    def y_enc(self) -> np.ndarray:
         # return self.dataset.target.label_encoder.transform(self.y)
         return self.data_enc[:, self.dataset.target.index]
 
@@ -143,10 +143,21 @@ class Datasplit(ABC):
         clear_cache(self, properties)
 
 
+DatasetType = Enum('DatasetType', 'binary multiclass regression')
+
 class Dataset(ABC):
 
     def __init__(self):
         super().__init__()
+
+    @property
+    @abstractmethod
+    def type(self) -> DatasetType:
+        """
+
+        :return:
+        """
+        pass
 
     @property
     @abstractmethod
