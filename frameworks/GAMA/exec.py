@@ -1,6 +1,5 @@
 import logging
 import os
-import pprint
 import sys
 import tempfile as tmp
 
@@ -15,16 +14,14 @@ import sklearn
 import category_encoders
 
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.utils import Timer, split_path, path_from_split
+from amlb.utils.os import split_path, path_from_split
 from frameworks.shared.callee import call_run, result, Timer
 
 
 log = logging.getLogger(__name__)
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset, config):
     log.info("\n**** GAMA  19.8.0 ****")
     log.info("sklearn == %s", sklearn.__version__)
     log.info("category_encoders == %s", category_encoders.__version__)
