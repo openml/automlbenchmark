@@ -14,8 +14,7 @@ def run(dataset: Dataset, config: TaskConfig):
     data = dict(
         train_path=dataset.train.path,
         test_path=dataset.test.path,
-        target=dataset.target.name,
-        truth=dataset.test.y
+        target=dataset.target.name
     )
 
     return run_in_venv(__file__, "exec.py",

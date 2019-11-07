@@ -72,7 +72,6 @@ def run(dataset, config):
         output_file=config.output_predictions_file,
         predictions=predictions,
         probabilities=probabilities,
-        truth=dataset['truth'],
         target_is_encoded=True,
         models_count=len(gama_automl._final_pop),
         training_duration=training.duration
