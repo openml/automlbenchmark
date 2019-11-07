@@ -11,19 +11,23 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from gama import GamaClassifier, GamaRegressor
+import sklearn
+import category_encoders
+
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.datautils import Encoder, impute, write_csv
-from amlb.results import save_predictions_to_file
 from amlb.utils import Timer, split_path, path_from_split
+from frameworks.shared.callee import call_run, result, Timer
 
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** GAMA ****\n")
+    log.info("\n**** GAMA  19.8.0 ****")
+    log.info("sklearn == %s", sklearn.__version__)
+    log.info("category_encoders == %s", category_encoders.__version__)
 
     is_classification = (config.type == 'classification')
     # Mapping of benchmark metrics to GAMA metrics
@@ -41,7 +45,7 @@ def run(dataset: Dataset, config: TaskConfig):
     if scoring_metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
@@ -69,14 +73,16 @@ def run(dataset: Dataset, config: TaskConfig):
     predictions = gama_automl.predict(X_test)
     probabilities = gama_automl.predict_proba(X_test) if is_classification else None
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=y_test,
-                             target_is_encoded=is_classification)
-
-    return dict(
-        models_count=len(gama_automl._final_pop),  # Not correct
+    return result(
+        output_file=config.output_predictions_file,
+        predictions=predictions,
+        probabilities=probabilities,
+        truth=y_test,
+        target_is_encoded=True,
+        models_count=len(gama_automl._final_pop),
         training_duration=training.duration
     )
+
+
+if __name__ == '__main__':
+    call_run(run)
