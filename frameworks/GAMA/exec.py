@@ -9,7 +9,7 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-from gama import GamaClassifier, GamaRegressor
+from gama import GamaClassifier, GamaRegressor, __version__
 import sklearn
 import category_encoders
 
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** GAMA  19.8.0 ****")
+    log.info("\n**** GAMA  %s ****", __version__)
     log.info("sklearn == %s", sklearn.__version__)
     log.info("category_encoders == %s", category_encoders.__version__)
 
