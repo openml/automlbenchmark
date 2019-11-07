@@ -13,8 +13,6 @@ from gama import GamaClassifier, GamaRegressor
 import sklearn
 import category_encoders
 
-
-from amlb.utils.os import split_path, path_from_split
 from frameworks.shared.callee import call_run, result, Timer
 
 
@@ -48,9 +46,9 @@ def run(dataset, config):
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
-    log_file = split_path(config.output_predictions_file)
-    log_file.extension = '.gamalog'
-    log_file = path_from_split(log_file)
+    dir, file = os.path.split(config.output_predictions_file)
+    file_name, file_ext = os.path.splitext(file)
+    log_file = os.path.join(dir, file_name + '.gamalog')
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
