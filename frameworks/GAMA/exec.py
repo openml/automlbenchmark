@@ -41,7 +41,7 @@ def run(dataset, config):
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
     X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
-    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
+    y_train, y_test = dataset.train.y_enc.squeeze(), dataset.test.y_enc.squeeze()
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
