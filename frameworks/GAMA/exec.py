@@ -40,9 +40,6 @@ def run(dataset, config):
     if scoring_metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
-    y_train, y_test = dataset.train.y_enc.squeeze(), dataset.test.y_enc.squeeze()
-
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
@@ -62,17 +59,20 @@ def run(dataset, config):
                             **training_params)
 
     with Timer() as training:
-        gama_automl.fit(X_train, y_train)
+        gama_automl.fit_arff(dataset['train_path'], dataset['target'])
 
     log.info('Predicting on the test set.')
-    predictions = gama_automl.predict(X_test)
-    probabilities = gama_automl.predict_proba(X_test) if is_classification else None
+    predictions = gama_automl.predict_arff(dataset['test_path'], dataset['target'])
+    if is_classification is not None:
+        probabilities = gama_automl.predict_proba_arff(dataset['test_path'], dataset['target'])
+    else:
+        probabilities = None
 
     return result(
         output_file=config.output_predictions_file,
         predictions=predictions,
         probabilities=probabilities,
-        truth=y_test,
+        truth=dataset['truth'],
         target_is_encoded=True,
         models_count=len(gama_automl._final_pop),
         training_duration=training.duration
