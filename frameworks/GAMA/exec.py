@@ -42,10 +42,7 @@ def run(dataset, config):
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
-
-    dir, file = os.path.split(config.output_predictions_file)
-    file_name, file_ext = os.path.splitext(file)
-    log_file = os.path.join(dir, file_name + '.gamalog')
+    log_file = os.path.join(config.output_dir, 'gama.log')
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)

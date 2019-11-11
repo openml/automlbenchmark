@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-shopt -s expand_aliases
 HERE=$(dirname "$0")
 #AMLB_DIR="$1"
 # by passing the module directory to `setup.sh`, it tells it to automatically create a virtual env under the current module.
