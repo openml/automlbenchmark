@@ -114,7 +114,7 @@ def save_artifacts(estimator, config):
     try:
         models_repr = estimator.show_models()
         log.debug("Trained Ensemble:\n%s", models_repr)
-        artifacts = config.framework_params.get('_saved_artifacts', [])
+        artifacts = config.framework_params.get('_save_artifacts', [])
         if 'models' in artifacts:
             models_file = os.path.join(make_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:

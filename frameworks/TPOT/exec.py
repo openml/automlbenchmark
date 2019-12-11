@@ -96,7 +96,7 @@ def save_artifacts(estimator, config):
         log.debug("All individuals :\n%s", list(estimator.evaluated_individuals_.items()))
         models = estimator.pareto_front_fitted_pipelines_
         hall_of_fame = list(zip(reversed(estimator._pareto_front.keys), estimator._pareto_front.items))
-        artifacts = config.framework_params.get('_saved_artifacts', False)
+        artifacts = config.framework_params.get('_save_artifacts', False)
         if 'models' in artifacts:
             models_file = os.path.join(make_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:

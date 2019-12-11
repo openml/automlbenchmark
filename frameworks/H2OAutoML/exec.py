@@ -38,7 +38,8 @@ def run(dataset: Dataset, config: TaskConfig):
         h2o.init(nthreads=nthreads,
                  min_mem_size=str(config.max_mem_size_mb)+"M",
                  max_mem_size=str(config.max_mem_size_mb)+"M",
-                 log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold)))
+                 # log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold))
+                 )
 
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from %s.", dataset.train.path)
@@ -92,7 +93,7 @@ def make_subdir(name, config):
 
 
 def save_artifacts(automl, dataset, config):
-    artifacts = config.framework_params.get('_saved_artifacts', ['leaderboard'])
+    artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
         lb = automl.leaderboard.as_data_frame()
         log.debug("Leaderboard:\n%s", lb.to_string())
