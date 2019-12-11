@@ -10,14 +10,14 @@ import openml as oml
 import arff
 import numpy as np
 
-from .data import Dataset, DatasetType, Datasplit, Feature
-from .utils import lazy_property, obj_size, profile, to_mb
+from ..data import Dataset, DatasetType, Datasplit, Feature
+from ..utils import lazy_property, obj_size, profile, to_mb
 
 
 log = logging.getLogger(__name__)
 
 
-class Openml():
+class Openml:
 
     def __init__(self, api_key, cache_dir=None):
         oml.config.apikey = api_key

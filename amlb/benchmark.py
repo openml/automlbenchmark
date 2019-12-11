@@ -16,7 +16,7 @@ import math
 import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
-from .openml import Openml
+from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
@@ -25,6 +25,13 @@ from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten
 
 
 log = logging.getLogger(__name__)
+
+
+class SetupMode(Enum):
+    auto = 0
+    skip = 1
+    force = 2
+    only = 3
 
 
 class Benchmark:
@@ -41,8 +48,7 @@ class Benchmark:
      - user-defined (list of) datasets
     """
 
-    task_loader = None
-    SetupMode = Enum('SetupMode', 'auto skip force only')
+    data_loader = None
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
@@ -87,9 +93,9 @@ class Benchmark:
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
-        Benchmark.task_loader = Openml(api_key=rconfig().openml.apikey, cache_dir=rconfig().input_dir)
+        Benchmark.data_loader = DataLoader(rconfig())
 
-        if mode == Benchmark.SetupMode.skip or mode == Benchmark.SetupMode.auto and self._setup_done():
+        if mode == SetupMode.skip or mode == SetupMode.auto and self._setup_done():
             return
 
         log.info("Setting up framework {}.".format(self.framework_name))
@@ -337,13 +343,13 @@ class BenchmarkTask:
         :return: path to the dataset file
         """
         if hasattr(self._task_def, 'openml_task_id'):
-            self._dataset = Benchmark.task_loader.load(task_id=self._task_def.openml_task_id, fold=self.fold)
+            self._dataset = Benchmark.data_loader.load(DataSourceType.openml_task, task_id=self._task_def.openml_task_id, fold=self.fold)
             log.debug("Loaded OpenML dataset for task_id %s.", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'openml_dataset_id'):
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
-            # TODO
+            self._dataset = Benchmark.data_loader.load(DataSourceType.raw, path=self._task_def.dataset, fold=self.fold)
             raise NotImplementedError("Raw dataset are not supported yet.")
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")

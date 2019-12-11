@@ -7,7 +7,7 @@
   - ParallelJobRunner queues the jobs and run them in a dedicated thread
 """
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-from enum import Enum
+from enum import Enum, auto
 import logging
 import multiprocessing
 import queue
@@ -20,7 +20,12 @@ from .utils import Namespace, Timer, InterruptTimeout
 log = logging.getLogger(__name__)
 
 
-State = Enum('State', 'created cancelled running stopping stopped')
+class State(Enum):
+    created = auto()
+    cancelled = auto()
+    running = auto()
+    stopping = auto()
+    stopped = auto()
 
 
 class InvalidStateError(Exception):
