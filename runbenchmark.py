@@ -123,7 +123,7 @@ try:
     if not args.keep_scores and args.mode != 'local':
         log.warning("`keep_scores` parameter is currently ignored in %s mode, scores are always saved in this mode.", args.mode)
 
-    bench.setup(amlb.Benchmark.SetupMode[args.setup])
+    bench.setup(amlb.SetupMode[args.setup])
     if args.setup != 'only':
         res = bench.run(args.task, args.fold)
 except (ValueError, AutoMLError) as e:

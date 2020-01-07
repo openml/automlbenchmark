@@ -107,7 +107,6 @@ class Benchmark:
             run_script(self.framework_def.setup_script, _live_output_=True)
 
         if self.framework_def.setup_cmd is not None:
-            print(self.framework_def.setup_cmd)
             run_cmd('\n'.join(self.framework_def.setup_cmd), _executable_="/bin/bash", _live_output_=True)
 
         invalidate_caches()
@@ -349,8 +348,7 @@ class BenchmarkTask:
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
-            self._dataset = Benchmark.data_loader.load(DataSourceType.raw, path=self._task_def.dataset, fold=self.fold)
-            raise NotImplementedError("Raw dataset are not supported yet.")
+            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold)
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 

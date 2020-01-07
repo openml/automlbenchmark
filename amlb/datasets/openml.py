@@ -17,7 +17,7 @@ from ..utils import lazy_property, obj_size, profile, to_mb
 log = logging.getLogger(__name__)
 
 
-class Openml:
+class OpenmlLoader:
 
     def __init__(self, api_key, cache_dir=None):
         oml.config.apikey = api_key
@@ -71,7 +71,7 @@ class OpenmlDataset(Dataset):
         self._attributes = None
         self._unique_values = {}
 
-    @property
+    @lazy_property
     def type(self):
         nclasses = self._oml_dataset.qualities.get('NumberOfClasses', 0)
         if nclasses > 2:
