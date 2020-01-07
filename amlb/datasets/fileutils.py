@@ -10,11 +10,11 @@ from ..utils import touch
 
 log = logging.getLogger(__name__)
 
-VALID_URLS = ("http", "https")
+SUPPORTED_SCHEMES = ("http", "https")
 
 
 def is_valid_url(url):
-    return urlparse(url).scheme in VALID_URLS
+    return urlparse(url).scheme in SUPPORTED_SCHEMES
 
 
 def url_exists(url):
