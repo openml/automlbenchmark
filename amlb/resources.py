@@ -264,7 +264,9 @@ class Resources:
         if task[conf] is None:
             task[conf] = ("openml.org/t/{}".format(task.openml_task_id) if task['openml_task_id'] is not None
                           else "openml.org/d/{}".format(task.openml_dataset_id) if task['openml_dataset_id'] is not None
-                          else task.dataset.train if task['dataset'] is not None
+                          else ((task.dataset['id'] if isinstance(task.dataset, (dict, Namespace))
+                                 else task.dataset if isinstance(task.dataset, str)
+                                 else None) or task.name) if task['dataset'] is not None
                           else None)
             if not lenient and task[conf] is None:
                 raise ValueError("task definition must contain one property among ['openml_task_id', 'dataset']")

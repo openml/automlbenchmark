@@ -8,7 +8,7 @@ import tempfile
 from typing import List, Union
 from urllib.error import URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, urlretrieve
 import zipfile
 
 import arff
@@ -16,7 +16,8 @@ import numpy as np
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
-from ..utils import Namespace, as_list, lazy_property, list_all_files, profile, touch
+from ..resources import get as rget
+from ..utils import Namespace, as_list, cached, lazy_property, list_all_files, profile, touch
 
 
 log = logging.getLogger(__name__)
@@ -35,13 +36,15 @@ def url_exists(url):
     try:
         with urlopen(head_req) as test:
             return test.status == 200
-    except URLError:
+    except URLError as e:
+        log.error(f"Cannot access url %s: %s", url, e)
         return False
 
 
 def download_file(url, dest_path):
-    touch(dest_path, as_dir=True)
-    with urlopen(url) as resp, open(dest_path, 'w') as dest:
+    touch(dest_path)
+    # urlretrieve(url, filename=dest_path)
+    with urlopen(url) as resp, open(dest_path, 'wb') as dest:
         shutil.copyfileobj(resp, dest)
 
 
@@ -62,19 +65,30 @@ def unarchive_file(path, dest_folder=None):
     return dest
 
 
+train_search_pat = re.compile(r"(?:(.*)[_-])train(?:[_-](\d+))?\.\w+")
+test_search_pat = re.compile(r"(?:(.*)[_-])test(?:[_-](\d+))?\.\w+")
+
+
 class FileLoader:
 
     def __init__(self, cache_dir=None):
         self._cache_dir = cache_dir if cache_dir else tempfile.mkdtemp(prefix='amlb_cache')
 
     def load(self, dataset, fold=0):
+        dataset = dataset if isinstance(dataset, Namespace) else Namespace(path=dataset)
         log.debug("Loading dataset %s", dataset)
-        paths = self._extract_train_test_paths(dataset)
-        target = dataset.target if isinstance(dataset, (dict, Namespace)) and 'target' in dataset else None
-        type_ = dataset.type if  isinstance(dataset, (dict, Namespace)) and 'type' in dataset else None
+        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset)
+        if len(paths['test']) == 0:
+            log.warning("No test file in the dataset, the train set will automatically be split 90%/10% using the given seed.")
+        seed = rget().seed(fold)
+        assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
+        assert len(paths['test']) == 0 or fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
+
+        target = dataset['target']
+        type_ = dataset['type']
         ext = os.path.splitext(paths['train'][0])[1].lower()
         train_path = paths['train'][fold]
-        test_path = paths['test'][fold] if 'test' in paths and len(paths['test']) > 0 else None
+        test_path = paths['test'][fold] if len(paths['test']) > 0 else None
         log.info(f"Using training set {train_path} with test set {test_path}.")
         if ext == '.arff':
             return ArffDataset(train_path, test_path, target=target, type=type_)
@@ -88,9 +102,9 @@ class FileLoader:
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
             return self._extract_train_test_paths(dict(train=[p for i, p in enumerate(dataset) if p % 2 == 0],
                                                        test=[p for i, p in enumerate(dataset) if p % 2 == 1]))
-        elif isinstance(dataset, (dict, Namespace)):
-            return dict(train=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset['train'])],
-                        test=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset['test'] if 'test' in dataset else [])])
+        elif isinstance(dataset, Namespace):
+            return dict(train=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset.train)],
+                        test=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset.test)])
         else:
             assert isinstance(dataset, str)
             dataset = os.path.expanduser(dataset)
@@ -99,19 +113,21 @@ class FileLoader:
             if os.path.isfile(dataset):
                 if is_archive(dataset):
                     arch_name, _ = os.path.splitext(os.path.basename(dataset))
-                    dest_folder = unarchive_file(dataset, os.path.join(self._cache_dir, arch_name))
+                    dest_folder = os.path.join(self._cache_dir, arch_name)
+                    if not os.path.exists(dest_folder):  # don't uncompress if previously done
+                        dest_folder = unarchive_file(dataset, dest_folder)
                     return self._extract_train_test_paths(dest_folder)
                 else:
-                    return dict(train=[dataset])
+                    return dict(train=[dataset], test=[])
             elif os.path.isdir(dataset):
                 files = list_all_files(dataset)
                 log.debug("Files found in dataset folder %s: %s", dataset, files)
                 assert len(files) > 0, f"Empty folder: {dataset}"
                 if len(files) == 1:
-                    return dict(train=files)
+                    return dict(train=files, test=[])
 
-                train_matches = [m for m in [re.search(r"(?:(.*)_)train(?:_(\d+))?\.\w+", f) for f in files] if m]
-                test_matches = [m for m in [re.search(r"(?:(.*)_)test(?:_(\d+))?\.\w+", f) for f in files] if m]
+                train_matches = [m for m in [train_search_pat.search(f) for f in files] if m]
+                test_matches = [m for m in [test_search_pat.search(f) for f in files] if m]
                 # verify they're for the same dataset (just based on name)
                 assert train_matches and test_matches, f"Folder {dataset} must contain at least one training and one test dataset."
                 root_names = {m[1] for m in (train_matches+test_matches)}
@@ -137,10 +153,9 @@ class FileLoader:
                 return paths
         elif is_valid_url(dataset):
             cached_file = os.path.join(self._cache_dir, os.path.basename(dataset))
-            if os.path.exists(cached_file):
-                return self._extract_train_test_paths(cached_file)
-            assert url_exists(dataset), f"Invalid path/url: {dataset}"
-            download_file(dataset, cached_file)
+            if not os.path.exists(cached_file):  # don't download if previously done
+                assert url_exists(dataset), f"Invalid path/url: {dataset}"
+                download_file(dataset, cached_file)
             return self._extract_train_test_paths(cached_file)
         else:
             raise ValueError(f"Invalid dataset description: {dataset}")
@@ -154,11 +169,12 @@ class FileDataset(Dataset):
         self._test = test
         self._target = target
         self._type = type
-        self._metadata = None
 
     @property
     def type(self) -> DatasetType:
-        return DatasetType[self._type] if self._type is not None else self._get_metadata('type')
+        return (DatasetType[self._type] if self._type is not None
+                else (DatasetType.binary if len(self.target.values) == 2 else DatasetType.multiclass) if self.target.is_categorical()
+                else DatasetType.regression)
 
     @property
     def train(self) -> Datasplit:
@@ -177,9 +193,8 @@ class FileDataset(Dataset):
         return self._get_metadata('target')
 
     def _get_metadata(self, prop):
-        if not self._metadata:
-            self._metadata = self._train.load_metadata()
-        return self._metadata[prop]
+        meta = self._train.load_metadata()
+        return meta[prop]
 
 
 class FileDatasplit(Datasplit):
@@ -226,11 +241,13 @@ class ArffDatasplit(FileDatasplit):
     def __init__(self, dataset, path):
         super().__init__(dataset, format='arff', path=path)
 
+    @cached
     def load_metadata(self):
-        ds = arff.load(self.path)
+        with open(self.path) as f:
+            ds = arff.load(f)
         attrs = ds['attributes']
         # arff loader types = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']
-        to_feature_type = lambda arff_type: 'categorical' if arff_type.lower() == 'string' else arff_type.lower()
+        to_feature_type = lambda arff_type: 'categorical' if isinstance(arff_type, (list, set)) or arff_type.lower() == 'string' else arff_type.lower()
 
         features = [
             Feature(
@@ -248,21 +265,21 @@ class ArffDatasplit(FileDatasplit):
             col = df.iloc[:, f.index]
             f.has_missing_values = col.hasnans
             if f.is_categorical():
-                unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
+                arff_type = attrs[f.index][1]
+                unique_values = (arff_type if isinstance(arff_type, (list, set))
+                                 else col.dropna().unique() if f.has_missing_values
+                                 else col.unique())
                 f.values = sorted(unique_values)
 
-        dataset_type = DatasetType.regression
-        if target.is_categorical():
-            dataset_type = DatasetType.binary if len(target.values) == 2 else DatasetType.multiclass
-
         return dict(
-            type=dataset_type,
             features=features,
             target=target
         )
 
+    @cached
     def load_data(self):
-        ds = arff.load(self.path)
+        with open(self.path) as f:
+            ds = arff.load(f)
         return np.asarray(ds['data'], dtype=object)
 
 
@@ -278,9 +295,9 @@ class CsvDatasplit(FileDatasplit):
     def __init__(self, dataset, path):
         super().__init__(dataset, format='csv', path=path)
 
+    @cached
     def load_metadata(self):
-        # df = np.genfromtxt(self.path, dtype=None, names=True)
-        df = read_csv(self.path, dtype=object)
+        df = read_csv(self.path)
         dtypes = df.dtypes
         to_feature_type = lambda dtype: ('categorical' if np.issubdtype(dtype, np.object_)
                                          else 'integer' if np.issubdtype(dtype, np.integer)
@@ -305,16 +322,12 @@ class CsvDatasplit(FileDatasplit):
                 unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
                 f.values = sorted(unique_values)
 
-        dataset_type = DatasetType.regression
-        if target.is_categorical():
-            dataset_type = DatasetType.binary if len(target.values) == 2 else DatasetType.multiclass
-
         return dict(
-            type=dataset_type,
             features=features,
             target=target
         )
 
+    @cached
     def load_data(self):
         # return np.genfromtxt(f, dtype=None)
         return read_csv(self.path, as_data_frame=False, dtype=object)
