@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import tarfile
 from urllib.error import URLError
@@ -48,7 +49,7 @@ def unarchive_file(path, dest_folder=None):
         with zipfile.ZipFile(path) as zf:
             zf.extractall(path=dest_folder)
     elif tarfile.is_tarfile(path):
-        with tarfile.TarFile(path) as tf:
+        with tarfile.open(path) as tf:
             tf.extractall(path=dest_folder)
     return dest
 

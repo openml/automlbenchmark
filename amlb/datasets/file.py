@@ -53,8 +53,8 @@ class FileLoader:
     def _extract_train_test_paths(self, dataset):
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
-            return self._extract_train_test_paths(dict(train=[p for i, p in enumerate(dataset) if p % 2 == 0],
-                                                       test=[p for i, p in enumerate(dataset) if p % 2 == 1]))
+            return self._extract_train_test_paths(Namespace(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
+                                                            test=[p for i, p in enumerate(dataset) if i % 2 == 1]))
         elif isinstance(dataset, Namespace):
             return dict(train=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset.train)],
                         test=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset.test)])
