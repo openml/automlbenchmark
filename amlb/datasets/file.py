@@ -31,11 +31,12 @@ class FileLoader:
         dataset = dataset if isinstance(dataset, Namespace) else Namespace(path=dataset)
         log.debug("Loading dataset %s", dataset)
         paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset)
-        if len(paths['test']) == 0:
-            log.warning("No test file in the dataset, the train set will automatically be split 90%/10% using the given seed.")
-        seed = rget().seed(fold)
         assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
-        assert len(paths['test']) == 0 or fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
+        # seed = rget().seed(fold)
+        # if len(paths['test']) == 0:
+        #     log.warning("No test file in the dataset, the train set will automatically be split 90%/10% using the given seed.")
+        # else:
+        assert fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
 
         target = dataset['target']
         type_ = dataset['type']
@@ -61,6 +62,7 @@ class FileLoader:
         else:
             assert isinstance(dataset, str)
             dataset = os.path.expanduser(dataset)
+            dataset = dataset.format(**rget()._common_dirs)
 
         if os.path.exists(dataset):
             if os.path.isfile(dataset):
@@ -181,6 +183,15 @@ class FileDatasplit(Datasplit):
                 else next(f for f in features if f.name == target) if isinstance(target, str)
                 else next((f for f in features if f.name.lower() in ['target', 'class']), None) or features[-1])
 
+    def _set_feature_as_target(self, target: Feature):
+        # for classification problems, ensure that the target appears as categorical
+        ds_type = self.dataset._type
+        if ds_type and DatasetType[ds_type] in [DatasetType.binary, DatasetType.multiclass]:
+            if not target.is_categorical():
+                log.warning("Forcing target column %s as 'categorical' for classification problems: was originally detected as '%s'.", target.name, target.data_type)
+                target.data_type = 'categorical'
+        target.is_target = True
+
 
 class ArffDataset(FileDataset):
 
@@ -201,7 +212,6 @@ class ArffDatasplit(FileDatasplit):
         attrs = ds['attributes']
         # arff loader types = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']
         to_feature_type = lambda arff_type: 'categorical' if isinstance(arff_type, (list, set)) or arff_type.lower() == 'string' else arff_type.lower()
-
         features = [
             Feature(
                 i,
@@ -211,7 +221,7 @@ class ArffDatasplit(FileDatasplit):
             for i, attr in enumerate(attrs)
         ]
         target = self._find_target_feature(features)
-        target.is_target = True
+        self._set_feature_as_target(target)
 
         df = to_data_frame(ds['data'])
         for f in features:
@@ -224,10 +234,12 @@ class ArffDatasplit(FileDatasplit):
                                  else col.unique())
                 f.values = sorted(unique_values)
 
-        return dict(
+        meta = dict(
             features=features,
             target=target
         )
+        log.debug("Metadata for dataset %s: %s", self.path, meta)
+        return meta
 
     @cached
     def load_data(self):
@@ -241,6 +253,7 @@ class CsvDataset(FileDataset):
     def __init__(self, train_path, test_path, target=None, type=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
         super().__init__(CsvDatasplit(self, train_path), CsvDatasplit(self, test_path), target=target, type=type)
+        self._dtypes = None
 
 
 class CsvDatasplit(FileDatasplit):
@@ -248,15 +261,19 @@ class CsvDatasplit(FileDatasplit):
     def __init__(self, dataset, path):
         super().__init__(dataset, format='csv', path=path)
 
+    def _set_feature_as_target(self, target: Feature):
+        super()._set_feature_as_target(target)
+        if target.is_categorical():
+            self.dataset._dtypes[target.index] = np.object_
+
     @cached
     def load_metadata(self):
         df = read_csv(self.path)
-        dtypes = df.dtypes
+        self.dataset._dtypes = dtypes = df.dtypes
         to_feature_type = lambda dtype: ('categorical' if np.issubdtype(dtype, np.object_)
                                          else 'integer' if np.issubdtype(dtype, np.integer)
                                          else 'real' if np.issubdtype(dtype, np.floating)
                                          else 'numeric')
-
         features = [
             Feature(
                 i,
@@ -266,22 +283,26 @@ class CsvDatasplit(FileDatasplit):
             for i, col in enumerate(df.columns)
         ]
         target = self._find_target_feature(features)
-        target.is_target = True
+        self._set_feature_as_target(target)
 
         for f in features:
             col = df.iloc[:, f.index]
             f.has_missing_values = col.hasnans
             if f.is_categorical():
                 unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
-                f.values = sorted(unique_values)
+                f.values = [str(v) for v in sorted(unique_values)]
 
-        return dict(
+        meta = dict(
             features=features,
             target=target
         )
+        log.debug("Metadata for dataset %s: %s", self.path, meta)
+        return meta
 
     @cached
     def load_data(self):
         # return np.genfromtxt(f, dtype=None)
-        return read_csv(self.path, as_data_frame=False, dtype=object)
+        dtypes = self.dataset._dtypes.to_dict()
+        data = read_csv(self.path, as_data_frame=False, dtype=dtypes)
+        return data
 

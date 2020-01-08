@@ -144,9 +144,11 @@ class Datasplit(ABC):
 
 
 class DatasetType(Enum):
-    binary = auto()
-    multiclass = auto()
-    regression = auto()
+    binary = 1
+    binomial = 1  # alias for conversion from str, but always use 'binary' in code
+    multiclass = 2
+    multinomial = 2  # alias for conversion from str, but always use 'multiclass' in code
+    regression = 3
 
 
 class Dataset(ABC):
