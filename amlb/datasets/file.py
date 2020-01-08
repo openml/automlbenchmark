@@ -27,6 +27,7 @@ class FileLoader:
     def __init__(self, cache_dir=None):
         self._cache_dir = cache_dir if cache_dir else tempfile.mkdtemp(prefix='amlb_cache')
 
+    @profile(logger=log)
     def load(self, dataset, fold=0):
         dataset = dataset if isinstance(dataset, Namespace) else Namespace(path=dataset)
         log.debug("Loading dataset %s", dataset)
@@ -163,7 +164,6 @@ class FileDatasplit(Datasplit):
         return self._path
 
     @lazy_property
-    @profile(logger=log)
     def data(self):
         # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
         log.debug("Loading datasplit %s.", self.path)
@@ -206,6 +206,7 @@ class ArffDatasplit(FileDatasplit):
         super().__init__(dataset, format='arff', path=path)
 
     @cached
+    @profile(logger=log)
     def load_metadata(self):
         with open(self.path) as f:
             ds = arff.load(f)
@@ -242,6 +243,7 @@ class ArffDatasplit(FileDatasplit):
         return meta
 
     @cached
+    @profile(logger=log)
     def load_data(self):
         with open(self.path) as f:
             ds = arff.load(f)
@@ -267,6 +269,7 @@ class CsvDatasplit(FileDatasplit):
             self.dataset._dtypes[target.index] = np.object_
 
     @cached
+    @profile(logger=log)
     def load_metadata(self):
         df = read_csv(self.path)
         self.dataset._dtypes = dtypes = df.dtypes
@@ -300,6 +303,7 @@ class CsvDatasplit(FileDatasplit):
         return meta
 
     @cached
+    @profile(logger=log)
     def load_data(self):
         # return np.genfromtxt(f, dtype=None)
         dtypes = self.dataset._dtypes.to_dict()

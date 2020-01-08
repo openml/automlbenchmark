@@ -300,19 +300,7 @@ By default, a benchmark run creates the following subdirectories and files in th
 
 
 ## Advanced configuration
-
-### Running a custom benchmark
 see [HOWTO]
-
-### Running a custom framework
-see [HOWTO]
-
-### Benchmark constraints
-##### Time limits
-##### Memory
-##### CPUs
-
-### AWS config
 
 
 [HOWTO]: ./HOWTO.md
