@@ -71,8 +71,8 @@ def run_in_venv(caller_file, script_file: str, *args,
         log.debug("Result from subprocess:\n%s", res)
         save_predictions_to_file(dataset=dataset,
                                  output_file=res.output_file,
-                                 predictions=res.predictions.reshape(-1, 1) if res.predictions is not None else None,
-                                 truth=res.truth.reshape(-1, 1) if res.truth is not None else None,
+                                 predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
+                                 truth=res.truth.reshape(-1) if res.truth is not None else None,
                                  probabilities=res.probabilities,
                                  target_is_encoded=res.target_is_encoded)
 

@@ -45,7 +45,7 @@ def run(dataset, config):
                   predictions=predictions,
                   truth=y_test,
                   probabilities=probabilities,
-                  target_is_encoded=True,
+                  target_is_encoded=is_classification,
                   models_count=len(rf),
                   training_duration=training.duration)
 
