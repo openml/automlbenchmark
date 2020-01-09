@@ -190,7 +190,7 @@ class Benchmark:
             else None
         if folds is None:
             raise ValueError("Fold value should be None, an int, or a list of ints.")
-        return filter(None, [self._make_job(task_def, f) for f in folds])
+        return list(filter(None, [self._make_job(task_def, f) for f in folds]))
 
     def _make_job(self, task_def, fold: int):
         """
