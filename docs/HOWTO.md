@@ -1,30 +1,31 @@
----
----
 # HOW-TO
 
 ## Run a benchmark
-see [README], `Quickstart` section for basic commands.
+see [README] `Quickstart` section for basic commands.
 
 ### Custom configuration
 
-Default configurations are all defined with some explanations in the `resources/config.yaml` file.
+Default configuration properties are all defined and described in the `resources/config.yaml` file.
 
-If you want to change those configurations, it is not recommended to edit the file above, but rather to create your own `config.yaml` file under the `user_dir` (by default `~/.config/automlbenchmark`). The application will automatically load this file and use to override the defaults.
+To override those configurations, create your custom `config.yaml` file under the `user_dir` . The application will automatically load this custom file and apply it on top of the defaults.
 
 _Example of config.yaml:_
 ```yaml
 ---
-input_dir: ~/data
+input_dir: ~/data   # change the default input directory (where data files are loaded and/or downloaded).
 
 frameworks:
-  definition_file:  # this allows to use default frameworks + those defined in your custom frameworks.yaml.
+  definition_file:  # this allows to add custom framework definitions (in {user}/frameworks.yaml) on top of the default ones.
     - '{root}/resources/frameworks.yaml'
     - '{user}/frameworks.yaml'
 
 benchmarks:
-  definition_dir:  # this allows to put your custom benchmark definitions under {user}/benchmarks.
+  definition_dir:  # this allows to add custom benchmark definitions (under {user}/benchmarks) to the default ones.
     - '{user}/benchmarks'
     - '{root}/resources/benchmarks'
+  constraints_file: # this allows to add custom constraint definitions (in {user}/constraints.yaml) on top of the default ones.
+    - '{root}/resources/constraints.yaml'
+    - '{user}/constraints.yaml'
 
 aws:
   resource_files:  # this allows to automatically upload custom config + frameworks to the running instance (benchmark files are always uploaded).
@@ -34,9 +35,15 @@ aws:
   use_docker: true  # you can decide to always use the prebuilt docker images on AWS.
 ```  
 
+**Note:** configurations support the following placeholders:
+- `{input}`: replaced by the value of config `input_dir`. Folder from which datasets are loaded (and/or downloaded) by default. Defaults to `~/.openml/cache`, but can also be overridden in a custom `config.yaml` or at the command line using `-i` or `--indir`.
+- `{output}`: replaced by the value of config `output_dir`. Folder where all outputs (results, logs, predictions...) will be stored. Defaults to `./results`, but can also be overridden in a custom `config.yaml` or at the command line using `-o` or `--outdir`. 
+- `{user}`: replaced by the value of config `user_dir`. Folder containing customizations (`config.yaml`, benchmark definitions, framework definitions...). Defaults to `~/.config/automlbenchmark`, but can be overridden at the command line using `-u` or `--userdir`.
+- `{root}`: replaced by the value of config `root_dir`. The root folder of the `automlbenchmark` application: this is detected at runtime.
+
 #### Run a framework with different (hyper-)parameters
 
-Framework definitions accept a `params` dictionary for pass-through parameters that are directly accessible from the framework `exec.py` file that does the AutoML training.
+Framework definitions accept a `params` dictionary for pass-through parameters, i.e. parameters that are directly accessible from the `exec.py` file in the framework integration executing the AutoML training.
 
 _Example:_
 
@@ -50,11 +57,11 @@ RandomForest:
     verbose: true
 ```
 
-**NOTE:** by convention, the param names starting with `_` are filtered out (they are not passed to the classifier/regressor) but are used for custom logic in the `exec.py`.
+**NOTE:** by convention, param names starting with `_` are filtered out (they are not passed to the classifier/regressor) but are used for custom logic in the `exec.py`.
 
 _Example:_
  
-In the definition below, the `_n_jobs` param is handled by custom code in `RandomForest/exec.py` (here it overrides the default `n_jobs` automatically calculated by the application: using all assigned cores).
+In the definition below, the `_n_jobs` param is handled by custom code in `RandomForest/exec.py`: here it overrides the default `n_jobs` automatically calculated by the application (using all assigned cores).
 ```yaml
 RandomForest:
   version: '0.21.3'
@@ -66,17 +73,21 @@ RandomForest:
 
 ## Add a benchmark
 
-By benchmark here, we mean a suite of datasets that can be used to feed any of the available frameworks, in combination with a set of constraints (time limit, cpus, memory) enforced by the application.
+In this section, `benchmark` means a suite of datasets that can be used to feed any of the available frameworks, in combination with a set of constraints (time limit, cpus, memory) enforced by the application.
 
-Each dataset must contain a training set and a test set. There can be various splits between the training set and the test one, in which case each split is named a `fold`, so that the same dataset can be benchmarked multiple times using a different fold. 
+A benchmark definition will then consist in a [datasets definition](#datasets-definition) and a [constraints definition](#constraint-definition).
 
-### Benchmark definition
+Each dataset must contain a training set and a test set. There can be multiple training/test splits, in which case each split is named a `fold`, so that the same dataset can be benchmarked multiple times using a different fold.
 
-A benchmark definition consists in a `yaml` file listing all the task/datasets that will be used when running the complete benchmark.
+### Datasets definition
 
-Each task/dataset must have a `name` that must be unique in the given definition file, and that will be used as an identifier, for example in the results.
+A dataset definition consists in a `yaml` file listing all the task/datasets that will used for the complete benchmark.
 
-This `name` can also be used on the command line (`-t` or `--task` argument) when we don't want to execute the full benchmark, but just a subset, often in combination with a specific fold (`-f` or `--fold` argument):
+Default dataset definitions are available under folder `resources/benchmarks`.
+
+Each task/dataset must have a `name` that should be unique (ignoring case) in the given definition file, it will also be used as an identifier, for example in the results.
+
+This `name` can also be used on the command line (`-t` or `--task` argument) when we just want to execute a subset of the benchmark, often in combination with a specific fold (`-f` or `--fold` argument):
 ```bash
 python runbenchmark.py randomforest validation -t bioresponse
 python runbenchmark.py randomforest validation -t bioresponse eucalyptus
@@ -99,22 +110,24 @@ The automlbenchmark application can directly consume those tasks using the follo
 - name: bioresponse
   openml_task_id: 9910
 ```
-where `openml_task_id` allows accessing the OpenML task at `https://www.openml.org/t/{openml_task_id}` (in this example: https://www.openml.org/t/9910). 
+where `openml_task_id` allows accessing the OpenML task at `https://www.openml.org/t/{openml_task_id}` (in this example: <https://www.openml.org/t/9910>). 
 
 
 #### OpenML studies
 
-[OpenML] studies are a collection of OpenML tasks, for example https://www.openml.org/s/218.
-The application doesn't directly support OpenML studies for now: they need to be converted into a proper benchmark definition file including all the tasks from the study, but we're thinking about improving this: see https://github.com/openml/automlbenchmark/issues/61.
+[OpenML] studies are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
+The application doesn't directly support OpenML studies for now: they need to be converted into a proper benchmark definition file including all the tasks from the study, but we're thinking about improving this: cf. <https://github.com/openml/automlbenchmark/issues/61>.
 
 #### File datasets
 
-It is also possible to benchmark the supported frameworks using your own datasets, as soon as they follow some requirements:
-- Each dataset must contain at least one file for training data and one file for test data.
+It is also possible to benchmark your own datasets, as soon as they follow some requirements:
 - The data files should be in one of the currently supported format: [ARFF], [CSV] (ideally with header).
+- Each dataset must contain at least one file for training data and one file for test data.
 - If the dataset is represented as an archive (.zip, .tar, .tgz, .tbz) or a directory, then the data files must follow this naming convention to be detected correctly:
   - if there's only one file for training and one for test, they should be named `{name}_train.csv` and `{name}_test.csv` (in case of CSV files).
   - if there are multiple `folds`, they should follow a similar convention: `{name}_train_0.csv`, `{name}_test_0.csv``, {name}_train_1.csv`, `{name}_test_1.csv`, ...
+
+_Example:_
 
 Then the datasets can be declared in the benchmark definition file as follow:
 ```yaml
@@ -184,12 +197,58 @@ Then the datasets can be declared in the benchmark definition file as follow:
 **Note**:
 - the naming convention is required only when `path` is pointing to a directory or an archive. If the files are listed explicitly, there's no constraint on the file names.
 - the `target` attribute is optional but recommended, otherwise the application will try to autodetect the target:
-  0. looking for a column named `target` of `class`.
+  0. looking for a column named `target` or `class`.
   0. using the last column as a fallback.
-- the `folds` attribute is also optional but recommended for those datasets as the default value is `folds=10` (common default with openml datasets), so if you don't have that many folds for your custom datasets, it is better to declare it explicitly here.
+- the `folds` attribute is also optional but recommended for those datasets as the default value is `folds=10` (default amount of folds in openml datasets), so if you don't have that many folds for your custom datasets, it is better to declare it explicitly here.
 - Remote files are downloaded to the `input_dir` folder and archives are decompressed there as well, so you may want to change the value of this folder in your [custom config.yaml file](#custom-configuration) or specify it at the command line with the `-i` or `--indir` argument (by default, it points to the `~/.openml/cache` folder).
 
 ### Constraints definition
+
+Now that we have defined a list of datasets, we also need to enforce some constraints on the autoML training.
+
+Default constraint definitions are available in `resources/constraint.yaml`. When no constraint is specified at the command line, the `test` constraint definition is used by default.
+
+THe application supports the following constraints:
+- `folds` (default=10): tell the number of tasks that will be created by default for each dataset of the benchmark. For example, if all datasets support 10 folds, setting a constraint `folds: 2` will create a task only for the first 2 folds by default.
+- `max_runtime_seconds` (default=3600): maximum time assigned for each individual benchmark task. This parameter is usually passed directly to the framework: if it doesn't respect the constraint, the application will abort the task after `2 * max_runtime_seconds`. In any case, the real task running time is always available in the results.
+- `cores` (default=-1): amount of cores used for each automl task. If <= 0, it will try to use all cores.
+- `max_mem_size_mb` (default=-1): amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
+- `min_vol_size_mb` (default=-1): minimum amount of free space required on the volume. If <= 0, skips verification. If the requirement is not fulfilled, a warning message will be printed, but the task will still be attempted.
+
+_Example:_
+
+Following the [custom configuration](#custom-configuration), it is possible to replace and/or add constraints by creating the following `constraints.yaml` file in your `user_dir`:
+
+```yaml
+---
+
+test:
+  folds: 1
+  max_runtime_seconds: 120
+
+1h16c:
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 16
+
+1h32c:
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 32
+
+4h16c:
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 16
+  min_vol_size_mb: 65536
+
+8h16c:
+  folds: 10
+  max_runtime_seconds: 28800
+  cores: 16
+  min_vol_size_mb: 65536
+
+```
 
 #### Add a default benchmark
 
@@ -218,6 +277,19 @@ Then the datasets can be declared in the benchmark definition file as follow:
 ## Troubleshooting guide
 
 ### Logs
+
+The application can collect various logs:
+- local benchmark application logs: those are always collected. For each run, the application generated 2 log files locally:
+  - `runbenchmark_{timestamp}.log`: contains logs for the application only (from DEBUG level).
+  - `runbenchmark_{timestamp}_full.log`: contains logs for the application + other Python libraries (from INFO level); e.g. `boto3` logs when running in `aws` mode.
+- remote application logs: for `aws` mode only, logs generated on the remote instances are automatically downloaded to the results folder, together with other result artifacts. 
+- framework logs (optional): if the framework integration supports it, it is possible to ask for the framework logs by creating a custom framework definition as follow:
+  ```yaml
+  H2OAutoML:
+    extends: H2OAutoML
+    params:
+      _save_artifacts: ['logs']
+  ```
 
 ### Profiling the application
 

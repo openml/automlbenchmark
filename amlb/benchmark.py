@@ -180,7 +180,7 @@ class Benchmark:
                 raise ValueError("Incorrect task name: {}.".format(task_name))
             return None
         if not include_disabled and not Benchmark._is_task_enabled(task_def):
-            raise ValueError("Task {} is disabled, please enable it first.".format(task_def.name))
+            raise ValueError(f"Task {task_def.name} is disabled, please enable it first.")
         return task_def
 
     def _task_jobs(self, task_def, folds=None):
@@ -190,7 +190,7 @@ class Benchmark:
             else None
         if folds is None:
             raise ValueError("Fold value should be None, an int, or a list of ints.")
-        return [self._make_job(task_def, f) for f in folds]
+        return filter(None, [self._make_job(task_def, f) for f in folds])
 
     def _make_job(self, task_def, fold: int):
         """
@@ -199,7 +199,9 @@ class Benchmark:
         :param fold: the specific fold to use on this task
         """
         if fold < 0 or fold >= task_def.folds:
-            raise ValueError("Fold value {} is out of range for task {}.".format(fold, task_def.name))
+            # raise ValueError(f"Fold value {fold} is out of range for task {task_def.name}.")
+            log.warning(f"Fold value {fold} is out of range for task {task_def.name}, skipping it.")
+            return
 
         return BenchmarkTask(self, task_def, fold).as_job(self.framework_module, self.framework_name)
 
