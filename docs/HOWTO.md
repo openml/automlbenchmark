@@ -250,6 +250,11 @@ test:
 
 ```
 
+The new constraints can then be used on the command line when executing the benchmark:
+```bash
+python runbenchmark.py randomforest validation 1h16c
+```
+
 #### Add a default benchmark
 
 #### Add a custom benchmark

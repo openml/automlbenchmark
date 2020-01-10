@@ -1,40 +1,9 @@
 ---
-#for doc purpose using <placeholder:default_value> syntax when it applies.
-
-# FORMAT:
-__dummy_framework_with_defaults:
-  version: ''
-  module: # defaults to `automl.frameworks.framework_name`
-  setup_args: ''
-  project: http://url/to/project/repo
-  docker_image: # will result in built docker image `author/image:tag`
-    author: automlbenchmark
-    image:  # defaults to `framework name to lowercase`
-    tag: latest
-
-#H2OAutoML:
-#  version: '3.22.0.5'
-#  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
-#  # my test repo
-#  docker_image:
-#    author: seibp
-#    image: automlbenchmark
-#    tag: latest
-
-H2OAutoML_wright:
-  module: frameworks.H2OAutoML
-  setup_args: 'wright'
-  version: '3.20.0.10'
 
 H2OAutoML_nightly:
   module: frameworks.H2OAutoML
-  setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip3 install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.23.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
+  setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.29.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
   version: 'nightly'
-
-H2OAutoML_local:
-  module: frameworks.H2OAutoML
-  setup_cmd: 'PIP install -U ~/repos/h2o/h2o-3/h2o-py/build/dist/h2o-3.23.0.99999-py2.py3-none-any.whl'
-  version: 'local'
 
 H2OAutoML_config_1:
   extends: H2OAutoML

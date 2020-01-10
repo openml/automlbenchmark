@@ -3,58 +3,23 @@
 # add miniboone to validation set: it has target at index 0 contrary to others
 - name: miniboone
   openml_task_id: 168335
-  metric:
-      - acc
-      - logloss
-      - auc
-  folds: 2
-  max_runtime_seconds: 600
 
 - name: albert
   openml_task_id: -1  # need to create an openml task for this dataset first or support raw datasets
   openml_data_id: 41147
   enabled: false
-  metric: 
-      - acc
-      - logloss
-      - auc
-  folds: 2
-  max_runtime_seconds: 1800
 
 - name: bioresponse 
   openml_task_id: 14966
-  metric:
-      - acc
-      - logloss
-      - auc
-  folds: 2
-  max_runtime_seconds: 1800
 
 - name: satellite
   openml_task_id: 167211
-  metric:
-      - auc
-      - logloss
-      - acc
-  folds: 2
-  max_runtime_seconds: 180
 
 - name: dionis
   openml_task_id: -1  # need to create an openml task for this dataset first or support raw datasets
   openml_data_id: 41167
   enabled: false
-  metric: 
-      - acc
-      - logloss
-  folds: 2
-  max_runtime_seconds: 1800
 
 - name: fashion-mnist 
   openml_task_id: 146825
-  metric: 
-      - acc
-      - logloss
-  folds: 2
-  max_runtime_seconds: 1800
-  ec2_instance_type: c5.xlarge
 

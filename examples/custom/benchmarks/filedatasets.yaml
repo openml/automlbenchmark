@@ -1,0 +1,45 @@
+---
+
+- name: iris_csv   # train file, test files and target set explicitly.
+  dataset:
+    train: '{user}/data/iris/IrisTrain.csv'
+    test: '{user}/data/iris/IrisTest.csv'
+    target: species
+  folds: 1
+
+- name: iris_arff   # train file, test files set explicitly, target auto-detected (column named `class`).
+  dataset:
+    train: '{user}/data/iris/IrisTrain.arff'
+    test: '{user}/data/iris/IrisTest.arff'
+  folds: 1
+
+- name: iris_dir_single   # train file and test files detected in given directory.
+  dataset:
+    path: '{user}/data/iris/single_fold'
+    target: species
+  folds: 1
+
+- name: iris_dir_single_minimal   # train file and test files detected in given directory + target auto-detected (here, last column).
+  dataset: '{user}/data/iris/single_fold'
+  folds: 1
+
+- name: iris_dir_multi_minimal   # multiple train and test files detected in directory.
+  dataset: '{user}/data/iris/multi_folds'
+  folds: 3
+
+- name: iris_zip  # archive unzipped to input folder and train + test files detected from unzipped folder.
+  dataset:
+    path: '{user}/data/iris/iris_single_fold.zip'
+    target: species
+  folds: 1
+
+- name: iris.tgz  # archive in different format, with multiple folds.
+  dataset: '{user}/data/iris/iris_multi_folds.tgz'
+  folds: 3
+
+- name: iris_remote  # archive is downloaded to input folder, unarchived there, and files auto-detected.
+  enabled: false
+  dataset: 'https:///data/iris/iris_single_fold.zip'
+  folds: 1
+
+
