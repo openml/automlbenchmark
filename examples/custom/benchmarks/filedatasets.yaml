@@ -39,7 +39,7 @@
 
 - name: iris_remote  # archive is downloaded to input folder, unarchived there, and files auto-detected.
   enabled: false
-  dataset: 'https:///data/iris/iris_single_fold.zip'
+  dataset: 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/iris_single_fold.zip'
   folds: 1
 
 
