@@ -88,3 +88,7 @@ TPOT:
 autoxgboost:
   version: '0.0.0.9000'
   project: https://github.com/ja-thomas/autoxgboost
+
+autogluon:
+  version: '0.0.3'
+  project: https://github.com/awslabs/autogluon
