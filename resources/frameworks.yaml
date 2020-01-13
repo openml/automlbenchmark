@@ -86,7 +86,7 @@ TPOT:
 #    verbosity: 2
 
 GAMA:
-  version: '19.11.2'
+  version: '20.0.0'
   project: https://github.com/PGijsbers/gama
 #  params:
 #    max_eval_time_mins: 2
