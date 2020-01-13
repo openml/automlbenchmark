@@ -1,23 +1,36 @@
 ---
 
+GradientBoosting:
+  module: extensions.GradientBoosting
+  version: '0.19.2'
+  project: https://scikit-learn.org/stable/modules/ensemble.html#gradient-boosting
+  params:
+    n_estimators: 500
+
+Stacking:
+  module: extensions.Stacking
+  version: '0.22.1'
+  project: https://scikit-learn.org/stable/modules/ensemble.html#stacking
+  params:
+    _rf_params: {n_estimators: 200}
+    _gbm_params: {n_estimators: 200}
+    _linear_params: {penalty: elasticnet, loss: log}
+#    _svc_params: {tol: 1e-3, max_iter: 1e5}
+#    _final_params: {penalty: elasticnet, loss: log} # sgd linear
+    _final_params: {max_iter: 1000}  # logistic/linear
+
 H2OAutoML_nightly:
   module: frameworks.H2OAutoML
   setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.29.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
   version: 'nightly'
 
-H2OAutoML_config_1:
+H2OAutoML_blending:
   extends: H2OAutoML
   params:
     nfolds: 0
-    stopping_tolerance: 0.01
 
-H2OAutoML_config_2:
+H2OAutoML_custom:
   extends: H2OAutoML
   params:
     nfolds: 3
     stopping_tolerance: 0.05
-
-Decision_Tree:
-  module: Decision_Tree
-  version: 'local'
-

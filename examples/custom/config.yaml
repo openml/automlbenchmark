@@ -22,7 +22,8 @@ aws:
   resource_files:  # this allows to automatically upload custom config + frameworks to the running instance (benchmark files are always uploaded).
     - '{user}/config.yaml'
     - '{user}/frameworks.yaml'
-    - '{user}/Decision_Tree'
+    - '{user}/extensions'
+
   ec2:
     instance_type:
       series: t3
