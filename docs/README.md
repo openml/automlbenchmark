@@ -1,7 +1,20 @@
+
+      
 # AutoML Benchmarking
 
 _**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._
 
+  * [Installation](#installation)
+     * [Pre-requisites](#pre-requisites)
+     * [Setup](#setup)
+  * [Quickstart](#quickstart)
+  * [Running benchmarks](#running-benchmarks)
+     * [In Docker image](#in-docker-image)
+     * [In local environment](#in-local-environment)
+     * [On AWS](#on-aws)
+     * [Output](#output)
+  * [Advanced configuration](#advanced-configuration)
+      
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
 * We currently lack standardized, easily-accessible benchmarking suites of tasks (datasets) that are curated to reflect important problem domains, practical to use, and sufficiently challenging to support a rigorous analysis of performance results. 

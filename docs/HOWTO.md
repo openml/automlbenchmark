@@ -1,5 +1,37 @@
 # HOW-TO
 
+  * [Run a benchmark](#run-a-benchmark)
+     * [Custom configuration](#custom-configuration)
+        * [Run a framework with different (hyper-)parameters](#run-a-framework-with-different-hyper-parameters)
+  * [Add a benchmark](#add-a-benchmark)
+     * [Datasets definition](#datasets-definition)
+        * [OpenML datasets](#openml-datasets)
+        * [OpenML tasks](#openml-tasks)
+        * [OpenML studies](#openml-studies)
+        * [File datasets](#file-datasets)
+     * [Constraints definition](#constraints-definition)
+  * [Add an AutoML framework](#add-an-automl-framework)
+     * [Framework definition](#framework-definition)
+     * [Framework integration](#framework-integration)
+        * [Recommended structure](#recommended-structure)
+        * [Frameworks with Python API](#frameworks-with-python-api)
+           * [Frameworks requiring a dedicated virtual env](#frameworks-requiring-a-dedicated-virtual-env)
+        * [Other Frameworks](#other-frameworks)
+        * [Add a default framework](#add-a-default-framework)
+        * [Add a custom framework](#add-a-custom-framework)
+  * [Analyze the results](#analyze-the-results)
+     * [Results file format](#results-file-format)
+     * [Predictions](#predictions)
+     * [Extract more information](#extract-more-information)
+  * [Troubleshooting guide](#troubleshooting-guide)
+     * [Where are the results?](#where-are-the-results)
+     * [Where are the logs?](#where-are-the-logs)
+     * [Profiling the application](#profiling-the-application)
+        * [Memory usage](#memory-usage)
+        * [Methods duration](#methods-duration)
+     * [Python library version conflict](#python-library-version-conflict)
+     * [Framework setup is not executed](#framework-setup-is-not-executed)
+
 ## Run a benchmark
 see [README](README.md#quickstart) for basic commands.
 
@@ -743,7 +775,7 @@ Examples of those artifacts are:
 
 By default, those artifacts are not saved, and all frameworks don't provide the same artifacts, that's why the list of the artifacts that should be extracted can only be specified in the framework definition using the conventional `_save_artifacts` param:
 
-_Example:_
+_Examples:_
 
 ```yaml
 autosklearn_debug:
@@ -756,6 +788,11 @@ H2OAutoML_debug:
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
   params:
     _save_artifacts: ['leaderboard', 'logs', 'models']  # will save the leaderboard and models under the `models` subfolder, and the H2O logs under `logs` subfolder.
+
+TPOT_debug:
+  extends: tpot
+  params:
+    _save_artifacts: ['models']
 ```
 
 ## Troubleshooting guide
