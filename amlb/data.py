@@ -11,7 +11,7 @@
 - **Feature** provides metadata for a given feature/column as well as encoding functions.
 """
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import Enum, auto
 import logging
 from typing import List
 
@@ -143,7 +143,13 @@ class Datasplit(ABC):
         clear_cache(self, properties)
 
 
-DatasetType = Enum('DatasetType', 'binary multiclass regression')
+class DatasetType(Enum):
+    binary = 1
+    binomial = 1  # alias for conversion from str, but always use 'binary' in code
+    multiclass = 2
+    multinomial = 2  # alias for conversion from str, but always use 'multiclass' in code
+    regression = 3
+
 
 class Dataset(ABC):
 

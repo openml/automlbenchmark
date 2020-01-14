@@ -1,5 +1,6 @@
 import logging
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+import sklearn
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
@@ -11,14 +12,14 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** Decision Tree (sklearn) ****\n")
+    log.info("\n**** Gradient Boosting (sklearn %s) ****\n", sklearn.__version__)
 
     is_classification = config.type == 'classification'
 
     X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y, dataset.test.y
 
-    estimator = DecisionTreeClassifier if is_classification else DecisionTreeRegressor
+    estimator = GradientBoostingClassifier if is_classification else GradientBoostingRegressor
     predictor = estimator(random_state=config.seed, **config.framework_params)
 
     with Timer() as training:

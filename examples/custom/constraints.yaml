@@ -1,0 +1,7 @@
+---
+
+30m4c2f:
+  folds: 2
+  max_runtime_seconds: 1800
+  cores: 4
+  ec2_instance_type: c5.xlarge

@@ -224,8 +224,7 @@ class Resources:
             if isinstance(framework.setup_cmd, str):
                 framework.setup_cmd = [framework.setup_cmd]
             framework.setup_cmd = [cmd.format(**self._common_dirs,
-                                              **dict(setup=os.path.join(framework.module, "setup"),
-                                                     pip="PIP",
+                                              **dict(pip="PIP",
                                                      py="PY"))
                                    for cmd in framework.setup_cmd]
 
@@ -250,7 +249,7 @@ class Resources:
 
     def _validate_task(self, task, lenient=False):
         missing = []
-        for conf in ['name', 'openml_task_id']:
+        for conf in ['name']:
             if task[conf] is None:
                 missing.append(conf)
         if not lenient and len(missing) > 0:
@@ -263,10 +262,14 @@ class Resources:
 
         conf = 'id'
         if task[conf] is None:
-            task[conf] = "openml.org/t/{}".format(task.openml_task_id) if task['openml_task_id'] is not None \
-                else "openml.org/d/{}".format(task.openml_dataset_id) if task['openml_dataset_id'] is not None \
-                else task.dataset if task['dataset'] is not None \
-                else None
+            task[conf] = ("openml.org/t/{}".format(task.openml_task_id) if task['openml_task_id'] is not None
+                          else "openml.org/d/{}".format(task.openml_dataset_id) if task['openml_dataset_id'] is not None
+                          else ((task.dataset['id'] if isinstance(task.dataset, (dict, Namespace))
+                                 else task.dataset if isinstance(task.dataset, str)
+                                 else None) or task.name) if task['dataset'] is not None
+                          else None)
+            if not lenient and task[conf] is None:
+                raise ValueError("task definition must contain one property among ['openml_task_id', 'dataset']")
 
         conf = 'metric'
         if task[conf] is None:

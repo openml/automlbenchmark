@@ -58,6 +58,9 @@ def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dty
      (numpy should be enough for our needs).
     :param path: the path to a csv file or a file-like object, or readable (with read() method) object.
     :param nrows: the number of rows to read, if not specified, all are read.
+    :param header: if the columns header should be read.
+    :param as_data_frame: if the result should be returned as a data frame (default) or a numpy array.
+    :param dtype: data type for columns.
     :return: a DataFrame
     """
     df = pd.read_csv(path,

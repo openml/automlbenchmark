@@ -149,7 +149,7 @@ def noop():
 def as_list(*args):
     if len(args) == 0:
         return list()
-    elif len(args) == 1 and isinstance(args[0], Iterable):
+    elif len(args) == 1 and isinstance(args[0], Iterable) and not isinstance(args[0], str):
         return list(args[0])
     return list(args)
 
@@ -157,7 +157,7 @@ def as_list(*args):
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):
     return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
                                 else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
-    else l.append(r)) or l, iterable, [])
+                                else l.append(r)) or l, iterable, [])
 
 
 def partition(iterable, predicate=id):
