@@ -55,8 +55,10 @@ AutoWEKA:
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 H2OAutoML:
-  version: '3.24.0.1'
+  version: '3.26.0.11'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+#  params:
+#    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
 
 hyperoptsklearn:
   version: '0.0.3'
