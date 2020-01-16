@@ -658,7 +658,7 @@ Here is a short description of each column:
 - `models`: for some frameworks, it is possible to know how many models in total were trained by the AutoML framework. 
 - `seed`: the seed or random state passed to the framework. With some frameworks, it is enough to obtain reproducible results. Note that the seed can be specified at the command line using `-Xseed=` arg (for example `python randomforest -Xseed=1452956522`): when there are multiple folds, the seed is then incremented by the fold number.
 - `info`: additional info in text format, this usually contains error messages if the job failed.
-- `acc`, `auc`, `logloss` metrics: all the metrics that were computed based on the generated predictions. For each job/row, one of them matches the `result` column, the others are purely informative.
+- `acc`, `auc`, `logloss` metrics: all the metrics that were computed based on the generated predictions. For each job/row, one of them matches the `result` column, the others are purely informative. Those additional metric columns are simply added in alphabetical order.
 
 ### Predictions
 
