@@ -92,3 +92,15 @@ autoxgboost:
 autogluon:
   version: '0.0.3'
   project: https://github.com/awslabs/autogluon
+
+H2OAutoML_benchmark:
+  version: '_TODO_'
+  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+
+autosklearn_benchmark:
+  version: '_TODO_'
+  project: https://automl.github.io/auto-sklearn/stable/
+
+TPOT_benchmark:
+  version: '_TODO_'
+  project: https://github.com/EpistasisLab/tpot
