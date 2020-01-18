@@ -94,13 +94,13 @@ autogluon:
   project: https://github.com/awslabs/autogluon
 
 H2OAutoML_benchmark:
-  version: '_TODO_'
+  version: '3.28.0.1'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 
 autosklearn_benchmark:
-  version: '_TODO_'
+  version: '0.5.2'
   project: https://automl.github.io/auto-sklearn/stable/
 
 TPOT_benchmark:
-  version: '_TODO_'
+  version: '0.11.1'
   project: https://github.com/EpistasisLab/tpot

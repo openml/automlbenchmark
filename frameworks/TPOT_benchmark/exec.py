@@ -28,7 +28,6 @@ def run(dataset: Dataset, config: TaskConfig):
             output_directory='tmp/',
             eval_metric=perf_metric,
             runtime_sec=config.max_runtime_seconds,
-            # runtime_sec=60,
             random_state=0,
             num_cores=config.cores,
         )
@@ -47,12 +46,21 @@ def run(dataset: Dataset, config: TaskConfig):
     if is_classification & (len(probabilities.shape) == 1):
         probabilities = np.array([[1-row, row] for row in probabilities])
 
+    classes = baseline.classes
+
+    if is_classification:
+        print(classes)
+        print(predictions[:5])
+        print(probabilities[:5])
+        print(y_test[:5])
+
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file,
                              probabilities=probabilities,
                              predictions=predictions,
                              truth=y_test,
-                             target_is_encoded=False)
+                             target_is_encoded=False,
+                             probabilities_labels=classes)
 
     return dict(
         models_count=num_models_trained,

@@ -67,7 +67,7 @@ def run(dataset: Dataset, config: TaskConfig):
             label='__label__',
             output_directory='tmp/',
             time_limits=config.max_runtime_seconds, num_bagging_sets=20,
-            eval_metric=perf_metric,
+            eval_metric=perf_metric.name,
             auto_stack=True,
             verbosity=2,
         )
