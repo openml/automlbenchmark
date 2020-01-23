@@ -104,3 +104,7 @@ autosklearn_benchmark:
 TPOT_benchmark:
   version: '0.11.1'
   project: https://github.com/EpistasisLab/tpot
+
+GoogleAutoMLTables_benchmark:
+  version: '0.0.1'
+  project: https://cloud.google.com/automl-tables/
