@@ -90,7 +90,7 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
 
 autogluon:
-  version: '0.0.3'
+  version: '0.0.4'
   project: https://github.com/awslabs/autogluon
 
 H2OAutoML_benchmark:

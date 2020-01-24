@@ -26,7 +26,7 @@ def run(dataset: Dataset, config: TaskConfig):
             label_column='__label__',
             problem_type=problem_type,
             output_directory='tmp/',
-            eval_metric=perf_metric,
+            eval_metric=perf_metric.name,
             runtime_sec=config.max_runtime_seconds,
             random_state=0,
             num_cores=config.cores,
