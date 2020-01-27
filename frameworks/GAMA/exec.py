@@ -42,7 +42,10 @@ def run(dataset, config):
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
-    log_file = os.path.join(config.output_dir, 'gama.log')
+
+    *_, did, fold = dataset.train_path.split('/')
+    fold = fold.split('.')[0].split('_')[-1]
+    log_file = os.path.join(config.output_dir, '{}_{}.log'.format(did, fold))
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
@@ -56,12 +59,12 @@ def run(dataset, config):
                             **training_params)
 
     with Timer() as training:
-        gama_automl.fit_arff(dataset.train_path, dataset.target)
+        gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
 
     log.info('Predicting on the test set.')
-    predictions = gama_automl.predict_arff(dataset.test_path, dataset.target)
+    predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
     if is_classification is not None:
-        probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target)
+        probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target, encoding='utf-8')
     else:
         probabilities = None
 
