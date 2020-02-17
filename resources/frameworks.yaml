@@ -136,3 +136,7 @@ AutoWEKA_benchmark:
 GoogleAutoMLTables_benchmark:
   version: '0.0.1'
   project: https://cloud.google.com/automl-tables/
+
+AutoPilot:
+  version: '1.0'
+  project: https://aws.amazon.com/sagemaker/autopilot/
