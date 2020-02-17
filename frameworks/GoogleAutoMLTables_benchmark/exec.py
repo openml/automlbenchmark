@@ -30,10 +30,8 @@ def run(dataset: Dataset, config: TaskConfig):
     if gcp_info['GOOGLE_APPLICATION_CREDENTIALS'] == 'PATH_TO_YOUR_CREDENTIALS_FILE':
         raise AssertionError('Edit source code and add your Google account credentials to run GCP-Tables')
 
-    # TODO: RENAME MODEL BASED ON TIME, OTHERWISE IT WON'T BE UNIQUE ACROSS 1hr and 4hr!
     X_train['googleautomllabel'] = y_train
 
-    # TODO: Replace name prefix - with _, and any other specials like .
     dataset_name_gcp_suffix = '_amlb_' + str(config.max_runtime_seconds) + '_f' + str(config.fold)
     num_chars_left = 32 - 4 - len(dataset_name_gcp_suffix)
     dataset_name_gcp_prefix = config.name[:num_chars_left]
