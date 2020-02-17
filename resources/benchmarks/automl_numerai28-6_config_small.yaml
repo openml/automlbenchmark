@@ -1,0 +1,14 @@
+---
+
+- name: __defaults__
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 8
+  min_vol_size_mb: 16384
+
+
+- name: numerai28.6
+  openml_task_id: 167120
+  metric:
+    - auc
+    - acc

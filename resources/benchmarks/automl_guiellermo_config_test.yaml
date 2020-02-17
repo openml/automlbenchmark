@@ -1,0 +1,14 @@
+---
+
+- name: __defaults__
+  folds: 2
+  max_runtime_seconds: 60
+  cores: 8
+  min_vol_size_mb: 16384
+
+
+- name: guiellermo
+  openml_task_id: 168337
+  metric:
+    - auc
+    - acc

@@ -1,0 +1,13 @@
+---
+
+- name: __defaults__
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 8
+  min_vol_size_mb: 16384
+
+- name: Fashion-MNIST
+  openml_task_id: 146825
+  metric:
+    - logloss
+    - acc

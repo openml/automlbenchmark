@@ -1,0 +1,13 @@
+---
+
+- name: __defaults__
+  folds: 2
+  max_runtime_seconds: 60
+  cores: 8
+  min_vol_size_mb: 16384
+
+- name: sylvine
+  openml_task_id: 168912
+  metric:
+    - auc
+    - acc
