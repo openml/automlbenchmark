@@ -29,7 +29,7 @@ def run(dataset: Dataset, config: TaskConfig):
             eval_metric=perf_metric.name,
             runtime_sec=config.max_runtime_seconds,
             random_state=0,
-            num_cores=config.cores,
+            num_cores=4,  # config.cores,  # TODO: Using all 8 threads causes OOM issues for AutoSklearn and is an experimental feature
         )
 
     is_classification = config.type == 'classification'
@@ -64,5 +64,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     return dict(
         models_count=num_models_trained,
-        training_duration=training.duration
+        models_ensemble_count=num_models_ensemble,
+        training_duration=fit_time,
+        predict_duration=predict_time,
     )

@@ -17,7 +17,9 @@ from amlb.utils import Timer
 log = logging.getLogger(__name__)
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset: Dataset, config: TaskConfig, parameters=None):
+    if parameters is None:
+        parameters = {}
     log.info("\n**** AutoGluon ****\n")
 
     print('#################')
@@ -66,16 +68,21 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train = load_pd.load(path=train_path)
     X_train['__label__'] = y_train
 
+    fit_params = dict(
+        train_data=X_train,
+        label='__label__',
+        output_directory='tmp/',
+        time_limits=config.max_runtime_seconds,
+        eval_metric=perf_metric.name,
+        verbosity=2,
+    )
+
+    for key in parameters.keys():
+        fit_params[key] = parameters[key]
+
     with Timer() as training:
         predictor = task.fit(
-            train_data=X_train,
-            label='__label__',
-            output_directory='tmp/',
-            time_limits=config.max_runtime_seconds,
-            eval_metric=perf_metric.name,
-            auto_stack=True,
-            verbosity=2,
-            # enable_fit_continuation=True,
+            **fit_params
         )
 
     X_test = load_pd.load(path=test_path)

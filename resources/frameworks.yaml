@@ -90,7 +90,31 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
 
 autogluon:
-  version: '0.0.4'
+  version: '0.0.5'
+  project: https://github.com/awslabs/autogluon
+
+autogluon_distill:
+  version: '0.0.5'
+  project: https://github.com/awslabs/autogluon
+
+autogluon_nostack:
+  version: '0.0.5'
+  project: https://github.com/awslabs/autogluon
+
+autogluon_nobag:
+  version: '0.0.5'
+  project: https://github.com/awslabs/autogluon
+
+autogluon_norepeatbag:
+  version: '0.0.5'
+  project: https://github.com/awslabs/autogluon
+
+autogluon_nonn:
+  version: '0.0.5'
+  project: https://github.com/awslabs/autogluon
+
+autogluon_noknn:
+  version: '0.0.5'
   project: https://github.com/awslabs/autogluon
 
 H2OAutoML_benchmark:
@@ -104,6 +128,10 @@ autosklearn_benchmark:
 TPOT_benchmark:
   version: '0.11.1'
   project: https://github.com/EpistasisLab/tpot
+
+AutoWEKA_benchmark:
+  version: '2.6'
+  project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 GoogleAutoMLTables_benchmark:
   version: '0.0.1'

@@ -267,7 +267,7 @@ class TaskResult:
     @profile(logger=log)
     def compute_scores(self, framework_name, metrics, result=None, meta_result=None):
         framework_def, _ = rget().framework_definition(framework_name)
-        meta_result = Namespace({} if meta_result is None else meta_result) % Namespace(models_count=nan, training_duration=nan)
+        meta_result = Namespace({} if meta_result is None else meta_result) % Namespace(models_count=nan, training_duration=nan, predict_duration=nan, models_ensemble_count=nan)
         scores = Namespace(
             id=self.task.id,
             task=self.task.name,
@@ -280,7 +280,9 @@ class TaskResult:
             tag=rget().project_info.tag,
             utc=datetime_iso(),
             duration=meta_result.training_duration,
-            models=meta_result.models_count
+            predict_duration=meta_result.predict_duration,
+            models=meta_result.models_count,
+            models_ensemble=meta_result.models_ensemble_count
         )
         result = self.get_result(framework_name) if result is None else result
         for metric in metrics:

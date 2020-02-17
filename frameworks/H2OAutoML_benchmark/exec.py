@@ -32,6 +32,13 @@ def run(dataset: Dataset, config: TaskConfig):
             num_cores=config.cores,
         )
 
+    # Optionally edd extra model information to the leaderboard
+    lb = baseline.model.leaderboard
+
+    # Print all rows (instead of default 10 rows)
+    lb_str = str(lb.head(rows=lb.nrows))
+    print(lb_str)
+
     is_classification = config.type == 'classification'
     if is_classification:
         predictions, probabilities, predict_time = baseline.predict(test_data=X_test, pred_class_and_proba=True)
@@ -64,5 +71,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     return dict(
         models_count=num_models_trained,
-        training_duration=training.duration
+        models_ensemble_count=num_models_ensemble,
+        training_duration=training.duration,
+        predict_duration=predict_time,
     )
