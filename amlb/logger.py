@@ -6,6 +6,15 @@ import io
 import logging
 import sys
 
+try:
+    # Import numba because if it is imported after amlb, it causes a crash
+    # Location: numba/typing/templates.py", line 850, in register_global
+    #  if getattr(mod, val.__name__) is not val:
+    # Exception is: AttributeError: module 'amlb.logger' has no attribute 'new_print'
+    import numba
+except:
+    pass
+
 # prevent asap other modules from defining the root logger using basicConfig
 logging.basicConfig(handlers=[logging.NullHandler()])
 
