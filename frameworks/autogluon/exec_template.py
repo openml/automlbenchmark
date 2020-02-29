@@ -99,8 +99,7 @@ def run(dataset: Dataset, config: TaskConfig, parameters=None):
     leaderboard = predictor._learner.leaderboard(X_test, y_test, silent=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         print(leaderboard)
-    ag_info = predictor._learner.info()
-    print(ag_info)
+    ag_info = predictor._learner.get_info()
 
     output_dir = config.output_dir
     ag_model_scores_path = output_dir + '/' + 'ag_scores/' + 'scores_' + str(config.fold) + '.csv'
