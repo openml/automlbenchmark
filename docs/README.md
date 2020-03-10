@@ -84,7 +84,7 @@ pip3 install -r requirements.txt
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
 
 1. The AutoML framework that should be evaluated, see [frameworks.yaml](resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
-2. The benchmark suite to run. Should be one implemented in [benchmarks folder](resources/benchmarks).
+2. The benchmark suite to run should be one implemented in [benchmarks folder](resources/benchmarks).
 3. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
 
 Examples:
