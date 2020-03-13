@@ -29,7 +29,7 @@ from urllib.parse import quote_plus as uenc
 import boto3
 import botocore.exceptions
 
-from .benchmark import Benchmark
+from .benchmark import Benchmark, SetupMode
 from .datautils import read_csv, write_csv
 from .docker import DockerBenchmark
 from .job import Job
@@ -101,7 +101,7 @@ class AWSBenchmark(Benchmark):
             raise ValueError("Region {} not supported by AMI yet.".format(self.region))
 
     def setup(self, mode):
-        if mode == Benchmark.SetupMode.skip:
+        if mode == SetupMode.skip:
             log.warning("AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode))
         # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource('s3', region_name=self.region)
@@ -110,7 +110,7 @@ class AWSBenchmark(Benchmark):
 
         # IAM setup to secure exchanges between s3 and ec2 instances
         self.iam = boto3.resource('iam', region_name=self.region)
-        if mode == Benchmark.SetupMode.force:
+        if mode == SetupMode.force:
             log.warning("Cleaning up previously created IAM entities if any.")
             self._delete_iam_entities()
         self.instance_profile = self._create_instance_profile()

@@ -8,7 +8,7 @@ import logging
 import os
 import re
 
-from .benchmark import Benchmark
+from .benchmark import Benchmark, SetupMode
 from .errors import InvalidStateError
 from .job import Job
 from .resources import config as rconfig, get as rget
@@ -51,10 +51,10 @@ class DockerBenchmark(Benchmark):
             self.parallel_jobs = rconfig().max_parallel_jobs
 
     def setup(self, mode, upload=False):
-        if mode == Benchmark.SetupMode.skip:
+        if mode == SetupMode.skip:
             return
 
-        if mode == Benchmark.SetupMode.auto and self._docker_image_exists():
+        if mode == SetupMode.auto and self._docker_image_exists():
             return
 
         custom_commands = self.framework_module.docker_commands(
@@ -62,7 +62,7 @@ class DockerBenchmark(Benchmark):
             setup_cmd=self.framework_def._setup_cmd
         ) if hasattr(self.framework_module, 'docker_commands') else ""
         self._generate_docker_script(custom_commands)
-        self._build_docker_image(cache=(mode != Benchmark.SetupMode.force))
+        self._build_docker_image(cache=(mode != SetupMode.force))
         if upload:
             self._upload_docker_image()
 

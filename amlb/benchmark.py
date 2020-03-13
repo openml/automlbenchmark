@@ -16,7 +16,7 @@ import math
 import os
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
-from .openml import Openml
+from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
@@ -25,6 +25,13 @@ from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten
 
 
 log = logging.getLogger(__name__)
+
+
+class SetupMode(Enum):
+    auto = 0
+    skip = 1
+    force = 2
+    only = 3
 
 
 class Benchmark:
@@ -41,8 +48,7 @@ class Benchmark:
      - user-defined (list of) datasets
     """
 
-    task_loader = None
-    SetupMode = Enum('SetupMode', 'auto skip force only')
+    data_loader = None
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
@@ -87,9 +93,9 @@ class Benchmark:
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
-        Benchmark.task_loader = Openml(api_key=rconfig().openml.apikey, cache_dir=rconfig().input_dir)
+        Benchmark.data_loader = DataLoader(rconfig())
 
-        if mode == Benchmark.SetupMode.skip or mode == Benchmark.SetupMode.auto and self._setup_done():
+        if mode == SetupMode.skip or mode == SetupMode.auto and self._setup_done():
             return
 
         log.info("Setting up framework {}.".format(self.framework_name))
@@ -101,7 +107,6 @@ class Benchmark:
             run_script(self.framework_def.setup_script, _live_output_=True)
 
         if self.framework_def.setup_cmd is not None:
-            print(self.framework_def.setup_cmd)
             run_cmd('\n'.join(self.framework_def.setup_cmd), _executable_="/bin/bash", _live_output_=True)
 
         invalidate_caches()
@@ -175,7 +180,7 @@ class Benchmark:
                 raise ValueError("Incorrect task name: {}.".format(task_name))
             return None
         if not include_disabled and not Benchmark._is_task_enabled(task_def):
-            raise ValueError("Task {} is disabled, please enable it first.".format(task_def.name))
+            raise ValueError(f"Task {task_def.name} is disabled, please enable it first.")
         return task_def
 
     def _task_jobs(self, task_def, folds=None):
@@ -185,7 +190,7 @@ class Benchmark:
             else None
         if folds is None:
             raise ValueError("Fold value should be None, an int, or a list of ints.")
-        return [self._make_job(task_def, f) for f in folds]
+        return list(filter(None, [self._make_job(task_def, f) for f in folds]))
 
     def _make_job(self, task_def, fold: int):
         """
@@ -194,7 +199,9 @@ class Benchmark:
         :param fold: the specific fold to use on this task
         """
         if fold < 0 or fold >= task_def.folds:
-            raise ValueError("Fold value {} is out of range for task {}.".format(fold, task_def.name))
+            # raise ValueError(f"Fold value {fold} is out of range for task {task_def.name}.")
+            log.warning(f"Fold value {fold} is out of range for task {task_def.name}, skipping it.")
+            return
 
         return BenchmarkTask(self, task_def, fold).as_job(self.framework_module, self.framework_name)
 
@@ -337,14 +344,13 @@ class BenchmarkTask:
         :return: path to the dataset file
         """
         if hasattr(self._task_def, 'openml_task_id'):
-            self._dataset = Benchmark.task_loader.load(task_id=self._task_def.openml_task_id, fold=self.fold)
+            self._dataset = Benchmark.data_loader.load(DataSourceType.openml_task, task_id=self._task_def.openml_task_id, fold=self.fold)
             log.debug("Loaded OpenML dataset for task_id %s.", self._task_def.openml_task_id)
         elif hasattr(self._task_def, 'openml_dataset_id'):
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
-            # TODO
-            raise NotImplementedError("Raw dataset are not supported yet.")
+            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold)
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 

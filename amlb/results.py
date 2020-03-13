@@ -215,10 +215,13 @@ class TaskResult:
         :return: None
         """
         log.debug("Saving predictions to `%s`.", output_file)
-        prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
-        df = to_data_frame(probabilities, columns=prob_cols)
-        if probabilities_labels:
-            df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
+        if probabilities is not None:
+            prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
+            df = to_data_frame(probabilities, columns=prob_cols)
+            if probabilities_labels:
+                df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
+        else:
+            df = to_data_frame(None)
 
         preds = predictions
         truth = truth if truth is not None else dataset.test.y

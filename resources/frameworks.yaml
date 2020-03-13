@@ -55,8 +55,10 @@ AutoWEKA:
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 H2OAutoML:
-  version: '3.24.0.1'
+  version: '3.28.0.4'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+#  params:
+#    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
 
 hyperoptsklearn:
   version: '0.0.3'
@@ -88,8 +90,7 @@ TPOT:
 GAMA:
   version: '20.1.0'
   project: https://github.com/PGijsbers/gama
-#  params:
-#    max_eval_time_mins: 2
-#    population_size: 25
-#    verbosity: 2
 
+autoxgboost:
+  version: '0.0.0.9000'
+  project: https://github.com/ja-thomas/autoxgboost

@@ -12,7 +12,7 @@ h2oautoml
 tpot
 oboe
 autoweka
-#autoxgboost
+autoxgboost
 #hyperoptsklearn
 #ranger
 )
@@ -20,15 +20,14 @@ autoweka
 BENCHMARKS=(
 #test
 #validation
-#small-2c1h
-#medium-4c1h
-small-8c1h
-medium-8c1h
-small-8c4h
-medium-8c4h
-#medium-8c8h
-large-8c4h
-large-8c8h
+small
+medium
+large
+)
+
+CONSTRAINTS=(
+1h8c
+4h8c
 )
 
 MODE=(
@@ -40,7 +39,7 @@ aws
 mode='local'
 
 usage() {
-    echo "Usage: $0 framework_or_benchmark [-m|--mode=<local|docker|aws>]" 1>&2;
+    echo "Usage: $0 framework_or_benchmark [-c|--constraint] [-m|--mode=<local|docker|aws>]" 1>&2;
 }
 
 POSITIONAL=()
@@ -51,10 +50,13 @@ for i in "$@"; do
             usage
             exit ;;
         -f=* | --framework=*)
-            framework="${i#*=}"
+            frameworks="${i#*=}"
             shift ;;
         -b=* | --benchmark=*)
-            benchmark="${i#*=}"
+            benchmarks="${i#*=}"
+            shift ;;
+        -c=* | --constraint=*)
+            constraints="${i#*=}"
             shift ;;
         -m=* | --mode=*)
             mode="${i#*=}"
@@ -71,46 +73,44 @@ for i in "$@"; do
     esac
 done
 
+if [[ -z $frameworks ]]; then
+  frameworks=${FRAMEWORKS[*]}
+fi
+
+if [[ -z $benchmarks ]]; then
+  benchmarks=${BENCHMARKS[*]}
+fi
+
+if [[ -z $constraints ]]; then
+  constraints=${CONSTRAINTS[*]}
+fi
+
 if [[ -z $parallel ]]; then
     if [[ $mode == "aws" ]]; then
-        parallel=40
+        parallel=60
     else
         parallel=1
     fi
 fi
 
 #extra_params="-u /dev/null -o ./stable -Xmax_parallel_jobs=40"
-extra_params="-u ~/dev/null -o ./stable -Xmax_parallel_jobs=40 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
+extra_params="-u ~/dev/null -o ./stable -Xmax_parallel_jobs=60 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
 #extra_params="-u ~/.config/automlbenchmark/stable -o ./stable -Xmax_parallel_jobs=20 -Xaws.use_docker=True -Xaws.query_frequency_seconds=60"
-
-#echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
 
 #identify the positional param if any
 #if [[ -n $POSITIONAL ]]; then
 #    if [[ -z $framework ]]; then
 #        for i in ${FRAMEWORKS[*]}; do
 #fi
-#echo "framework=$framework, benchmark=$benchmark, mode=$mode, extra_params=$extra_params, positional=$POSITIONAL"
-
 
 #run the benchmarks
-if [[ -z $benchmark && -z $framework ]]; then
 #    usage
 #    exit 1
-    for b in ${BENCHMARKS[*]}; do
-        for f in ${FRAMEWORKS[*]}; do
-            python runbenchmark.py $f $b -m $mode -p $parallel $extra_params
+for c in ${constraints[*]}; do
+    for b in ${benchmarks[*]}; do
+        for f in ${frameworks[*]}; do
+#            echo "python runbenchmark.py $f $b $c -m $mode -p $parallel $extra_params"
+            python runbenchmark.py $f $b $c -m $mode -p $parallel $extra_params
         done
     done
-elif [[ -z $benchmark ]]; then
-    for b in ${BENCHMARKS[*]}; do
-        python runbenchmark.py $framework $b -m $mode -p $parallel $extra_params
-    done
-elif [[ -z $framework ]]; then
-    for f in ${FRAMEWORKS[*]}; do
-        python runbenchmark.py $f $benchmark -m $mode -p $parallel $extra_params
-    done
-else
-    python runbenchmark.py $framework $benchmark -m $mode -p $parallel $extra_params
-fi
-
+done

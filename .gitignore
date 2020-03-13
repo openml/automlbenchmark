@@ -18,6 +18,7 @@ venv/
 .ipynb_checkpoints/
 lib/
 logs/
+models/
 predictions/
 results/
 scores/

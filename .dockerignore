@@ -5,6 +5,7 @@
 logs
 results
 **/logs
+**/models
 **/predictions
 **/scores
 **/lib

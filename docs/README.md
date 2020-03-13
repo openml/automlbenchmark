@@ -1,7 +1,20 @@
+
+      
 # AutoML Benchmarking
 
 _**NOTE:**_ _This benchmarking framework is a WORK IN PROGRESS.  Check back later for the completed benchmark suite.  Please file an issue with any concerns/questions._
 
+  * [Installation](#installation)
+     * [Pre-requisites](#pre-requisites)
+     * [Setup](#setup)
+  * [Quickstart](#quickstart)
+  * [Running benchmarks](#running-benchmarks)
+     * [In Docker image](#in-docker-image)
+     * [In local environment](#in-local-environment)
+     * [On AWS](#on-aws)
+     * [Output](#output)
+  * [Advanced configuration](#advanced-configuration)
+      
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
 * We currently lack standardized, easily-accessible benchmarking suites of tasks (datasets) that are curated to reflect important problem domains, practical to use, and sufficiently challenging to support a rigorous analysis of performance results. 
@@ -71,7 +84,7 @@ pip3 install -r requirements.txt
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
 
 1. The AutoML framework that should be evaluated, see [frameworks.yaml](resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [here](docker/readme.md).
-2. The benchmark suite to run. Should be one implemented in [benchmarks folder](resources/benchmarks).
+2. The benchmark suite to run should be one implemented in [benchmarks folder](resources/benchmarks).
 3. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
 
 Examples:
@@ -161,10 +174,10 @@ The `automlbenchmark` app currently allows running benchmarks in various environ
 * on AWS, possibly distributing the tasks to multiple EC2 instances, each of them running the benchmark either locally or in a docker container.
 
 ### In Docker image
-The Docker image is automatically built before running the benchmark if it doesn't already exist locally or in a public repository.
-Especially, it will need to download and install all the dependencies when building the image, so this may take some time.
+The [Docker] image is automatically built before running the benchmark if it doesn't already exist locally or in a public repository (by default in <https://hub.docker.com/orgs/automlbenchmark/repositories>).
+Especially, without docker image, the application will need to download and install all the dependencies when building the image, so this may take some time.
 
-The generated image is usually named `automlbenchmark/{framework}:{tag}`, but this is customizable per framework: cf. `resources/frameworks.yaml` for details.
+The generated image is usually named `automlbenchmark/{framework}:{tag}`, but this is customizable per framework: cf. `resources/frameworks.yaml` and [HOWTO](HOWTO.md#framework-definition) for details.
 
 For example, this will build a Docker image for the `RandomForest` framework and then immediately start a container to run the `validation` benchmark, using all folds, allocating 1h and 4 cores for each task:
 ```bash
@@ -212,7 +225,7 @@ python3 runbenchmark.py TPOT validation -t bioresponse -f 0
 
 ### On AWS
 To run a benchmark on AWS you additionally need to have a configured AWS account.
-The application is using the [boto3](https://boto3.readthedocs.io/) Python package to exchange files through S3 and create EC2 instances.
+The application is using the [boto3] Python package to exchange files through S3 and create EC2 instances.
 
  If this is your first time setting up your AWS account on the machine that will run the `automlbenchmark` app, you can use the [AWS CLI](http://aws.amazon.com/cli/) tool and run:
  ```bash
@@ -300,20 +313,11 @@ By default, a benchmark run creates the following subdirectories and files in th
 
 
 ## Advanced configuration
-
-### Running a custom benchmark
 see [HOWTO]
-
-### Running a custom framework
-see [HOWTO]
-
-### Benchmark constraints
-##### Time limits
-##### Memory
-##### CPUs
-
-### AWS config
 
 
 [HOWTO]: ./HOWTO.md
 [examples/aws]: ../examples/aws/config.yaml
+
+[Docker]: https://docs.docker.com/
+[boto3]: https://boto3.readthedocs.io/

@@ -14,9 +14,9 @@ from tpot import TPOTClassifier, TPOTRegressor
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.datautils import Encoder, impute, write_csv
+from amlb.datautils import Encoder, impute
 from amlb.results import save_predictions_to_file
-from amlb.utils import Timer, split_path, path_from_split
+from amlb.utils import Timer, touch
 
 
 log = logging.getLogger(__name__)
@@ -61,20 +61,6 @@ def run(dataset: Dataset, config: TaskConfig):
     with Timer() as training:
         tpot.fit(X_train, y_train)
 
-    log.debug("All individuals :\n%s", list(tpot.evaluated_individuals_.items()))
-    models = tpot.pareto_front_fitted_pipelines_
-    hall_of_fame = list(zip(reversed(tpot._pareto_front.keys), tpot._pareto_front.items))
-    models_file = split_path(config.output_predictions_file)
-    models_file.extension = '.models.txt'
-    models_file = path_from_split(models_file)
-    with open(models_file, 'w') as f:
-        for m in hall_of_fame:
-            pprint.pprint(dict(
-                fitness=str(m[0]),
-                model=str(m[1]),
-                pipeline=models[str(m[1])],
-            ), stream=f)
-
     log.info('Predicting on the test set.')
     predictions = tpot.predict(X_test)
     try:
@@ -91,7 +77,34 @@ def run(dataset: Dataset, config: TaskConfig):
                              truth=y_test,
                              target_is_encoded=is_classification)
 
+    save_artifacts(tpot, config)
+
     return dict(
         models_count=len(tpot.evaluated_individuals_),
         training_duration=training.duration
     )
+
+
+def make_subdir(name, config):
+    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
+    touch(subdir, as_dir=True)
+    return subdir
+
+
+def save_artifacts(estimator, config):
+    try:
+        log.debug("All individuals :\n%s", list(estimator.evaluated_individuals_.items()))
+        models = estimator.pareto_front_fitted_pipelines_
+        hall_of_fame = list(zip(reversed(estimator._pareto_front.keys), estimator._pareto_front.items))
+        artifacts = config.framework_params.get('_save_artifacts', False)
+        if 'models' in artifacts:
+            models_file = os.path.join(make_subdir('models', config), 'models.txt')
+            with open(models_file, 'w') as f:
+                for m in hall_of_fame:
+                    pprint.pprint(dict(
+                        fitness=str(m[0]),
+                        model=str(m[1]),
+                        pipeline=models[str(m[1])],
+                    ), stream=f)
+    except:
+        log.debug("Error when saving artifacts.", exc_info=True)

@@ -3,34 +3,29 @@
 ---
 project_repository: https://github.com/openml/automlbenchmark
 
+input_dir: '{user}/data'   # change the default input directory (where data files are loaded and/or downloaded).
+
 frameworks:
-  definition_file:
+  definition_file:  # this allows to add custom framework definitions (in {user}/frameworks.yaml) on top of the default ones.
     - '{root}/resources/frameworks.yaml'
     - '{user}/frameworks.yaml'
 
 benchmarks:
-  definition_dir:
-    - '{user}'
+  definition_dir:  # this allows to add custom benchmark definitions (under {user}/benchmarks) to the default ones.
+    - '{user}/benchmarks'
     - '{root}/resources/benchmarks'
-  defaults:
-    cores: 2
+  constraints_file: # this allows to add custom constraint definitions (in {user}/constraints.yaml) on top of the default ones.
+    - '{root}/resources/constraints.yaml'
+    - '{user}/constraints.yaml'
 
 aws:
-  iam:
-    temporary: false
+  resource_files:  # this allows to automatically upload custom config + frameworks to the running instance (benchmark files are always uploaded).
+    - '{user}/config.yaml'
+    - '{user}/frameworks.yaml'
+    - '{user}/extensions'
 
-  s3:
-    temporary: false
-  
   ec2:
     instance_type:
       series: t3
-
-  resource_files:
-    - '{user}/config.yaml'
-    - '{user}/frameworks.yaml'
-    - '{user}/Decision_Tree'
-
-  use_docker: false
-
+  use_docker: true  # you can decide to always use the prebuilt docker images on AWS.
 

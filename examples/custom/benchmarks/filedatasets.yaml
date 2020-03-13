@@ -1,0 +1,56 @@
+---
+
+- name: iris_csv   # train file, test files and target set explicitly (no constraint on file names).
+  dataset:
+    train: '{user}/data/iris/IrisTrain.csv'
+    test: '{user}/data/iris/IrisTest.csv'
+    target: species
+  folds: 1
+
+- name: iris_arff   # train file, test files set explicitly, target auto-detected (column named `class`).
+  dataset:
+    train: '{user}/data/iris/IrisTrain.arff'
+    test: '{user}/data/iris/IrisTest.arff'
+  folds: 1
+
+- name: iris_multi_folds  # fold 0 is (train[0], test[0]), fold 1 is (train[1], test[1]), ... (no constraint on file names).
+  dataset:
+    train:
+      - '{user}/data/iris/IrisTrain.csv'
+      - '{user}/data/iris/single_fold/iris_train.csv'
+    test:
+      - '{user}/data/iris/IrisTest.csv'
+      - '{user}/data/iris/single_fold/iris_test.csv'
+    target: species
+  folds: 2
+
+- name: iris_dir_single   # train file and test files detected in given directory: pay attention to the naming convention (_train.csv, _test.csv) for the files in the directory.
+  dataset:
+    path: '{user}/data/iris/single_fold'
+    target: species
+  folds: 1
+
+- name: iris_dir_single_minimal   # train file and test files detected in given directory + target auto-detected (here, last column): pay attention to the naming convention (_train_0.csv, _test_0.csv, _train_1.csv, ...) for the files in the directory.
+  dataset: '{user}/data/iris/single_fold'
+  folds: 1
+
+- name: iris_dir_multi_minimal   # multiple train and test files detected in directory.
+  dataset: '{user}/data/iris/multi_folds'
+  folds: 3
+
+- name: iris_zip  # archive unzipped to input folder and train + test files detected from unzipped folder.
+  dataset:
+    path: '{user}/data/iris/iris_single_fold.zip'
+    target: species
+  folds: 1
+
+- name: iris.tgz  # archive in different format, with multiple folds.
+  dataset: '{user}/data/iris/iris_multi_folds.tgz'
+  folds: 3
+
+- name: iris_remote  # archive is downloaded to input folder, unarchived there, and files auto-detected.
+  enabled: false
+  dataset: 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/iris_single_fold.zip'
+  folds: 1
+
+
