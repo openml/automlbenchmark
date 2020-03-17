@@ -2,6 +2,8 @@
 #shopt -s expand_aliases
 
 MODULE_ROOT="$1"
+APP_ROOT=$(dirname $(dirname $(dirname "$0")))
+#APP_ROOT="$(pwd)"
 
 SUDO() {
   if [[ $EUID == 0 ]]; then
@@ -14,8 +16,8 @@ SUDO() {
 
 if [[ -n "$MODULE_ROOT" ]]; then
     PY_VENV="$MODULE_ROOT/venv"
-elif [[ -d "/venvs/bench" ]]; then
-    PY_VENV="/venvs/bench"
+elif [[ -d "$APP_ROOT/venv" ]]; then
+    PY_VENV="$APP_ROOT/venv"
 fi
 
 if [[ -n "$PY_VENV" ]]; then

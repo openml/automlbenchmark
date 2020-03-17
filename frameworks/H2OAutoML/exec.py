@@ -105,7 +105,7 @@ def save_artifacts(automl, dataset, config):
             all_models_se = next((mid for mid in lb['model_id'] if mid.startswith("StackedEnsemble_AllModels")),
                                  None)
             mformat = 'mojo' if 'mojos' in artifacts else 'json'
-            if all_models_se:
+            if all_models_se and mformat == 'mojo':
                 save_model(all_models_se, dest_dir=models_dir, mformat=mformat)
             else:
                 for mid in lb['model_id']:

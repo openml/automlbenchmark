@@ -224,8 +224,8 @@ class Resources:
             if isinstance(framework.setup_cmd, str):
                 framework.setup_cmd = [framework.setup_cmd]
             framework.setup_cmd = [cmd.format(**self._common_dirs,
-                                              **dict(pip="PIP",
-                                                     py="PY"))
+                                              **dict(pip="{pip}",
+                                                     py="{py}"))
                                    for cmd in framework.setup_cmd]
 
         if framework['params'] is None:

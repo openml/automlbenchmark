@@ -16,11 +16,17 @@ results
 # editors/IDEs
 .idea
 *.iml
-*.swp
+**/*.swp
 **/*.ipynb
 
 # tmp files
 **/*.log
 **/*.csv
 **/*.arff
+
+# binary files
+**/*.zip
+**/*.tgz
+**/*.gz
+**/*.bz2
 **/*.png
