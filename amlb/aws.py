@@ -829,8 +829,8 @@ runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
-  - mkdir /repo
-  - cd /repo
+  - mkdir ~/repo
+  - cd ~/repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - python3 -m venv venv
   - alias PIP='~/repo/venv/bin/pip3'
