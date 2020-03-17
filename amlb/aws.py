@@ -14,6 +14,7 @@ necessary to run a benchmark on EC2 instances:
 - properly cleans up AWS resources (S3, EC2).
 """
 from concurrent.futures import ThreadPoolExecutor
+import copy as cp
 import datetime as dt
 import json
 import logging
@@ -187,22 +188,23 @@ class AWSBenchmark(Benchmark):
     def _make_aws_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
-        task_def = self._get_task_def(task_names[0]) if len(task_names) >= 1 \
-            else self._get_task_def('__defaults__', include_disabled=True, fail_on_missing=False)
-        instance_def = ns(
-            type=task_def.ec2_instance_type,
-            volume_type=task_def.ec2_volume_type,
-        ) if task_def else ns(
-            type='.'.join([rconfig().aws.ec2.instance_type.series, rconfig().aws.ec2.instance_type.map.default]),
-            volume_type=rconfig().aws.ec2.volume_type,
-        )
-        if task_def and task_def.min_vol_size_mb > 0:
-            instance_def.volume_size = math.ceil((task_def.min_vol_size_mb + rconfig().benchmarks.os_vol_size_mb) / 1024.)
-        else:
-            instance_def.volume_size = None
+        task_def = (self._get_task_def(task_names[0]) if len(task_names) >= 1
+                    else self._get_task_def('__defaults__', include_disabled=True, fail_on_missing=False) or ns(name='all'))
+        task_def = cp.copy(task_def)
+        tconfig = rconfig()['t'] or ns()  # handle task params from cli (-Xt.foo=bar)
+        for k, v in tconfig:
+            setattr(task_def, k, v)
 
-        timeout_secs = task_def.max_runtime_seconds if task_def \
-            else sum([task.max_runtime_seconds for task in self.benchmark_def])
+        instance_def = ns()
+        instance_def.type = (task_def.ec2_instance_type if 'ec2_instance_type' in task_def
+                             else '.'.join([rconfig().aws.ec2.instance_type.series, rconfig().aws.ec2.instance_type.map.default]))
+        instance_def.volume_type = (task_def.ec2_volume_type if 'ec2_volume_type' in task_def
+                                    else rconfig().aws.ec2.volume_type)
+        instance_def.volume_size = (math.ceil((task_def.min_vol_size_mb + rconfig().benchmarks.os_vol_size_mb) / 1024.) if task_def.min_vol_size_mb > 0
+                                    else None)
+
+        timeout_secs = (task_def.max_runtime_seconds if 'max_runtime_seconds' in task_def
+                        else sum([task.max_runtime_seconds for task in self.benchmark_def]))
         timeout_secs += rconfig().aws.overhead_time_seconds
 
         job = Job('_'.join(['aws',
