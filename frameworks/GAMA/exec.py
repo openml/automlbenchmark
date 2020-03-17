@@ -45,7 +45,7 @@ def run(dataset, config):
 
     *_, did, fold = dataset.train_path.split('/')
     fold = fold.split('.')[0].split('_')[-1]
-    log_file = os.path.join(config.output_dir, '{}_{}.log'.format(did, fold))
+    log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
