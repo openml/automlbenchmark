@@ -829,13 +829,13 @@ runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
-  - mkdir ~/repo
-  - cd ~/repo
+  - mkdir /repo
+  - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - python3 -m venv venv
-  - alias PIP='~/repo/venv/bin/pip3'
-  - alias PY='~/repo/venv/bin/python3 -W ignore'
-  - alias PIP_REQ='xargs -L 1 ~/repo/venv/bin/pip3 install --no-cache-dir'
+  - alias PIP='/repo/venv/bin/pip3'
+  - alias PY='/repo/venv/bin/python3 -W ignore'
+  - alias PIP_REQ='xargs -L 1 /repo/venv/bin/pip3 install --no-cache-dir'
 #  - PIP install -U pip=={pip_version}
   - PIP install -U pip
   - PIP_REQ < requirements.txt
@@ -899,13 +899,13 @@ pip3 install -U awscli
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
 mkdir -p /s3bucket/user
-mkdir ~/repo
-cd ~/repo
+mkdir /repo
+cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
 python3 -m venv venv
-alias PIP='~/repo/venv/bin/pip3'
-alias PY='~/repo/venv/bin/python3 -W ignore'
+alias PIP='/repo/venv/bin/pip3'
+alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pip_version}
 PIP install -U pip
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
