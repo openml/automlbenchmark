@@ -826,17 +826,18 @@ runcmd:
   - systemctl disable apt-daily.service
   - systemctl daemon-reload
   - pip3 install -U awscli
-  - python3 -m venv /venvs/bench
-  - alias PIP='/venvs/bench/bin/pip3'
-  - alias PY='/venvs/bench/bin/python3 -W ignore'
-  - alias PIP_REQ='xargs -L 1 /venvs/bench/bin/pip3 install --no-cache-dir'
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
-  - PIP install -U pip=={pip_version}
+  - python3 -m venv venv
+  - alias PIP='/repo/venv/bin/pip3'
+  - alias PY='/repo/venv/bin/python3 -W ignore'
+  - alias PIP_REQ='xargs -L 1 /repo/venv/bin/pip3 install --no-cache-dir'
+#  - PIP install -U pip=={pip_version}
+  - PIP install -U pip
   - PIP_REQ < requirements.txt
 #  - until aws s3 ls '{s3_base_url}'; do echo "waiting for credentials"; sleep 10; done
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
@@ -894,20 +895,20 @@ apt-get -y install python3 python3-pip python3-venv
 #apt-get -y install docker.io
 
 pip3 install -U awscli
-python3 -m venv /venvs/bench
-alias PIP='/venvs/bench/bin/pip3'
-alias PY='/venvs/bench/bin/python3 -W ignore'
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
 mkdir -p /s3bucket/user
-mkdir ~/repo
-cd ~/repo
+mkdir /repo
+cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
-PIP install -U pip=={pip_version}
+python3 -m venv venv
+alias PIP='/repo/venv/bin/pip3'
+alias PY='/repo/venv/bin/python3 -W ignore'
+#PIP install -U pip=={pip_version}
+PIP install -U pip
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
-PIP install -U awscli
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive

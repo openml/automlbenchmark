@@ -107,7 +107,18 @@ class Benchmark:
             run_script(self.framework_def.setup_script, _live_output_=True)
 
         if self.framework_def.setup_cmd is not None:
-            run_cmd('\n'.join(self.framework_def.setup_cmd), _executable_="/bin/bash", _live_output_=True)
+            def resolve_venv(cmd):
+                venvs = [
+                    *[os.path.join(p, "venv") for p in self.framework_module.__path__],
+                    os.path.join(rconfig().root_dir, "venv"),
+                ]
+                venv = next((ve for ve in venvs if os.path.isdir(ve)), None)
+                py = os.path.join(venv, "bin", "python") if venv else "python"
+                pip = os.path.join(venv, "bin", "pip") if venv else "pip"
+                return cmd.format(py=py, pip=pip)
+
+            setup_cmd = [resolve_venv(cmd) for cmd in self.framework_def.setup_cmd]
+            run_cmd('\n'.join(setup_cmd), _executable_="/bin/bash", _live_output_=True)
 
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
