@@ -155,7 +155,10 @@ class SingularityBenchmark(Benchmark):
 
     @property
     def _singularity_image(self):
-        return os.path.join(self._framework_dir, self._singularity_image_name + ".sif")
+        # By default, when the image is created the autoMLbenchmar dir is added
+        # to the container. Created and read sif files from /tmp and not from
+        # run/ dir
+        return os.path.join('/tmp', self._singularity_image_name + ".sif")
 
     def _singularity_image_exists(self):
         # In comparisson to Docker, the singularity image is just a file
