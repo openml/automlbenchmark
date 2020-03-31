@@ -20,4 +20,10 @@ RUN {here}/setup.sh
 """.format(here=dir_of(__file__, True))
 
 
+def singularity_commands(*args, **kwargs):
+    return """
+{here}/setup.sh
+""".format(here=dir_of(__file__, True))
+
+
 __all__ = (setup, run, docker_commands)

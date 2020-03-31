@@ -27,4 +27,11 @@ RUN {here}/setup.sh {amlb_dir}
 """.format(here=dir_of(__file__, True), amlb_dir=rconfig().root_dir)
 
 
+def singularity_commands(*args, **kwargs):
+    return """
+{here}/setup.sh
+""".format(here=dir_of(__file__, True))
+
+
+
 __all__ = (setup, run, docker_commands())

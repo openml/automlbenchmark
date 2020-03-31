@@ -33,13 +33,14 @@ CONSTRAINTS=(
 MODE=(
 local
 docker
+singularity
 aws
 )
 
 mode='local'
 
 usage() {
-    echo "Usage: $0 framework_or_benchmark [-c|--constraint] [-m|--mode=<local|docker|aws>]" 1>&2;
+    echo "Usage: $0 framework_or_benchmark [-c|--constraint] [-m|--mode=<local|singularity|docker|aws>]" 1>&2;
 }
 
 POSITIONAL=()
