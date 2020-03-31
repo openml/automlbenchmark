@@ -8,6 +8,7 @@ import time
 
 def setup_logger():
     console = logging.StreamHandler(sys.stdout)
+    console.setLevel(logging.INFO)
     handlers = [console]
     logging.basicConfig(handlers=handlers)
     root = logging.getLogger()
