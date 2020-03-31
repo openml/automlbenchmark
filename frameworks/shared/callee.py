@@ -134,3 +134,14 @@ def call_run(run_fn):
 
     print(config.result_token)
     print(json.dumps(res, separators=(',', ':')))
+
+
+def touch(path, as_dir=False):
+    path = os.path.realpath(os.path.expanduser(path))
+    if not os.path.exists(path):
+        dirname, basename = (path, '') if as_dir else os.path.split(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname, exist_ok=True)
+        if basename:
+            open(path, 'a').close()
+    os.utime(path, times=None)
