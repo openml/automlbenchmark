@@ -66,6 +66,17 @@ docker:
     image:    # set by docker.py based on framework name, lowercase
     tag:      # set by docker.py based on framework version
 
+singularity:
+  force_branch: true  # set to true if docker image can only be built from a clean branch, wth same tag as defined in `project_repository`.
+  minimize_instances: true
+  library: 'francisco.rivera.valverde/default'
+  run_extra_options: ''
+  image:      # set this value through -Xdocker.image=my-docker-image to run benchmark with a specific image
+  image_defaults:
+    author: automlbenchmark
+    image:    # set by docker.py based on framework name, lowercase
+    tag:      # set by docker.py based on framework version
+
 aws:
   region: ''      # read from ~/.aws/config by default
 
