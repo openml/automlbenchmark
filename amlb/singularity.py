@@ -195,7 +195,6 @@ mkdir /input
 mkdir /output
 mkdir /custom
 
-# Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 
 xargs -L 1 $PIP install --no-cache-dir < requirements.txt
 
