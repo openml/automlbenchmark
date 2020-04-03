@@ -48,7 +48,7 @@ class DockerBenchmark(ContainerBenchmark):
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
-            touch(d)
+            touch(d, as_dir=True)
         script_extra_params = ""
         inst_name = self.sid
         cmd = (
