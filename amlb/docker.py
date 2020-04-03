@@ -83,7 +83,7 @@ class DockerBenchmark(ContainerBenchmark):
         if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
         try:
-            run_cmd("docker pull {image}".format(image=self._image_name))
+            run_cmd("docker pull {image}".format(image=self._image_name), _live_output_=True)
             return True
         except:
             pass
@@ -163,4 +163,3 @@ CMD ["{framework}", "test"]
         )
         with open(self._script, 'w') as file:
             file.write(docker_content)
-
