@@ -11,7 +11,7 @@ import re
 
 from .container import ContainerBenchmark
 from .resources import config as rconfig, get as rget
-from .utils import dir_of, run_cmd
+from .utils import dir_of, run_cmd, touch
 
 
 log = logging.getLogger(__name__)
@@ -82,6 +82,8 @@ class SingularityBenchmark(ContainerBenchmark):
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
+        for d in [in_dir, out_dir, custom_dir]:
+            touch(d)
         script_extra_params = ""
         inst_name = self.sid
         cmd = (
