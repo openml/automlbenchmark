@@ -25,7 +25,8 @@ all_results_files = {
     ],
     '8h': [
         "input/results_large-8c8h_ref.csv", "input/results_large-8c8h.csv",
-    ]
+    ],
+    
 }
 
 config.results_group = '4h'

@@ -1,5 +1,6 @@
 from IPython import display as ipyd
 from IPython.display import FileLink, FileLinks
+import fnmatch
 import os
 
 import pandas as pd
@@ -22,6 +23,40 @@ class Namespace:
         clone = Namespace(**self.__dict__)
         clone.__dict__.update(**kwargs)
         return clone
+
+    
+def list_all_files(paths, include=None, exclude=None):
+    """
+    :param paths: the directories to look into.
+    :param include: a UNIX path pattern for the files to be included in the result list
+    :param exclude: a UNIX path pattern for the files to be excluded from the result list
+    """
+    all_files = []
+    paths = paths if isinstance(paths, list) else [paths]
+    for path in paths:
+        # path = normalize_path(path)
+        if os.path.isdir(path):
+            for root_dir, sub_dirs, files in os.walk(path):
+                for name in files:
+                    all_files.append(os.path.join(root_dir, name))
+        elif os.path.isfile(path):
+            all_files.append(path)
+
+    if include is not None:
+        include = include if isinstance(include, list) else [include]
+        included = []
+        for pattern in include:
+            included.extend(fnmatch.filter(all_files, pattern))
+        all_files = [file for file in all_files if file in included]
+
+    if exclude is not None:
+        exclude = exclude if isinstance(exclude, list) else [exclude]
+        excluded = []
+        for pattern in exclude:
+            excluded.extend(fnmatch.filter(all_files, pattern))
+        all_files = [file for file in all_files if file not in excluded]
+
+    return all_files
 
 
 def create_file(*path_tokens):

@@ -32,6 +32,7 @@ class SetupMode(Enum):
     skip = 1
     force = 2
     only = 3
+    script = 4
 
 
 class Benchmark:

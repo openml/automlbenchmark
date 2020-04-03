@@ -28,7 +28,7 @@ def render_summary(col, results, show_imputations=True, filename=None, float_for
     float_format = config.ff if float_format is None else float_format
     res_group = results.groupby(['type', 'task', 'framework'])
     df = res_group[col].mean().unstack()
-    if show_imputations:
+    if show_imputations and 'imp_result' in results.columns:
         imputed_df = (res_group['result', 'imp_result']
                       .apply(lambda df: sum(imputed(row) for _, row in df.iterrows()))
                       .unstack())
@@ -56,7 +56,7 @@ def render_leaderboard(col, results, aggregate=False, show_imputations=False, fi
           else results.pivot_table(index=['type','task', 'fold'], columns='framework', values=col))
     df = (df.apply(rank, axis=1, result_type='broadcast')
           .astype(object))
-    if show_imputations:
+    if show_imputations and 'imp_result' in results.columns:
         imputed_df = (res_group['result', 'imp_result']
                       .apply(lambda df: sum(imputed(row) for _, row in df.iterrows()))
                       .unstack())

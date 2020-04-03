@@ -118,7 +118,8 @@ class Resources:
                         later.append(framework)
                         continue
                     else:
-                        framework % parent  # adds framework's missing keys from parent
+                        framework.parent = parent
+                        framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
                 self._validate_framework(framework)
                 validated.append(framework)
             to_validate = later

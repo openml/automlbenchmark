@@ -16,6 +16,7 @@ necessary to run a benchmark on EC2 instances:
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
 import datetime as dt
+import itertools
 import json
 import logging
 import math
@@ -48,19 +49,53 @@ class AWSBenchmark(Benchmark):
     """
 
     @classmethod
-    def fetch_results(cls, instances_file, filter=None, force_update=False):
-        bench = cls(None, None)
+    def fetch_results(cls, instances_file, instance_selector=None):
+        bench = cls(None, None, None)
         bench._load_instances(normalize_path(instances_file))
         inst = next(inst for inst in bench.instances.values())
         bench.sid = inst.session
         bucket_name = re.match(r's3://([\w\-.]+)/.*', inst.s3_dir).group(1)
         bench.s3 = boto3.resource('s3', region_name=bench.region)
         bench.bucket = bench._create_s3_bucket(bucket_name, auto_create=False)
-        filter = (lambda items: [k for k, v in items]) if filter is None else filter
-        for iid in filter(bench.instances.items()):
-            if force_update:
-                bench.instances[iid].success = False
+        instance_selector = (lambda *_: True) if instance_selector is None else instance_selector
+        for iid, _ in filter(instance_selector, bench.instances.items()):
             bench._download_results(iid)
+
+    @classmethod
+    def reconnect(cls, instances_file):
+        bench = cls(None, None, None)
+        bench._load_instances(normalize_path(instances_file))
+        inst = next(inst for inst in bench.instances.values())
+        bench.sid = inst.session
+        bench.setup(SetupMode.script)
+        bench._exec_start()
+        bench._monitoring_start()
+
+        def to_job(iid, inst):
+            inst.instance = bench.ec2.Instance(iid)
+            job = Job(inst.key)
+            job.instance_id = iid
+
+            def _run(job_self):
+                return bench._wait_for_results(job_self)
+
+            def _on_done(job_self):
+                terminate = bench._download_results(job_self.instance_id)
+                if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
+                    log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
+                        "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
+                        job_self.instance_id)
+                bench._stop_instance(job_self.instance_id, terminate=terminate)
+
+            job._run = _run.__get__(job)
+            job._on_done = _on_done.__get__(job)
+
+        jobs = list(itertools.starmap(to_job, bench.instances.items()))
+        bench.parallel_jobs = len(jobs)
+        try:
+            bench._run_jobs(jobs)
+        finally:
+            bench.cleanup()
 
     def __init__(self, framework_name, benchmark_name, constraint_name, region=None):
         """
@@ -107,7 +142,7 @@ class AWSBenchmark(Benchmark):
         # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
-        self.uploaded_resources = self._upload_resources()
+        self.uploaded_resources = self._upload_resources() if mode != SetupMode.script else []
 
         # IAM setup to secure exchanges between s3 and ec2 instances
         self.iam = boto3.resource('iam', region_name=self.region)
@@ -450,7 +485,7 @@ class AWSBenchmark(Benchmark):
                     self.instances[iid].key,
                     self._s3_key(self.sid, instance_key_or_id=iid, absolute=True)
                     ) for iid in self.instances.keys()],
-                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3 dir'],
+                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3_dir'],
                   path=os.path.join(self.output_dirs.session, 'instances.csv'))
 
     def _load_instances(self, instances_file):
@@ -460,7 +495,7 @@ class AWSBenchmark(Benchmark):
             success=row['success'],
             session=row['session'],
             key=row['instance_key'],
-            s3_dir=row['s3 dir'],
+            s3_dir=row['s3_dir'],
         ) for idx, row in df.iterrows()}
 
     def _s3_key(self, main_dir, *subdirs, instance_key_or_id=None, absolute=False, encode=False):
