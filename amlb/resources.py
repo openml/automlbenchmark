@@ -237,15 +237,15 @@ class Resources:
             framework.version = 'latest'
 
         did = copy.copy(self.config.docker.image_defaults)
-        if framework['docker_image'] is None:
-            framework['docker_image'] = did
+        if framework['image'] is None:
+            framework['image'] = did
         for conf in ['author', 'image', 'tag']:
-            if framework.docker_image[conf] is None:
-                framework.docker_image[conf] = did[conf]
-        if framework.docker_image.image is None:
-            framework.docker_image.image = framework.name.lower()
-        if framework.docker_image.tag is None:
-            framework.docker_image.tag = framework.version.lower()
+            if framework.image[conf] is None:
+                framework.image[conf] = did[conf]
+        if framework.image.image is None:
+            framework.image.image = framework.name.lower()
+        if framework.image.tag is None:
+            framework.image.tag = framework.version.lower()
 
     def _validate_task(self, task, lenient=False):
         missing = []

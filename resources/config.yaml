@@ -56,15 +56,23 @@ versions:
   pip: 19.3.1
   python: 3.7.4  # should we also enforce the Python version in docker images/ec2 instances?
 
-docker:
-  force_branch: true  # set to true if docker image can only be built from a clean branch, wth same tag as defined in `project_repository`.
+container: &container
+  force_branch: true  # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
   minimize_instances: true
-  run_extra_options: '--shm-size=1024M'
-  image:      # set this value through -Xdocker.image=my-docker-image to run benchmark with a specific image
+  run_extra_options: ''
+  image:      # set this value through -Xcontainer.image=my-image to run benchmark with a specific image
   image_defaults:
     author: automlbenchmark
-    image:    # set by docker.py based on framework name, lowercase
-    tag:      # set by docker.py based on framework version
+    image:    # set by container impl based on framework name, lowercase
+    tag:      # set by container impl based on framework version
+
+docker:
+  <<: *container
+  run_extra_options: '--shm-size=1024M'
+
+singularity:
+  <<: *container
+  library: 'automlbenchmark/default'
 
 aws:
   region: ''      # read from ~/.aws/config by default
@@ -149,4 +157,3 @@ aws:
                         # Note that using docker in AWS mode requires the docker image being
                         # previously published in a public repository or using an AMI with the pre-downloaded image,
                         # whereas the local mode is self-configured and framework agnostic (works with generic AMI).
-

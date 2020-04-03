@@ -19,7 +19,7 @@ parser.add_argument('benchmark', type=str, nargs='?', default='test',
                          "or the path to a benchmark description file. Defaults to `%(default)s`.")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
                     help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
-parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws'], default='local',
+parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws', 'singularity'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
                     help="The specific task name (as defined in the benchmark file) to run. "
@@ -109,13 +109,15 @@ try:
         bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
     elif args.mode == 'docker':
         bench = amlb.DockerBenchmark(args.framework, args.benchmark, args.constraint)
+    elif args.mode == 'singularity':
+        bench = amlb.SingularityBenchmark(args.framework, args.benchmark, args.constraint)
     elif args.mode == 'aws':
         bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint)
         # bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
     # elif args.mode == "aws-remote":
     #     bench = amlb.AWSRemoteBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
     else:
-        raise ValueError("`mode` must be one of 'aws', 'docker' or 'local'.")
+        raise ValueError("`mode` must be one of 'aws', 'docker', 'singularity' or 'local'.")
 
     if args.setup == 'only':
         log.warning("Setting up %s environment only for %s, no benchmark will be run.", args.mode, args.framework)
