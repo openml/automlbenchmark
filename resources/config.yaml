@@ -60,7 +60,7 @@ container: &container
   force_branch: true  # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
   minimize_instances: true
   run_extra_options: ''
-  image:      # set this value through -container.image=my-image to run benchmark with a specific image
+  image:      # set this value through -Xcontainer.image=my-image to run benchmark with a specific image
   image_defaults:
     author: automlbenchmark
     image:    # set by container impl based on framework name, lowercase
@@ -157,4 +157,3 @@ aws:
                         # Note that using docker in AWS mode requires the docker image being
                         # previously published in a public repository or using an AMI with the pre-downloaded image,
                         # whereas the local mode is self-configured and framework agnostic (works with generic AMI).
-
