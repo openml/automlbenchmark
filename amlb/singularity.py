@@ -67,10 +67,7 @@ class SingularityBenchmark(ContainerBenchmark):
         if return_docker_name:
             return image_name
         else:
-            return os.path.join(
-            self._framework_dir,
-            image_name + '.sif'
-        )
+            return os.path.join(self._framework_dir, image_name + '.sif')
 
     @property
     def _image_name(self):
