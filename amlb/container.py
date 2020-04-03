@@ -24,18 +24,6 @@ class ContainerBenchmark(Benchmark):
     an extension of Benchmark to run benchmarks inside a container.
     """
 
-    @staticmethod
-    def image_name(framework_def, branch=None):
-        di = framework_def.image
-        if branch is None:
-            branch = rget().project_info.branch
-        return "{author}/{image}:{tag}".format(
-            author=di.author,
-            image=di.image if di.image else framework_def.name.lower(),
-            tag=re.sub(r"([^\w.-])", '.',
-                       '-'.join([di.tag if di.tag else framework_def.version.lower(), branch]))
-        )
-
     @abstractmethod
     def __init__(self, framework_name, benchmark_name, constraint_name):
         """
@@ -45,6 +33,23 @@ class ContainerBenchmark(Benchmark):
         :param constraint_name:
         """
         super().__init__(framework_name, benchmark_name, constraint_name)
+        self._custom_image_name = rconfig().container.image
+        self.minimize_instances = rconfig().container.minimize_instances
+        self.container_name = None
+        self.force_branch = rconfig().container.force_branch
+        self.custom_commands = ""
+
+    def _container_image_name(self, branch=None):
+        di = self.framework_def.image
+        if branch is None:
+            branch = rget().project_info.branch
+
+        return "{author}/{image}:{tag}".format(
+            author=di.author,
+            image=di.image if di.image else self.framework_def.name.lower(),
+            tag=re.sub(r"([^\w.-])", '.',
+                       '-'.join([di.tag if di.tag else self.framework_def.version.lower(), branch]))
+        )
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
@@ -87,7 +92,7 @@ class ContainerBenchmark(Benchmark):
         folds = [] if folds is None else [str(f) for f in folds]
 
         def _run():
-            self._start("{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
+            self._start_container("{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                 framework=self.framework_name,
                 benchmark=self.benchmark_name,
                 constraint=self.constraint_name,
@@ -106,17 +111,13 @@ class ContainerBenchmark(Benchmark):
         job._run = _run
         return job
 
-    def _start(self, script_params=""):
+    def _start_container(self, script_params=""):
         """Implementes the container run method"""
         raise NotImplementedError
 
     @property
-    def _script(self):
-        return os.path.join(self._framework_dir, 'Scriptfile')
-
-    @property
     def _image_name(self):
-        return self._custom_image_name or ContainerBenchmark.image_name(self.framework_def)
+        return self._custom_image_name or self._container_image_name()
 
     def _image_exists(self):
         """Implements a method to see if the container image is available"""
@@ -147,7 +148,7 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                     force = input(f"""Branch `{current_branch}` isn't tagged as `{tag}` (as required by config.project_repository).
 Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                 if force == 'y':
-                    self._custom_image_name = self._custom_image_name or ContainerBenchmark.image_name(self.framework_def, current_branch)
+                    self._custom_image_name = self._custom_image_name or self._container_image_name(current_branch)
                 else:
                     raise InvalidStateError(
                         "The image can't be built as current branch is not tagged as required `{}`. "

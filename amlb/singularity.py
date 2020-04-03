@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 class SingularityBenchmark(ContainerBenchmark):
     """SingularityBenchmark
-    an extension of ContainerBenchmark to run benchmarks inside docker.
+    an extension of ContainerBenchmark to run benchmarks inside Singularity.
     """
 
     def __init__(self, framework_name, benchmark_name, constraint_name):
@@ -39,11 +39,48 @@ class SingularityBenchmark(ContainerBenchmark):
             setup_cmd=self.framework_def._setup_cmd
         ) if hasattr(self.framework_module, 'singularity_commands') else ""
 
+    def _container_image_name(self, branch=None, return_docker_name=False):
+        """
+        Singularity Images would be located on the framework directory
+        We prefer to pull from docker, so we have to mind the docker tag
+        When downloading from Docker, the colon is changed to underscore
+        """
+        di = self.framework_def.image
+
+        # If we want to pull from docker, the separator is a colon for tag
+        separator = '_' if not return_docker_name else ':'
+        # Also, no need for author in image name
+        author = '' if not return_docker_name else f"{di.author}/"
+
+        if branch is None:
+            branch = rget().project_info.branch
+
+        image_name = "{author}{image}{separator}{tag}".format(
+            author=author,
+            separator=separator,
+            image=di.image if di.image else self.framework_def.name.lower(),
+            tag=re.sub(r"([^\w.-])", '.',
+                       '-'.join([di.tag if di.tag else self.framework_def.version.lower(), branch]))
+        )
+
+        # Make sure image is in the framework directory
+        if return_docker_name:
+            return image_name
+        else:
+            return os.path.join(
+            self._framework_dir,
+            image_name + '.sif'
+        )
+
+    @property
+    def _image_name(self):
+        return self._custom_image_name or self._container_image_name()
+
     @property
     def _script(self):
         return os.path.join(self._framework_dir, 'Singularityfile')
 
-    def _start(self, script_params=""):
+    def _start_container(self, script_params=""):
         """Implementes the container run method"""
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
@@ -60,7 +97,7 @@ class SingularityBenchmark(ContainerBenchmark):
             input=in_dir,
             output=out_dir,
             custom=custom_dir,
-            image=self._docker2singularity(self._image_name),
+            image=self._image_name,
             params=script_params,
             extra_params=script_extra_params,
         )
@@ -69,48 +106,55 @@ class SingularityBenchmark(ContainerBenchmark):
         log.info("Generated files will be available in folder %s.", out_dir)
         try:
             run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
-        except:  # also want to handle KeyboardInterrupt
-            try:
-                raise NotImplementedError
-            except:
-                pass
-            finally:
-                raise
-    def _docker2singularity(self, name):
-        author, image_name, tag = re.split('/|:', name)
-        return image_name + '_' + tag + '.sif'
+        except:
+            # also want to handle KeyboardInterrupt
+            # In the foreground run mode, the user has to kill the process
+            # There is yet no docker kill command. User has to kill PID manually
+            log.warn(f"Container {inst_name} may still be running, please verify and kill it manually.")
+            raise Exception
 
     def _image_exists(self):
         """Implements a method to see if the container image is available"""
         log.info(f"Looking for the image {self._image_name}")
-        if os.path.exists(self._docker2singularity(self._image_name)):
+        if os.path.exists(self._image_name):
             return True
         try:
             # We pull from docker as there are not yet singularity org accounts
-            run_cmd("singularity pull docker://{image}".format(image=self._image_name))
+            run_cmd("singularity pull {output_file} docker://{image}".format(
+                image=self._container_image_name(return_docker_name=True),
+                output_file=self._image_name,
+                )
+            )
             return True
         except:
-            pass
+            try:
+                # If no docker image, pull from singularity hub
+                run_cmd("singularity pull {output_file} library://{library}/{image}".format(
+                    image=self._container_image_name(return_docker_name=True),
+                    output_file=self._image_name,
+                    library=rconfig().singularity.library)
+                )
+                return True
+            except:
+                pass
         return False
 
     def _run_container_build_command(self, cache):
         log.info(f"Building singularity image {self._image_name}.")
-        name = self._docker2singularity(self._image_name)
         run_cmd("sudo singularity build {options} {container} {script}".format(
             options="" if cache else "--disable-cache",
-            container=self._docker2singularity(self._image_name),
+            container=self._image_name,
             script=self._script,
         ), _live_output_=True)
-        log.info(f"Successfully built singularity image {name}.")
+        log.info(f"Successfully built singularity image {self._image_name}.")
 
     def _upload_image(self):
         image = self._image_name
         library=rconfig().singularity.library
-        name = self._docker2singularity(self._image_name)
+        name = self._container_image_name(return_docker_name=True)
         log.info(f"Publishing Singularity image {image}.")
-        run_cmd(f"singularity login && singularity push -U {name} library://{library}/{name}:latest")
+        run_cmd(f"singularity login && singularity push -U {image} library://{library}/{name}")
         log.info(f"Successfully published singularity image {image}.")
-
 
     def _generate_script(self, custom_commands):
         singularity_content="""Bootstrap: docker

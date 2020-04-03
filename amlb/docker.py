@@ -42,8 +42,7 @@ class DockerBenchmark(ContainerBenchmark):
     def _script(self):
         return os.path.join(self._framework_dir, 'Dockerfile')
 
-
-    def _start(self, script_params=""):
+    def _start_container(self, script_params=""):
         """Implementes the container run method"""
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
@@ -101,7 +100,7 @@ class DockerBenchmark(ContainerBenchmark):
         log.info("Successfully built docker image {image}.")
 
     def _upload_image(self):
-        image = self._docker_image_name
+        image = self._image_name
         log.info(f"Publishing docker image {image}.")
         run_cmd(f"docker login && docker push {image}")
         log.info(f"Successfully published docker image {image}.")
