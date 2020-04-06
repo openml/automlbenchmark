@@ -24,6 +24,19 @@ class ContainerBenchmark(Benchmark):
     an extension of Benchmark to run benchmarks inside a container.
     """
 
+    @classmethod
+    def image_name(cls, framework_def, branch=None, **kwargs):
+        di = framework_def.image
+        if branch is None:
+            branch = rget().project_info.branch
+
+        return "{author}/{image}:{tag}".format(
+            author=di.author,
+            image=di.image if di.image else framework_def.name.lower(),
+            tag=re.sub(r"([^\w.-])", '.',
+                       '-'.join([di.tag if di.tag else framework_def.version.lower(), branch]))
+        )
+
     @abstractmethod
     def __init__(self, framework_name, benchmark_name, constraint_name):
         """
@@ -40,16 +53,7 @@ class ContainerBenchmark(Benchmark):
         self.custom_commands = ""
 
     def _container_image_name(self, branch=None):
-        di = self.framework_def.image
-        if branch is None:
-            branch = rget().project_info.branch
-
-        return "{author}/{image}:{tag}".format(
-            author=di.author,
-            image=di.image if di.image else self.framework_def.name.lower(),
-            tag=re.sub(r"([^\w.-])", '.',
-                       '-'.join([di.tag if di.tag else self.framework_def.version.lower(), branch]))
-        )
+        return self.image_name(self.framework_def, branch)
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
