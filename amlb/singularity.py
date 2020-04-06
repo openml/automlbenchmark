@@ -22,6 +22,31 @@ class SingularityBenchmark(ContainerBenchmark):
     an extension of ContainerBenchmark to run benchmarks inside Singularity.
     """
 
+    @classmethod
+    def image_name(cls, framework_def, branch=None, as_docker_image=False, **kwargs):
+        """
+        We prefer to pull from docker, so we have to mind the docker tag
+        When downloading from Docker, the colon is changed to underscore
+        """
+        di = framework_def.image
+
+        # If we want to pull from docker, the separator is a colon for tag
+        separator = '_' if not as_docker_image else ':'
+        # Also, no need for author in image name
+        author = '' if not as_docker_image else f"{di.author}/"
+
+        if branch is None:
+            branch = rget().project_info.branch
+
+        di = framework_def.image
+        return "{author}{image}{separator}{tag}".format(
+            author=author,
+            separator=separator,
+            image=di.image if di.image else framework_def.name.lower(),
+            tag=re.sub(r"([^\w.-])", '.',
+                       '-'.join([di.tag if di.tag else framework_def.version.lower(), branch]))
+        )
+
     def __init__(self, framework_name, benchmark_name, constraint_name):
         """
 
@@ -39,32 +64,14 @@ class SingularityBenchmark(ContainerBenchmark):
             setup_cmd=self.framework_def._setup_cmd
         ) if hasattr(self.framework_module, 'singularity_commands') else ""
 
-    def _container_image_name(self, branch=None, return_docker_name=False):
+    def _container_image_name(self, branch=None, as_docker_image=False):
         """
         Singularity Images would be located on the framework directory
-        We prefer to pull from docker, so we have to mind the docker tag
-        When downloading from Docker, the colon is changed to underscore
         """
-        di = self.framework_def.image
-
-        # If we want to pull from docker, the separator is a colon for tag
-        separator = '_' if not return_docker_name else ':'
-        # Also, no need for author in image name
-        author = '' if not return_docker_name else f"{di.author}/"
-
-        if branch is None:
-            branch = rget().project_info.branch
-
-        image_name = "{author}{image}{separator}{tag}".format(
-            author=author,
-            separator=separator,
-            image=di.image if di.image else self.framework_def.name.lower(),
-            tag=re.sub(r"([^\w.-])", '.',
-                       '-'.join([di.tag if di.tag else self.framework_def.version.lower(), branch]))
-        )
+        image_name = self.image_name(self.framework_def, branch=branch, as_docker_image=as_docker_image)
 
         # Make sure image is in the framework directory
-        if return_docker_name:
+        if as_docker_image:
             return image_name
         else:
             return os.path.join(self._framework_dir, image_name + '.sif')
