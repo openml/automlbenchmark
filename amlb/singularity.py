@@ -127,7 +127,7 @@ class SingularityBenchmark(ContainerBenchmark):
         try:
             # We pull from docker as there are not yet singularity org accounts
             run_cmd("singularity pull {output_file} docker://{image}".format(
-                image=self._container_image_name(return_docker_name=True),
+                image=self._container_image_name(as_docker_image=True),
                 output_file=self._image_name,
             ), _live_output_=True)
             return True
@@ -135,7 +135,7 @@ class SingularityBenchmark(ContainerBenchmark):
             try:
                 # If no docker image, pull from singularity hub
                 run_cmd("singularity pull {output_file} library://{library}/{image}".format(
-                    image=self._container_image_name(return_docker_name=True),
+                    image=self._container_image_name(as_docker_image=True),
                     output_file=self._image_name,
                     library=rconfig().singularity.library
                 ), _live_output_=True)
@@ -156,7 +156,7 @@ class SingularityBenchmark(ContainerBenchmark):
     def _upload_image(self):
         image = self._image_name
         library=rconfig().singularity.library
-        name = self._container_image_name(return_docker_name=True)
+        name = self._container_image_name(as_docker_image=True)
         log.info(f"Publishing Singularity image {image}.")
         run_cmd(f"singularity login && singularity push -U {image} library://{library}/{name}")
         log.info(f"Successfully published singularity image {image}.")
