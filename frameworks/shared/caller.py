@@ -20,6 +20,7 @@ vector_keys = re.compile("^y(_.+)?$")
 
 def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
+                process_results=None,
                 python_exec=None):
 
     here = dir_of(caller_file)
@@ -69,6 +70,9 @@ def run_in_venv(caller_file, script_file: str, *args,
             res[name] = np.load(res[name], allow_pickle=True) if res[name] is not None else None
 
         log.debug("Result from subprocess:\n%s", res)
+        if callable(process_results):
+            res = process_results(res)
+
         save_predictions_to_file(dataset=dataset,
                                  output_file=res.output_file,
                                  predictions=res.predictions.reshape(-1) if res.predictions is not None else None,

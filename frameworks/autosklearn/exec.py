@@ -88,7 +88,7 @@ def run(dataset, config):
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_test= dataset.test.X_enc
+    X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
     predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None

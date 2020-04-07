@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=$1
+VERSION=${1:-"zahradnik"}
 echo "setting up H2O version $VERSION"
 
 HERE=$(dirname "$0")
@@ -10,7 +10,11 @@ if [[ -x "$(command -v apt-get)" ]]; then
 fi
 PIP install --no-cache-dir -r $HERE/requirements.txt
 
-if [[ "$VERSION" = "yu" || -z "$VERSION" ]]; then
+if [[ "$VERSION" = "zahradnik" ]]; then
+    h2o_package="https://h2o-release.s3.amazonaws.com/h2o/rel-zahradnik/1/Python/h2o-3.30.0.1-py2.py3-none-any.whl"
+elif [[ "$VERSION" = "yule" ]]; then
+    h2o_package="https://h2o-release.s3.amazonaws.com/h2o/rel-yule/3/Python/h2o-3.28.1.3-py2.py3-none-any.whl"
+elif [[ "$VERSION" = "yu" ]]; then
     h2o_package="http://h2o-release.s3.amazonaws.com/h2o/rel-yu/4/Python/h2o-3.28.0.4-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yau" ]]; then
     h2o_package="http://h2o-release.s3.amazonaws.com/h2o/rel-yau/11/Python/h2o-3.26.0.11-py2.py3-none-any.whl"

@@ -12,17 +12,13 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from tpot import TPOTClassifier, TPOTRegressor
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import Encoder, impute
-from amlb.results import save_predictions_to_file
-from amlb.utils import Timer, touch
+from frameworks.shared.callee import call_run, result, Timer, touch
 
 
 log = logging.getLogger(__name__)
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset, config):
     log.info("\n**** TPOT ****\n")
 
     is_classification = config.type == 'classification'
@@ -41,8 +37,8 @@ def run(dataset: Dataset, config: TaskConfig):
     if scoring_metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
-    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
+    X_train = dataset.train.X_enc
+    y_train = dataset.train.y_enc
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
@@ -62,27 +58,24 @@ def run(dataset: Dataset, config: TaskConfig):
         tpot.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
+    X_test = dataset.test.X_enc
+    y_test = dataset.test.y_enc
     predictions = tpot.predict(X_test)
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
     except RuntimeError:
         # TPOT throws a RuntimeError if the optimized pipeline does not support `predict_proba`.
-        target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
-        probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(predictions)
-
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=y_test,
-                             target_is_encoded=is_classification)
+        probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
 
     save_artifacts(tpot, config)
 
-    return dict(
-        models_count=len(tpot.evaluated_individuals_),
-        training_duration=training.duration
-    )
+    return result(output_file=config.output_predictions_file,
+                  predictions=predictions,
+                  truth=y_test,
+                  probabilities=probabilities,
+                  target_is_encoded=is_classification,
+                  models_count=len(tpot.evaluated_individuals_),
+                  training_duration=training.duration)
 
 
 def make_subdir(name, config):
@@ -108,3 +101,7 @@ def save_artifacts(estimator, config):
                     ), stream=f)
     except:
         log.debug("Error when saving artifacts.", exc_info=True)
+
+
+if __name__ == '__main__':
+    call_run(run)
