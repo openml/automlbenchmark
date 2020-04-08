@@ -1,19 +1,16 @@
 import logging
+import os
 import sys
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import Encoder, impute
-from amlb.results import NoResultError, save_predictions_to_file
-from amlb.utils import Timer, dir_of
-
-sys.path.append("{}/lib/oboe/automl".format(dir_of(__file__)))
+sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
 from auto_learner import AutoLearner
+
+from frameworks.shared.callee import call_run, result, Timer
 
 log = logging.getLogger(__name__)
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset, config):
     log.info("\n**** Oboe ****\n")
 
     is_classification = config.type == 'classification'
@@ -21,8 +18,8 @@ def run(dataset: Dataset, config: TaskConfig):
         # regression currently fails (as of 26.02.2019: still under development state by oboe team)
         raise ValueError('Regression is not yet supported (under development).')
 
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
-    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
+    X_train = dataset.train.X_enc
+    y_train = dataset.train.y_enc
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_cores = config.framework_params.get('_n_cores', config.cores)
@@ -42,25 +39,27 @@ def run(dataset: Dataset, config: TaskConfig):
             aml.fit(X_train, y_train)
         except IndexError as e:
             if len(aml_models()) == 0:  # incorrect handling of some IndexError in oboe if ensemble is empty
-                raise NoResultError("Oboe could not produce any model in the requested time.") from e
+                raise ValueError("Oboe could not produce any model in the requested time.")
             raise e
 
+    log.info('Predicting on the test set.')
+    X_test = dataset.test.X_enc
+    y_test = dataset.test.y_enc
     predictions = aml.predict(X_test).reshape(len(X_test))
 
     if is_classification:
-        target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
-        probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(predictions)
+        probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
     else:
         probabilities = None
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=y_test,
-                             target_is_encoded=True)
+    return result(output_file=config.output_predictions_file,
+                  predictions=predictions,
+                  truth=y_test,
+                  probabilities=probabilities,
+                  target_is_encoded=is_classification,
+                  models_count=len(aml_models()),
+                  training_duration=training.duration)
 
-    return dict(
-        models_count=len(aml_models()),
-        training_duration=training.duration
-    )
+
+if __name__ == '__main__':
+    call_run(run)

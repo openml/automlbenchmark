@@ -29,7 +29,7 @@ DecisionTree:
   project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
 
 RandomForest:
-  version: '0.21.3'
+  version: '0.22.2'
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000
@@ -37,7 +37,7 @@ RandomForest:
 #    verbose: true
 
 TunedRandomForest:
-  version: '0.19.2'
+  version: '0.22.2'
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000

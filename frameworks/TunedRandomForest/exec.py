@@ -15,14 +15,11 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import Imputer, impute
-from amlb.results import save_predictions_to_file
-from amlb.utils import Timer
+from frameworks.shared.callee import call_run, result, Timer
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +30,7 @@ def pick_values_uniform(start: int, end: int, length: int):
     return sorted(set([int(f) for f in uniform_floats]))
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset, config):
     log.info("\n**** Tuned Random Forest (sklearn) ****\n")
 
     is_classification = config.type == 'classification'
@@ -42,8 +39,7 @@ def run(dataset: Dataset, config: TaskConfig):
     tuning_params = config.framework_params.get('_tuning', training_params)
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
-    # Impute any missing data (can test using -t 146606)
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores."
@@ -72,7 +68,7 @@ def run(dataset: Dataset, config: TaskConfig):
         for i, max_features_value in enumerate(max_features_values):
             log.info("[{:2d}/{:2d}] Evaluating max_features={}"
                      .format(i + 1, len(max_features_values), max_features_value))
-            imputation = Imputer()
+            imputation = SimpleImputer()
             random_forest = estimator(n_jobs=n_jobs,
                                       random_state=config.seed,
                                       max_features=max_features_value,
@@ -112,14 +108,16 @@ def run(dataset: Dataset, config: TaskConfig):
     predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=y_test,
-                             target_is_encoded=True)
-
-    return dict(
+    return result(
+        output_file=config.output_predictions_file,
+        predictions=predictions,
+        truth=y_test,
+        probabilities=probabilities,
+        target_is_encoded=is_classification,
         models_count=len(rf),
         training_duration=training.duration+sum(map(lambda t: t[1], tuning_durations))
     )
+
+
+if __name__ == '__main__':
+    call_run(run)

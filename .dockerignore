@@ -24,8 +24,15 @@ results
 **/*.csv
 **/*.arff
 
+# custom files
+my_*
+.my_*
+
 # binary files
+**/*.whl
+**/*.jar
 **/*.zip
+**/*.tar
 **/*.tgz
 **/*.gz
 **/*.bz2

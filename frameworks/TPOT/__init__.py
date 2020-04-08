@@ -2,7 +2,7 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import Encoder, impute
 from amlb.resources import config as rconfig
-from amlb.utils import call_script_in_same_dir, dir_of
+from amlb.utils import call_script_in_same_dir
 
 
 def setup(*args, **kwargs):
@@ -25,8 +25,8 @@ def run(dataset: Dataset, config: TaskConfig):
     )
 
     def process_results(results):
-        if len(results.probabilities) == 1 and isinstance(results.probabilities[0], str):  # numpy load always return an array
-            prob_format = results.probabilities
+        if not results.probabilities.shape:  # numpy load always return an array
+            prob_format = results.probabilities.item()
             if prob_format == "predictions":
                 target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
                 results.probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(results.predictions)
@@ -38,17 +38,3 @@ def run(dataset: Dataset, config: TaskConfig):
                        input_data=data, dataset=dataset, config=config,
                        process_results=process_results)
 
-
-def docker_commands(*args, **kwargs):
-    return """
-RUN {here}/setup.sh {amlb_dir}
-""".format(here=dir_of(__file__, True), amlb_dir=rconfig().root_dir)
-
-
-def singularity_commands(*args, **kwargs):
-    return """
-{here}/setup.sh {amlb_dir}
-""".format(here=dir_of(__file__, True), amlb_dir=rconfig().root_dir)
-
-
-__all__ = (setup, run, docker_commands)
