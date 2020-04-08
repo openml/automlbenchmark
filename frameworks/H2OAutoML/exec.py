@@ -54,7 +54,7 @@ def run(dataset: Dataset, config: TaskConfig):
                   config.max_runtime_seconds, config.cores, sort_metric)
 
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds,
-                        max_runtime_secs_per_model=config.max_runtime_seconds/2,  # to prevent timeout on ensembles
+                        max_runtime_secs_per_model=round(config.max_runtime_seconds/2),  # to prevent timeout on ensembles
                         sort_metric=sort_metric,
                         seed=config.seed,
                         **training_params)
