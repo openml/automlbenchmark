@@ -34,7 +34,8 @@ def run(dataset, config):
         mae='neg_mean_absolute_error',
         mse='neg_mean_squared_error',
         msle='neg_mean_squared_log_error',
-        r2='r2'
+        r2='r2',
+        rmse='neg_root_mean_squared_error',
     )
     scoring_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if scoring_metric is None:

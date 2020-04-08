@@ -46,7 +46,16 @@ def run(dataset, config):
              .format(config.max_runtime_seconds, n_jobs))
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
-    metric = dict(auc='roc_auc', logloss='neg_log_loss', acc='accuracy')[config.metric]
+    metric = dict(
+        acc='accuracy',
+        auc='roc_auc',
+        f1='f1',
+        logloss='neg_log_loss',
+        mae='neg_mean_absolute_error',
+        mse='neg_mean_squared_error',
+        r2='r2',
+        rmse='neg_root_mean_squared_error',
+    )[config.metric]
 
     n_features = X_train.shape[1]
     default_value = max(1, int(math.sqrt(n_features)))

@@ -10,17 +10,12 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
-import psutil
 
 from frameworks.shared.callee import call_run, result, Timer, touch
+from utils import system_memory_mb
 
 log = logging.getLogger(__name__)
 
-
-def system_memory_mb():
-    """Returns vm memory in mb"""
-    vm = psutil.virtual_memory().total
-    return vm / (1 << 20)
 
 def run(dataset, config):
     log.info("\n**** AutoSklearn ****\n")
@@ -37,6 +32,7 @@ def run(dataset, config):
         logloss=metrics.log_loss,
         mae=metrics.mean_absolute_error,
         mse=metrics.mean_squared_error,
+        rmse=metrics.mean_squared_error,  # autosklearn can optimize on mse, and we compute rmse independently on predictions
         r2=metrics.r2
     )
     perf_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
@@ -63,7 +59,7 @@ def run(dataset, config):
 
     # when memory is large enough, we should have:
     # (cores - 1) * ml_memory_limit_mb + ensemble_memory_limit_mb = config.max_mem_size_mb
-    total_memory_mb = system_memory_mb()
+    total_memory_mb = system_memory_mb().total
     if ml_memory_limit == 'auto':
         ml_memory_limit = max(min(config.max_mem_size_mb,
                                   math.ceil(total_memory_mb / n_jobs)),
@@ -121,6 +117,7 @@ def save_artifacts(estimator, config):
                 f.write(models_repr)
     except:
         log.debug("Error when saving artifacts.", exc_info=True)
+
 
 if __name__ == '__main__':
     call_run(run)
