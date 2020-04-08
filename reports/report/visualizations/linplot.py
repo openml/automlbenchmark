@@ -19,7 +19,7 @@ def draw_parallel_coord(df, class_column,
         colors = mp.cm.get_cmap(colormap).colors[:len(df[class_column].unique())]
         axes = pd.plotting.parallel_coordinates(df,
                                                 class_column=class_column,
-                                                colors=colors,
+                                                color=colors,
                                                 axvlines=False,
                                                 )
         set_scales(axes, yscale=yscale)

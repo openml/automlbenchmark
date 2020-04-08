@@ -44,6 +44,11 @@ def dir_of(caller_file, rel_to_project_root=False):
 
 
 def list_all_files(paths, include=None, exclude=None):
+    """
+    :param paths: the directories to look into.
+    :param include: a UNIX path pattern for the files to be included in the result list
+    :param exclude: a UNIX path pattern for the files to be excluded from the result list
+    """
     all_files = []
     paths = paths if isinstance(paths, list) else [paths]
     for path in paths:

@@ -28,24 +28,20 @@ class SingularityBenchmark(ContainerBenchmark):
         We prefer to pull from docker, so we have to mind the docker tag
         When downloading from Docker, the colon is changed to underscore
         """
+        if branch is None:
+            branch = rget().project_info.branch
         di = framework_def.image
 
         # If we want to pull from docker, the separator is a colon for tag
         separator = '_' if not as_docker_image else ':'
         # Also, no need for author in image name
         author = '' if not as_docker_image else f"{di.author}/"
-
-        if branch is None:
-            branch = rget().project_info.branch
-
-        di = framework_def.image
-        return "{author}{image}{separator}{tag}".format(
-            author=author,
-            separator=separator,
-            image=di.image if di.image else framework_def.name.lower(),
-            tag=re.sub(r"([^\w.-])", '.',
-                       '-'.join([di.tag if di.tag else framework_def.version.lower(), branch]))
-        )
+        image = di.image if di.image else framework_def.name.lower()
+        tags = [di.tag if di.tag else framework_def.version.lower()]
+        if branch != 'master':
+            tags.append(branch)
+        tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
+        return f"{author}{image}{separator}{tag}"
 
     def __init__(self, framework_name, benchmark_name, constraint_name):
         """
