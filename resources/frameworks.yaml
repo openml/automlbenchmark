@@ -61,7 +61,7 @@ H2OAutoML:
 #    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
 
 hyperoptsklearn:
-  version: '0.0.3'
+  version: 'latest'
   project: http://hyperopt.github.io/hyperopt-sklearn/
   params:
     max_evals: 1000

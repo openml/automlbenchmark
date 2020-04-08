@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #shopt -s expand_aliases
 
+SHARED_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd -P)"
 MODULE_ROOT="$1"
-APP_ROOT=$(dirname $(dirname $(dirname "$0")))
+APP_ROOT=$(dirname $(dirname "$SHARED_DIR"))
 #APP_ROOT="$(pwd)"
 
 SUDO() {
@@ -49,3 +50,5 @@ PIP() {
 #echo "PIP=$(command -v PIP)"
 echo "PY=$py_exec"
 echo "PIP=$pip_exec"
+
+PIP install --no-cache-dir -r $SHARED_DIR/requirements.txt

@@ -25,4 +25,4 @@ class DataLoader:
             raise NotImplementedError(f"data source {source} is not supported yet")
 
 
-__all__ = (DataLoader, DataSourceType)
+__all__ = ["DataLoader", "DataSourceType"]

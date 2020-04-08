@@ -52,7 +52,11 @@ def run_in_venv(caller_file, script_file: str, *args,
             output, err = run_cmd(cmd, *args,
                                   _input_str_=params,
                                   _live_output_=True,
-                                  _env_=dict(PYTHONPATH=rconfig().root_dir)
+                                  _env_=dict(
+                                      PYTHONPATH=os.pathsep.join([
+                                          rconfig().root_dir,
+                                          os.path.join(rconfig().root_dir, "amlb"),
+                                      ]))
                                   )
 
         out = io.StringIO(output)
