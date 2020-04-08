@@ -21,20 +21,6 @@ class DockerBenchmark(ContainerBenchmark):
     an extension of ContainerBenchmark to run benchmarks inside docker.
     """
 
-    @staticmethod
-    def docker_image_name(framework_def, branch=None):
-        if branch is None:
-            branch = rget().project_info.branch
-
-        di = framework_def.docker_image
-        author = di.author
-        image = di.image if di.image else framework_def.name.lower()
-        tags = [di.tag if di.tag else framework_def.version.lower()]
-        if branch != 'master':
-            tags.append(branch)
-        tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
-        return f"{author}/{image}:{tag}"
-
     def __init__(self, framework_name, benchmark_name, constraint_name):
         """
 
