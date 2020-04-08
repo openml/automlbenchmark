@@ -29,7 +29,7 @@ class ContainerBenchmark(Benchmark):
         if branch is None:
             branch = rget().project_info.branch
 
-        di = framework_def.docker_image
+        di = framework_def.image
         author = di.author
         image = di.image if di.image else framework_def.name.lower()
         tags = [di.tag if di.tag else framework_def.version.lower()]
