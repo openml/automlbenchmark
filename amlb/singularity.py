@@ -155,14 +155,14 @@ class SingularityBenchmark(ContainerBenchmark):
 
     def _upload_image(self):
         image = self._image_name
-        library=rconfig().singularity.library
+        library = rconfig().singularity.library
         name = self._container_image_name(as_docker_image=True)
         log.info(f"Publishing Singularity image {image}.")
         run_cmd(f"singularity login && singularity push -U {image} library://{library}/{name}")
         log.info(f"Successfully published singularity image {image}.")
 
     def _generate_script(self, custom_commands):
-        singularity_content="""Bootstrap: docker
+        singularity_content = """Bootstrap: docker
 From: ubuntu:18.04
 %files
 . /bench/
@@ -203,6 +203,7 @@ mkdir /custom
 
 xargs -L 1 $PIP install --no-cache-dir < requirements.txt
 
+RUN $PY {script} {framework} -s only
 {custom_commands}
 
 %environment

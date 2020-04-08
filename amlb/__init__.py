@@ -11,15 +11,15 @@ from .singularity import SingularityBenchmark
 from .aws import AWSBenchmark, AWSRemoteBenchmark
 from .results import TaskResult
 
-__all__ = (
-    log,
-    AutoMLError,
-    Resources,
-    Benchmark,
-    DockerBenchmark,
-    SingularityBenchmark,
-    AWSBenchmark,
-    AWSRemoteBenchmark,
-    SetupMode,
-    TaskResult,
-)
+__all__ = [
+    "log",
+    "AutoMLError",
+    "Resources",
+    "Benchmark",
+    "DockerBenchmark",
+    "SingularityBenchmark",
+    "AWSBenchmark",
+    "AWSRemoteBenchmark",
+    "SetupMode",
+    "TaskResult",
+]

@@ -72,7 +72,7 @@ class DockerBenchmark(ContainerBenchmark):
             run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
         except:  # also want to handle KeyboardInterrupt
             try:
-                run_cmd("docker kill {}".format(inst_name))
+                run_cmd(f"docker kill {inst_name}")
             except:
                 pass
             finally:
@@ -80,12 +80,12 @@ class DockerBenchmark(ContainerBenchmark):
 
     def _image_exists(self):
         """Implements a method to see if the container image is available"""
-        output, _ = run_cmd("docker images -q {image}".format(image=self._image_name))
+        output, _ = run_cmd(f"docker images -q {self._image_name}")
         log.debug("docker image id: %s", output)
         if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
         try:
-            run_cmd("docker pull {image}".format(image=self._image_name), _live_output_=True)
+            run_cmd(f"docker pull {self._image_name}", _live_output_=True)
             return True
         except:
             pass
@@ -93,13 +93,13 @@ class DockerBenchmark(ContainerBenchmark):
 
     def _run_container_build_command(self, cache):
         image = self._image_name
-        log.info("Building docker image {image}.")
+        log.info(f"Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
             container=image,
             script=self._script
         ), _live_output_=True)
-        log.info("Successfully built docker image {image}.")
+        log.info(f"Successfully built docker image {image}.")
 
     def _upload_image(self):
         image = self._image_name
@@ -147,6 +147,7 @@ ADD . /bench/
 
 RUN xargs -L 1 $PIP install --no-cache-dir < requirements.txt
 
+RUN $PY {script} {framework} -s only
 {custom_commands}
 
 # https://docs.docker.com/engine/reference/builder/#entrypoint
