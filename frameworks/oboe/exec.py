@@ -14,9 +14,9 @@ def run(dataset, config):
     log.info("\n**** Oboe ****\n")
 
     is_classification = config.type == 'classification'
-    if not is_classification:
+    # if not is_classification:
         # regression currently fails (as of 26.02.2019: still under development state by oboe team)
-        raise ValueError('Regression is not yet supported (under development).')
+        # raise ValueError('Regression is not yet supported (under development).')
 
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc

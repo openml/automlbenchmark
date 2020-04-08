@@ -22,6 +22,7 @@ def run(dataset: Dataset, config: TaskConfig):
         logloss='logloss',
         mae='mae',
         mse='mse',
+        r2='r2',
         rmse='rmse',
         rmsle='rmsle'
     )

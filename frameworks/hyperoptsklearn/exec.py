@@ -35,6 +35,7 @@ def run(dataset, config):
         mse=(mean_squared_error, False),
         msle=(mean_squared_log_error, False),
         r2=(default, False), # lambda y, pred: 1.0 - r2_score(y, pred)
+        rmse=(mean_squared_error, False),
     )
     loss_fn, continuous_loss_fn = metrics_to_loss_mapping[config.metric] if config.metric in metrics_to_loss_mapping else (None, False)
     if loss_fn is None:

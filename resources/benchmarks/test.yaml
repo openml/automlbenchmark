@@ -40,7 +40,7 @@
   enabled: false
   openml_task_id: 2295
   metric:
-    - mae
-    - mse
     - rmse
     - r2
+    - mae
+    - mse

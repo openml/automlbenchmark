@@ -25,7 +25,7 @@ def run(dataset: Dataset, config: TaskConfig):
     )
 
     def process_results(results):
-        if not results.probabilities.shape:  # numpy load always return an array
+        if results.probabilities is not None and not results.probabilities.shape:  # numpy load always return an array
             prob_format = results.probabilities.item()
             if prob_format == "predictions":
                 target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
