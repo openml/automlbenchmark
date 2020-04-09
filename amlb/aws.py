@@ -305,18 +305,32 @@ class AWSBenchmark(Benchmark):
 
         interrupt = threading.Event()
         while not interrupt.is_set():
-            if job.instance_id in self.instances:
-                inst_desc = self.instances[job.instance_id]
-                if inst_desc['abort']:
-                    self._update_instance(job.instance_id, status='aborted')
-                    raise Exception("Aborting instance {} for job {}.".format(job.instance_id, job.name))
+            inst_desc = self.instances[job.instance_id] if job.instance_id in self.instances else ns()
+            if inst_desc['abort']:
+                self._update_instance(job.instance_id, status='aborted')
+                raise Exception("Aborting instance {} for job {}.".format(job.instance_id, job.name))
             try:
                 state = instance.state['Name']
-                log.info("[%s] checking job %s on instance %s: %s.", datetime_iso(), job.name, job.instance_id, state)
+                state_code = instance.state['Code']
+                log.info("[%s] checking job %s on instance %s: %s [%s].", datetime_iso(), job.name, job.instance_id, state, state_code)
                 log_console()
                 self._update_instance(job.instance_id, status=state)
 
-                if instance.state['Code'] > 16:     # ended instance
+                if state_code == 16:
+                    if inst_desc['meta_info'] is None:
+                        meta_info = dict(
+                            instance_type=instance.instance_type,
+                            launch_time=str(instance.launch_time),
+                            public_dns_name=instance.public_dns_name,
+                            public_ip=instance.public_ip_address,
+                            private_dns_name=instance.private_dns_name,
+                            private_ip=instance.private_ip_address,
+                            availability_zone=instance.placement['AvailabilityZone'],
+                            subnet_id=instance.subnet_id,
+                        )
+                        self._update_instance(job.instance_id, meta_info=meta_info)
+                        log.info("Running EC2 instance %s: %s", instance.id, meta_info)
+                elif state_code > 16:     # ended instance
                     log.info("EC2 instance %s is %s: %s", job.instance_id, state, instance.state_reason['Message'])
                     interrupt.set()
             except Exception as e:
@@ -395,14 +409,15 @@ class AWSBenchmark(Benchmark):
         # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
+        ec2_config = rconfig().aws.ec2
         try:
             ebs = dict(VolumeType=instance_def.volume_type)
             if instance_def.volume_size:
                 ebs['VolumeSize'] = instance_def.volume_size
 
-            instance = self.ec2.create_instances(
+            instance_params = dict(
                 BlockDeviceMappings=[dict(
-                    DeviceName=rconfig().aws.ec2.root_device_name,
+                    DeviceName=ec2_config.root_device_name,
                     Ebs=ebs
                 )],
                 IamInstanceProfile=dict(Name=self.instance_profile.name),
@@ -410,16 +425,32 @@ class AWSBenchmark(Benchmark):
                 InstanceType=instance_def.type,
                 MinCount=1,
                 MaxCount=1,
-                SubnetId=rconfig().aws.ec2.subnet_id,
+                SubnetId=ec2_config.subnet_id,
+                TagSpecifications=[
+                    dict(
+                        ResourceType='instance',
+                        Tags=[
+                            dict(Key='Name', Value=f"benchmark_{inst_key}")
+                        ]
+                    )
+                ],
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
-            )[0]
-            log.info("Started EC2 instance %s.", instance.id)
+            )
+            if ec2_config.key_name is not None:
+                instance_params.update(KeyName=ec2_config.key_name)
+            if ec2_config.security_groups:
+                instance_params.update(SecurityGroups=ec2_config.security_groups)
+
+            instance = self.ec2.create_instances(**instance_params)[0]
+            log.info("Started EC2 instance %s", instance.id)
             self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='',
-                                             start_time=datetime_iso(), stop_time='')
+                                             start_time=datetime_iso(), stop_time='',
+                                             meta_info=None)
         except Exception as e:
             fake_iid = "no_instance_{}".format(len(self.instances)+1)
             self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False,
-                                          start_time=datetime_iso(), stop_time=datetime_iso())
+                                          start_time=datetime_iso(), stop_time=datetime_iso(),
+                                          meta_info=None)
             raise e
         finally:
             self._exec_send(self._save_instances)
@@ -461,8 +492,6 @@ class AWSBenchmark(Benchmark):
 
     def _update_instance(self, instance_id, **kwargs):
         do_save = False
-        if len(kwargs):
-            do_save = True
         inst = self.instances[instance_id]
         for k, v in kwargs.items():
             if k in inst and inst[k] != v:
@@ -483,9 +512,10 @@ class AWSBenchmark(Benchmark):
                     self.instances[iid].stop_time,
                     self.sid,
                     self.instances[iid].key,
-                    self._s3_key(self.sid, instance_key_or_id=iid, absolute=True)
+                    self._s3_key(self.sid, instance_key_or_id=iid, absolute=True),
+                    self.instances[iid].meta_info
                     ) for iid in self.instances.keys()],
-                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3_dir'],
+                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3_dir', 'meta_info'],
                   path=os.path.join(self.output_dirs.session, 'instances.csv'))
 
     def _load_instances(self, instances_file):

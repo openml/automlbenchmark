@@ -100,6 +100,8 @@ aws:
     delete_resources: false
 
   ec2:
+    key_name:    # the name of the key pair passed to EC2 instances (if not set, user can't ssh the running instances)
+    security_groups: []  # the optional additional security groups to set on the instances
     terminate_instances: always     # if `always`, the EC2 instances are always terminated.
                                     # if `success`, EC2 instances are terminated at the end of the main job iff it ended successfully (=the main results could be downloaded),
                                     #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
