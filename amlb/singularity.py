@@ -90,7 +90,7 @@ class SingularityBenchmark(ContainerBenchmark):
         script_extra_params = ""
         inst_name = self.sid
         cmd = (
-            "singularity run {options} "
+            "singularity run --pwd /bench {options} "
             "-B {input}:/input -B {output}:/output -B {custom}:/custom "
             "{image} \"{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}\""
         ).format(
