@@ -39,6 +39,7 @@ def run(dataset: Dataset, config: TaskConfig):
         h2o.init(nthreads=nthreads,
                  min_mem_size=str(config.max_mem_size_mb)+"M",
                  max_mem_size=str(config.max_mem_size_mb)+"M",
+                 strict_version_check=config.framework_params.get('_strict_version_check', True)
                  # log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold))
                  )
 

@@ -158,7 +158,8 @@ class Benchmark:
             runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=rconfig().delay_between_jobs, done_async=True)
 
         try:
-            with OSMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+            with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
+                              frequency_seconds=rconfig().monitoring.frequency_seconds,
                               check_on_exit=True,
                               statistics=rconfig().monitoring.statistics,
                               verbosity=rconfig().monitoring.verbosity):
