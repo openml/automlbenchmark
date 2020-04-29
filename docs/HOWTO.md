@@ -82,9 +82,8 @@ _Example:_
 
 In the definition below, the `n_estimators` and `verbose` params are passed directly to the `RandomForestClassifier`
 ```yaml
-RandomForest:
-  version: '0.21.3'
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+RandomForest_custom:
+  extends: RandomForest
   params:
     n_estimators: 2000
     verbose: true
@@ -96,9 +95,8 @@ _Example:_
  
 In the definition below, the `_n_jobs` param is handled by custom code in `RandomForest/exec.py`: here it overrides the default `n_jobs` automatically calculated by the application (using all assigned cores).
 ```yaml
-RandomForest:
-  version: '0.21.3'
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+RandomForest_custom:
+  extends: RandomForest
   params:
     n_estimators: 2000
     _n_jobs: 1
@@ -437,7 +435,7 @@ Please note however, that this structure is not a requirement, the only requirem
 A simple `__init__.py` would look like this:
 
 ```python
-from amlb.utils import as_cmd_args, call_script_in_same_dir, dir_of
+from amlb.utils import call_script_in_same_dir
 
 
 def setup(*args, **kwargs):
@@ -447,17 +445,6 @@ def setup(*args, **kwargs):
 def run(*args, **kwargs):
     from .exec import run
     return run(*args, **kwargs)
-
-
-def docker_commands(*args, **kwargs):
-    return """
-RUN {here}/setup.sh {args}
-""".format(
-        here=dir_of(__file__, True),
-        args=' '.join(as_cmd_args(*args)),
-    )
-
-__all__ = (setup, run, docker_commands)
 
 ```
 
@@ -565,6 +552,32 @@ Here are the main differences:
   Here, the `exec.R` script is also responsible to save the predictions in the expected format.
 
 #### Add a default framework
+
+Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.
+
+*NOTE:*
+There are a few requirements when integrating a new default framework:
+- The code snippet triggering the training should use only defaults (no AutoML hyper parameters), plus possibly a generic `**kwargs` in order to support `params` section in custom framework definitions. 
+- Exceptions:
+  - the problem type ("classification", "regression", "binary", "multiclass"): this is available through `config.type` or `dataset.type`. 
+  - information about data, for example the column types: available through the `dataset` object.
+  - time, cpu and memory constraints: those must be provided by the benchmark application through the `config` object.  
+  - the objective function: provided by `config.metric` (usually requires a translation for a given framework).
+  - seed: provided by `config.seed`
+  - paths to folders (output, temporary...): if possible, use `config.output_dir` or a subfolder (see existing integrations).
+- The default framework definition in `resources/frameworks.yaml` shouldn't have any `params` section: this `params` section is intended for custom definitions, not default ones.
+```yaml
+good_framework:
+   version: "0.0.1"
+   project: "http://go.to/good_framework
+
+bad_framework:
+   version: "0.0.1"
+   project: "http://go.to/bad_framework
+   params: 
+     enable_this: true
+     use: ['this', 'that']
+```
 
 Using the instructions above:
  1. verify that there is an issue created under <https://github.com/openml/automlbenchmark/issues> for the framework you want to add, or create one.
