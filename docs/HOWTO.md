@@ -569,11 +569,11 @@ There are a few requirements when integrating a new default framework:
 ```yaml
 good_framework:
    version: "0.0.1"
-   project: "http://go.to/good_framework
+   project: "http://go.to/good_framework"
 
 bad_framework:
    version: "0.0.1"
-   project: "http://go.to/bad_framework
+   project: "http://go.to/bad_framework"
    params: 
      enable_this: true
      use: ['this', 'that']
