@@ -270,20 +270,22 @@ class TaskResult:
     @profile(logger=log)
     def compute_scores(self, framework_name, metrics, result=None, meta_result=None):
         framework_def, _ = rget().framework_definition(framework_name)
-        meta_result = Namespace({} if meta_result is None else meta_result) % Namespace(models_count=nan, training_duration=nan)
+        meta_result = Namespace({} if meta_result is None else meta_result)
         scores = Namespace(
             id=self.task.id,
             task=self.task.name,
             framework=framework_name,
             version=framework_def.version,
-            params=str(framework_def.params) if len(framework_def.params) > 0 else '',
+            params=(str(meta_result.params) if 'params' in meta_result
+                    else str(framework_def.params) if len(framework_def.params) > 0
+                    else ''),
             fold=self.fold,
             mode=rconfig().run_mode,
             seed=rget().seed(self.fold),
             tag=rget().project_info.tag,
             utc=datetime_iso(),
-            duration=meta_result.training_duration,
-            models=meta_result.models_count
+            duration=meta_result.training_duration if 'training_duration' in meta_result else nan,
+            models=meta_result.models_count if 'models_count' in meta_result else nan,
         )
         result = self.get_result(framework_name) if result is None else result
         for metric in metrics:
