@@ -291,6 +291,7 @@ class TaskResult:
             scores[metric] = score
         scores.result = scores[metrics[0]] if len(metrics) > 0 else result.evaluate('')
         scores.info = result.info
+        scores % Namespace({k: v for k, v in meta_result if k not in ['models_count', 'training_duration']})
         log.info("Metric scores: %s", scores)
         return scores
 

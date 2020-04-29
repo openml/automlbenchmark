@@ -46,6 +46,15 @@ TunedRandomForest:
 #      n_estimators: 500
 
 ### AutoML frameworks
+AutoGluon:
+  version: "0.0.6"
+  project: https://autogluon.mxnet.io
+
+AutoGluon_autostack:
+  extends: AutoGluon
+  params:
+    auto_stack: true
+
 autosklearn:
   version: '0.6.0'
   project: https://automl.github.io/auto-sklearn/stable/
