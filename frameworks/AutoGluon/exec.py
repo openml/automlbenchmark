@@ -59,9 +59,9 @@ def run(dataset, config):
 
     probabilities = predictor.predict_proba(X_test, as_pandas=True) if is_classification else None
     if is_classification and len(probabilities.shape) == 1:
-        # for binary, autogluon returns only one probability and it's not systematically the smaller or greater label.
+        # for binary, AutoGluon returns only one probability and it's not systematically the smaller or greater label.
         # Here, we're trying to identify to which label correspond the probabilities
-        # and from there we can build the probabilitie for all labels.
+        # and from there we can build the probabilities for all labels.
         classes = dataset.target.classes
         prob_class = next((predictions[i] if p > 0.5 else next(c for c in classes if c != predictions[i])
                            for i, p in enumerate(probabilities) if p != 0.5),
