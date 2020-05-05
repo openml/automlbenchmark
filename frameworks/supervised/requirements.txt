@@ -1,1 +1,1 @@
-mljar-supervised==0.2.8
+mljar-supervised==0.3.1

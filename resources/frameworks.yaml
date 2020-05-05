@@ -96,6 +96,8 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
 
 supervised:
-  version: '0.2.8'
+  version: '0.3.1'
   project: https://github.com/mljar/mljar-supervised
-  
+#  params:
+#    algorithms: ["Baseline"]
+#    _save_artifacts: True

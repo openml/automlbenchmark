@@ -4,16 +4,19 @@ import tempfile as tmp
 import pandas as pd
 import numpy as np
 
-import sklearn
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-
-from frameworks.shared.callee import call_run, result, Timer
+from frameworks.shared.callee import call_run, result, Timer, touch
 
 log = logging.getLogger(os.path.basename(__file__))
 
 import supervised
 from supervised.automl import AutoML
 import shutil
+
+
+def make_subdir(name, config):
+    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
+    touch(subdir, as_dir=True)
+    return subdir
 
 def run(dataset, config):
     log.info("\n**** mljar-supervised ****\n")
@@ -39,13 +42,7 @@ def run(dataset, config):
             X_test[col] = x2
         except Exception as e:
             pass
-
-    print(
-        "We completely ignore the advice to optimize towards metric: {}.".format(
-            config.metric
-        )
-    )
-    
+ 
     ml_task = None  # the AutoML will guess about ML task
     # however, in case of multiclass classification, we will set the ml_task manually.
     # AutoML assumes that multiclass calssification is when there is from 2 to 20 unique values.
@@ -53,17 +50,15 @@ def run(dataset, config):
     if is_classification and len(np.unique(y_train)) > 2:
         ml_task = "multiclass_classification"
 
-    algorithms = ["Baseline", "Decision Tree", "Random Forest", "Xgboost", "LightGBM"]
-    if config.max_runtime_seconds <= 60:
-        algorithms = ["Baseline"]
-    results_path = "AutoML_results"
-    shutil.rmtree(results_path, ignore_errors=True) # clear just in case
+    results_path = make_subdir("results", config)    
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+
     automl = AutoML(
         results_path=results_path,
-        algorithms=algorithms,
         total_time_limit=config.max_runtime_seconds,
-        seed=12,
-        ml_task=ml_task
+        seed=config.seed,
+        ml_task=ml_task,
+        **training_params
     )
     
     with Timer() as training:
@@ -79,8 +74,8 @@ def run(dataset, config):
         predictions = preds["prediction"].values
 
     # clean the results 
-    # if you want to inspect results, please comment below line
-    shutil.rmtree(results_path, ignore_errors=True)
+    if not config.framework_params.get('_save_artifacts', False):
+        shutil.rmtree(results_path, ignore_errors=True)
 
     return result(
         output_file=config.output_predictions_file,
