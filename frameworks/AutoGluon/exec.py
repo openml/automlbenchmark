@@ -4,7 +4,6 @@ import warnings
 warnings.simplefilter("ignore")
 
 import matplotlib
-import numpy as np
 import pandas as pd
 matplotlib.use('agg')  # no need for tk
 
