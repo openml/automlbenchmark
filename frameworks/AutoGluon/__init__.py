@@ -19,6 +19,7 @@ def run(dataset: Dataset, config: TaskConfig):
             classes=dataset.target.values
         ),
         columns=[f.name for f in dataset.features],
+        type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
     )
 
     return run_in_venv(__file__, "exec.py",

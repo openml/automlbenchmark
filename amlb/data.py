@@ -36,7 +36,7 @@ class Feature:
         self.index = index
         self.name = name
         self.data_type = data_type
-        self.values = sorted(values) if values is not None else None
+        self.values = values
         self.has_missing_values = has_missing_values
         self.is_target = is_target
 

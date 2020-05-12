@@ -36,6 +36,7 @@ def run(dataset, config):
         log.warning("Performance metric %s not supported.", config.metric)
 
     is_classification = config.type == 'classification'
+    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
     train = pd.DataFrame(dataset.train.data, columns=dataset.columns)
     label = dataset.target.name
@@ -45,9 +46,11 @@ def run(dataset, config):
         predictor = task.fit(
             train_data=train,
             label=label,
+            problem_type=dataset.type,
             output_directory=output_dir,
             time_limits=config.max_runtime_seconds,
             eval_metric=perf_metric.name,
+            **training_params
         )
 
     test = pd.DataFrame(dataset.test.data, columns=dataset.columns)
@@ -57,17 +60,8 @@ def run(dataset, config):
     with Timer() as predict:
         predictions = predictor.predict(X_test)
 
-    probabilities = predictor.predict_proba(X_test, as_pandas=True) if is_classification else None
-    if is_classification and len(probabilities.shape) == 1:
-        # for binary, AutoGluon returns only one probability and it's not systematically the smaller or greater label.
-        # Here, we're trying to identify to which label correspond the probabilities
-        # and from there we can build the probabilities for all labels.
-        classes = dataset.target.classes
-        prob_class = next((predictions[i] if p > 0.5 else next(c for c in classes if c != predictions[i])
-                           for i, p in enumerate(probabilities) if p != 0.5),
-                          classes[1])
-        probabilities = (np.array([[1-row, row] for row in probabilities]) if prob_class == classes[1]
-                         else np.array([[row, 1-row] for row in probabilities]))
+    probabilities = predictor.predict_proba(dataset=X_test, as_pandas=True, as_multiclass=True) if is_classification else None
+    prob_labels = probabilities.columns.values.tolist()
 
     leaderboard = predictor._learner.leaderboard(X_test, y_test, silent=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
@@ -76,12 +70,13 @@ def run(dataset, config):
     save_artifacts(predictor, leaderboard, config)
 
     num_models_trained = len(leaderboard)
-    num_models_ensemble = len(leaderboard[leaderboard['stack_level'] > 0])
+    num_models_ensemble = len(predictor._trainer.get_minimum_model_set(predictor._trainer.model_best))
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,
                   truth=y_test,
                   probabilities=probabilities,
+                  probabilities_labels=prob_labels,
                   target_is_encoded=False,
                   models_count=num_models_trained,
                   models_ensemble_count=num_models_ensemble,
@@ -103,11 +98,11 @@ def save_artifacts(predictor, leaderboard, config):
             save_pd.save(path=os.path.join(models_dir, "leaderboard.csv"), df=leaderboard)
 
         if 'info' in artifacts:
-            ag_info = predictor._learner.get_info()
+            ag_info = predictor.info()
             info_dir = make_subdir("info", config)
             save_pkl.save(path=os.path.join(info_dir, "info.pkl"), object=ag_info)
     except:
-        log.debug("Error when saving artifacts.", exc_info=True)
+        log.warning("Error when saving artifacts.", exc_info=True)
 
 
 if __name__ == '__main__':
