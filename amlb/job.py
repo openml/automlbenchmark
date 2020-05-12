@@ -78,6 +78,8 @@ class Job:
         try:
             if self.state in [State.running, State.stopping]:
                 self._on_done()
+            else:
+                log.warning("Job `%s` done with unexpected state: %s", self.name, self.state)
         except Exception as e:
             log.error("Job `%s` completion failed with error: %s", self.name, str(e))
             log.exception(e)

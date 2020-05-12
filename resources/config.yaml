@@ -137,7 +137,7 @@ aws:
         ami: ami-00035f41c82244dab
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
       eu-central-1:
-        ami: ami-0bdf93799014acdc4
+        ami: ami-0e342d72b12109f91
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
 
   max_timeout_seconds: 21600

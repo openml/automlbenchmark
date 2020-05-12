@@ -119,6 +119,7 @@ class AWSBenchmark(Benchmark):
         self.uploaded_resources = None
         self.instance_profile = None
         self.instances = {}
+        self.instances_def = []
         self.jobs = []
         self.exec = None
         self.monitoring = None
@@ -231,6 +232,7 @@ class AWSBenchmark(Benchmark):
             setattr(task_def, k, v)
 
         instance_def = ns()
+        instance_def.id = (task_def.ec2_instance_id if 'ec2_instance_id' in task_def else None)
         instance_def.type = (task_def.ec2_instance_type if 'ec2_instance_type' in task_def
                              else '.'.join([rconfig().aws.ec2.instance_type.series, rconfig().aws.ec2.instance_type.map.default]))
         instance_def.volume_type = (task_def.ec2_volume_type if 'ec2_volume_type' in task_def
@@ -241,6 +243,9 @@ class AWSBenchmark(Benchmark):
         timeout_secs = (task_def.max_runtime_seconds if 'max_runtime_seconds' in task_def
                         else sum([task.max_runtime_seconds for task in self.benchmark_def]))
         timeout_secs += rconfig().aws.overhead_time_seconds
+
+        assert not (instance_def.id and self.parallel_jobs > 1), "Job parallelization is not supported when providing an instance id."
+        self.instances_def.append(instance_def)
 
         job = Job('_'.join(['aws',
                             self.benchmark_name,
@@ -287,6 +292,7 @@ class AWSBenchmark(Benchmark):
 
     def _wait_for_results(self, job):
         instance = self.instances[job.instance_id].instance
+        running = False
         last_console_line = -1
 
         def log_console():
@@ -301,7 +307,10 @@ class AWSBenchmark(Benchmark):
                     if new_log:
                         log.info(new_log)
             except Exception as e:
-                log.exception(e)
+                if 'UnsupportedOperation' in str(e):
+                    log.error(e)
+                else:
+                    log.exception(e)
 
         interrupt = threading.Event()
         while not interrupt.is_set():
@@ -310,8 +319,14 @@ class AWSBenchmark(Benchmark):
                 self._update_instance(job.instance_id, status='aborted')
                 raise Exception("Aborting instance {} for job {}.".format(job.instance_id, job.name))
             try:
-                state = instance.state['Name']
-                state_code = instance.state['Code']
+                # instance_state = instance.state
+                statuses = self.ec2.meta.client.describe_instance_status(InstanceIds=[job.instance_id])['InstanceStatuses']
+                # log.info(status)
+                instance_state = (statuses[0]['InstanceState'] if len(statuses) > 0
+                                  else instance.state if not running
+                                  else dict(Name='NoState', Code=100))
+                state = instance_state['Name']
+                state_code = instance_state['Code']
                 log.info("[%s] checking job %s on instance %s: %s [%s].", datetime_iso(), job.name, job.instance_id, state, state_code)
                 log_console()
                 self._update_instance(job.instance_id, status=state)
@@ -330,6 +345,7 @@ class AWSBenchmark(Benchmark):
                         )
                         self._update_instance(job.instance_id, meta_info=meta_info)
                         log.info("Running EC2 instance %s: %s", instance.id, meta_info)
+                        running = True
                 elif state_code > 16:     # ended instance
                     log.info("EC2 instance %s is %s: %s", job.instance_id, state, instance.state_reason['Message'])
                     interrupt.set()
@@ -402,46 +418,58 @@ class AWSBenchmark(Benchmark):
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)
-        inst_key = instance_key.lower() if instance_key \
-            else "{}_p{}_i{}".format(self.sid,
-                                     re.sub(r"[\s-]", '', script_params),
-                                     datetime_iso(micros=True, time_sep='.')).lower()
+        inst_key = (instance_key.lower() if instance_key
+                    else "{}_p{}_i{}".format(self.sid,
+                                             re.sub(r"[\s-]", '', script_params),
+                                             datetime_iso(micros=True, time_sep='.')).lower())
         # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
         ec2_config = rconfig().aws.ec2
         try:
-            ebs = dict(VolumeType=instance_def.volume_type)
-            if instance_def.volume_size:
-                ebs['VolumeSize'] = instance_def.volume_size
+            # TODO: try to keep user-data fixed as changes are not executed on next start when using `modify_attribute`.
+            # can trigger benchmark from generated bach script in /user dir
+            # also, use [scripts-user, always] in cloud_final_modules (cf. https://cloudinit.readthedocs.io/en/latest/topics/boot.html and https://aws.amazon.com/premiumsupport/knowledge-center/execute-user-data-ec2/)
+            user_data = self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
 
-            instance_params = dict(
-                BlockDeviceMappings=[dict(
-                    DeviceName=ec2_config.root_device_name,
-                    Ebs=ebs
-                )],
-                IamInstanceProfile=dict(Name=self.instance_profile.name),
-                ImageId=self.ami,
-                InstanceType=instance_def.type,
-                MinCount=1,
-                MaxCount=1,
-                SubnetId=ec2_config.subnet_id,
-                TagSpecifications=[
-                    dict(
-                        ResourceType='instance',
-                        Tags=[
-                            dict(Key='Name', Value=f"benchmark_{inst_key}")
-                        ]
-                    )
-                ],
-                UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
-            )
-            if ec2_config.key_name is not None:
-                instance_params.update(KeyName=ec2_config.key_name)
-            if ec2_config.security_groups:
-                instance_params.update(SecurityGroups=ec2_config.security_groups)
+            if instance_def.id:
+                instance = self.ec2.Instance(instance_def.id)
+                assert instance.state['Name'] == 'stopped'
+                instance.modify_attribute(UserData=dict(Value=user_data))
+                instance.start()
+            else:
+                ebs = dict(VolumeType=instance_def.volume_type)
+                if instance_def.volume_size:
+                    ebs['VolumeSize'] = instance_def.volume_size
 
-            instance = self.ec2.create_instances(**instance_params)[0]
+                instance_params = dict(
+                    BlockDeviceMappings=[dict(
+                        DeviceName=ec2_config.root_device_name,
+                        Ebs=ebs
+                    )],
+                    IamInstanceProfile=dict(Name=self.instance_profile.name),
+                    ImageId=self.ami,
+                    InstanceType=instance_def.type,
+                    MinCount=1,
+                    MaxCount=1,
+                    SubnetId=ec2_config.subnet_id,
+                    TagSpecifications=[
+                        dict(
+                            ResourceType='instance',
+                            Tags=[
+                                dict(Key='Name', Value=f"benchmark_{inst_key}")
+                            ]
+                        )
+                    ],
+                    UserData=user_data
+                )
+                if ec2_config.key_name is not None:
+                    instance_params.update(KeyName=ec2_config.key_name)
+                if ec2_config.security_groups:
+                    instance_params.update(SecurityGroups=ec2_config.security_groups)
+
+                instance = self.ec2.create_instances(**instance_params)[0]
+
             log.info("Started EC2 instance %s", instance.id)
             self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='',
                                              start_time=datetime_iso(), stop_time='',
@@ -463,7 +491,9 @@ class AWSBenchmark(Benchmark):
             return
 
         terminate_config = rconfig().aws.ec2.terminate_instances
-        if terminate_config in ['always', True]:
+        if any(instance_id == idef.id for idef in self.instances_def):
+            terminate = False  # don't terminate instances that already existed
+        elif terminate_config in ['always', True]:
             terminate = True
         elif terminate_config in ['never', False]:
             terminate = False
@@ -476,6 +506,7 @@ class AWSBenchmark(Benchmark):
                 response = instance.terminate()
             else:
                 response = instance.stop()
+                # instance.modify_attribute(UserData=dict(Value=""))
             log.info("%s EC2 instances %s with response %s.", "Terminated" if terminate else "Stopped", instance_id, response)
         except Exception as e:
             log.error("ERROR: EC2 instance %s could not be %s!\n"
@@ -894,7 +925,7 @@ runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
-  - mkdir /repo
+  - mkdir -p /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - python3 -m venv venv
@@ -910,7 +941,8 @@ runcmd:
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
-  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+  - rm -f /var/lib/cloud/instance/sem/config_scripts_user
+  - rm -f /var/lib/cloud/instance/user-data.txt*
 
 final_message: "AutoML benchmark {ikey} completed after $UPTIME s"
 
@@ -964,7 +996,7 @@ pip3 install -U awscli
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
 mkdir -p /s3bucket/user
-mkdir /repo
+mkdir -p /repo
 cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
