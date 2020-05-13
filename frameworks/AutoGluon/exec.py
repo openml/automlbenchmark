@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import warnings
 warnings.simplefilter("ignore")
 
@@ -97,9 +98,18 @@ def make_subdir(name, config):
 def save_artifacts(predictor, leaderboard, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
+        models_dir = make_subdir("models", config)
+        shutil.rmtree(os.path.join(models_dir, "utils"), ignore_errors=True)
+
         if 'leaderboard' in artifacts:
-            models_dir = make_subdir("models", config)
             save_pd.save(path=os.path.join(models_dir, "leaderboard.csv"), df=leaderboard)
+
+        if 'models' not in artifacts:
+            shutil.rmtree(os.path.join(models_dir, "models"), ignore_errors=True)
+            with os.scandir(models_dir) as it:
+                for f in it:
+                    if f.is_file() and os.path.splitext(f.name)[1] == '.pkl':
+                        os.remove(f.path)
 
         if 'info' in artifacts:
             ag_info = predictor.info()
