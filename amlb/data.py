@@ -27,11 +27,17 @@ class Feature:
 
     def __init__(self, index, name, data_type, values=None, has_missing_values=False, is_target=False):
         """
+        TODO: cleanup data_type, pick one name for each type and stick to it.
+        OpenML, when reading ARFF file, should use only ['nominal', 'numeric', 'string', 'date'].
+        FileLoader uses all ARFF types as well as ['categorical', 'integer', 'real', 'numeric'] for CSV files (no string or date types?).
+        Also see https://waikato.github.io/weka-wiki/formats_and_processing/arff_stable/
 
         :param index:
         :param name:
-        :param type:
+        :param data_type: one of ['categorical', 'nominal', 'enum', 'string', 'numeric', 'integer', 'real', 'date']
         :param values:
+        :param has_missing_values:
+        :param is_target:
         """
         self.index = index
         self.name = name
