@@ -26,7 +26,9 @@ def run(dataset, config):
         logloss=metrics.log_loss,
         mae=metrics.mean_absolute_error,
         mse=metrics.mean_squared_error,
-        r2=metrics.r2
+        r2=metrics.r2,
+        # rmse=metrics.root_mean_squared_error,  # metrics.root_mean_squared_error incorrectly registered in autogluon REGRESSION_METRICS
+        rmse=metrics.mean_squared_error,  # for now, we can let autogluon optimize training on mse: anyway we compute final score from predictions.
     )
 
     perf_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
@@ -37,8 +39,9 @@ def run(dataset, config):
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
-    column_types = NS.dict(dataset.columns.types)
-    train = pd.DataFrame(dataset.train.data, columns=dataset.columns.names).astype(column_types, copy=False)
+    column_names, _ = zip(*dataset.columns)
+    column_types = dict(dataset.columns)
+    train = pd.DataFrame(dataset.train.data, columns=column_names).astype(column_types, copy=False)
     label = dataset.target.name
     print(f"Columns dtypes:\n{train.dtypes}")
 
@@ -54,7 +57,7 @@ def run(dataset, config):
             **training_params
         )
 
-    test = pd.DataFrame(dataset.test.data, columns=dataset.columns.names).astype(column_types, copy=False)
+    test = pd.DataFrame(dataset.test.data, columns=column_names).astype(column_types, copy=False)
     X_test = test.drop(columns=label)
     y_test = test[label]
 
