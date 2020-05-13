@@ -18,8 +18,11 @@ def run(dataset: Dataset, config: TaskConfig):
             name=dataset.target.name,
             classes=dataset.target.values
         ),
-        columns=[f.name for f in dataset.features],
-        type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
+        columns=dict(
+            names=[f.name for f in dataset.features],
+            types={f.name: ('object' if f.is_categorical() else 'float') for f in dataset.features}
+        ),
+        problem_type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
     )
 
     return run_in_venv(__file__, "exec.py",

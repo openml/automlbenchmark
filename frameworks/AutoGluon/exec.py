@@ -11,7 +11,7 @@ from autogluon.task.tabular_prediction.tabular_prediction import TabularPredicti
 from autogluon.utils.tabular.utils.savers import save_pd, save_pkl
 import autogluon.utils.tabular.metrics as metrics
 
-from frameworks.shared.callee import call_run, result, Timer, touch
+from frameworks.shared.callee import NS, call_run, result, Timer, touch
 
 log = logging.getLogger(__name__)
 
@@ -37,22 +37,24 @@ def run(dataset, config):
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
-    train = pd.DataFrame(dataset.train.data, columns=dataset.columns)
+    column_types = NS.dict(dataset.columns.types)
+    train = pd.DataFrame(dataset.train.data, columns=dataset.columns.names).astype(column_types, copy=False)
     label = dataset.target.name
+    print(f"Columns dtypes:\n{train.dtypes}")
 
     output_dir = make_subdir("models", config)
     with Timer() as training:
         predictor = task.fit(
             train_data=train,
             label=label,
-            problem_type=dataset.type,
+            problem_type=dataset.problem_type,
             output_directory=output_dir,
             time_limits=config.max_runtime_seconds,
             eval_metric=perf_metric.name,
             **training_params
         )
 
-    test = pd.DataFrame(dataset.test.data, columns=dataset.columns)
+    test = pd.DataFrame(dataset.test.data, columns=dataset.columns.names).astype(column_types, copy=False)
     X_test = test.drop(columns=label)
     y_test = test[label]
 
@@ -60,7 +62,7 @@ def run(dataset, config):
         predictions = predictor.predict(X_test)
 
     probabilities = predictor.predict_proba(dataset=X_test, as_pandas=True, as_multiclass=True) if is_classification else None
-    prob_labels = probabilities.columns.values.tolist()
+    prob_labels = probabilities.columns.values.tolist() if probabilities is not None else None
 
     leaderboard = predictor._learner.leaderboard(X_test, y_test, silent=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):

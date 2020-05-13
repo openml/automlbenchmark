@@ -1,3 +1,2 @@
 mxnet
-scikit-learn==0.22.2
-autogluon==0.0.8
+autogluon==0.0.9
