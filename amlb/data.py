@@ -31,6 +31,7 @@ class Feature:
         OpenML, when reading ARFF file, should use only ['nominal', 'numeric', 'string', 'date'].
         FileLoader uses all ARFF types as well as ['categorical', 'integer', 'real', 'numeric'] for CSV files (no string or date types?).
         Also see https://waikato.github.io/weka-wiki/formats_and_processing/arff_stable/
+        DataSplit class below should probably return pandas DataFrames instead of numpy arrays, and fully embrace pandas dtypes.
 
         :param index:
         :param name:
