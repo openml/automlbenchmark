@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import socket
 
 # prevent asap other modules from defining the root logger using basicConfig
 import amlb.logger
@@ -65,7 +66,10 @@ sid = (args.session if args.session is not None
        else "{}_{}".format('_'.join([args.framework,
                                      os.path.splitext(os.path.basename(args.benchmark))[0],
                                      args.constraint,
-                                     extras.get('run_mode', args.mode)])
+                                     extras.get('run_mode', args.mode),
+                                     socket.gethostname(),
+                                     str(os.getpid()),
+                                     ])
                               .lower(),
                            now_str))
 log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
