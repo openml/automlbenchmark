@@ -35,16 +35,16 @@ class Feature:
         """
         self.index = index
         self.name = name
-        self.data_type = data_type
+        self.data_type = data_type.lower() if data_type is not None else None
         self.values = values
         self.has_missing_values = has_missing_values
         self.is_target = is_target
 
     def is_categorical(self, strict=True):
         if strict:
-            return self.data_type is not None and self.data_type.lower() in ['categorical', 'nominal', 'enum']
+            return self.data_type in ['categorical', 'nominal', 'enum']
         else:
-            return self.data_type is not None and self.data_type.lower() not in ['numeric', 'integer', 'real']
+            return self.data_type not in [None, 'numeric', 'integer', 'real']
 
     @lazy_property
     def label_encoder(self):
