@@ -94,7 +94,8 @@ def result(output_file=None,
            target_is_encoded=False,
            error_message=None,
            models_count=None,
-           training_duration=None):
+           training_duration=None,
+           **others):
     return locals()
 
 

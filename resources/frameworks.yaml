@@ -46,6 +46,16 @@ TunedRandomForest:
 #      n_estimators: 500
 
 ### AutoML frameworks
+AutoGluon:
+  version: "0.0.9"
+  project: https://autogluon.mxnet.io
+
+AutoGluon_best:
+  extends: AutoGluon
+  description: "provides the most accurate overall predictor"
+  params:
+    presets: best_quality
+
 autosklearn:
   version: '0.6.0'
   project: https://automl.github.io/auto-sklearn/stable/

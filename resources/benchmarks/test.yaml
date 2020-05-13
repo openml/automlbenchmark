@@ -30,17 +30,14 @@
   cores: 2
   max_runtime_seconds: 60
 
-- name: iris
-  openml_task_id: 59
-
 - name: kc2
   openml_task_id: 3913
+  description: "binary test dataset"
+
+- name: iris
+  openml_task_id: 59
+  description: "multiclass test dataset"
 
 - name: cholesterol
-  enabled: false
   openml_task_id: 2295
-  metric:
-    - rmse
-    - r2
-    - mae
-    - mse
+  description: "regression test dataset"
