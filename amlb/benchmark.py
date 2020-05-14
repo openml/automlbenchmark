@@ -155,7 +155,7 @@ class Benchmark:
             runner = SimpleJobRunner(jobs)
         else:
             # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
-            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True)
+            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=rconfig().delay_between_jobs, done_async=True)
 
         try:
             with OSMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,

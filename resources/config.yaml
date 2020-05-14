@@ -15,6 +15,7 @@ sid:        # session id: set by caller (runbenchmark.py)
 
 parallel_jobs: 1
 max_parallel_jobs: 5
+delay_between_jobs: 5  # delay in seconds between each parallel job start
 monitoring:
   frequency_seconds: 120  # set <= 0 to disable
   statistics: ['cpu', 'memory', 'volume']
