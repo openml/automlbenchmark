@@ -95,10 +95,10 @@ autoxgboost:
   version: '0.0.0.9000'
   project: https://github.com/ja-thomas/autoxgboost
 
-supervised:
-  version: '0.3.4'
+mljarsupervised:
+  version: '0.3.5'
   project: https://github.com/mljar/mljar-supervised
-#  params:
-#    explain_level: 0
+  params:
+    explain_level: 0   # unnecessary for benchmarks and time-consuming
 #    algorithms: ["Baseline"]
 #    _save_artifacts: True

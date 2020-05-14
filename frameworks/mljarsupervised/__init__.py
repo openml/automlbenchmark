@@ -20,7 +20,10 @@ def run(dataset: Dataset, config: TaskConfig):
         test=dict(
             X=dataset.test.X,
             y=dataset.test.y
-        )
+        ),
+        columns=[(f.name, ('object' if f.is_categorical(strict=False)  # keep as object everything that is not numerical
+                           else 'float')) for f in dataset.predictors],
+        problem_type=dataset.type.name
     )
 
     return run_in_venv(__file__, "exec.py",

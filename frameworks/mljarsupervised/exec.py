@@ -21,35 +21,21 @@ def make_subdir(name, config):
 def run(dataset, config):
     log.info("\n**** mljar-supervised ****\n")
 
+    column_names, _ = zip(*dataset.columns)
+    column_types = dict(dataset.columns)
+    X_train = pd.DataFrame(dataset.train.X, columns=column_names).astype(column_types, copy=False)
+    X_test = pd.DataFrame(dataset.test.X, columns=column_names).astype(column_types, copy=False)
+
+    y_train = dataset.train.y.flatten()
+    y_test = dataset.test.y.flatten()
+
+    problem_mapping = dict(
+        binary="binary_classification",
+        multiclass="multiclass_classification",
+        regression="regression"
+    )
     is_classification = config.type == "classification"
-
-    X_train, X_test = dataset.train.X, dataset.test.X
-    y_train, y_test = dataset.train.y, dataset.test.y
-
-    X_train = pd.DataFrame(X_train, columns=[f"f{i}" for i in range(X_train.shape[1])])
-    X_test = pd.DataFrame(X_test, columns=[f"f{i}" for i in range(X_test.shape[1])])
-
-    y_train = y_train.flatten()
-    y_test = y_test.flatten()
-
-
-    # cast columns to have float types
-    for col in X_train.columns:
-        try: 
-            x1 = X_train[col].astype(float)
-            X_train[col] = x1
-            x2 = X_test[col].astype(float)
-            X_test[col] = x2
-        except Exception as e:
-            pass
- 
-    ml_task = None  # the AutoML will guess about ML task
-    # however, in case of multiclass classification, we will set the ml_task manually.
-    # AutoML assumes that multiclass calssification is when there is from 2 to 20 unique values.
-    # In this benchmark, there can be casses when it is much more classes than 20. That's why we set manually.
-    if is_classification and len(np.unique(y_train)) > 2:
-        ml_task = "multiclass_classification"
-
+    ml_task = problem_mapping.get(dataset.problem_type) # if None the AutoML will guess about the ML task
     results_path = make_subdir("results", config)    
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
