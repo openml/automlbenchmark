@@ -11,7 +11,7 @@ fi
 PIP install --no-cache-dir -r $HERE/requirements.txt
 
 if [[ "$VERSION" = "zahradnik" ]]; then
-    h2o_package="https://h2o-release.s3.amazonaws.com/h2o/rel-zahradnik/1/Python/h2o-3.30.0.1-py2.py3-none-any.whl"
+    h2o_package="https://h2o-release.s3.amazonaws.com/h2o/rel-zahradnik/3/Python/h2o-3.30.0.3-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yule" ]]; then
     h2o_package="https://h2o-release.s3.amazonaws.com/h2o/rel-yule/3/Python/h2o-3.28.1.3-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yu" ]]; then
