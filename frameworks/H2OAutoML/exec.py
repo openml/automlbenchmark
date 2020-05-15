@@ -1,5 +1,6 @@
 import logging
 import os
+import psutil
 
 import h2o
 from h2o.automl import H2OAutoML
@@ -24,6 +25,7 @@ class BackendMemoryMonitoring(Monitoring):
 
     def _check_state(self):
         sd = h2o.cluster().get_status_details()
+        log.log(self._log_level, "System memory (bytes): %s", psutil.virtual_memory())
         log.log(self._log_level, "DKV: %s MB; Other: %s MB", sd['mem_value_size'][0] >> 20, sd['pojo_mem'][0] >> 20)
 
 
