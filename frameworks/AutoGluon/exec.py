@@ -104,17 +104,17 @@ def save_artifacts(predictor, leaderboard, config):
         if 'leaderboard' in artifacts:
             save_pd.save(path=os.path.join(models_dir, "leaderboard.csv"), df=leaderboard)
 
+        if 'info' in artifacts:
+            ag_info = predictor.info()
+            info_dir = make_subdir("info", config)
+            save_pkl.save(path=os.path.join(info_dir, "info.pkl"), object=ag_info)
+
         if 'models' not in artifacts:
             shutil.rmtree(os.path.join(models_dir, "models"), ignore_errors=True)
             with os.scandir(models_dir) as it:
                 for f in it:
                     if f.is_file() and os.path.splitext(f.name)[1] == '.pkl':
                         os.remove(f.path)
-
-        if 'info' in artifacts:
-            ag_info = predictor.info()
-            info_dir = make_subdir("info", config)
-            save_pkl.save(path=os.path.join(info_dir, "info.pkl"), object=ag_info)
     except:
         log.warning("Error when saving artifacts.", exc_info=True)
 
