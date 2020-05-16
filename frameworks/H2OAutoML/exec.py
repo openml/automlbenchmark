@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import psutil
@@ -77,10 +78,14 @@ def run(dataset: Dataset, config: TaskConfig):
                         seed=config.seed,
                         **training_params)
 
+        monitor = (BackendMemoryMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+                                          check_on_exit=True,
+                                          verbosity=rconfig().monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
+                   # else contextlib.nullcontext  # Py 3.7+ only
+                   else contextlib.contextmanager(iter)([0])
+                   )
         with Timer() as training:
-            with BackendMemoryMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
-                                         check_on_exit=True,
-                                         verbosity=rconfig().monitoring.verbosity):
+            with monitor:
                 aml.train(y=dataset.target.index, training_frame=train)
 
         if not aml.leader:
