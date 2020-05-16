@@ -276,7 +276,7 @@ class TaskResult:
             task=self.task.name,
             framework=framework_name,
             version=framework_def.version,
-            params=(str(meta_result.params) if 'params' in meta_result
+            params=(str(meta_result.params) if 'params' in meta_result and bool(meta_result.params)
                     else str(framework_def.params) if len(framework_def.params) > 0
                     else ''),
             fold=self.fold,

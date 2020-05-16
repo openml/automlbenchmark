@@ -6,6 +6,7 @@ import multiprocessing as mp
 import os
 import queue
 import re
+import select
 import signal
 import stat
 import subprocess
@@ -16,18 +17,21 @@ import traceback
 
 import psutil
 
-from .core import Namespace, flatten, fn_name
+from .core import Namespace, as_list, flatten, fn_name
 from .os import dir_of, to_mb
 from .time import Timeout, Timer
 
 log = logging.getLogger(__name__)
 
 
-def run_subprocess(*popenargs, input=None, timeout=None, check=False, communicate_fn=None, **kwargs):
+def run_subprocess(*popenargs,
+                   input=None, capture_output=False, timeout=None, check=False, communicate_fn=None,
+                   **kwargs):
     """
     a clone of :function:`subprocess.run` which allows custom handling of communication
     :param popenargs:
     :param input:
+    :param capture_output:
     :param timeout:
     :param check:
     :param communicate_fn:
@@ -39,24 +43,29 @@ def run_subprocess(*popenargs, input=None, timeout=None, check=False, communicat
             raise ValueError('stdin and input arguments may not both be used.')
         kwargs['stdin'] = subprocess.PIPE
 
+    if capture_output:
+        if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+            raise ValueError('stdout and stderr arguments may not be used '
+                             'with capture_output.')
+        kwargs['stdout'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.PIPE
+
     def communicate(process, input=None, timeout=None):
-        if communicate_fn:
-            out, err = communicate_fn(process, input=input, timeout=timeout)
-            process.wait()  # safety, in case not done by communicate_fn
-            return out, err
-        else:
-            return process.communicate(input=input, timeout=timeout)
+        return (communicate_fn(process, input=input, timeout=timeout) if communicate_fn
+                else process.communicate(input=input, timeout=timeout))
 
     with subprocess.Popen(*popenargs, **kwargs) as process:
         try:
             stdout, stderr = communicate(process, input, timeout=timeout)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
             process.kill()
-            stdout, stderr = communicate(process)
+            if sys.platform == 'win32':
+                e.stdout, e.stderr = communicate(process)
+            else:
+                process.wait()
             raise subprocess.TimeoutExpired(process.args, timeout, output=stdout, stderr=stderr)
         except:
             process.kill()
-            process.wait()
             raise
         retcode = process.poll()
         if check and retcode:
@@ -77,6 +86,8 @@ def run_cmd(cmd, *args, **kwargs):
         input_str=None,
         capture_output=True,
         capture_error=True,
+        bufsize=-1,
+        text=True,
         live_output=False,  # one of (True, 'line', 'block', False)
         output_level=logging.DEBUG,
         error_level=logging.ERROR,
@@ -85,6 +96,7 @@ def run_cmd(cmd, *args, **kwargs):
         env=None,
         preexec_fn=None,
         timeout=None,
+        activity_timeout=None,
     )
     for k, v in params:
         kk = '_'+k+'_'
@@ -111,15 +123,25 @@ def run_cmd(cmd, *args, **kwargs):
             except:
                 raise
 
-        out = io.StringIO()
-        for line in iter(process.stdout.readline, ''):
-            out.write(line)
-            if mode == 'line':
-                print(re.sub(r'\n$', '', line, count=1))
-            elif mode == 'block':
-                print(line, end='')
+        def read_pipe(pipe, timeout):
+            pipes = as_list(pipe)
+            ready, *_ = select.select(pipes, [], [], timeout)
+            reads = [''] * len(pipes)
+            for i, p in enumerate(pipes):
+                if p in ready:
+                    line = p.readline()
+                    if mode == 'line':
+                        print(re.sub(r'\n$', '', line, count=1))
+                    elif mode == 'block':
+                        print(line, end='')
+                    reads[i] = line
+            return reads if len(pipes) > 1 else reads[0]
+
+        output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
+                                                     process.stderr if process.stderr else 2], params.activity_timeout),
+                                  ['', '']))
         print()  # ensure that the log buffer is flushed at the end
-        return out.getvalue(), ''.join(map(str, iter(process.stderr.readline, ''))) if process.stderr else None
+        return ''.join(output), ''.join(error)
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
@@ -131,7 +153,8 @@ def run_cmd(cmd, *args, **kwargs):
                                    stdout=subprocess.PIPE if params.capture_output else None,
                                    stderr=subprocess.PIPE if params.capture_error else None,
                                    shell=params.shell,
-                                   universal_newlines=True,
+                                   bufsize=params.bufsize,
+                                   universal_newlines=params.text,
                                    executable=params.executable,
                                    env=params.env,
                                    preexec_fn=params.preexec_fn)
