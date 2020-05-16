@@ -52,6 +52,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             output, err = run_cmd(cmd, *args,
                                   _input_str_=params,
                                   _live_output_=True,
+                                  _error_level_=logging.DEBUG,
                                   _env_=dict(
                                       PYTHONPATH=os.pathsep.join([
                                           rconfig().root_dir,
