@@ -862,7 +862,7 @@ runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
-  - pip3 install -U awscli
+  - pip3 install -U awscli wheel
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
@@ -897,7 +897,7 @@ runcmd:
   - systemctl disable apt-daily.timer
   - systemctl disable apt-daily.service
   - systemctl daemon-reload
-  - pip3 install -U awscli
+  - pip3 install -U awscli wheel
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
@@ -966,7 +966,7 @@ apt-get -y install curl wget unzip git
 apt-get -y install python3 python3-pip python3-venv
 #apt-get -y install docker.io
 
-pip3 install -U awscli
+pip3 install -U awscli wheel
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
@@ -979,7 +979,7 @@ python3 -m venv venv
 alias PIP='/repo/venv/bin/pip3'
 alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pip_version}
-PIP install -U pip
+PIP install -U pip wheel
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
