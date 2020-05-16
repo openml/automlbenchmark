@@ -1,5 +1,7 @@
+import contextlib
 import logging
 import os
+import psutil
 
 import h2o
 from h2o.automl import H2OAutoML
@@ -8,9 +10,24 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import to_data_frame, write_csv
 from amlb.results import NoResultError, save_predictions_to_file
-from amlb.utils import Timer, touch
+from amlb.utils import Monitoring, Timer, touch
+from amlb.resources import config as rconfig
 
 log = logging.getLogger(__name__)
+
+
+class BackendMemoryMonitoring(Monitoring):
+
+    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
+                 verbosity=0, log_level=logging.INFO):
+        super().__init__(name, frequency_seconds, check_on_exit, "backend_monitoring_")
+        self._verbosity = verbosity
+        self._log_level = log_level
+
+    def _check_state(self):
+        sd = h2o.cluster().get_status_details()
+        log.log(self._log_level, "System memory (bytes): %s", psutil.virtual_memory())
+        log.log(self._log_level, "DKV: %s MB; Other: %s MB", sd['mem_value_size'][0] >> 20, sd['pojo_mem'][0] >> 20)
 
 
 def run(dataset: Dataset, config: TaskConfig):
@@ -39,6 +56,7 @@ def run(dataset: Dataset, config: TaskConfig):
         h2o.init(nthreads=nthreads,
                  min_mem_size=str(config.max_mem_size_mb)+"M",
                  max_mem_size=str(config.max_mem_size_mb)+"M",
+                 strict_version_check=config.framework_params.get('_strict_version_check', True)
                  # log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold))
                  )
 
@@ -60,8 +78,15 @@ def run(dataset: Dataset, config: TaskConfig):
                         seed=config.seed,
                         **training_params)
 
+        monitor = (BackendMemoryMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+                                          check_on_exit=True,
+                                          verbosity=rconfig().monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
+                   # else contextlib.nullcontext  # Py 3.7+ only
+                   else contextlib.contextmanager(iter)([0])
+                   )
         with Timer() as training:
-            aml.train(y=dataset.target.index, training_frame=train)
+            with monitor:
+                aml.train(y=dataset.target.index, training_frame=train)
 
         if not aml.leader:
             raise NoResultError("H2O could not produce any model in the requested time.")
@@ -76,7 +101,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     finally:
         if h2o.connection():
-            h2o.remove_all()
+            # h2o.remove_all()
             h2o.connection().close()
         if h2o.connection().local_server:
             h2o.connection().local_server.shutdown()

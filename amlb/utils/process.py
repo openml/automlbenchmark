@@ -272,8 +272,9 @@ class InterruptTimeout(Timeout):
 
 class Monitoring:
 
-    def __init__(self, frequency_seconds=300, check_on_exit=False, thread_prefix="monitoring_"):
+    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False, thread_prefix="monitoring_"):
         self._exec = None
+        self._name = name or os.getpid()
         self._frequency = frequency_seconds
         self._thread_prefix = thread_prefix
         self._interrupt = threading.Event()
@@ -309,9 +310,10 @@ class Monitoring:
 
 class CPUMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, check_on_exit=False,
+    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
                  use_interval=False, per_cpu=False, verbosity=0, log_level=logging.INFO):
-        super().__init__(frequency_seconds=0 if use_interval else frequency_seconds,
+        super().__init__(name=name,
+                         frequency_seconds=0 if use_interval else frequency_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="cpu_monitoring_")
         self._interval = frequency_seconds if use_interval else None
@@ -322,17 +324,18 @@ class CPUMonitoring(Monitoring):
     def _check_state(self):
         if self._verbosity == 0:
             percent = psutil.cpu_percent(interval=self._interval, percpu=self._per_cpu)
-            log.log(self._log_level, "CPU Utilization: %s%%", percent)
+            log.log(self._log_level, "[%s] CPU Utilization: %s%%", self._name, percent)
         elif self._verbosity > 0:
             percent = psutil.cpu_times_percent(interval=self._interval, percpu=self._per_cpu)
-            log.log(self._log_level, "CPU Utilization (in percent):\n%s", percent)
+            log.log(self._log_level, "[%s] CPU Utilization (in percent):\n%s", self._name, percent)
 
 
 class MemoryMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, check_on_exit=False,
+    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
                  verbosity=0, log_level=logging.INFO):
-        super().__init__(frequency_seconds=frequency_seconds,
+        super().__init__(name=name,
+                         frequency_seconds=frequency_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="memory_monitoring_")
         self._verbosity = verbosity
@@ -341,20 +344,21 @@ class MemoryMonitoring(Monitoring):
     def _check_state(self):
         if self._verbosity == 0:
             percent = system_memory_mb().used_percentage
-            log.log(self._log_level, "Memory Usage: %s%%", percent)
+            log.log(self._log_level, "[%s] Memory Usage: %s%%", self._name, percent)
         elif self._verbosity == 1:
             mem = system_memory_mb()
-            log.log(self._log_level, "Memory Usage (in MB): %s", mem)
+            log.log(self._log_level, "[%s] Memory Usage (in MB): %s", self._name, mem)
         elif self._verbosity > 1:
             mem = psutil.virtual_memory()
-            log.log(self._log_level, "Memory Usage (in Bytes): %s", mem)
+            log.log(self._log_level, "[%s] Memory Usage (in Bytes): %s",self._name,  mem)
 
 
 class VolumeMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, check_on_exit=False, root="/",
+    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False, root="/",
                  verbosity=0, log_level=logging.INFO):
-        super().__init__(frequency_seconds=frequency_seconds,
+        super().__init__(name=name,
+                         frequency_seconds=frequency_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="volume_monitoring_")
         self._root = root
@@ -364,27 +368,27 @@ class VolumeMonitoring(Monitoring):
     def _check_state(self):
         if self._verbosity == 0:
             percent = system_volume_mb(self._root).used_percentage
-            log.log(self._log_level, "Disk Usage: %s%%", percent)
+            log.log(self._log_level, "[%s] Disk Usage: %s%%", self._name, percent)
         elif self._verbosity == 1:
             du = system_volume_mb(self._root)
-            log.log(self._log_level, "Disk Usage (in MB): %s", du)
+            log.log(self._log_level, "[%s] Disk Usage (in MB): %s", self._name, du)
         elif self._verbosity > 1:
             du = psutil.disk_usage(self._root)
-            log.log(self._log_level, "Disk Usage (in Bytes): %s", du)
+            log.log(self._log_level, "[%s] Disk Usage (in Bytes): %s", self._name, du)
 
 
 class OSMonitoring(Monitoring):
 
-    def __init__(self, frequency_seconds=300, check_on_exit=False,
+    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
                  statistics=('cpu', 'memory', 'volume'), verbosity=0, log_level=logging.INFO):
-        super().__init__(frequency_seconds=frequency_seconds, check_on_exit=check_on_exit)
+        super().__init__(name=name, frequency_seconds=frequency_seconds, check_on_exit=check_on_exit)
         self.monitors = []
         if 'cpu' in statistics:
-            self.monitors.append(CPUMonitoring(frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(CPUMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
         if 'memory' in statistics:
-            self.monitors.append(MemoryMonitoring(frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(MemoryMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
         if 'volume' in statistics:
-            self.monitors.append(VolumeMonitoring(frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(VolumeMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
 
     def _check_state(self):
         for monitor in self.monitors:
