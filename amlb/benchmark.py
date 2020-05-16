@@ -102,10 +102,14 @@ class Benchmark:
         log.info("Setting up framework {}.".format(self.framework_name))
 
         if hasattr(self.framework_module, 'setup'):
-            self.framework_module.setup(self.framework_def.setup_args, _live_output_=True)
+            self.framework_module.setup(self.framework_def.setup_args,
+                                        _live_output_=rconfig().setup.live_output,
+                                        _activity_timeout_=rconfig().setup.activity_timeout)
 
         if self.framework_def.setup_script is not None:
-            run_script(self.framework_def.setup_script, _live_output_=True)
+            run_script(self.framework_def.setup_script,
+                       _live_output_=rconfig().setup.live_output,
+                       _activity_timeout_=rconfig().setup.activity_timeout)
 
         if self.framework_def.setup_cmd is not None:
             def resolve_venv(cmd):
@@ -119,7 +123,10 @@ class Benchmark:
                 return cmd.format(py=py, pip=pip)
 
             setup_cmd = [resolve_venv(cmd) for cmd in self.framework_def.setup_cmd]
-            run_cmd('\n'.join(setup_cmd), _executable_="/bin/bash", _live_output_=True)
+            run_cmd('\n'.join(setup_cmd),
+                    _executable_="/bin/bash",
+                    _live_output_=rconfig().setup.live_output,
+                    _activity_timeout_=rconfig().setup.activity_timeout)
 
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))

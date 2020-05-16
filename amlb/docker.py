@@ -97,8 +97,10 @@ class DockerBenchmark(ContainerBenchmark):
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
             container=image,
-            script=self._script
-        ), _live_output_=True)
+            script=self._script),
+            _live_output_=rconfig().setup.live_output,
+            _activity_timeout_=rconfig().setup.activity_timeout
+        )
         log.info(f"Successfully built docker image {image}.")
 
     def _upload_image(self):
