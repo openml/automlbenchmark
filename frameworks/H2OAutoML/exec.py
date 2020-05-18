@@ -51,15 +51,17 @@ def run(dataset: Dataset, config: TaskConfig):
     try:
         training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
         nthreads = config.framework_params.get('_nthreads', config.cores)
+        jvm_memory = str(round(config.max_mem_size_mb * 2/3))+"M"   # leaving 1/3rd of available memory for XGBoost
 
-        log.info("Starting H2O cluster with %s cores, %sMB memory.", nthreads, config.max_mem_size_mb)
+        log.info("Starting H2O cluster with %s cores, %s memory.", nthreads, jvm_memory)
         max_port_range = 49151
         min_port_range = 1024
         port = os.getpid() % (max_port_range-min_port_range) + min_port_range
+
         h2o.init(nthreads=nthreads,
                  port=port,
-                 min_mem_size=str(config.max_mem_size_mb)+"M",
-                 max_mem_size=str(config.max_mem_size_mb)+"M",
+                 min_mem_size=jvm_memory,
+                 max_mem_size=jvm_memory,
                  strict_version_check=config.framework_params.get('_strict_version_check', True)
                  # log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold))
                  )
