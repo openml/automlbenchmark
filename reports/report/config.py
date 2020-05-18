@@ -10,6 +10,7 @@ excluded_frameworks = []
 
 binary_score_label = 'AUC'
 multiclass_score_label = 'logloss'
+regression_score_label = 'RMSE'
 
 # impute_missing_with = 'constantpredictor'
 impute_missing_with = 'randomforest'

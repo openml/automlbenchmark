@@ -44,9 +44,12 @@ def imputed(row):
     return pd.isna(row.result) and pd.notna(row.imp_result)
 
 
+greater_is_better_metrics = ['auc', 'acc', 'r2']
+
+
 def score(row, res_col='result'):
-    return row[res_col] if row[res_col] in [row.auc, row.acc] \
-        else - row[res_col]
+    return (row[res_col] if any([row[res_col] == getattr(row, m, None) for m in greater_is_better_metrics])
+            else - row[res_col])
 
 
 def norm_score(row, results_df, score_col='score', zero_one_refs=None):
