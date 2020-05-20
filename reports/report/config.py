@@ -8,9 +8,12 @@ colormap = 'tab10'
 renamed_frameworks = dict()
 excluded_frameworks = []
 
+binary_result_label = 'AUC'
 binary_score_label = 'AUC'
-multiclass_score_label = 'logloss'
-regression_score_label = 'RMSE'
+multiclass_result_label = 'logloss'
+multiclass_score_label = 'neg. logloss'
+regression_result_label = 'RMSE'
+regression_score_label = 'neg. RMSE'
 
 # impute_missing_with = 'constantpredictor'
 impute_missing_with = 'randomforest'
