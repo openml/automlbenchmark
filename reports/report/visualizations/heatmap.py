@@ -39,6 +39,6 @@ def draw_score_heatmap(col, results, type_filter='all', metadata=None, y_sort_by
                        y_labels=task_labels(df.index),
                        #                        xlabel="Framework", ylabel="Task",
                        **kwargs)
-    if filename is not None:
+    if filename:
         savefig(fig, create_file("graphics", config.results_group, filename))
     return fig

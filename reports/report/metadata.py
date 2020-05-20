@@ -51,5 +51,6 @@ def render_metadata(metadata, filename='metadata.csv'):
                                'nrows', 'nfeatures', 'nclasses',
                                'class_imbalance'])
     df.sort_values(by='name', inplace=True)
-    df.to_csv(filename, index=False)
+    if filename:
+        df.to_csv(filename, index=False)
     return df

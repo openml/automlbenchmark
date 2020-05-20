@@ -35,8 +35,9 @@ def render_summary(col, results, show_imputations=True, filename=None, float_for
         df = df.combine(imputed_df, ft.partial(add_imputed_mark,
                                                val_format=lambda *v: (float_format+"%s") % tuple(v)))
     display(df, float_format=float_format)
-    if filename is not None:
+    if filename:
         df.to_csv(create_file("tables", config.results_group, filename), float_format=float_format)
+    return df
 
 
 def rank(scores):
@@ -62,6 +63,7 @@ def render_leaderboard(col, results, aggregate=False, show_imputations=False, fi
                       .unstack())
         df = df.combine(imputed_df, add_imputed_mark)
     display(df)
-    if filename is not None:
+    if filename:
         df.to_csv(create_file("tables", config.results_group, filename), float_format='%.f')
+    return df
 
