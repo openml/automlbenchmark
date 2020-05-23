@@ -14,7 +14,7 @@ import arff
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score  # just aliasing
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score  # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
 from .utils import profile, path_from_split, split_path, touch
