@@ -102,7 +102,7 @@ class Benchmark:
         log.info("Setting up framework {}.".format(self.framework_name))
 
         if hasattr(self.framework_module, 'setup'):
-            self.framework_module.setup(self.framework_def.setup_args,
+            self.framework_module.setup(*self.framework_def.setup_args,
                                         _live_output_=rconfig().setup.live_output,
                                         _activity_timeout_=rconfig().setup.activity_timeout)
 

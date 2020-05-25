@@ -40,7 +40,7 @@ benchmarks:
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
   metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType)
-    binary: ['auc', 'acc']
+    binary: ['auc', 'logloss', 'acc']
     multiclass: ['logloss', 'acc']
     regression: ['rmse', 'r2']
   defaults:
