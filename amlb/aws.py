@@ -37,7 +37,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, flatten, list_all_files, normalize_path, str_def, tail, touch
+from .utils import Namespace as ns, datetime_iso, file_filter, flatten, list_all_files, normalize_path, str_def, tail, touch
 
 
 log = logging.getLogger(__name__)
@@ -626,7 +626,7 @@ class AWSBenchmark(Benchmark):
 
     def _upload_resources(self):
         upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
-        upload_files = list_all_files(upload_paths, exclude=rconfig().aws.resource_ignore)
+        upload_files = list_all_files(upload_paths, file_filter(exclude=rconfig().aws.resource_ignore))
         log.debug("Uploading files to S3: %s", upload_files)
         uploaded_resources = []
         for res in upload_files:
