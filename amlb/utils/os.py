@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
+import zipfile
 
 from .core import Namespace
 from .time import datetime_iso
@@ -102,6 +103,15 @@ def backup_file(file_path):
     dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
     log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)
+
+
+def zip_dir(directory, dest_archive):
+    with zipfile.ZipFile(dest_archive, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for dir, subdirs, files in os.walk(directory):
+            for file in files:
+                file_path = os.path.join(dir, file)
+                in_archive = os.path.relpath(file_path, directory)
+                zf.write(file_path, in_archive)
 
 
 class TmpDir:

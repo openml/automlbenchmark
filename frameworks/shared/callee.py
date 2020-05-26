@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+import zipfile
 
 
 def setup_logger():
@@ -146,3 +147,12 @@ def touch(path, as_dir=False):
         if basename:
             open(path, 'a').close()
     os.utime(path, times=None)
+
+
+def zip_dir(directory, dest_archive):
+    with zipfile.ZipFile(dest_archive, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for dir, subdirs, files in os.walk(directory):
+            for file in files:
+                file_path = os.path.join(dir, file)
+                in_archive = os.path.relpath(file_path, directory)
+                zf.write(file_path, in_archive)
