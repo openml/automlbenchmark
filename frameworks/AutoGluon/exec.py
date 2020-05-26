@@ -115,7 +115,7 @@ def save_artifacts(predictor, leaderboard, config):
                 for f in it:
                     if f.is_file() and os.path.splitext(f.name)[1] == '.pkl':
                         os.remove(f.path)
-    except:
+    except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 
 

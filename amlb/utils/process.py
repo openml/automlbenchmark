@@ -64,7 +64,7 @@ def run_subprocess(*popenargs,
             else:
                 process.wait()
             raise subprocess.TimeoutExpired(process.args, timeout, output=stdout, stderr=stderr)
-        except:
+        except:  # also handles kb interrupts
             process.kill()
             raise
         retcode = process.poll()

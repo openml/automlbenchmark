@@ -100,7 +100,7 @@ def save_artifacts(estimator, config):
                         model=str(m[1]),
                         pipeline=models[str(m[1])],
                     ), stream=f)
-    except:
+    except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
 
