@@ -149,10 +149,20 @@ def touch(path, as_dir=False):
     os.utime(path, times=None)
 
 
-def zip_dir(directory, dest_archive):
-    with zipfile.ZipFile(dest_archive, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for dir, subdirs, files in os.walk(directory):
-            for file in files:
-                file_path = os.path.join(dir, file)
-                in_archive = os.path.relpath(file_path, directory)
-                zf.write(file_path, in_archive)
+def normalize_path(path):
+    return os.path.realpath(os.path.expanduser(path))
+
+
+def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED):
+    path = normalize_path(path)
+    if not os.path.exists(path): return
+    with zipfile.ZipFile(dest_archive, 'w', compression) as zf:
+        if os.path.isfile(path):
+            in_archive = os.path.basename(path)
+            zf.write(path, in_archive)
+        elif os.path.isdir(path):
+            for dir, subdirs, files in os.walk(path):
+                for file in files:
+                    file_path = os.path.join(dir, file)
+                    in_archive = os.path.relpath(file_path, path)
+                    zf.write(file_path, in_archive)
