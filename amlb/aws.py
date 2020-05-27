@@ -433,7 +433,13 @@ class AWSBenchmark(Benchmark):
                         Tags=[
                             dict(Key='Name', Value=f"benchmark_{inst_key}")
                         ]
-                    )
+                    ),
+                    dict(
+                        ResourceType='volume',
+                        Tags=[
+                            dict(Key='Name', Value=f"benchmark_{inst_key}")
+                        ]
+                    ),
                 ],
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
             )
