@@ -97,8 +97,10 @@ class DockerBenchmark(ContainerBenchmark):
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
             container=image,
-            script=self._script
-        ), _live_output_=True)
+            script=self._script),
+            _live_output_=rconfig().setup.live_output,
+            _activity_timeout_=rconfig().setup.activity_timeout
+        )
         log.info(f"Successfully built docker image {image}.")
 
     def _upload_image(self):
@@ -115,7 +117,7 @@ RUN apt-get update
 RUN apt-get -y install apt-utils dialog locales
 RUN apt-get -y install curl wget unzip git
 RUN apt-get -y install python3 python3-pip python3-venv
-RUN pip3 install -U pip
+RUN pip3 install -U pip wheel
 
 # aliases for the python system
 ENV SPIP pip3
@@ -135,8 +137,8 @@ WORKDIR /bench
 RUN $SPY -m venv venv
 ENV PIP /bench/venv/bin/pip3
 ENV PY /bench/venv/bin/python3 -W ignore
-#RUN $PIP install -U pip=={pip_version}
-RUN $PIP install -U pip
+#RUN $PIP install -U pip=={pip_version} wheel
+RUN $PIP install -U pip wheel
 
 VOLUME /input
 VOLUME /output

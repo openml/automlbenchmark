@@ -48,7 +48,7 @@ def run(dataset, config):
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
     predictors_type = dataset.predictors_type
-    log.info("predictors_type=%s", predictors_type)
+    log.debug("predictors_type=%s", predictors_type)
     # log.info("finite=%s", np.isfinite(X_train))
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}

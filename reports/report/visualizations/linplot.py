@@ -48,6 +48,6 @@ def draw_score_parallel_coord(col, results, type_filter='all', metadata=None,
                               ylabel=ylabel or "Score",
                               legend_title="Framework",
                               **kwargs)
-    if filename is not None:
+    if filename:
         savefig(fig, create_file("graphics", config.results_group, filename))
     return fig

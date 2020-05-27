@@ -169,7 +169,7 @@ apt-get update
 apt-get -y install apt-utils dialog locales
 apt-get -y install curl wget unzip git
 apt-get -y install python3 python3-pip python3-venv
-pip3 install -U pip
+pip3 install -U pip wheel
 
 # aliases for the python system
 SPIP=pip3
@@ -189,8 +189,8 @@ cd /bench
 $SPY -m venv venv
 PIP=/bench/venv/bin/pip3
 PY=/bench/venv/bin/python3
-#RUN $PIP install -U pip=={pip_version}
-$PIP install -U pip
+#$PIP install -U pip=={pip_version} wheel
+$PIP install -U pip wheel
 
 mkdir /input
 mkdir /output

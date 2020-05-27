@@ -1,0 +1,2 @@
+mxnet
+autogluon==0.0.9
