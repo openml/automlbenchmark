@@ -14,7 +14,7 @@ import numpy as np
 from numpy import nan, sort
 
 from .data import Dataset, DatasetType, Feature
-from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
+from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
 
@@ -319,7 +319,7 @@ class Result:
         if hasattr(self, metric):
             return getattr(self, metric)()
         # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
-        log.warning("Metric %s is not supported for %s!", metric, type=self.type)
+        log.warning("Metric {} is not supported for {}!".format( metric, self.type))
         return nan
 
 
@@ -357,8 +357,7 @@ class ClassificationResult(Result):
         return float(accuracy_score(self.truth, self.predictions))
 
     def balacc(self):
-        # return float(balanced_accuracy_score(self.truth, self.predictions))
-        pass
+        return float(balanced_accuracy_score(self.truth, self.predictions))
 
     def auc(self):
         if self.type != DatasetType.binary:
