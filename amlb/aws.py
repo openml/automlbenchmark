@@ -867,7 +867,7 @@ runcmd:
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
-  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+  #- rm -f /var/lib/cloud/instance/sem/config_scripts_user
 
 final_message: "AutoML benchmark (docker) {ikey} completed after $UPTIME s"
 
@@ -917,7 +917,7 @@ runcmd:
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
-  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+#  - rm -f /var/lib/cloud/instance/sem/config_scripts_user
 
 final_message: "AutoML benchmark {ikey} completed after $UPTIME s"
 
@@ -987,7 +987,7 @@ aws s3 cp '{s3_user}' /s3bucket/user --recursive
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
 aws s3 cp /s3bucket/output '{s3_output}' --recursive
-rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+#rm -f /var/lib/cloud/instance/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
 """.format(
             repo=rget().project_info.repo,
