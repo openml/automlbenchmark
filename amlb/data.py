@@ -51,13 +51,16 @@ class Feature:
         if strict:
             return self.data_type in ['categorical', 'nominal', 'enum']
         else:
-            return self.data_type not in [None, 'numeric', 'integer', 'real']
+            return self.data_type is not None and not self.is_numerical()
+
+    def is_numerical(self):
+        return self.data_type in ['numeric', 'integer', 'real']
 
     @lazy_property
     def label_encoder(self):
         return Encoder('label' if self.values is not None else 'no-op',
                        target=self.is_target,
-                       encoded_type=int if self.is_target and self.is_categorical() else float,
+                       encoded_type=int if self.is_target and not self.is_numerical() else float,
                        missing_policy='mask' if self.has_missing_values else 'ignore'
                        ).fit(self.values)
 
@@ -65,7 +68,7 @@ class Feature:
     def one_hot_encoder(self):
         return Encoder('one-hot' if self.values is not None else 'no-op',
                        target=self.is_target,
-                       encoded_type=int if self.is_target and self.is_categorical() else float,
+                       encoded_type=int if self.is_target and not self.is_numerical() else float,
                        missing_policy='mask' if self.has_missing_values else 'ignore'
                        ).fit(self.values)
 

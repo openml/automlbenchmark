@@ -20,7 +20,7 @@ def run(dataset: Dataset, config: TaskConfig):
             X_enc=dataset.test.X_enc,
             y_enc=dataset.test.y_enc
         ),
-        predictors_type=['Categorical' if p.is_categorical(strict=False) else 'Numerical' for p in dataset.predictors]
+        predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors]
     )
 
     return run_in_venv(__file__, "exec.py",
