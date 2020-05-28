@@ -16,7 +16,7 @@ __dummy_framework_with_defaults:
 
 ### Non AutoML reference frameworks
 constantpredictor:
-  version: '0.19.2'
+  version: 'latest'
   project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
 
 constantpredictor_enc:
