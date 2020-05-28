@@ -54,6 +54,7 @@ def run_in_venv(caller_file, script_file: str, *args,
                                   _live_output_=True,
                                   _error_level_=logging.DEBUG,
                                   _env_=dict(
+                                      PATH=os.environ['PATH'],
                                       PYTHONPATH=os.pathsep.join([
                                           rconfig().root_dir,
                                           os.path.join(rconfig().root_dir, "amlb"),
