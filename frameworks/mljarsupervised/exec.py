@@ -3,7 +3,8 @@ import os
 import tempfile as tmp
 import pandas as pd
 import numpy as np
-
+import matplotlib
+matplotlib.use('agg')  # no need for tk
 from frameworks.shared.callee import call_run, result, Timer, touch
 
 log = logging.getLogger(os.path.basename(__file__))
