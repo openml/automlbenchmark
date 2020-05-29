@@ -12,7 +12,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from tpot import TPOTClassifier, TPOTRegressor
 
-from frameworks.shared.callee import call_run, result, Timer, touch
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def run(dataset, config):
                      random_state=config.seed,
                      **training_params)
 
-    with Timer() as training:
+    with utils.Timer() as training:
         tpot.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
@@ -79,12 +79,6 @@ def run(dataset, config):
                   training_duration=training.duration)
 
 
-def make_subdir(name, config):
-    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
-    touch(subdir, as_dir=True)
-    return subdir
-
-
 def save_artifacts(estimator, config):
     try:
         log.debug("All individuals :\n%s", list(estimator.evaluated_individuals_.items()))
@@ -92,7 +86,7 @@ def save_artifacts(estimator, config):
         hall_of_fame = list(zip(reversed(estimator._pareto_front.keys), estimator._pareto_front.items))
         artifacts = config.framework_params.get('_save_artifacts', False)
         if 'models' in artifacts:
-            models_file = os.path.join(make_subdir('models', config), 'models.txt')
+            models_file = os.path.join(output_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:
                 for m in hall_of_fame:
                     pprint.pprint(dict(

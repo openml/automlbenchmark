@@ -202,7 +202,8 @@ class TaskResult:
     def save_predictions(dataset: Dataset, output_file: str,
                          predictions=None, truth=None,
                          probabilities=None, probabilities_labels=None,
-                         target_is_encoded=False):
+                         target_is_encoded=False,
+                         preview=True):
         """ Save class probabilities and predicted labels to file in csv format.
 
         :param dataset:
@@ -234,7 +235,8 @@ class TaskResult:
 
         df = df.assign(predictions=preds)
         df = df.assign(truth=truth)
-        log.info("Predictions preview:\n %s\n", df.head(20).to_string())
+        if preview:
+            log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(output_file)
         write_csv(df, path=output_file)
         log.info("Predictions saved to `%s`.", output_file)
@@ -428,8 +430,10 @@ _encode_predictions_and_truth_ = False
 def save_predictions_to_file(dataset: Dataset, output_file: str,
                              predictions=None, truth=None,
                              probabilities=None, probabilities_labels=None,
-                             target_is_encoded=False):
+                             target_is_encoded=False,
+                             preview=True):
     TaskResult.save_predictions(dataset, output_file=output_file,
                                 predictions=predictions, truth=truth,
                                 probabilities=probabilities, probabilities_labels=probabilities_labels,
-                                target_is_encoded=target_is_encoded)
+                                target_is_encoded=target_is_encoded,
+                                preview=preview)
