@@ -394,7 +394,9 @@ class BenchmarkTask:
         :param framework:
         :return:
         """
-        results = TaskResult(task_def=self._task_def, fold=self.fold, predictions_dir=self.benchmark.output_dirs.predictions)
+        results = TaskResult(task_def=self._task_def, fold=self.fold,
+                             constraint=self.benchmark.constraint_name,
+                             predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task_config)
         task_config.estimate_system_params()

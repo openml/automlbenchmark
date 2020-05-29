@@ -271,7 +271,7 @@ class AWSBenchmark(Benchmark):
                 return self._wait_for_results(job_self)
             except Exception as e:
                 fold = int(folds[0]) if len(folds) > 0 else -1
-                results = TaskResult(task_def=task_def, fold=fold)
+                results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
                 return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
 
         def _on_done(job_self):
