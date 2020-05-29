@@ -139,6 +139,13 @@ def save_artifacts(automl, dataset, config):
             else:
                 for mid in lb['model_id']:
                     save_model(mid, dest_dir=models_dir, mformat=mformat)
+                models_archive = os.path.join(models_dir, "models.zip")
+                zip_path(models_dir, models_archive)
+
+                def delete(path, isdir):
+                    if path != models_archive and os.path.splitext(path)[1] in ['.json', '.zip']:
+                        os.remove(path)
+                walk_apply(models_dir, delete, max_depth=0)
 
         if 'models_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
