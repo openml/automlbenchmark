@@ -146,7 +146,8 @@ class Benchmark:
         jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
             results = self._run_jobs(jobs)
-            # log.info(results)
+            log.info(f"Processing results for {self.sid}")
+            log.debug(results)
             if task_name is None:
                 scoreboard = self._process_results(results)
             else:
@@ -420,7 +421,8 @@ class BenchmarkTask:
             result = ErrorResult(e)
         finally:
             self._dataset.release()
-            meta_result = meta_result or {}
-            meta_result['params'] = task_config.framework_params
-            return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
+
+        meta_result = meta_result or {}
+        meta_result['params'] = task_config.framework_params
+        return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
 

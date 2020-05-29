@@ -158,7 +158,7 @@ def save_artifacts(automl, dataset, config):
         if 'logs' in artifacts:
             logs_dir = make_subdir("logs", config)
             h2o.download_all_logs(dirname=logs_dir)
-    except:
+    except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
 

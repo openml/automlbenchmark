@@ -15,7 +15,7 @@ import signal
 import threading
 import time
 
-from .utils import Namespace, Timer, InterruptTimeout
+from .utils import Namespace, Timer, InterruptTimeout, raise_in_thread, signal_handler
 
 log = logging.getLogger(__name__)
 
@@ -42,10 +42,12 @@ class Job:
         self.name = name
         self.timeout = timeout_secs
         self.state = State.created
+        self.thread_id = None
 
     def start(self):
         try:
             start_msg = "Starting job {}.".format(self.name)
+            self.thread_id = threading.current_thread().ident
             if self.state == State.stopping:
                 self.state = State.cancelled
                 raise CancelledError("Job was cancelled.")
@@ -55,7 +57,8 @@ class Job:
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
             with Timer() as t:
-                with InterruptTimeout(self.timeout):
+                # don't propagate interruption error here (sig=None) so that we can collect the timeout in the result
+                with InterruptTimeout(self.timeout, sig=None):
                     result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)
@@ -89,7 +92,8 @@ class Job:
         pass
 
     def _stop(self):
-        pass
+        if self.thread_id is not None:
+            raise_in_thread(self.thread_id, CancelledError)
 
     def _on_done(self):
         """hook to execute logic after job completion in a thread-safe way as this is executed in the main thread"""
@@ -146,6 +150,7 @@ class MultiThreadingJobRunner(JobRunner):
         self._daemons = use_daemons
 
     def _run(self):
+        signal_handler(signal.SIGINT, self.stop)
         q = queue.Queue()
 
         def worker():
@@ -166,8 +171,6 @@ class MultiThreadingJobRunner(JobRunner):
             thread.start()
             threads.append(thread)
 
-        # previous_handler = signal.signal(signal.SIGINT, self.stop)
-
         try:
             for job in self.jobs:
                 if self.state == State.stopping:
@@ -177,7 +180,6 @@ class MultiThreadingJobRunner(JobRunner):
                     time.sleep(self._delay)
             q.join()
         finally:
-            # signal.signal(signal.SIGINT, previous_handler)
             for _ in range(self.parallel_jobs):
                 q.put(None)     # stopping workers
             for thread in threads:

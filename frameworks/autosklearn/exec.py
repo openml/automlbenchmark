@@ -115,7 +115,7 @@ def save_artifacts(estimator, config):
             models_file = os.path.join(make_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:
                 f.write(models_repr)
-    except:
+    except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
 

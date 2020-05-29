@@ -73,7 +73,7 @@ class DockerBenchmark(ContainerBenchmark):
         except:  # also want to handle KeyboardInterrupt
             try:
                 run_cmd(f"docker kill {inst_name}")
-            except:
+            except Exception:
                 pass
             finally:
                 raise
@@ -87,7 +87,7 @@ class DockerBenchmark(ContainerBenchmark):
         try:
             run_cmd(f"docker pull {self._image_name}", _live_output_=True)
             return True
-        except:
+        except Exception:
             pass
         return False
 

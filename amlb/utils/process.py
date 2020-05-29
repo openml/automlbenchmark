@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from functools import reduce, wraps
+import inspect
 import io
 import logging
 import multiprocessing as mp
@@ -64,7 +65,7 @@ def run_subprocess(*popenargs,
             else:
                 process.wait()
             raise subprocess.TimeoutExpired(process.args, timeout, output=stdout, stderr=stderr)
-        except:
+        except:  # also handles kb interrupts
             process.kill()
             raise
         retcode = process.poll()
@@ -186,15 +187,15 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
 
 
 def get_thread(tid=None):
-    return threading.current_thread() if tid is None \
-        else threading.main_thread() if tid == 0 \
-        else next(filter(lambda t: t.ident == tid, threading.enumerate()))
+    return (threading.current_thread() if tid is None
+            else threading.main_thread() if tid == 0
+            else next(filter(lambda t: t.ident == tid, threading.enumerate())))
 
 
 def get_process(pid=None):
-    pid = os.getpid() if pid is None \
-        else os.getppid() if pid == 0 \
-        else pid
+    pid = (os.getpid() if pid is None
+           else os.getppid() if pid == 0
+           else pid)
     return psutil.Process(pid) if psutil.pid_exists(pid) else None
 
 
@@ -269,28 +270,82 @@ def system_volume_mb(root="/"):
     )
 
 
+def signal_handler(sig, handler):
+    """
+    :param sig: a signal as defined in https://docs.python.org/3.7/library/signal.html#module-contents
+    :param handler: a handler function executed when the given signal is raised in the current thread.
+    """
+    prev_handler = None
+
+    def handle(signum, frame):
+        try:
+            handler()
+        finally:
+            # restore previous signal handler
+            signal.signal(sig, prev_handler or signal.SIG_DFL)
+
+    prev_handler = signal.signal(sig, handle)
+
+
+def raise_in_thread(thread_id, exc):
+    """
+    :param thread_id: the thread in which the exception will be raised.
+    :param exc: the exception to raise in the thread: it can be an exception class or an instance.
+    """
+    import ctypes
+    tid = ctypes.c_long(thread_id)
+    exc_class = exc if inspect.isclass(exc) else type(exc.__class__.__name__, (exc.__class__,), dict(
+        __init__=lambda s: super(s.__class__, s).__init__(str(exc))
+    ))
+    exc_class = ctypes.py_object(exc_class)
+    ret = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, exc_class)
+    if ret == 0:
+        raise ValueError(f"Nonexistent thread {thread_id}")
+    elif ret > 1:
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        raise SystemError(f"Failed raising exception in thread {thread_id}")
+
+
 class InterruptTimeout(Timeout):
+    """
+    A :class:`Timeout` implementation that can send a signal to the interrupted thread or process,
+    or raise an exception in the thread (works only for thread interruption)
+    if the passed signal is an exception class or instance.
+    """
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
                  interrupt='thread', sig=signal.SIGINT, ident=None, before_interrupt=None):
         def interruption():
-            nonlocal message
-            if message is None:
-                desc = 'current' if ident is None else 'main' if ident == 0 else self.ident
-                message = "Interrupting {} {} after {}s timeout.".format(interrupt, desc, timeout_secs)
-            log.log(log_level, message)
+            log.log(log_level, self.message)
             if before_interrupt is not None:
                 before_interrupt()
             if interrupt == 'thread':
-                # _thread.interrupt_main()
-                signal.pthread_kill(self.ident, sig)
+                if isinstance(self.sig, (type(None), BaseException)):
+                    raise_in_thread(self.ident, TimeoutError(self.message) if self.sig is None else self.sig)
+                else:
+                    # _thread.interrupt_main()
+                    signal.pthread_kill(self.ident, self.sig)
             elif interrupt == 'process':
-                os.kill(self.ident, sig)
+                os.kill(self.ident, self.sig)
 
         super().__init__(timeout_secs, on_timeout=interruption)
         if interrupt not in ['thread', 'process']:
             raise ValueError("`interrupt` value should be one of ['thread', 'process'].")
+        if message is None:
+            desc = 'current' if ident is None else 'main' if ident == 0 else self.ident
+            self.message = f"Interrupting {interrupt} {desc} after {timeout_secs}s timeout."
+        else:
+            self.message = message
         self.ident = get_thread(ident).ident if interrupt == 'thread' else get_process(ident).pid
+        self.sig = sig(self.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        super().__exit__(exc_type, exc_val, exc_tb)
+        if self.timed_out:
+            if isinstance(self.sig, BaseException):
+                raise self.sig
+            elif self.sig is None:
+                return True
 
 
 class Monitoring:

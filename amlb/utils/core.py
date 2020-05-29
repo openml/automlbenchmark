@@ -22,7 +22,7 @@ class Namespace:
             try:
                 if isinstance(v, str):
                     v = literal_eval(v)
-            except:
+            except Exception:
                 pass
             parsed[k] = v
         sublevel = {}
