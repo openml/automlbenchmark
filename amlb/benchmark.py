@@ -420,7 +420,8 @@ class BenchmarkTask:
             result = ErrorResult(e)
         finally:
             self._dataset.release()
-            meta_result = meta_result or {}
-            meta_result['params'] = task_config.framework_params
-            return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
+
+        meta_result = meta_result or {}
+        meta_result['params'] = task_config.framework_params
+        return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
 

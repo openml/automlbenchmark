@@ -319,7 +319,7 @@ class Result:
         if hasattr(self, metric):
             return getattr(self, metric)()
         # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
-        log.warning("Metric {} is not supported for {}!".format( metric, self.type))
+        log.warning("Metric %s is not supported for %s!", metric, self.type)
         return nan
 
 

@@ -15,7 +15,7 @@ import signal
 import threading
 import time
 
-from .utils import Namespace, Timer, InterruptTimeout
+from .utils import Namespace, Timer, InterruptTimeout, TimeoutException
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class Job:
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
             with Timer() as t:
-                with InterruptTimeout(self.timeout):
+                with InterruptTimeout(self.timeout, sig=TimeoutException):
                     result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)
