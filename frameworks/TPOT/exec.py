@@ -12,7 +12,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from tpot import TPOTClassifier, TPOTRegressor
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, get_extension, result, output_subdir, utils
 
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,8 @@ def run(dataset, config):
         r2='r2',
         rmse='neg_mean_squared_error',  # TPOT can score on mse, as app computes rmse independently on predictions
     )
-    scoring_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    scoring_metric = (metrics_mapping[config.metric] if config.metric in metrics_mapping
+                      else get_extension(config.extensions, config.metric))
     if scoring_metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
