@@ -110,9 +110,13 @@ def file_filter(include=None, exclude=None):
     return lambda p: includes(p) and not excludes(p)
 
 
-def walk_apply(dir_path, apply, topdown=True, filtr=None):
+def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filtr=None):
     dir_path = normalize_path(dir_path)
     for dir, subdirs, files in os.walk(dir_path, topdown=topdown):
+        if max_depth >= 0:
+            depth = 0 if dir == dir_path else len(str.split(os.path.relpath(dir, dir_path), os.sep))
+            if depth > max_depth:
+                continue
         for p in itertools.chain(files, subdirs):
             path = os.path.join(dir, p)
             if filtr is None or filtr(path):

@@ -3,8 +3,10 @@ import logging
 import os
 import re
 import sys
-import time
-import zipfile
+
+# for backwards compatibility, imports the utility functions that used to be duplicated here
+from utils import Namespace as NS, Timer, touch
+import utils  # alias amlb utils
 
 
 def setup_logger():
@@ -21,74 +23,6 @@ setup_logger()
 log = logging.getLogger(__name__)
 
 
-class NS:
-
-    @staticmethod
-    def dict(ns, deep=True):
-        dic = ns.__dict__
-        if not deep:
-            return dic
-        for k, v in dic.items():
-            if isinstance(v, NS):
-                dic[k] = NS.dict(v)
-        return dic
-
-    @staticmethod
-    def from_dict(dic, deep=True):
-        ns = NS(dic)
-        if not deep:
-            return ns
-        for k, v in ns.__dict__.items():
-            if isinstance(v, dict):
-                ns.__dict__[k] = NS.from_dict(v)
-        return ns
-
-    @staticmethod
-    def walk(ns, fn, inplace=False):
-        nns = ns if inplace else NS()
-        for k, v in ns.__dict__.items():
-            nk, nv = fn(k, v)
-            if nk is not None:
-                if v is nv and isinstance(v, NS):
-                    nv = NS.walk(nv, fn, inplace)
-                nns.__dict__[nk] = nv
-        return nns
-
-    def __init__(self, *args, **kwargs):
-        self.__dict__.update(dict(*args, **kwargs))
-
-    def __str__(self):
-        return str(self.__dict__)
-
-    def __repr__(self):
-        return repr(self.__dict__)
-
-
-class Timer:
-
-    @staticmethod
-    def _zero():
-        return 0
-
-    def __init__(self, clock=time.time, enabled=True):
-        self.start = 0
-        self.stop = 0
-        self._time = clock if enabled else Timer._zero
-
-    def __enter__(self):
-        self.start = self._time()
-        return self
-
-    def __exit__(self, *args):
-        self.stop = self._time()
-
-    @property
-    def duration(self):
-        if self.stop > 0:
-            return self.stop - self.start
-        return self._time() - self.start
-
-
 def result(output_file=None,
            predictions=None, truth=None,
            probabilities=None, probabilities_labels=None,
@@ -100,6 +34,12 @@ def result(output_file=None,
     return locals()
 
 
+def output_subdir(name, config):
+    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
+    touch(subdir, as_dir=True)
+    return subdir
+
+
 data_keys = re.compile("^(X|y|data)(_.+)?$")
 
 
@@ -108,7 +48,7 @@ def call_run(run_fn):
 
     params = NS.from_dict(json.loads(sys.stdin.read()))
 
-    def load_data(name, path):
+    def load_data(name, path, **ignored):
         if isinstance(path, str) and data_keys.match(name):
             return name, np.load(path, allow_pickle=True)
         return name, path
@@ -136,33 +76,3 @@ def call_run(run_fn):
 
     print(config.result_token)
     print(json.dumps(res, separators=(',', ':')))
-
-
-def touch(path, as_dir=False):
-    path = os.path.realpath(os.path.expanduser(path))
-    if not os.path.exists(path):
-        dirname, basename = (path, '') if as_dir else os.path.split(path)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname, exist_ok=True)
-        if basename:
-            open(path, 'a').close()
-    os.utime(path, times=None)
-
-
-def normalize_path(path):
-    return os.path.realpath(os.path.expanduser(path))
-
-
-def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED):
-    path = normalize_path(path)
-    if not os.path.exists(path): return
-    with zipfile.ZipFile(dest_archive, 'w', compression) as zf:
-        if os.path.isfile(path):
-            in_archive = os.path.basename(path)
-            zf.write(path, in_archive)
-        elif os.path.isdir(path):
-            for dir, subdirs, files in os.walk(path):
-                for file in files:
-                    file_path = os.path.join(dir, file)
-                    in_archive = os.path.relpath(file_path, path)
-                    zf.write(file_path, in_archive)

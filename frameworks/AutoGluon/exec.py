@@ -12,7 +12,7 @@ from autogluon.task.tabular_prediction.tabular_prediction import TabularPredicti
 from autogluon.utils.tabular.utils.savers import save_pd, save_pkl
 import autogluon.utils.tabular.metrics as metrics
 
-from frameworks.shared.callee import NS, call_run, result, Timer, touch
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
@@ -46,8 +46,8 @@ def run(dataset, config):
     label = dataset.target.name
     print(f"Columns dtypes:\n{train.dtypes}")
 
-    output_dir = make_subdir("models", config)
-    with Timer() as training:
+    output_dir = output_subdir("models", config)
+    with utils.Timer() as training:
         predictor = task.fit(
             train_data=train,
             label=label,
@@ -62,7 +62,7 @@ def run(dataset, config):
     X_test = test.drop(columns=label)
     y_test = test[label]
 
-    with Timer() as predict:
+    with utils.Timer() as predict:
         predictions = predictor.predict(X_test)
 
     probabilities = predictor.predict_proba(dataset=X_test, as_pandas=True, as_multiclass=True) if is_classification else None
@@ -89,16 +89,10 @@ def run(dataset, config):
                   predict_duration=predict.duration)
 
 
-def make_subdir(name, config):
-    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
-    touch(subdir, as_dir=True)
-    return subdir
-
-
 def save_artifacts(predictor, leaderboard, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
-        models_dir = make_subdir("models", config)
+        models_dir = output_subdir("models", config)
         shutil.rmtree(os.path.join(models_dir, "utils"), ignore_errors=True)
 
         if 'leaderboard' in artifacts:
@@ -106,15 +100,20 @@ def save_artifacts(predictor, leaderboard, config):
 
         if 'info' in artifacts:
             ag_info = predictor.info()
-            info_dir = make_subdir("info", config)
+            info_dir = output_subdir("info", config)
             save_pkl.save(path=os.path.join(info_dir, "info.pkl"), object=ag_info)
 
-        if 'models' not in artifacts:
-            shutil.rmtree(os.path.join(models_dir, "models"), ignore_errors=True)
-            with os.scandir(models_dir) as it:
-                for f in it:
-                    if f.is_file() and os.path.splitext(f.name)[1] == '.pkl':
-                        os.remove(f.path)
+        if 'models' in artifacts:
+            utils.zip_path(models_dir,
+                           os.path.join(models_dir, "models.zip"))
+
+        def delete(path, isdir):
+            if isdir:
+                shutil.rmtree(path, ignore_errors=True)
+            elif os.path.splitext(path)[1] == '.pkl':
+                os.remove(path)
+        utils.walk_apply(models_dir, delete, max_depth=0)
+
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 

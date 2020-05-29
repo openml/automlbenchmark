@@ -49,6 +49,8 @@ TunedRandomForest:
 AutoGluon:
   version: "0.0.9"
   project: https://autogluon.mxnet.io
+#  params:
+#    _save_artifacts: ['leaderboard', 'models', 'info']
 
 AutoGluon_best:
   extends: AutoGluon
@@ -59,6 +61,8 @@ AutoGluon_best:
 autosklearn:
   version: '0.6.0'
   project: https://automl.github.io/auto-sklearn/stable/
+#  params:
+#    _save_artifacts: ['models']
 
 AutoWEKA:
   version: '2.6'
@@ -93,6 +97,7 @@ TPOT:
   version: '0.11.1'
   project: https://github.com/EpistasisLab/tpot
 #  params:
+#    _save_artifacts: ['models']
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
