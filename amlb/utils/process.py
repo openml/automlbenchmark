@@ -270,7 +270,28 @@ def system_volume_mb(root="/"):
     )
 
 
+def signal_handler(sig, handler):
+    """
+    :param sig: a signal as defined in https://docs.python.org/3.7/library/signal.html#module-contents
+    :param handler: a handler function executed when the given signal is raised in the current thread.
+    """
+    prev_handler = None
+
+    def handle(signum, stck):
+        try:
+            handler()
+        finally:
+            # restore previous signal handler
+            signal.signal(sig, prev_handler or signal.SIG_DFL)
+
+    prev_handler = signal.signal(sig, handle)
+
+
 def raise_in_thread(thread_id, exc_class):
+    """
+    :param thread_id: the thread in which the exception will be raised.
+    :param exc_class: the exception type to raise in the thread.
+    """
     import ctypes
     tid = ctypes.c_long(thread_id)
     exc = ctypes.py_object(exc_class)
@@ -282,11 +303,12 @@ def raise_in_thread(thread_id, exc_class):
         raise SystemError(f"Failed raising exception in thread {thread_id}")
 
 
-class TimeoutException(Exception):
-    pass
-
-
 class InterruptTimeout(Timeout):
+    """
+    A :class:`Timeout` implementation that can send a signal to the interrupted thread or process,
+    or raise an exception in the thread (works only for thread interruption)
+    if the passed signal is an exception class or instance.
+    """
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
                  interrupt='thread', sig=signal.SIGINT, ident=None, before_interrupt=None):
@@ -296,7 +318,7 @@ class InterruptTimeout(Timeout):
                 before_interrupt()
             if interrupt == 'thread':
                 if isinstance(self.sig, (type(None), BaseException)):
-                    raise_in_thread(self.ident, TimeoutException)
+                    raise_in_thread(self.ident, TimeoutError)
                     # raise_in_thread(self.ident, self.sig)
                 else:
                     # _thread.interrupt_main()
@@ -317,7 +339,7 @@ class InterruptTimeout(Timeout):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        if exc_type is TimeoutException:
+        if exc_type is TimeoutError:
             if isinstance(self.sig, BaseException):
                 raise self.sig
             elif self.sig is None:
