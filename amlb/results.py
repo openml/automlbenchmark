@@ -114,8 +114,8 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'params', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
-        # fixed_cols = ['id', 'task', 'framework', 'fold', 'result', 'mode', 'version', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
+        fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'result', 'metric', 'mode', 'version',
+                      'params', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
@@ -253,15 +253,16 @@ class TaskResult:
         task_name = d['task']
         fold = int(d['fold'])
         result = cls.load_predictions(path)
-        task_result = cls(task_name, fold)
+        task_result = cls(task_name, fold, '')
         metrics = rconfig().benchmarks.metrics.get(result.type.name)
         return task_result.compute_scores(framework_name, metrics, result=result)
 
-    def __init__(self, task_def, fold: int, predictions_dir=None):
+    def __init__(self, task_def, fold: int, constraint: str, predictions_dir=None):
         self.task = task_def
         self.fold = fold
-        self.predictions_dir = predictions_dir if predictions_dir \
-            else output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions
+        self.constraint = constraint
+        self.predictions_dir = (predictions_dir if predictions_dir
+                                else output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions)
 
     @memoize
     def get_result(self, framework_name):
@@ -274,6 +275,7 @@ class TaskResult:
         scores = Namespace(
             id=self.task.id,
             task=self.task.name,
+            constraint=self.constraint,
             framework=framework_name,
             version=framework_def.version,
             params=(str(meta_result.params) if 'params' in meta_result and bool(meta_result.params)
@@ -291,7 +293,8 @@ class TaskResult:
         for metric in metrics:
             score = result.evaluate(metric)
             scores[metric] = score
-        scores.result = scores[metrics[0]] if len(metrics) > 0 else result.evaluate('')
+        scores.metric = metrics[0] if len(metrics) > 0 else ''
+        scores.result = scores[scores.metric] if scores.metric in scores else result.evaluate(scores.metric)
         scores.info = result.info
         scores % Namespace({k: v for k, v in meta_result if k not in ['models_count', 'training_duration']})
         log.info("Metric scores: %s", scores)
