@@ -146,7 +146,8 @@ class Benchmark:
         jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
             results = self._run_jobs(jobs)
-            # log.info(results)
+            log.info(f"Processing results for {self.sid}")
+            log.debug(results)
             if task_name is None:
                 scoreboard = self._process_results(results)
             else:

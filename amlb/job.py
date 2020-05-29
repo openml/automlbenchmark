@@ -57,7 +57,8 @@ class Job:
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
             with Timer() as t:
-                with InterruptTimeout(self.timeout, sig=TimeoutError):
+                # don't propagate interruption error here (sig=None) so that we can collect the timeout in the result
+                with InterruptTimeout(self.timeout, sig=None):
                     result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)

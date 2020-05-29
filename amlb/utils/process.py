@@ -277,7 +277,7 @@ def signal_handler(sig, handler):
     """
     prev_handler = None
 
-    def handle(signum, stck):
+    def handle(signum, frame):
         try:
             handler()
         finally:
@@ -287,15 +287,18 @@ def signal_handler(sig, handler):
     prev_handler = signal.signal(sig, handle)
 
 
-def raise_in_thread(thread_id, exc_class):
+def raise_in_thread(thread_id, exc):
     """
     :param thread_id: the thread in which the exception will be raised.
-    :param exc_class: the exception type to raise in the thread.
+    :param exc: the exception to raise in the thread: it can be an exception class or an instance.
     """
     import ctypes
     tid = ctypes.c_long(thread_id)
-    exc = ctypes.py_object(exc_class)
-    ret = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, exc)
+    exc_class = exc if inspect.isclass(exc) else type(exc.__class__.__name__, (exc.__class__,), dict(
+        __init__=lambda s: super(s.__class__, s).__init__(str(exc))
+    ))
+    exc_class = ctypes.py_object(exc_class)
+    ret = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, exc_class)
     if ret == 0:
         raise ValueError(f"Nonexistent thread {thread_id}")
     elif ret > 1:
@@ -318,8 +321,7 @@ class InterruptTimeout(Timeout):
                 before_interrupt()
             if interrupt == 'thread':
                 if isinstance(self.sig, (type(None), BaseException)):
-                    raise_in_thread(self.ident, TimeoutError)
-                    # raise_in_thread(self.ident, self.sig)
+                    raise_in_thread(self.ident, TimeoutError(self.message) if self.sig is None else self.sig)
                 else:
                     # _thread.interrupt_main()
                     signal.pthread_kill(self.ident, self.sig)
@@ -339,7 +341,7 @@ class InterruptTimeout(Timeout):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        if exc_type is TimeoutError:
+        if self.timed_out:
             if isinstance(self.sig, BaseException):
                 raise self.sig
             elif self.sig is None:

@@ -63,8 +63,13 @@ class Timer:
 class Timeout:
 
     def __init__(self, timeout_secs, on_timeout=None):
+        def timeout_handler():
+            self.timed_out = True
+            on_timeout()
+
         enabled = timeout_secs is not None and timeout_secs >= 0
-        self.timer = threading.Timer(timeout_secs, on_timeout) if enabled else None
+        self.timer = threading.Timer(timeout_secs, timeout_handler) if enabled else None
+        self.timed_out = False
 
     @property
     def active(self):
