@@ -68,6 +68,14 @@ AutoWEKA:
   version: '2.6'
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
+autoxgboost:
+  version: 'latest'
+  project: https://github.com/ja-thomas/autoxgboost
+
+GAMA:
+  version: '20.1.0'
+  project: https://github.com/PGijsbers/gama
+
 H2OAutoML:
   version: '3.30.0.4'
   setup_args: 'zahradnik'
@@ -102,11 +110,3 @@ TPOT:
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
-
-GAMA:
-  version: '20.1.0'
-  project: https://github.com/PGijsbers/gama
-
-autoxgboost:
-  version: 'latest'
-  project: https://github.com/ja-thomas/autoxgboost

@@ -14,7 +14,7 @@ PIP install --no-cache-dir -r "https://raw.githubusercontent.com/EpistasisLab/tp
 #PIP install --no-cache-dir -r $HERE/requirements.txt
 
 if [[ "$VERSION" =~ ^[0-9] ]]; then
-    PIP install tpot[dask]==${VERSION}
+    PIP install --no-cache-dir -U tpot[dask]==${VERSION}
 else
-    PIP install --no-cache-dir -e git+https://github.com/EpistasisLab/tpot.git@${VERSION}#egg=tpot
+    PIP install --no-cache-dir -U -e git+https://github.com/EpistasisLab/tpot.git@${VERSION}#egg=tpot
 fi

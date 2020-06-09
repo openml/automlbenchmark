@@ -2,6 +2,10 @@
 HERE=$(dirname "$0")
 AMLB_DIR="$1"
 VERSION=${2:-"latest"}
+if [[ "$VERSION" == "latest" ]]; then
+    VERSION="master"
+fi
+
 # creating local venv
 . ${HERE}/../shared/setup.sh ${HERE}
 #if [[ -x "$(command -v apt-get)" ]]; then
@@ -11,8 +15,9 @@ if [[ -x "$(command -v brew)" ]]; then
 fi
 
 cat ${HERE}/requirements.txt | sed '/^$/d' | while read -r i; do PIP install "$i"; done
-if [[ "$VERSION" == "latest" ]]; then
-    PIP install autogluon
+
+if [[ "$VERSION" =~ ^[0-9] ]]; then
+    PIP install --no-cache-dir -U autogluon==${VERSION}
 else
-    PIP install autogluon==${VERSION}
+    PIP install --no-cache-dir -U -e git+https://github.com/awslabs/autogluon.git@${VERSION}#egg=autogluon
 fi
