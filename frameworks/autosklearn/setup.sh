@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-#AMLB_DIR="$1"
-#VERSION=${2:-"v.0.6.0"}
+AMLB_DIR="$1"
+VERSION=${2:-"latest"}
 
 # creating local venv
 . $HERE/../shared/setup.sh $HERE
@@ -13,4 +13,9 @@ fi
 # this virtual env is then used to run the exec.py only, and can be configured here using `PIP` and `PY` commands.
 #curl "https://raw.githubusercontent.com/automl/auto-sklearn/${VERSION}/requirements.txt" | sed '/^$/d' | while read -r i; do PIP install "$i"; done
 #PIP install --no-cache-dir -r "https://raw.githubusercontent.com/automl/auto-sklearn/${VERSION}/requirements.txt"
-PIP install --no-cache-dir -r $HERE/requirements.txt
+#PIP install --no-cache-dir -r $HERE/requirements.txt
+if [[ "$VERSION" == "latest" ]]; then
+    PIP install auto-sklearn
+else
+    PIP install auto-sklearn==${VERSION}
+fi

@@ -25,7 +25,7 @@ constantpredictor_enc:
     encode: true
 
 DecisionTree:
-  version: '0.19.2'
+  version: '0.22.2'
   project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
 
 RandomForest:
@@ -59,7 +59,7 @@ AutoGluon_best:
     presets: best_quality
 
 autosklearn:
-  version: '0.6.0'
+  version: '0.7.0'
   project: https://automl.github.io/auto-sklearn/stable/
 #  params:
 #    _save_artifacts: ['models']
@@ -69,7 +69,8 @@ AutoWEKA:
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 H2OAutoML:
-  version: '3.30.0.3'
+  version: '3.30.0.4'
+  setup_args: 'zahradnik'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 #  params:
 #    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
@@ -90,11 +91,11 @@ oboe:
 #    verbose: true
 
 ranger:
-  version: '0.10.1'
+  version: 'latest'
   project: https://github.com/imbs-hl/ranger
 
 TPOT:
-  version: '0.11.1'
+  version: '0.11.5'
   project: https://github.com/EpistasisLab/tpot
 #  params:
 #    _save_artifacts: ['models']
@@ -107,5 +108,5 @@ GAMA:
   project: https://github.com/PGijsbers/gama
 
 autoxgboost:
-  version: '0.0.0.9000'
+  version: 'latest'
   project: https://github.com/ja-thomas/autoxgboost
