@@ -97,8 +97,8 @@ def backup_file(file_path):
 def _create_file_filter(filtr, default_value=True):
     matches = ((lambda _: default_value) if filtr is None
                else filtr if callable(filtr)
-               else lambda p: fnmatch.fnmatch(p, filtr) if isinstance(filtr, str)
-               else lambda p: any(fnmatch.fnmatch(p, pat) for pat in filtr) if isinstance(filtr, (list, tuple))
+               else (lambda p: fnmatch.fnmatch(p, filtr)) if isinstance(filtr, str)
+               else (lambda p: any(fnmatch.fnmatch(p, pat) for pat in filtr)) if isinstance(filtr, (list, tuple))
                else None)
     if matches is None:
         raise ValueError("filter should be None, a predicate function, a wildcard pattern or a list of those.")
