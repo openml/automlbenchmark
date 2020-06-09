@@ -47,7 +47,7 @@ TunedRandomForest:
 
 ### AutoML frameworks
 AutoGluon:
-  version: "0.0.9"
+  version: "0.0.10"
   project: https://autogluon.mxnet.io
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
