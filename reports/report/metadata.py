@@ -1,3 +1,5 @@
+import math
+
 import openml as oml
 import pandas as pd
 
@@ -12,9 +14,40 @@ def dataset_metadata(task_id):
     did = dataset.dataset_id
     name = dataset.name
     dq = dataset.qualities
+    features = list(dataset.features.values())
+    feature_types = oml.datasets.OpenMLDataFeature.LEGAL_DATA_TYPES
+
+    features_excluded = []
+    if dataset.row_id_attribute:
+        features_excluded.append(dataset.row_id_attribute)
+    if dataset.ignore_attribute:
+        features_excluded.extend(dataset.ignore_attribute)
+
     nrows = int(dq['NumberOfInstances'])
     nfeatures = int(dq['NumberOfFeatures'])
     nclasses = int(dq['NumberOfClasses'])
+
+    features_stats = {}
+    for ft in feature_types:
+        feats = [f for f in features if f.data_type == ft and f.name not in features_excluded]
+        missing = [f.number_missing_values for f in feats]
+        features_stats[ft] = dict(
+            count=len(feats),
+            na_min=min(missing, default=math.nan),
+            na_max=max(missing, default=math.nan),
+        )
+        if ft == 'nominal':
+            distinct = [len(f.nominal_values) for f in feats]
+            features_stats[ft].update(
+                distinct_min=min(distinct, default=math.nan),
+                distinct_max=max(distinct, default=math.nan)
+            )
+
+    flat_feature_stats = {f"{ft}_{k}": v
+                          for ft, k, v in [(ft, k, v)
+                                           for ft, stats in features_stats.items()
+                                           for k, v in stats.items()]}
+
     # class_entropy = float(dq['ClassEntropy'])
     class_imbalance = float(dq['MajorityClassPercentage'])/float(dq['MinorityClassPercentage'])
     task_type = ('regression' if nclasses == 0 
@@ -32,7 +65,7 @@ def dataset_metadata(task_id):
         nclasses=nclasses,
         # class_entropy=class_entropy,
         class_imbalance=class_imbalance,
-    )
+    ).extend(**flat_feature_stats)
 
 
 def load_dataset_metadata(results):
@@ -46,10 +79,13 @@ def load_dataset_metadata(results):
 
 
 def render_metadata(metadata, filename='metadata.csv'):
-    df = pd.DataFrame([m.__dict__ for m in metadata.values()], 
-                      columns=['task', 'name', 'type', 'dataset', 
-                               'nrows', 'nfeatures', 'nclasses',
-                               'class_imbalance'])
+    fixed_cols = ['task', 'name', 'type', 'dataset',
+                  'nrows', 'nfeatures', 'nclasses',
+                  'class_imbalance']
+    dyn_cols = [k for k in next(iter(metadata.values())).__dict__.keys() if k not in fixed_cols] if len(metadata.values()) > 0 else []
+    dyn_cols.sort()
+    df = pd.DataFrame([m.__dict__ for m in metadata.values()],
+                      columns=[]+fixed_cols+dyn_cols)
     df.sort_values(by='name', inplace=True)
     if filename:
         df.to_csv(filename, index=False)
