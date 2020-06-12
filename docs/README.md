@@ -31,7 +31,7 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 * [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework) as Docker images
 * Execute experiments locally or on AWS (see below)
 
-#### Roadmap: 
+### Roadmap: 
 * Add a regression benchmark to the framework.
 * More benchmark datasets (especially bigger datasets).
 * Automatic sharing of benchmarking results on OpenML.
