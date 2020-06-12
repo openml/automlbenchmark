@@ -553,11 +553,12 @@ Here are the main differences:
 
 #### Add a default framework
 
-Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.
+Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.  
 
 *NOTE:*
 There are a few requirements when integrating a new default framework:
-- The code snippet triggering the training should use only defaults (no AutoML hyper parameters), plus possibly a generic `**kwargs` in order to support `params` section in custom framework definitions. 
+- The code snippet triggering the training should use only defaults (no AutoML hyper parameters), plus possibly a generic `**kwargs` in order to support `params` section in custom framework definitions.  In other words, one of the requirements for being included in the benchmark is that the framework is submitted without any tweaks to default settings.  This is to prevent submissions (systems) from overfitting or tuning to the benchmark.
+- There must be a way to limit the runtime of the algorithm (a maximum runtime parameter).
 - Exceptions:
   - the problem type ("classification", "regression", "binary", "multiclass"): this is available through `config.type` or `dataset.type`. 
   - information about data, for example the column types: available through the `dataset` object.
