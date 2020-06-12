@@ -11,8 +11,8 @@ fi
 #. $AMLB_DIR/frameworks/shared/setup.sh $HERE
 
 PIP install -r $HERE/requirements.txt
-if [[ "$VERSION" == "latest" ]]; then
-    PIP install --no-cache-dir -U -e git+https://github.com/PGijsbers/gama@i${VERSION}#egg=gama
-else
+if [[ "$VERSION" =~ ^[0-9] ]]; then
     PIP install --no-cache-dir -U gama==${VERSION}
+else
+    PIP install --no-cache-dir -U -e git+https://github.com/PGijsbers/gama@${VERSION}#egg=gama
 fi
