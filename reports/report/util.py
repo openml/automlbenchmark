@@ -94,14 +94,13 @@ def sort_dataframe(df, by=None, axis=0):
         cols.sort(key=by) if by else cols.sort()
         return df[cols]
 #         return df.sort_index(by, axis=1)
-    else:
-        if by:
-            tmp_sort='tmp_sort'
-            tmp_df = df.reset_index()
-            tmp_df = tmp_df.assign(tmp_sort=by)
-            tmp_df.set_index([*df.index.names, tmp_sort], inplace=True)
-            tmp_df.sort_index(level=tmp_sort, inplace=True)
-            tmp_df.set_index(tmp_df.index.droplevel(tmp_sort), inplace=True)
-            return tmp_df
-        return df.sort_index()
+    elif by:
+        tmp_sort = 'tmp_sort'
+        tmp_df = df.reset_index()
+        tmp_df = tmp_df.assign(tmp_sort=by)
+        tmp_df.set_index([*df.index.names, tmp_sort], inplace=True)
+        tmp_df.sort_index(level=tmp_sort, inplace=True)
+        tmp_df.set_index(tmp_df.index.droplevel(tmp_sort), inplace=True)
+        return tmp_df
+    return df.sort_index()
 
