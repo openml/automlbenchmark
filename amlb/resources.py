@@ -213,7 +213,7 @@ class Resources:
             framework.version = 'latest'
 
         if framework['setup_args'] is None:
-            framework.setup_args = [framework.version]
+            framework.setup_args = [framework.version] if framework['repo'] is None else [framework.version, framework.repo]
         elif isinstance(framework.setup_args, str):
             framework.setup_args = [framework.setup_args]
 

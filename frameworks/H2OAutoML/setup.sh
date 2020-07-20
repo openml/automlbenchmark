@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 VERSION=${1:-"latest"}
+H2O_REPO=${2:-"https://h2o-release.s3.amazonaws.com/h2o"}
 echo "setting up H2O version $VERSION"
 
 HERE=$(dirname "$0")
@@ -9,8 +10,6 @@ if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y openjdk-8-jdk
 fi
 PIP install --no-cache-dir -r ${HERE}/requirements.txt
-
-H2O_REPO="https://h2o-release.s3.amazonaws.com/h2o"
 
 if  [[ "$VERSION" = "latest" ]]; then
     h2o_package="h2o"

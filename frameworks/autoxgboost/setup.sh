@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 VERSION=${1:-"latest"}
+REPO=${2:-"ja-thomas/autoxgboost"}
+if [[ "$VERSION" == "latest" ]]; then
 # currently latest maps to master branch
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
@@ -20,5 +22,5 @@ fi
 
 #PIP install --no-cache-dir -r $HERE/requirements.txt
 #SUDO Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "mlr", "mlrMBO", "mlrCPO", "farff", "xgboost"), repos="https://cloud.r-project.org/", dependencies = TRUE)'
-SUDO Rscript -e 'remotes::install_github("ja-thomas/autoxgboost", ref="'"${VERSION}"'")'
+SUDO Rscript -e 'remotes::install_github("${REPO}", ref="'"${VERSION}"'")'
 

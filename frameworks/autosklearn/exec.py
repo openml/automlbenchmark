@@ -8,8 +8,10 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+import autosklearn
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
+from packaging import version
 
 from frameworks.shared.callee import call_run, result, output_subdir, utils
 
@@ -72,14 +74,23 @@ def run(dataset, config):
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
     # TODO: do we need to set per_run_time_limit too?
     estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
+
+    if version.parse(autosklearn.__version__) >= version.parse("0.8"):
+        constr_extra_params = dict(metric=perf_metric)
+        fit_extra_params = {}
+    else:
+        constr_extra_params = {}
+        fit_extra_params = dict(metric=perf_metric)
+
     auto_sklearn = estimator(time_left_for_this_task=config.max_runtime_seconds,
                              n_jobs=n_jobs,
                              ml_memory_limit=ml_memory_limit,
                              ensemble_memory_limit=ensemble_memory_limit,
                              seed=config.seed,
+                             **constr_extra_params,
                              **training_params)
     with utils.Timer() as training:
-        auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
+        auto_sklearn.fit(X_train, y_train, feat_type=predictors_type, **fit_extra_params)
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
