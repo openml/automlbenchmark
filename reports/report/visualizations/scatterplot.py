@@ -59,6 +59,6 @@ def draw_score_stripplot(col, results, type_filter='all', metadata=None,
         legend_title="Framework",
         **kwargs
     )
-    if filename is not None:
+    if filename:
         savefig(fig, create_file("graphics", config.results_group, filename))
     return fig

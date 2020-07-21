@@ -112,7 +112,7 @@ class SingularityBenchmark(ContainerBenchmark):
             # also want to handle KeyboardInterrupt
             # In the foreground run mode, the user has to kill the process
             # There is yet no docker kill command. User has to kill PID manually
-            log.warn(f"Container {inst_name} may still be running, please verify and kill it manually.")
+            log.warning(f"Container {inst_name} may still be running, please verify and kill it manually.")
             raise Exception
 
     def _image_exists(self):
@@ -127,7 +127,7 @@ class SingularityBenchmark(ContainerBenchmark):
                 output_file=self._image_name,
             ), _live_output_=True)
             return True
-        except:
+        except Exception:
             try:
                 # If no docker image, pull from singularity hub
                 run_cmd("singularity pull {output_file} library://{library}/{image}".format(
@@ -136,7 +136,7 @@ class SingularityBenchmark(ContainerBenchmark):
                     library=rconfig().singularity.library
                 ), _live_output_=True)
                 return True
-            except:
+            except Exception:
                 pass
         return False
 
@@ -169,7 +169,7 @@ apt-get update
 apt-get -y install apt-utils dialog locales
 apt-get -y install curl wget unzip git
 apt-get -y install python3 python3-pip python3-venv
-pip3 install -U pip
+pip3 install -U pip wheel
 
 # aliases for the python system
 SPIP=pip3
@@ -189,8 +189,8 @@ cd /bench
 $SPY -m venv venv
 PIP=/bench/venv/bin/pip3
 PY=/bench/venv/bin/python3
-#RUN $PIP install -U pip=={pip_version}
-$PIP install -U pip
+#$PIP install -U pip=={pip_version} wheel
+$PIP install -U pip wheel
 
 mkdir /input
 mkdir /output

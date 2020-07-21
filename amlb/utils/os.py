@@ -1,9 +1,11 @@
 import datetime as dt
 import fnmatch
+import itertools
 import logging
 import os
 import shutil
 import tempfile
+import zipfile
 
 from .core import Namespace
 from .time import datetime_iso
@@ -43,11 +45,10 @@ def dir_of(caller_file, rel_to_project_root=False):
         return abs_path
 
 
-def list_all_files(paths, include=None, exclude=None):
+def list_all_files(paths, filtr=None):
     """
     :param paths: the directories to look into.
-    :param include: a UNIX path pattern for the files to be included in the result list
-    :param exclude: a UNIX path pattern for the files to be excluded from the result list
+    :param filtr: None, or a predicate function returning True iff the file should be listed.
     """
     all_files = []
     paths = paths if isinstance(paths, list) else [paths]
@@ -56,25 +57,14 @@ def list_all_files(paths, include=None, exclude=None):
         if os.path.isdir(path):
             for root_dir, sub_dirs, files in os.walk(path):
                 for name in files:
-                    all_files.append(os.path.join(root_dir, name))
+                    full_path = os.path.join(root_dir, name)
+                    if filtr(full_path):
+                        all_files.append(full_path)
         elif os.path.isfile(path):
-            all_files.append(path)
+            if filtr(path):
+                all_files.append(path)
         else:
             log.warning("Skipping file `%s` as it doesn't exist.", path)
-
-    if include is not None:
-        include = include if isinstance(include, list) else [include]
-        included = []
-        for pattern in include:
-            included.extend(fnmatch.filter(all_files, pattern))
-        all_files = [file for file in all_files if file in included]
-
-    if exclude is not None:
-        exclude = exclude if isinstance(exclude, list) else [exclude]
-        excluded = []
-        for pattern in exclude:
-            excluded.extend(fnmatch.filter(all_files, pattern))
-        all_files = [file for file in all_files if file not in excluded]
 
     return all_files
 
@@ -91,7 +81,7 @@ def touch(path, as_dir=False):
 
 
 def backup_file(file_path):
-    src_path = os.path.realpath(file_path)
+    src_path = normalize_path(file_path)
     if not os.path.isfile(src_path):
         return
     p = split_path(src_path)
@@ -102,6 +92,52 @@ def backup_file(file_path):
     dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
     log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)
+
+
+def _create_file_filter(filtr, default_value=True):
+    matches = ((lambda _: default_value) if filtr is None
+               else filtr if callable(filtr)
+               else (lambda p: fnmatch.fnmatch(p, filtr)) if isinstance(filtr, str)
+               else (lambda p: any(fnmatch.fnmatch(p, pat) for pat in filtr)) if isinstance(filtr, (list, tuple))
+               else None)
+    if matches is None:
+        raise ValueError("filter should be None, a predicate function, a wildcard pattern or a list of those.")
+    return matches
+
+
+def file_filter(include=None, exclude=None):
+    includes = _create_file_filter(include, True)
+    excludes = _create_file_filter(exclude, False)
+    return lambda p: includes(p) and not excludes(p)
+
+
+def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filtr=None):
+    dir_path = normalize_path(dir_path)
+    for dir, subdirs, files in os.walk(dir_path, topdown=topdown):
+        if max_depth >= 0:
+            depth = 0 if dir == dir_path else len(str.split(os.path.relpath(dir, dir_path), os.sep))
+            if depth > max_depth:
+                continue
+        for p in itertools.chain(files, subdirs):
+            path = os.path.join(dir, p)
+            if filtr is None or filtr(path):
+                apply(path, isdir=(p in subdirs))
+
+
+def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, filtr=None):
+    path = normalize_path(path)
+    if not os.path.exists(path): return
+    with zipfile.ZipFile(dest_archive, 'w', compression) as zf:
+        if os.path.isfile(path):
+            in_archive = os.path.basename(path)
+            zf.write(path, in_archive)
+        elif os.path.isdir(path):
+            def add_to_archive(file, isdir):
+                if isdir: return
+                in_archive = os.path.relpath(file, path)
+                zf.write(file, in_archive)
+            walk_apply(path, add_to_archive,
+                       filtr=lambda p: (filtr is None or filtr(p)) and not os.path.samefile(dest_archive, p))
 
 
 class TmpDir:

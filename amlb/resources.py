@@ -210,7 +210,9 @@ class Resources:
             framework.module = '.'.join([self.config.frameworks.root_module, framework.name])
 
         if framework['setup_args'] is None:
-            framework.setup_args = None
+            framework.setup_args = []
+        elif isinstance(framework.setup_args, str):
+            framework.setup_args = [framework.setup_args]
 
         if framework['setup_script'] is None:
             framework.setup_script = None

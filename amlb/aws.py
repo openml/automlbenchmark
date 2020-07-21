@@ -37,7 +37,7 @@ from .docker import DockerBenchmark
 from .job import Job
 from .resources import config as rconfig, get as rget
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, flatten, list_all_files, normalize_path, str_def, tail, touch
+from .utils import Namespace as ns, datetime_iso, file_filter, flatten, list_all_files, normalize_path, str_def, tail, touch
 
 
 log = logging.getLogger(__name__)
@@ -256,7 +256,8 @@ class AWSBenchmark(Benchmark):
                 instance_def,
                 script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
-                    benchmark=self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir) else "{}/{}.yaml".format(resources_root, self.benchmark_name),
+                    benchmark=(self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir)
+                               else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
                     constraint=self.constraint_name,
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
@@ -270,7 +271,7 @@ class AWSBenchmark(Benchmark):
                 return self._wait_for_results(job_self)
             except Exception as e:
                 fold = int(folds[0]) if len(folds) > 0 else -1
-                results = TaskResult(task_def=task_def, fold=fold)
+                results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
                 return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
 
         def _on_done(job_self):
@@ -432,7 +433,13 @@ class AWSBenchmark(Benchmark):
                         Tags=[
                             dict(Key='Name', Value=f"benchmark_{inst_key}")
                         ]
-                    )
+                    ),
+                    dict(
+                        ResourceType='volume',
+                        Tags=[
+                            dict(Key='Name', Value=f"benchmark_{inst_key}")
+                        ]
+                    ),
                 ],
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
             )
@@ -600,24 +607,30 @@ class AWSBenchmark(Benchmark):
             self.bucket.delete()
             log.info("S3 bucket %s was successfully deleted.", self.bucket.name)
 
-    def _upload_resources(self):
-        def dest_path(res_path):
-            in_app_dir = res_path.startswith(rconfig().root_dir)
-            if in_app_dir:
-                return None
-            in_input_dir = res_path.startswith(rconfig().input_dir)
-            in_user_dir = res_path.startswith(rconfig().user_dir)
-            name = (os.path.relpath(res_path, start=rconfig().input_dir) if in_input_dir
-                    else os.path.relpath(res_path, start=rconfig().user_dir) if in_user_dir
-                    else os.path.basename(res_path))
-            return self._s3_input(name) if in_input_dir else self._s3_user(name)
+    def _rel_path(self, res_path):
+        in_app_dir = res_path.startswith(rconfig().root_dir)
+        if in_app_dir:
+            return None
+        in_input_dir = res_path.startswith(rconfig().input_dir)
+        in_user_dir = res_path.startswith(rconfig().user_dir)
+        return (os.path.relpath(res_path, start=rconfig().input_dir) if in_input_dir
+                else os.path.relpath(res_path, start=rconfig().user_dir) if in_user_dir
+                else os.path.basename(res_path))
 
+    def _dest_path(self, res_path):
+        name = self._rel_path(res_path)
+        if name is None:
+            return None
+        in_input_dir = res_path.startswith(rconfig().input_dir)
+        return self._s3_input(name) if in_input_dir else self._s3_user(name)
+
+    def _upload_resources(self):
         upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
-        upload_files = list_all_files(upload_paths, exclude=rconfig().aws.resource_ignore)
+        upload_files = list_all_files(upload_paths, file_filter(exclude=rconfig().aws.resource_ignore))
         log.debug("Uploading files to S3: %s", upload_files)
         uploaded_resources = []
         for res in upload_files:
-            upload_path = dest_path(res)
+            upload_path = self._dest_path(res)
             if upload_path is None:
                 log.debug("Skipping upload of `%s` to s3 bucket.", res)
                 continue
@@ -855,12 +868,12 @@ runcmd:
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
-  - pip3 install -U awscli
+  - pip3 install -U awscli wheel
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
   - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
-  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+  #- rm -f /var/lib/cloud/instance/sem/config_scripts_user
 
 final_message: "AutoML benchmark (docker) {ikey} completed after $UPTIME s"
 
@@ -890,7 +903,7 @@ runcmd:
   - systemctl disable apt-daily.timer
   - systemctl disable apt-daily.service
   - systemctl daemon-reload
-  - pip3 install -U awscli
+  - pip3 install -U awscli wheel
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
@@ -910,7 +923,7 @@ runcmd:
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
   - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
-  - rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+#  - rm -f /var/lib/cloud/instance/sem/config_scripts_user
 
 final_message: "AutoML benchmark {ikey} completed after $UPTIME s"
 
@@ -959,7 +972,7 @@ apt-get -y install curl wget unzip git
 apt-get -y install python3 python3-pip python3-venv
 #apt-get -y install docker.io
 
-pip3 install -U awscli
+pip3 install -U awscli wheel
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
@@ -972,7 +985,7 @@ python3 -m venv venv
 alias PIP='/repo/venv/bin/pip3'
 alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pip_version}
-PIP install -U pip
+PIP install -U pip wheel
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
@@ -980,7 +993,7 @@ aws s3 cp '{s3_user}' /s3bucket/user --recursive
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
 PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
 aws s3 cp /s3bucket/output '{s3_output}' --recursive
-rm -f /var/lib/cloud/instances/*/sem/config_scripts_user
+#rm -f /var/lib/cloud/instance/sem/config_scripts_user
 shutdown -P +1 "I'm losing power"
 """.format(
             repo=rget().project_info.repo,

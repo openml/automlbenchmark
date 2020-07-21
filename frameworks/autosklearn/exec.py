@@ -11,8 +11,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 
-from frameworks.shared.callee import call_run, result, Timer, touch
-from utils import system_memory_mb
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ def run(dataset, config):
     X_train = dataset.train.X_enc
     y_train = dataset.train.y_enc
     predictors_type = dataset.predictors_type
-    log.info("predictors_type=%s", predictors_type)
+    log.debug("predictors_type=%s", predictors_type)
     # log.info("finite=%s", np.isfinite(X_train))
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
@@ -59,7 +58,7 @@ def run(dataset, config):
 
     # when memory is large enough, we should have:
     # (cores - 1) * ml_memory_limit_mb + ensemble_memory_limit_mb = config.max_mem_size_mb
-    total_memory_mb = system_memory_mb().total
+    total_memory_mb = utils.system_memory_mb().total
     if ml_memory_limit == 'auto':
         ml_memory_limit = max(min(config.max_mem_size_mb,
                                   math.ceil(total_memory_mb / n_jobs)),
@@ -79,7 +78,7 @@ def run(dataset, config):
                              ensemble_memory_limit=ensemble_memory_limit,
                              seed=config.seed,
                              **training_params)
-    with Timer() as training:
+    with utils.Timer() as training:
         auto_sklearn.fit(X_train, y_train, metric=perf_metric, feat_type=predictors_type)
 
     # Convert output to strings for classification
@@ -100,22 +99,16 @@ def run(dataset, config):
                   training_duration=training.duration)
 
 
-def make_subdir(name, config):
-    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
-    touch(subdir, as_dir=True)
-    return subdir
-
-
 def save_artifacts(estimator, config):
     try:
         models_repr = estimator.show_models()
         log.debug("Trained Ensemble:\n%s", models_repr)
         artifacts = config.framework_params.get('_save_artifacts', [])
         if 'models' in artifacts:
-            models_file = os.path.join(make_subdir('models', config), 'models.txt')
+            models_file = os.path.join(output_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:
                 f.write(models_repr)
-    except:
+    except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
 

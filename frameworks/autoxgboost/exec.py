@@ -13,17 +13,16 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** Autoxgboost (R) ****\n")
 
     is_classification = config.type == 'classification'
-    if not is_classification:
-        raise ValueError('Regression is not supported.')
 
     here = dir_of(__file__)
 
     with Timer() as training:
-        run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', target.index = {target_index}, '{output}', {cores}, time.budget = {time_budget})" """.format(
+        run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores}, time.budget = {time_budget})" """.format(
             script=os.path.join(here, 'exec.R'),
             train=dataset.train.path,
             test=dataset.test.path,
             target_index=dataset.target.index+1,
+            type=config.type,
             output=config.output_predictions_file,
             cores=config.cores,
             time_budget=config.max_runtime_seconds

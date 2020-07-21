@@ -25,7 +25,7 @@ if [[ -n "$PY_VENV" ]]; then
     py_exec="$PY_VENV/bin/python"
     if [[ ! -x py_exec ]]; then
         python3 -m venv "$PY_VENV"
-        $py_exec -m pip install -U pip
+        $py_exec -m pip install -U pip wheel
     fi
     py_exec="$py_exec -W ignore"
     pip_exec="$PY_VENV/bin/pip"

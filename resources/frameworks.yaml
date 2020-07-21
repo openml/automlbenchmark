@@ -16,7 +16,7 @@ __dummy_framework_with_defaults:
 
 ### Non AutoML reference frameworks
 constantpredictor:
-  version: '0.19.2'
+  version: 'latest'
   project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
 
 constantpredictor_enc:
@@ -46,16 +46,30 @@ TunedRandomForest:
 #      n_estimators: 500
 
 ### AutoML frameworks
+AutoGluon:
+  version: "0.0.9"
+  project: https://autogluon.mxnet.io
+#  params:
+#    _save_artifacts: ['leaderboard', 'models', 'info']
+
+AutoGluon_best:
+  extends: AutoGluon
+  description: "provides the most accurate overall predictor"
+  params:
+    presets: best_quality
+
 autosklearn:
   version: '0.6.0'
   project: https://automl.github.io/auto-sklearn/stable/
+#  params:
+#    _save_artifacts: ['models']
 
 AutoWEKA:
   version: '2.6'
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 H2OAutoML:
-  version: '3.30.0.1'
+  version: '3.30.0.3'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 #  params:
 #    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
@@ -83,6 +97,7 @@ TPOT:
   version: '0.11.1'
   project: https://github.com/EpistasisLab/tpot
 #  params:
+#    _save_artifacts: ['models']
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2

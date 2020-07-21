@@ -102,10 +102,14 @@ class Benchmark:
         log.info("Setting up framework {}.".format(self.framework_name))
 
         if hasattr(self.framework_module, 'setup'):
-            self.framework_module.setup(self.framework_def.setup_args, _live_output_=True)
+            self.framework_module.setup(*self.framework_def.setup_args,
+                                        _live_output_=rconfig().setup.live_output,
+                                        _activity_timeout_=rconfig().setup.activity_timeout)
 
         if self.framework_def.setup_script is not None:
-            run_script(self.framework_def.setup_script, _live_output_=True)
+            run_script(self.framework_def.setup_script,
+                       _live_output_=rconfig().setup.live_output,
+                       _activity_timeout_=rconfig().setup.activity_timeout)
 
         if self.framework_def.setup_cmd is not None:
             def resolve_venv(cmd):
@@ -119,7 +123,10 @@ class Benchmark:
                 return cmd.format(py=py, pip=pip)
 
             setup_cmd = [resolve_venv(cmd) for cmd in self.framework_def.setup_cmd]
-            run_cmd('\n'.join(setup_cmd), _executable_="/bin/bash", _live_output_=True)
+            run_cmd('\n'.join(setup_cmd),
+                    _executable_="/bin/bash",
+                    _live_output_=rconfig().setup.live_output,
+                    _activity_timeout_=rconfig().setup.activity_timeout)
 
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
@@ -139,7 +146,8 @@ class Benchmark:
         jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
             results = self._run_jobs(jobs)
-            # log.info(results)
+            log.info(f"Processing results for {self.sid}")
+            log.debug(results)
             if task_name is None:
                 scoreboard = self._process_results(results)
             else:
@@ -155,10 +163,11 @@ class Benchmark:
             runner = SimpleJobRunner(jobs)
         else:
             # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
-            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=5, done_async=True)
+            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=rconfig().delay_between_jobs, done_async=True)
 
         try:
-            with OSMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+            with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
+                              frequency_seconds=rconfig().monitoring.frequency_seconds,
                               check_on_exit=True,
                               statistics=rconfig().monitoring.statistics,
                               verbosity=rconfig().monitoring.verbosity):
@@ -385,7 +394,9 @@ class BenchmarkTask:
         :param framework:
         :return:
         """
-        results = TaskResult(task_def=self._task_def, fold=self.fold, predictions_dir=self.benchmark.output_dirs.predictions)
+        results = TaskResult(task_def=self._task_def, fold=self.fold,
+                             constraint=self.benchmark.constraint_name,
+                             predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def, _ = rget().framework_definition(framework_name)
         task_config = copy(self.task_config)
         task_config.estimate_system_params()
@@ -412,5 +423,8 @@ class BenchmarkTask:
             result = ErrorResult(e)
         finally:
             self._dataset.release()
-            return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
+
+        meta_result = meta_result or {}
+        meta_result['params'] = task_config.framework_params
+        return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
 

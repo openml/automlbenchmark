@@ -12,7 +12,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from tpot import TPOTClassifier, TPOTRegressor
 
-from frameworks.shared.callee import call_run, result, Timer, touch
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 
 log = logging.getLogger(__name__)
@@ -31,7 +31,8 @@ def run(dataset, config):
         mae='neg_mean_absolute_error',
         mse='neg_mean_squared_error',
         msle='neg_mean_squared_log_error',
-        r2='r2'
+        r2='r2',
+        rmse='neg_mean_squared_error',  # TPOT can score on mse, as app computes rmse independently on predictions
     )
     scoring_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if scoring_metric is None:
@@ -54,7 +55,7 @@ def run(dataset, config):
                      random_state=config.seed,
                      **training_params)
 
-    with Timer() as training:
+    with utils.Timer() as training:
         tpot.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
@@ -78,12 +79,6 @@ def run(dataset, config):
                   training_duration=training.duration)
 
 
-def make_subdir(name, config):
-    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
-    touch(subdir, as_dir=True)
-    return subdir
-
-
 def save_artifacts(estimator, config):
     try:
         log.debug("All individuals :\n%s", list(estimator.evaluated_individuals_.items()))
@@ -91,7 +86,7 @@ def save_artifacts(estimator, config):
         hall_of_fame = list(zip(reversed(estimator._pareto_front.keys), estimator._pareto_front.items))
         artifacts = config.framework_params.get('_save_artifacts', False)
         if 'models' in artifacts:
-            models_file = os.path.join(make_subdir('models', config), 'models.txt')
+            models_file = os.path.join(output_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:
                 for m in hall_of_fame:
                     pprint.pprint(dict(
@@ -99,7 +94,7 @@ def save_artifacts(estimator, config):
                         model=str(m[1]),
                         pipeline=models[str(m[1])],
                     ), stream=f)
-    except:
+    except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
 

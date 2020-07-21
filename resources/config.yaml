@@ -15,6 +15,7 @@ sid:        # session id: set by caller (runbenchmark.py)
 
 parallel_jobs: 1
 max_parallel_jobs: 5
+delay_between_jobs: 5  # delay in seconds between each parallel job start
 monitoring:
   frequency_seconds: 120  # set <= 0 to disable
   statistics: ['cpu', 'memory', 'volume']
@@ -23,6 +24,10 @@ seed: auto  # default global seed (used if not set in task definition), can be o
             # `auto`: a global seed will be generated and passed to all jobs.
             # `none`: no seed will be provided (seed left to framework's responsibility).
             # any int32 to pass a fixed seed to the jobs.
+
+setup:
+  live_output: true      # set to true to stream the output of setup commands, if false they are only printed when setup is complete.
+  activity_timeout: 300  # when using live output, subprocess will be considered as hanging if nothing was printed during this activity time.
 
 frameworks:
   definition_file: '{root}/resources/frameworks.yaml'
@@ -35,7 +40,7 @@ benchmarks:
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
   metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType)
-    binary: ['auc', 'acc']
+    binary: ['auc', 'logloss', 'acc']
     multiclass: ['logloss', 'acc']
     regression: ['rmse', 'r2']
   defaults:

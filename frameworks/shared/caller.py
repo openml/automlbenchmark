@@ -52,7 +52,9 @@ def run_in_venv(caller_file, script_file: str, *args,
             output, err = run_cmd(cmd, *args,
                                   _input_str_=params,
                                   _live_output_=True,
+                                  _error_level_=logging.DEBUG,
                                   _env_=dict(
+                                      PATH=os.environ['PATH'],
                                       PYTHONPATH=os.pathsep.join([
                                           rconfig().root_dir,
                                           os.path.join(rconfig().root_dir, "amlb"),
@@ -82,9 +84,11 @@ def run_in_venv(caller_file, script_file: str, *args,
                                  predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
                                  truth=res.truth.reshape(-1) if res.truth is not None else None,
                                  probabilities=res.probabilities,
+                                 probabilities_labels=res.probabilities_labels,
                                  target_is_encoded=res.target_is_encoded)
 
         return dict(
             models_count=res.models_count if res.models_count is not None else 1,
-            training_duration=res.training_duration if res.training_duration is not None else proc_timer.duration
+            training_duration=res.training_duration if res.training_duration is not None else proc_timer.duration,
+            **res.others.__dict__
         )
