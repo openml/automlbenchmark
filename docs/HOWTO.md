@@ -310,7 +310,7 @@ Adding an AutoML framework consist in several steps:
 ### Framework definition
 
 The framework definition consists in an entry in a `yaml` file with the framework name and some properties
- 1. to describe the framework: `project`, `version`.
+ 1. to describe the framework and define which version will be used: `project`, `version`.
  1. to indicate the Python module with the integration code: `module` or `extends`.
  1. to pass optional parameters to the framework and/or the integration code: `params`.
  
@@ -342,15 +342,25 @@ Stacking:
 #    _final_params: {penalty: elasticnet, loss: log} # sgd linear
     _final_params: {max_iter: 1000}  # logistic/linear
 
+autosklearn_latest:
+  extends: autosklearn
+  version: latest
+  description: "this will use master branch from the autosklearn repository instead of the fixed version"
+
+autosklearn_mybranch:
+  extends: autosklearn
+  version: mybranch
+  description: "this will use mybranch branch from the autosklearn repository instead of the fixed version"
+
+autosklearn_oldgen:
+  extends: autosklearn
+  version: "0.7.1"
+  description: "this will use the latest autosklearn version from the old generation"
+
 H2OAutoML_nightly:
   module: frameworks.H2OAutoML
   setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.29.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
   version: 'nightly'
-
-H2OAutoML_blending:
-  extends: H2OAutoML
-  params:
-    nfolds: 0
 
 H2OAutoML_custom:
   extends: H2OAutoML

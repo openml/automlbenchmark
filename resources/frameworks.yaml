@@ -25,7 +25,7 @@ constantpredictor_enc:
     encode: true
 
 DecisionTree:
-  version: '0.19.2'
+  version: '0.22.2'
   project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
 
 RandomForest:
@@ -47,7 +47,7 @@ TunedRandomForest:
 
 ### AutoML frameworks
 AutoGluon:
-  version: "0.0.9"
+  version: "0.0.12"
   project: https://autogluon.mxnet.io
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
@@ -59,17 +59,27 @@ AutoGluon_best:
     presets: best_quality
 
 autosklearn:
-  version: '0.6.0'
-  project: https://automl.github.io/auto-sklearn/stable/
+  version: '0.8.0'
+  project: https://automl.github.io/auto-sklearn/
 #  params:
 #    _save_artifacts: ['models']
+#    _n_jobs: 1
 
 AutoWEKA:
   version: '2.6'
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
+autoxgboost:
+  version: 'latest'
+  project: https://github.com/ja-thomas/autoxgboost
+
+GAMA:
+  version: '20.1.0'
+  project: https://github.com/PGijsbers/gama
+
 H2OAutoML:
-  version: '3.30.0.3'
+  version: '3.30.0.4'
+  setup_args: 'zahradnik'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 #  params:
 #    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
@@ -90,22 +100,14 @@ oboe:
 #    verbose: true
 
 ranger:
-  version: '0.10.1'
+  version: 'latest'
   project: https://github.com/imbs-hl/ranger
 
 TPOT:
-  version: '0.11.1'
+  version: '0.11.5'
   project: https://github.com/EpistasisLab/tpot
 #  params:
 #    _save_artifacts: ['models']
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
-
-GAMA:
-  version: '20.1.0'
-  project: https://github.com/PGijsbers/gama
-
-autoxgboost:
-  version: '0.0.0.9000'
-  project: https://github.com/ja-thomas/autoxgboost

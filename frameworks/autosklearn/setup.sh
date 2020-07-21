@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-#AMLB_DIR="$1"
-#VERSION=${2:-"v.0.6.0"}
+AMLB_DIR="$1"
+VERSION=${2:-"latest"}
+REPO=${3:-"https://github.com/automl/auto-sklearn.git"}
+PKG=${4:-"auto-sklearn"}
+if [[ "$VERSION" == "latest" ]]; then
+    VERSION="master"
+fi
 
 # creating local venv
 . $HERE/../shared/setup.sh $HERE
@@ -9,8 +14,14 @@ HERE=$(dirname "$0")
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y build-essential swig
 fi
-# by passing the module directory to `setup.sh`, it tells it to automatically create a virtual env under the current module.
-# this virtual env is then used to run the exec.py only, and can be configured here using `PIP` and `PY` commands.
-#curl "https://raw.githubusercontent.com/automl/auto-sklearn/${VERSION}/requirements.txt" | sed '/^$/d' | while read -r i; do PIP install "$i"; done
-#PIP install --no-cache-dir -r "https://raw.githubusercontent.com/automl/auto-sklearn/${VERSION}/requirements.txt"
-PIP install --no-cache-dir -r $HERE/requirements.txt
+
+if [[ "$VERSION" =~ ^[0-9] ]]; then
+    PIP install --no-cache-dir ${PKG}==${VERSION}
+else
+#    PIP install --no-cache-dir -e git+${REPO}@${VERSION}#egg=${PKG}
+    TARGET_DIR="${HERE}/lib/${PKG}"
+    rm -Rf ${TARGET_DIR}
+    git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
+    PIP install -e ${TARGET_DIR}
+fi
+
