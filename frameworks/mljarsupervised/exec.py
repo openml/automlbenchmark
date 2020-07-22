@@ -1,31 +1,33 @@
-import logging
 import os
-import tempfile as tmp
+import shutil
+import logging
+
 import pandas as pd
-import numpy as np
 import matplotlib
-matplotlib.use('agg')  # no need for tk
+from supervised.automl import AutoML
+
 from frameworks.shared.callee import call_run, result, Timer, touch
 
+matplotlib.use("agg")  # no need for tk
 log = logging.getLogger(os.path.basename(__file__))
-
-import supervised
-from supervised.automl import AutoML
-import shutil
-
 
 def make_subdir(name, config):
     subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
     touch(subdir, as_dir=True)
     return subdir
 
+
 def run(dataset, config):
     log.info("\n**** mljar-supervised ****\n")
 
     column_names, _ = zip(*dataset.columns)
     column_types = dict(dataset.columns)
-    X_train = pd.DataFrame(dataset.train.X, columns=column_names).astype(column_types, copy=False)
-    X_test = pd.DataFrame(dataset.test.X, columns=column_names).astype(column_types, copy=False)
+    X_train = pd.DataFrame(dataset.train.X, columns=column_names).astype(
+        column_types, copy=False
+    )
+    X_test = pd.DataFrame(dataset.test.X, columns=column_names).astype(
+        column_types, copy=False
+    )
 
     y_train = dataset.train.y.flatten()
     y_test = dataset.test.y.flatten()
@@ -33,12 +35,16 @@ def run(dataset, config):
     problem_mapping = dict(
         binary="binary_classification",
         multiclass="multiclass_classification",
-        regression="regression"
+        regression="regression",
     )
     is_classification = config.type == "classification"
-    ml_task = problem_mapping.get(dataset.problem_type) # if None the AutoML will guess about the ML task
-    results_path = make_subdir("results", config)    
-    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    ml_task = problem_mapping.get(
+        dataset.problem_type
+    )  # if None the AutoML will guess about the ML task
+    results_path = make_subdir("results", config)
+    training_params = {
+        k: v for k, v in config.framework_params.items() if not k.startswith("_")
+    }
 
     automl = AutoML(
         results_path=results_path,
@@ -47,7 +53,7 @@ def run(dataset, config):
         ml_task=ml_task,
         **training_params
     )
-    
+
     with Timer() as training:
         automl.fit(X_train, y_train)
 
@@ -60,8 +66,8 @@ def run(dataset, config):
     else:
         predictions = preds["prediction"].values
 
-    # clean the results 
-    if not config.framework_params.get('_save_artifacts', False):
+    # clean the results
+    if not config.framework_params.get("_save_artifacts", False):
         shutil.rmtree(results_path, ignore_errors=True)
 
     return result(

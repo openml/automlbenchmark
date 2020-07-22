@@ -111,9 +111,9 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
 
 mljarsupervised:
-  version: '0.3.5'
+  version: '0.5.5'
   project: https://github.com/mljar/mljar-supervised
   params:
-    explain_level: 0   # unnecessary for benchmarks and time-consuming
+    mode: "Compete"   # set mode for Compete, default mode is Explain
 #    algorithms: ["Baseline"]
 #    _save_artifacts: True
