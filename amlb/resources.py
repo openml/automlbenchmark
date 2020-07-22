@@ -209,8 +209,11 @@ class Resources:
         if framework['module'] is None:
             framework.module = '.'.join([self.config.frameworks.root_module, framework.name])
 
+        if framework['version'] is None:
+            framework.version = 'latest'
+
         if framework['setup_args'] is None:
-            framework.setup_args = []
+            framework.setup_args = [framework.version] if framework['repo'] is None else [framework.version, framework.repo]
         elif isinstance(framework.setup_args, str):
             framework.setup_args = [framework.setup_args]
 
@@ -235,9 +238,6 @@ class Resources:
             framework.params = dict()
         else:
             framework.params = Namespace.dict(framework.params)
-
-        if framework['version'] is None:
-            framework.version = 'latest'
 
         did = copy.copy(self.config.docker.image_defaults)
         if framework['image'] is None:

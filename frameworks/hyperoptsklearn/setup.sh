@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-
-. $HERE/../shared/setup.sh $HERE
-
-TARGET_DIR="$HERE/lib/hyperopt-sklearn"
-if [[ ! -e "$TARGET_DIR" ]]; then
-    git clone https://github.com/hyperopt/hyperopt-sklearn.git $TARGET_DIR
+VERSION=${1:-"latest"}
+REPO=${2:-"https://github.com/hyperopt/hyperopt-sklearn.git"}
+PKG=${3:-"hyperopt-sklearn"}
+if [[ "$VERSION" == "latest" ]]; then
+    VERSION="master"
 fi
-#PIP install --no-cache-dir -e $TARGET_DIR[xgboost]
-PIP install --no-cache-dir -e $TARGET_DIR
-PIP install --no-cache-dir -r $HERE/requirements.txt
+
+. ${HERE}/../shared/setup.sh ${HERE}
+
+if [[ "$VERSION" =~ ^[0-9] ]]; then
+    PIP install --no-cache-dir ${PKG}==${VERSION}
+else
+#    PIP install --no-cache-dir -e git+${REPO}@${VERSION}#egg=${PKG}
+    LIB=$(echo ${PKG} | sed "s/\[.*\]//")
+    TARGET_DIR="${HERE}/lib/${LIB}"
+    rm -Rf ${TARGET_DIR}
+    git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
+    PIP install -e ${HERE}/lib/${PKG}
+fi

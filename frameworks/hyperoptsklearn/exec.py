@@ -2,7 +2,6 @@ import functools as ft
 import logging
 import os
 import signal
-import sys
 import tempfile as tmp
 
 from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
@@ -12,7 +11,6 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-sys.path.append("{}/lib/hyperopt-sklearn".format(dir_of(__file__)))
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 from hyperopt import tpe
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
