@@ -6,16 +6,10 @@ import pandas as pd
 import matplotlib
 from supervised.automl import AutoML
 
-from frameworks.shared.callee import call_run, result, Timer, touch
+from frameworks.shared.callee import call_run, result, Timer, touch, output_subdir
 
 matplotlib.use("agg")  # no need for tk
 log = logging.getLogger(os.path.basename(__file__))
-
-def make_subdir(name, config):
-    subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
-    touch(subdir, as_dir=True)
-    return subdir
-
 
 def run(dataset, config):
     log.info("\n**** mljar-supervised ****\n")
@@ -41,7 +35,7 @@ def run(dataset, config):
     ml_task = problem_mapping.get(
         dataset.problem_type
     )  # if None the AutoML will guess about the ML task
-    results_path = make_subdir("results", config)
+    results_path = output_subdir("results", config)
     training_params = {
         k: v for k, v in config.framework_params.items() if not k.startswith("_")
     }
