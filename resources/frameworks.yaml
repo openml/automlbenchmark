@@ -68,6 +68,14 @@ AutoWEKA:
   version: '2.6'
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
+MLPlanWEKA:
+  version: 'latest'
+  project: https://mlplan.org
+
+MLPlanSKLearn:
+  version: 'latest'
+  project: https://mlplan.org
+
 H2OAutoML:
   version: '3.30.0.3'
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
