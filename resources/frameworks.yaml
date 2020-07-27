@@ -87,8 +87,9 @@ H2OAutoML:
 hyperoptsklearn:
   version: 'latest'
   project: http://hyperopt.github.io/hyperopt-sklearn/
-  params:
-    max_evals: 1000
+#  params:
+#    max_evals: 1000
+#    algo: hyperopt.tpe.suggest
 #    verbose: true
 
 oboe:
