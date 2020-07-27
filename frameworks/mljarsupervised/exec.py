@@ -4,11 +4,12 @@ import logging
 
 import pandas as pd
 import matplotlib
+matplotlib.use("agg")  # no need for tk
+
 from supervised.automl import AutoML
 
 from frameworks.shared.callee import call_run, result, Timer, touch, output_subdir
 
-matplotlib.use("agg")  # no need for tk
 log = logging.getLogger(os.path.basename(__file__))
 
 def run(dataset, config):
