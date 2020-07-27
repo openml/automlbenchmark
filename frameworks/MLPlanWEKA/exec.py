@@ -39,7 +39,10 @@ def run(dataset: Dataset, config: TaskConfig):
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
-    cmd_root = "java -jar {here}/lib/mlplan/mlplan-cli*.jar ".format(here=dir_of(__file__))
+    mem_limit = str(max(config.max_mem_size_mb-1024,2048))
+    log.info("Using {}MB as maximum memory for java".format(mem_limit))
+
+    cmd_root = "java -jar -Xmx"+ mem_limit +"M {here}/lib/mlplan/mlplan-cli*.jar ".format(here=dir_of(__file__))
     cmd_params = dict(
         f='"{}"'.format(train_file),
         p='"{}"'.format(test_file),

@@ -14,16 +14,17 @@ log = logging.getLogger(__name__)
 def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** ML-Plan for scikit-learn ****\n")
 
-    is_classification = config.type == "classification"
-    if not is_classification:
-	    raise ValueError('ML-Plan for scikit-learn does not support regression')
-
     # Mapping of benchmark metrics to Weka metrics
     metrics_mapping = dict(
         acc='ERRORRATE',
         auc='AUC',
         logloss='LOGLOSS',
-	    f1='F1'
+	f1='F1',
+	r2='R2',
+	rmse='ROOT_MEAN_SQUARED_ERROR',
+	mse='MEAN_SQUARED_ERROR',
+	rmsle='ROOT_MEAN_SQUARED_LOGARITHM_ERROR',
+	mae='MEAN_ABSOLUTE_ERROR'
     )
     metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if metric is None:
@@ -40,7 +41,6 @@ def run(dataset: Dataset, config: TaskConfig):
 
     cmd_root = "java -jar {here}/lib/mlplan/mlplan-cli*.jar ".format(here=dir_of(__file__))
     cmd_params = dict(
-	    m='sklearn',
         f='"{}"'.format(train_file),
         p='"{}"'.format(test_file),
         t=config.max_runtime_seconds,
@@ -50,6 +50,11 @@ def run(dataset: Dataset, config: TaskConfig):
 	    ooab=config.output_predictions_file,
         **training_params
     )
+
+    if config.type == 'regression':
+	    cmd_params.update({'m': 'sklearn-regression'})
+    else:
+	    cmd_params.update({'m': 'sklearn'})
 
     cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
 
