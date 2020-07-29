@@ -52,12 +52,6 @@ class Benchmark:
     data_loader = None
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
-        """
-
-        :param framework_name:
-        :param benchmark_name:
-        :param constraint_name:
-        """
         if rconfig().run_mode == 'script':
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None

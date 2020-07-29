@@ -4,6 +4,7 @@ as well as handy methods to access other resources like *automl frameworks* and 
 """
 import copy
 import logging
+import openml
 import os
 import random
 import re
@@ -165,34 +166,48 @@ class Resources:
     # @memoize
     def benchmark_definition(self, name, defaults=None):
         """
-        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
+        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
         benchmark_name = name
-        benchmark_dir = self.config.benchmarks.definition_dir
-        if not isinstance(benchmark_dir, list):
-            benchmark_dir = [benchmark_dir]
 
-        benchmark_file = None
-        for bd in benchmark_dir:
-            bf = os.path.join(bd, "{}.yaml".format(benchmark_name))
-            if os.path.exists(bf):
-                benchmark_file = bf
-                break
+        try:
+            study_id = int(benchmark_name)
+        except ValueError:
+            study_id = None
 
-        if benchmark_file is None:
-            benchmark_file = name
-            benchmark_name, _ = os.path.splitext(os.path.basename(name))
+        if study_id:
+            study = openml.study.get_suite(study_id)
+            oml_tasks = [openml.tasks.get_task(tid, download_data=False) for tid in study.tasks]
+            oml_datasets = [openml.datasets.get_dataset(t.dataset_id, download_data=False) for t in oml_tasks]
+            tasks = [Namespace(name=d.name, description=d.description, openml_task_id=t.id) for t, d in zip(oml_tasks, oml_datasets)]
+            hard_defaults = Namespace()
+            benchmark_file = "study_{}".format(study_id)
+        else:
+            benchmark_dir = self.config.benchmarks.definition_dir
+            if not isinstance(benchmark_dir, list):
+                benchmark_dir = [benchmark_dir]
 
-        if not os.path.exists(benchmark_file):
-            # should we support s3 and check for s3 path before raising error?
-            raise ValueError("Incorrect benchmark name or path `{}`, name not available in {}.".format(name, self.config.benchmarks.definition_dir))
+            benchmark_file = None
+            for bd in benchmark_dir:
+                bf = os.path.join(bd, "{}.yaml".format(benchmark_name))
+                if os.path.exists(bf):
+                    benchmark_file = bf
+                    break
 
-        log.info("Loading benchmark definitions from %s.", benchmark_file)
-        tasks = config_load(benchmark_file)
-        hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
-        tasks = [task for task in tasks if task is not hard_defaults]
+            if benchmark_file is None:
+                benchmark_file = name
+                benchmark_name, _ = os.path.splitext(os.path.basename(name))
+
+            if not os.path.exists(benchmark_file):
+                # should we support s3 and check for s3 path before raising error?
+                raise ValueError("Incorrect benchmark name or path `{}`, name not available in {}.".format(name, self.config.benchmarks.definition_dir))
+
+            log.info("Loading benchmark definitions from %s.", benchmark_file)
+            tasks = config_load(benchmark_file)
+            hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
+            tasks = [task for task in tasks if task is not hard_defaults]
 
         defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:

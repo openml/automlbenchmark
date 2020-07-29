@@ -15,8 +15,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('framework', type=str,
                     help="The framework to evaluate as defined by default in resources/frameworks.yaml.")
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
-                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml "
-                         "or the path to a benchmark description file. Defaults to `%(default)s`.")
+                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, "
+                         "a path to a benchmark description file, or an openml suite ID. Defaults to `%(default)s`.")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
                     help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
 parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws', 'singularity'], default='local',
