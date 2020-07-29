@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-. $HERE/../shared/setup.sh $HERE
+. $HERE/../shared/setup.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     echo "Install system dependencies."
     SUDO apt-get update
     SUDO apt-get install -y wget unzip openjdk-11-jdk
 fi
 
-PIP install --no-cache-dir -r $HERE/requirements.txt
+pip3 install --no-cache-dir -r $HERE/requirements.txt
+
 MLPLAN_ARC="mlplan.zip"
 DOWNLOAD_DIR="$HERE/lib"
 TARGET_DIR="$DOWNLOAD_DIR/mlplan"
