@@ -24,62 +24,75 @@ def run(dataset, config):
         rmsle='ROOT_MEAN_SQUARED_LOGARITHM_ERROR',
         mae='MEAN_ABSOLUTE_ERROR'
     )
+
     metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if metric is None:
 	    raise ValueError('Performance metric {} is not supported.'.format(config.metric))
     
     train_file = dataset.train.path
     test_file = dataset.test.path
-    # Weka requires target as the last attribute
-    if dataset.target.index != len(dataset.predictors):
-        train_file = reorder_dataset(dataset.train.path, target_src=dataset.target.index)
-        test_file = reorder_dataset(dataset.test.path, target_src=dataset.target.index)
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
-	
-	backend = config.framework_params.get('_backend', 'weka')
-	
+    backend = config.framework_params.get('_backend', 'weka')
+
     if backend == "weka":
         mem_limit = str(max(config.max_mem_size_mb-1024,2048))
     else:
         mem_limit = str(max((config.max_mem_size_mb-1024) / config.cores,2048))
 
     mode = backend
-	if config.type == 'regression':
-	    mode += '-regression'
-	
+    if config.type == 'regression':
+        mode += '-regression'
+
     log.info("Running ML-Plan with backend %s in mode %s and a maximum time of %ss on %s cores with %sMB for the JVM, optimizing %s.", backend, mode, config.max_runtime_seconds, config.cores, config.max_mem_size_mb, metric)
     log.info("Environment: %s", os.environ)
-	
-	predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
-	statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
 
-    cmd_root = "java -jar {here}/lib/mlplan/mlplan-cli*.jar -Xmx{mem_mb}M".format(here=dir_of(__file__),mem_mb=mem_limit)
+    predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
+    statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
+
+
+    cmd_root = "java -jar -Xmx{mem_mb}M {here}/lib/mlplan/mlplan-cli*.jar ".format(here=os.path.dirname(__file__),mem_mb=mem_limit)
     cmd_params = dict(
         f='"{}"'.format(train_file),
         p='"{}"'.format(test_file),
         t=config.max_runtime_seconds,
         ncpus=config.cores,
         l=metric,
-		m=mode,
-	    s=config.seed,   # weka accepts only int16 as seeds
-	    ooab=predictions_file,
+        m=mode,
+        s=config.seed,   # weka accepts only int16 as seeds
+        ooab=predictions_file,
+        os=statistics_file,
         **training_params
     )
 
     cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
 
-    with Timer() as training:
-        run_cmd(cmd, _live_output_=True)
+    with utils.Timer() as training:
+        utils.run_cmd(cmd, _live_output_=True)
+
+    with open(statistics_file, 'r') as f:
+        stats = json.load(f)
+
+    predictions = stats["predictions"]
+    truth = stats["truth"]
+    numEvals = stats["num_evaluations"]
+
+    # only for classification tasks we have probabilities available, thus check whether the json contains the respective fields
+    if "probabilities" in stats and "probabilities_labels" in stats:
+        probabilities = stats["probabilities"]
+        probabilities_labels = stats["probabilities_labels"]
+    else:
+        probabilities = []
+        probabilities_labels = []
 
     return result(
-	    output_file=config.output_predictions_file,
-		predictions=predictions,
-		truth=y_test,
-		probabilities=probabilities,
-		probabilities_labels=probabilities_labels,
-		target_is_encoded=is_classification,
-		models_count=models_count,
+        output_file=config.output_predictions_file,
+        predictions=predictions,
+        truth=truth,
+        probabilities=probabilities,
+        probabilities_labels=probabilities_labels,
+        target_is_encoded=is_classification,
+        models_count=numEvals,
         training_duration=training.duration
     )
 
