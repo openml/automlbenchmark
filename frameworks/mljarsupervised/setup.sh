@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${1:-"latest"}
-REPO=${2:-"https://github.com/hyperopt/hyperopt-sklearn.git"}
-PKG=${3:-"hyperopt-sklearn"}
+AMLB_DIR="$1"
+VERSION=${2:-"latest"}
+REPO=${3:-"https://github.com/mljar/mljar-supervised.git"}
+PKG=${4:-"mljar-supervised"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
 
-. ${HERE}/../shared/setup.sh ${HERE}
+# creating local venv
+. $HERE/../shared/setup.sh $HERE
+
+if [[ -x "$(command -v apt-get)" ]]; then
+    SUDO apt-get install -y build-essential swig
+fi
 
 if [[ "$VERSION" =~ ^[0-9] ]]; then
     PIP install --no-cache-dir ${PKG}==${VERSION}
 else
 #    PIP install --no-cache-dir -e git+${REPO}@${VERSION}#egg=${PKG}
-    LIB=$(echo ${PKG} | sed "s/\[.*\]//")
-    TARGET_DIR="${HERE}/lib/${LIB}"
+    TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
-    PIP install -e ${HERE}/lib/${PKG}
+    PIP install -e ${TARGET_DIR}
 fi

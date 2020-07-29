@@ -2,7 +2,6 @@ import functools as ft
 import logging
 import os
 import signal
-import sys
 import tempfile as tmp
 
 from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
@@ -12,9 +11,8 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-sys.path.append("{}/lib/hyperopt-sklearn".format(dir_of(__file__)))
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
-from hyperopt import tpe
+import hyperopt
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
 
 log = logging.getLogger(__name__)
@@ -45,6 +43,8 @@ def run(dataset, config):
         loss_fn = None
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    if 'algo' in training_params:
+        training_params['algo'] = eval(training_params['algo'])  # evil eval: use get_extensions instead once https://github.com/openml/automlbenchmark/pull/141 is merged
 
     log.warning("Ignoring cores constraint of %s cores.", config.cores)
     log.info("Running hyperopt-sklearn with a maximum time of %ss on %s cores, optimizing %s.",
@@ -62,7 +62,6 @@ def run(dataset, config):
 
     estimator = HyperoptEstimator(classifier=classifier,
                                   regressor=regressor,
-                                  algo=tpe.suggest,
                                   loss_fn=loss_fn,
                                   continuous_loss_fn=continuous_loss_fn,
                                   trial_timeout=config.max_runtime_seconds,
