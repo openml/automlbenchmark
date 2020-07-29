@@ -69,13 +69,20 @@ AutoWEKA:
   version: '2.6'
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
-MLPlanWEKA:
-  version: 'latest'
+MLPlan:
+  module: frameworks.MLPlan
+  version: '0.2.3'
   project: https://mlplan.org
 
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
 MLPlanSKLearn:
-  version: 'latest'
-  project: https://mlplan.org
+  extends: MLPlan
+  params:
+    _backend: sklearn
 
 autoxgboost:
   version: 'latest'
