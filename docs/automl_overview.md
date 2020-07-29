@@ -217,11 +217,11 @@ Komer, Brent, James Bergstra, and Chris Eliasmith (2014).
 [source](https://github.com/starlibs/AILibs) |
 [documentation](https://starlibs.github.io/AILibs/projects/mlplan/) |
 Java |
-Optimization: Best-First Search on a search graph induced through Hierachical Task Network Planning | -
+Optimization: Best-First Search on a search graph induced through Hierachical Task Network Planning | AGPL-3.0
 
 > a new approach to AutoML based on hierarchical planning
 
-ML-Plan organizes the search space of possible AutoML solution candidates via Hierarchical Task Network (HTN) planning.
+ML-Plan organizes the search space of possible solution candidates via Hierarchical Task Network (HTN) planning.
 It works with both WEKA and scikit-learn backends and can be used to deal with classification, regression, multi-label classification, and remaining useful lifetime estimation tasks.
 ML-Plan is under active development.
 
