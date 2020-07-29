@@ -79,13 +79,14 @@ def run_in_venv(caller_file, script_file: str, *args,
         if callable(process_results):
             res = process_results(res)
 
-        save_predictions_to_file(dataset=dataset,
-                                 output_file=res.output_file,
-                                 predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
-                                 truth=res.truth.reshape(-1) if res.truth is not None else None,
-                                 probabilities=res.probabilities,
-                                 probabilities_labels=res.probabilities_labels,
-                                 target_is_encoded=res.target_is_encoded)
+        if res.output_file:
+            save_predictions_to_file(dataset=dataset,
+                                     output_file=res.output_file,
+                                     predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
+                                     truth=res.truth.reshape(-1) if res.truth is not None else None,
+                                     probabilities=res.probabilities,
+                                     probabilities_labels=res.probabilities_labels,
+                                     target_is_encoded=res.target_is_encoded)
 
         return dict(
             models_count=res.models_count if res.models_count is not None else 1,
