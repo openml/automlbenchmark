@@ -4,7 +4,6 @@ as well as handy methods to access other resources like *automl frameworks* and 
 """
 import copy
 import logging
-import openml
 import os
 import random
 import re
@@ -171,7 +170,7 @@ class Resources:
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
-        hard_defaults, tasks, benchmark_file, benchmark_name = benchmark_load(name, self.config.benchmarks.definition_dir)
+        hard_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(name, self.config.benchmarks.definition_dir)
 
         defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:
@@ -182,7 +181,7 @@ class Resources:
         defaults.enabled = False
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
-        return tasks, benchmark_name, benchmark_file
+        return tasks, benchmark_name, benchmark_path
 
     def _validate_framework(self, framework):
         if framework['module'] is None:

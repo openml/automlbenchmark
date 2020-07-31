@@ -1,9 +1,8 @@
 import logging
 import os
-from typing import List
+from typing import List, Tuple, Optional
 
-from amlb.utils import config_load
-
+from amlb.utils import config_load, Namespace
 
 log = logging.getLogger(__name__)
 
@@ -26,9 +25,10 @@ def _find_local_benchmark_definition(name: str, benchmark_definition_dirs: List[
             name, benchmark_definition_dirs))
 
 
-def load_file_benchmark(name: str, benchmark_definition_dirs: List[str]):
+def load_file_benchmark(name: str, benchmark_definition_dirs: List[str]) -> Tuple[str, Optional[str], List[Namespace]]:
+    """ Loads benchmark from a local file. """
     benchmark_file = _find_local_benchmark_definition(name, benchmark_definition_dirs)
     log.info("Loading benchmark definitions from %s.", benchmark_file)
     tasks = config_load(benchmark_file)
     benchmark_name, _ = os.path.splitext(os.path.basename(benchmark_file))
-    return benchmark_name, tasks
+    return benchmark_name, benchmark_file, tasks
