@@ -1,9 +1,8 @@
 import os
-from typing import Tuple, List
+from typing import List
 
-from amlb.utils import Namespace
-from .openml import is_openml_benchmark, oml_benchmark_to_tasks
-from .file import file_benchmark_to_tasks
+from .openml import is_openml_benchmark, load_oml_benchmark
+from .file import load_file_benchmark
 
 
 def benchmark_load(name, benchmark_definition_dirs: List[str]):
@@ -11,16 +10,11 @@ def benchmark_load(name, benchmark_definition_dirs: List[str]):
     # but local file benchmark can require probing from disk to see if it is valid,
     # which is why it is tried last.
     if is_openml_benchmark(name):
-        tasks = oml_benchmark_to_tasks(name)
-        benchmark_name = "study_{}".format(name.split('/')[-1])
+        benchmark_name, tasks = load_oml_benchmark(name)
     # elif is_kaggle_benchmark(name):
     else:
-        tasks = file_benchmark_to_tasks(name, benchmark_definition_dirs)
-        benchmark_name, _ = os.path.splitext(os.path.basename(name))
+        benchmark_name, tasks = load_file_benchmark(name, benchmark_definition_dirs)
 
     hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
     tasks = [task for task in tasks if task is not hard_defaults]
-    return hard_defaults, tasks, 'test_file_name'
-
-
-
+    return hard_defaults, tasks, 'test_file_name', benchmark_name

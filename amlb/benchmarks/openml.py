@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import List, Union, Tuple
 
 import openml
 
@@ -26,20 +26,25 @@ def is_openml_benchmark(benchmark: str) -> bool:
     return False
 
 
-def oml_benchmark_to_tasks(benchmark: str) -> List[Namespace]:
+def load_oml_benchmark(benchmark: str) -> Tuple[str, List[Namespace]]:
     domain, oml_type, oml_id = benchmark.split('/')
     if oml_type == 't':
         log.info("Loading openml task %s.", oml_id)
-        return [oml_task_to_ns(oml_id)]
+        # We first have the retrieve the task because we don't know the dataset id
+        t = openml.tasks.get_task(oml_id, download_data=False)
+        data = openml.datasets.get_dataset(t.dataset_id, download_data=False)
+        return "task_{}".format(oml_id), [Namespace(name=data.name, description=data.description, openml_task_id=t.id)]
     elif oml_type == 's':
         log.info("Loading openml study %s.", oml_id)
         study = openml.study.get_suite(oml_id)
-        return [oml_task_to_ns(task_id) for task_id in study.tasks]
+        name = "study_{}".format(oml_id) if study.alias is None else study.alias
+
+        # Here we know the (task, dataset) pairs so only download dataset meta-data is sufficient
+        tasks = []
+        for tid, did in zip(study.tasks, study.data):
+            data = openml.datasets.get_dataset(did, download_data=False)
+            tasks.append(Namespace(name=data.name, description=data.description, openml_task_id=tid))
+
+        return name, tasks
     else:
         raise ValueError("The oml_type is {} but must be 's' or 't'".format(oml_type))
-
-
-def oml_task_to_ns(task_id: Union[str, int]) -> Namespace:
-    t = openml.tasks.get_task(task_id, download_data=False)
-    data = openml.datasets.get_dataset(t.dataset_id, download_data=False)
-    return Namespace(name=data.name, description=data.description, openml_task_id=t.id)

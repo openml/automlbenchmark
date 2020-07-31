@@ -171,8 +171,7 @@ class Resources:
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
-        benchmark_name = name
-        hard_defaults, tasks, benchmark_file = benchmark_load(name, self.config.benchmarks.definition_dir)
+        hard_defaults, tasks, benchmark_file, benchmark_name = benchmark_load(name, self.config.benchmarks.definition_dir)
 
         defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:

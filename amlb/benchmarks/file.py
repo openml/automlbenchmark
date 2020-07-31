@@ -26,9 +26,9 @@ def _find_local_benchmark_definition(name: str, benchmark_definition_dirs: List[
             name, benchmark_definition_dirs))
 
 
-def file_benchmark_to_tasks(name: str, benchmark_definition_dirs: List[str]):
+def load_file_benchmark(name: str, benchmark_definition_dirs: List[str]):
     benchmark_file = _find_local_benchmark_definition(name, benchmark_definition_dirs)
     log.info("Loading benchmark definitions from %s.", benchmark_file)
     tasks = config_load(benchmark_file)
     benchmark_name, _ = os.path.splitext(os.path.basename(benchmark_file))
-    return tasks
+    return benchmark_name, tasks
