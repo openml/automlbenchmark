@@ -109,3 +109,7 @@ GAMA:
 autoxgboost:
   version: '0.0.0.9000'
   project: https://github.com/ja-thomas/autoxgboost
+
+mlr3automl:
+  version: '0.0.0.9000'
+  project: https://github.com/a-hanf/mlr3automl
