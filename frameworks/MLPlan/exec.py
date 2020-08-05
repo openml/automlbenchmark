@@ -36,9 +36,9 @@ def run(dataset, config):
     backend = config.framework_params.get('_backend', 'weka')
 
     if backend == "weka":
-        mem_limit = str(max(config.max_mem_size_mb-1024,2048))
+        mem_limit = str(max(config.max_mem_size_mb-1024, 2048))
     else:
-        mem_limit = str(max((config.max_mem_size_mb-1024) / config.cores,2048))
+        mem_limit = str(max(round((config.max_mem_size_mb-1024) / config.cores), 2048))
 
     mode = backend
     if config.type == 'regression':
