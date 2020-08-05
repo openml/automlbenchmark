@@ -24,8 +24,9 @@ def run_in_venv(caller_file, script_file: str, *args,
                 python_exec=None):
 
     here = dir_of(caller_file)
+    venv_bin_path = os.path.join(here, 'venv', 'bin')
     if python_exec is None:  # use local virtual env by default
-        python_exec = os.path.join(here, 'venv/bin/python -W ignore')
+        python_exec = os.path.join(venv_bin_path, 'python -W ignore')
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
@@ -54,7 +55,10 @@ def run_in_venv(caller_file, script_file: str, *args,
                                   _live_output_=True,
                                   _error_level_=logging.DEBUG,
                                   _env_=dict(
-                                      PATH=os.environ['PATH'],
+                                      PATH=os.pathsep.join([
+                                          venv_bin_path,
+                                          os.environ['PATH']
+                                      ]),
                                       PYTHONPATH=os.pathsep.join([
                                           rconfig().root_dir,
                                           os.path.join(rconfig().root_dir, "amlb"),
