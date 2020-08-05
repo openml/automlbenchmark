@@ -62,6 +62,7 @@ def run(dataset, config):
         s=config.seed,   # weka accepts only int16 as seeds
         ooab=predictions_file,
         os=statistics_file,
+        tmp=os.TmpDir,
         **training_params
     )
 
