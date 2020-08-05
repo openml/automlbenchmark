@@ -9,6 +9,7 @@ echo "Setup ML-Plan for version $VERSION"
 
 if [[ -x "$(command -v apt-get)" ]]; then
     echo "setup system packages"
+    SUDO apt-get update
     SUDO apt-get install -y wget unzip openjdk-11-jdk
     SUDO apt-get install -y libatlas3-base libopenblas-base
 fi
