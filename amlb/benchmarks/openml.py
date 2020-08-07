@@ -15,7 +15,7 @@ def is_openml_benchmark(benchmark: str) -> bool:
         domain, oml_type, oml_id = benchmark.split('/')
         supported_types = ['s', 't']
 
-        if oml_id.isdecimal() and float(oml_id).is_integer() and int(oml_id) > 0:
+        if oml_id.isdecimal():
             return domain == "openml" and oml_type in supported_types
     return False
 
