@@ -14,15 +14,13 @@ def _find_local_benchmark_definition(name: str, benchmark_definition_dirs: List[
         return name
 
     for bd in benchmark_definition_dirs:
-        bf = os.path.join(bd, "{}.yaml".format(name))
+        bf = os.path.join(bd, f"{name}.yaml")
         if os.path.exists(bf):
             # We don't account for duplicate definitions (yet).
             return bf
 
     # should we support s3 and check for s3 path before raising error?
-    raise ValueError(
-        "Incorrect benchmark name or path `{}`, name not available in {}.".format(
-            name, benchmark_definition_dirs))
+    raise ValueError(f"Incorrect benchmark name or path `{name}`, name not available in {benchmark_definition_dirs}.")
 
 
 def load_file_benchmark(name: str, benchmark_definition_dirs: List[str]) -> Tuple[str, Optional[str], List[Namespace]]:
