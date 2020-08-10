@@ -256,7 +256,7 @@ class AWSBenchmark(Benchmark):
                 instance_def,
                 script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self.framework_name,
-                    benchmark=(self.benchmark_name if self.benchmark_path.startswith(rconfig().root_dir)
+                    benchmark=(self.benchmark_name if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
                                else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
                     constraint=self.constraint_name,
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
@@ -625,7 +625,8 @@ class AWSBenchmark(Benchmark):
         return self._s3_input(name) if in_input_dir else self._s3_user(name)
 
     def _upload_resources(self):
-        upload_paths = [self.benchmark_path] + rconfig().aws.resource_files
+        default_paths = [self.benchmark_path] if self.benchmark_path is not None else []
+        upload_paths = default_paths + rconfig().aws.resource_files
         upload_files = list_all_files(upload_paths, file_filter(exclude=rconfig().aws.resource_ignore))
         log.debug("Uploading files to S3: %s", upload_files)
         uploaded_resources = []
