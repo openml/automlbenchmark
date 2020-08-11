@@ -9,6 +9,7 @@ import random
 import re
 import sys
 
+from amlb.benchmarks.parser import benchmark_load
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
 
 
@@ -165,34 +166,11 @@ class Resources:
     # @memoize
     def benchmark_definition(self, name, defaults=None):
         """
-        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
+        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
-        benchmark_name = name
-        benchmark_dir = self.config.benchmarks.definition_dir
-        if not isinstance(benchmark_dir, list):
-            benchmark_dir = [benchmark_dir]
-
-        benchmark_file = None
-        for bd in benchmark_dir:
-            bf = os.path.join(bd, "{}.yaml".format(benchmark_name))
-            if os.path.exists(bf):
-                benchmark_file = bf
-                break
-
-        if benchmark_file is None:
-            benchmark_file = name
-            benchmark_name, _ = os.path.splitext(os.path.basename(name))
-
-        if not os.path.exists(benchmark_file):
-            # should we support s3 and check for s3 path before raising error?
-            raise ValueError("Incorrect benchmark name or path `{}`, name not available in {}.".format(name, self.config.benchmarks.definition_dir))
-
-        log.info("Loading benchmark definitions from %s.", benchmark_file)
-        tasks = config_load(benchmark_file)
-        hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
-        tasks = [task for task in tasks if task is not hard_defaults]
+        hard_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(name, self.config.benchmarks.definition_dir)
 
         defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:
@@ -203,7 +181,7 @@ class Resources:
         defaults.enabled = False
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
-        return tasks, benchmark_name, benchmark_file
+        return tasks, benchmark_name, benchmark_path
 
     def _validate_framework(self, framework):
         if framework['module'] is None:

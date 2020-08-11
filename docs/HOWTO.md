@@ -112,7 +112,8 @@ Each dataset must contain a training set and a test set. There can be multiple t
 
 ### Datasets definition
 
-A dataset definition consists in a `yaml` file listing all the task/datasets that will used for the complete benchmark.
+A dataset definition consists in a `yaml` file listing all the task/datasets that will used for the complete benchmark, 
+or as an OpenML suite.
 
 Default dataset definitions are available under folder `resources/benchmarks`.
 
@@ -154,11 +155,10 @@ The automlbenchmark application can directly consume those tasks using the follo
 ```
 where `openml_task_id` allows accessing the OpenML task at `https://www.openml.org/t/{openml_task_id}` (in this example: <https://www.openml.org/t/9910>). 
 
-
-#### OpenML studies
-
-[OpenML] studies are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
-The application doesn't directly support OpenML studies for now: they need to be converted into a proper benchmark definition file including all the tasks from the study, but we're thinking about improving this: cf. <https://github.com/openml/automlbenchmark/issues/61>.
+Alternatively, you can run the benchmark on a single OpenML task without writing a benchmark definition:
+```bash
+python runbenchmark.py randomforest openml/t/59
+```
 
 #### File datasets
 
@@ -243,6 +243,19 @@ Then the datasets can be declared in the benchmark definition file as follow:
   0. using the last column as a fallback.
 - the `folds` attribute is also optional but recommended for those datasets as the default value is `folds=10` (default amount of folds in openml datasets), so if you don't have that many folds for your custom datasets, it is better to declare it explicitly here.
 - Remote files are downloaded to the `input_dir` folder and archives are decompressed there as well, so you may want to change the value of this folder in your [custom config.yaml file](#custom-configuration) or specify it at the command line with the `-i` or `--indir` argument (by default, it points to the `~/.openml/cache` folder).
+
+#### OpenML suites
+
+[OpenML] suites are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
+You can run the benchmark on an openml suite directly, without defining the benchmark in a local file:
+```bash
+python runbenchmark.py randomforest openml/s/218
+```
+
+You can define a new OpenML suite yourself, for example through the Python API.
+[This openml-python tutorial](https://openml.github.io/openml-python/master/examples/30_extended/suites_tutorial.html#sphx-glr-examples-30-extended-suites-tutorial-py)
+explains how to build your own suite.
+An advantage of using an OpenML suite is that sharing it is easy as the suite and its datasets can be accessed through APIs in many programming languages.
 
 ### Constraints definition
 

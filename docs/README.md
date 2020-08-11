@@ -57,11 +57,17 @@ Optional: create a Python3 virtual environment.
 _Those virtual environments are created internally using `python -m venv` and we encountered issues with `pip` when `venv` is used on top of a `virtualenv` environment._
 _Therefore, we rather suggest one of the method below:_ 
 
-using venv:
+using venv on Linux/macOS:
 ```bash
 python3 -m venv ./venv
 source venv/bin/activate
 # remember to call `deactivate` once you're done using the application
+```
+using venv on Windows:
+```bash
+python3 -m venv ./venv
+venv\Scripts\activate
+# remember to call `venv\Scripts\deactivate` once you're done using the application
 ```
 
 or using pyenv:
@@ -85,7 +91,7 @@ pip3 install -r requirements.txt
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
 
 1. The AutoML framework that should be evaluated, see [frameworks.yaml](../resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [HOWTO](./HOWTO.md#add-an-automl-framework).
-2. The benchmark suite to run should be one implemented in [benchmarks folder](../resources/benchmarks).
+2. The benchmark suite to run should be one implemented in [benchmarks folder](../resources/benchmarks), or an OpenML study or task (formatted as `openml/s/X` or `openml/t/Y` respectively).
 3. (Optional) The constraints applied to the benchmark as defined by default in [constraints.yaml](../resources/constraints.yaml). Default constraint is `test` (1 single fold for 10 min).
 4. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
 
@@ -94,7 +100,7 @@ Examples:
 python3 runbenchmark.py 
 python3 runbenchmark.py constantpredictor
 python3 runbenchmark.py tpot test
-python3 runbenchmark.py autosklearn test -m docker
+python3 runbenchmark.py autosklearn openml/t/59 -m docker
 python3 runbenchmark.py h2oautoml validation 1h4c -m aws
 ```
 
@@ -114,9 +120,10 @@ usage: runbenchmark.py [-h] [-m {local,docker,aws}]
 positional arguments:
   framework             The framework to evaluate as defined by default in
                         resources/frameworks.yaml.
-  benchmark             The benchmark type to run as defined by default in
-                        resources/benchmarks/{benchmark}.yaml or the path to a
-                        benchmark description file. Defaults to `test`.
+  benchmark             The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, 
+                        a path to a benchmark description file, or an openml suite or task. 
+                        OpenML references should be formatted as 'openml/s/X'  and 'openml/t/Y', 
+                        for studies and tasks respectively. Defaults to `test`.
   constraint            The constraint definition to use as defined by default in
                         resources/constraints.yaml. Defaults to `test`.
 
@@ -127,8 +134,9 @@ optional arguments:
                         will be running. Defaults to local.
   -t [task_id [task_id ...]], --task [task_id [task_id ...]]
                         The specific task name (as defined in the benchmark
-                        file) to run. If not provided, then all tasks from the
-                        benchmark will be run.
+                        file) to run. When an OpenML reference is used as benchmark, 
+                        the dataset name should be used instead. If not provided, 
+                        then all tasks from the benchmark will be run.
   -f [fold_num [fold_num ...]], --fold [fold_num [fold_num ...]]
                         If task is provided, the specific fold(s) to run. If
                         fold is not provided, then all folds from the task
