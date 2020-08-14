@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import json
+import tempfile
 
 from frameworks.shared.callee import call_run, result, output_subdir, utils
 
@@ -49,27 +50,29 @@ def run(dataset, config):
 
     predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
     statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
-
+    #tmp_dir = output_subdir('mlplan_tmp', config)
 
     cmd_root = "java -jar -Xmx{mem_mb}M {here}/lib/mlplan/mlplan-cli*.jar ".format(here=os.path.dirname(__file__),mem_mb=mem_limit)
-    cmd_params = dict(
-        f='"{}"'.format(train_file),
-        p='"{}"'.format(test_file),
-        t=config.max_runtime_seconds,
-        ncpus=config.cores,
-        l=metric,
-        m=mode,
-        s=config.seed,   # weka accepts only int16 as seeds
-        ooab=predictions_file,
-        os=statistics_file,
-        tmp=utils.os.TmpDir,
-        **training_params
-    )
 
-    cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        cmd_params = dict(
+            f='"{}"'.format(train_file),
+            p='"{}"'.format(test_file),
+            t=config.max_runtime_seconds,
+            ncpus=config.cores,
+            l=metric,
+            m=mode,
+            s=config.seed,   # weka accepts only int16 as seeds
+            ooab=predictions_file,
+            os=statistics_file,
+            tmp=tmp_dir,
+            **training_params
+       )
 
-    with utils.Timer() as training:
-        utils.run_cmd(cmd, _live_output_=True)
+        cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
+
+        with utils.Timer() as training:
+            utils.run_cmd(cmd, _live_output_=True)
 
     with open(statistics_file, 'r') as f:
         stats = json.load(f)

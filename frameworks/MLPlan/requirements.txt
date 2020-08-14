@@ -1,5 +1,6 @@
 setuptools
 
+ruamel.yaml>=0.15,<1.0
 numpy>=1.15,<2.0
 scipy>=1.5,<1.6
 
