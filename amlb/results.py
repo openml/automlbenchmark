@@ -12,6 +12,7 @@ import statistics
 
 import numpy as np
 from numpy import nan, sort
+import pandas as pd
 
 from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
@@ -189,6 +190,8 @@ class TaskResult:
         if os.path.isfile(predictions_file):
             df = read_csv(predictions_file, dtype=object)
             log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
+            if rconfig().test_mode:
+                TaskResult.validate_predictions(df)
             if df.shape[1] > 2:
                 return ClassificationResult(df)
             else:
@@ -247,6 +250,41 @@ class TaskResult:
         backup_file(output_file)
         write_csv(df, path=output_file)
         log.info("Predictions saved to `%s`.", output_file)
+
+    @staticmethod
+    def validate_predictions(predictions: pd.DataFrame):
+        names = predictions.columns.values
+        assert len(names) >= 2, "predictions frame should have 2 columns (regression) or more (classification)"
+        assert names[-1] == "truth", "last column of predictions frame must be named `truth`"
+        assert names[-2] == "predictions", "last column of predictions frame must be named `predictions`"
+        if len(names) == 2:  # regression
+            for name, col in predictions.items():
+                pd.to_numeric(col)  # pandas will raise if we have non-numerical values
+        else:  # classification
+            predictors = names[:-2]
+            probabilities, preds, truth = predictions.iloc[:,:-2], predictions.iloc[:,-2], predictions.iloc[:,-1]
+            assert np.array_equal(predictors, np.sort(predictors)), "Predictors columns are not sorted in lexicographic order."
+            assert set(np.unique(predictors)) == set(predictors), "Predictions contain multiple columns with the same label."
+            for name, col in probabilities.items():
+                pd.to_numeric(col)  # pandas will raise if we have non-numerical values
+
+            if _encode_predictions_and_truth_:
+                assert np.array_equal(truth, truth.astype(int)), "Values in truth column are not encoded."
+                assert np.array_equal(preds, preds.astype(int)), "Values in predictions column are not encoded."
+                predictors_set = set(range(len(predictors)))
+                validate_row = lambda r: r[:-2].astype(float).values.argmax() == r[-2]
+            else:
+                predictors_set = set(predictors)
+                validate_row = lambda r: r[:-2].astype(float).idxmax() == r[-2]
+
+            truth_set = set(truth.unique())
+            if predictors_set < truth_set:
+                log.warning("Truth column contains values unseen during training: no matching probability column.")
+            if predictors_set > truth_set:
+                log.warning("Truth column doesn't contain all the possible target values: the test dataset may be too small.")
+            predictions_set = set(preds.unique())
+            assert predictions_set <= predictors_set, "Predictions column contains unexpected values: {}.".format(predictions_set - predictors_set)
+            assert predictions.apply(validate_row, axis=1).all(), "Predictions don't always match the predictor with the highest probability."
 
     @classmethod
     def score_from_predictions_file(cls, path):

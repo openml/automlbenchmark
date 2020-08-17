@@ -611,11 +611,11 @@ Using the instructions above:
  1. try to setup the framework: 
     > python runbenchmark.py myframework -s only
  1. fixes the framework setup until it works: the setup being usually a simple `setup.sh` script, you should be able to test it directly without using the application.
- 1. try to run simple test against one fold using defaults (`test` benchmark and `test` constraints):
-    > python runbenchmark.py myframework -f 0
+ 1. try to run simple test against one fold using defaults (`test` benchmark and `test` constraints) with the `-Xtest_mode` that will trigger additional validations:
+    > python runbenchmark.py myframework -f 0 -Xtest_mode
  1. fix the module integration code until the test produce all results with no error (if the integration generated an error, it is visible in the results).
  1. if this works, validate it against the `validation` dataset using one fold:
-    > python runbenchmark.py myframework validation 1h4c -f 0
+    > python runbenchmark.py myframework validation 1h4c -f 0 -Xtest_mode
  1. if this works, try to run it in docker to validate the docker image setup: 
     > python runbenchmark.py myframework -m docker
  1. if this works, try to run it in aws: 
@@ -909,12 +909,26 @@ _Examples of method duration info when using this custom profiling_:
 see [Framework integration](#frameworks-requiring-a-dedicated-virtual-env)
 
 ### Framework setup is not executed
-
 Try the following:
 - force the setup using the `-s only` or `-s force` arg on the command line:
   - `-s only` or `--setup=only` will force the setup and skip the benchmark run.
   - `-s force` or `--setup=force` will force the setup and run the benchmark immediately.
 - delete the `.marker_setup_safe_to_delete` from the framework module and try to run the benchmark again. This marker file is automatically created after a successful setup to avoid having to execute it each tine (setup phase can be time-consuming), this marker then prevents auto-setup, except if the `-s only` or `-s force` args above are used.
+
+### Framework setup fails
+If the setup fails, first note that only the following OS are fully supported:
+- Ubuntu 18.04
+
+The setup is created for Debian-based linux environments, and macOS (most frameworks can be installed on macOS, ideally with `brew` installed, but there may be a few exceptions), so it may work with other Linux environments not listed above (e.g. Debian, Ubuntu 20.04, ...).
+The best way to run benchmarks on non-supported OS, is to use the docker mode.
+
+If the setup fails on a supported environment, please try the following:
+- force the setup: see above.
+- ensure that the same framework is not set up multiple times in parallel on the same machine:
+  - first use `python runbenchmark.py MyFramework -s only` on one terminal.
+  - then you can trigger multiple `python runbenchmark.py MyFramework ...` (without `-s` option) in parallel.
+- delete the `lib` and `venv` folders, if present, under the given framework folder (e.g. `frameworks/MyFramework`), and try the setup again.
+
 
 [README]: ./README.md
 [OpenML]: https://openml.org

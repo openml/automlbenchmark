@@ -14,6 +14,7 @@ _**NOTE:**_ _This benchmarking framework currently features binary and multiclas
      * [On AWS](#on-aws)
      * [Output](#output)
   * [Advanced configuration](#advanced-configuration)
+  * [Issues](#issues)
       
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
@@ -323,10 +324,15 @@ By default, a benchmark run creates the following subdirectories and files in th
 
 
 ## Advanced configuration
-see [HOWTO]
+If you need to create your own benchmark, add a framework, create a plugin for a proprietary framework, or simply want to use some advanced options (e.g. run some frameworks with non-default parameters), see the [HOWTO].
+
+## Issues
+If you face any issue, please first have a look at the [Troubleshooting guide] and check the [existing issues](https://github.com/openml/automlbenchmark/issues).
+Any new issue should also be reported there.
 
 
 [HOWTO]: ./HOWTO.md
+[Troubleshooting guide]: ./HOWTO.md#troubleshooting-guide
 [examples/aws]: ../examples/aws/config.yaml
 
 [Docker]: https://docs.docker.com/

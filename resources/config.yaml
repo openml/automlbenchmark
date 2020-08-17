@@ -13,6 +13,7 @@ script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
 
+test_mode: False
 parallel_jobs: 1
 max_parallel_jobs: 5
 delay_between_jobs: 5  # delay in seconds between each parallel job start
