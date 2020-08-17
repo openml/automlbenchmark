@@ -216,17 +216,24 @@ class TaskResult:
         :return: None
         """
         log.debug("Saving predictions to `%s`.", output_file)
+        remap = None
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
             df = to_data_frame(probabilities, columns=prob_cols)
             if probabilities_labels:
                 df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
+                if any(prob_cols != df.columns.values):
+                    encoding_map = {prob_cols.index(col): i for i, col in enumerate(df.columns.values)}
+                    remap = np.vectorize(lambda v: encoding_map[v])
         else:
             df = to_data_frame(None)
 
         preds = predictions
         truth = truth if truth is not None else dataset.test.y
         if not _encode_predictions_and_truth_ and target_is_encoded:
+            if remap:
+                predictions = remap(predictions)
+                truth = remap(truth)
             preds = dataset.target.label_encoder.inverse_transform(predictions)
             truth = dataset.target.label_encoder.inverse_transform(truth)
         if _encode_predictions_and_truth_ and not target_is_encoded:
