@@ -72,7 +72,7 @@ AutoWEKA:
 MLPlan:
   module: frameworks.MLPlan
   version: '0.2.3'
-  project: https://mlplan.org
+  project: http://mlplan.org
 
 MLPlanWEKA:
   extends: MLPlan
