@@ -12,14 +12,6 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   test <- farff::readARFF(test_file)
   colnames(test) <- make.names(colnames(test))
 
-  # TODO: missing data should be handled in mlr3automl itself
-  missing_cols <- names(which(sapply(train, anyNA)))
-  missing_cols <- c(missing_cols, names(which(sapply(test, anyNA))))
-
-  train <- train[, !(colnames(train) %in% missing_cols)]
-  test <- test[, !(colnames(test) %in% missing_cols)]
-
-
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
