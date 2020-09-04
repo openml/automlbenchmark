@@ -35,7 +35,7 @@ def run(dataset, config):
         mse='neg_mean_squared_error',
         msle='neg_mean_squared_log_error',
         r2='r2',
-        rmse='neg_root_mean_squared_error',
+        rmse='neg_mean_squared_error',
     )
     scoring_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if scoring_metric is None:
@@ -46,7 +46,6 @@ def run(dataset, config):
 
     *_, did, fold = dataset.train_path.split('/')
     log_file = os.path.join(config.output_dir, "gama")
-
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
 
@@ -64,7 +63,7 @@ def run(dataset, config):
 
     log.info('Predicting on the test set.')
     predictions = gama_automl.predict_from_file(dataset.test_path, dataset.target, encoding='utf-8')
-    if is_classification is not None:
+    if is_classification:
         probabilities = gama_automl.predict_proba_from_file(dataset.test_path, dataset.target, encoding='utf-8')
     else:
         probabilities = None
