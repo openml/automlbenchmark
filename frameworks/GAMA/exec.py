@@ -45,8 +45,7 @@ def run(dataset, config):
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
     *_, did, fold = dataset.train_path.split('/')
-    fold = fold.split('.')[0].split('_')[-1]
-    log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
+    log_file = os.path.join(config.output_dir, "gama")
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
@@ -56,16 +55,17 @@ def run(dataset, config):
                             max_total_time=config.max_runtime_seconds,
                             scoring=scoring_metric,
                             random_state=config.seed,
-                            keep_analysis_log=log_file,
+                            output_directory=log_file,
+                            max_memory_mb=config.max_mem_size_mb,
                             **training_params)
 
     with Timer() as training:
-        gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
+        gama_automl.fit_from_file(dataset.train_path, dataset.target, encoding='utf-8')
 
     log.info('Predicting on the test set.')
-    predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
+    predictions = gama_automl.predict_from_file(dataset.test_path, dataset.target, encoding='utf-8')
     if is_classification is not None:
-        probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target, encoding='utf-8')
+        probabilities = gama_automl.predict_proba_from_file(dataset.test_path, dataset.target, encoding='utf-8')
     else:
         probabilities = None
 
@@ -74,7 +74,7 @@ def run(dataset, config):
         predictions=predictions,
         probabilities=probabilities,
         target_is_encoded=False,
-        models_count=len(gama_automl._final_pop),
+        models_count=len(gama_automl._evaluation_library.evaluations),
         training_duration=training.duration
     )
 

@@ -89,7 +89,7 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
 
 GAMA:
-  version: '20.1.0'
+  version: '20.2.2'
   project: https://github.com/PGijsbers/gama
 
 H2OAutoML:
