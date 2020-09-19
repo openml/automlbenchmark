@@ -22,20 +22,21 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     stop("Task type not supported!")
   }
 
-  model <- AutoML(train, terminator = trm("run_time", secs = time.budget - 15))
+  model <- AutoML(train, terminator = trm('combo', list(trm('run_time', secs = time.budget - 30), trm('stagnation'))))
   model$train()
   preds <- model$predict(test)
-  preds <- cbind(preds$data$prob, preds$data$tab)
-  names(preds)[names(preds) == "response"] <- "predictions"
 
   if (type == "classification") {
-    names(preds) <- sub("^prob.", "", names(preds))
+    result = data.frame(preds$data$prob, preds$data$response, preds$data$truth)
+    colnames(result) = c(colnames(preds$data$prob), 'predictions', 'truth')
+  } else {
+    result = data.frame(preds$data$response, preds$data$truth)
+    colnames(result) = c('predictions', 'truth')
   }
 
-  preds[, 'row_id'] <- NULL
-  write.table(preds, file = output_predictions_file,
-    row.names = FALSE, col.names = TRUE,
-    sep = ",", quote = FALSE
+  write.table(result, file = output_predictions_file,
+              row.names = FALSE, col.names = TRUE,
+              sep = ",", quote = FALSE
   )
 }
 
