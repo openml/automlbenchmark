@@ -14,10 +14,11 @@ run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.
 sid:        # session id: set by caller (runbenchmark.py)
 
 parallel_jobs: 1
-max_parallel_jobs: 5
+max_parallel_jobs:
+
 delay_between_jobs: 5  # delay in seconds between each parallel job start
 monitoring:
-  frequency_seconds: 120  # set <= 0 to disable
+  frequency_seconds: 0  # set <= 0 to disable
   statistics: ['cpu', 'memory', 'volume']
   verbosity: 0
 seed: auto  # default global seed (used if not set in task definition), can be one of:

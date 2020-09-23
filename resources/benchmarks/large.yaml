@@ -1,5 +1,8 @@
 ---
 
+- name: __defaults__
+  cores: 10
+
 - name: Airlines
   openml_task_id: 189354
 
