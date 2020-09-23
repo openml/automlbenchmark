@@ -3,7 +3,7 @@
 test:
   folds: 2
   max_runtime_seconds: 600
-  cores: 4
+  cores: 10
 
 1h4c:
   folds: 10

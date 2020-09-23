@@ -1,4 +1,6 @@
 ---
+- name: __defaults__
+  cores: 10
 
 - name: adult
   openml_task_id: 7592

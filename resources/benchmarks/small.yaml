@@ -1,4 +1,6 @@
 ---
+- name: __defaults__
+  cores: 10
 
 - name: Australian
   openml_task_id: 146818
