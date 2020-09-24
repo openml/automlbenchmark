@@ -20,7 +20,7 @@ test:
   folds: 10
   max_runtime_seconds: 3600
   cores: 10
-  min_vol_size_mb: 65536
+  min_vol_size_mb: 16384
 
 4h8c:
   folds: 10

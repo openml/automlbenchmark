@@ -1,6 +1,6 @@
 ---
 - name: __defaults__
-  cores: 10
+  max_runtime_seconds: 600
 
 - name: Australian
   openml_task_id: 146818
