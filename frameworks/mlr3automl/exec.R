@@ -22,7 +22,8 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     stop("Task type not supported!")
   }
 
-  model <- AutoML(train, learner_list = c('classif.xgboost'), terminator = trm('combo', list(trm('run_time', secs = time.budget - 30), trm('stagnation'))))
+  model <- AutoML(train, learner_list = c('classif.xgboost'),
+                  terminator = trm('combo', list(trm('run_time', secs = time.budget - 30), trm('stagnation', iters = 50))))
   model$train()
   preds <- model$predict(test)
 
