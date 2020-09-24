@@ -23,7 +23,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   }
 
   model <- AutoML(train, learner_list = c('classif.xgboost'),
-                  terminator = trm('combo', list(trm('run_time', secs = time.budget - 30), trm('stagnation', iters = 50))))
+                  terminator = trm('combo', list(trm('run_time', secs = time.budget - 30), trm('stagnation', iters = 20))))
   model$train()
   preds <- model$predict(test)
 
