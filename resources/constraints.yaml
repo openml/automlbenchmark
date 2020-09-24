@@ -17,7 +17,7 @@ test:
   min_vol_size_mb: 16384
 
 1h10c:
-  folds: 10
+  folds: 2
   max_runtime_seconds: 3600
   cores: 10
   min_vol_size_mb: 16384
