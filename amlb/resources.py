@@ -6,10 +6,11 @@ import copy
 import itertools
 import logging
 import os
+from queue import Queue
 import random
 import re
 import sys
-from typing import List, Union
+from typing import List, Union, Optional
 
 from amlb.benchmarks.parser import benchmark_load
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
@@ -90,51 +91,7 @@ class Resources:
     @lazy_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
-        return self.load_framework_definitions(frameworks_file)
-
-    def load_framework_definitions(self, frameworks_file: Union[str, List[str]]) -> Namespace:
-        """ Load the framework definition listed in the framework file(s).
-
-        Loads the definition(s) from the file(s),
-        :param frameworks_file:
-        :return: Namespace containing each framework definition,
-        """
-        frameworks = load_framework_definitions_raw(frameworks_file)
-        to_validate = []
-        for name, framework in frameworks:
-            framework.name = name
-            to_validate.append(framework)
-        # support for frameworks definition extending other definitions:
-        # useful when having multiple definitions with different params
-        validated = []
-        while len(to_validate) > 0:
-            later = []
-            for framework in to_validate:
-                if framework['extends'] is not None:
-                    parent = frameworks[framework.extends]
-                    if parent is None:
-                        log.warning("Removing framework %s as parent %s doesn't exist.",
-                                    framework.name, framework.extends)
-                        continue
-                    elif parent == framework:
-                        log.warning("Framework %s extends itself: removing extension.",
-                                    framework.name)
-                        framework.extends = None
-                    elif parent not in validated:
-                        later.append(framework)
-                        continue
-                    else:
-                        framework.parent = parent
-                        framework % copy.deepcopy(
-                            parent)  # adds framework's missing keys from parent
-                self._validate_framework(framework)
-                validated.append(framework)
-            to_validate = later
-        log.debug("Available framework definitions:\n%s", frameworks)
-        frameworks_lookup = Namespace()
-        for framework in validated:
-            frameworks_lookup[framework.name.lower()] = framework
-        return frameworks_lookup
+        return load_framework_definitions(frameworks_file)
 
     @memoize
     def constraint_definition(self, name):
@@ -186,51 +143,6 @@ class Resources:
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_path
-
-    def _validate_framework(self, framework):
-        if framework['module'] is None:
-            framework.module = '.'.join([self.config.frameworks.root_module, framework.name])
-
-        if framework['version'] is None:
-            framework.version = 'latest'
-
-        if framework['setup_args'] is None:
-            framework.setup_args = [framework.version] if framework['repo'] is None else [framework.version, framework.repo]
-        elif isinstance(framework.setup_args, str):
-            framework.setup_args = [framework.setup_args]
-
-        if framework['setup_script'] is None:
-            framework.setup_script = None
-        else:
-            framework.setup_script = framework.setup_script.format(**self._common_dirs,
-                                                                   **dict(module=framework.module))
-        if framework['setup_cmd'] is None:
-            framework._setup_cmd = None
-            framework.setup_cmd = None
-        else:
-            framework._setup_cmd = framework.setup_cmd
-            if isinstance(framework.setup_cmd, str):
-                framework.setup_cmd = [framework.setup_cmd]
-            framework.setup_cmd = [cmd.format(**self._common_dirs,
-                                              **dict(pip="{pip}",
-                                                     py="{py}"))
-                                   for cmd in framework.setup_cmd]
-
-        if framework['params'] is None:
-            framework.params = dict()
-        else:
-            framework.params = Namespace.dict(framework.params)
-
-        did = copy.copy(self.config.docker.image_defaults)
-        if framework['image'] is None:
-            framework['image'] = did
-        for conf in ['author', 'image', 'tag']:
-            if framework.image[conf] is None:
-                framework.image[conf] = did[conf]
-        if framework.image.image is None:
-            framework.image.image = framework.name.lower()
-        if framework.image.tag is None:
-            framework.image.tag = framework.version.lower()
 
     def _validate_task(self, task, lenient=False):
         missing = []
@@ -293,6 +205,118 @@ def load_framework_definitions_raw(frameworks_file: Union[str, List[str]]) -> Na
         if d1.intersection(d2) != set():
             raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
     return Namespace.merge(*definitions_by_file)
+
+
+def load_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namespace:
+    """ Load the framework definition listed in the framework file(s).
+
+    Loads the definition(s) from the file(s),
+    :param frameworks_file:
+    :return: Namespace containing each framework definition,
+    """
+    frameworks = load_framework_definitions_raw(frameworks_file)
+
+    add_and_normalize_names(frameworks)
+    remove_frameworks_with_unknown_parent(frameworks)
+    remove_self_reference_extensions(frameworks)
+    to_autocomplete = [framework for _, framework in frameworks]
+
+    autocompleted = []
+    while len(to_autocomplete) > 0:
+        framework = to_autocomplete.pop(0)
+        parent = frameworks[framework.extends] if "extends" in framework else None
+        if parent is not None and parent not in autocompleted:
+            to_autocomplete.append(framework)
+            continue
+
+        autocomplete_definition(framework, parent)
+        autocompleted.append(framework)
+
+    log.debug("Available framework definitions:\n%s", frameworks)
+    return frameworks
+
+
+def add_and_normalize_names(frameworks: Namespace):
+    """ Converts each framework definition to lowercase and adds a 'name' field. """
+    framework_names = dir(frameworks)
+    for name in framework_names:
+        framework = frameworks[name]
+        framework.name = name.lower()
+        if name.lower() != name:
+            del frameworks[name]
+            frameworks[name.lower()] = framework
+        if "extends" in framework:
+            framework.extends = framework.extends.lower()
+
+
+def autocomplete_definition(framework: Namespace, parent: Optional[Namespace]):
+    if parent is not None:
+        framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
+
+    if framework['module'] is None:
+        framework.module = '.'.join(
+            [get().config.frameworks.root_module, framework.name])
+
+    if framework['version'] is None:
+        framework.version = 'latest'
+
+    if framework['setup_args'] is None:
+        framework.setup_args = [framework.version] if framework['repo'] is None else [
+            framework.version, framework.repo]
+    elif isinstance(framework.setup_args, str):
+        framework.setup_args = [framework.setup_args]
+
+    if framework['setup_script'] is None:
+        framework.setup_script = None
+    else:
+        framework.setup_script = framework.setup_script.format(**get()._common_dirs,
+                                                               **dict(
+                                                                   module=framework.module))
+    if framework['setup_cmd'] is None:
+        framework._setup_cmd = None
+        framework.setup_cmd = None
+    else:
+        framework._setup_cmd = framework.setup_cmd
+        if isinstance(framework.setup_cmd, str):
+            framework.setup_cmd = [framework.setup_cmd]
+        framework.setup_cmd = [cmd.format(**get()._common_dirs,
+                                          **dict(pip="{pip}",
+                                                 py="{py}"))
+                               for cmd in framework.setup_cmd]
+
+    if framework['params'] is None:
+        framework.params = dict()
+    else:
+        framework.params = Namespace.dict(framework.params)
+
+    did = copy.copy(get().config.docker.image_defaults)
+    if framework['image'] is None:
+        framework['image'] = did
+    for conf in ['author', 'image', 'tag']:
+        if framework.image[conf] is None:
+            framework.image[conf] = did[conf]
+    if framework.image.image is None:
+        framework.image.image = framework.name.lower()
+    if framework.image.tag is None:
+        framework.image.tag = framework.version.lower()
+
+
+def remove_self_reference_extensions(frameworks: Namespace):
+    for name, framework in frameworks:
+        if "extends" in framework and framework.extends == framework.name:
+            log.warning("Framework %s extends itself: removing extension.",
+                        framework.name)
+            framework.extends = None
+
+
+def remove_frameworks_with_unknown_parent(frameworks: Namespace):
+    frameworks_with_unknown_parent = [
+        (name, framework.extends) for name, framework in frameworks
+        if "extends" in framework and framework.extends not in frameworks
+    ]
+    for framework, parent in frameworks_with_unknown_parent:
+        log.warning("Removing framework %s as parent %s doesn't exist.", framework, parent)
+        del frameworks[framework]
 
 
 __INSTANCE__: Resources = None
