@@ -3,11 +3,13 @@
 as well as handy methods to access other resources like *automl frameworks* and *benchmark definitions*
 """
 import copy
+import itertools
 import logging
 import os
 import random
 import re
 import sys
+from typing import List, Union
 
 from amlb.benchmarks.parser import benchmark_load
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
@@ -88,19 +90,20 @@ class Resources:
     @lazy_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
-        log.info("Loading frameworks definitions from %s.", frameworks_file)
-        if not isinstance(frameworks_file, list):
-            frameworks_file = [frameworks_file]
+        return self.load_framework_definitions(frameworks_file)
 
-        frameworks = Namespace()
-        for ff in frameworks_file:
-            frameworks + config_load(ff)
+    def load_framework_definitions(self, frameworks_file: Union[str, List[str]]) -> Namespace:
+        """ Load the framework definition listed in the framework file(s).
 
+        Loads the definition(s) from the file(s),
+        :param frameworks_file:
+        :return: Namespace containing each framework definition,
+        """
+        frameworks = load_framework_definitions_raw(frameworks_file)
         to_validate = []
         for name, framework in frameworks:
             framework.name = name
             to_validate.append(framework)
-
         # support for frameworks definition extending other definitions:
         # useful when having multiple definitions with different params
         validated = []
@@ -110,23 +113,24 @@ class Resources:
                 if framework['extends'] is not None:
                     parent = frameworks[framework.extends]
                     if parent is None:
-                        log.warning("Removing framework %s as parent %s doesn't exist.", framework.name, framework.extends)
+                        log.warning("Removing framework %s as parent %s doesn't exist.",
+                                    framework.name, framework.extends)
                         continue
                     elif parent == framework:
-                        log.warning("Framework %s extends itself: removing extension.", framework.name)
+                        log.warning("Framework %s extends itself: removing extension.",
+                                    framework.name)
                         framework.extends = None
                     elif parent not in validated:
                         later.append(framework)
                         continue
                     else:
                         framework.parent = parent
-                        framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
+                        framework % copy.deepcopy(
+                            parent)  # adds framework's missing keys from parent
                 self._validate_framework(framework)
                 validated.append(framework)
             to_validate = later
-
         log.debug("Available framework definitions:\n%s", frameworks)
-
         frameworks_lookup = Namespace()
         for framework in validated:
             frameworks_lookup[framework.name.lower()] = framework
@@ -276,6 +280,19 @@ class Resources:
         if task[conf] is None:
             task[conf] = self.config.aws.ec2.volume_type
             log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
+
+
+def load_framework_definitions_raw(frameworks_file: Union[str, List[str]]) -> Namespace:
+    """ Load and merge the framework file(s), does not allow duplicate definitions. """
+    log.info("Loading frameworks definitions from %s.", frameworks_file)
+    if not isinstance(frameworks_file, list):
+        frameworks_file = [frameworks_file]
+
+    definitions_by_file = [config_load(file) for file in frameworks_file]
+    for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
+        if d1.intersection(d2) != set():
+            raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
+    return Namespace.merge(*definitions_by_file)
 
 
 __INSTANCE__: Resources = None
