@@ -299,11 +299,11 @@ def autocomplete_params(framework):
         framework.params = Namespace.dict(framework.params)
 
 
-def autocomplete_image(framework, resource):
+def autocomplete_image(framework: Namespace, config_: Namespace):
     if "image" not in framework:
-        framework.image = copy.deepcopy(resource.docker.image_defaults)
+        framework.image = copy.deepcopy(config_.docker.image_defaults)
     else:
-        framework.image = Namespace.merge(resource.docker.image_defaults, framework.image)
+        framework.image = Namespace.merge(config_.docker.image_defaults, framework.image)
 
     if framework.image.tag is None:
         framework.image.tag = framework.version.lower()
@@ -312,13 +312,24 @@ def autocomplete_image(framework, resource):
         framework.image.image = framework.name
 
 
-def autocomplete_definition(framework: Namespace, parent: Optional[Namespace]):
+def autocomplete_definition2(framework: Namespace, parent: Optional[Namespace], resource: Resources):
+    # todo: inherit from parent
+    autocomplete_framework_module(framework, resource.config)
+    autocomplete_framework_version(framework)
+    autocomplete_framework_setup_args(framework)
+    autocomplete_params(framework)
+    autocomplete_image(framework, resource.config)
+    autocomplete_setup_cmd(framework, resource)
+    autocomplete_setup_script(framework, resource)
+
+
+def autocomplete_definition(framework: Namespace, parent: Optional[Namespace], resource):
     if parent is not None:
         framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
 
     if framework['module'] is None:
         framework.module = '.'.join(
-            [get().config.frameworks.root_module, framework.name])
+            [resource.config.frameworks.root_module, framework.name])
 
     if framework['version'] is None:
         framework.version = 'latest'
@@ -332,7 +343,7 @@ def autocomplete_definition(framework: Namespace, parent: Optional[Namespace]):
     if framework['setup_script'] is None:
         framework.setup_script = None
     else:
-        framework.setup_script = framework.setup_script.format(**get()._common_dirs,
+        framework.setup_script = framework.setup_script.format(**resource._common_dirs,
                                                                **dict(
                                                                    module=framework.module))
     if framework['setup_cmd'] is None:
@@ -342,7 +353,7 @@ def autocomplete_definition(framework: Namespace, parent: Optional[Namespace]):
         framework._setup_cmd = framework.setup_cmd
         if isinstance(framework.setup_cmd, str):
             framework.setup_cmd = [framework.setup_cmd]
-        framework.setup_cmd = [cmd.format(**get()._common_dirs,
+        framework.setup_cmd = [cmd.format(**resource._common_dirs,
                                           **dict(pip="{pip}",
                                                  py="{py}"))
                                for cmd in framework.setup_cmd]
@@ -352,7 +363,7 @@ def autocomplete_definition(framework: Namespace, parent: Optional[Namespace]):
     else:
         framework.params = Namespace.dict(framework.params)
 
-    did = copy.copy(get().config.docker.image_defaults)
+    did = copy.copy(resource.config.docker.image_defaults)
     if framework['image'] is None:
         framework['image'] = did
     for conf in ['author', 'image', 'tag']:

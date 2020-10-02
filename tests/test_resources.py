@@ -6,7 +6,7 @@ from amlb.resources import load_framework_definitions_raw, \
     autocomplete_definition, autocomplete_framework_module, \
     autocomplete_framework_version, autocomplete_framework_setup_args, \
     autocomplete_setup_script, Resources, autocomplete_setup_cmd, autocomplete_params, \
-    autocomplete_image
+    autocomplete_image, autocomplete_definition2
 
 framework_file = "files/frameworks.yaml"
 framework_file_with_extension_only = "files/frameworks3.yaml"
@@ -29,12 +29,24 @@ directory_aliases = [
 
 @pytest.fixture
 def simple_resource():
-    return Resources(Namespace(
-        input_dir="my_input",
-        output_dir="my_output",
-        user_dir="my_user_dir",
-        root_dir="my_root_dir",
-    ))
+    return Resources(
+        Namespace(
+            input_dir="my_input",
+            output_dir="my_output",
+            user_dir="my_user_dir",
+            root_dir="my_root_dir",
+            docker=Namespace(
+                image_defaults=Namespace(
+                    author="author",
+                    image=None,
+                    tag=None,
+                )
+            ),
+            frameworks=Namespace(
+                root_module="frameworks",
+            )
+        )
+    )
 
 
 def test_load_framework_definition_raw_one_file():
@@ -251,105 +263,102 @@ def test_autocomplete_params_is_something():
 
 @pytest.mark.parametrize("author", ["automlbenchmark", "unittest"])
 def test_autocomplete_image_none_correct_author(simple_resource, author):
-    docker_resource = simple_resource.config.merge(
-        Namespace(
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author=author,
-                    image=None,
-                    tag=None,
-                )
-            )
-        )
-    )
+    simple_resource.config.docker.image_defaults.author = author
     framework = Namespace(version="v", name="n")
-    autocomplete_image(framework, docker_resource)
+    autocomplete_image(framework, simple_resource.config)
     assert framework.image.author == author
 
 
 @pytest.mark.parametrize("tag, expected", [("V1", "V1"), (None, "v0.2dev")])
 def test_autocomplete_image_none_correct_tag(simple_resource, tag, expected):
-    docker_resource = simple_resource.config.merge(
-        Namespace(
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author="author",
-                    image=None,
-                    tag=tag,
-                )
-            )
-        )
-    )
+    simple_resource.config.docker.image_defaults.tag = tag
     framework = Namespace(version="V0.2dev", name="n")
-    autocomplete_image(framework, docker_resource)
+    autocomplete_image(framework, simple_resource.config)
     assert framework.image.tag == expected
 
 
 @pytest.mark.parametrize("image, expected", [("img", "img"), (None, "decision_tree")])
 def test_autocomplete_image_none_correct_image(simple_resource, image, expected):
-    docker_resource = simple_resource.config.merge(
-        Namespace(
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author="author",
-                    image=image,
-                    tag=None,
-                )
-            )
-        )
-    )
+    simple_resource.config.docker.image_defaults.image = image
     framework = Namespace(name="decision_tree", version="v0.1")
-    autocomplete_image(framework, docker_resource)
+    autocomplete_image(framework, simple_resource.config)
     assert framework.image.image == expected
 
 
 def test_autocomplete_image_set_author(simple_resource):
-    docker_resource = simple_resource.config.merge(
-        Namespace(
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author="author",
-                    image=None,
-                    tag=None,
-                )
-            )
-        )
-    )
+    simple_resource.config.docker.image_defaults.author = "author"
     framework = Namespace(name="n", version="0.1", image=Namespace(author="hfinley"))
-    autocomplete_image(framework, docker_resource)
+    autocomplete_image(framework, simple_resource.config)
     assert framework.image.author == "hfinley"
 
 
 def test_autocomplete_image_set_tag(simple_resource):
-    docker_resource = simple_resource.config.merge(
-        Namespace(
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author="author",
-                    image=None,
-                    tag="v1.0dev",
-                )
-            )
-        )
-    )
+    simple_resource.config.docker.image_defaults.tag = "v1.0dev"
     framework = Namespace(name="n", image=Namespace(tag="1.0-xenial"))
-    autocomplete_image(framework, docker_resource)
+    autocomplete_image(framework, simple_resource.config)
     assert framework.image.tag == "1.0-xenial"
 
 
 def test_autocomplete_image_set_image(simple_resource):
-    docker_resource = simple_resource.config.merge(
-        Namespace(
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author="author",
-                    image="default_image",
-                    tag="v1.0",
-                )
-            )
-        )
-    )
-    framework = Namespace(name="n", image=Namespace(image="automl"))
-    autocomplete_image(framework, docker_resource)
+    simple_resource.config.docker.image_defaults.image = "default_image"
+    framework = Namespace(name="n", version="20.0a", image=Namespace(image="automl"))
+    autocomplete_image(framework, simple_resource.config)
     assert framework.image.image == "automl"
 
+
+def test_autocomplete_definition2_all_empty_defaults(simple_resource):
+    framework_one = Namespace(name="h2o_automl")
+    framework_two = Namespace(name="h2o_automl")
+    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
+    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
+    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
+
+
+def test_autocomplete_definition2_all_framework_nonempty(simple_resource):
+    framework_one = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
+    framework_two = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
+    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
+    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
+    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
+
+
+def test_autocomplete_definition2_all_both_nonempty(simple_resource):
+    framework_one = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
+    framework_two = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
+    additional_defaults = Namespace(
+        docker=Namespace(
+            image_defaults=Namespace(
+                author="author",
+                image="default-image",
+                tag="default-tag",
+            )
+        ),
+        frameworks=Namespace(
+            root_module="frameworks",
+        )
+    )
+    simple_resource.config + additional_defaults
+    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
+    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
+    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
+
+
+def test_autocomplete_definition2_all_framework_empty(simple_resource):
+    framework_one = Namespace(name="gama")
+    framework_two = Namespace(name="gama")
+    additional_defaults = Namespace(
+        docker=Namespace(
+            image_defaults=Namespace(
+                author="author",
+                image="default-image",
+                tag="default-tag",
+            )
+        ),
+        frameworks=Namespace(
+            root_module="frameworks",
+        )
+    )
+    simple_resource.config + additional_defaults
+    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
+    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
+    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
