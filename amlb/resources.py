@@ -249,6 +249,69 @@ def add_and_normalize_names(frameworks: Namespace):
             framework.extends = framework.extends.lower()
 
 
+def autocomplete_framework_module(framework, config):
+    if "module" not in framework:
+        framework.module = f"{config.frameworks.root_module}.{framework.name}"
+
+
+def autocomplete_framework_version(framework):
+    if "version" not in framework:
+        framework.version = "latest"
+
+
+def autocomplete_framework_setup_args(framework):
+    if "setup_args" in framework:
+        framework.setup_args = [framework.setup_args]
+    else:
+        framework.setup_args = [framework.version]
+        if "repo" in framework:
+            framework.setup_args.append(framework.repo)
+
+
+def autocomplete_setup_script(framework, resource):
+    if "setup_script" not in framework:
+        framework.setup_script = None
+    else:
+        framework.setup_script = framework.setup_script.format(
+            module=framework.module,
+            **resource._common_dirs,
+        )
+
+
+def autocomplete_setup_cmd(framework, resource):
+    if "setup_cmd" not in framework:
+        framework._setup_cmd = None
+        framework.setup_cmd = None
+    else:
+        framework._setup_cmd = framework.setup_cmd
+        if isinstance(framework.setup_cmd, str):
+            framework.setup_cmd = [framework.setup_cmd]
+        framework.setup_cmd = [
+            cmd.format(pip="{pip}", py="{py}", **resource._common_dirs)
+            for cmd in framework.setup_cmd
+        ]
+
+
+def autocomplete_params(framework):
+    if "params" not in framework:
+        framework.params = dict()
+    else:
+        framework.params = Namespace.dict(framework.params)
+
+
+def autocomplete_image(framework, resource):
+    if "image" not in framework:
+        framework.image = copy.deepcopy(resource.docker.image_defaults)
+    else:
+        framework.image = Namespace.merge(resource.docker.image_defaults, framework.image)
+
+    if framework.image.tag is None:
+        framework.image.tag = framework.version.lower()
+
+    if framework.image.image is None:
+        framework.image.image = framework.name
+
+
 def autocomplete_definition(framework: Namespace, parent: Optional[Namespace]):
     if parent is not None:
         framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
