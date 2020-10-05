@@ -5,6 +5,9 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install -r optional-requirements.txt
+
+before_script:
+  - export PYTHONPATH=$PYTHONPATH:$(pwd)
 script:
   - cd tests
   - pytest
