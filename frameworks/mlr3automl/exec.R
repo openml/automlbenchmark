@@ -15,12 +15,12 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_list = c('classif.xgboost'),
+    model <- AutoML(train, learner_list = c('classif.svm'),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.9)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_list = c('regr.xgboost'),
+    model <- AutoML(train, learner_list = c('regr.svm'),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.9)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")
