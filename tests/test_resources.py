@@ -1,6 +1,6 @@
 import pytest
 from amlb.utils import Namespace
-from amlb.resources import load_framework_definitions_raw, \
+from amlb.resources import load_and_merge_framework_definitions, \
     remove_frameworks_with_unknown_parent, remove_self_reference_extensions, \
     add_and_normalize_names, load_framework_definitions, from_config, \
     autocomplete_definition, autocomplete_framework_module, \
@@ -9,17 +9,6 @@ from amlb.resources import load_framework_definitions_raw, \
     autocomplete_image, add_defaults_to_frameworks, \
     update_frameworks_with_parent_definitions, find_all_parents, \
     sanitize_and_add_defaults
-
-framework_file = "files/frameworks.yaml"
-framework_file_with_extension_only = "files/frameworks3.yaml"
-second_file_has_duplicate = [
-    framework_file,
-    "files/frameworks2.yaml",
-]
-second_file_has_extension = [
-    framework_file,
-    framework_file_with_extension_only,
-]
 
 directory_aliases = [
     ("input", "my_input"),
@@ -50,31 +39,6 @@ def simple_resource():
         )
     )
 
-
-def test_load_framework_definition_raw_one_file():
-    definition = load_framework_definitions_raw(framework_file)
-    assert "unit_test_framework" in definition
-    assert len(definition) == 5
-
-
-def test_load_framework_definition_raw_two_files_duplicate():
-    with pytest.raises(ValueError, match="Duplicate entry 'duplicate_entry' found."):
-        load_framework_definitions_raw(second_file_has_duplicate)
-
-
-def test_load_framework_definition_raw_two_files_extensions():
-    definition = load_framework_definitions_raw(second_file_has_extension)
-    assert "other_test_framework_extended_other_file" in definition
-    assert len(definition) == 6
-
-
-def test_load_framework_definition_raw_extension_no_base():
-    try:
-        load_framework_definitions_raw(framework_file_with_extension_only)
-    except Exception:
-        pytest.fail(
-            "Extensions should be verified when filling defaults, not on initial load."
-        )
 
 
 def test_remove_frameworks_with_unknown_parent_removes_one():

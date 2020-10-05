@@ -194,7 +194,7 @@ class Resources:
             log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
 
 
-def load_framework_definitions_raw(frameworks_file: Union[str, List[str]]) -> Namespace:
+def load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namespace:
     """ Load and merge the framework file(s), does not allow duplicate definitions. """
     log.info("Loading frameworks definitions from %s.", frameworks_file)
     if not isinstance(frameworks_file, list):
@@ -235,7 +235,7 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], resource:
     :param frameworks_file:
     :return: Namespace containing each framework definition,
     """
-    frameworks = load_framework_definitions_raw(frameworks_file)
+    frameworks = load_and_merge_framework_definitions(frameworks_file)
     sanitize_and_add_defaults(frameworks, resource)
     log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
