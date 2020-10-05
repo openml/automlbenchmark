@@ -207,18 +207,15 @@ def load_framework_definitions_raw(frameworks_file: Union[str, List[str]]) -> Na
     return Namespace.merge(*definitions_by_file)
 
 
-def load_framework_definitions(frameworks_file: Union[str, List[str]], resource: Resources) -> Namespace:
-    """ Load the framework definition listed in the framework file(s).
-
-    Loads the definition(s) from the file(s),
-    :param frameworks_file:
-    :return: Namespace containing each framework definition,
-    """
-    frameworks = load_framework_definitions_raw(frameworks_file)
-
+def sanitize_definitions(frameworks: Namespace):
+    """ Normalize names, add name field, remove invalid extensions. """
     add_and_normalize_names(frameworks)
     remove_frameworks_with_unknown_parent(frameworks)
     remove_self_reference_extensions(frameworks)
+
+
+def sanitize_and_add_defaults(frameworks, resource: Resources):
+    sanitize_definitions(frameworks)
 
     # `module` is the only field that should have a default
     # based on the parent. For that reason we add it before
@@ -228,9 +225,18 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], resource:
             autocomplete_framework_module(framework, resource.config)
     update_frameworks_with_parent_definitions(frameworks)
 
-    for _, framework in frameworks:
-        autocomplete_definition2(framework, resource)
+    add_defaults_to_frameworks(frameworks, resource)
 
+
+def load_framework_definitions(frameworks_file: Union[str, List[str]], resource: Resources) -> Namespace:
+    """ Load the framework definition listed in the framework file(s).
+
+    Loads the definition(s) from the file(s),
+    :param frameworks_file:
+    :return: Namespace containing each framework definition,
+    """
+    frameworks = load_framework_definitions_raw(frameworks_file)
+    sanitize_and_add_defaults(frameworks, resource)
     log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
 
@@ -321,22 +327,26 @@ def find_all_parents(framework, frameworks):
 
 
 def update_frameworks_with_parent_definitions(frameworks: Namespace):
+    """ Add fields defined by ancestors
+
+    Extensions do not overwrite fields defined on the framework itself.
+    If multiple parents define the same field, the parent that is 'closer'
+    to the child framework defines the field value.
+    """
     for name, framework in frameworks:
         parents = find_all_parents(framework, frameworks)
         for parent in parents:
             framework % copy.deepcopy(parent)
-    # Copy anything the parent defines, and the child does not.
-    # Module generates based on name, which is wrong (if it does not use the same module as the parent, it should be overwritten?)
 
 
-def autocomplete_definition2(framework: Namespace, resource: Resources):
-    autocomplete_framework_module(framework, resource.config)
-    autocomplete_framework_version(framework)
-    autocomplete_framework_setup_args(framework)
-    autocomplete_params(framework)
-    autocomplete_image(framework, resource.config)
-    autocomplete_setup_cmd(framework, resource)
-    autocomplete_setup_script(framework, resource)
+def add_defaults_to_frameworks(frameworks: Namespace, resource: Resources):
+    for _, framework in frameworks:
+        autocomplete_framework_version(framework)
+        autocomplete_framework_setup_args(framework)
+        autocomplete_params(framework)
+        autocomplete_image(framework, resource.config)
+        autocomplete_setup_cmd(framework, resource)
+        autocomplete_setup_script(framework, resource)
 
 
 def autocomplete_definition(framework: Namespace, parent: Optional[Namespace], resource):

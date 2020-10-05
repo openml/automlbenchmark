@@ -6,8 +6,9 @@ from amlb.resources import load_framework_definitions_raw, \
     autocomplete_definition, autocomplete_framework_module, \
     autocomplete_framework_version, autocomplete_framework_setup_args, \
     autocomplete_setup_script, Resources, autocomplete_setup_cmd, autocomplete_params, \
-    autocomplete_image, autocomplete_definition2, \
-    update_frameworks_with_parent_definitions, find_all_parents
+    autocomplete_image, add_defaults_to_frameworks, \
+    update_frameworks_with_parent_definitions, find_all_parents, \
+    sanitize_and_add_defaults
 
 framework_file = "files/frameworks.yaml"
 framework_file_with_extension_only = "files/frameworks3.yaml"
@@ -307,75 +308,6 @@ def test_autocomplete_image_set_image(simple_resource):
     assert framework.image.image == "automl"
 
 
-def test_autocomplete_definition2_all_empty_defaults(simple_resource):
-    framework_one = Namespace(name="h2o_automl")
-    framework_two = Namespace(name="h2o_automl")
-    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
-    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
-    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
-
-
-def test_autocomplete_definition2_all_framework_nonempty(simple_resource):
-    framework_one = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
-    framework_two = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
-    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
-    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
-    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
-
-
-def test_autocomplete_definition2_all_both_nonempty(simple_resource):
-    framework_one = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
-    framework_two = Namespace(name="gama", version="v0.2beta", module="custom", setup_args="password", params=Namespace(mode="best"), setup_cmd="start", setup_script="start.sh", image=Namespace(author="pgijsbers", tag="v0.2beta-xenial", image="gama"))
-    additional_defaults = Namespace(
-        docker=Namespace(
-            image_defaults=Namespace(
-                author="author",
-                image="default-image",
-                tag="default-tag",
-            )
-        ),
-        frameworks=Namespace(
-            root_module="frameworks",
-        )
-    )
-    simple_resource.config + additional_defaults
-    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
-    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
-    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
-
-
-def test_autocomplete_definition2_all_framework_empty(simple_resource):
-    framework_one = Namespace(name="gama")
-    framework_two = Namespace(name="gama")
-    additional_defaults = Namespace(
-        docker=Namespace(
-            image_defaults=Namespace(
-                author="author",
-                image="default-image",
-                tag="default-tag",
-            )
-        ),
-        frameworks=Namespace(
-            root_module="frameworks",
-        )
-    )
-    simple_resource.config + additional_defaults
-    autocomplete_definition(framework_one, parent=None, resource=simple_resource)
-    autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
-    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
-
-
-def test_autocomplete_definition_extensions(simple_resource):
-    framework = Namespace(name="gama", version="0.6")
-    framework_one = Namespace(name="gama_old", extends="gama", version="0.5")
-    framework_two = Namespace(name="gama_old", extends="gama", version="0.5")
-
-    autocomplete_definition(framework, parent=None, resource=simple_resource)
-    autocomplete_definition(framework_one, parent=framework, resource=simple_resource)
-    autocomplete_definition2(framework_two, parent=framework, resource=simple_resource)
-    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
-
-
 def test_find_all_parents_no_parent():
     frameworks = Namespace(
         gama=Namespace(name="gama", version="latest", description="flexible automl"),
@@ -439,5 +371,22 @@ def test_update_frameworks_with_parent_definitions_does_not_overwrite_child_yaml
     assert frameworks.gama_old.description == "old gama"
 
 
-def test_load_framework_definitions()
+def test_sanitize_and_add_defaults_root_definition_get_module(simple_resource):
+    frameworks = Namespace(auto_sklearn=Namespace())
+    sanitize_and_add_defaults(frameworks, simple_resource)
+    assert frameworks.auto_sklearn.module == "frameworks.auto_sklearn"
 
+
+def test_sanitize_and_add_defaults_child_inherits_module(simple_resource):
+    frameworks = Namespace(
+        auto_sklearn=Namespace(),
+        auto_sklearn_old=Namespace(extends="auto_sklearn")
+    )
+    sanitize_and_add_defaults(frameworks, simple_resource)
+    assert frameworks.auto_sklearn_old.module == "frameworks.auto_sklearn"
+
+
+def test_sanitize_and_add_defaults_module_not_overwritten(simple_resource):
+    frameworks = Namespace(auto_sklearn=Namespace(module="custom_module"))
+    sanitize_and_add_defaults(frameworks, simple_resource)
+    assert frameworks.auto_sklearn.module == "custom_module"
