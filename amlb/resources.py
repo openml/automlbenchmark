@@ -207,7 +207,7 @@ def load_framework_definitions_raw(frameworks_file: Union[str, List[str]]) -> Na
     return Namespace.merge(*definitions_by_file)
 
 
-def load_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namespace:
+def load_framework_definitions(frameworks_file: Union[str, List[str]], resource: Resources) -> Namespace:
     """ Load the framework definition listed in the framework file(s).
 
     Loads the definition(s) from the file(s),
@@ -219,18 +219,17 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namesp
     add_and_normalize_names(frameworks)
     remove_frameworks_with_unknown_parent(frameworks)
     remove_self_reference_extensions(frameworks)
-    to_autocomplete = [framework for _, framework in frameworks]
 
-    autocompleted = []
-    while len(to_autocomplete) > 0:
-        framework = to_autocomplete.pop(0)
-        parent = frameworks[framework.extends] if "extends" in framework else None
-        if parent is not None and parent not in autocompleted:
-            to_autocomplete.append(framework)
-            continue
+    # `module` is the only field that should have a default
+    # based on the parent. For that reason we add it before
+    # we update children with their parent fields.
+    for _, framework in frameworks:
+        if "extends" not in framework:
+            autocomplete_framework_module(framework, resource.config)
+    update_frameworks_with_parent_definitions(frameworks)
 
-        autocomplete_definition(framework, parent)
-        autocompleted.append(framework)
+    for _, framework in frameworks:
+        autocomplete_definition2(framework, resource)
 
     log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
@@ -312,8 +311,25 @@ def autocomplete_image(framework: Namespace, config_: Namespace):
         framework.image.image = framework.name
 
 
-def autocomplete_definition2(framework: Namespace, parent: Optional[Namespace], resource: Resources):
-    # todo: inherit from parent
+def find_all_parents(framework, frameworks):
+    """ Return all definitions framework extends, from direct parent to furthest. """
+    parents = []
+    while "extends" in framework:
+        framework = frameworks[framework.extends]
+        parents.append(framework)
+    return parents
+
+
+def update_frameworks_with_parent_definitions(frameworks: Namespace):
+    for name, framework in frameworks:
+        parents = find_all_parents(framework, frameworks)
+        for parent in parents:
+            framework % copy.deepcopy(parent)
+    # Copy anything the parent defines, and the child does not.
+    # Module generates based on name, which is wrong (if it does not use the same module as the parent, it should be overwritten?)
+
+
+def autocomplete_definition2(framework: Namespace, resource: Resources):
     autocomplete_framework_module(framework, resource.config)
     autocomplete_framework_version(framework)
     autocomplete_framework_setup_args(framework)

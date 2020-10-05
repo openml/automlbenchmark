@@ -6,7 +6,8 @@ from amlb.resources import load_framework_definitions_raw, \
     autocomplete_definition, autocomplete_framework_module, \
     autocomplete_framework_version, autocomplete_framework_setup_args, \
     autocomplete_setup_script, Resources, autocomplete_setup_cmd, autocomplete_params, \
-    autocomplete_image, autocomplete_definition2
+    autocomplete_image, autocomplete_definition2, \
+    update_frameworks_with_parent_definitions, find_all_parents
 
 framework_file = "files/frameworks.yaml"
 framework_file_with_extension_only = "files/frameworks3.yaml"
@@ -362,3 +363,81 @@ def test_autocomplete_definition2_all_framework_empty(simple_resource):
     autocomplete_definition(framework_one, parent=None, resource=simple_resource)
     autocomplete_definition2(framework_two, parent=None, resource=simple_resource)
     assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
+
+
+def test_autocomplete_definition_extensions(simple_resource):
+    framework = Namespace(name="gama", version="0.6")
+    framework_one = Namespace(name="gama_old", extends="gama", version="0.5")
+    framework_two = Namespace(name="gama_old", extends="gama", version="0.5")
+
+    autocomplete_definition(framework, parent=None, resource=simple_resource)
+    autocomplete_definition(framework_one, parent=framework, resource=simple_resource)
+    autocomplete_definition2(framework_two, parent=framework, resource=simple_resource)
+    assert Namespace.dict(framework_one) == Namespace.dict(framework_two)
+
+
+def test_find_all_parents_no_parent():
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", description="flexible automl"),
+        h2o_automl=Namespace(name="h2o", version="1.3"),
+    )
+    parents = find_all_parents(frameworks.gama, frameworks)
+    assert parents == []
+
+
+@pytest.mark.parametrize("framework", ["gama", "h2o_automl"])
+def test_find_all_parents_one_parent(framework):
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", description="flexible automl"),
+        gama_old=Namespace(name="gama_20.1.0", version="20.1.0", extends="gama"),
+        h2o_automl=Namespace(name="h2o", version="latest"),
+        h2o_automl_old=Namespace(name="h2o_1.2", version="1.2", extends="h2o_automl"),
+    )
+    parents = find_all_parents(frameworks[f"{framework}_old"], frameworks)
+    assert parents == [frameworks[framework]]
+
+
+@pytest.mark.parametrize("framework", ["gama", "h2o_automl"])
+def test_find_all_parents_two_parents(framework):
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", description="flexible automl"),
+        gama_old=Namespace(name="gama_20.1.0", version="20.1.0", extends="gama"),
+        gama_older=Namespace(name="gama_20.0.0", version="20.0.0", extends="gama_old"),
+        h2o_automl=Namespace(name="h2o", version="latest"),
+        h2o_automl_old=Namespace(name="h2o_1.2", version="1.2", extends="h2o_automl"),
+        h2o_automl_older=Namespace(name="h2o_1.1", version="1.1", extends="h2o_automl_old"),
+    )
+    parents = find_all_parents(frameworks[f"{framework}_older"], frameworks)
+    assert parents == [frameworks[f"{framework}_old"], frameworks[framework]]
+
+
+def test_update_frameworks_with_parent_definitions_adds_parent_yaml():
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", description="flexible automl"),
+        gama_old=Namespace(name="gama_20.1.0", version="20.1.0", extends="gama"),
+    )
+    update_frameworks_with_parent_definitions(frameworks)
+    assert frameworks.gama_old.description == "flexible automl"
+
+
+def test_update_frameworks_with_parent_definitions_parent_overwrites_grandparent_yaml():
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", description="flexible automl"),
+        gama_old=Namespace(name="gama_2", version="1", description="automl", extends="gama"),
+        gama_oldest=Namespace(name="gama_1", version="2", extends="gama_old"),
+    )
+    update_frameworks_with_parent_definitions(frameworks)
+    assert frameworks.gama_oldest.description == "automl"
+
+
+def test_update_frameworks_with_parent_definitions_does_not_overwrite_child_yaml():
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", description="flexible automl"),
+        gama_old=Namespace(name="gama_20.1", version="20.1", description="old gama", extends="gama"),
+    )
+    update_frameworks_with_parent_definitions(frameworks)
+    assert frameworks.gama_old.description == "old gama"
+
+
+def test_load_framework_definitions()
+
