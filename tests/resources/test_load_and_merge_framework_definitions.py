@@ -1,5 +1,5 @@
 import pytest
-from amlb.resources import load_and_merge_framework_definitions
+from amlb.framework_definitions import load_and_merge_framework_definitions
 
 framework_file = "files/frameworks.yaml"
 framework_file_with_extension_only = "files/frameworks3.yaml"

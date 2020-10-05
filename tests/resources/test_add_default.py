@@ -1,7 +1,7 @@
 import pytest
-from amlb.resources import add_default_params, add_default_module, \
-    add_default_version, add_default_setup_args, add_default_setup_script, \
-    add_default_setup_cmd, add_default_image
+from amlb.framework_definitions import add_default_module, add_default_version, \
+    add_default_setup_args, add_default_setup_script, add_default_setup_cmd, \
+    add_default_params, add_default_image
 from amlb.utils import Namespace
 
 
