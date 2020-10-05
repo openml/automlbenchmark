@@ -222,7 +222,7 @@ def sanitize_and_add_defaults(frameworks, resource: Resources):
     # we update children with their parent fields.
     for _, framework in frameworks:
         if "extends" not in framework:
-            autocomplete_framework_module(framework, resource.config)
+            add_default_module(framework, resource.config)
     update_frameworks_with_parent_definitions(frameworks)
 
     add_defaults_to_frameworks(frameworks, resource)
@@ -254,17 +254,17 @@ def add_and_normalize_names(frameworks: Namespace):
             framework.extends = framework.extends.lower()
 
 
-def autocomplete_framework_module(framework, config):
+def add_default_module(framework, config):
     if "module" not in framework:
         framework.module = f"{config.frameworks.root_module}.{framework.name}"
 
 
-def autocomplete_framework_version(framework):
+def add_default_version(framework):
     if "version" not in framework:
         framework.version = "latest"
 
 
-def autocomplete_framework_setup_args(framework):
+def add_default_setup_args(framework):
     if "setup_args" in framework:
         framework.setup_args = [framework.setup_args]
     else:
@@ -273,7 +273,7 @@ def autocomplete_framework_setup_args(framework):
             framework.setup_args.append(framework.repo)
 
 
-def autocomplete_setup_script(framework, resource):
+def add_default_setup_script(framework, resource):
     if "setup_script" not in framework:
         framework.setup_script = None
     else:
@@ -283,7 +283,7 @@ def autocomplete_setup_script(framework, resource):
         )
 
 
-def autocomplete_setup_cmd(framework, resource):
+def add_default_setup_cmd(framework, resource):
     if "setup_cmd" not in framework:
         framework._setup_cmd = None
         framework.setup_cmd = None
@@ -297,14 +297,14 @@ def autocomplete_setup_cmd(framework, resource):
         ]
 
 
-def autocomplete_params(framework):
+def add_default_params(framework):
     if "params" not in framework:
         framework.params = dict()
     else:
         framework.params = Namespace.dict(framework.params)
 
 
-def autocomplete_image(framework: Namespace, config_: Namespace):
+def add_default_image(framework: Namespace, config_: Namespace):
     if "image" not in framework:
         framework.image = copy.deepcopy(config_.docker.image_defaults)
     else:
@@ -341,12 +341,12 @@ def update_frameworks_with_parent_definitions(frameworks: Namespace):
 
 def add_defaults_to_frameworks(frameworks: Namespace, resource: Resources):
     for _, framework in frameworks:
-        autocomplete_framework_version(framework)
-        autocomplete_framework_setup_args(framework)
-        autocomplete_params(framework)
-        autocomplete_image(framework, resource.config)
-        autocomplete_setup_cmd(framework, resource)
-        autocomplete_setup_script(framework, resource)
+        add_default_version(framework)
+        add_default_setup_args(framework)
+        add_default_params(framework)
+        add_default_image(framework, resource.config)
+        add_default_setup_cmd(framework, resource)
+        add_default_setup_script(framework, resource)
 
 
 def autocomplete_definition(framework: Namespace, parent: Optional[Namespace], resource):

@@ -3,10 +3,10 @@ from amlb.utils import Namespace
 from amlb.resources import load_and_merge_framework_definitions, \
     remove_frameworks_with_unknown_parent, remove_self_reference_extensions, \
     add_and_normalize_names, load_framework_definitions, from_config, \
-    autocomplete_definition, autocomplete_framework_module, \
-    autocomplete_framework_version, autocomplete_framework_setup_args, \
-    autocomplete_setup_script, Resources, autocomplete_setup_cmd, autocomplete_params, \
-    autocomplete_image, add_defaults_to_frameworks, \
+    autocomplete_definition, add_default_module, \
+    add_default_version, add_default_setup_args, \
+    add_default_setup_script, Resources, add_default_setup_cmd, add_default_params, \
+    add_default_image, add_defaults_to_frameworks, \
     update_frameworks_with_parent_definitions, find_all_parents, \
     sanitize_and_add_defaults
 
@@ -16,29 +16,6 @@ directory_aliases = [
     ("user", "my_user_dir"),
     ("root", "my_root_dir"),
 ]
-
-
-@pytest.fixture
-def simple_resource():
-    return Resources(
-        Namespace(
-            input_dir="my_input",
-            output_dir="my_output",
-            user_dir="my_user_dir",
-            root_dir="my_root_dir",
-            docker=Namespace(
-                image_defaults=Namespace(
-                    author="author",
-                    image=None,
-                    tag=None,
-                )
-            ),
-            frameworks=Namespace(
-                root_module="frameworks",
-            )
-        )
-    )
-
 
 
 def test_remove_frameworks_with_unknown_parent_removes_one():
@@ -88,188 +65,6 @@ def test_add_and_normalize_names_extension_is_normalized():
     f = Namespace(dummy=Namespace(extends="AnotherDummy"))
     add_and_normalize_names(f)
     assert f.dummy.extends == "anotherdummy"
-
-
-@pytest.mark.parametrize("name", ["a", "b"])
-def test_autocomplete_framework_module_name(name):
-    dummy_config = Namespace(frameworks=Namespace(root_module="frameworks"))
-    framework = Namespace(name=name)
-    autocomplete_framework_module(framework, dummy_config)
-    assert framework.module == f"frameworks.{name}"
-
-
-def test_autocomplete_framework_module_custom_module():
-    dummy_config = Namespace(frameworks=Namespace(root_module="frameworks"))
-    framework = Namespace(name="c", module="custom")
-    autocomplete_framework_module(framework, config=dummy_config)
-    assert framework.module == "custom"
-
-
-def test_autocomplete_framework_module_custom_root_module():
-    dummy_config = Namespace(frameworks=Namespace(root_module="different"))
-    framework = Namespace(name="d")
-    autocomplete_framework_module(framework, dummy_config)
-    assert framework.module == "different.d"
-
-
-def test_autocomplete_framework_version_set_default():
-    framework = Namespace()
-    autocomplete_framework_version(framework)
-    assert "version" in framework
-    assert framework.version == "latest"
-
-
-def test_autocomplete_framework_version_specified():
-    framework = Namespace(version="v1.0")
-    autocomplete_framework_version(framework)
-    assert "version" in framework
-    assert framework.version == "v1.0"
-
-
-def test_autocomplete_framework_setup_args_default_no_repo_is_version():
-    f_my_version = Namespace(version="my_version")
-    f_my_other_version = Namespace(version="my_other_version")
-
-    autocomplete_framework_setup_args(f_my_version)
-    autocomplete_framework_setup_args(f_my_other_version)
-
-    assert f_my_version.setup_args == ["my_version"]
-    assert f_my_other_version.setup_args == ["my_other_version"]
-
-
-@pytest.mark.parametrize("version, repo", [("my_version", "my_repo"), ("my_other_version", "my_other_repo")])
-def test_autocomplete_framework_setup_args_default_with_repo_is_version_then_repo(version, repo):
-    f_my_version = Namespace(version=version, repo=repo)
-    autocomplete_framework_setup_args(f_my_version)
-    assert f_my_version.setup_args == [version, repo]
-
-
-def test_autocomplete_framework_setup_args_already_set():
-    f_no_extra = Namespace(setup_args="no_extra")
-    autocomplete_framework_setup_args(f_no_extra)
-    assert f_no_extra.setup_args == ["no_extra"]
-
-
-def test_autocomplete_framework_setup_args_already_set_ignores_others():
-    f_with_extra = Namespace(setup_args="w_extra", version="my_version", repo="my_repo")
-    autocomplete_framework_setup_args(f_with_extra)
-    assert f_with_extra.setup_args == ["w_extra"]
-
-
-def test_autocomplete_setup_script_none_provided(simple_resource):
-    framework = Namespace()
-    autocomplete_setup_script(framework, simple_resource)
-    assert framework.setup_script is None
-
-
-def test_autocomplete_setup_script_static(simple_resource):
-    framework = Namespace(module="my_module", setup_script="t.sh")
-    autocomplete_setup_script(framework, simple_resource)
-    assert framework.setup_script == "t.sh"
-
-
-def test_autocomplete_setup_script_interpolates_module(simple_resource):
-    framework = Namespace(module="my_module", setup_script="{module}/t.sh")
-    autocomplete_setup_script(framework, simple_resource)
-    assert framework.setup_script == "my_module/t.sh"
-
-
-@pytest.mark.parametrize("alias, actual", directory_aliases)
-def test_autocomplete_setup_script_interpolates_directory(simple_resource, alias, actual):
-    framework = Namespace(setup_script=f"{{{alias}}}/t.sh", module="")
-    autocomplete_setup_script(framework, simple_resource)
-    assert framework.setup_script.endswith(f"{actual}/t.sh")
-
-
-def test_autocomplete_setup_cmd_none_provided(simple_resource):
-    framework = Namespace()
-    autocomplete_setup_cmd(framework, simple_resource)
-    assert framework.setup_cmd == None
-    assert framework._setup_cmd == None
-
-
-@pytest.mark.parametrize("commands", ["original", ["one", "two"]])
-def test_autocomplete_setup_cmd_provided_original_saved(simple_resource, commands):
-    framework = Namespace(setup_cmd=commands)
-    autocomplete_setup_cmd(framework, simple_resource)
-    assert framework._setup_cmd == commands
-
-
-def test_autocomplete_setup_cmd_str_to_list(simple_resource):
-    framework = Namespace(setup_cmd="str_command")
-    autocomplete_setup_cmd(framework, simple_resource)
-    assert framework.setup_cmd == ["str_command"]
-
-
-def test_autocomplete_setup_cmd_list_unaltered(simple_resource):
-    framework = Namespace(setup_cmd=["str", "commands"])
-    autocomplete_setup_cmd(framework, simple_resource)
-    assert framework.setup_cmd == ["str", "commands"]
-
-
-@pytest.mark.parametrize("alias, actual", directory_aliases)
-def test_autocomplete_setup_cmd_directory_interpolation(simple_resource, alias, actual):
-    framework = Namespace(setup_cmd=[f"{{{alias}}}"])
-    autocomplete_setup_cmd(framework, simple_resource)
-    assert framework.setup_cmd[0].endswith(actual)
-
-
-def test_autocomplete_params_none():
-    framework = Namespace()
-    autocomplete_params(framework)
-    assert framework.params == dict()
-
-
-def test_autocomplete_params_is_something():
-    framework = Namespace(params=Namespace(my_param="set"))
-    autocomplete_params(framework)
-    assert isinstance(framework.params, dict)
-    assert framework.params["my_param"] == "set"
-
-
-@pytest.mark.parametrize("author", ["automlbenchmark", "unittest"])
-def test_autocomplete_image_none_correct_author(simple_resource, author):
-    simple_resource.config.docker.image_defaults.author = author
-    framework = Namespace(version="v", name="n")
-    autocomplete_image(framework, simple_resource.config)
-    assert framework.image.author == author
-
-
-@pytest.mark.parametrize("tag, expected", [("V1", "V1"), (None, "v0.2dev")])
-def test_autocomplete_image_none_correct_tag(simple_resource, tag, expected):
-    simple_resource.config.docker.image_defaults.tag = tag
-    framework = Namespace(version="V0.2dev", name="n")
-    autocomplete_image(framework, simple_resource.config)
-    assert framework.image.tag == expected
-
-
-@pytest.mark.parametrize("image, expected", [("img", "img"), (None, "decision_tree")])
-def test_autocomplete_image_none_correct_image(simple_resource, image, expected):
-    simple_resource.config.docker.image_defaults.image = image
-    framework = Namespace(name="decision_tree", version="v0.1")
-    autocomplete_image(framework, simple_resource.config)
-    assert framework.image.image == expected
-
-
-def test_autocomplete_image_set_author(simple_resource):
-    simple_resource.config.docker.image_defaults.author = "author"
-    framework = Namespace(name="n", version="0.1", image=Namespace(author="hfinley"))
-    autocomplete_image(framework, simple_resource.config)
-    assert framework.image.author == "hfinley"
-
-
-def test_autocomplete_image_set_tag(simple_resource):
-    simple_resource.config.docker.image_defaults.tag = "v1.0dev"
-    framework = Namespace(name="n", image=Namespace(tag="1.0-xenial"))
-    autocomplete_image(framework, simple_resource.config)
-    assert framework.image.tag == "1.0-xenial"
-
-
-def test_autocomplete_image_set_image(simple_resource):
-    simple_resource.config.docker.image_defaults.image = "default_image"
-    framework = Namespace(name="n", version="20.0a", image=Namespace(image="automl"))
-    autocomplete_image(framework, simple_resource.config)
-    assert framework.image.image == "automl"
 
 
 def test_find_all_parents_no_parent():
