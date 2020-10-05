@@ -91,7 +91,7 @@ class Resources:
     @lazy_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
-        return load_framework_definitions(frameworks_file)
+        return load_framework_definitions(frameworks_file, self)
 
     @memoize
     def constraint_definition(self, name):
@@ -320,7 +320,7 @@ def add_default_image(framework: Namespace, config_: Namespace):
 def find_all_parents(framework, frameworks):
     """ Return all definitions framework extends, from direct parent to furthest. """
     parents = []
-    while "extends" in framework:
+    while "extends" in framework and framework.extends is not None:
         framework = frameworks[framework.extends]
         parents.append(framework)
     return parents
@@ -334,6 +334,7 @@ def update_frameworks_with_parent_definitions(frameworks: Namespace):
     to the child framework defines the field value.
     """
     for name, framework in frameworks:
+        log.info(f"{name} {framework}")
         parents = find_all_parents(framework, frameworks)
         for parent in parents:
             framework % copy.deepcopy(parent)
@@ -347,58 +348,6 @@ def add_defaults_to_frameworks(frameworks: Namespace, resource: Resources):
         add_default_image(framework, resource.config)
         add_default_setup_cmd(framework, resource)
         add_default_setup_script(framework, resource)
-
-
-def autocomplete_definition(framework: Namespace, parent: Optional[Namespace], resource):
-    if parent is not None:
-        framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
-
-    if framework['module'] is None:
-        framework.module = '.'.join(
-            [resource.config.frameworks.root_module, framework.name])
-
-    if framework['version'] is None:
-        framework.version = 'latest'
-
-    if framework['setup_args'] is None:
-        framework.setup_args = [framework.version] if framework['repo'] is None else [
-            framework.version, framework.repo]
-    elif isinstance(framework.setup_args, str):
-        framework.setup_args = [framework.setup_args]
-
-    if framework['setup_script'] is None:
-        framework.setup_script = None
-    else:
-        framework.setup_script = framework.setup_script.format(**resource._common_dirs,
-                                                               **dict(
-                                                                   module=framework.module))
-    if framework['setup_cmd'] is None:
-        framework._setup_cmd = None
-        framework.setup_cmd = None
-    else:
-        framework._setup_cmd = framework.setup_cmd
-        if isinstance(framework.setup_cmd, str):
-            framework.setup_cmd = [framework.setup_cmd]
-        framework.setup_cmd = [cmd.format(**resource._common_dirs,
-                                          **dict(pip="{pip}",
-                                                 py="{py}"))
-                               for cmd in framework.setup_cmd]
-
-    if framework['params'] is None:
-        framework.params = dict()
-    else:
-        framework.params = Namespace.dict(framework.params)
-
-    did = copy.copy(resource.config.docker.image_defaults)
-    if framework['image'] is None:
-        framework['image'] = did
-    for conf in ['author', 'image', 'tag']:
-        if framework.image[conf] is None:
-            framework.image[conf] = did[conf]
-    if framework.image.image is None:
-        framework.image.image = framework.name.lower()
-    if framework.image.tag is None:
-        framework.image.tag = framework.version.lower()
 
 
 def remove_self_reference_extensions(frameworks: Namespace):

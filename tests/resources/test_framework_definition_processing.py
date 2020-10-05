@@ -70,6 +70,13 @@ def test_find_all_parents_returns_empty_list_if_framework_has_no_parent():
     assert parents == []
 
 
+def test_find_all_parents_ignores_when_extends_is_none():
+    frameworks = Namespace(
+        gama=Namespace(name="gama", version="latest", extends=None),
+    )
+    find_all_parents(frameworks.gama, frameworks)
+
+
 @pytest.mark.parametrize("framework", ["gama", "h2o_automl"])
 def test_find_all_parents_returns_parent_of_framework_with_single_parent(framework):
     frameworks = Namespace(
