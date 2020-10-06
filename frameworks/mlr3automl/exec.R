@@ -1,4 +1,6 @@
 library(mlr3)
+libary(mlr3learners)
+libary(mlr3learners.liblinear)
 library(mlr3tuning)
 library(mlr3pipelines)
 library(mlr3automl)
