@@ -31,7 +31,15 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   model$train()
   preds <- model$predict(test)
 
-  if (type == "classification") {
+  if (type == "classification" && any(grepl("liblinear", model$learner_list))) {
+    result = data.frame(preds$data$response, preds$data$truth)
+    const_column = rep(0.5, length(preds$response))
+    for (level in train$class_names) {
+      result = cbind(const_column, result)
+    }
+    colnames(result) = c(train$class_names, 'predictions', 'truth')
+  }
+  elif (type == "classification") {
     result = data.frame(preds$data$prob, preds$data$response, preds$data$truth)
     colnames(result) = c(colnames(preds$data$prob), 'predictions', 'truth')
   } else {
