@@ -39,7 +39,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     }
     colnames(result) = c(train$class_names, 'predictions', 'truth')
   }
-  elif (type == "classification") {
+  else if (type == "classification") {
     result = data.frame(preds$data$prob, preds$data$response, preds$data$truth)
     colnames(result) = c(colnames(preds$data$prob), 'predictions', 'truth')
   } else {
