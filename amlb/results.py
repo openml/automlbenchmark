@@ -329,8 +329,6 @@ class Result:
             # as a scikit-learn scorer), and once in the amlb-compatible format.
             # The amlb-compatible format is marked with a trailing underscore.
             custom_metric = get_extension(rconfig().extensions_files, f"{metric}_")
-            if custom_metric is None:
-                custom_metric = get_extension(rconfig().extensions_files, metric)
             if custom_metric is not None:
                 return custom_metric(self)
         # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
