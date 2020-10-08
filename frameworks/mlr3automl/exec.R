@@ -17,12 +17,12 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_list = c("classif.liblinearl1l2svc"), resampling = rsmp("holdout"),
+    model <- AutoML(train, learner_list = c("classif.cv_glmnet"), resampling = rsmp("holdout"),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.8)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_list = c("regr.liblinearl2l1svr"), resampling = rsmp("holdout"),
+    model <- AutoML(train, learner_list = c("regr.cv_glmnet"), resampling = rsmp("holdout"),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.8)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")

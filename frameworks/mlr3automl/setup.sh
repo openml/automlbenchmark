@@ -21,6 +21,6 @@ SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3tuning"
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3oml")'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/paradox")'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3learners")'
-SUDO Rscript -e 'remotes::install_github("https://github.com/a-hanf/mlr3automl", ref = "create_stable_SVM")'
+SUDO Rscript -e 'remotes::install_github("https://github.com/a-hanf/mlr3automl", ref = "create_stable_log_lin_reg")'
 
 
