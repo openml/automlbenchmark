@@ -17,12 +17,12 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_list = c("classif.cv_glmnet"), resampling = rsmp("holdout"),
+    model <- AutoML(train, learner_list = c("classif.liblinearl1logreg"), resampling = rsmp("holdout"),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.8)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_list = c("regr.cv_glmnet"), resampling = rsmp("holdout"),
+    model <- AutoML(train, learner_list = c("regr.liblinearl2l1svr"), resampling = rsmp("holdout"),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.8)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")
@@ -31,7 +31,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   model$train()
   preds <- model$predict(test)
 
-  if (type == "classification" && any(grepl("liblinear", model$learner_list))) {
+  if (type == "classification" && model$learner$predict_type == "response") {
     result = data.frame(preds$data$response, preds$data$truth)
     const_column = rep(0.5, length(preds$response))
     for (level in train$class_names) {
