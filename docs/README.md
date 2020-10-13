@@ -347,7 +347,7 @@ Any new issue should also be reported there.
 
 We don't perform a benchmark evaluation for each new package or update.
 Due to budget constraints, we can only do a limited number of evaluations.
-The next full evaluation will be performed before the end of the year.
+The next full evaluation will be performed before the end of the year 2020.
 We hope to find funding to guarantee regular evaluations.
 
 ---
