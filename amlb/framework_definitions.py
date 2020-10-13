@@ -15,13 +15,13 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], resource)
     :param frameworks_file:
     :return: Namespace containing each framework definition,
     """
-    frameworks = load_and_merge_framework_definitions(frameworks_file)
-    sanitize_and_add_defaults(frameworks, resource)
+    frameworks = _load_and_merge_framework_definitions(frameworks_file)
+    _sanitize_and_add_defaults(frameworks, resource)
     log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
 
 
-def load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namespace:
+def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namespace:
     """ Load and merge the framework file(s), does not allow duplicate definitions. """
     log.info("Loading frameworks definitions from %s.", frameworks_file)
     if not isinstance(frameworks_file, list):
@@ -34,28 +34,28 @@ def load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]])
     return Namespace.merge(*definitions_by_file)
 
 
-def sanitize_definitions(frameworks: Namespace):
+def _sanitize_definitions(frameworks: Namespace):
     """ Normalize names, add name field, remove invalid extensions. """
-    add_and_normalize_names(frameworks)
-    remove_frameworks_with_unknown_parent(frameworks)
-    remove_self_reference_extensions(frameworks)
+    _add_and_normalize_names(frameworks)
+    _remove_frameworks_with_unknown_parent(frameworks)
+    _remove_self_reference_extensions(frameworks)
 
 
-def sanitize_and_add_defaults(frameworks, resource):
-    sanitize_definitions(frameworks)
+def _sanitize_and_add_defaults(frameworks, resource):
+    _sanitize_definitions(frameworks)
 
     # `module` is the only field that should have a default
     # based on the parent. For that reason we add it before
     # we update children with their parent fields.
     for _, framework in frameworks:
         if "extends" not in framework:
-            add_default_module(framework, resource.config)
-    update_frameworks_with_parent_definitions(frameworks)
+            _add_default_module(framework, resource.config)
+    _update_frameworks_with_parent_definitions(frameworks)
 
-    add_defaults_to_frameworks(frameworks, resource)
+    _add_defaults_to_frameworks(frameworks, resource)
 
 
-def add_and_normalize_names(frameworks: Namespace):
+def _add_and_normalize_names(frameworks: Namespace):
     """ Converts each framework definition to lowercase and adds a 'name' field. """
     framework_names = dir(frameworks)
     for name in framework_names:
@@ -68,17 +68,17 @@ def add_and_normalize_names(frameworks: Namespace):
             framework.extends = framework.extends.lower()
 
 
-def add_default_module(framework, config):
+def _add_default_module(framework, config):
     if "module" not in framework:
         framework.module = f"{config.frameworks.root_module}.{framework.name}"
 
 
-def add_default_version(framework):
+def _add_default_version(framework):
     if "version" not in framework:
         framework.version = "latest"
 
 
-def add_default_setup_args(framework):
+def _add_default_setup_args(framework):
     if "setup_args" in framework:
         framework.setup_args = [framework.setup_args]
     else:
@@ -87,7 +87,7 @@ def add_default_setup_args(framework):
             framework.setup_args.append(framework.repo)
 
 
-def add_default_setup_script(framework, resource):
+def _add_default_setup_script(framework, resource):
     if "setup_script" not in framework:
         framework.setup_script = None
     else:
@@ -97,7 +97,7 @@ def add_default_setup_script(framework, resource):
         )
 
 
-def add_default_setup_cmd(framework, resource):
+def _add_default_setup_cmd(framework, resource):
     if "setup_cmd" not in framework:
         framework._setup_cmd = None
         framework.setup_cmd = None
@@ -111,14 +111,14 @@ def add_default_setup_cmd(framework, resource):
         ]
 
 
-def add_default_params(framework):
+def _add_default_params(framework):
     if "params" not in framework:
         framework.params = dict()
     else:
         framework.params = Namespace.dict(framework.params)
 
 
-def add_default_image(framework: Namespace, config_: Namespace):
+def _add_default_image(framework: Namespace, config_: Namespace):
     if "image" not in framework:
         framework.image = copy.deepcopy(config_.docker.image_defaults)
     else:
@@ -131,7 +131,7 @@ def add_default_image(framework: Namespace, config_: Namespace):
         framework.image.image = framework.name
 
 
-def find_all_parents(framework, frameworks):
+def _find_all_parents(framework, frameworks):
     """ Return all definitions framework extends, from direct parent to furthest. """
     parents = []
     while "extends" in framework and framework.extends is not None:
@@ -140,7 +140,7 @@ def find_all_parents(framework, frameworks):
     return parents
 
 
-def update_frameworks_with_parent_definitions(frameworks: Namespace):
+def _update_frameworks_with_parent_definitions(frameworks: Namespace):
     """ Add fields defined by ancestors
 
     Extensions do not overwrite fields defined on the framework itself.
@@ -149,22 +149,22 @@ def update_frameworks_with_parent_definitions(frameworks: Namespace):
     """
     for name, framework in frameworks:
         log.info(f"{name} {framework}")
-        parents = find_all_parents(framework, frameworks)
+        parents = _find_all_parents(framework, frameworks)
         for parent in parents:
             framework % copy.deepcopy(parent)
 
 
-def add_defaults_to_frameworks(frameworks: Namespace, resource):
+def _add_defaults_to_frameworks(frameworks: Namespace, resource):
     for _, framework in frameworks:
-        add_default_version(framework)
-        add_default_setup_args(framework)
-        add_default_params(framework)
-        add_default_image(framework, resource.config)
-        add_default_setup_cmd(framework, resource)
-        add_default_setup_script(framework, resource)
+        _add_default_version(framework)
+        _add_default_setup_args(framework)
+        _add_default_params(framework)
+        _add_default_image(framework, resource.config)
+        _add_default_setup_cmd(framework, resource)
+        _add_default_setup_script(framework, resource)
 
 
-def remove_self_reference_extensions(frameworks: Namespace):
+def _remove_self_reference_extensions(frameworks: Namespace):
     for name, framework in frameworks:
         if "extends" in framework and framework.extends == framework.name:
             log.warning("Framework %s extends itself: removing extension.",
@@ -172,7 +172,7 @@ def remove_self_reference_extensions(frameworks: Namespace):
             framework.extends = None
 
 
-def remove_frameworks_with_unknown_parent(frameworks: Namespace):
+def _remove_frameworks_with_unknown_parent(frameworks: Namespace):
     frameworks_with_unknown_parent = [
         (name, framework.extends) for name, framework in frameworks
         if "extends" in framework and framework.extends not in frameworks
