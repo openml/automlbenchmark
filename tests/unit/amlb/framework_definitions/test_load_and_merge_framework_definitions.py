@@ -1,11 +1,15 @@
+import os
 import pytest
 from amlb.framework_definitions import _load_and_merge_framework_definitions
 
-framework_file = "files/frameworks.yaml"
-framework_file_with_extension_only = "files/frameworks3.yaml"
+here = os.path.realpath(os.path.dirname(__file__))
+res = os.path.join(here, 'resources')
+
+framework_file = f"{res}/frameworks.yaml"
+framework_file_with_extension_only = f"{res}/frameworks3.yaml"
 second_file_has_duplicate = [
     framework_file,
-    "files/frameworks2.yaml",
+    f"{res}/frameworks2.yaml",
 ]
 second_file_has_extension = [
     framework_file,
