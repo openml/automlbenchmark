@@ -118,11 +118,11 @@ def _add_default_params(framework):
         framework.params = Namespace.dict(framework.params)
 
 
-def _add_default_image(framework: Namespace, config_: Namespace):
+def _add_default_image(framework: Namespace, config: Namespace):
     if "image" not in framework:
-        framework.image = copy.deepcopy(config_.docker.image_defaults)
+        framework.image = copy.deepcopy(config.docker.image_defaults)
     else:
-        framework.image = Namespace.merge(config_.docker.image_defaults, framework.image)
+        framework.image = Namespace.merge(config.docker.image_defaults, framework.image)
 
     if framework.image.tag is None:
         framework.image.tag = framework.version.lower()
