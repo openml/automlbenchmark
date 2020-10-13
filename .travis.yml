@@ -4,10 +4,7 @@ python:
 
 install:
   - pip install -r requirements.txt
-  - pip install -r optional-requirements.txt
+  - pip install -r dev-requirements.txt
 
-before_script:
-  - export PYTHONPATH=$PYTHONPATH:$(pwd)
 script:
-  - cd tests
-  - pytest
+  - python -m pytest
