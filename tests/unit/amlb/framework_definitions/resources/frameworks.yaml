@@ -1,0 +1,29 @@
+---
+# [1/3] files with framework definitions for unit tests only
+
+__dummy_framework_with_defaults:
+  version: ''
+  module: # defaults to `frameworks.framework_name`
+  setup_args: ''
+  params: {}
+  project: http://url/to/project/repo
+  image: # will result in built image `author/image:tag`
+    author: automlbenchmark
+    image:  # defaults to `framework name to lowercase`
+    tag:  # defaults to `framework version`
+
+unit_test_framework:
+  version: 'latest'
+  project: https://some.url
+
+unit_test_framework_extended_same_file:
+  version: 'latest'
+  extends: unit_test_framework
+
+other_test_framework:
+  version: 'latest'
+  project: https://some.url
+
+duplicate_entry:
+  version: 'latest'
+  project: https://some.url
