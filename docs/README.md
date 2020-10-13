@@ -15,6 +15,7 @@ _**NOTE:**_ _This benchmarking framework currently features binary and multiclas
      * [Output](#output)
   * [Advanced configuration](#advanced-configuration)
   * [Issues](#issues)
+  * [Frequently Asked Questions](#frequently-asked-questions)
       
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
@@ -29,7 +30,8 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ### Features:
 * Curated suites of [benchmarking datasets](https://openml.github.io/automlbenchmark/benchmark_datasets.html) from [OpenML](https://www.openml.org/s/218/data).
 * Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
-* [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework) as Docker images
+* [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework)
+* Experiments can be run in Docker or Singularity containers
 * Execute experiments locally or on AWS (see below)
 
 ### Roadmap: 
@@ -41,7 +43,7 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ## Installation
 ### Pre-requisites
 To run the benchmarks, you will need:
-* Python 3.5+.
+* Python 3.6+.
 * PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
@@ -49,7 +51,7 @@ To run the benchmarks, you will need:
 ### Setup
 Clone the repo:
 ```bash
-git clone https://github.com/openml/automlbenchmark.git
+git clone https://github.com/openml/automlbenchmark.git --branch stable --depth 1
 cd automlbenchmark
 ```
 Optional: create a Python3 virtual environment.
@@ -337,3 +339,24 @@ Any new issue should also be reported there.
 
 [Docker]: https://docs.docker.com/
 [boto3]: https://boto3.readthedocs.io/
+
+
+## Frequently Asked Questions
+
+**When will results be updated, also for the new/updated frameworks?**
+
+We don't perform a benchmark evaluation for each new package or update.
+Due to budget constraints, we can only do a limited number of evaluations.
+The next full evaluation will be performed before the end of the year 2020.
+We hope to find funding to guarantee regular evaluations.
+
+---
+**(When) will you add framework X?**
+
+We are currently not focused on integrating additional AutoML systems.
+However, we process any pull requests that add frameworks and will assist with the integration.
+The best way to make sure framework X gets included is to start with the integration yourself or encourage the package authors to do so (for technical details see [HOWTO]).
+
+It is also possible to open a Github issue indicating the framework you would like added.
+Please use a clear title (e.g. "Add framework: X") and provide some relevant information (e.g. a link to the documentation).
+This helps us keep track of which frameworks people are interested in seeing included.
