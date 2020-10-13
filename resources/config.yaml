@@ -52,6 +52,9 @@ benchmarks:
     max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
     min_vol_size_mb: -1       # default minimum amount of free space required on the volume. If <= 0, skips verification.
 
+extensions_files:
+  - '{user}/extensions.py'
+
 results:
   error_max_length: 200
   save: true  # set by runbenchmark.py

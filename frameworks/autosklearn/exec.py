@@ -13,7 +13,7 @@ from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, get_extension, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +36,8 @@ def run(dataset, config):
         rmse=metrics.mean_squared_error,  # autosklearn can optimize on mse, and we compute rmse independently on predictions
         r2=metrics.r2
     )
-    perf_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    perf_metric = (metrics_mapping[config.metric] if config.metric in metrics_mapping
+                   else get_extension(config.extensions, config.metric))
     if perf_metric is None:
         # TODO: figure out if we are going to blindly pass metrics through, or if we use a strict mapping
         log.warning("Performance metric %s not supported.", config.metric)

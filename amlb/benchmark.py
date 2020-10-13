@@ -273,7 +273,7 @@ class TaskConfig:
 
     def __init__(self, name, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
-                 input_dir, output_dir):
+                 input_dir, output_dir, extensions):
         self.framework = None
         self.framework_params = None
         self.type = None
@@ -289,6 +289,7 @@ class TaskConfig:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
+        self.extensions = extensions
 
     def __json__(self):
         return self.__dict__
@@ -344,6 +345,7 @@ class BenchmarkTask:
             min_vol_size_mb=task_def.min_vol_size_mb,
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
+            extensions=rconfig().extensions_files,
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:

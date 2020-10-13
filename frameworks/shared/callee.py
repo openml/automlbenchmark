@@ -1,3 +1,4 @@
+import linecache
 import json
 import logging
 import os
@@ -44,7 +45,38 @@ def output_subdir(name, config):
     return subdir
 
 
-data_keys = re.compile("^(X|y|data)(_.+)?$")
+_extensions_ = {}
+
+
+def get_extension(files, name=None, default=None):
+    files = [files] if isinstance(files, str) else files
+
+    extensions = []
+    for file in files:
+        if file in _extensions_:
+            extensions.append(_extensions_.get(file, {}))
+        elif os.path.isfile(file):
+            try:
+                with open(file) as f:
+                    # linecache and compile are necessary only if we want to inspect code later
+                    # otherwise the following statement is enough:
+                    # exec(f.read(), customizations)
+                    linecache.updatecache(f.name)
+                    code = compile(f.read(), f.name, 'exec')
+                    ext = {}
+                    exec(code, ext)
+                    _extensions_[file] = ext
+                    extensions.append(ext)
+            except Exception as e:
+                log.warning("Could not load extension file %s: %s", file, str(e))
+                _extensions_[file] = {}
+        else:
+            log.warning("No extensions available at %s", file)
+
+    return extensions if name is None else next((ext[name] for ext in extensions if name in ext), default)
+
+
+_data_keys_ = re.compile("^(X|y|data)(_.+)?$")
 
 
 def call_run(run_fn):
@@ -53,7 +85,7 @@ def call_run(run_fn):
     params = NS.from_dict(json.loads(sys.stdin.read()))
 
     def load_data(name, path, **ignored):
-        if isinstance(path, str) and data_keys.match(name):
+        if isinstance(path, str) and _data_keys_.match(name):
             return name, np.load(path, allow_pickle=True)
         return name, path
 
