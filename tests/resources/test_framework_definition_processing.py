@@ -106,32 +106,61 @@ def test_find_all_parents_returns_frameworks_closest_first_if_two_parents(framew
     assert parents == [frameworks[f"{framework}_old"], frameworks[framework]]
 
 
-def test_update_frameworks_with_parent_definitions_add_missing_field_from_parent():
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("description", "flexible automl"),
+        ("params", dict(foo="bar")),
+        ("version", "20.1.0"),
+        ("setup_args", "zahradnik"),
+    ]
+)
+def test_update_frameworks_with_parent_definitions_add_missing_field_from_parent(field, value):
     frameworks = Namespace(
-        gama=Namespace(name="gama", version="latest", description="flexible automl"),
-        gama_old=Namespace(name="gama_20.1.0", version="20.1.0", extends="gama"),
+        gama=Namespace(name="gama", **{field: value}),
+        gama_old=Namespace(name="gama_20.1.0", extends="gama"),
     )
     _update_frameworks_with_parent_definitions(frameworks)
-    assert frameworks.gama_old.description == "flexible automl"
+    assert frameworks.gama_old[field] == value
 
 
-def test_update_frameworks_with_parent_definitions_does_not_overwrite_child_yaml():
+@pytest.mark.parametrize(
+    "field, p_value, c_value",
+    [
+        ("description", "flexible automl", "just automl"),
+        ("params", dict(foo="bar"), dict(foo="baz")),
+        ("params", dict(foo="bar"), dict(bar="baz")),
+        ("version", "20.1.0", "20.1"),
+        ("setup_args", "zahradnik", "smith"),
+    ]
+)
+def test_update_frameworks_with_parent_definitions_does_not_overwrite_child(field, p_value, c_value):
     frameworks = Namespace(
-        gama=Namespace(name="gama", version="latest", description="flexible automl"),
-        gama_old=Namespace(name="gama_20.1", version="20.1", description="old gama", extends="gama"),
+        gama=Namespace(name="gama", **{field: p_value}),
+        gama_old=Namespace(name="gama_20.1", **{field: c_value}, extends="gama"),
     )
     _update_frameworks_with_parent_definitions(frameworks)
-    assert frameworks.gama_old.description == "old gama"
+    assert frameworks.gama_old[field] == c_value
 
 
-def test_update_frameworks_with_parent_definitions_parent_overwrites_grandparent_yaml():
+@pytest.mark.parametrize(
+    "field, g_value, p_value",
+    [
+        ("description", "flexible automl", "just automl"),
+        ("params", dict(foo="bar"), dict(foo="baz")),
+        ("params", dict(foo="bar"), dict(bar="baz")),
+        ("version", "20.1.0", "20.1"),
+        ("setup_args", "zahradnik", "smith"),
+    ]
+)
+def test_update_frameworks_with_parent_definitions_parent_overwrites_grandparent_yaml(field, g_value, p_value):
     frameworks = Namespace(
-        gama=Namespace(name="gama", version="latest", description="flexible automl"),
-        gama_old=Namespace(name="gama_2", version="1", description="automl", extends="gama"),
-        gama_oldest=Namespace(name="gama_1", version="2", extends="gama_old"),
+        gama=Namespace(name="gama", **{field: g_value}),
+        gama_old=Namespace(name="gama_2", **{field: p_value}, extends="gama"),
+        gama_oldest=Namespace(name="gama_1", extends="gama_old"),
     )
     _update_frameworks_with_parent_definitions(frameworks)
-    assert frameworks.gama_oldest.description == "automl"
+    assert frameworks.gama_oldest[field] == p_value
 
 
 def test_sanitize_and_add_defaults_root_definition_get_module(simple_resource):
