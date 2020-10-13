@@ -73,7 +73,11 @@ def test_find_all_parents_ignores_when_extends_is_none():
     frameworks = Namespace(
         gama=Namespace(name="gama", version="latest", extends=None),
     )
-    _find_all_parents(frameworks.gama, frameworks)
+    assert _find_all_parents(frameworks.gama, frameworks) == [], """
+            Extends `None` should behave as if it does not extend any definition.
+            Extends `None` is used when an unknown extension is removed.
+    """
+
 
 
 @pytest.mark.parametrize("framework", ["gama", "h2o_automl"])
