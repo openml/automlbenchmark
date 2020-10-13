@@ -18,7 +18,7 @@ unit_test_framework:
 
 unit_test_framework_extended_same_file:
   version: 'latest'
-  extends: my_unit_test_framework
+  extends: unit_test_framework
 
 other_test_framework:
   version: 'latest'
