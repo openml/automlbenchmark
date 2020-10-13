@@ -17,6 +17,7 @@ from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
+from frameworks.shared.callee import get_extension
 
 log = logging.getLogger(__name__)
 
@@ -323,6 +324,13 @@ class Result:
     def evaluate(self, metric):
         if hasattr(self, metric):
             return getattr(self, metric)()
+        else:
+            # A metric may be defined twice, once for the automl system to use (e.g.
+            # as a scikit-learn scorer), and once in the amlb-compatible format.
+            # The amlb-compatible format is marked with a trailing underscore.
+            custom_metric = get_extension(rconfig().extensions_files, f"{metric}_")
+            if custom_metric is not None:
+                return custom_metric(self)
         # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
         log.warning("Metric %s is not supported for %s!", metric, self.type)
         return nan
