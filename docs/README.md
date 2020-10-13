@@ -51,7 +51,7 @@ To run the benchmarks, you will need:
 ### Setup
 Clone the repo:
 ```bash
-git clone https://github.com/openml/automlbenchmark.git
+git clone https://github.com/openml/automlbenchmark.git --branch stable --depth 1
 cd automlbenchmark
 ```
 Optional: create a Python3 virtual environment.
