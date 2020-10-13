@@ -98,6 +98,15 @@ def _add_default_setup_script(framework, resource):
 
 
 def _add_default_setup_cmd(framework, resource):
+    """ Defines default setup_cmd and _setup_cmd, interpolate commands if necessary.
+
+    The default values are `None`.
+    In case a setup_cmd is defined, the original definition is saved to `_setup_cmd`.
+    The new `setup_cmd` will be a list of commands, where each command has the
+    directories, package manager and python binary interpolated.
+    `_setup_cmd` will be used for setup inside containers.
+    `setup_cmd` will be used when running locally (or on an Amazon image).
+    """
     if "setup_cmd" not in framework:
         framework._setup_cmd = None
         framework.setup_cmd = None
