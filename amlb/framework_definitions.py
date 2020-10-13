@@ -148,7 +148,6 @@ def _update_frameworks_with_parent_definitions(frameworks: Namespace):
     to the child framework defines the field value.
     """
     for name, framework in frameworks:
-        log.info(f"{name} {framework}")
         parents = _find_all_parents(framework, frameworks)
         for parent in parents:
             framework % copy.deepcopy(parent)
