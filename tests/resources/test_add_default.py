@@ -160,12 +160,11 @@ def test_image_uses_default_author(simple_resource):
     assert framework.image.author == "unit test author"
 
 
-@pytest.mark.skip("Define expected behavior (I don't think this is allowed?)")
 def test_image_what_to_do_if_no_default_author(simple_resource):
     simple_resource.config.docker.image_defaults.author = None
     framework = Namespace(version="v", name="n")
     _add_default_image(framework, simple_resource.config)
-    assert framework.image.author == "unit test author"
+    assert framework.image.author == ""
 
 
 def test_image_author_kept_if_defined(simple_resource):

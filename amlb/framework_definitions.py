@@ -130,6 +130,9 @@ def _add_default_image(framework: Namespace, config: Namespace):
     if framework.image.image is None:
         framework.image.image = framework.name
 
+    if framework.image.author is None:
+        framework.image.author = ""
+
 
 def _find_all_parents(framework, frameworks):
     """ Return all definitions framework extends, from direct parent to furthest. """
