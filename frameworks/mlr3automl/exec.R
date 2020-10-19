@@ -31,7 +31,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   model$train()
   preds <- model$predict(test)
 
-  if (type == "classification" && model$learner$predict_type == "response") {
+  if (type == "classification" && !("prob" %in% preds$predict_types)) {
     result = data.frame(preds$data$response, preds$data$truth)
     const_column = rep(0.5, length(preds$response))
     for (level in train$class_names) {
