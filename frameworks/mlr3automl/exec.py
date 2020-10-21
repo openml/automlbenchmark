@@ -17,7 +17,7 @@ def run(dataset: Dataset, config: TaskConfig):
     here = dir_of(__file__)
 
     with Timer() as training:
-        run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores}, time.budget = {time_budget}), seed = {seed})" """.format(
+        run_cmd(r"""Rscript --vanilla -e "source('{script}'); run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores}, time.budget = {time_budget}, seed = {seed}))" """.format(
             script=os.path.join(here, 'exec.R'),
             train=dataset.train.path,
             test=dataset.test.path,
