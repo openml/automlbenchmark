@@ -1,4 +1,10 @@
+library(mlr3)
+library(mlr3learners)
+library(mlr3extralearners)
+library(mlr3tuning)
+library(mlr3pipelines)
 library(mlr3automl)
+library(farff)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed) {
   start_time = Sys.time()
@@ -16,17 +22,17 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   colnames(test) <- make.names(colnames(test))
 
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
-  remaining_budget = as.integer(time.budget - Sys.time() + start_time)
+  remaining_budget = as.integer(start_time - Sys.time() + time.budget)
   print(paste("remaining budget: ", remaining_budget, " seconds"))
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = remaining_budget * 0.3, resampling = rsmp("holdout"),
+    model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.3), resampling = rsmp("holdout"),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.9)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = remaining_budget * 0.3, resampling = rsmp("holdout"),
+    model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.3), resampling = rsmp("holdout"),
                     terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.9)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")
