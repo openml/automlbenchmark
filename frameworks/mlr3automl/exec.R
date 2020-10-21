@@ -7,7 +7,14 @@ library(mlr3automl)
 library(farff)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed) {
-  set.seed(seed)
+  seed = as.integer(seed)
+  # AutoML benchmark uses unsigned 32bit integers as seeds, which may be too large for R
+  # use fixed seed if it goes wrong
+  if (is.na(seed)) {
+    set.seed(42)
+  } else {
+    set.seed(seed)
+  }
   train <- farff::readARFF(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
