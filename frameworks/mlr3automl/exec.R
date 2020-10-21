@@ -1,12 +1,7 @@
-library(mlr3)
-library(mlr3learners)
-library(mlr3learners.liblinear)
-library(mlr3tuning)
-library(mlr3pipelines)
 library(mlr3automl)
-library(farff)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed) {
+  start_time = Sys.time()
   # AutoML benchmark uses unsigned 32bit integers as seeds, which may be too large for R (32bit signed)
   if (seed > .Machine$integer.max) {
     set.seed(42)
@@ -20,22 +15,27 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   test <- farff::readARFF(test_file)
   colnames(test) <- make.names(colnames(test))
 
+  print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
+  remaining_budget = as.integer(time.budget - Sys.time() + start_time)
+  print(paste("remaining budget: ", remaining_budget, " seconds"))
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = time.budget * 0.8, resampling = rsmp("holdout"),
-                    terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.8)), trm('stagnation', iters = 20))))
+    model <- AutoML(train, learner_timeout = remaining_budget * 0.3, resampling = rsmp("holdout"),
+                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.9)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = time.budget * 0.8, resampling = rsmp("holdout"),
-                    terminator = trm('combo', list(trm('run_time', secs = as.integer(time.budget * 0.8)), trm('stagnation', iters = 20))))
+    model <- AutoML(train, learner_timeout = remaining_budget * 0.3, resampling = rsmp("holdout"),
+                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.9)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")
   }
-
+  print(paste("Finished creating model after ", Sys.time() - start_time, " seconds"))
   model$train()
+  print(paste("Finished training model after ", Sys.time() - start_time, " seconds"))
   preds <- model$predict(test)
+  print(paste("Finished predictions after ", Sys.time() - start_time, " seconds"))
 
   if (type == "classification" && !("prob" %in% preds$predict_types)) {
     result = data.frame(preds$data$response, preds$data$truth)
@@ -57,6 +57,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
               row.names = FALSE, col.names = TRUE,
               sep = ",", quote = FALSE
   )
+  print(paste("Finished writing results after ", Sys.time() - start_time, " seconds"))
 }
 
 # args = commandArgs(trailingOnly=TRUE)
