@@ -6,7 +6,8 @@ library(mlr3pipelines)
 library(mlr3automl)
 library(farff)
 
-run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget) {
+run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed) {
+  set.seed(seed)
   train <- farff::readARFF(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
