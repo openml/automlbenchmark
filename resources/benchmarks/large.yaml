@@ -4,11 +4,11 @@
   cores: 10
   max_runtime_seconds: 3600
 
-- name: Airlines
-  openml_task_id: 189354
-
 - name: Albert
   openml_task_id: 189356
+
+- name: Airlines
+  openml_task_id: 189354
 
 - name: Covertype
   openml_task_id: 7593
