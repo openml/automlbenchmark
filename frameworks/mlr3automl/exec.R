@@ -37,11 +37,11 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   } else {
     stop("Task type not supported!")
   }
-  print(paste("Finished creating model after ", Sys.time() - start_time, " seconds"))
+  print(paste("Finished creating model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   model$train()
-  print(paste("Finished training model after ", Sys.time() - start_time, " seconds"))
+  print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   preds <- model$predict(test)
-  print(paste("Finished predictions after ", Sys.time() - start_time, " seconds"))
+  print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
 
   if (type == "classification" && !("prob" %in% preds$predict_types)) {
     result = data.frame(preds$data$response, preds$data$truth)
@@ -63,7 +63,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
               row.names = FALSE, col.names = TRUE,
               sep = ",", quote = FALSE
   )
-  print(paste("Finished writing results after ", Sys.time() - start_time, " seconds"))
+  print(paste("Finished writing results after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
 }
 
 # args = commandArgs(trailingOnly=TRUE)
