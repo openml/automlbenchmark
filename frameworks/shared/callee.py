@@ -4,13 +4,7 @@ import os
 import re
 import sys
 
-try:
-    # for backwards compatibility, imports the utility functions that used to be duplicated here
-    from utils import Namespace as NS, Timer, touch
-    import utils  # alias amlb utils
-except ImportError:
-    # callee was not imported from subprocess created by caller
-    from amlb.utils import Namespace as NS, touch
+from amlb.utils import Namespace as NS, touch
 
 
 def setup_logger():

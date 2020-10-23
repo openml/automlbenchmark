@@ -12,8 +12,9 @@ from autogluon.task.tabular_prediction.tabular_prediction import TabularPredicti
 from autogluon.utils.tabular.utils.savers import save_pd, save_pkl
 import autogluon.utils.tabular.metrics as metrics
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir
 
+from amlb import utils
 log = logging.getLogger(__name__)
 
 
