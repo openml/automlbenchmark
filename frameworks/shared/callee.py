@@ -5,13 +5,18 @@ import os
 import re
 import sys
 
-amlb_path = os.environ["AMLB_PATH"]
 
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+amlb_path = os.environ["AMLB_PATH"]
 if amlb_path:
-    spec = importlib.util.spec_from_file_location("utils", os.path.join(amlb_path, "utils", "__init__.py"))
-    utils = importlib.util.module_from_spec(spec)
-    sys.modules['utils'] = utils
-    spec.loader.exec_module(utils)
+    utils = load_module("amlb.utils", os.path.join(amlb_path, "utils", "__init__.py"))
     NS = utils.Namespace
     touch = utils.touch
 else:
