@@ -60,7 +60,7 @@ def _add_and_normalize_names(frameworks: Namespace):
     framework_names = dir(frameworks)
     for name in framework_names:
         framework = frameworks[name]
-        framework.name = name.lower()
+        framework.name = name
         if name.lower() != name:
             del frameworks[name]
             frameworks[name.lower()] = framework
