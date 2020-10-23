@@ -3,8 +3,8 @@ import os
 
 from ruamel import yaml
 
-from .core import Namespace, json_load
-from .os import normalize_path
+from amlb.utils.core import Namespace, json_load
+from amlb.utils.os import normalize_path
 
 log = logging.getLogger(__name__)
 
@@ -43,4 +43,3 @@ def config_load(path, verbose=False):
     log.log(logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path)
     with open(path, 'r') as file:
         return loader(file, as_namespace=True)
-

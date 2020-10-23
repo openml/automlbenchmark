@@ -11,7 +11,7 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.framework_definitions import load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
+from amlb.utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
 
 
 log = logging.getLogger(__name__)
@@ -229,4 +229,3 @@ def output_dirs(root, session=None, subdirs=None, create=False):
         if create and not os.path.exists(dirs[d]):
             touch(dirs[d], as_dir=True)
     return dirs
-

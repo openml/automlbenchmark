@@ -6,14 +6,13 @@ providing the same parameters and features allowing to import config and export 
 """
 from abc import abstractmethod
 import logging
-import os
 import re
 
-from .benchmark import Benchmark, SetupMode
-from .errors import InvalidStateError
-from .job import Job
-from .resources import config as rconfig, get as rget
-from .utils import dir_of, run_cmd
+from amlb.benchmark import Benchmark, SetupMode
+from amlb.errors import InvalidStateError
+from amlb.job import Job
+from amlb.resources import config as rconfig, get as rget
+from amlb.utils import run_cmd
 
 
 log = logging.getLogger(__name__)

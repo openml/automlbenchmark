@@ -15,12 +15,12 @@ import logging
 import math
 import os
 
-from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
-from .datasets import DataLoader, DataSourceType
-from .data import DatasetType
-from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
-from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
+from amlb.job import Job, SimpleJobRunner, MultiThreadingJobRunner
+from amlb.datasets import DataLoader, DataSourceType
+from amlb.data import DatasetType
+from amlb.resources import get as rget, config as rconfig, output_dirs as routput_dirs
+from amlb.results import ErrorResult, Scoreboard, TaskResult
+from amlb.utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
     run_cmd, run_script, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
 
 
@@ -421,4 +421,3 @@ class BenchmarkTask:
         meta_result = meta_result or {}
         meta_result['params'] = task_config.framework_params
         return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
-

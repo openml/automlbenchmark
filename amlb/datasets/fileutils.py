@@ -4,10 +4,10 @@ import shutil
 import tarfile
 from urllib.error import URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen, urlretrieve
+from urllib.request import Request, urlopen
 import zipfile
 
-from ..utils import touch
+from amlb.utils import touch
 
 log = logging.getLogger(__name__)
 
@@ -52,4 +52,3 @@ def unarchive_file(path, dest_folder=None):
         with tarfile.open(path) as tf:
             tf.extractall(path=dest_folder)
     return dest
-

@@ -73,5 +73,3 @@ def lazy_property(prop_fn):
         return cache(self, prop_name, prop_fn)
 
     return decorator
-
-

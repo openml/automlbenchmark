@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
-from functools import reduce, wraps
+from functools import wraps
 import inspect
-import io
 import logging
 import multiprocessing as mp
 import os
@@ -13,14 +12,12 @@ import stat
 import subprocess
 import sys
 import threading
-import _thread
-import traceback
 
 import psutil
 
-from .core import Namespace, as_list, flatten, fn_name
-from .os import dir_of, to_mb
-from .time import Timeout, Timer
+from amlb.utils.core import Namespace, as_list, flatten, fn_name
+from amlb.utils.os import dir_of, to_mb
+from amlb.utils.time import Timeout, Timer
 
 log = logging.getLogger(__name__)
 
@@ -536,6 +533,3 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
         return profiler
 
     return decorator
-
-
-

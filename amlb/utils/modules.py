@@ -18,4 +18,3 @@ def pip_install(module_or_requirements, is_requirements=False):
     except SystemExit as se:
         log.error("Error when trying to install python modules %s.", module_or_requirements)
         log.exception(se)
-

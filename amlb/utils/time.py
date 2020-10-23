@@ -83,5 +83,3 @@ class Timeout:
     def __exit__(self, *args):
         if self.timer:
             self.timer.cancel()
-
-

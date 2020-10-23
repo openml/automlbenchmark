@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
-from .file import FileLoader
-from .openml import OpenmlLoader
+from amlb.datasets.file import FileLoader
+from amlb.datasets.openml import OpenmlLoader
 
 
 class DataSourceType(Enum):

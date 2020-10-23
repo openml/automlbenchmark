@@ -6,16 +6,15 @@
   - SimpleJobRunner runs the jobs sequentially.
   - ParallelJobRunner queues the jobs and run them in a dedicated thread
 """
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
-import multiprocessing
 import queue
 import signal
 import threading
 import time
 
-from .utils import Namespace, Timer, InterruptTimeout, raise_in_thread, signal_handler
+from amlb.utils import Namespace, Timer, InterruptTimeout, raise_in_thread, signal_handler
 
 log = logging.getLogger(__name__)
 
@@ -228,4 +227,3 @@ class ThreadPoolExecutorJobRunner(ExecutorJobRunner):
 class ProcessPoolExecutorJobRunner(ExecutorJobRunner):
     def __init__(self, jobs, parallel_jobs):
         super().__init__(ProcessPoolExecutor, jobs, parallel_jobs)
-

@@ -13,11 +13,13 @@ import statistics
 import numpy as np
 from numpy import nan, sort
 import pandas as pd
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score
 
-from .data import Dataset, DatasetType, Feature
-from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
-from .resources import get as rget, config as rconfig, output_dirs
-from .utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
+
+from amlb.datautils import read_csv, write_csv, is_data_frame, to_data_frame
+from amlb.data import Dataset, DatasetType, Feature
+from amlb.resources import get as rget, config as rconfig, output_dirs
+from amlb.utils import Namespace, backup_file, cached, datetime_iso, memoize, profile
 
 log = logging.getLogger(__name__)
 

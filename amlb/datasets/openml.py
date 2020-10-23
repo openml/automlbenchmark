@@ -10,8 +10,8 @@ import openml as oml
 import arff
 import numpy as np
 
-from ..data import Dataset, DatasetType, Datasplit, Feature
-from ..utils import lazy_property, obj_size, profile, to_mb
+from amlb.data import Dataset, DatasetType, Datasplit, Feature
+from amlb.utils import lazy_property, profile
 
 
 log = logging.getLogger(__name__)
@@ -219,5 +219,3 @@ def _save_split_set(path, name, full_dataset=None, indexes=None):
             'attributes': full_dataset['attributes'],
             'data': split_data
         }, file)
-
-

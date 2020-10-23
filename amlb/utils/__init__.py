@@ -8,10 +8,10 @@ important
     and should have no dependency to any other **amlb** module.
 """
 
-from .cache import *
-from .config import *
-from .core import *
-from .modules import *
-from .os import *
-from .process import *
-from .time import *
+from amlb.utils.cache import *
+from amlb.utils.config import *
+from amlb.utils.core import *
+from amlb.utils.modules import *
+from amlb.utils.os import *
+from amlb.utils.process import *
+from amlb.utils.time import *

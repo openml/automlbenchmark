@@ -7,8 +7,8 @@ import shutil
 import tempfile
 import zipfile
 
-from .core import Namespace
-from .time import datetime_iso
+from amlb.utils.core import Namespace
+from amlb.utils.time import datetime_iso
 
 log = logging.getLogger(__name__)
 
@@ -151,6 +151,3 @@ class TmpDir:
 
     def __exit__(self, *args):
         shutil.rmtree(self.tmp_dir)
-        # pass
-
-

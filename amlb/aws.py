@@ -31,13 +31,13 @@ from urllib.parse import quote_plus as uenc
 import boto3
 import botocore.exceptions
 
-from .benchmark import Benchmark, SetupMode
-from .datautils import read_csv, write_csv
-from .docker import DockerBenchmark
-from .job import Job
-from .resources import config as rconfig, get as rget
-from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, datetime_iso, file_filter, flatten, list_all_files, normalize_path, str_def, tail, touch
+from amlb.benchmark import Benchmark, SetupMode
+from amlb.datautils import read_csv, write_csv
+from amlb.docker import DockerBenchmark
+from amlb.job import Job
+from amlb.resources import config as rconfig, get as rget
+from amlb.results import ErrorResult, Scoreboard, TaskResult
+from amlb.utils import Namespace as ns, datetime_iso, file_filter, flatten, list_all_files, normalize_path, str_def, tail, touch
 
 
 log = logging.getLogger(__name__)
@@ -1051,4 +1051,3 @@ class AWSRemoteBenchmark(Benchmark):
 
     def _upload_results(self):
         pass
-

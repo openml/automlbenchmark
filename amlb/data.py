@@ -11,7 +11,7 @@
 - **Feature** provides metadata for a given feature/column as well as encoding functions.
 """
 from abc import ABC, abstractmethod
-from enum import Enum, auto
+from enum import Enum
 import logging
 from typing import List
 
@@ -224,4 +224,3 @@ class Dataset(ABC):
         self.train.release()
         self.test.release()
         clear_cache(self, properties)
-

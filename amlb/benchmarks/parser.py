@@ -1,7 +1,7 @@
 from typing import List
 
-from .openml import is_openml_benchmark, load_oml_benchmark
-from .file import load_file_benchmark
+from amlb.benchmarks.openml import is_openml_benchmark, load_oml_benchmark
+from amlb.benchmarks.file import load_file_benchmark
 
 
 def benchmark_load(name, benchmark_definition_dirs: List[str]):

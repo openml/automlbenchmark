@@ -8,12 +8,12 @@ from typing import List, Union
 import arff
 import numpy as np
 
-from ..data import Dataset, DatasetType, Datasplit, Feature
-from ..datautils import read_csv, to_data_frame
-from ..resources import get as rget
-from ..utils import Namespace, as_list, cached, lazy_property, list_all_files, profile
+from amlb.data import Dataset, DatasetType, Datasplit, Feature
+from amlb.datautils import read_csv, to_data_frame
+from amlb.resources import get as rget
+from amlb.utils import Namespace, as_list, cached, lazy_property, list_all_files, profile
 
-from .fileutils import *
+from amlb.datasets.fileutils import *
 
 
 log = logging.getLogger(__name__)
