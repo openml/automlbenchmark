@@ -41,17 +41,18 @@ def test_add_and_normalize_names_adds_name():
     assert f.dummy.name == "dummy"
 
 
-def test_add_and_normalize_names_converts_name_to_lower_case():
+def test_add_and_normalize_names_keeps_original_name_as_framework_attribute():
     f = Namespace(Dummy=Namespace())
     _add_and_normalize_names(f)
     assert "dummy" in f, "The 'Dummy' entry should be in all lower case."
-    assert f.dummy.name == "dummy"
+    assert f.dummy.name == "Dummy"
 
 
-def test_add_and_normalize_names_original_removed_for_normalized_framework():
+def test_add_and_normalize_names_uses_lowercase_name_as_lookup_key():
     f = Namespace(Dummy=Namespace())
     _add_and_normalize_names(f)
     assert "Dummy" not in f, "The old name should be invalid."
+    assert "dummy" in f, "The lower case name is available for lookup."
 
 
 def test_add_and_normalize_names_extension_is_normalized():
