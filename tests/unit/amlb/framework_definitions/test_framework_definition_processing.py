@@ -1,7 +1,7 @@
 import pytest
 from amlb.utils import Namespace
 from amlb.framework_definitions import _sanitize_and_add_defaults, \
-    _add_and_normalize_names, _find_all_parents, \
+    _add_framework_name, _find_all_parents, \
     _update_frameworks_with_parent_definitions, _remove_self_reference_extensions, \
     _remove_frameworks_with_unknown_parent
 
@@ -34,30 +34,18 @@ def test_remove_self_reference_extensions_does_not_remove_reference_to_other():
     assert f.dummy.extends is "some_other_framework"
 
 
-def test_add_and_normalize_names_adds_name():
+def test_add_framework_name_adds_name_attribute_to_framework_definition():
     f = Namespace(dummy=Namespace())
-    _add_and_normalize_names(f)
+    _add_framework_name(f)
     assert "name" in f.dummy
     assert f.dummy.name == "dummy"
 
 
-def test_add_and_normalize_names_converts_name_to_lower_case():
+def test_add_framework_name_does_not_change_name_case():
     f = Namespace(Dummy=Namespace())
-    _add_and_normalize_names(f)
-    assert "dummy" in f, "The 'Dummy' entry should be in all lower case."
-    assert f.dummy.name == "dummy"
-
-
-def test_add_and_normalize_names_original_removed_for_normalized_framework():
-    f = Namespace(Dummy=Namespace())
-    _add_and_normalize_names(f)
-    assert "Dummy" not in f, "The old name should be invalid."
-
-
-def test_add_and_normalize_names_extension_is_normalized():
-    f = Namespace(dummy=Namespace(extends="AnotherDummy"))
-    _add_and_normalize_names(f)
-    assert f.dummy.extends == "anotherdummy"
+    _add_framework_name(f)
+    assert "Dummy" in f
+    assert f.Dummy.name == "Dummy"
 
 
 def test_find_all_parents_returns_empty_list_if_framework_has_no_parent():

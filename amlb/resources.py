@@ -81,7 +81,8 @@ class Resources:
         :param name:
         :return: name of the framework as defined in the frameworks definition file
         """
-        framework = self._frameworks[name.lower()]
+        lname = name.lower()
+        framework = next((f for n, f in self._frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
         return framework, framework.name
