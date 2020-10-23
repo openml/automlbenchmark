@@ -36,7 +36,7 @@ def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]
 
 def _sanitize_definitions(frameworks: Namespace):
     """ Normalize names, add name field, remove invalid extensions. """
-    _add_and_normalize_names(frameworks)
+    _add_framework_name(frameworks)
     _remove_frameworks_with_unknown_parent(frameworks)
     _remove_self_reference_extensions(frameworks)
 
@@ -55,17 +55,12 @@ def _sanitize_and_add_defaults(frameworks, resource):
     _add_defaults_to_frameworks(frameworks, resource)
 
 
-def _add_and_normalize_names(frameworks: Namespace):
+def _add_framework_name(frameworks: Namespace):
     """ Converts each framework definition to lowercase and adds a 'name' field. """
     framework_names = dir(frameworks)
     for name in framework_names:
         framework = frameworks[name]
         framework.name = name
-        if name.lower() != name:
-            del frameworks[name]
-            frameworks[name.lower()] = framework
-        if "extends" in framework:
-            framework.extends = framework.extends.lower()
 
 
 def _add_default_module(framework, config):
