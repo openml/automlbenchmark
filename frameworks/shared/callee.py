@@ -14,7 +14,7 @@ def load_module(name, path):
     return module
 
 
-amlb_path = os.environ["AMLB_PATH"]
+amlb_path = os.environ.get("AMLB_PATH")
 if amlb_path:
     utils = load_module("amlb.utils", os.path.join(amlb_path, "utils", "__init__.py"))
     NS = utils.Namespace
