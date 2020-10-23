@@ -8,7 +8,7 @@ matplotlib.use("agg")  # no need for tk
 
 from supervised.automl import AutoML
 
-from frameworks.shared.callee import call_run, result, Timer, touch, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(os.path.basename(__file__))
 
@@ -49,7 +49,7 @@ def run(dataset, config):
         **training_params
     )
 
-    with Timer() as training:
+    with utils.Timer() as training:
         automl.fit(X_train, y_train)
 
     preds = automl.predict(X_test)
