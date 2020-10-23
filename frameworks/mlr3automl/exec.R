@@ -4,7 +4,7 @@ library(mlr3extralearners)
 library(mlr3tuning)
 library(mlr3pipelines)
 library(mlr3automl)
-library(farff)
+library(mlr3oml)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed) {
   start_time = Sys.time()
@@ -14,7 +14,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   } else {
     set.seed(seed)
   }
-  train <- farff::readARFF(train_file)
+  train <- mlr3oml::read_arff(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
 
