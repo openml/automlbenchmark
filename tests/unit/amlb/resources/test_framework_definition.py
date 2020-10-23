@@ -3,22 +3,20 @@ from amlb.resources import Resources
 from amlb.utils import Namespace as NS
 
 
-def test_framework_definition_lookup_is_case_insensitive():
-    res = NS(
-        _frameworks=NS(
-            lower=NS(name="lower"),
-            UPPER=NS(name="UPPER"),
-            Camel=NS(name="CaMel")
-        )
-    )
+@pytest.mark.parametrize(
+    "frameworks, lookup, expected",
+    [
+        (NS(MixedCase=NS(name="MixedCase")), "MixedCase", "MixedCase"),
+        (NS(MixedCase=NS(name="MixedCase")), "mixedcase", "MixedCase"),
+        (NS(MixedCase=NS(name="MixedCase")), "MIXEDCASE", "MixedCase"),
+        (NS(MixedCase=NS(name="MixedCase")), "mIxEdCasE", "MixedCase"),
+    ]
+)
+def test_framework_definition_lookup_is_case_insensitive(frameworks, lookup, expected):
+    res = NS(_frameworks=frameworks)
     # binding `framework_definition` method to our resource mock: use pytest-mock instead?
     res.framework_definition = Resources.framework_definition.__get__(res)
-
-    assert res.framework_definition("lower") == (res._frameworks.lower, "lower")
-    assert res.framework_definition("upper") == (res._frameworks.UPPER, "UPPER")
-    assert res.framework_definition("camel") == (res._frameworks.Camel, "CaMel")
-    assert res.framework_definition("CAMEL") == (res._frameworks.Camel, "CaMel")
-    assert res.framework_definition("Camel") == (res._frameworks.Camel, "CaMel")
+    assert res.framework_definition(lookup) == (frameworks[expected], frameworks[expected].name)
 
 
 def test_framework_definition_raises_error_if_no_matching_framework():

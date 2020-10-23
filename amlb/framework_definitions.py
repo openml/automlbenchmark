@@ -56,10 +56,8 @@ def _sanitize_and_add_defaults(frameworks, resource):
 
 
 def _add_framework_name(frameworks: Namespace):
-    """ Converts each framework definition to lowercase and adds a 'name' field. """
-    framework_names = dir(frameworks)
-    for name in framework_names:
-        framework = frameworks[name]
+    """ Adds a 'name' attribute to each framework. """
+    for name, framework in frameworks:
         framework.name = name
 
 
