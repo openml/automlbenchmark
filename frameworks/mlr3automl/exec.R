@@ -18,7 +18,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
 
-  test <- farff::readARFF(test_file)
+  test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
 
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
@@ -27,13 +27,13 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.3), resampling = rsmp("holdout"),
-                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.9)), trm('stagnation', iters = 20))))
+    model <- AutoML(train, learner_timeout = Inf, resampling = rsmp("holdout"),
+                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.8)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.3), resampling = rsmp("holdout"),
-                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.9)), trm('stagnation', iters = 20))))
+    model <- AutoML(train, learner_timeout = Inf, resampling = rsmp("holdout"),
+                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.8)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")
   }
