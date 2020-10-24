@@ -1,0 +1,13 @@
+---
+- name: __defaults__
+  cores: 10
+  max_runtime_seconds: 3600
+
+- name: Fashion-MNIST
+  openml_task_id: 146825
+
+- name: Volkert
+  openml_task_id: 168331
+
+- name: Dionis
+  openml_task_id: 189355
