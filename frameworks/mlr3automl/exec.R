@@ -27,13 +27,13 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = Inf, resampling = rsmp("holdout"),
-                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.8)), trm('stagnation', iters = 20))))
+    model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.1)), resampling = rsmp("holdout"),
+                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.7)), trm('stagnation', iters = 20))))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, learner_timeout = Inf, resampling = rsmp("holdout"),
-                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.8)), trm('stagnation', iters = 20))))
+    model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.1)), resampling = rsmp("holdout"),
+                    terminator = trm('combo', list(trm('run_time', secs = as.integer(remaining_budget * 0.7)), trm('stagnation', iters = 20))))
   } else {
     stop("Task type not supported!")
   }
