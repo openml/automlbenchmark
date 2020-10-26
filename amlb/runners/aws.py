@@ -449,6 +449,22 @@ class AWSBenchmark(Benchmark):
                 instance_params.update(KeyName=ec2_config.key_name)
             if ec2_config.security_groups:
                 instance_params.update(SecurityGroups=ec2_config.security_groups)
+            if ec2_config.spot.enabled:
+                spot_options = dict(
+                    SpotInstanceType='one-time',
+                    InstanceInterruptionBehavior='terminate'
+                )
+                if ec2_config.spot.max_hourly_price:
+                    spot_options.update(MaxPrice=ec2_config.spot.max_hourly_price)
+                if ec2_config.spot.block_enabled:
+                    duration_min = (math.ceil(timeout_secs/3600) + 1) * 60  # duration_min most be a multiple of 60, also adding 1h extra to be safe
+                    if duration_min <= 360:  # blocks are only allowed until 6h
+                        spot_options.update(BlockDurationMinutes=duration_min)
+
+                instance_params.update(InstanceMarketOptions=dict(
+                    MarketType='spot',
+                    SpotOptions=spot_options
+                ))
 
             instance = self.ec2.create_instances(**instance_params)[0]
             log.info("Started EC2 instance %s", instance.id)
@@ -1011,6 +1027,21 @@ shutdown -P +1 "I'm losing power"
             params=script_params,
             extra_params=script_extra_params,
         )
+
+
+class OnDemandInstances:
+    pass
+
+
+class SpotInstances:
+    """
+    Spot Fleet:
+      possibility to create multiple Spot Instance Pools: one for various availability zones.
+      strategy `lowestPrice` (default) + possibly `InstancePoolsToUseCount=3` for example to distribute instances across multiple availability zones.
+      use Spot Blocks (with predefined instance runtime): user not charged if AWS interrupts the instance.
+    """
+
+    pass
 
 
 class AWSRemoteBenchmark(Benchmark):

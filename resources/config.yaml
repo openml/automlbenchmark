@@ -151,6 +151,10 @@ aws:
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+    spot:
+      enabled: false             # if enabled, aws mode will try to obtain a spot instance instead of on-demand.
+      block_enabled: false       # if enabled, and if spot is enabled, aws mode will try to use block instances (possible only if total instance runtime <= 6h, i.e. for benchmark runtime up to 4h).
+      max_hourly_price: ''       # the max hourly price (in dollar) per instance to bid (defaults to on-demand price).
 
   max_timeout_seconds: 21600
   overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
