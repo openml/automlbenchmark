@@ -130,7 +130,7 @@ def _add_default_image(framework: Namespace, config: Namespace):
         framework.image.tag = framework.version.lower()
 
     if framework.image.image is None:
-        framework.image.image = framework.name
+        framework.image.image = framework.name.lower()
 
     if framework.image.author is None:
         framework.image.author = ""

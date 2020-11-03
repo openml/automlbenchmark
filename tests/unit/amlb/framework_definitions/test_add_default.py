@@ -202,9 +202,9 @@ def test_image_uses_default_image(simple_resource):
     assert framework.image.image == "img"
 
 
-def test_image_uses_framework_name_if_no_default_image(simple_resource):
+def test_image_uses_lowercase_framework_name_if_no_default_image(simple_resource):
     simple_resource.config.docker.image_defaults.image = None
-    framework = Namespace(name="decision_tree", version="v0.1")
+    framework = Namespace(name="Decision_tree", version="v0.1")
     _add_default_image(framework, simple_resource.config)
     assert framework.image.image == "decision_tree"
 
