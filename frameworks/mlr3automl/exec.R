@@ -28,7 +28,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
     model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.2), resampling = rsmp("holdout"),
-                    measure = msr("classif.auc"),
+                    measure = msr("classif.acc"),
                     terminator = trm('run_time', secs = as.integer(remaining_budget * 0.8)))
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
