@@ -9,9 +9,9 @@ import logging
 import os
 import re
 
+from ..resources import config as rconfig, get as rget
+from ..utils import dir_of, run_cmd, touch
 from .container import ContainerBenchmark
-from .resources import config as rconfig, get as rget
-from .utils import dir_of, run_cmd, touch
 
 
 log = logging.getLogger(__name__)

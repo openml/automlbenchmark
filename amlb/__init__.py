@@ -6,9 +6,7 @@ from .logger import app_logger as log
 from .errors import AutoMLError
 from .resources import Resources
 from .benchmark import Benchmark, SetupMode
-from .docker import DockerBenchmark
-from .singularity import SingularityBenchmark
-from .aws import AWSBenchmark, AWSRemoteBenchmark
+from .runners import AWSBenchmark, DockerBenchmark, SingularityBenchmark
 from .results import TaskResult
 
 __all__ = [
@@ -19,7 +17,6 @@ __all__ = [
     "DockerBenchmark",
     "SingularityBenchmark",
     "AWSBenchmark",
-    "AWSRemoteBenchmark",
     "SetupMode",
     "TaskResult",
 ]
