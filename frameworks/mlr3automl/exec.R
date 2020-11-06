@@ -6,7 +6,7 @@ library(mlr3pipelines)
 library(mlr3automl)
 library(mlr3oml)
 
-run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed) {
+run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed, name) {
   start_time = Sys.time()
   # AutoML benchmark uses unsigned 32bit integers as seeds, which may be too large for R (32bit signed)
   if (seed > .Machine$integer.max) {
@@ -43,7 +43,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   preds <- model$predict(test)
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
-  saveRDS(model$learner$archive, paste("~/tuning_archives/", model$task$id, model$measure$id, Sys.Date(), sep = "_"))
+  saveRDS(model$learner$archive, paste("~/tuning_archives/", name, model$measure$id, Sys.Date(), sep = "_"))
 
   if (type == "classification" && !("prob" %in% preds$predict_types)) {
     result = data.frame(preds$data$response, preds$data$truth)
