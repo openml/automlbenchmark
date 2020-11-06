@@ -10,7 +10,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from frameworks.shared.callee import call_run, result, Timer
+from frameworks.shared.callee import call_run, result, utils
 
 log = logging.getLogger(os.path.basename(__file__))
 
@@ -35,7 +35,7 @@ def run(dataset, config):
                    random_state=config.seed,
                    **training_params)
 
-    with Timer() as training:
+    with utils.Timer() as training:
         rf.fit(X_train, y_train)
 
     predictions = rf.predict(X_test)

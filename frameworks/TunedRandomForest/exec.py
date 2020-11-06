@@ -19,7 +19,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from frameworks.shared.callee import call_run, result, Timer
+from frameworks.shared.callee import call_run, result, utils
 
 log = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def run(dataset, config):
                 ('preprocessing', imputation),
                 ('learning', random_forest)
             ])
-            with Timer() as cv_scoring:
+            with utils.Timer() as cv_scoring:
                 try:
                     scores = cross_val_score(estimator=pipeline,
                                              X=dataset.train.X_enc,
@@ -111,7 +111,7 @@ def run(dataset, config):
                    random_state=config.seed,
                    max_features=best_max_features_value,
                    **training_params)
-    with Timer() as training:
+    with utils.Timer() as training:
         rf.fit(X_train, y_train)
 
     predictions = rf.predict(X_test)

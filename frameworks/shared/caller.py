@@ -61,8 +61,9 @@ def run_in_venv(caller_file, script_file: str, *args,
                                       ]),
                                       PYTHONPATH=os.pathsep.join([
                                           rconfig().root_dir,
-                                          os.path.join(rconfig().root_dir, "amlb"),
-                                      ]))
+                                      ]),
+                                      AMLB_PATH=os.path.join(rconfig().root_dir, "amlb")
+                                    ),
                                   )
 
         out = io.StringIO(output)

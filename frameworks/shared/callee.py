@@ -1,15 +1,25 @@
+import importlib.util
 import json
 import logging
 import os
 import re
 import sys
 
-try:
-    # for backwards compatibility, imports the utility functions that used to be duplicated here
-    from utils import Namespace as NS, Timer, touch
-    import utils  # alias amlb utils
-except ImportError:
-    # callee was not imported from subprocess created by caller
+
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+amlb_path = os.environ.get("AMLB_PATH")
+if amlb_path:
+    utils = load_module("amlb.utils", os.path.join(amlb_path, "utils", "__init__.py"))
+    NS = utils.Namespace
+    touch = utils.touch
+else:
     from amlb.utils import Namespace as NS, touch
 
 
