@@ -9,11 +9,11 @@ import logging
 import os
 import re
 
-from .benchmark import Benchmark, SetupMode
-from .errors import InvalidStateError
-from .job import Job
-from .resources import config as rconfig, get as rget
-from .utils import dir_of, run_cmd
+from ..benchmark import Benchmark, SetupMode
+from ..errors import InvalidStateError
+from ..job import Job
+from ..resources import config as rconfig, get as rget
+from ..utils import dir_of, run_cmd
 
 
 log = logging.getLogger(__name__)
