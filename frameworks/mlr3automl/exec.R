@@ -29,12 +29,14 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
     model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.2), resampling = rsmp("holdout"),
                     measure = msr("classif.acc"),
-                    terminator = trm('run_time', secs = as.integer(remaining_budget * 0.8)))
+                    terminator = trm('run_time', secs = as.integer(remaining_budget * 0.8)),
+                    preprocessing = "full")
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
     model <- AutoML(train, learner_timeout = as.integer(remaining_budget * 0.2), resampling = rsmp("holdout"),
-                    terminator = trm('run_time', secs = as.integer(remaining_budget * 0.8)))
+                    terminator = trm('run_time', secs = as.integer(remaining_budget * 0.8)),
+                    preprocessing = "full")
   } else {
     stop("Task type not supported!")
   }
