@@ -107,10 +107,13 @@ class AWSBenchmark(Benchmark):
         """
         super().__init__(framework_name, benchmark_name, constraint_name)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
-        self.region = region if region \
-            else rconfig().aws.region if rconfig().aws['region'] \
-            else boto3.session.Session().region_name
+        self.region = (region if region
+                       else rconfig().aws.region if rconfig().aws['region']
+                       else boto3.session.Session().region_name)
         self.ami = rconfig().aws.ec2.regions[self.region].ami
+        self.event_bridge = None
+        self.sns = None
+        self.sqs = None
         self.cloudwatch = None
         self.ec2 = None
         self.iam = None
@@ -139,6 +142,12 @@ class AWSBenchmark(Benchmark):
     def setup(self, mode):
         if mode == SetupMode.skip:
             log.warning("AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode))
+        # Events + Notifications setup
+        self.event_bridge = boto3.client("events")
+        self.sns = boto3.resource('sns', region_name=self.region)
+        self.sqs = boto3.resource('sqs', region_name=self.region)
+        self._setup_notifications()
+
         # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
@@ -154,6 +163,68 @@ class AWSBenchmark(Benchmark):
         # EC2 setup to prepare creation of ec2 instances
         self.ec2 = boto3.resource('ec2', region_name=self.region)
         self.cloudwatch = boto3.resource('cloudwatch', region_name=self.region)
+
+    def _setup_notifications(self):
+        ec2_config = rconfig().aws.ec2
+        if ec2_config.spot.enabled:
+            self.event_bridge.list_rules()
+            # if not created, create rule
+
+            spot_notification_name = 'SpotInterruptionNotification'
+            spot_notification_topic = next((t for t in self.sns.topics.all()
+                                            if t.arn.endswith(f":{spot_notification_name}")),
+                                           None)
+            if not spot_notification_topic:
+                spot_notification_topic = self.sns.Topic(self.sns.create_topic(
+                    Name=spot_notification_name,
+                    Attributes=dict(
+                        DisplayName=spot_notification_name,
+                        DeliveryPolicy=dict(
+                            http=dict(
+                                defaultHealthyRetryPolicy=dict(
+                                    minDelayTarget=5,
+                                    maxDelayTarget=10,
+                                    numRetries=3,
+                                    numMaxDelayRetries=0,
+                                    numNoDelayRetries=0,
+                                    numMinDelayRetries=0,
+                                    backoffFunction='linear'
+                                ),
+                                disableSubscriptionOverrides=False
+                            )
+                        )
+                    )
+                )['TopicArn'])
+
+            event_bus = 'default'
+            spot_rule_name = 'SpotInterruptionRule'
+            spot_notification_rule = next((r for r in self.event_bridge.list_rules(NamePrefix=spot_rule_name, EventBusName=event_bus)['Rules']
+                                           if r['Name'] == spot_rule_name),
+                                          None)
+            if not spot_notification_rule:
+                self.event_bridge.put_rule(
+                    Name=spot_rule_name,
+                    EventPattern={'source': ["aws.ec2"], 'detail-type': ["EC2 Spot Instance Interruption Warning"]},
+                    EventBusName=event_bus
+                )
+            elif spot_notification_rule['State'] == 'DISABLED':
+                self.event_bridge.enable_rule(Name=spot_rule_name, EventBusName=event_bus)
+
+            spot_rule_target = next((t for t in self.event_bridge.list_targets_by_rule(Rule=spot_rule_name, EventBusName=event_bus)['Targets']
+                                     if t['Arn'] == spot_notification_topic.arn),
+                                    None)
+            if not spot_rule_target:
+                self.event_bridge.put_targets(
+                    Rule=spot_rule_name,
+                    EventBusName=event_bus,
+                    Targets=[dict(
+                        Id=spot_notification_name,
+                        Arn=spot_notification_topic.arn
+                    )]
+                )
+
+
+            # self.sns.subscriptions.filter()
 
     def cleanup(self):
         self._stop_all_instances()
@@ -405,10 +476,10 @@ class AWSBenchmark(Benchmark):
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
         log.info("Starting new EC2 instance with params: %s.", script_params)
-        inst_key = instance_key.lower() if instance_key \
-            else "{}_p{}_i{}".format(self.sid,
-                                     re.sub(r"[\s-]", '', script_params),
-                                     datetime_iso(micros=True, time_sep='.')).lower()
+        inst_key = (instance_key.lower() if instance_key
+                    else "{}_p{}_i{}".format(self.sid,
+                                             re.sub(r"[\s-]", '', script_params),
+                                             datetime_iso(micros=True, time_sep='.')).lower())
         # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
@@ -523,7 +594,7 @@ class AWSBenchmark(Benchmark):
                 inst[k] = v
                 do_save = True
         if do_save:
-            self._exec_send(lambda: self._save_instances())
+            self._exec_send(self._save_instances)
 
     def _stop_all_instances(self):
         for iid in self.instances.keys():
@@ -1027,21 +1098,6 @@ shutdown -P +1 "I'm losing power"
             params=script_params,
             extra_params=script_extra_params,
         )
-
-
-class OnDemandInstances:
-    pass
-
-
-class SpotInstances:
-    """
-    Spot Fleet:
-      possibility to create multiple Spot Instance Pools: one for various availability zones.
-      strategy `lowestPrice` (default) + possibly `InstancePoolsToUseCount=3` for example to distribute instances across multiple availability zones.
-      use Spot Blocks (with predefined instance runtime): user not charged if AWS interrupts the instance.
-    """
-
-    pass
 
 
 class AWSRemoteBenchmark(Benchmark):
