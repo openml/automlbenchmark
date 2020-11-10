@@ -33,7 +33,7 @@ import botocore.exceptions
 
 from ..benchmark import Benchmark, SetupMode
 from ..datautils import read_csv, write_csv
-from ..job import Job
+from ..job import Job, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, Scoreboard, TaskResult
 from ..utils import Namespace as ns, datetime_iso, file_filter, flatten, list_all_files, normalize_path, str_def, tail, touch
@@ -111,9 +111,6 @@ class AWSBenchmark(Benchmark):
                        else rconfig().aws.region if rconfig().aws['region']
                        else boto3.session.Session().region_name)
         self.ami = rconfig().aws.ec2.regions[self.region].ami
-        self.event_bridge = None
-        self.sns = None
-        self.sqs = None
         self.cloudwatch = None
         self.ec2 = None
         self.iam = None
@@ -142,11 +139,6 @@ class AWSBenchmark(Benchmark):
     def setup(self, mode):
         if mode == SetupMode.skip:
             log.warning("AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode))
-        # Events + Notifications setup
-        self.event_bridge = boto3.client("events")
-        self.sns = boto3.resource('sns', region_name=self.region)
-        self.sqs = boto3.resource('sqs', region_name=self.region)
-        self._setup_notifications()
 
         # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource('s3', region_name=self.region)
@@ -163,68 +155,6 @@ class AWSBenchmark(Benchmark):
         # EC2 setup to prepare creation of ec2 instances
         self.ec2 = boto3.resource('ec2', region_name=self.region)
         self.cloudwatch = boto3.resource('cloudwatch', region_name=self.region)
-
-    def _setup_notifications(self):
-        ec2_config = rconfig().aws.ec2
-        if ec2_config.spot.enabled:
-            self.event_bridge.list_rules()
-            # if not created, create rule
-
-            spot_notification_name = 'SpotInterruptionNotification'
-            spot_notification_topic = next((t for t in self.sns.topics.all()
-                                            if t.arn.endswith(f":{spot_notification_name}")),
-                                           None)
-            if not spot_notification_topic:
-                spot_notification_topic = self.sns.Topic(self.sns.create_topic(
-                    Name=spot_notification_name,
-                    Attributes=dict(
-                        DisplayName=spot_notification_name,
-                        DeliveryPolicy=dict(
-                            http=dict(
-                                defaultHealthyRetryPolicy=dict(
-                                    minDelayTarget=5,
-                                    maxDelayTarget=10,
-                                    numRetries=3,
-                                    numMaxDelayRetries=0,
-                                    numNoDelayRetries=0,
-                                    numMinDelayRetries=0,
-                                    backoffFunction='linear'
-                                ),
-                                disableSubscriptionOverrides=False
-                            )
-                        )
-                    )
-                )['TopicArn'])
-
-            event_bus = 'default'
-            spot_rule_name = 'SpotInterruptionRule'
-            spot_notification_rule = next((r for r in self.event_bridge.list_rules(NamePrefix=spot_rule_name, EventBusName=event_bus)['Rules']
-                                           if r['Name'] == spot_rule_name),
-                                          None)
-            if not spot_notification_rule:
-                self.event_bridge.put_rule(
-                    Name=spot_rule_name,
-                    EventPattern={'source': ["aws.ec2"], 'detail-type': ["EC2 Spot Instance Interruption Warning"]},
-                    EventBusName=event_bus
-                )
-            elif spot_notification_rule['State'] == 'DISABLED':
-                self.event_bridge.enable_rule(Name=spot_rule_name, EventBusName=event_bus)
-
-            spot_rule_target = next((t for t in self.event_bridge.list_targets_by_rule(Rule=spot_rule_name, EventBusName=event_bus)['Targets']
-                                     if t['Arn'] == spot_notification_topic.arn),
-                                    None)
-            if not spot_rule_target:
-                self.event_bridge.put_targets(
-                    Rule=spot_rule_name,
-                    EventBusName=event_bus,
-                    Targets=[dict(
-                        Id=spot_notification_name,
-                        Arn=spot_notification_topic.arn
-                    )]
-                )
-
-
-            # self.sns.subscriptions.filter()
 
     def cleanup(self):
         self._stop_all_instances()
@@ -348,12 +278,16 @@ class AWSBenchmark(Benchmark):
                 return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
 
         def _on_done(job_self):
-            terminate = self._download_results(job_self.instance_id)
-            if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
-                log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
-                            "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
-                            job_self.instance_id)
-            self._stop_instance(job_self.instance_id, terminate=terminate)
+            if job_self.state is JobState.rescheduled:
+                self._stop_instance(job_self.instance_id)
+                self.job_runner.put(job_self)
+            else:
+                terminate = self._download_results(job_self.instance_id)
+                if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
+                    log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
+                                "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
+                                job_self.instance_id)
+                self._stop_instance(job_self.instance_id, terminate=terminate)
 
         job._run = _run.__get__(job)
         job._on_done = _on_done.__get__(job)
@@ -405,7 +339,12 @@ class AWSBenchmark(Benchmark):
                         self._update_instance(job.instance_id, meta_info=meta_info)
                         log.info("Running EC2 instance %s: %s", instance.id, meta_info)
                 elif state_code > 16:     # ended instance
-                    log.info("EC2 instance %s is %s: %s", job.instance_id, state, instance.state_reason['Message'])
+                    state_reason_msg = instance.state_reason['Message']
+                    log.info("EC2 instance %s is %s: %s", job.instance_id, state, state_reason_msg)
+                    # self._update_instance(job.instance_id, stop_reason=state_reason_msg)
+                    if state_reason_msg in ['Server.SpotInstanceShutdown', 'Server.SpotInstanceTermination']:
+                        log.info("[%s] was aborted due to Spot instance unavailability, rescheduling it.", job.name)
+                        job.reschedule()
                     interrupt.set()
             except Exception as e:
                 log.exception(e)
@@ -540,12 +479,12 @@ class AWSBenchmark(Benchmark):
             instance = self.ec2.create_instances(**instance_params)[0]
             log.info("Started EC2 instance %s", instance.id)
             self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='',
-                                             start_time=datetime_iso(), stop_time='',
+                                             start_time=datetime_iso(), stop_time='', stop_reason='',
                                              meta_info=None)
         except Exception as e:
             fake_iid = "no_instance_{}".format(len(self.instances)+1)
             self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False,
-                                          start_time=datetime_iso(), stop_time=datetime_iso(),
+                                          start_time=datetime_iso(), stop_time=datetime_iso(), stop_reason=str(e),
                                           meta_info=None)
             raise e
         finally:
@@ -582,7 +521,9 @@ class AWSBenchmark(Benchmark):
             try:
                 state = response['TerminatingInstances'][0]['CurrentState']['Name']
                 log.info("Instance %s state: %s.", instance_id, state)
-                self._update_instance(instance_id, status=state, stop_time=datetime_iso())
+                self._update_instance(instance_id, status=state,
+                                      stop_time=datetime_iso(),
+                                      stop_reason=instance.state_reason['Message'])
             except:
                 pass
 
@@ -606,12 +547,13 @@ class AWSBenchmark(Benchmark):
                     self.instances[iid].success,
                     self.instances[iid].start_time,
                     self.instances[iid].stop_time,
+                    self.instances[iid].stop_reason,
                     self.sid,
                     self.instances[iid].key,
                     self._s3_key(self.sid, instance_key_or_id=iid, absolute=True),
                     self.instances[iid].meta_info
                     ) for iid in self.instances.keys()],
-                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3_dir', 'meta_info'],
+                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'stop_reason', 'session', 'instance_key', 's3_dir', 'meta_info'],
                   path=os.path.join(self.output_dirs.session, 'instances.csv'))
 
     def _load_instances(self, instances_file):

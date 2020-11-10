@@ -24,6 +24,7 @@ class State(Enum):
     created = auto()
     cancelled = auto()
     running = auto()
+    rescheduled = auto()
     stopping = auto()
     stopped = auto()
 
@@ -38,9 +39,10 @@ class CancelledError(Exception):
 
 class Job:
 
-    def __init__(self, name="", timeout_secs=None):
+    def __init__(self, name="", timeout_secs=None, priority=None):
         self.name = name
         self.timeout = timeout_secs
+        self.priority = priority
         self.state = State.created
         self.thread_id = None
 
@@ -79,13 +81,24 @@ class Job:
 
     def done(self):
         try:
-            if self.state in [State.running, State.stopping]:
+            if self.state in [State.rescheduled, State.running, State.stopping]:
                 self._on_done()
         except Exception as e:
             log.error("Job `%s` completion failed with error: %s", self.name, str(e))
             log.exception(e)
         finally:
-            self.state = State.stopped
+            if self.state is State.rescheduled:
+                self.reset()
+            else:
+                self.state = State.stopped
+
+    def reschedule(self):
+        self.state = State.rescheduled
+        self.thread_id = None
+
+    def reset(self):
+        self.state = State.created
+        self.thread_id = None
 
     def _run(self):
         """jobs should implement their run logic in this method"""
@@ -106,10 +119,14 @@ class JobRunner:
         self.jobs = jobs
         self.results = []
         self.state = State.created
+        self._queue = queue.PriorityQueue(maxsize=len(jobs))
+        self._last_priority = 0
 
     def start(self):
         if self.state != State.created:
             raise InvalidStateError(self.state)
+        for job in self.jobs:
+            self.put(job)
         self.state = State.running
         with Timer() as t:
             self._run()
@@ -119,7 +136,28 @@ class JobRunner:
 
     def stop(self):
         self.state = State.stopping
+        self._queue.put((-1, None))
         return self._stop()
+
+    def stop_if_complete(self):
+        if 0 < len(self.jobs) == len(self.results):
+            self.stop()
+
+    def put(self, job, priority=None):
+        if priority is None:
+            if job.priority is None:
+                job.priority = self._last_priority = self._last_priority+1
+        else:
+            job.priority = priority
+        # job.reset()
+        self._queue.put((job.priority, job))
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        _, job = self._queue.get()
+        return job
 
     def _run(self):
         pass
@@ -132,12 +170,14 @@ class JobRunner:
 class SimpleJobRunner(JobRunner):
 
     def _run(self):
-        for job in self.jobs:
+        for job in self:
             if self.state == State.stopping:
                 break
             result, duration = job.start()
-            self.results.append(Namespace(name=job.name, result=result, duration=duration))
+            if job.state is not State.rescheduled:
+                self.results.append(Namespace(name=job.name, result=result, duration=duration))
             job.done()
+            self.stop_if_complete()
 
 
 class MultiThreadingJobRunner(JobRunner):
@@ -160,9 +200,11 @@ class MultiThreadingJobRunner(JobRunner):
                     q.task_done()
                     break
                 result, duration = job.start()
-                self.results.append(Namespace(name=job.name, result=result, duration=duration))
+                if job.state is not State.rescheduled:
+                    self.results.append(Namespace(name=job.name, result=result, duration=duration))
                 if self._done_async:
                     job.done()
+                self.stop_if_complete()
                 q.task_done()
 
         threads = []
@@ -172,7 +214,7 @@ class MultiThreadingJobRunner(JobRunner):
             threads.append(thread)
 
         try:
-            for job in self.jobs:
+            for job in self:
                 if self.state == State.stopping:
                     break
                 q.put(job)     # TODO: timeout
