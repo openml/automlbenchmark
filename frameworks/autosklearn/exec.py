@@ -146,17 +146,9 @@ def save_artifacts(estimator, config):
             print('Saving debug artifacts!')
             debug_dir = output_subdir('debug', config)
             ignore_extensions = ['.npy', '.pcs', '.model', '.ensemble', '.pkl']
-            tmp_directory = estimator.automl_._backend.temporary_directory
-            files_to_copy = []
-            for r, d, f in os.walk(tmp_directory):
-                for file_name in f:
-                    base, ext = os.path.splitext(file_name)
-                    if ext not in ignore_extensions:
-                        files_to_copy.append(os.path.join(r, file_name))
-            for filename in files_to_copy:
-                dst = filename.replace(tmp_directory, debug_dir+'/')
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                copyfile(filename, dst)
+utils.zip_path(tmp_directory,
+                       os.path.join(debug_dir, "artifacts.zip"),
+                       filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions)
     except Exception as e:
         log.debug("Error when saving artifacts= {e}.".format(e), exc_info=True)
 
