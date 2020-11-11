@@ -9,6 +9,8 @@ import random
 import re
 import sys
 
+from amlb.benchmarks.parser import benchmark_load
+from amlb.framework_definitions import load_framework_definitions
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
 
 
@@ -79,7 +81,8 @@ class Resources:
         :param name:
         :return: name of the framework as defined in the frameworks definition file
         """
-        framework = self._frameworks[name.lower()]
+        lname = name.lower()
+        framework = next((f for n, f in self._frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
         return framework, framework.name
@@ -87,49 +90,7 @@ class Resources:
     @lazy_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
-        log.info("Loading frameworks definitions from %s.", frameworks_file)
-        if not isinstance(frameworks_file, list):
-            frameworks_file = [frameworks_file]
-
-        frameworks = Namespace()
-        for ff in frameworks_file:
-            frameworks + config_load(ff)
-
-        to_validate = []
-        for name, framework in frameworks:
-            framework.name = name
-            to_validate.append(framework)
-
-        # support for frameworks definition extending other definitions:
-        # useful when having multiple definitions with different params
-        validated = []
-        while len(to_validate) > 0:
-            later = []
-            for framework in to_validate:
-                if framework['extends'] is not None:
-                    parent = frameworks[framework.extends]
-                    if parent is None:
-                        log.warning("Removing framework %s as parent %s doesn't exist.", framework.name, framework.extends)
-                        continue
-                    elif parent == framework:
-                        log.warning("Framework %s extends itself: removing extension.", framework.name)
-                        framework.extends = None
-                    elif parent not in validated:
-                        later.append(framework)
-                        continue
-                    else:
-                        framework.parent = parent
-                        framework % copy.deepcopy(parent)  # adds framework's missing keys from parent
-                self._validate_framework(framework)
-                validated.append(framework)
-            to_validate = later
-
-        log.debug("Available framework definitions:\n%s", frameworks)
-
-        frameworks_lookup = Namespace()
-        for framework in validated:
-            frameworks_lookup[framework.name.lower()] = framework
-        return frameworks_lookup
+        return load_framework_definitions(frameworks_file, self)
 
     @memoize
     def constraint_definition(self, name):
@@ -165,34 +126,11 @@ class Resources:
     # @memoize
     def benchmark_definition(self, name, defaults=None):
         """
-        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml or the path to a user-defined benchmark description file.
+        :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
-        benchmark_name = name
-        benchmark_dir = self.config.benchmarks.definition_dir
-        if not isinstance(benchmark_dir, list):
-            benchmark_dir = [benchmark_dir]
-
-        benchmark_file = None
-        for bd in benchmark_dir:
-            bf = os.path.join(bd, "{}.yaml".format(benchmark_name))
-            if os.path.exists(bf):
-                benchmark_file = bf
-                break
-
-        if benchmark_file is None:
-            benchmark_file = name
-            benchmark_name, _ = os.path.splitext(os.path.basename(name))
-
-        if not os.path.exists(benchmark_file):
-            # should we support s3 and check for s3 path before raising error?
-            raise ValueError("Incorrect benchmark name or path `{}`, name not available in {}.".format(name, self.config.benchmarks.definition_dir))
-
-        log.info("Loading benchmark definitions from %s.", benchmark_file)
-        tasks = config_load(benchmark_file)
-        hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
-        tasks = [task for task in tasks if task is not hard_defaults]
+        hard_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(name, self.config.benchmarks.definition_dir)
 
         defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:
@@ -203,52 +141,7 @@ class Resources:
         defaults.enabled = False
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
-        return tasks, benchmark_name, benchmark_file
-
-    def _validate_framework(self, framework):
-        if framework['module'] is None:
-            framework.module = '.'.join([self.config.frameworks.root_module, framework.name])
-
-        if framework['setup_args'] is None:
-            framework.setup_args = []
-        elif isinstance(framework.setup_args, str):
-            framework.setup_args = [framework.setup_args]
-
-        if framework['setup_script'] is None:
-            framework.setup_script = None
-        else:
-            framework.setup_script = framework.setup_script.format(**self._common_dirs,
-                                                                   **dict(module=framework.module))
-        if framework['setup_cmd'] is None:
-            framework._setup_cmd = None
-            framework.setup_cmd = None
-        else:
-            framework._setup_cmd = framework.setup_cmd
-            if isinstance(framework.setup_cmd, str):
-                framework.setup_cmd = [framework.setup_cmd]
-            framework.setup_cmd = [cmd.format(**self._common_dirs,
-                                              **dict(pip="{pip}",
-                                                     py="{py}"))
-                                   for cmd in framework.setup_cmd]
-
-        if framework['params'] is None:
-            framework.params = dict()
-        else:
-            framework.params = Namespace.dict(framework.params)
-
-        if framework['version'] is None:
-            framework.version = 'latest'
-
-        did = copy.copy(self.config.docker.image_defaults)
-        if framework['image'] is None:
-            framework['image'] = did
-        for conf in ['author', 'image', 'tag']:
-            if framework.image[conf] is None:
-                framework.image[conf] = did[conf]
-        if framework.image.image is None:
-            framework.image.image = framework.name.lower()
-        if framework.image.tag is None:
-            framework.image.tag = framework.version.lower()
+        return tasks, benchmark_name, benchmark_path
 
     def _validate_task(self, task, lenient=False):
         missing = []

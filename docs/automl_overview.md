@@ -214,15 +214,15 @@ Komer, Brent, James Bergstra, and Chris Eliasmith (2014).
 *ICML workshop on AutoML 2014*.
 
 ## ML-Plan
-[source](https://github.com/fmohr/AILibs/tree/master/softwareconfiguration/mlplan) |
-[documentation](https://github.com/fmohr/AILibs/tree/dev/softwareconfiguration/mlplan/docs/javadoc) |
+[source](https://github.com/starlibs/AILibs) |
+[documentation](https://starlibs.github.io/AILibs/projects/mlplan/) |
 Java |
-Optimization: Hierachical Task Planning | -
+Optimization: Best-First Search on a search graph induced through Hierachical Task Network Planning | AGPL-3.0
 
 > a new approach to AutoML based on hierarchical planning
 
-ML-Plan is a new AutoML framework based on Hierarchical Task Planning.
-It can optimize with both a WEKA and scikit-learn backend.
+ML-Plan organizes the search space of possible solution candidates via Hierarchical Task Network (HTN) planning.
+It works with both WEKA and scikit-learn backends and can be used to deal with classification, regression, multi-label classification, and remaining useful lifetime estimation tasks.
 ML-Plan is under active development.
 
 #### Papers
@@ -232,8 +232,16 @@ Felix Mohr, Marcel Wever and Eyke Hüllermeier (2018).
 *Machine Learning  107(8):1495–1515*
 
 Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
+[ML-Plan for Unlimited-Length Machine Learning Pipelines](https://ris.uni-paderborn.de/download/3852/3853/38.pdf)
+* ICML workshop on AutoML 2018*.
+
+Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
 [Automated Multi-Label Classification based on ML-Plan](https://arxiv.org/abs/1811.04060)
 *arXiv preprint*
+
+Marcel Wever, Felix Mohr, Alexander Tornede and Eyke Hüllermeier (2019).
+[Automating Multi-Label Classification Extending ML-Plan](https://ris.uni-paderborn.de/download/10232/13177/Automating_MultiLabel_Classification_Extending_ML-Plan.pdf)
+* ICML workshop on AutoML 2019*.
 
 ## OBOE 
 [source](https://github.com/udellgroup/oboe) |

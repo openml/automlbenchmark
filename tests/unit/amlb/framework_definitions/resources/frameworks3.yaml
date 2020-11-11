@@ -1,0 +1,6 @@
+---
+# [3/3] files with framework definitions for unit tests only
+
+other_test_framework_extended_other_file:
+  version: 'latest'
+  extends: other_test_framework

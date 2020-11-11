@@ -112,7 +112,8 @@ Each dataset must contain a training set and a test set. There can be multiple t
 
 ### Datasets definition
 
-A dataset definition consists in a `yaml` file listing all the task/datasets that will used for the complete benchmark.
+A dataset definition consists in a `yaml` file listing all the task/datasets that will used for the complete benchmark, 
+or as an OpenML suite.
 
 Default dataset definitions are available under folder `resources/benchmarks`.
 
@@ -154,11 +155,10 @@ The automlbenchmark application can directly consume those tasks using the follo
 ```
 where `openml_task_id` allows accessing the OpenML task at `https://www.openml.org/t/{openml_task_id}` (in this example: <https://www.openml.org/t/9910>). 
 
-
-#### OpenML studies
-
-[OpenML] studies are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
-The application doesn't directly support OpenML studies for now: they need to be converted into a proper benchmark definition file including all the tasks from the study, but we're thinking about improving this: cf. <https://github.com/openml/automlbenchmark/issues/61>.
+Alternatively, you can run the benchmark on a single OpenML task without writing a benchmark definition:
+```bash
+python runbenchmark.py randomforest openml/t/59
+```
 
 #### File datasets
 
@@ -244,6 +244,19 @@ Then the datasets can be declared in the benchmark definition file as follow:
 - the `folds` attribute is also optional but recommended for those datasets as the default value is `folds=10` (default amount of folds in openml datasets), so if you don't have that many folds for your custom datasets, it is better to declare it explicitly here.
 - Remote files are downloaded to the `input_dir` folder and archives are decompressed there as well, so you may want to change the value of this folder in your [custom config.yaml file](#custom-configuration) or specify it at the command line with the `-i` or `--indir` argument (by default, it points to the `~/.openml/cache` folder).
 
+#### OpenML suites
+
+[OpenML] suites are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
+You can run the benchmark on an openml suite directly, without defining the benchmark in a local file:
+```bash
+python runbenchmark.py randomforest openml/s/218
+```
+
+You can define a new OpenML suite yourself, for example through the Python API.
+[This openml-python tutorial](https://openml.github.io/openml-python/master/examples/30_extended/suites_tutorial.html#sphx-glr-examples-30-extended-suites-tutorial-py)
+explains how to build your own suite.
+An advantage of using an OpenML suite is that sharing it is easy as the suite and its datasets can be accessed through APIs in many programming languages.
+
 ### Constraints definition
 
 Now that we have defined a list of datasets, we also need to enforce some constraints on the autoML training.
@@ -310,7 +323,7 @@ Adding an AutoML framework consist in several steps:
 ### Framework definition
 
 The framework definition consists in an entry in a `yaml` file with the framework name and some properties
- 1. to describe the framework: `project`, `version`.
+ 1. to describe the framework and define which version will be used: `project`, `version`.
  1. to indicate the Python module with the integration code: `module` or `extends`.
  1. to pass optional parameters to the framework and/or the integration code: `params`.
  
@@ -342,15 +355,25 @@ Stacking:
 #    _final_params: {penalty: elasticnet, loss: log} # sgd linear
     _final_params: {max_iter: 1000}  # logistic/linear
 
+autosklearn_latest:
+  extends: autosklearn
+  version: latest
+  description: "this will use master branch from the autosklearn repository instead of the fixed version"
+
+autosklearn_mybranch:
+  extends: autosklearn
+  version: mybranch
+  description: "this will use mybranch branch from the autosklearn repository instead of the fixed version"
+
+autosklearn_oldgen:
+  extends: autosklearn
+  version: "0.7.1"
+  description: "this will use the latest autosklearn version from the old generation"
+
 H2OAutoML_nightly:
   module: frameworks.H2OAutoML
   setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.29.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
   version: 'nightly'
-
-H2OAutoML_blending:
-  extends: H2OAutoML
-  params:
-    nfolds: 0
 
 H2OAutoML_custom:
   extends: H2OAutoML
@@ -588,11 +611,11 @@ Using the instructions above:
  1. try to setup the framework: 
     > python runbenchmark.py myframework -s only
  1. fixes the framework setup until it works: the setup being usually a simple `setup.sh` script, you should be able to test it directly without using the application.
- 1. try to run simple test against one fold using defaults (`test` benchmark and `test` constraints):
-    > python runbenchmark.py myframework -f 0
+ 1. try to run simple test against one fold using defaults (`test` benchmark and `test` constraints) with the `-Xtest_mode` that will trigger additional validations:
+    > python runbenchmark.py myframework -f 0 -Xtest_mode
  1. fix the module integration code until the test produce all results with no error (if the integration generated an error, it is visible in the results).
  1. if this works, validate it against the `validation` dataset using one fold:
-    > python runbenchmark.py myframework validation 1h4c -f 0
+    > python runbenchmark.py myframework validation 1h4c -f 0 -Xtest_mode
  1. if this works, try to run it in docker to validate the docker image setup: 
     > python runbenchmark.py myframework -m docker
  1. if this works, try to run it in aws: 
@@ -886,12 +909,26 @@ _Examples of method duration info when using this custom profiling_:
 see [Framework integration](#frameworks-requiring-a-dedicated-virtual-env)
 
 ### Framework setup is not executed
-
 Try the following:
 - force the setup using the `-s only` or `-s force` arg on the command line:
   - `-s only` or `--setup=only` will force the setup and skip the benchmark run.
   - `-s force` or `--setup=force` will force the setup and run the benchmark immediately.
 - delete the `.marker_setup_safe_to_delete` from the framework module and try to run the benchmark again. This marker file is automatically created after a successful setup to avoid having to execute it each tine (setup phase can be time-consuming), this marker then prevents auto-setup, except if the `-s only` or `-s force` args above are used.
+
+### Framework setup fails
+If the setup fails, first note that only the following OS are fully supported:
+- Ubuntu 18.04
+
+The setup is created for Debian-based linux environments, and macOS (most frameworks can be installed on macOS, ideally with `brew` installed, but there may be a few exceptions), so it may work with other Linux environments not listed above (e.g. Debian, Ubuntu 20.04, ...).
+The best way to run benchmarks on non-supported OS, is to use the docker mode.
+
+If the setup fails on a supported environment, please try the following:
+- force the setup: see above.
+- ensure that the same framework is not set up multiple times in parallel on the same machine:
+  - first use `python runbenchmark.py MyFramework -s only` on one terminal.
+  - then you can trigger multiple `python runbenchmark.py MyFramework ...` (without `-s` option) in parallel.
+- delete the `lib` and `venv` folders, if present, under the given framework folder (e.g. `frameworks/MyFramework`), and try the setup again.
+
 
 [README]: ./README.md
 [OpenML]: https://openml.org

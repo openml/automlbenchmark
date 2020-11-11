@@ -14,6 +14,8 @@ _**NOTE:**_ _This benchmarking framework currently features binary and multiclas
      * [On AWS](#on-aws)
      * [Output](#output)
   * [Advanced configuration](#advanced-configuration)
+  * [Issues](#issues)
+  * [Frequently Asked Questions](#frequently-asked-questions)
       
 Automatic Machine Learning (AutoML) systems automatically build machine learning pipelines or neural architectures in a data-driven, objective, and automatic way. They automate a lot of drudge work in designing machine learning systems, so that better systems can be developed, faster. However, AutoML research is also slowed down by two factors:
 
@@ -28,7 +30,8 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ### Features:
 * Curated suites of [benchmarking datasets](https://openml.github.io/automlbenchmark/benchmark_datasets.html) from [OpenML](https://www.openml.org/s/218/data).
 * Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
-* [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework) as Docker images
+* [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework)
+* Experiments can be run in Docker or Singularity containers
 * Execute experiments locally or on AWS (see below)
 
 ### Roadmap: 
@@ -40,7 +43,7 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ## Installation
 ### Pre-requisites
 To run the benchmarks, you will need:
-* Python 3.5+.
+* Python 3.6+.
 * PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
@@ -48,7 +51,7 @@ To run the benchmarks, you will need:
 ### Setup
 Clone the repo:
 ```bash
-git clone https://github.com/openml/automlbenchmark.git
+git clone https://github.com/openml/automlbenchmark.git --branch stable --depth 1
 cd automlbenchmark
 ```
 Optional: create a Python3 virtual environment.
@@ -57,11 +60,17 @@ Optional: create a Python3 virtual environment.
 _Those virtual environments are created internally using `python -m venv` and we encountered issues with `pip` when `venv` is used on top of a `virtualenv` environment._
 _Therefore, we rather suggest one of the method below:_ 
 
-using venv:
+using venv on Linux/macOS:
 ```bash
 python3 -m venv ./venv
 source venv/bin/activate
 # remember to call `deactivate` once you're done using the application
+```
+using venv on Windows:
+```bash
+python3 -m venv ./venv
+venv\Scripts\activate
+# remember to call `venv\Scripts\deactivate` once you're done using the application
 ```
 
 or using pyenv:
@@ -85,7 +94,7 @@ pip3 install -r requirements.txt
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
 
 1. The AutoML framework that should be evaluated, see [frameworks.yaml](../resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [HOWTO](./HOWTO.md#add-an-automl-framework).
-2. The benchmark suite to run should be one implemented in [benchmarks folder](../resources/benchmarks).
+2. The benchmark suite to run should be one implemented in [benchmarks folder](../resources/benchmarks), or an OpenML study or task (formatted as `openml/s/X` or `openml/t/Y` respectively).
 3. (Optional) The constraints applied to the benchmark as defined by default in [constraints.yaml](../resources/constraints.yaml). Default constraint is `test` (1 single fold for 10 min).
 4. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
 
@@ -94,7 +103,7 @@ Examples:
 python3 runbenchmark.py 
 python3 runbenchmark.py constantpredictor
 python3 runbenchmark.py tpot test
-python3 runbenchmark.py autosklearn test -m docker
+python3 runbenchmark.py autosklearn openml/t/59 -m docker
 python3 runbenchmark.py h2oautoml validation 1h4c -m aws
 ```
 
@@ -114,9 +123,10 @@ usage: runbenchmark.py [-h] [-m {local,docker,aws}]
 positional arguments:
   framework             The framework to evaluate as defined by default in
                         resources/frameworks.yaml.
-  benchmark             The benchmark type to run as defined by default in
-                        resources/benchmarks/{benchmark}.yaml or the path to a
-                        benchmark description file. Defaults to `test`.
+  benchmark             The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, 
+                        a path to a benchmark description file, or an openml suite or task. 
+                        OpenML references should be formatted as 'openml/s/X'  and 'openml/t/Y', 
+                        for studies and tasks respectively. Defaults to `test`.
   constraint            The constraint definition to use as defined by default in
                         resources/constraints.yaml. Defaults to `test`.
 
@@ -127,8 +137,9 @@ optional arguments:
                         will be running. Defaults to local.
   -t [task_id [task_id ...]], --task [task_id [task_id ...]]
                         The specific task name (as defined in the benchmark
-                        file) to run. If not provided, then all tasks from the
-                        benchmark will be run.
+                        file) to run. When an OpenML reference is used as benchmark, 
+                        the dataset name should be used instead. If not provided, 
+                        then all tasks from the benchmark will be run.
   -f [fold_num [fold_num ...]], --fold [fold_num [fold_num ...]]
                         If task is provided, the specific fold(s) to run. If
                         fold is not provided, then all folds from the task
@@ -315,11 +326,37 @@ By default, a benchmark run creates the following subdirectories and files in th
 
 
 ## Advanced configuration
-see [HOWTO]
+If you need to create your own benchmark, add a framework, create a plugin for a proprietary framework, or simply want to use some advanced options (e.g. run some frameworks with non-default parameters), see the [HOWTO].
+
+## Issues
+If you face any issue, please first have a look at the [Troubleshooting guide] and check the [existing issues](https://github.com/openml/automlbenchmark/issues).
+Any new issue should also be reported there.
 
 
 [HOWTO]: ./HOWTO.md
+[Troubleshooting guide]: ./HOWTO.md#troubleshooting-guide
 [examples/aws]: ../examples/aws/config.yaml
 
 [Docker]: https://docs.docker.com/
 [boto3]: https://boto3.readthedocs.io/
+
+
+## Frequently Asked Questions
+
+**When will results be updated, also for the new/updated frameworks?**
+
+We don't perform a benchmark evaluation for each new package or update.
+Due to budget constraints, we can only do a limited number of evaluations.
+The next full evaluation will be performed before the end of the year 2020.
+We hope to find funding to guarantee regular evaluations.
+
+---
+**(When) will you add framework X?**
+
+We are currently not focused on integrating additional AutoML systems.
+However, we process any pull requests that add frameworks and will assist with the integration.
+The best way to make sure framework X gets included is to start with the integration yourself or encourage the package authors to do so (for technical details see [HOWTO]).
+
+It is also possible to open a Github issue indicating the framework you would like added.
+Please use a clear title (e.g. "Add framework: X") and provide some relevant information (e.g. a link to the documentation).
+This helps us keep track of which frameworks people are interested in seeing included.

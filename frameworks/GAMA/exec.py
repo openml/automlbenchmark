@@ -13,7 +13,7 @@ from gama import GamaClassifier, GamaRegressor, __version__
 import sklearn
 import category_encoders
 
-from frameworks.shared.callee import call_run, result, Timer
+from frameworks.shared.callee import call_run, result, utils
 
 
 log = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ def run(dataset, config):
     *_, did, fold = dataset.train_path.split('/')
     fold = fold.split('.')[0].split('_')[-1]
     log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
+    utils.touch(log_file)
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
@@ -59,7 +60,7 @@ def run(dataset, config):
                             keep_analysis_log=log_file,
                             **training_params)
 
-    with Timer() as training:
+    with utils.Timer() as training:
         gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
 
     log.info('Predicting on the test set.')

@@ -13,6 +13,7 @@ script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
 
+test_mode: False
 parallel_jobs: 1
 max_parallel_jobs:
 
@@ -35,7 +36,8 @@ frameworks:
   root_module: frameworks
 
 benchmarks:
-  definition_dir: '{root}/resources/benchmarks'
+  definition_dir:
+    - '{root}/resources/benchmarks'
   constraints_file: '{root}/resources/constraints.yaml'
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.

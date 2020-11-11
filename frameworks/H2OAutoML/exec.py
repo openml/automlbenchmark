@@ -58,7 +58,8 @@ def run(dataset: Dataset, config: TaskConfig):
         log.info("Starting H2O cluster with %s cores, %s memory.", nthreads, jvm_memory)
         max_port_range = 49151
         min_port_range = 1024
-        port = os.getpid() % (max_port_range-min_port_range) + min_port_range
+        rnd_port = os.getpid() % (max_port_range-min_port_range) + min_port_range
+        port = config.framework_params.get('_port', rnd_port)
 
         h2o.init(nthreads=nthreads,
                  port=port,

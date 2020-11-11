@@ -15,14 +15,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('framework', type=str,
                     help="The framework to evaluate as defined by default in resources/frameworks.yaml.")
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
-                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml "
-                         "or the path to a benchmark description file. Defaults to `%(default)s`.")
+                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, "
+                         "a path to a benchmark description file, or an openml suite or task. OpenML references should "
+                         "be formatted as 'openml/s/X' and 'openml/t/Y', for studies and tasks respectively. Defaults to `%(default)s`.")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
                     help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
 parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws', 'singularity'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
                     help="The specific task name (as defined in the benchmark file) to run. "
+                         "When an OpenML reference is used as benchmark, the dataset name should be used instead. "
                          "If not provided, then all tasks from the benchmark will be run.")
 parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*', default=None,
                     help="If task is provided, the specific fold(s) to run. "
