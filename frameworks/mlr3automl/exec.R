@@ -47,17 +47,10 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   saveRDS(model$learner$archive, paste("~/tuning_archives/", name, model$measure$id, gsub("\\s|:", "_", Sys.time()), sep = "_"))
 
-  if (type == "classification" && !("prob" %in% preds$predict_types)) {
-    result = data.frame(preds$data$response, preds$data$truth)
-    const_column = rep(0.5, length(preds$response))
-    for (level in train$class_names) {
-      result = cbind(const_column, result)
-    }
-    colnames(result) = c(train$class_names, 'predictions', 'truth')
-  }
-  else if (type == "classification") {
-    result = data.frame(preds$data$prob, preds$data$response, preds$data$truth)
-    colnames(result) = c(colnames(preds$data$prob), 'predictions', 'truth')
+  if (type == "classification") {
+    sorted_colnames = sort(colnames(preds$data$prob))
+    result = data.frame(preds$data$prob[, sorted_colnames], preds$data$response, preds$data$truth)
+    colnames(result) = c(sorted_colnames, 'predictions', 'truth')
   } else {
     result = data.frame(preds$data$response, preds$data$truth)
     colnames(result) = c('predictions', 'truth')
