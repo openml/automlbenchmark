@@ -1,7 +1,10 @@
 import datetime as dt
 import logging
+import math
 import threading
 import time
+
+from .core import identity, threadsafe_generator
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +36,35 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
             strf += "{_}%f".format(_=micros_sep)
     datetime = dt.datetime.utcnow() if datetime is None else datetime
     return datetime.strftime(strf)
+
+
+def countdown(timeout_secs, on_timeout=None, message=None, frequency=1, log_level=logging.INFO):
+    timeout_epoch = time.time() + timeout_secs
+    remaining = timeout_secs
+    while remaining > 0:
+        mins, secs = divmod(remaining, 60)
+        hours, mins = divmod(mins, 60)
+        if message:
+            log.log(log_level, "in %02d:%02d:%02d : %s", hours, mins, secs, message)
+        else:
+            log.log(log_level, "countdown: %02d:%02d:%02d", hours, mins, secs)
+        next_sleep = min(frequency, remaining)
+        time.sleep(next_sleep)
+        remaining = math.ceil(timeout_epoch - time.time())
+    if on_timeout:
+        on_timeout()
+
+
+@threadsafe_generator
+def retry(start=0, fn=identity, max_retries=-1):
+    delay = start
+    retries = 1
+    while True:
+        if 0 <= max_retries < retries:
+            return
+        yield delay
+        retries = retries+1
+        delay = fn(delay)
 
 
 class Timer:
@@ -83,5 +115,4 @@ class Timeout:
     def __exit__(self, *args):
         if self.timer:
             self.timer.cancel()
-
 

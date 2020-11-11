@@ -90,14 +90,14 @@ class Job:
             if self.state is State.rescheduled:
                 self.reset()
             else:
-                self.state = State.stopped
+                self.reset(State.stopped)
 
     def reschedule(self):
         self.state = State.rescheduled
         self.thread_id = None
 
-    def reset(self):
-        self.state = State.created
+    def reset(self, state=State.created):
+        self.state = state
         self.thread_id = None
 
     def _run(self):
@@ -119,14 +119,13 @@ class JobRunner:
         self.jobs = jobs
         self.results = []
         self.state = State.created
-        self._queue = queue.PriorityQueue(maxsize=len(jobs))
+        self._queue = None
         self._last_priority = 0
 
     def start(self):
         if self.state != State.created:
             raise InvalidStateError(self.state)
-        for job in self.jobs:
-            self.put(job)
+        self._init_queue()
         self.state = State.running
         with Timer() as t:
             self._run()
@@ -149,14 +148,24 @@ class JobRunner:
                 job.priority = self._last_priority = self._last_priority+1
         else:
             job.priority = priority
-        # job.reset()
         self._queue.put((job.priority, job))
+
+    def _init_queue(self):
+        self._queue = queue.PriorityQueue(maxsize=len(self.jobs))
+        for job in self.jobs:
+            self.put(job)
 
     def __iter__(self):
         return self
 
     def __next__(self):
+        if self._queue is None:
+            return
         _, job = self._queue.get()
+        self._queue.task_done();
+        if job is None:
+            self._queue = None
+            return
         return job
 
     def _run(self):

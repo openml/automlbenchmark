@@ -7,6 +7,7 @@ import json
 import logging
 import pprint
 import re
+import threading
 
 log = logging.getLogger(__name__)
 
@@ -155,6 +156,10 @@ def noop(*args, **kwargs):
     pass
 
 
+def identity(x, *args):
+    return (x,) + args if args else x
+
+
 def as_list(*args):
     if len(args) == 0:
         return list()
@@ -280,4 +285,29 @@ def json_dumps(o, style='default'):
         return json.encoder.JSONEncoder.default(None, o)
 
     return json.dumps(o, indent=indent, separators=separators, default=default_encode)
+
+
+class ThreadsafeIterator:
+    """
+    Wrapper class making an iterator threadsafe
+    """
+    def __init__(self, it):
+        self.it = it
+        self.lock = threading.Lock()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        with self.lock:
+            return next(self.it)
+
+
+def threadsafe_generator(fn):
+    """
+    Decorator making a generator thread-safe.
+    """
+    def gen(*args, **kwargs):
+        return ThreadsafeIterator(fn(*args, **kwargs))
+    return gen
 
