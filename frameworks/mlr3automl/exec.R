@@ -30,13 +30,13 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     model <- AutoML(train, resampling = rsmp("holdout"),
                     measure = msr("classif.acc"),
                     runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = "full")
+                    preprocessing = "stability")
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
     model <- AutoML(train, resampling = rsmp("holdout"),
                     runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = "full")
+                    preprocessing = "stability")
   } else {
     stop("Task type not supported!")
   }
