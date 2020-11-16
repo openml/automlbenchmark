@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import shutil
 import tempfile as tmp
 import warnings
 
@@ -80,11 +81,6 @@ def run(dataset, config):
         ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
         # when memory is large enough, we should have:
         # (cores - 1) * ml_memory_limit_mb + ensemble_memory_limit_mb = config.max_mem_size_mb
-        total_memory_mb = utils.system_memory_mb().total
-        if ml_memory_limit == 'auto':
-            ml_memory_limit = max(min(config.max_mem_size_mb,
-                                      math.ceil(total_memory_mb / n_jobs)),
-                                  3072)  # 3072 is autosklearn defaults
         if ensemble_memory_limit == 'auto':
             ensemble_memory_limit = max(math.ceil(ml_memory_limit - (total_memory_mb - config.max_mem_size_mb)),
                                         math.ceil(ml_memory_limit / 3),  # default proportions
@@ -107,7 +103,8 @@ def run(dataset, config):
     constr_params["seed"] = config.seed
 
     log.info("Auto-sklearn constructor arguments: %s", constr_params)
-    log.info("Auto-sklearn fit() arguments: %s", training_params)
+    log.info("Auto-sklearn additional constructor arguments: %s", training_params)
+    log.info("Auto-sklearn fit() arguments: %s", fit_extra_params)
 
     auto_sklearn = estimator(**constr_params, **training_params)
     with utils.Timer() as training:
@@ -142,13 +139,26 @@ def save_artifacts(estimator, config):
             models_file = os.path.join(output_subdir('models', config), 'models.txt')
             with open(models_file, 'w') as f:
                 f.write(models_repr)
-        if 'debug' in artifacts:
+        if 'debug_as_files' in artifacts or 'debug_as_zip' in artifacts:
             print('Saving debug artifacts!')
             debug_dir = output_subdir('debug', config)
             ignore_extensions = ['.npy', '.pcs', '.model', '.ensemble', '.pkl']
-utils.zip_path(tmp_directory,
-                       os.path.join(debug_dir, "artifacts.zip"),
-                       filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions)
+            tmp_directory = estimator.automl_._backend.temporary_directory
+            if 'debug_as_files' in artifacts:
+                files_to_copy = []
+                for r, d, f in os.walk(tmp_directory):
+                    for file_name in f:
+                        base, ext = os.path.splitext(file_name)
+                        if ext not in ignore_extensions:
+                            files_to_copy.append(os.path.join(r, file_name))
+                for filename in files_to_copy:
+                    dst = filename.replace(tmp_directory, debug_dir+'/')
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    shutil.copyfile(filename, dst)
+            else:
+                utils.zip_path(tmp_directory,
+                           os.path.join(debug_dir, "artifacts.zip"),
+                           filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions)
     except Exception as e:
         log.debug("Error when saving artifacts= {e}.".format(e), exc_info=True)
 
