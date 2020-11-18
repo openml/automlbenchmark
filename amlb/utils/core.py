@@ -287,20 +287,18 @@ def json_dumps(o, style='default'):
     return json.dumps(o, indent=indent, separators=separators, default=default_encode)
 
 
-class ThreadsafeIterator:
+def threadsafe_iterator(it):
     """
-    Wrapper class making an iterator threadsafe
+    Wrapper making an iterator thread-safe.
     """
-    def __init__(self, it):
-        self.it = it
-        self.lock = threading.Lock()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        with self.lock:
-            return next(self.it)
+    it = iter(it)
+    lock = threading.Lock()
+    while True:
+        try:
+            with lock:
+                yield next(it)
+        except StopIteration:
+            return
 
 
 def threadsafe_generator(fn):
@@ -308,6 +306,6 @@ def threadsafe_generator(fn):
     Decorator making a generator thread-safe.
     """
     def gen(*args, **kwargs):
-        return ThreadsafeIterator(fn(*args, **kwargs))
+        return threadsafe_iterator(fn(*args, **kwargs))
     return gen
 

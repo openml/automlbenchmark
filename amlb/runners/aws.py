@@ -224,7 +224,9 @@ class AWSBenchmark(Benchmark):
 
     def _job_reschedule(self, job):
         if not self.retry:
-            self.retry = retry(2, lambda x: x*2, max_retries=3)
+            self.retry = retry(2, lambda x: x*2, max_retries=3)  # TODO: externalize
+        # we want sth more clever: if some job, is already waiting, use the same waiting time
+        # only increase wait time if the job passed as param was previously waiting (wait_min_secs > 0)
         wait = next(self.retry, None)
         if wait is None:
             # write job state/description for later replay
