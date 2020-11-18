@@ -1,0 +1,104 @@
+---
+
+- name: Moneyball
+  openml_task_id: 167210
+
+- name: quake
+  openml_task_id: 359930
+
+- name: sensory
+  openml_task_id: 359931
+
+- name: socmob
+  openml_task_id: 359932
+
+- name: space_ga
+  openml_task_id: 359933
+
+- name: tecator
+  openml_task_id: 359934
+
+- name: wine_quality
+  openml_task_id: 359935
+
+- name: elevators
+  openml_task_id: 359936
+
+- name: Yolanda
+  openml_task_id: 317614
+
+- name: Allstate_Claims_Severity
+  openml_task_id: 233212
+
+- name: black_friday
+  openml_task_id: 359937
+
+- name: diamonds
+  openml_task_id: 233211
+
+- name: Flora
+  openml_task_id: 317613
+
+- name: Brazilian_houses
+  openml_task_id: 359938
+
+- name: Santander_transaction_value
+  openml_task_id: 233214
+
+- name: Mercedes_Benz_Greener_Manufacturing
+  openml_task_id: 233215
+
+- name: topo_2_1
+  openml_task_id: 359939
+
+- name: yprop_4_1
+  openml_task_id: 359940
+
+- name: QSAR-TID-11
+  openml_task_id: 13854
+
+- name: QSAR-TID-10980
+  openml_task_id: 14097
+
+- name: OnlineNewsPopularity
+  openml_task_id: 359941
+
+- name: Airlines_DepDelay_1M
+  openml_task_id: 359926
+
+- name: colleges
+  openml_task_id: 359942
+
+- name: nyc-taxi-green-dec-2016
+  openml_task_id: 359943
+
+- name: abalone
+  openml_task_id: 359944
+
+- name: us_crime
+  openml_task_id: 359945
+
+- name: pol
+  openml_task_id: 359946
+
+- name: Buzzinsocialmedia_Twitter
+  openml_task_id: 233213
+
+- name: MIP-2016-regression
+  openml_task_id: 359947
+
+- name: SAT11-HAND-runtime-regression
+  openml_task_id: 359948
+
+- name: house_sales
+  openml_task_id: 359949
+
+- name: boston
+  openml_task_id: 359950
+
+- name: house_prices_nominal
+  openml_task_id: 359951
+
+- name: house_16H
+  openml_task_id: 359952
+
