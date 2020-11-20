@@ -20,7 +20,9 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
 
   test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
-
+  
+  preprocessing = "stability"
+  
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
   print(paste("remaining budget: ", remaining_budget, " seconds"))
@@ -30,13 +32,13 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     model <- AutoML(train, resampling = rsmp("holdout"),
                     measure = msr("classif.acc"),
                     runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = "full")
+                    preprocessing = preprocessing)
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
     model <- AutoML(train, resampling = rsmp("holdout"),
                     runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = "full")
+                    preprocessing = preprocessing)
   } else {
     stop("Task type not supported!")
   }
@@ -45,7 +47,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   preds <- model$predict(test)
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
-  saveRDS(model$learner$archive, paste("~/tuning_archives/", name, model$measure$id, gsub("\\s|:", "_", Sys.time()), sep = "_"))
+  saveRDS(model$learner$archive, paste("~/tuning_archives/", name, model$measure$id, preprocessing, gsub("\\s|:", "_", Sys.time()), sep = "_"))
 
   if (type == "classification") {
     sorted_colnames = sort(colnames(preds$data$prob))
