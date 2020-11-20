@@ -21,7 +21,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
   
-  preprocessing = "stability"
+  preprocessing = "full"
   
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
@@ -29,8 +29,15 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
+    
+    if ("twoclass" %in% train$properties) {
+      measure = msr("classif.auc")
+    } else {
+      measure = msr("classif.logloss")
+    }
+    
     model <- AutoML(train, resampling = rsmp("holdout"),
-                    measure = msr("classif.acc"),
+                    measure = measure,
                     runtime = as.integer(remaining_budget * 0.8),
                     preprocessing = preprocessing)
   } else if (type == "regression") {
