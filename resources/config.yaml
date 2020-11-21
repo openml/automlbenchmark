@@ -26,6 +26,10 @@ seed: auto  # default global seed (used if not set in task definition), can be o
             # `none`: no seed will be provided (seed left to framework's responsibility).
             # any int32 to pass a fixed seed to the jobs.
 
+token_separator: '.'    # set to '_' for backwards compatibility.
+                        # This separator is used to generate directory structure and files,
+                        # the '_' separator makes the parsing of those names more difficult as it's also used in framework names, task names...
+
 setup:
   live_output: true      # set to true to stream the output of setup commands, if false they are only printed when setup is complete.
   activity_timeout: 300  # when using live output, subprocess will be considered as hanging if nothing was printed during this activity time.
@@ -33,6 +37,7 @@ setup:
 frameworks:
   definition_file: '{root}/resources/frameworks.yaml'
   root_module: frameworks
+  allow_duplicates: false  # if true, the last definition is used.
 
 benchmarks:
   definition_dir:

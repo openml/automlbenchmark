@@ -3,6 +3,7 @@
 as well as logic to compute, format, save, read and merge scores obtained from those predictions (cf. ``Result`` and ``Scoreboard``).
 """
 from functools import partial
+import collections
 import io
 import logging
 import math
@@ -39,16 +40,17 @@ class Scoreboard:
 
     @classmethod
     def from_file(cls, path):
+        sep = rconfig().token_separator
         folder, basename = os.path.split(path)
         framework_name = None
         benchmark_name = None
         task_name = None
         patterns = [
             cls.results_file,
-            r"(?P<framework>[\w\-]+)_benchmark_(?P<benchmark>[\w\-]+)\.csv",
-            r"benchmark_(?P<benchmark>[\w\-]+)\.csv",
-            r"(?P<framework>[\w\-]+)_task_(?P<task>[\w\-]+)\.csv",
-            r"task_(?P<task>[\w\-]+)\.csv",
+            rf"(?P<framework>[\w\-]+){sep}benchmark{sep}(?P<benchmark>[\w\-]+)\.csv",
+            rf"benchmark{sep}(?P<benchmark>[\w\-]+)\.csv",
+            rf"(?P<framework>[\w\-]+){sep}task{sep}(?P<task>[\w\-]+)\.csv",
+            rf"task{sep}(?P<task>[\w\-]+)\.csv",
             r"(?P<framework>[\w\-]+)\.csv",
         ]
         found = False
@@ -288,20 +290,38 @@ class TaskResult:
 
     @classmethod
     def score_from_predictions_file(cls, path):
+        sep = rconfig().token_separator
         folder, basename = os.path.split(path)
-        pattern = r"(?P<framework>[\w\-]+?)_(?P<task>[\w\-]+)_(?P<fold>\d+)(_(?P<datetime>\d{8}T\d{6}))?.csv"
-        m = re.fullmatch(pattern, basename)
-        if not m:
+        folder_g = collections.defaultdict(lambda: None)
+        if folder:
+            folder_pat = rf"/(?P<framework>[\w\-]+?){sep}(?P<benchmark>[\w\-]+){sep}(?P<constraint>[\w\-]+){sep}(?P<mode>[\w\-]+)({sep}(?P<datetime>\d{8}T\d{6}))/"
+            folder_m = re.match(folder_pat, folder)
+            if folder_m:
+                folder_g = folder_m.groupdict()
+
+        file_pat = rf"(?P<framework>[\w\-]+?){sep}(?P<task>[\w\-]+){sep}(?P<fold>\d+)\.csv"
+        file_m = re.fullmatch(file_pat, basename)
+        if not file_m:
             log.error("Predictions file `%s` has wrong naming format.", path)
             return None
 
-        d = m.groupdict()
-        framework_name = d['framework']
-        task_name = d['task']
-        fold = int(d['fold'])
+        file_g = file_m.groupdict()
+        framework_name = file_g['framework']
+        task_name = file_g['task']
+        fold = int(file_g['fold'])
+        constraint = folder_g['constraint']
+        benchmark = folder_g['benchmark']
+        task = Namespace(name=task_name, id=task_name)
+        if benchmark:
+            try:
+                tasks, _, _ = rget().benchmark_definition(benchmark)
+                task = next(t for t in tasks if t.name==task_name)
+            except:
+                pass
+
         result = cls.load_predictions(path)
-        task_result = cls(task_name, fold, '')
-        metrics = rconfig().benchmarks.metrics.get(result.type.name)
+        task_result = cls(task, fold, constraint, '')
+        metrics = rconfig().benchmarks.metrics[result.type.name]
         return task_result.compute_scores(framework_name, metrics, result=result)
 
     def __init__(self, task_def, fold: int, constraint: str, predictions_dir=None):
@@ -348,7 +368,8 @@ class TaskResult:
         return scores
 
     def _predictions_file(self, framework_name):
-        return os.path.join(self.predictions_dir, "{framework}_{task}_{fold}.csv").format(
+        return os.path.join(self.predictions_dir, "{framework}{sep}{task}{sep}{fold}.csv").format(
+            sep=rconfig().token_separator,
             framework=framework_name.lower(),
             task=self.task.name,
             fold=self.fold
@@ -398,7 +419,7 @@ class ClassificationResult(Result):
         super().__init__(predictions_df, info)
         self.classes = self.df.columns[:-2].values.astype(str, copy=False)
         self.probabilities = self.df.iloc[:, :-2].values.astype(float, copy=False)
-        self.target = Feature(0, 'class', 'categorical', self.classes, is_target=True)
+        self.target = Feature(0, 'class', 'categorical', values=self.classes, is_target=True)
         self.type = DatasetType.binary if len(self.classes) == 2 else DatasetType.multiclass
         self.truth = self._autoencode(self.truth.astype(str, copy=False))
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))
