@@ -104,16 +104,16 @@ class Scoreboard:
         self.framework_name = framework_name
         self.benchmark_name = benchmark_name
         self.task_name = task_name
-        self.scores_dir = scores_dir if scores_dir \
-            else output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores
+        self.scores_dir = (scores_dir if scores_dir
+                           else output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores)
         self.scores = scores if scores is not None else self._load()
 
     @cached
     def as_data_frame(self):
         # index = ['task', 'framework', 'fold']
         index = []
-        df = self.scores if is_data_frame(self.scores) \
-            else to_data_frame([dict(sc) for sc in self.scores])
+        df = (self.scores if is_data_frame(self.scores)
+              else to_data_frame([dict(sc) for sc in self.scores]))
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
@@ -165,18 +165,19 @@ class Scoreboard:
                           scores_dir=self.scores_dir)
 
     def _score_file(self):
+        sep = rconfig().token_separator
         if self.framework_name:
             if self.task_name:
-                file_name = "{framework}_task_{task}.csv".format(framework=self.framework_name, task=self.task_name)
+                file_name = f"{self.framework_name}{sep}task_{self.task_name}.csv"
             elif self.benchmark_name:
-                file_name = "{framework}_benchmark_{benchmark}.csv".format(framework=self.framework_name, benchmark=self.benchmark_name)
+                file_name = f"{self.framework_name}{sep}benchmark_{self.benchmark_name}.csv"
             else:
-                file_name = "{framework}.csv".format(framework=self.framework_name)
+                file_name = f"{self.framework_name}.csv"
         else:
             if self.task_name:
-                file_name = "task_{task}.csv".format(task=self.task_name)
+                file_name = f"task_{self.task_name}.csv"
             elif self.benchmark_name:
-                file_name = "benchmark_{benchmark}.csv".format(benchmark=self.benchmark_name)
+                file_name = f"benchmark_{self.benchmark_name}.csv"
             else:
                 file_name = Scoreboard.results_file
 

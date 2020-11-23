@@ -71,9 +71,9 @@ sid = (args.session if args.session is not None
                                      args.constraint,
                                      extras.get('run_mode', args.mode)])
                               .lower(),
-                           now_str))
+                           now_str)).replace("/", "_")
 log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
-                                     session=sid.replace("/", "_"),
+                                     session=sid,
                                      subdirs='logs' if args.outdir else '',
                                      create=True)['logs' if args.outdir else 'session']
 # now_str = datetime_iso(time=False, no_sep=True)
