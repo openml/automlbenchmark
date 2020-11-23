@@ -76,7 +76,7 @@ sid = (args.session if args.session is not None
                                      str_sanitize(args.constraint),
                                      extras.get('run_mode', args.mode)])
                               .lower(),
-                           now_str))
+                           now_str)).replace("/", "_")
 log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
                                      session=sid,
                                      subdirs='logs' if args.outdir else '',
