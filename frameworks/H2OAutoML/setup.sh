@@ -14,7 +14,7 @@ PIP install --no-cache-dir -r ${HERE}/requirements.txt
 if  [[ "$VERSION" = "latest" ]]; then
     h2o_package="h2o"
 elif [[ "$VERSION" = "zermelo" ]]; then
-    h2o_package="${H2O_REPO}/rel-zermelo/1/Python/h2o-3.32.0.1-py2.py3-none-any.whl"
+    h2o_package="${H2O_REPO}/rel-zermelo/2/Python/h2o-3.32.0.2-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "zahradnik" ]]; then
     h2o_package="${H2O_REPO}/rel-zahradnik/4/Python/h2o-3.30.0.4-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yule" ]]; then
@@ -43,4 +43,3 @@ if [[ -n "$h2o_package" ]]; then
 else
     echo "not installing any H2O release version"
 fi
-
