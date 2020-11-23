@@ -52,6 +52,11 @@ class DockerBenchmark(ContainerBenchmark):
         script_extra_params = ""
         inst_name = self.sid
 
+        if ' -f ' in script_params:
+             inst_name = inst_name + '_f' + script_params.split(' -f ')[1].split()[0]
+        elif ' --fold ' in script_params:
+            inst_name = inst_name + '_f' + script_params.split(' --fold ')[1].split()[0]
+
         memory = ""
         if rconfig().docker.constraints_enabled:
             if "max_mem_size_mb" in self.constraint_def:
