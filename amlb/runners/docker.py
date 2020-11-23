@@ -52,11 +52,11 @@ class DockerBenchmark(ContainerBenchmark):
         script_extra_params = ""
         inst_name = self.sid
 
-        if "max_mem_size_mb" in self.constraint_def:
-            memory = "--memory={}m".format(self.constraint_def['max_mem_size_mb'])
-            memory += " " + "--memory-swap={}g".format(2 * float(self.constraint_def['max_mem_size_mb']) / 1024)
-        else:
-            memory = ""
+        memory = ""
+        if rconfig().docker.constraints_enabled:
+            if "max_mem_size_mb" in self.constraint_def:
+                memory = "--memory={}m".format(self.constraint_def['max_mem_size_mb'])
+                memory += " " + "--memory-swap={}".format(self.constraint_def['swap'])
 
         cmd = (
             "docker run --name {name} {options} "

@@ -76,6 +76,8 @@ container: &container
 docker:
   <<: *container
   run_extra_options: '--shm-size=1024M'
+  constraints_enabled: false  # enable resources constraints for docker container
+  swap: '0' # --memory-swap option to docker run
 
 singularity:
   <<: *container
