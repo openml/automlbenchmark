@@ -52,9 +52,9 @@ AutoGluon:
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
 
-AutoGluon_best:
+AutoGluon_bestquality:
   extends: AutoGluon
-  description: "provides the most accurate overall predictor"
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
   params:
     presets: best_quality
 
@@ -107,6 +107,19 @@ hyperoptsklearn:
 #    algo: hyperopt.tpe.suggest
 #    verbose: true
 
+mljarsupervised:
+  version: '0.6.0'
+  project: https://github.com/mljar/mljar-supervised
+#  params:
+#    algorithms: ["Baseline"]
+#    _save_artifacts: True
+
+mljarsupervised_compete:
+  extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  params:
+    mode: "Compete"   # set mode for Compete, default mode is Explain
+
 oboe:
   version: 'latest'
   project: https://github.com/udellgroup/oboe
@@ -128,10 +141,3 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
-mljarsupervised:
-  version: '0.6.0'
-  project: https://github.com/mljar/mljar-supervised
-  params:
-    mode: "Compete"   # set mode for Compete, default mode is Explain
-#    algorithms: ["Baseline"]
-#    _save_artifacts: True
