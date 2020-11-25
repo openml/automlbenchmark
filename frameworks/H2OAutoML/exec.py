@@ -5,6 +5,8 @@ import psutil
 import re
 import shutil
 
+from packaging import version
+
 import h2o
 from h2o.automl import H2OAutoML
 
@@ -63,20 +65,33 @@ def run(dataset: Dataset, config: TaskConfig):
         rnd_port = os.getpid() % (max_port_range-min_port_range) + min_port_range
         port = config.framework_params.get('_port', rnd_port)
 
+        init_params = config.framework_params.get('_init', {})
+        if "logs" in config.framework_params.get('_save_artifacts', []):
+            init_params['ice_root'] = output_subdir("logs", config)
+
         h2o.init(nthreads=nthreads,
                  port=port,
                  min_mem_size=jvm_memory,
                  max_mem_size=jvm_memory,
-                 strict_version_check=config.framework_params.get('_strict_version_check', True)
-                 # log_dir=os.path.join(config.output_dir, 'logs', config.name, str(config.fold))
-                 )
+                 **init_params)
 
+        import_kwargs = {}
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from %s.", dataset.train.path)
-        train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config))
-        # train.impute(method='mean')
+        train = None
+        if version.parse(h2o.__version__) >= version.parse("3.32.0.3"):  # previous versions may fail to parse correctly arff files using single quotes as enum/string delimiters
+            import_kwargs['quotechar'] = '"'
+            train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config), **import_kwargs)
+            if not verify_loaded_frame(train, dataset):
+                h2o.remove(train)
+                train = None
+                import_kwargs['quotechar'] = "'"
+
+        if not train:
+            train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config), **import_kwargs)
+            # train.impute(method='mean')
         log.debug("Loading test data from %s.", dataset.test.path)
-        test = h2o.import_file(dataset.test.path, destination_frame=frame_name('test', config))
+        test = h2o.import_file(dataset.test.path, destination_frame=frame_name('test', config), **import_kwargs)
         # test.impute(method='mean')
 
         log.info("Running model on task %s, fold %s.", config.name, config.fold)
@@ -122,6 +137,12 @@ def run(dataset: Dataset, config: TaskConfig):
             h2o.connection().local_server.shutdown()
         # if h2o.cluster():
         #     h2o.cluster().shutdown()
+
+
+def verify_loaded_frame(fr, dataset):
+    nlevels = fr.nlevels()
+    expected_nlevels = [0 if f.values is None else len(f.values) for f in dataset.features]
+    return nlevels == expected_nlevels
 
 
 def frame_name(fr_type, config):
@@ -176,7 +197,16 @@ def save_artifacts(automl, dataset, config):
 
         if 'logs' in artifacts:
             logs_dir = output_subdir("logs", config)
-            h2o.download_all_logs(dirname=logs_dir)
+            logs_zip = os.path.join(logs_dir, "h2o_logs.zip")
+            zip_path(logs_dir, logs_zip)
+            # h2o.download_all_logs(dirname=logs_dir)
+
+            def delete(path, isdir):
+                if isdir:
+                    shutil.rmtree(path, ignore_errors=True)
+                elif path != logs_zip:
+                    os.remove(path)
+            walk_apply(logs_dir, delete, max_depth=0)
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
