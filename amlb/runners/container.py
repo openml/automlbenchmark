@@ -107,14 +107,12 @@ class ContainerBenchmark(Benchmark):
             ))
             # TODO: would be nice to reload generated scores and return them
 
-        job = Job(rconfig().token_separator.join([
-            self.container_name,
-            self.benchmark_name,
-            self.constraint_name,
-            ' '.join(task_names) if len(task_names) > 0 else 'all',
-            ' '.join(folds),
-            self.framework_name
-        ]))
+        job = Job('_'.join([self.container_name,
+                            self.benchmark_name,
+                            self.constraint_name,
+                            '.'.join(task_names) if len(task_names) > 0 else 'all',
+                            '.'.join(folds),
+                            self.framework_name]))
         job._run = _run
         return job
 

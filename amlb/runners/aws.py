@@ -242,14 +242,12 @@ class AWSBenchmark(Benchmark):
                         else sum([task.max_runtime_seconds for task in self.benchmark_def]))
         timeout_secs += rconfig().aws.overhead_time_seconds
 
-        job = Job(rconfig().token_separator.join([
-            'aws',
-            self.benchmark_name,
-            self.constraint_name,
-            ' '.join(task_names) if len(task_names) > 0 else 'all',
-            ' '.join(folds),
-            self.framework_name
-        ]))
+        job = Job('_'.join(['aws',
+                            self.benchmark_name,
+                            self.constraint_name,
+                            '.'.join(task_names) if len(task_names) > 0 else 'all',
+                            '.'.join(folds),
+                            self.framework_name]))
         job.instance_id = None
 
         def _run(job_self):

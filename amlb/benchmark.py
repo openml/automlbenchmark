@@ -70,16 +70,9 @@ class Benchmark:
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
 
         self.parallel_jobs = rconfig().parallel_jobs
-        self.sid = (rconfig().sid if rconfig().sid is not None
-                    else rconfig().token_separator.join([
-                        rconfig().token_separator.join([
-                            framework_name,
-                            benchmark_name,
-                            constraint_name,
-                            rconfig().run_mode
-                        ]).lower(),
-                        datetime_iso(micros=True, no_sep=True)
-                    ])).replace("/", "_")
+        self.sid = rconfig().sid if rconfig().sid is not None \
+            else "{}_{}".format('_'.join([framework_name, benchmark_name, constraint_name, rconfig().run_mode]).lower(),
+                                datetime_iso(micros=True, no_sep=True))
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -382,7 +375,7 @@ class BenchmarkTask:
             return self.run(framework, framework_name)
         timeout_secs = min(self.task_config.max_runtime_seconds * 2,
                            self.task_config.max_runtime_seconds + rconfig().benchmarks.overhead_time_seconds)
-        job = Job(name=rconfig().token_separator.join(['local', self.task_config.name, str(self.fold), framework_name]),
+        job = Job(name='_'.join(['local', self.task_config.name, str(self.fold), framework_name]),
                   timeout_secs=timeout_secs)  # this timeout is just to handle edge cases where framework never completes
         job._run = _run
         return job
