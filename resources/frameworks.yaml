@@ -14,38 +14,10 @@ __dummy_framework_with_defaults:
     tag:  # defaults to `framework version`
 
 
-### Non AutoML reference frameworks
-constantpredictor:
-  version: 'latest'
-  project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
+#########################
+### AutoML frameworks ###
+#########################
 
-constantpredictor_enc:
-  extends: constantpredictor
-  params:
-    encode: true
-
-DecisionTree:
-  version: '0.22.2'
-  project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
-
-RandomForest:
-  version: '0.22.2'
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
-  params:
-    n_estimators: 2000
-#    _n_jobs: 1   # faster, fitter, happier (running OoM on some datasets when using multiprocessing)
-#    verbose: true
-
-TunedRandomForest:
-  version: '0.22.2'
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
-  params:
-    n_estimators: 2000
-#    _n_jobs: 1  # cf. RandomForest
-#    _tuning:
-#      n_estimators: 500
-
-### AutoML frameworks
 AutoGluon:
   version: "0.0.12"
   project: https://autogluon.mxnet.io
@@ -74,15 +46,15 @@ MLPlan:
   version: '0.2.3'
   project: http://mlplan.org
 
-MLPlanWEKA:
-  extends: MLPlan
-  params:
-    _backend: weka
-
 MLPlanSKLearn:
   extends: MLPlan
   params:
     _backend: sklearn
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
 
 autoxgboost:
   version: 'latest'
@@ -118,7 +90,7 @@ mljarsupervised_compete:
   extends: mljarsupervised
   description: "MLJar using 'Compete' mode to provide most accurate predictor"
   params:
-    mode: "Compete"   # set mode for Compete, default mode is Explain
+    mode: Compete   # set mode for Compete, default mode is Explain
 
 oboe:
   version: 'latest'
@@ -140,4 +112,43 @@ TPOT:
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
+
+
+
+
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor:
+  version: 'latest'
+  project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
+
+constantpredictor_enc:
+  extends: constantpredictor
+  params:
+    encode: true
+
+DecisionTree:
+  version: '0.22.2'
+  project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
+
+RandomForest:
+  version: '0.22.2'
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  params:
+    n_estimators: 2000
+#    _n_jobs: 1   # faster, fitter, happier (running OoM on some datasets when using multiprocessing)
+#    verbose: true
+
+TunedRandomForest:
+  version: '0.22.2'
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  params:
+    n_estimators: 2000
+#    _n_jobs: 1  # cf. RandomForest
+#    _tuning:
+#      n_estimators: 500
 
