@@ -22,6 +22,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   colnames(test) <- make.names(colnames(test))
   
   preprocessing = "full"
+  portfolio = FALSE
   
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
@@ -33,19 +34,19 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     if ("twoclass" %in% train$properties) {
       measure = msr("classif.auc")
     } else {
-      measure = msr("classif.logloss")
+      measure = msr("classif.acc")
     }
     
     model <- AutoML(train, resampling = rsmp("holdout"),
                     measure = measure,
                     runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = preprocessing)
+                    preprocessing = preprocessing, portfolio = portfolio)
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
     model <- AutoML(train, resampling = rsmp("holdout"),
                     runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = preprocessing)
+                    preprocessing = preprocessing, portfolio = portfolio)
   } else {
     stop("Task type not supported!")
   }
@@ -54,7 +55,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   preds <- model$predict(test)
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
-  saveRDS(model$learner$archive, paste("~/tuning_archives/", name, model$measure$id, preprocessing, gsub("\\s|:", "_", Sys.time()), sep = "_"))
+  saveRDS(model$learner$archive, paste("~/tuning_archives/", name, model$measure$id, preprocessing, portfolio, gsub("\\s|:", "_", Sys.time()), sep = "_"))
 
   if (type == "classification") {
     sorted_colnames = sort(colnames(preds$data$prob))
