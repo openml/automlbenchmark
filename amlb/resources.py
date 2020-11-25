@@ -90,7 +90,7 @@ class Resources:
     @lazy_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
-        return load_framework_definitions(frameworks_file, self)
+        return load_framework_definitions(frameworks_file, self.config)
 
     @memoize
     def constraint_definition(self, name):
