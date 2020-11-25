@@ -185,7 +185,6 @@ def save_model(model_id, dest_dir='.', mformat='mojo'):
 
 def save_predictions(model, test, dataset, config, predictions_file=None, preview=True):
     h2o_preds = model.predict(test).as_data_frame(use_pandas=False)
-    print(h2o_preds[:10])
     preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
     y_pred = preds.iloc[:, 0]
 
