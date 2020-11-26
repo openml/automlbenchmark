@@ -3,34 +3,36 @@ import itertools
 import logging
 from typing import Union, List
 
-from amlb.utils import Namespace, config_load
+from .utils import Namespace, config_load
 
 log = logging.getLogger(__name__)
 
 
-def load_framework_definitions(frameworks_file: Union[str, List[str]], resource) -> Namespace:
+def load_framework_definitions(frameworks_file: Union[str, List[str]], config: Namespace) -> Namespace:
     """ Load the framework definition listed in the framework file(s).
 
     Loads the definition(s) from the file(s),
     :param frameworks_file:
+    :param config:
     :return: Namespace containing each framework definition,
     """
-    frameworks = _load_and_merge_framework_definitions(frameworks_file)
-    _sanitize_and_add_defaults(frameworks, resource)
+    frameworks = _load_and_merge_framework_definitions(frameworks_file, config)
+    _sanitize_and_add_defaults(frameworks, config)
     log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
 
 
-def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]) -> Namespace:
+def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]], config) -> Namespace:
     """ Load and merge the framework file(s), does not allow duplicate definitions. """
     log.info("Loading frameworks definitions from %s.", frameworks_file)
     if not isinstance(frameworks_file, list):
         frameworks_file = [frameworks_file]
 
     definitions_by_file = [config_load(file) for file in frameworks_file]
-    for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
-        if d1.intersection(d2) != set():
-            raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
+    if not config.frameworks.allow_duplicates:
+        for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
+            if d1.intersection(d2) != set():
+                raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
     return Namespace.merge(*definitions_by_file)
 
 

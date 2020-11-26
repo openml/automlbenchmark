@@ -10,6 +10,7 @@ import amlb
 from amlb import log
 from amlb.utils import config_load
 
+root_dir = os.path.dirname(__file__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('predictions', type=str,
@@ -24,6 +25,7 @@ amlb.logger.setup(root_level='DEBUG', console_level='INFO')
 
 config = config_load("resources/config.yaml")
 config.run_mode = 'script'
+config.root_dir = root_dir
 config.script = os.path.basename(__file__)
 amlb.resources.from_config(config)
 
