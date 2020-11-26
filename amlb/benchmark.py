@@ -62,8 +62,10 @@ class Benchmark:
             self.sid = None
             return
 
-        self._forward_params = locals()
-        self.framework_def, self.framework_name = rget().framework_definition(framework_name)
+        fsplits = framework_name.split(':')
+        framework_name = fsplits[0]
+        tag = fsplits[1] if len(fsplits) > 1 else None
+        self.framework_def, self.framework_name = rget().framework_definition(framework_name, tag)
         log.debug("Using framework definition: %s.", self.framework_def)
 
         self.constraint_def, self.constraint_name = rget().constraint_definition(constraint_name)

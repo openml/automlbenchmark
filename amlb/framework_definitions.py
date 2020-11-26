@@ -17,7 +17,8 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], config: N
     :return: Namespace containing each framework definition,
     """
     frameworks = _load_and_merge_framework_definitions(frameworks_file, config)
-    _sanitize_and_add_defaults(frameworks, config)
+    for tag, defs in frameworks:
+        _sanitize_and_add_defaults(defs, config)
     log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
 
@@ -28,19 +29,16 @@ def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]
     if not isinstance(frameworks_file, list):
         frameworks_file = [frameworks_file]
 
-    definitions_by_file = [config_load(file) for file in frameworks_file]
-    if not config.frameworks.allow_duplicates:
-        for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
-            if d1.intersection(d2) != set():
-                raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
-    return Namespace.merge(*definitions_by_file)
+    definitions_by_tag = Namespace()
+    for tag in [""]+config.frameworks.tags:
+        definitions_by_file = [config_load(f"{file}_{tag}" if len(tag) > 0 else file) for file in frameworks_file]
+        if not config.frameworks.allow_duplicates:
+            for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
+                if d1.intersection(d2) != set():
+                    raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
+        definitions_by_tag[tag] = Namespace.merge(*definitions_by_file)
 
-
-def _sanitize_definitions(frameworks: Namespace):
-    """ Normalize names, add name field, remove invalid extensions. """
-    _add_framework_name(frameworks)
-    _remove_frameworks_with_unknown_parent(frameworks)
-    _remove_self_reference_extensions(frameworks)
+    return definitions_by_tag
 
 
 def _sanitize_and_add_defaults(frameworks, config):
@@ -57,6 +55,13 @@ def _sanitize_and_add_defaults(frameworks, config):
     _add_defaults_to_frameworks(frameworks, config)
 
 
+def _sanitize_definitions(frameworks: Namespace):
+    """ Normalize names, add name field, remove invalid extensions. """
+    _add_framework_name(frameworks)
+    _remove_frameworks_with_unknown_parent(frameworks)
+    _remove_self_reference_extensions(frameworks)
+
+
 def _add_framework_name(frameworks: Namespace):
     """ Adds a 'name' attribute to each framework. """
     for name, framework in frameworks:
@@ -70,7 +75,7 @@ def _add_default_module(framework, config):
 
 def _add_default_version(framework):
     if "version" not in framework:
-        framework.version = "latest"
+        framework.version = "stable"
 
 
 def _add_default_setup_args(framework):

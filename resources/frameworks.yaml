@@ -42,7 +42,6 @@ AutoWEKA:
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
 
 MLPlan:
-  module: frameworks.MLPlan
   version: '0.2.3'
   project: http://mlplan.org
 

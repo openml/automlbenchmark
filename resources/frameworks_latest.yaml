@@ -1,0 +1,94 @@
+---
+#
+#  Please note: frameworks defined in this file are all set to "latest" which is usually not be a stable/release version
+#  but rather the current state of `master` branch for example or the last nightly build.
+#
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  version: "latest"
+
+AutoGluon_bestquality:
+  extends: AutoGluon
+  params:
+    presets: best_quality
+
+autosklearn:
+  version: 'latest'
+
+AutoWEKA:
+  version: 'latest'
+
+MLPlan:
+  version: 'latest'
+
+MLPlanSKLearn:
+  extends: MLPlan
+  params:
+    _backend: sklearn
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+autoxgboost:
+  version: 'latest'
+
+GAMA:
+  version: 'latest'
+
+H2OAutoML:
+  version: 'latest'
+
+hyperoptsklearn:
+  version: 'latest'
+
+mljarsupervised:
+  version: 'latest'
+
+mljarsupervised_compete:
+  extends: mljarsupervised
+  params:
+    mode: Compete   # set mode for Compete, default mode is Explain
+
+oboe:
+  version: 'latest'
+
+ranger:
+  version: 'latest'
+
+TPOT:
+  version: 'latest'
+
+
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor:
+  version: 'latest'
+
+constantpredictor_enc:
+  extends: constantpredictor
+  params:
+    encode: true
+
+DecisionTree:
+  version: 'latest'
+
+RandomForest:
+  version: 'latest'
+  params:
+    n_estimators: 2000
+
+TunedRandomForest:
+  version: 'latest'
+  params:
+    n_estimators: 2000
+

@@ -77,13 +77,18 @@ class Resources:
         else:
             return self.config.seed
 
-    def framework_definition(self, name):
+    def framework_definition(self, name, tag=None):
         """
         :param name:
         :return: name of the framework as defined in the frameworks definition file
         """
         lname = name.lower()
-        framework = next((f for n, f in self._frameworks if n.lower() == lname), None)
+        if tag is None:
+            tag = ""
+        if tag not in self._frameworks:
+            raise ValueError("Incorrect tag `{}`: only those among {} are allowed.".format(tag, self._config.frameworks.tags))
+        frameworks = self._frameworks[tag]
+        framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
         return framework, framework.name

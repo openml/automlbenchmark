@@ -37,7 +37,9 @@ setup:
 frameworks:
   definition_file: '{root}/resources/frameworks.yaml'
   root_module: frameworks
-  allow_duplicates: false  # if true, the last definition is used.
+  allow_duplicates: false     # if true, the last definition is used.
+  tags: ['stable', 'latest']  # the list of support tags when looking up frameworks
+                              # for example frmwk:stable will look for framework frmwk in a frameworks_stable.yaml file if present.
 
 benchmarks:
   definition_dir:
