@@ -148,7 +148,7 @@ def repr_def(obj):
     return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
 
 
-def noop():
+def noop(*args, **kwargs):
     pass
 
 
