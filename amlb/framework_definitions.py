@@ -3,7 +3,7 @@ import itertools
 import logging
 from typing import Union, List
 
-from .utils import Namespace, config_load
+from .utils import Namespace, config_load, str_sanitize
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def _sanitize_and_add_defaults(frameworks, config):
 def _add_framework_name(frameworks: Namespace):
     """ Adds a 'name' attribute to each framework. """
     for name, framework in frameworks:
-        framework.name = name
+        framework.name = str_sanitize(name)
 
 
 def _add_default_module(framework, config):

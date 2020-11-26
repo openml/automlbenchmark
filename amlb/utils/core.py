@@ -4,6 +4,7 @@ from functools import reduce, wraps
 import json
 import logging
 import pprint
+import re
 
 log = logging.getLogger(__name__)
 
@@ -199,6 +200,10 @@ def str_def(s, if_none=''):
     if s is None:
         return if_none
     return str(s)
+
+
+def str_sanitize(name):
+    return re.sub(r"[^\w-]", "_", name)
 
 
 def head(s, lines=10):

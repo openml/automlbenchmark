@@ -11,7 +11,7 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.framework_definitions import load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
+from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, str_sanitize, touch
 
 
 log = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ class Resources:
             constraints + config_load(ef)
 
         for name, c in constraints:
-            c.name = name
+            c.name = str_sanitize(name)
 
         log.debug("Available benchmark constraints:\n%s", constraints)
         constraints_lookup = Namespace()
