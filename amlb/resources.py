@@ -36,17 +36,18 @@ class Resources:
 
     def __init__(self, config: Namespace):
         self._config = config
-        self._common_dirs = dict(
+        common_dirs = dict(
             input=normalize_path(config.input_dir),
             output=normalize_path(config.output_dir),
             user=normalize_path(config.user_dir),
             root=normalize_path(config.root_dir),
         )
-        self.config = Resources._normalize(config, replace=self._common_dirs)
+        self.config = Resources._normalize(config, replace=common_dirs)
+        self.config.common_dirs = common_dirs
         log.debug("Using config:\n%s", self.config)
 
         # allowing to load custom modules from user directory
-        sys.path.append(self._common_dirs['user'])
+        sys.path.append(common_dirs['user'])
         log.debug("Extended Python sys.path to user directory: %s.", sys.path)
 
     @lazy_property

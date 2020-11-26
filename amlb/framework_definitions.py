@@ -43,7 +43,7 @@ def _sanitize_definitions(frameworks: Namespace):
     _remove_self_reference_extensions(frameworks)
 
 
-def _sanitize_and_add_defaults(frameworks, resource):
+def _sanitize_and_add_defaults(frameworks, config):
     _sanitize_definitions(frameworks)
 
     # `module` is the only field that should have a default
@@ -51,10 +51,10 @@ def _sanitize_and_add_defaults(frameworks, resource):
     # we update children with their parent fields.
     for _, framework in frameworks:
         if "extends" not in framework:
-            _add_default_module(framework, resource.config)
+            _add_default_module(framework, config)
     _update_frameworks_with_parent_definitions(frameworks)
 
-    _add_defaults_to_frameworks(frameworks, resource)
+    _add_defaults_to_frameworks(frameworks, config)
 
 
 def _add_framework_name(frameworks: Namespace):
@@ -82,17 +82,17 @@ def _add_default_setup_args(framework):
             framework.setup_args.append(framework.repo)
 
 
-def _add_default_setup_script(framework, resource):
+def _add_default_setup_script(framework, config):
     if "setup_script" not in framework:
         framework.setup_script = None
     else:
         framework.setup_script = framework.setup_script.format(
             module=framework.module,
-            **resource._common_dirs,
+            **config.common_dirs,
         )
 
 
-def _add_default_setup_cmd(framework, resource):
+def _add_default_setup_cmd(framework, config):
     """ Defines default setup_cmd and _setup_cmd, interpolate commands if necessary.
 
     The default values are `None`.
@@ -110,7 +110,7 @@ def _add_default_setup_cmd(framework, resource):
         if isinstance(framework.setup_cmd, str):
             framework.setup_cmd = [framework.setup_cmd]
         framework.setup_cmd = [
-            cmd.format(pip="{pip}", py="{py}", **resource._common_dirs)
+            cmd.format(pip="{pip}", py="{py}", **config.common_dirs)
             for cmd in framework.setup_cmd
         ]
 
@@ -160,14 +160,14 @@ def _update_frameworks_with_parent_definitions(frameworks: Namespace):
             framework % copy.deepcopy(parent)
 
 
-def _add_defaults_to_frameworks(frameworks: Namespace, resource):
+def _add_defaults_to_frameworks(frameworks: Namespace, config):
     for _, framework in frameworks:
         _add_default_version(framework)
         _add_default_setup_args(framework)
         _add_default_params(framework)
-        _add_default_image(framework, resource.config)
-        _add_default_setup_cmd(framework, resource)
-        _add_default_setup_script(framework, resource)
+        _add_default_image(framework, config)
+        _add_default_setup_cmd(framework, config)
+        _add_default_setup_script(framework, config)
 
 
 def _remove_self_reference_extensions(frameworks: Namespace):
