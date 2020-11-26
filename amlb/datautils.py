@@ -160,7 +160,8 @@ class Encoder(TransformerMixin):
     """
 
     def __init__(self, type='label', target=True, encoded_type=int,
-                 missing_policy='ignore', missing_values=None, missing_replaced_by=''):
+                 missing_policy='ignore', missing_values=None, missing_replaced_by='',
+                 trim_values=False):
         """
         :param type:
         :param target:
@@ -178,15 +179,13 @@ class Encoder(TransformerMixin):
         self.missing_values = set(missing_values).union([None]) if missing_values else {None}
         self.missing_replaced_by = missing_replaced_by
         self.missing_encoded_value = None
-        self.str_encoder = None
+        self.trim_values = trim_values
         self.classes = None
-        self._enc_classes_ = None
         # self.encoded_type = int if target else encoded_type
         self.encoded_type = encoded_type
         if type == 'label':
             self.delegate = LabelEncoder() if target else OrdinalEncoder()
         elif type == 'one-hot':
-            self.str_encoder = None if target else LabelEncoder()
             self.delegate = LabelBinarizer() if target else OneHotEncoder(sparse=False, handle_unknown='ignore')
         elif type == 'no-op':
             self.delegate = None
@@ -219,8 +218,9 @@ class Encoder(TransformerMixin):
             return self
 
         vec = np.asarray(vec, dtype=object)
+        if self.trim_values:
+            vec = np.char.strip(vec.astype(str))
         self.classes = np.unique(vec) if self._ignore_missing else np.unique(np.insert(vec, 0, self.missing_replaced_by))
-        self._enc_classes_ = self.str_encoder.fit_transform(self.classes) if self.str_encoder else self.classes
 
         if self._mask_missing:
             self.missing_encoded_value = self.delegate.fit_transform(self._reshape(self.classes))[0]
@@ -245,20 +245,22 @@ class Encoder(TransformerMixin):
         if not self.delegate:
             return return_value(vec.astype(self.encoded_type, copy=False))
 
-        if self.str_encoder:
-            vec = self.str_encoder.transform(vec)
-
         if self._mask_missing or self._encode_missing:
             mask = [v in self.missing_values for v in vec]
             if any(mask):
                 # if self._mask_missing:
                 #     missing = vec[mask]
                 vec[mask] = self.missing_replaced_by
+                if self.trim_values:
+                    vec = np.char.strip(vec.astype(str))
+
                 res = self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False)
                 if self._mask_missing:
                     res[mask] = np.NaN if self.encoded_type == float else None
                 return return_value(res)
 
+        if self.trim_values:
+            vec = np.char.strip(vec.astype(str))
         return return_value(self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False))
 
     def inverse_transform(self, vec, **params):
@@ -272,7 +274,7 @@ class Encoder(TransformerMixin):
             return vec
 
         # TODO: handle mask
-        vec = np.asarray(vec, dtype=object).astype(self.encoded_type, copy=False)
+        vec = np.asarray(vec).astype(self.encoded_type, copy=False)
         return self.delegate.inverse_transform(vec, **params)
 
 
