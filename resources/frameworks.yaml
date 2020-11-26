@@ -14,7 +14,114 @@ __dummy_framework_with_defaults:
     tag:  # defaults to `framework version`
 
 
-### Non AutoML reference frameworks
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  version: "0.0.12"
+  project: https://autogluon.mxnet.io
+#  params:
+#    _save_artifacts: ['leaderboard', 'models', 'info']
+
+AutoGluon_bestquality:
+  extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
+  params:
+    presets: best_quality
+
+autosklearn:
+  version: '0.8.0'
+  project: https://automl.github.io/auto-sklearn/
+#  params:
+#    _save_artifacts: ['models']
+#    _n_jobs: 1
+
+AutoWEKA:
+  version: '2.6'
+  project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
+
+MLPlan:
+  module: frameworks.MLPlan
+  version: '0.2.3'
+  project: http://mlplan.org
+
+MLPlanSKLearn:
+  extends: MLPlan
+  params:
+    _backend: sklearn
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+autoxgboost:
+  version: 'latest'
+  project: https://github.com/ja-thomas/autoxgboost
+
+GAMA:
+  version: '20.1.0'
+  project: https://github.com/PGijsbers/gama
+
+H2OAutoML:
+  version: '3.30.0.4'
+  setup_args: 'zahradnik'
+  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
+#  params:
+#    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
+
+hyperoptsklearn:
+  version: 'latest'
+  project: http://hyperopt.github.io/hyperopt-sklearn/
+#  params:
+#    max_evals: 1000
+#    algo: hyperopt.tpe.suggest
+#    verbose: true
+
+mljarsupervised:
+  version: '0.6.0'
+  project: https://github.com/mljar/mljar-supervised
+#  params:
+#    algorithms: ["Baseline"]
+#    _save_artifacts: True
+
+mljarsupervised_compete:
+  extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  params:
+    mode: Compete   # set mode for Compete, default mode is Explain
+
+oboe:
+  version: 'latest'
+  project: https://github.com/udellgroup/oboe
+#  params:
+#    build_ensemble: false
+#    selection_method: random
+#    verbose: true
+
+ranger:
+  version: 'latest'
+  project: https://github.com/imbs-hl/ranger
+
+TPOT:
+  version: '0.11.5'
+  project: https://github.com/EpistasisLab/tpot
+#  params:
+#    _save_artifacts: ['models']
+#    max_eval_time_mins: 2
+#    population_size: 25
+#    verbosity: 2
+
+
+
+
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
 constantpredictor:
   version: 'latest'
   project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
@@ -45,93 +152,3 @@ TunedRandomForest:
 #    _tuning:
 #      n_estimators: 500
 
-### AutoML frameworks
-AutoGluon:
-  version: "0.0.12"
-  project: https://autogluon.mxnet.io
-#  params:
-#    _save_artifacts: ['leaderboard', 'models', 'info']
-
-AutoGluon_best:
-  extends: AutoGluon
-  description: "provides the most accurate overall predictor"
-  params:
-    presets: best_quality
-
-autosklearn:
-  version: '0.8.0'
-  project: https://automl.github.io/auto-sklearn/
-#  params:
-#    _save_artifacts: ['models']
-#    _n_jobs: 1
-
-AutoWEKA:
-  version: '2.6'
-  project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
-
-MLPlan:
-  module: frameworks.MLPlan
-  version: '0.2.3'
-  project: http://mlplan.org
-
-MLPlanWEKA:
-  extends: MLPlan
-  params:
-    _backend: weka
-
-MLPlanSKLearn:
-  extends: MLPlan
-  params:
-    _backend: sklearn
-
-autoxgboost:
-  version: 'latest'
-  project: https://github.com/ja-thomas/autoxgboost
-
-GAMA:
-  version: '20.1.0'
-  project: https://github.com/PGijsbers/gama
-
-H2OAutoML:
-  version: '3.30.0.4'
-  setup_args: 'zahradnik'
-  project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
-#  params:
-#    _save_artifacts: ['leaderboard', 'logs', 'models', 'models_predictions', 'mojos']
-
-hyperoptsklearn:
-  version: 'latest'
-  project: http://hyperopt.github.io/hyperopt-sklearn/
-#  params:
-#    max_evals: 1000
-#    algo: hyperopt.tpe.suggest
-#    verbose: true
-
-oboe:
-  version: 'latest'
-  project: https://github.com/udellgroup/oboe
-#  params:
-#    build_ensemble: false
-#    selection_method: random
-#    verbose: true
-
-ranger:
-  version: 'latest'
-  project: https://github.com/imbs-hl/ranger
-
-TPOT:
-  version: '0.11.5'
-  project: https://github.com/EpistasisLab/tpot
-#  params:
-#    _save_artifacts: ['models']
-#    max_eval_time_mins: 2
-#    population_size: 25
-#    verbosity: 2
-
-mljarsupervised:
-  version: '0.6.0'
-  project: https://github.com/mljar/mljar-supervised
-  params:
-    mode: "Compete"   # set mode for Compete, default mode is Explain
-#    algorithms: ["Baseline"]
-#    _save_artifacts: True
