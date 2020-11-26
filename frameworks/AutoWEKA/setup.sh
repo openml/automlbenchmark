@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${1:-"latest"}
+VERSION=${1:-"stable"}
 . $HERE/../shared/setup.sh
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update

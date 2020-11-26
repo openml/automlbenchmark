@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${2:-"latest"}
+AMLB_DIR="$1"
+VERSION=${2:-"stable"}
+if [[ "$VERSION" == "stable" ]]; then
+    VERSION="latest"
+fi
 
 echo "Setup ML-Plan for version $VERSION"
 

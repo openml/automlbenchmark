@@ -11,14 +11,16 @@ matplotlib.use('agg')  # no need for tk
 from autogluon.task.tabular_prediction.tabular_prediction import TabularPrediction as task
 from autogluon.utils.tabular.utils.savers import save_pd, save_pkl
 import autogluon.utils.tabular.metrics as metrics
+from autogluon.version import __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** AutoGluon ****\n")
+    log.info(f"\n**** AutoGluon [v{__version__}] ****\n")
+    save_metadata(config, version=__version__)
 
     metrics_mapping = dict(
         acc=metrics.accuracy,

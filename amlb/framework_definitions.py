@@ -1,6 +1,7 @@
 import copy
 import itertools
 import logging
+import os
 from typing import Union, List
 
 from .utils import Namespace, config_load, str_sanitize
@@ -31,7 +32,7 @@ def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]
 
     definitions_by_tag = Namespace()
     for tag in [""]+config.frameworks.tags:
-        definitions_by_file = [config_load(f"{file}_{tag}" if len(tag) > 0 else file) for file in frameworks_file]
+        definitions_by_file = [config_load(_definition_file(file, tag)) for file in frameworks_file]
         if not config.frameworks.allow_duplicates:
             for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
                 if d1.intersection(d2) != set():
@@ -39,6 +40,14 @@ def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]
         definitions_by_tag[tag] = Namespace.merge(*definitions_by_file)
 
     return definitions_by_tag
+
+
+def _definition_file(file, tag):
+    if len(tag) == 0:
+        return file
+
+    path, ext = os.path.splitext(file)
+    return f"{path}_{tag}{ext}"
 
 
 def _sanitize_and_add_defaults(frameworks, config):

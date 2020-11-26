@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${1:-"latest"}
+VERSION=${1:-"stable"}
 REPO=${2:-"ja-thomas/autoxgboost"}
-if [[ "$VERSION" == "latest" ]]; then
-# currently latest maps to master branch
-if [[ "$VERSION" == "latest" ]]; then
+# currently both stable and latest maps to master branch
+if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
     VERSION="master"
 fi
 . $HERE/../shared/setup.sh

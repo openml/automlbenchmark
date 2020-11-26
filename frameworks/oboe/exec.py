@@ -5,13 +5,14 @@ import sys
 sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
 from auto_learner import AutoLearner
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result, save_metadata, utils
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** Oboe ****\n")
+    log.info(f"\n**** Oboe [{config.framework_version}] ****\n")
+    save_metadata(config)
 
     is_classification = config.type == 'classification'
     if not is_classification:
