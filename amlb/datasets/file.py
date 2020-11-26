@@ -10,7 +10,7 @@ import numpy as np
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
-from ..resources import get as rget
+from ..resources import config as rconfig
 from ..utils import Namespace, as_list, cached, lazy_property, list_all_files, profile
 
 from .fileutils import *
@@ -63,7 +63,7 @@ class FileLoader:
         else:
             assert isinstance(dataset, str)
             dataset = os.path.expanduser(dataset)
-            dataset = dataset.format(**rget()._common_dirs)
+            dataset = dataset.format(**rconfig().common_dirs)
 
         if os.path.exists(dataset):
             if os.path.isfile(dataset):

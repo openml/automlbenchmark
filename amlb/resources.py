@@ -11,7 +11,7 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.framework_definitions import load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, touch
+from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, str_sanitize, touch
 
 
 log = logging.getLogger(__name__)
@@ -36,17 +36,18 @@ class Resources:
 
     def __init__(self, config: Namespace):
         self._config = config
-        self._common_dirs = dict(
+        common_dirs = dict(
             input=normalize_path(config.input_dir),
             output=normalize_path(config.output_dir),
             user=normalize_path(config.user_dir),
             root=normalize_path(config.root_dir),
         )
-        self.config = Resources._normalize(config, replace=self._common_dirs)
+        self.config = Resources._normalize(config, replace=common_dirs)
+        self.config.common_dirs = common_dirs
         log.debug("Using config:\n%s", self.config)
 
         # allowing to load custom modules from user directory
-        sys.path.append(self._common_dirs['user'])
+        sys.path.append(common_dirs['user'])
         log.debug("Extended Python sys.path to user directory: %s.", sys.path)
 
     @lazy_property
@@ -115,7 +116,7 @@ class Resources:
             constraints + config_load(ef)
 
         for name, c in constraints:
-            c.name = name
+            c.name = str_sanitize(name)
 
         log.debug("Available benchmark constraints:\n%s", constraints)
         constraints_lookup = Namespace()
