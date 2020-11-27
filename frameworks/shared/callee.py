@@ -52,7 +52,7 @@ def output_subdir(name, config):
 
 
 def save_metadata(config, **kwargs):
-    obj = utils.Namespace.dict(config)
+    obj = dict(config.__dict__)
     obj.update(kwargs)
     utils.json_dump(obj, config.output_metadata_file, style='pretty')
 
