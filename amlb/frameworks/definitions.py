@@ -4,9 +4,11 @@ import logging
 import os
 from typing import Union, List
 
-from .utils import Namespace, config_load, str_sanitize
+from amlb.utils import Namespace, config_load, str_sanitize
 
 log = logging.getLogger(__name__)
+
+default_tag = '_'
 
 
 def load_framework_definitions(frameworks_file: Union[str, List[str]], config: Namespace) -> Namespace:
@@ -31,7 +33,7 @@ def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]
         frameworks_file = [frameworks_file]
 
     definitions_by_tag = Namespace()
-    for tag in [""]+config.frameworks.tags:
+    for tag in [default_tag]+config.frameworks.tags:
         definitions_by_file = [config_load(_definition_file(file, tag)) for file in frameworks_file]
         if not config.frameworks.allow_duplicates:
             for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
@@ -43,7 +45,7 @@ def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]]
 
 
 def _definition_file(file, tag):
-    if len(tag) == 0:
+    if tag == default_tag:
         return file
 
     path, ext = os.path.splitext(file)

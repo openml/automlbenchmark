@@ -10,7 +10,7 @@ import re
 import sys
 
 from amlb.benchmarks.parser import benchmark_load
-from amlb.framework_definitions import load_framework_definitions
+from amlb.frameworks import default_tag, load_framework_definitions
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, str_sanitize, touch
 
 
@@ -84,9 +84,9 @@ class Resources:
         """
         lname = name.lower()
         if tag is None:
-            tag = ""
+            tag = default_tag
         if tag not in self._frameworks:
-            raise ValueError("Incorrect tag `{}`: only those among {} are allowed.".format(tag, self._config.frameworks.tags))
+            raise ValueError("Incorrect tag `{}`: only those among {} are allowed.".format(tag, self.config.frameworks.tags))
         frameworks = self._frameworks[tag]
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:

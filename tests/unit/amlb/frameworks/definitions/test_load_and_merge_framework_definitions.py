@@ -1,6 +1,6 @@
 import os
 import pytest
-from amlb.framework_definitions import _load_and_merge_framework_definitions
+from amlb.frameworks.definitions import default_tag, _load_and_merge_framework_definitions
 
 here = os.path.realpath(os.path.dirname(__file__))
 res = os.path.join(here, 'resources')
@@ -19,16 +19,20 @@ second_file_has_extension = [
 
 @pytest.mark.use_disk
 def test_loads_all_definitions(simple_resource):
-    definition = _load_and_merge_framework_definitions(framework_file, simple_resource.config)
-    assert "unit_test_framework" in definition
-    assert len(definition) == 5
+    definitions_by_tag = _load_and_merge_framework_definitions(framework_file, simple_resource.config)
+    assert len(definitions_by_tag) == 1
+    definitions = definitions_by_tag[default_tag]
+    assert "unit_test_framework" in definitions
+    assert len(definitions) == 5
 
 
 @pytest.mark.use_disk
 def test_merges_definitions_of_two_files(simple_resource):
-    definition = _load_and_merge_framework_definitions(second_file_has_extension, simple_resource.config)
-    assert "other_test_framework_extended_other_file" in definition
-    assert len(definition) == 6
+    definitions_by_tag = _load_and_merge_framework_definitions(second_file_has_extension, simple_resource.config)
+    assert len(definitions_by_tag) == 1
+    definitions = definitions_by_tag[default_tag]
+    assert "other_test_framework_extended_other_file" in definitions
+    assert len(definitions) == 6
 
 
 @pytest.mark.use_disk
