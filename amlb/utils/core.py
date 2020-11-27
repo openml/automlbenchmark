@@ -1,6 +1,8 @@
 from ast import literal_eval
+import base64
 from collections.abc import Iterable
 from functools import reduce, wraps
+import hashlib
 import json
 import logging
 import pprint
@@ -202,8 +204,12 @@ def str_def(s, if_none=''):
     return str(s)
 
 
-def str_sanitize(name):
-    return re.sub(r"[^\w-]", "_", name)
+def str_sanitize(s):
+    return re.sub(r"[^\w-]", "_", s)
+
+
+def str_digest(s):
+    return base64.b64encode(hashlib.md5(s.encode()).digest()).decode()
 
 
 def head(s, lines=10):

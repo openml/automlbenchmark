@@ -99,10 +99,10 @@ class Resources:
         :param name: name of the benchmark constraint definition as defined in the constraints file
         :return: a Namespace object with the constraint config (folds, cores, max_runtime_seconds, ...) for the current benchmamk run.
         """
-        constraint_config = self._constraints[name.lower()]
-        if not constraint_config:
+        constraint = self._constraints[name.lower()]
+        if not constraint:
             raise ValueError("Incorrect constraint definition `{}`: not listed in {}.".format(name, self.config.benchmarks.constraints_file))
-        return constraint_config, constraint_config.name
+        return constraint, constraint.name
 
     @lazy_property
     def _constraints(self):

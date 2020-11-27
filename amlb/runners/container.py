@@ -98,9 +98,9 @@ class ContainerBenchmark(Benchmark):
 
         def _run():
             self._start_container("{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
-                framework=self.framework_name,
-                benchmark=self.benchmark_name,
-                constraint=self.constraint_name,
+                framework=self._forward_params['framework_name'],
+                benchmark=self._forward_params['benchmark_name'],
+                constraint=self._forward_params['constraint_name'],
                 task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                 folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                 seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,

@@ -8,7 +8,7 @@ import sys
 import amlb.logger
 
 import amlb
-from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool
+from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize
 from amlb import log, AutoMLError
 
 
@@ -65,13 +65,13 @@ extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in 
 
 now_str = datetime_iso(date_sep='', time_sep='')
 sid = (args.session if args.session is not None
-       else "{}.{}".format('.'.join([args.framework,
-                                     (args.benchmark if re.fullmatch(r"(openml)/[st]/\d+", args.benchmark)
-                                      else os.path.splitext(os.path.basename(args.benchmark))[0]),
-                                     args.constraint,
+       else "{}.{}".format('.'.join([str_sanitize(args.framework.split(':', 1)[0]),
+                                     str_sanitize(args.benchmark if re.fullmatch(r"(openml)/[st]/\d+", args.benchmark)
+                                                  else os.path.splitext(os.path.basename(args.benchmark))[0]),
+                                     str_sanitize(args.constraint),
                                      extras.get('run_mode', args.mode)])
                               .lower(),
-                           now_str)).replace("/", "_")
+                           now_str))
 log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
                                      session=sid,
                                      subdirs='logs' if args.outdir else '',

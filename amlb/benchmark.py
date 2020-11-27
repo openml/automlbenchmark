@@ -60,6 +60,7 @@ class Benchmark:
             self.sid = None
             return
 
+        self._forward_params = locals()
         self.framework_def, self.framework_name = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s.", self.framework_def)
 
@@ -79,7 +80,7 @@ class Benchmark:
                             rconfig().run_mode
                         ]).lower(),
                         datetime_iso(micros=True, no_sep=True)
-                    ])).replace("/", "_")
+                    ]))
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
