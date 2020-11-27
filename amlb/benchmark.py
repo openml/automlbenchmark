@@ -74,8 +74,8 @@ class Benchmark:
         self.sid = (rconfig().sid if rconfig().sid is not None
                     else rconfig().token_separator.join([
                         rconfig().token_separator.join([
-                            str_sanitize(framework_name),
-                            str_sanitize(benchmark_name),
+                            framework_name,
+                            benchmark_name,
                             constraint_name,
                             rconfig().run_mode
                         ]).lower(),

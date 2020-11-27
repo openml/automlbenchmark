@@ -9,7 +9,7 @@ import os
 import re
 
 from ..resources import config as rconfig, get as rget
-from ..utils import dir_of, run_cmd, touch
+from ..utils import dir_of, run_cmd, str_digest, str_sanitize, touch
 from .container import ContainerBenchmark
 
 
@@ -50,7 +50,7 @@ class DockerBenchmark(ContainerBenchmark):
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
         script_extra_params = ""
-        inst_name = self.sid
+        inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} "
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "

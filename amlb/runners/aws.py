@@ -258,8 +258,7 @@ class AWSBenchmark(Benchmark):
                 instance_def,
                 script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                     framework=self._forward_params['framework_name'],
-                    # benchmark=self._forward_params['benchmark_name'],
-                    benchmark=(self.benchmark_name if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
+                    benchmark=(self._forward_params['benchmark_name']if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
                                else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
                     constraint=self._forward_params['constraint_name'],
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
