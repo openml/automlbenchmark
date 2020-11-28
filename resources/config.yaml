@@ -41,7 +41,7 @@ benchmarks:
   constraints_file: '{root}/resources/constraints.yaml'
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
-  overhead_time_seconds: 600   # amount of additional time allowed for the job to complete before sending an interruption signal
+  overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete before sending an interruption signal
   metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType)
     binary: ['auc', 'logloss', 'acc']
     multiclass: ['logloss', 'acc']
