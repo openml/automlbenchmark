@@ -21,7 +21,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
   
-  preprocessing = "full"
+  preprocessing = "stability"
   portfolio = TRUE
   
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
