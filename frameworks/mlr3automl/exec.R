@@ -26,6 +26,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   resampling = rsmp("holdout")
   eda = "EDA"
   terminator = trm("evals", n_evals = 50)
+  learner_timeout = 135
   
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
@@ -41,13 +42,13 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     }
     
     model <- AutoML(train, resampling = resampling,, terminator = terminator,
-                    measure = measure,
+                    measure = measure, learner_timeout = learner_timeout,
                     runtime = as.integer(remaining_budget * 0.8),
                     preprocessing = preprocessing, portfolio = portfolio)
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, resampling = resampling, terminator = terminator,
+    model <- AutoML(train, resampling = resampling, terminator = terminator, learner_timeout = learner_timeout,
                     runtime = as.integer(remaining_budget * 0.8),
                     preprocessing = preprocessing, portfolio = portfolio)
   } else {
