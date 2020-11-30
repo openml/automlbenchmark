@@ -118,7 +118,7 @@ class Scoreboard:
             # avoid dtype conversions during reindexing on empty frame
             return df
         fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'result', 'metric', 'mode', 'version',
-                      'params', 'app_version', 'utc', 'training_duration', 'predict_duration',  'models_count', 'seed', 'info']
+                      'params', 'app_version', 'utc', 'duration', 'training_duration', 'predict_duration', 'models_count', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
@@ -135,7 +135,7 @@ class Scoreboard:
         df = self.as_data_frame()
         force_str_cols = ['id']
         nanable_int_cols = ['fold', 'models_count', 'seed']
-        low_precision_float_cols = ['training_duration', 'predict_duration']
+        low_precision_float_cols = ['duration', 'training_duration', 'predict_duration']
         high_precision_float_cols = [col for col in df.select_dtypes(include=[np.float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
         for col in force_str_cols:
             df[col] = df[col].astype(np.object).map(str_print).astype(np.str)
@@ -357,6 +357,7 @@ class TaskResult:
             app_version=rget().app_version,
             utc=datetime_iso(),
             metric=metadata.metric,
+            duration=nan
         )
         required_metares = ['training_duration', 'predict_duration', 'models_count']
         for m in required_metares:
