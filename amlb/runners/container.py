@@ -149,7 +149,7 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
 
             tag = rget().project_info.tag
             tags, _ = run_cmd("git tag --points-at HEAD")
-            if tag and not re.search(r'(?m)^{}$'.format(tag), tags):
+            if tag and not re.search(r'(?m)^{}$'.format(tag), tags+current_branch):
                 force = None
                 while force not in ['y', 'n']:
                     force = input(f"""Branch `{current_branch}` isn't tagged as `{tag}` (as required by config.project_repository).
