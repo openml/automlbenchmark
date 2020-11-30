@@ -4,7 +4,7 @@ H2O_REPO=${2:-"https://h2o-release.s3.amazonaws.com/h2o"}
 echo "setting up H2O version $VERSION"
 
 HERE=$(dirname "$0")
-. ${HERE}/../shared/setup.sh
+. ${HERE}/../shared/setup.sh ""
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y openjdk-8-jdk
