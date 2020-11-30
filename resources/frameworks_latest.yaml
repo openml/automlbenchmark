@@ -22,19 +22,6 @@ autosklearn:
 AutoWEKA:
   version: 'latest'
 
-MLPlan:
-  version: 'latest'
-
-MLPlanSKLearn:
-  extends: MLPlan
-  params:
-    _backend: sklearn
-
-MLPlanWEKA:
-  extends: MLPlan
-  params:
-    _backend: weka
-
 autoxgboost:
   version: 'latest'
 
@@ -55,10 +42,20 @@ mljarsupervised_compete:
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
-oboe:
+MLPlan:
   version: 'latest'
 
-ranger:
+MLPlanSKLearn:
+  extends: MLPlan
+  params:
+    _backend: sklearn
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+oboe:
   version: 'latest'
 
 TPOT:
@@ -71,8 +68,7 @@ TPOT:
 ### Non AutoML reference frameworks ###
 #######################################
 
-constantpredictor:
-  version: 'latest'
+constantpredictor: {}
 
 constantpredictor_enc:
   extends: constantpredictor
@@ -86,6 +82,9 @@ RandomForest:
   version: 'latest'
   params:
     n_estimators: 2000
+
+ranger:
+  version: 'latest'
 
 TunedRandomForest:
   version: 'latest'

@@ -1,48 +1,48 @@
 ---
-#
-#  Please note: frameworks defined in this file are all set to "stable" which is understood as the most recent stable/release version.
-#
 
 #########################
 ### AutoML frameworks ###
 #########################
 
 AutoGluon:
-  version: "stable"
+  version: "0.0.12"
 
 AutoGluon_bestquality:
   extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
   params:
     presets: best_quality
 
 autosklearn:
-  version: 'stable'
+  version: '0.8.0'
 
 AutoWEKA:
-  version: 'stable'
+  version: '2.6'
 
 autoxgboost:
-  version: 'stable'
+  version: 'latest'
 
 GAMA:
-  version: 'stable'
+  version: '20.1.0'
 
 H2OAutoML:
-  version: 'stable'
+  version: '3.30.0.4'
+  setup_args: 'zahradnik'
 
 hyperoptsklearn:
-  version: 'stable'
+  version: 'latest'
 
 mljarsupervised:
-  version: 'stable'
+  version: '0.6.0'
 
 mljarsupervised_compete:
   extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
 MLPlan:
-  version: 'stable'
+  version: '0.2.3'
 
 MLPlanSKLearn:
   extends: MLPlan
@@ -55,10 +55,12 @@ MLPlanWEKA:
     _backend: weka
 
 oboe:
-  version: 'stable'
+  version: 'latest'
 
 TPOT:
-  version: 'stable'
+  version: '0.11.5'
+
+
 
 
 
@@ -75,10 +77,10 @@ constantpredictor_enc:
     encode: true
 
 DecisionTree:
-  version: 'stable'
+  version: '0.22.2'
 
 RandomForest:
-  version: 'stable'
+  version: '0.22.2'
   params:
     n_estimators: 2000
 
@@ -86,7 +88,7 @@ ranger:
   version: 'stable'
 
 TunedRandomForest:
-  version: 'stable'
+  version: '0.22.2'
   params:
     n_estimators: 2000
 
