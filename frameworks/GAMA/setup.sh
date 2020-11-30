@@ -9,10 +9,10 @@ if [[ "$VERSION" == "latest" ]]; then
 fi
 
 #create local venv
-. $HERE/../shared/setup.sh $HERE
-#. $AMLB_DIR/frameworks/shared/setup.sh $HERE
+. ${HERE}/../shared/setup.sh ${HERE}
+#. ${AMLB_DIR}/frameworks/shared/setup.sh ${HERE}
 
-PIP install -r $HERE/requirements.txt
+PIP install -r ${HERE}/requirements.txt
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U ${PKG}
 elif [[ "$VERSION" =~ ^[0-9] ]]; then

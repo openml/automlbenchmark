@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-. $HERE/../shared/setup.sh
+. ${HERE}/../shared/setup.sh ""
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev

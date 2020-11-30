@@ -38,7 +38,7 @@ frameworks:
   definition_file: '{root}/resources/frameworks.yaml'
   root_module: frameworks
   allow_duplicates: false     # if true, the last definition is used.
-  tags: ['latest', '2020Q2']  # the list of supported tags when looking up frameworks:
+  tags: ['stable', 'latest', '2020Q2']  # the list of supported tags when looking up frameworks:
                               # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:

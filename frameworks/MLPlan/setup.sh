@@ -9,7 +9,7 @@ fi
 echo "Setup ML-Plan for version $VERSION"
 
 # creating local venv
-. $HERE/../shared/setup.sh $HERE
+. ${HERE}/../shared/setup.sh ${HERE}
 
 if [[ -x "$(command -v apt-get)" ]]; then
     echo "setup system packages"

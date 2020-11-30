@@ -9,7 +9,7 @@ if [[ "$VERSION" == "latest" ]]; then
 fi
 
 # creating local venv
-. $HERE/../shared/setup.sh $HERE
+. ${HERE}/../shared/setup.sh ${HERE}
 
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y build-essential swig

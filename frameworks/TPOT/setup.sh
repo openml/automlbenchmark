@@ -9,7 +9,7 @@ if [[ "$VERSION" == "latest" ]]; then
 fi
 
 # creating local venv
-. $HERE/../shared/setup.sh $HERE
+. ${HERE}/../shared/setup.sh ${HERE}
 
 RAWREPO=$(echo ${REPO} | sed "s/github\.com/raw\.githubusercontent\.com/")
 if [[ "$VERSION" == "stable" ]]; then

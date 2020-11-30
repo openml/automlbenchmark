@@ -6,7 +6,7 @@ REPO=${2:-"ja-thomas/autoxgboost"}
 if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
     VERSION="master"
 fi
-. $HERE/../shared/setup.sh
+. ${HERE}/../shared/setup.sh ""
 if [[ -x "$(command -v apt-get)" ]]; then
 SUDO apt-get update
 SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev
