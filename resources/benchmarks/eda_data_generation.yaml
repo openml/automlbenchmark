@@ -1,0 +1,7 @@
+---
+- name: __defaults__
+  cores: 10
+  max_runtime_seconds: 3600
+
+- name: christine
+  openml_task_id: 168908
