@@ -1,7 +1,13 @@
 ---
 - name: __defaults__
   cores: 10
-  max_runtime_seconds: 3600
+  max_runtime_seconds: 7200
+
+- name: credit-g
+  openml_task_id: 31
 
 - name: christine
   openml_task_id: 168908
+
+- name: KDDCup09_appetency
+  openml_task_id: 3945
