@@ -54,7 +54,8 @@ def run(dataset, config):
     with utils.Timer() as training:
         automl.fit(X_train, y_train)
 
-    preds = automl.predict(X_test)
+    with utils.Timer() as predict:
+        preds = automl.predict(X_test)
 
     predictions, probabilities = None, None
     if is_classification:
@@ -74,6 +75,7 @@ def run(dataset, config):
         probabilities=probabilities,
         models_count=len(automl._models),
         training_duration=training.duration,
+        predict_duration=predict.duration
     )
 
 

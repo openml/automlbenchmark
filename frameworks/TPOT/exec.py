@@ -63,7 +63,8 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
-    predictions = tpot.predict(X_test)
+    with utils.Timer() as predict:
+        predictions = tpot.predict(X_test)
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
     except RuntimeError:
@@ -78,7 +79,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(tpot.evaluated_individuals_),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 def save_artifacts(estimator, config):
