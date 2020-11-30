@@ -25,7 +25,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   portfolio = FALSE
   resampling = rsmp("holdout")
   eda = "EDA"
-  terminator = trm("evals", n_evals = 1000)
+  terminator = trm("evals", n_evals = 50)
   
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
