@@ -13,16 +13,13 @@ SUDO apt-get install -y libssl-dev libcurl4-openssl-dev
 SUDO apt-get install -y libcairo2-dev libudunits2-dev
 fi
 
-#PIP install --no-cache-dir -r $HERE/requirements.txt
-SUDO Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "testthat", "checkmate", "R6", "xgboost", "igraph", "glmnet", "ranger", "liblineaR"), repos="https://cloud.r-project.org/", dependencies = TRUE)'
+SUDO Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR"), repos="https://cloud.r-project.org/", dependencies = TRUE)'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3pipelines")'
-SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3tuning")'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3oml")'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/paradox")'
-SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3learners")'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3extralearners")'
-SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3", ref = "timeout")'
 SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3misc")'
-SUDO Rscript -e 'remotes::install_github("https://github.com/a-hanf/mlr3automl", ref = "add_hyperband")'
-
+SUDO Rscript -e 'remotes::install_github("https://github.com/a-hanf/mlr3automl")'
+SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3tuning@autotuner-notimeout")'
+SUDO Rscript -e 'remotes::install_github("https://github.com/mlr-org/mlr3@master")'
 
