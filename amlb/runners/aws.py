@@ -274,12 +274,14 @@ class AWSBenchmark(Benchmark):
         job.instance_id = None
         job.wait_min_secs = 0
 
+        def _prepare(job_self):
+            if job.wait_min_secs:
+                countdown(job.wait_min_secs,
+                          message=f"starting job {job_self.name}",
+                          frequency=rconfig().aws.query_frequency_seconds)
+
         def _run(job_self):
             try:
-                if job.wait_min_secs:
-                    countdown(job.wait_min_secs,
-                              message=f"starting job {job_self.name}",
-                              frequency=rconfig().aws.query_frequency_seconds)
                 resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
                 job_self.instance_id = self._start_instance(
                     instance_def,
@@ -323,6 +325,7 @@ class AWSBenchmark(Benchmark):
                                 job_self.instance_id)
                 self._stop_instance(job_self.instance_id, terminate=terminate)
 
+        job._prepare = _prepare.__get__(job)
         job._run = _run.__get__(job)
         job._on_done = _on_done.__get__(job)
         return job

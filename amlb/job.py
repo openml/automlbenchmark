@@ -58,6 +58,7 @@ class Job:
                 raise InvalidStateError("Job can't be started from state `{}`.".format(self.state))
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
+            self._prepare()
             with Timer() as t:
                 # don't propagate interruption error here (sig=None) so that we can collect the timeout in the result
                 with InterruptTimeout(self.timeout, sig=None):
@@ -100,8 +101,12 @@ class Job:
         self.state = state
         self.thread_id = None
 
+    def _prepare(self):
+        """hood to execute pre-run logic: this is executed in the same thread as the run logic."""
+        pass
+
     def _run(self):
-        """jobs should implement their run logic in this method"""
+        """jobs should implement their run logic in this method."""
         pass
 
     def _stop(self):
@@ -109,7 +114,7 @@ class Job:
             raise_in_thread(self.thread_id, CancelledError)
 
     def _on_done(self):
-        """hook to execute logic after job completion in a thread-safe way as this is executed in the main thread"""
+        """hook to execute logic after job completion in a thread-safe way as this is executed in the main thread."""
         pass
 
 
@@ -162,7 +167,7 @@ class JobRunner:
         if self._queue is None:
             return
         _, job = self._queue.get()
-        self._queue.task_done();
+        self._queue.task_done()
         if job is None:
             self._queue = None
             return
