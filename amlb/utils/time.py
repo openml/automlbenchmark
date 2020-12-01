@@ -56,7 +56,14 @@ def countdown(timeout_secs, on_timeout=None, message=None, frequency=1, log_leve
 
 
 @threadsafe_generator
-def retry(start=0, fn=identity, max_retries=-1):
+def retry_after(start=0, fn=identity, max_retries=math.inf):
+    """
+    generator returning a delay (usually interpreted as seconds) before next retry
+    :param start: the first delay
+    :param fn: the function computing the next delay from the previous one
+    :param max_retries:
+    :return:
+    """
     delay = start
     retries = 1
     while True:
@@ -65,6 +72,28 @@ def retry(start=0, fn=identity, max_retries=-1):
         yield delay
         retries = retries+1
         delay = fn(delay)
+
+
+def retry_policy(policy: str):
+    tokens = policy.split(':', 3)
+    type = tokens[0]
+    l = len(tokens)
+    if type == 'constant':
+        interval = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
+        start = float(tokens[1] if l > 2 else interval)
+        return start, (lambda _: interval)
+    elif type == 'linear':
+        max_delay = float(tokens[3] if l > 3 else math.inf)
+        increment = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
+        start = float(tokens[1] if l > 2 else increment)
+        return start, (lambda d: min(d + increment, max_delay))
+    elif type == 'exponential':
+        max_delay = float(tokens[3] if l > 3 else math.inf)
+        factor = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 2)
+        start = float(tokens[1] if l > 2 else 60)
+        return start, (lambda d: min(d * factor, max_delay))
+    else:
+        raise ValueError(f"Unsupported policy {type} in '{policy}': supported policies are [constant, linear, exponential].")
 
 
 class Timer:

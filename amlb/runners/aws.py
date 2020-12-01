@@ -36,7 +36,7 @@ from ..datautils import read_csv, write_csv
 from ..job import Job, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, Scoreboard, TaskResult
-from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, retry, str_def, tail, touch
+from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, retry_after, retry_policy, str_def, tail, touch
 from .docker import DockerBenchmark
 
 
@@ -224,7 +224,10 @@ class AWSBenchmark(Benchmark):
 
     def _job_reschedule(self, job):
         if not self.retry:
-            self.retry = retry(2, lambda x: x*2, max_retries=3)  # TODO: externalize
+            spotconf = rconfig().aws.ec2.spot
+            start_delay, delay_fn = retry_policy(spotconf.retry_policy)
+            max_retries = spotconf.max_retries
+            self.retry = retry_after(start_delay, delay_fn, max_retries=max_retries)
         # we want sth more clever: if some job, is already waiting, use the same waiting time
         # only increase wait time if the job passed as param was previously waiting (wait_min_secs > 0)
         wait = next(self.retry, None)
