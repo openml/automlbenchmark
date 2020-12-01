@@ -6,22 +6,17 @@ import re
 import shutil
 
 from packaging import version
+import  pandas as pd
 
 import h2o
 from h2o.automl import H2OAutoML
 
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import to_data_frame, write_csv
-from amlb.results import NoResultError, save_predictions
-from amlb.utils import Monitoring, Timer, walk_apply, zip_path
-from amlb.resources import config as rconfig
-from frameworks.shared.callee import output_subdir, save_metadata
+from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, save_metadata, utils
 
 log = logging.getLogger(__name__)
 
 
-class BackendMemoryMonitoring(Monitoring):
+class BackendMemoryMonitoring(utils.Monitoring):
 
     def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
                  verbosity=0, log_level=logging.INFO):
@@ -35,7 +30,7 @@ class BackendMemoryMonitoring(Monitoring):
         log.log(self._log_level, "DKV: %s MB; Other: %s MB", sd['mem_value_size'][0] >> 20, sd['pojo_mem'][0] >> 20)
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset, config):
     log.info(f"\n**** H2O AutoML [v{h2o.__version__}] ****\n")
     save_metadata(config, version=h2o.__version__)
     # Mapping of benchmark metrics to H2O metrics
@@ -104,26 +99,31 @@ def run(dataset: Dataset, config: TaskConfig):
                         seed=config.seed,
                         **training_params)
 
-        monitor = (BackendMemoryMonitoring(frequency_seconds=rconfig().monitoring.frequency_seconds,
+        monitor = (BackendMemoryMonitoring(frequency_seconds=config.ext.monitoring.frequency_seconds,
                                           check_on_exit=True,
-                                          verbosity=rconfig().monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
+                                          verbosity=config.ext.monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
                    # else contextlib.nullcontext  # Py 3.7+ only
                    else contextlib.contextmanager(iter)([0])
                    )
-        with Timer() as training:
+        with utils.Timer() as training:
             with monitor:
                 aml.train(y=dataset.target.index, training_frame=train)
 
         if not aml.leader:
-            raise NoResultError("H2O could not produce any model in the requested time.")
+            raise FrameworkError("H2O could not produce any model in the requested time.")
 
-        with Timer() as predict:
+        with utils.Timer() as predict:
             preds = aml.predict(test)
 
-        save_preds(preds, test, dataset=dataset, config=config)
+        preds = extract_preds(preds, test, dataset=dataset)
         save_artifacts(aml, dataset=dataset, config=config)
 
-        return dict(
+        return result(
+            output_file=config.output_predictions_file,
+            predictions=preds.predictions,
+            truth=preds.truth,
+            probabilities=preds.probabilities,
+            probabilities_labels=preds.probabilities_labels,
             models_count=len(aml.leaderboard),
             training_duration=training.duration,
             predict_duration=predict.duration
@@ -168,37 +168,33 @@ def save_artifacts(automl, dataset, config):
                 for mid in lb['model_id']:
                     save_model(mid, dest_dir=models_dir, mformat=mformat)
                 models_archive = os.path.join(models_dir, "models.zip")
-                zip_path(models_dir, models_archive)
+                utils.zip_path(models_dir, models_archive)
 
                 def delete(path, isdir):
                     if path != models_archive and os.path.splitext(path)[1] in ['.json', '.zip']:
                         os.remove(path)
-                walk_apply(models_dir, delete, max_depth=0)
+                utils.walk_apply(models_dir, delete, max_depth=0)
 
         if 'models_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
             test = h2o.get_frame(frame_name('test', config))
             for mid in lb['model_id']:
                 model = h2o.get_model(mid)
-                preds = model.predict(test)
-                save_preds(preds, test,
-                           dataset=dataset,
-                           config=config,
-                           predictions_file=os.path.join(predictions_dir, mid, 'predictions.csv'),
-                           preview=False
-                           )
-            zip_path(predictions_dir,
+                h2o_preds = model.predict(test)
+                preds = extract_preds(h2o_preds, test, dataset=dataset)
+                write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
+            utils.zip_path(predictions_dir,
                      os.path.join(predictions_dir, "models_predictions.zip"))
 
             def delete(path, isdir):
                 if isdir:
                     shutil.rmtree(path, ignore_errors=True)
-            walk_apply(predictions_dir, delete, max_depth=0)
+            utils.walk_apply(predictions_dir, delete, max_depth=0)
 
         if 'logs' in artifacts:
             logs_dir = output_subdir("logs", config)
             logs_zip = os.path.join(logs_dir, "h2o_logs.zip")
-            zip_path(logs_dir, logs_zip)
+            utils.zip_path(logs_dir, logs_zip)
             # h2o.download_all_logs(dirname=logs_dir)
 
             def delete(path, isdir):
@@ -206,7 +202,7 @@ def save_artifacts(automl, dataset, config):
                     shutil.rmtree(path, ignore_errors=True)
                 elif path != logs_zip:
                     os.remove(path)
-            walk_apply(logs_dir, delete, max_depth=0)
+            utils.walk_apply(logs_dir, delete, max_depth=0)
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
@@ -220,7 +216,7 @@ def save_model(model_id, dest_dir='.', mformat='mojo'):
         model.save_model_details(path=dest_dir)
 
 
-def save_preds(h2o_preds, test, dataset, config, predictions_file=None, preview=True):
+def extract_preds(h2o_preds, test, dataset):
     h2o_preds = h2o_preds.as_data_frame(use_pandas=False)
     preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
     y_pred = preds.iloc[:, 0]
@@ -237,10 +233,28 @@ def save_preds(h2o_preds, test, dataset, config, predictions_file=None, preview=
         prob_labels = None
     truth = y_truth.values
 
-    save_predictions(dataset=dataset,
-                     output_file=config.output_predictions_file if predictions_file is None else predictions_file,
-                     probabilities=probabilities,
-                     probabilities_labels=prob_labels,
-                     predictions=predictions,
-                     truth=truth,
-                     preview=preview)
+    return utils.Namespace(predictions=predictions,
+                           truth=truth,
+                           probabilities=probabilities,
+                           probabilities_labels=prob_labels)
+
+
+def write_preds(preds, path):
+    df = to_data_frame(preds.probabilities, columns=preds.probabilities_labels)
+    df = df.assign(predictions=preds.predictions)
+    df = df.assign(truth=preds.truth)
+    write_csv(df,  path)
+
+
+def to_data_frame(arr, columns=None):
+    return pd.DataFrame.from_records(arr, columns=columns)
+
+
+def write_csv(df, path):
+    utils.touch(path)
+    df.to_csv(path, header=True, index=False)
+
+
+if __name__ == '__main__':
+    call_run(run)
+

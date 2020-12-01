@@ -310,6 +310,7 @@ class TaskConfig:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
+        self.ext = ns()  # used if frameworks require extra config points
 
     def __json__(self):
         return self.__dict__
