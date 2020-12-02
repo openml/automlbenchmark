@@ -36,7 +36,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     if ("twoclass" %in% train$properties) {
       measure = msr("classif.auc")
     } else {
-      measure = msr("classif.acc")
+      measure = msr("classif.logloss")
     }
     
     model <- AutoML(train, resampling = resampling, terminator = terminator,
