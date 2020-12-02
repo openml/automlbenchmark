@@ -3,7 +3,7 @@
 test:
   folds: 2
   max_runtime_seconds: 600
-  cores: 1
+  cores: 4
 
 1h4c:
   folds: 10
@@ -14,18 +14,6 @@ test:
   folds: 10
   max_runtime_seconds: 3600
   cores: 8
-  min_vol_size_mb: 16384
-
-1h10c:
-  folds: 1
-  max_runtime_seconds: 1800
-  cores: 10
-  min_vol_size_mb: 16384
-
-1h10cCV:
-  folds: 10
-  max_runtime_seconds: 1800
-  cores: 10
   min_vol_size_mb: 16384
 
 4h8c:
