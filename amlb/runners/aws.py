@@ -80,12 +80,12 @@ class AWSBenchmark(Benchmark):
                 return bench._wait_for_results(job_self)
 
             def _on_done(job_self):
-                terminate = bench._download_results(job_self.instance_id)
+                terminate = bench._download_results(job_self.ext.instance_id)
                 if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
                     log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
                         "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
-                        job_self.instance_id)
-                bench._stop_instance(job_self.instance_id, terminate=terminate)
+                                job_self.ext.instance_id)
+                bench._stop_instance(job_self.ext.instance_id, terminate=terminate)
 
             job._run = _run.__get__(job)
             job._on_done = _on_done.__get__(job)
@@ -122,7 +122,6 @@ class AWSBenchmark(Benchmark):
         self.jobs = []
         self.exec = None
         self.monitoring = None
-        self.retry = None
         self._validate2()
 
     def _validate(self):
@@ -223,23 +222,23 @@ class AWSBenchmark(Benchmark):
                 pass
 
     def _job_reschedule(self, job):
-        if not self.retry:
+        if not job.ext.retry:
             spotconf = rconfig().aws.ec2.spot
             start_delay, delay_fn = retry_policy(spotconf.retry_policy)
             max_retries = spotconf.max_retries
-            self.retry = retry_after(start_delay, delay_fn, max_retries=max_retries)
-        # we want sth more clever: if some job, is already waiting, use the same waiting time
-        # only increase wait time if the job passed as param was previously waiting (wait_min_secs > 0)
-        wait = next(self.retry, None)
+            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=max_retries)
+
+        wait = next(job.ext.retry, None)
         if wait is None:
             # write job state/description for later replay
             raise Exception("Aborting job {}: no instance available.".format(job.name))
         else:
-            job.wait_min_secs = wait
+            job.ext.wait_min_secs = wait
             job.reschedule()
 
-    def _no_retry(self):
-        self.retry = None
+    def _reset_retry(self):
+        for j in self.jobs:
+            j.ext.retry = None
 
     def _make_aws_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
@@ -271,19 +270,22 @@ class AWSBenchmark(Benchmark):
             ' '.join(folds),
             self.framework_name
         ]))
-        job.instance_id = None
-        job.wait_min_secs = 0
+        job.ext = ns(
+            instance_id=None,
+            wait_min_secs=0,
+            retry=None
+        )
 
         def _prepare(job_self):
-            if job.wait_min_secs:
-                countdown(job.wait_min_secs,
+            if job.ext.wait_min_secs:
+                countdown(job.ext.wait_min_secs,
                           message=f"starting job {job_self.name}",
                           frequency=rconfig().aws.query_frequency_seconds)
 
         def _run(job_self):
             try:
                 resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
-                job_self.instance_id = self._start_instance(
+                job_self.ext.instance_id = self._start_instance(
                     instance_def,
                     script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                         framework=self._forward_params['framework_name'],
@@ -298,7 +300,7 @@ class AWSBenchmark(Benchmark):
                     instance_key=job.name,
                     timeout_secs=timeout_secs
                 )
-                self._no_retry()
+                self._reset_retry()
                 return self._wait_for_results(job_self)
             except Exception as e:
                 log.error("Job %s failed with: %s", job_self.name, e)
@@ -315,23 +317,25 @@ class AWSBenchmark(Benchmark):
 
         def _on_done(job_self):
             if job_self.state is JobState.rescheduled:
-                self._stop_instance(job_self.instance_id)
+                self._stop_instance(job_self.ext.instance_id)
                 self.job_runner.put(job_self)
             else:
-                terminate = self._download_results(job_self.instance_id)
+                terminate = self._download_results(job_self.ext.instance_id)
                 if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
                     log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
-                                job_self.instance_id)
-                self._stop_instance(job_self.instance_id, terminate=terminate)
+                                job_self.ext.instance_id)
+                self._stop_instance(job_self.ext.instance_id, terminate=terminate)
+                self.jobs.remove(job_self)
 
         job._prepare = _prepare.__get__(job)
         job._run = _run.__get__(job)
         job._on_done = _on_done.__get__(job)
+        self.jobs.append(job)
         return job
 
     def _wait_for_results(self, job):
-        instance = self.instances[job.instance_id].instance
+        instance = self.instances[job.ext.instance_id].instance
         last_console_line = -1
 
         def log_console():
@@ -350,16 +354,16 @@ class AWSBenchmark(Benchmark):
 
         interrupt = threading.Event()
         while not interrupt.is_set():
-            inst_desc = self.instances[job.instance_id] if job.instance_id in self.instances else ns()
+            inst_desc = self.instances[job.ext.instance_id] if job.ext.instance_id in self.instances else ns()
             if inst_desc['abort']:
-                self._update_instance(job.instance_id, status='aborted')
-                raise Exception("Aborting instance {} for job {}.".format(job.instance_id, job.name))
+                self._update_instance(job.ext.instance_id, status='aborted')
+                raise Exception("Aborting instance {} for job {}.".format(job.ext.instance_id, job.name))
             try:
                 state = instance.state['Name']
                 state_code = instance.state['Code']
-                log.info("[%s] checking job %s on instance %s: %s [%s].", datetime_iso(), job.name, job.instance_id, state, state_code)
+                log.info("[%s] checking job %s on instance %s: %s [%s].", datetime_iso(), job.name, job.ext.instance_id, state, state_code)
                 log_console()
-                self._update_instance(job.instance_id, status=state)
+                self._update_instance(job.ext.instance_id, status=state)
 
                 if state_code == 16:
                     if inst_desc['meta_info'] is None:
@@ -373,12 +377,12 @@ class AWSBenchmark(Benchmark):
                             availability_zone=instance.placement['AvailabilityZone'],
                             subnet_id=instance.subnet_id,
                         )
-                        self._update_instance(job.instance_id, meta_info=meta_info)
+                        self._update_instance(job.ext.instance_id, meta_info=meta_info)
                         log.info("Running EC2 instance %s: %s", instance.id, meta_info)
                 elif state_code > 16:     # ended instance
                     state_reason_msg = instance.state_reason['Message']
-                    log.info("EC2 instance %s is %s: %s", job.instance_id, state, state_reason_msg)
-                    # self._update_instance(job.instance_id, stop_reason=state_reason_msg)
+                    log.info("EC2 instance %s is %s: %s", job.ext.instance_id, state, state_reason_msg)
+                    # self._update_instance(job.ext.instance_id, stop_reason=state_reason_msg)
                     if state_reason_msg in ['Server.SpotInstanceShutdown', 'Server.SpotInstanceTermination']:
                         log.info("Job %s was aborted due to Spot instance unavailability, rescheduling it.", job.name)
                         self._job_reschedule(job)
