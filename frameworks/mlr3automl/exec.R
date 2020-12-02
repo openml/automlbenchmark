@@ -21,11 +21,10 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
   
-  preprocessing = "full"
-  portfolio = FALSE
+  preprocessing = "stability"
+  portfolio = TRUE
   resampling = rsmp("holdout")
-  eda = "EDA"
-  terminator = trm("evals", n_evals = 50)
+  terminator = trm("none")
 
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
@@ -58,7 +57,6 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
   preds <- model$predict(test)
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
-  saveRDS(model$learner$archive$data(), paste("~/tuning_archives/", name, model$measure$id, preprocessing, portfolio, eda, gsub("\\s|:", "_", Sys.time()), sep = "_"))
 
   if (type == "classification") {
     sorted_colnames = sort(colnames(preds$data$prob))
@@ -73,5 +71,4 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
               row.names = FALSE, col.names = TRUE,
               sep = ",", quote = FALSE
   )
-  print(paste("Finished writing results after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
 }
