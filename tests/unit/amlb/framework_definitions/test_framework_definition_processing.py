@@ -153,7 +153,7 @@ def test_update_frameworks_with_parent_definitions_parent_overwrites_grandparent
 
 def test_sanitize_and_add_defaults_root_definition_get_module(simple_resource):
     frameworks = Namespace(auto_sklearn=Namespace())
-    _sanitize_and_add_defaults(frameworks, simple_resource)
+    _sanitize_and_add_defaults(frameworks, simple_resource.config)
     assert frameworks.auto_sklearn.module == "frameworks.auto_sklearn"
 
 
@@ -162,11 +162,11 @@ def test_sanitize_and_add_defaults_child_inherits_module(simple_resource):
         auto_sklearn=Namespace(),
         auto_sklearn_old=Namespace(extends="auto_sklearn")
     )
-    _sanitize_and_add_defaults(frameworks, simple_resource)
+    _sanitize_and_add_defaults(frameworks, simple_resource.config)
     assert frameworks.auto_sklearn_old.module == "frameworks.auto_sklearn"
 
 
 def test_sanitize_and_add_defaults_defined_module_not_overwritten(simple_resource):
     frameworks = Namespace(auto_sklearn=Namespace(module="custom_module"))
-    _sanitize_and_add_defaults(frameworks, simple_resource)
+    _sanitize_and_add_defaults(frameworks, simple_resource.config)
     assert frameworks.auto_sklearn.module == "custom_module"

@@ -21,7 +21,7 @@ from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
 from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
-    run_cmd, run_script, str2bool, system_cores, system_memory_mb, system_volume_mb, touch
+    run_cmd, run_script, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -60,6 +60,7 @@ class Benchmark:
             self.sid = None
             return
 
+        self._forward_params = locals()
         self.framework_def, self.framework_name = rget().framework_definition(framework_name)
         log.debug("Using framework definition: %s.", self.framework_def)
 
@@ -70,9 +71,16 @@ class Benchmark:
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
 
         self.parallel_jobs = rconfig().parallel_jobs
-        self.sid = rconfig().sid if rconfig().sid is not None \
-            else "{}_{}".format('_'.join([framework_name, benchmark_name, constraint_name, rconfig().run_mode]).lower(),
-                                datetime_iso(micros=True, no_sep=True))
+        self.sid = (rconfig().sid if rconfig().sid is not None
+                    else rconfig().token_separator.join([
+                        rconfig().token_separator.join([
+                            framework_name,
+                            benchmark_name,
+                            constraint_name,
+                            rconfig().run_mode
+                        ]).lower(),
+                        datetime_iso(micros=True, no_sep=True)
+                    ]))
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -180,16 +188,16 @@ class Benchmark:
         return [task_def for task_def in self.benchmark_def if Benchmark._is_task_enabled(task_def)]
 
     def _get_task_defs(self, task_name):
-        task_defs = self._benchmark_tasks() if task_name is None \
-            else [self._get_task_def(name) for name in task_name] if isinstance(task_name, list) \
-            else [self._get_task_def(task_name)]
+        task_defs = (self._benchmark_tasks() if task_name is None
+                     else [self._get_task_def(name) for name in task_name] if isinstance(task_name, list)
+                     else [self._get_task_def(task_name)])
         if len(task_defs) == 0:
             raise ValueError("No task available.")
         return task_defs
 
     def _get_task_def(self, task_name, include_disabled=False, fail_on_missing=True):
         try:
-            task_def = next(task for task in self.benchmark_def if task.name.lower() == task_name.lower())
+            task_def = next(task for task in self.benchmark_def if task.name.lower() == str_sanitize(task_name.lower()))
         except StopIteration:
             if fail_on_missing:
                 raise ValueError("Incorrect task name: {}.".format(task_name))
@@ -199,10 +207,10 @@ class Benchmark:
         return task_def
 
     def _task_jobs(self, task_def, folds=None):
-        folds = range(task_def.folds) if folds is None \
-            else folds if isinstance(folds, list) and all(isinstance(f, int) for f in folds) \
-            else [folds] if isinstance(folds, int) \
-            else None
+        folds = (range(task_def.folds) if folds is None
+                 else folds if isinstance(folds, list) and all(isinstance(f, int) for f in folds)
+                 else [folds] if isinstance(folds, int)
+                 else None)
         if folds is None:
             raise ValueError("Fold value should be None, an int, or a list of ints.")
         return list(filter(None, [self._make_job(task_def, f) for f in folds]))
@@ -225,14 +233,14 @@ class Benchmark:
         if len(scores) == 0:
             return None
 
-        board = Scoreboard(scores,
-                           framework_name=self.framework_name,
-                           task_name=task_name,
-                           scores_dir=self.output_dirs.scores) if task_name \
-            else Scoreboard(scores,
+        board = (Scoreboard(scores,
                             framework_name=self.framework_name,
-                            benchmark_name=self.benchmark_name,
-                            scores_dir=self.output_dirs.scores)
+                            task_name=task_name,
+                            scores_dir=self.output_dirs.scores) if task_name
+                 else Scoreboard(scores,
+                                 framework_name=self.framework_name,
+                                 benchmark_name=self.benchmark_name,
+                                 scores_dir=self.output_dirs.scores))
 
         if rconfig().results.save:
             self._save(board)
@@ -375,7 +383,7 @@ class BenchmarkTask:
             return self.run(framework, framework_name)
         timeout_secs = min(self.task_config.max_runtime_seconds * 2,
                            self.task_config.max_runtime_seconds + rconfig().benchmarks.overhead_time_seconds)
-        job = Job(name='_'.join(['local', self.task_config.name, str(self.fold), framework_name]),
+        job = Job(name=rconfig().token_separator.join(['local', self.task_config.name, str(self.fold), framework_name]),
                   timeout_secs=timeout_secs)  # this timeout is just to handle edge cases where framework never completes
         job._run = _run
         return job

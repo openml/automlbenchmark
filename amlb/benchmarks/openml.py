@@ -3,7 +3,7 @@ from typing import List, Tuple, Optional
 
 import openml
 
-from amlb.utils import Namespace
+from amlb.utils import Namespace, str_sanitize
 
 
 log = logging.getLogger(__name__)
@@ -30,7 +30,9 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
         # We first have the retrieve the task because we don't know the dataset id
         t = openml.tasks.get_task(oml_id, download_data=False)
         data = openml.datasets.get_dataset(t.dataset_id, download_data=False)
-        tasks = [Namespace(name=data.name, description=data.description, openml_task_id=t.id)]
+        tasks = [Namespace(name=str_sanitize(data.name),
+                           description=data.description,
+                           openml_task_id=t.id)]
     elif oml_type == 's':
         log.info("Loading openml suite %s.", oml_id)
         suite = openml.study.get_suite(oml_id)
@@ -39,7 +41,9 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
         tasks = []
         for tid, did in zip(suite.tasks, suite.data):
             data = openml.datasets.get_dataset(did, download_data=False)
-            tasks.append(Namespace(name=data.name, description=data.description, openml_task_id=tid))
+            tasks.append(Namespace(name=str_sanitize(data.name),
+                                   description=data.description,
+                                   openml_task_id=tid))
     else:
         raise ValueError(f"The oml_type is {oml_type} but must be 's' or 't'")
     return name, path, tasks

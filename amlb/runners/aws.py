@@ -242,12 +242,14 @@ class AWSBenchmark(Benchmark):
                         else sum([task.max_runtime_seconds for task in self.benchmark_def]))
         timeout_secs += rconfig().aws.overhead_time_seconds
 
-        job = Job('_'.join(['aws',
-                            self.benchmark_name,
-                            self.constraint_name,
-                            '.'.join(task_names) if len(task_names) > 0 else 'all',
-                            '.'.join(folds),
-                            self.framework_name]))
+        job = Job(rconfig().token_separator.join([
+            'aws',
+            self.benchmark_name,
+            self.constraint_name,
+            ' '.join(task_names) if len(task_names) > 0 else 'all',
+            ' '.join(folds),
+            self.framework_name
+        ]))
         job.instance_id = None
 
         def _run(job_self):
@@ -255,10 +257,10 @@ class AWSBenchmark(Benchmark):
             job_self.instance_id = self._start_instance(
                 instance_def,
                 script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
-                    framework=self.framework_name,
-                    benchmark=(self.benchmark_name if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
+                    framework=self._forward_params['framework_name'],
+                    benchmark=(self._forward_params['benchmark_name']if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
                                else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
-                    constraint=self.constraint_name,
+                    constraint=self._forward_params['constraint_name'],
                     task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
                     folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                     seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,

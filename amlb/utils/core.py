@@ -1,9 +1,12 @@
 from ast import literal_eval
+import base64
 from collections.abc import Iterable
 from functools import reduce, wraps
+import hashlib
 import json
 import logging
 import pprint
+import re
 
 log = logging.getLogger(__name__)
 
@@ -148,7 +151,7 @@ def repr_def(obj):
     return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
 
 
-def noop():
+def noop(*args, **kwargs):
     pass
 
 
@@ -199,6 +202,14 @@ def str_def(s, if_none=''):
     if s is None:
         return if_none
     return str(s)
+
+
+def str_sanitize(s):
+    return re.sub(r"[^\w-]", "_", s)
+
+
+def str_digest(s):
+    return base64.b64encode(hashlib.md5(s.encode()).digest()).decode()
 
 
 def head(s, lines=10):

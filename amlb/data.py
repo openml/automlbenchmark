@@ -46,6 +46,7 @@ class Feature:
         self.values = values
         self.has_missing_values = has_missing_values
         self.is_target = is_target
+        # print(self)
 
     def is_categorical(self, strict=True):
         if strict:
@@ -61,7 +62,8 @@ class Feature:
         return Encoder('label' if self.values is not None else 'no-op',
                        target=self.is_target,
                        encoded_type=int if self.is_target and not self.is_numerical() else float,
-                       missing_policy='mask' if self.has_missing_values else 'ignore'
+                       missing_policy='mask' if self.has_missing_values else 'ignore',
+                       trim_values=True
                        ).fit(self.values)
 
     @lazy_property
@@ -69,7 +71,8 @@ class Feature:
         return Encoder('one-hot' if self.values is not None else 'no-op',
                        target=self.is_target,
                        encoded_type=int if self.is_target and not self.is_numerical() else float,
-                       missing_policy='mask' if self.has_missing_values else 'ignore'
+                       missing_policy='mask' if self.has_missing_values else 'ignore',
+                       trim_values=True
                        ).fit(self.values)
 
     def __repr__(self):

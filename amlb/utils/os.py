@@ -50,6 +50,7 @@ def list_all_files(paths, filtr=None):
     :param paths: the directories to look into.
     :param filtr: None, or a predicate function returning True iff the file should be listed.
     """
+    filtr = filtr or (lambda _: True)
     all_files = []
     paths = paths if isinstance(paths, list) else [paths]
     for path in paths:

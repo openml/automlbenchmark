@@ -193,11 +193,13 @@ def save_predictions(model, test, dataset, config, predictions_file=None, previe
 
     predictions = y_pred.values
     probabilities = preds.iloc[:, 1:].values
+    prob_labels = h2o_preds[0][1:]
     truth = y_truth.values
 
     save_predictions_to_file(dataset=dataset,
                              output_file=config.output_predictions_file if predictions_file is None else predictions_file,
                              probabilities=probabilities,
+                             probabilities_labels=prob_labels,
                              predictions=predictions,
                              truth=truth,
                              preview=preview)
