@@ -436,10 +436,10 @@ class ClassificationResult(Result):
             # raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
             log.warning("AUC metric is only supported for binary classification: %s.", self.classes)
             return nan
-        return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
+        return float(roc_auc_score(self.truth, self.probabilities[:, 1], labels=self.classes))
 
     def cm(self):
-        return confusion_matrix(self.truth, self.predictions)
+        return confusion_matrix(self.truth, self.predictions, labels=self.classes)
 
     def _per_class_errors(self):
         return [(s-d)/s for s, d in ((sum(r), r[i]) for i, r in enumerate(self.cm()))]
@@ -453,11 +453,11 @@ class ClassificationResult(Result):
         return max(self._per_class_errors())
 
     def f1(self):
-        return float(f1_score(self.truth, self.predictions))
+        return float(f1_score(self.truth, self.predictions, labels=self.classes))
 
     def logloss(self):
         # truth_enc = self.target.one_hot_encoder.transform(self.truth)
-        return float(log_loss(self.truth, self.probabilities))
+        return float(log_loss(self.truth, self.probabilities, labels=self.classes))
 
     def _autoencode(self, vec):
         needs_encoding = not _encode_predictions_and_truth_ or (isinstance(vec[0], str) and not vec[0].isdigit())
