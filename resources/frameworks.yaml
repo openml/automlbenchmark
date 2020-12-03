@@ -80,7 +80,7 @@ hyperoptsklearn:
 #    verbose: true
 
 mljarsupervised:
-  version: '0.6.0'
+  version: '0.7.11'
   project: https://github.com/mljar/mljar-supervised
 #  params:
 #    algorithms: ["Baseline"]
@@ -88,7 +88,7 @@ mljarsupervised:
 
 mljarsupervised_compete:
   extends: mljarsupervised
-  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
