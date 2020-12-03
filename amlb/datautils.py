@@ -76,7 +76,7 @@ def write_csv(data, path, header=True, columns=None, index=False, append=False):
         data_frame = data
     else:
         data_frame = to_data_frame(data, columns=columns)
-        header = columns is not None
+        header = header and columns is not None
     touch(path)
     data_frame.to_csv(path,
                       header=header,

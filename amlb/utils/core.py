@@ -1,6 +1,6 @@
 from ast import literal_eval
 import base64
-from collections.abc import Iterable
+from collections.abc import Iterable, Sized
 from functools import reduce, wraps
 import hashlib
 import json
@@ -203,10 +203,15 @@ def str2bool(s):
         raise ValueError(s+" can't be interpreted as a boolean.")
 
 
-def str_def(s, if_none=''):
-    if s is None:
+_empty_ = "__empty__"
+
+
+def str_def(o, if_none='', if_empty=_empty_):
+    if o is None:
         return if_none
-    return str(s)
+    if if_empty != _empty_ and isinstance(o, Sized) and len(o) == 0:
+        return if_empty
+    return str(o)
 
 
 def str_sanitize(s):

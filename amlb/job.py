@@ -29,11 +29,15 @@ class State(Enum):
     stopped = auto()
 
 
-class InvalidStateError(Exception):
+class JobError(Exception):
     pass
 
 
-class CancelledError(Exception):
+class InvalidStateError(JobError):
+    pass
+
+
+class CancelledError(JobError):
     pass
 
 
