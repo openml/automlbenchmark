@@ -424,6 +424,7 @@ class ClassificationResult(Result):
         self.type = DatasetType.binary if len(self.classes) == 2 else DatasetType.multiclass
         self.truth = self._autoencode(self.truth.astype(str, copy=False))
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))
+        self.labels = self._autoencode(self.classes)
 
     def acc(self):
         return float(accuracy_score(self.truth, self.predictions))
@@ -434,12 +435,12 @@ class ClassificationResult(Result):
     def auc(self):
         if self.type != DatasetType.binary:
             # raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
-            log.warning("AUC metric is only supported for binary classification: %s.", self.classes)
+            log.warning("AUC metric is only supported for binary classification: %s.", self.labels)
             return nan
-        return float(roc_auc_score(self.truth, self.probabilities[:, 1], labels=self.classes))
+        return float(roc_auc_score(self.truth, self.probabilities[:, 1], labels=self.labels))
 
     def cm(self):
-        return confusion_matrix(self.truth, self.predictions, labels=self.classes)
+        return confusion_matrix(self.truth, self.predictions, labels=self.labels)
 
     def _per_class_errors(self):
         return [(s-d)/s for s, d in ((sum(r), r[i]) for i, r in enumerate(self.cm()))]
@@ -453,11 +454,10 @@ class ClassificationResult(Result):
         return max(self._per_class_errors())
 
     def f1(self):
-        return float(f1_score(self.truth, self.predictions, labels=self.classes))
+        return float(f1_score(self.truth, self.predictions, labels=self.labels))
 
     def logloss(self):
-        # truth_enc = self.target.one_hot_encoder.transform(self.truth)
-        return float(log_loss(self.truth, self.probabilities, labels=self.classes))
+        return float(log_loss(self.truth, self.probabilities, labels=self.labels))
 
     def _autoencode(self, vec):
         needs_encoding = not _encode_predictions_and_truth_ or (isinstance(vec[0], str) and not vec[0].isdigit())
