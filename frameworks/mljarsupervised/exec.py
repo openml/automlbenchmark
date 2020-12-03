@@ -17,37 +17,47 @@ def run(dataset, config):
     log.info(f"\n**** mljar-supervised [v{supervised.__version__}] ****\n")
     save_metadata(config, version=supervised.__version__)
 
-    column_names, _ = zip(*dataset.columns)
-    column_types = dict(dataset.columns)
-    X_train = pd.DataFrame(dataset.train.X, columns=column_names).astype(
-        column_types, copy=False
+    # Mapping of benchmark metrics to MLJAR metrics
+    metrics_mapping = dict(
+        auc='auc',
+        logloss='logloss',
+        rmse='rmse'
     )
-    X_test = pd.DataFrame(dataset.test.X, columns=column_names).astype(
-        column_types, copy=False
-    )
-
-    y_train = dataset.train.y.flatten()
-    y_test = dataset.test.y.flatten()
-
+    eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else "auto"
+    
+    # Mapping of benchmark task to MLJAR ML task
     problem_mapping = dict(
         binary="binary_classification",
         multiclass="multiclass_classification",
         regression="regression",
     )
-    is_classification = config.type == "classification"
     ml_task = problem_mapping.get(
         dataset.problem_type
     )  # if None the AutoML will guess about the ML task
+    is_classification = config.type == "classification"
     results_path = output_subdir("results", config)
     training_params = {
         k: v for k, v in config.framework_params.items() if not k.startswith("_")
     }
 
+    column_names, _ = zip(*dataset.columns)
+    column_types = dict(dataset.columns)
+    label = dataset.target.name
+
+    train = pd.DataFrame(dataset.train.data, columns=column_names).astype(column_types, copy=False)
+    X_train = train.drop(columns=label)
+    y_train = train[label]
+
+    test = pd.DataFrame(dataset.test.data, columns=column_names).astype(column_types, copy=False)
+    X_test = test.drop(columns=label)
+    y_test = test[label]
+
     automl = AutoML(
         results_path=results_path,
         total_time_limit=config.max_runtime_seconds,
-        seed=config.seed,
+        random_state=config.seed,
         ml_task=ml_task,
+        eval_metric=eval_metric,
         **training_params
     )
 
@@ -55,7 +65,7 @@ def run(dataset, config):
         automl.fit(X_train, y_train)
 
     with utils.Timer() as predict:
-        preds = automl.predict(X_test)
+        preds = automl.predict_all(X_test)
 
     predictions, probabilities = None, None
     if is_classification:

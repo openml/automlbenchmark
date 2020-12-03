@@ -104,8 +104,7 @@ mljarsupervised:
 
 mljarsupervised_compete:
   extends: mljarsupervised
-  description: |
-    MLJar using 'Compete' mode to provide most accurate predictor.
+  description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
