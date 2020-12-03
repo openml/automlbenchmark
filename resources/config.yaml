@@ -158,7 +158,8 @@ aws:
       retry_policy: 'exponential:300:2:10800'  # use "constant:interval", "linear:start:increment:max" or "exponential:start:factor:max"
                                                # e.g. "linear:300:600" will first wait 5min and then add 10min to waiting time between each retry,
                                                #      "exponential:300:2:10800" with first wait 5min and then double waiting time between each retry, until the maximum of 3h then used for all retries.
-      max_retries: 10
+      max_attempts: 10
+      fallback_to_on_demand: false             # if couldn't obtain a spot instance after max retry, starts an on-demand instance.
 
   max_timeout_seconds: 21600
   overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.

@@ -16,6 +16,7 @@ necessary to run a benchmark on EC2 instances:
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
 import datetime as dt
+from enum import Enum
 import itertools
 import json
 import logging
@@ -41,6 +42,12 @@ from .docker import DockerBenchmark
 
 
 log = logging.getLogger(__name__)
+
+
+class InstanceType(Enum):
+    On_Demand = 0
+    Spot = 1
+    Spot_Block = 2
 
 
 class AWSBenchmark(Benchmark):
@@ -222,16 +229,21 @@ class AWSBenchmark(Benchmark):
                 pass
 
     def _job_reschedule(self, job, reason=None):
-        spotconf = rconfig().aws.ec2.spot
-        max_retries = spotconf.max_retries
+        spot_config = rconfig().aws.ec2.spot
+        max_attempts = spot_config.max_attempts
         if not job.ext.retry:
-            start_delay, delay_fn = retry_policy(spotconf.retry_policy)
-            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=max_retries)
+            start_delay, delay_fn = retry_policy(spot_config.retry_policy)
+            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=max_attempts - 1)
 
         wait = next(job.ext.retry, None)
         if wait is None:
-            log.error("Aborting job %s after %s retries: %s.", job.name, max_retries, reason)
-            raise JobError(reason)
+            if spot_config.fallback_to_on_demand:
+                job.ext.instance_type = InstanceType.On_Demand
+                job.ext.wait_min_secs = 0
+                job.reschedule()
+            else:
+                log.error("Aborting job %s after %s attempts: %s.", job.name, max_attempts, reason)
+                raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
             job.reschedule()
@@ -278,10 +290,14 @@ class AWSBenchmark(Benchmark):
             seed=seed,
             instance_id=None,
             wait_min_secs=0,
-            retry=None
+            retry=None,
+            instance_type=None
         )
 
         def _prepare(_self):
+            spot_config = rconfig().aws.ec2.spot
+            if _self.ext.instance_type is None and spot_config.enabled:
+                _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
             if _self.ext.wait_min_secs:
                 countdown(_self.ext.wait_min_secs,
                           message=f"starting job {_self.name}",
@@ -303,7 +319,8 @@ class AWSBenchmark(Benchmark):
                     ),
                     # instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
                     instance_key=_self.name,
-                    timeout_secs=timeout_secs
+                    timeout_secs=timeout_secs,
+                    instance_type=_self.ext.instance_type
                 )
                 self._reset_retry()
                 return self._wait_for_results(_self)
@@ -477,7 +494,7 @@ class AWSBenchmark(Benchmark):
         finally:
             self.monitoring = None
 
-    def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
+    def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1, instance_type=None):
         log.info("Starting new EC2 instance with params: %s.", script_params)
         inst_key = (instance_key.lower() if instance_key
                     else "{}_p{}_i{}".format(self.sid,
@@ -523,14 +540,14 @@ class AWSBenchmark(Benchmark):
                 instance_params.update(KeyName=ec2_config.key_name)
             if ec2_config.security_groups:
                 instance_params.update(SecurityGroups=ec2_config.security_groups)
-            if ec2_config.spot.enabled:
+            if instance_type in [InstanceType.Spot, InstanceType.Spot_Block]:
                 spot_options = dict(
                     SpotInstanceType='one-time',
                     InstanceInterruptionBehavior='terminate'
                 )
                 if ec2_config.spot.max_hourly_price:
                     spot_options.update(MaxPrice=str(ec2_config.spot.max_hourly_price))
-                if ec2_config.spot.block_enabled:
+                if instance_type is InstanceType.Spot_Block:
                     duration_min = (math.ceil(timeout_secs/3600) + 1) * 60  # duration_min most be a multiple of 60, also adding 1h extra to be safe
                     if duration_min <= 360:  # blocks are only allowed until 6h
                         spot_options.update(BlockDurationMinutes=duration_min)
