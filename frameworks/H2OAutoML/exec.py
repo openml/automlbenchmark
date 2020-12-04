@@ -182,6 +182,8 @@ def save_artifacts(automl, dataset, config):
                 model = h2o.get_model(mid)
                 h2o_preds = model.predict(test)
                 preds = extract_preds(h2o_preds, test, dataset=dataset)
+                if preds.probabilities_labels is None:
+                    preds.probabilities_labels = preds.h2o_labels
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
             utils.zip_path(predictions_dir,
                      os.path.join(predictions_dir, "models_predictions.zip"))
@@ -216,7 +218,7 @@ def save_model(model_id, dest_dir='.', mformat='mojo'):
         model.save_model_details(path=dest_dir)
 
 
-def extract_preds(h2o_preds, test, dataset):
+def extract_preds(h2o_preds, test, dataset, ):
     h2o_preds = h2o_preds.as_data_frame(use_pandas=False)
     preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
     y_pred = preds.iloc[:, 0]
@@ -226,7 +228,7 @@ def extract_preds(h2o_preds, test, dataset):
 
     predictions = y_pred.values
     probabilities = preds.iloc[:, 1:].values
-    prob_labels = h2o_preds[0][1:]
+    prob_labels = h2o_labels = h2o_preds[0][1:]
     if all([re.fullmatch(r"p\d+", p) for p in prob_labels]):
         # for categories represented as numerical values, h2o prefixes the probabilities columns with p
         # in this case, we let the app setting the labels to avoid mismatch
@@ -236,7 +238,8 @@ def extract_preds(h2o_preds, test, dataset):
     return utils.Namespace(predictions=predictions,
                            truth=truth,
                            probabilities=probabilities,
-                           probabilities_labels=prob_labels)
+                           probabilities_labels=prob_labels,
+                           h2o_labels=h2o_labels)
 
 
 def write_preds(preds, path):
