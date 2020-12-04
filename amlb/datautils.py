@@ -161,7 +161,7 @@ class Encoder(TransformerMixin):
 
     def __init__(self, type='label', target=True, encoded_type=int,
                  missing_policy='ignore', missing_values=None, missing_replaced_by='',
-                 trim_values=False):
+                 normalize_fn=None):
         """
         :param type:
         :param target:
@@ -171,6 +171,7 @@ class Encoder(TransformerMixin):
             encode: encode all missing values as the encoded value of missing_replaced_by
         :param missing_values:
         :param missing_replaced_by:
+        :param normalize_fn: if provided, function applied to all elements during fit and transform (for example, trimming spaces, lowercase...)
         """
         super().__init__()
         assert missing_policy in ['ignore', 'mask', 'encode']
@@ -179,7 +180,7 @@ class Encoder(TransformerMixin):
         self.missing_values = set(missing_values).union([None]) if missing_values else {None}
         self.missing_replaced_by = missing_replaced_by
         self.missing_encoded_value = None
-        self.trim_values = trim_values
+        self.normalize_fn = normalize_fn
         self.classes = None
         # self.encoded_type = int if target else encoded_type
         self.encoded_type = encoded_type
@@ -218,8 +219,8 @@ class Encoder(TransformerMixin):
             return self
 
         vec = np.asarray(vec, dtype=object)
-        if self.trim_values:
-            vec = np.char.strip(vec.astype(str))
+        if self.normalize_fn:
+            vec = self.normalize_fn(vec)
         self.classes = np.unique(vec) if self._ignore_missing else np.unique(np.insert(vec, 0, self.missing_replaced_by))
 
         if self._mask_missing:
@@ -251,16 +252,16 @@ class Encoder(TransformerMixin):
                 # if self._mask_missing:
                 #     missing = vec[mask]
                 vec[mask] = self.missing_replaced_by
-                if self.trim_values:
-                    vec = np.char.strip(vec.astype(str))
+                if self.normalize_fn:
+                    vec = self.normalize_fn(vec)
 
                 res = self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False)
                 if self._mask_missing:
                     res[mask] = np.NaN if self.encoded_type == float else None
                 return return_value(res)
 
-        if self.trim_values:
-            vec = np.char.strip(vec.astype(str))
+        if self.normalize_fn:
+            vec = self.normalize_fn(vec)
         return return_value(self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False))
 
     def inverse_transform(self, vec, **params):
