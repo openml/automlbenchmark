@@ -1,12 +1,13 @@
 from ast import literal_eval
 import base64
-from collections.abc import Iterable
+from collections.abc import Iterable, Sized
 from functools import reduce, wraps
 import hashlib
 import json
 import logging
 import pprint
 import re
+import threading
 
 log = logging.getLogger(__name__)
 
@@ -155,6 +156,10 @@ def noop(*args, **kwargs):
     pass
 
 
+def identity(x, *args):
+    return (x,) + args if args else x
+
+
 def as_list(*args):
     if len(args) == 0:
         return list()
@@ -198,10 +203,15 @@ def str2bool(s):
         raise ValueError(s+" can't be interpreted as a boolean.")
 
 
-def str_def(s, if_none=''):
-    if s is None:
+_empty_ = "__empty__"
+
+
+def str_def(o, if_none='', if_empty=_empty_):
+    if o is None:
         return if_none
-    return str(s)
+    if if_empty != _empty_ and isinstance(o, Sized) and len(o) == 0:
+        return if_empty
+    return str(o)
 
 
 def str_sanitize(s):
@@ -280,4 +290,27 @@ def json_dumps(o, style='default'):
         return json.encoder.JSONEncoder.default(None, o)
 
     return json.dumps(o, indent=indent, separators=separators, default=default_encode)
+
+
+def threadsafe_iterator(it):
+    """
+    Wrapper making an iterator thread-safe.
+    """
+    it = iter(it)
+    lock = threading.Lock()
+    while True:
+        try:
+            with lock:
+                yield next(it)
+        except StopIteration:
+            return
+
+
+def threadsafe_generator(fn):
+    """
+    Decorator making a generator thread-safe.
+    """
+    def gen(*args, **kwargs):
+        return threadsafe_iterator(fn(*args, **kwargs))
+    return gen
 

@@ -52,6 +52,8 @@ class Benchmark:
     data_loader = None
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
+        self.job_runner = None
+
         if rconfig().run_mode == 'script':
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
@@ -162,10 +164,12 @@ class Benchmark:
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
-            runner = SimpleJobRunner(jobs)
+            self.job_runner = SimpleJobRunner(jobs)
         else:
             # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
-            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=rconfig().delay_between_jobs, done_async=True)
+            self.job_runner = MultiThreadingJobRunner(jobs, self.parallel_jobs,
+                                                      delay_secs=rconfig().delay_between_jobs,
+                                                      done_async=True)
 
         try:
             with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
@@ -173,11 +177,11 @@ class Benchmark:
                               check_on_exit=True,
                               statistics=rconfig().monitoring.statistics,
                               verbosity=rconfig().monitoring.verbosity):
-                runner.start()
+                self.job_runner.start()
         except (KeyboardInterrupt, InterruptedError):
             pass
         finally:
-            results = runner.results
+            results = self.job_runner.results
 
         for res in results:
             if res.result is not None and math.isnan(res.result.duration):
