@@ -16,6 +16,9 @@ from ..utils import lazy_property, obj_size, profile, to_mb
 
 log = logging.getLogger(__name__)
 
+# hack (only adding a ? to the regexp pattern) to ensure that '?' values remain quoted when we save dataplits in arff format.
+arff._RE_QUOTE_CHARS = re.compile(r'[?"\'\\\s%,\000-\031]', re.UNICODE)
+
 
 class OpenmlLoader:
 
