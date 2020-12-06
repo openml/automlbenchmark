@@ -113,7 +113,9 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
-
+lightautoml:
+  project: https://github.com/sberbank-ai-lab/LightAutoML
+  version: '0.2.1'
 
 
 
