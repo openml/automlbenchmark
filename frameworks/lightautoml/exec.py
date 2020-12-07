@@ -29,8 +29,10 @@ def run(dataset, config):
     df_train = pd.DataFrame(dataset.train.data, columns=column_names).astype(column_types, copy=False)
     df_train[dataset.target.name] = y_train
 
+    max_mem_size_gb = float(config.max_mem_size_mb) / 1024
     task = Task(dataset.problem_type)
-    automl = TabularUtilizedAutoML(task=task, timeout=config.max_runtime_seconds, random_state=config.seed)
+    automl = TabularUtilizedAutoML(task=task, timeout=config.max_runtime_seconds, cpu_limit=config.cores,
+                                   memory_limit=max_mem_size_gb, random_state=config.seed)
 
     with utils.Timer() as training:
         oof_pred = automl.fit_predict(train_data=df_train, roles={'target': label}).data
