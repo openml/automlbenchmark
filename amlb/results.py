@@ -118,7 +118,7 @@ class Scoreboard:
             # avoid dtype conversions during reindexing on empty frame
             return df
         fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'result', 'metric', 'mode', 'version',
-                      'params', 'tag', 'utc', 'duration', 'models', 'seed', 'info']
+                      'params', 'app_version', 'utc', 'duration', 'models', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
         dynamic_cols.sort()
@@ -354,7 +354,7 @@ class TaskResult:
             fold=self.fold,
             mode=rconfig().run_mode,
             seed=metadata.seed,
-            tag=rget().project_info.tag,
+            app_version=rget().app_version,
             utc=datetime_iso(),
             metric=metadata.metric,
             duration=meta_result.training_duration if 'training_duration' in meta_result else nan,

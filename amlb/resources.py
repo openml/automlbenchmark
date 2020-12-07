@@ -12,6 +12,7 @@ import sys
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
+from .__version__ import __version__
 
 
 log = logging.getLogger(__name__)
@@ -87,6 +88,20 @@ class Resources:
             tags=tags,
             status=status
         )
+
+    @lazy_property
+    def app_version(self):
+        v = __version__
+        if v != "dev":
+            return v
+        g = self.git_info
+        tokens = []
+        if "/openml/automlbenchmark" not in g.repo:
+            tokens.append(g.repo)
+        tokens.append(g.branch)
+        tokens.append(g.commit[:6])
+        return "{v} ({details})".format(v=v, details=", ".join(tokens))
+
 
     def seed(self, fold=None):
         if isinstance(fold, int) and str(self.config.seed).lower() in ['auto']:

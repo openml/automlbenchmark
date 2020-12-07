@@ -14,6 +14,7 @@ from ..errors import InvalidStateError
 from ..job import Job
 from ..resources import config as rconfig, get as rget
 from ..utils import dir_of, run_cmd
+from ..__version__ import __version__ as dev
 
 
 log = logging.getLogger(__name__)
@@ -136,7 +137,7 @@ class ContainerBenchmark(Benchmark):
             current_branch = rget().git_info.branch
             create_custom_name = False
             status = rget().git_info.status
-            if len(status) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
+            if len(status) > 1 or re.search(r'\[(ahead|behind) \d+\]', status[0]):
                 log.info("Branch status:\n%s", status)
                 force = None
                 while force not in ['y', 'n']:
@@ -163,9 +164,7 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                     )
                 create_custom_name = True
             if create_custom_name and not self._custom_image_name:
-                # current_commit = rget().git_info.commit[:10]
-                # custom_branch = f"{current_branch}#{current_commit}"
-                self._custom_image_name = self._container_image_name(current_branch)
+                self._custom_image_name = self._container_image_name(dev)
 
         self._run_container_build_command(cache)
 
