@@ -11,6 +11,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 import autosklearn
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
+from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
 from packaging import version
 
@@ -21,12 +22,16 @@ log = logging.getLogger(__name__)
 askl_version = version.parse(autosklearn.__version__)
 
 def run(dataset, config):
-    log.info(f"\n**** AutoSklearn [v{askl_version}]****\n")
-    save_metadata(config, version=askl_version)
+    askl_method_version = 2 if config.framework_params.get('_askl2', False) else 1
+    askl_string = "Auto-sklearn2.0" if askl_method_version == 2 else "Auto-sklearn"
+
+    log.info(f"\n**** {askl_string} [v{autosklearn.__version__}]****\n")
+    save_metadata(config, version=autosklearn.__version__)
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
     is_classification = config.type == 'classification'
+    dataset_name = config.name
 
     # Mapping of benchmark metrics to autosklearn metrics
     metrics_mapping = dict(
@@ -45,8 +50,15 @@ def run(dataset, config):
         log.warning("Performance metric %s not supported.", config.metric)
 
     # Set resources based on datasize
-    log.info("Running auto-sklearn with a maximum time of %ss on %s cores with %sMB, optimizing %s.",
-             config.max_runtime_seconds, config.cores, config.max_mem_size_mb, perf_metric)
+    log.info(
+        "Running %s for %s with a maximum time of %ss on %s cores with %sMB, optimizing %s.",
+        askl_string,
+        dataset_name,
+        config.max_runtime_seconds,
+        config.cores,
+        config.max_mem_size_mb,
+        perf_metric,
+    )
     log.info("Environment: %s", os.environ)
 
     X_train = dataset.train.X_enc
@@ -60,7 +72,7 @@ def run(dataset, config):
     ml_memory_limit = config.framework_params.get('_ml_memory_limit', 'auto')
 
     constr_params = {}
-    fit_extra_params = {}
+    fit_extra_params = {'dataset_name': dataset_name}
 
     total_memory_mb = utils.system_memory_mb().total
     if ml_memory_limit == 'auto':
@@ -90,8 +102,15 @@ def run(dataset, config):
         constr_params["ensemble_memory_limit"] = ensemble_memory_limit
 
     log.warning("Using meta-learned initialization, which might be bad (leakage).")
-    # TODO: do we need to set per_run_time_limit too?
-    estimator = AutoSklearnClassifier if is_classification else AutoSklearnRegressor
+    if is_classification:
+        estimator = AutoSklearn2Classifier if askl_method_version == 2 else AutoSklearnClassifier
+    else:
+        if askl_method_version == 2:
+            log.warning(
+                '%s does not support regression, falling back to regular Auto-sklearn!',
+                askl_string,
+            )
+        estimator = AutoSklearnRegressor
 
     if askl_version >= version.parse("0.8"):
         constr_params['metric'] = perf_metric
@@ -102,9 +121,9 @@ def run(dataset, config):
     constr_params["n_jobs"] = n_jobs
     constr_params["seed"] = config.seed
 
-    log.info("Auto-sklearn constructor arguments: %s", constr_params)
-    log.info("Auto-sklearn additional constructor arguments: %s", training_params)
-    log.info("Auto-sklearn fit() arguments: %s", fit_extra_params)
+    log.info("%s constructor arguments: %s", askl_string, constr_params)
+    log.info("%s additional constructor arguments: %s", askl_string, training_params)
+    log.info("%s fit() arguments: %s", askl_string, fit_extra_params)
 
     auto_sklearn = estimator(**constr_params, **training_params)
     with utils.Timer() as training:
@@ -142,23 +161,28 @@ def save_artifacts(estimator, config):
         if 'debug_as_files' in artifacts or 'debug_as_zip' in artifacts:
             print('Saving debug artifacts!')
             debug_dir = output_subdir('debug', config)
-            ignore_extensions = ['.npy', '.pcs', '.model', '.ensemble', '.pkl']
+            ignore_extensions = ['.npy', '.pcs', '.model', '.cv_model', '.ensemble', '.pkl']
             tmp_directory = estimator.automl_._backend.temporary_directory
             if 'debug_as_files' in artifacts:
-                files_to_copy = []
-                for r, d, f in os.walk(tmp_directory):
-                    for file_name in f:
-                        base, ext = os.path.splitext(file_name)
-                        if ext not in ignore_extensions:
-                            files_to_copy.append(os.path.join(r, file_name))
-                for filename in files_to_copy:
-                    dst = filename.replace(tmp_directory, debug_dir+'/')
+                def _copy(filename, **_):
+                    dst = filename.replace(tmp_directory, debug_dir + '/')
                     os.makedirs(os.path.dirname(dst), exist_ok=True)
                     shutil.copyfile(filename, dst)
+
+                utils.walk_apply(
+                    tmp_directory,
+                    _copy,
+                    filtr=lambda path: (
+                        os.path.splitext(path)[1] not in ignore_extensions
+                        and not os.path.isdir(path)
+                    ),
+                )
             else:
-                utils.zip_path(tmp_directory,
-                           os.path.join(debug_dir, "artifacts.zip"),
-                           filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions)
+                utils.zip_path(
+                    tmp_directory,
+                    os.path.join(debug_dir, "artifacts.zip"),
+                    filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions
+                )
     except Exception as e:
         log.debug("Error when saving artifacts= {e}.".format(e), exc_info=True)
 
