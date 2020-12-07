@@ -12,7 +12,7 @@ import sys
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
 from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
-from .__version__ import __version__
+from .__version__ import __version__, _dev_version as dev
 
 
 log = logging.getLogger(__name__)
@@ -67,20 +67,23 @@ class Resources:
     def git_info(self):
         def git(cmd, defval=None):
             try:
-                return run_cmd(f"git {cmd}")[0].strip()
+                return run_cmd(f"git {cmd}", _log_level_=logging.DEBUG)[0].strip()
             except Exception:
                 return defval
 
+        na = "NA"
         version = git("--version")
-        if version:
-            repo = git("remote get-url origin")
-            branch = git("rev-parse --abbrev-ref HEAD")
-            # commit = git("rev-parse --short=10 HEAD")
-            commit = git("rev-parse HEAD")
-            tags = git("tag --points-at HEAD").splitlines()
-            status = git("status -b --porcelain").splitlines()
+        is_git_repo = version and git("rev-parse --git-dir 2> /dev/null")
+        if version and is_git_repo:
+            # git("fetch")
+            repo = git("remote get-url origin", na)
+            branch = git("rev-parse --abbrev-ref HEAD", na)
+            commit = git("rev-parse HEAD", na)
+            tags = git("tag --points-at HEAD", "").splitlines()
+            status = git("status -b --porcelain", "").splitlines()
         else:
-            repo = branch = commit = tags = status = "NA"
+            repo = branch = commit = na
+            tags = status = []
         return Namespace(
             repo=repo,
             branch=branch,
@@ -92,16 +95,15 @@ class Resources:
     @lazy_property
     def app_version(self):
         v = __version__
-        if v != "dev":
+        if v != dev:
             return v
         g = self.git_info
         tokens = []
         if "/openml/automlbenchmark" not in g.repo:
             tokens.append(g.repo)
         tokens.append(g.branch)
-        tokens.append(g.commit[:6])
-        return "{v} ({details})".format(v=v, details=", ".join(tokens))
-
+        tokens.append(g.commit[:7])
+        return "{v} [{details}]".format(v=v, details=", ".join(tokens))
 
     def seed(self, fold=None):
         if isinstance(fold, int) and str(self.config.seed).lower() in ['auto']:

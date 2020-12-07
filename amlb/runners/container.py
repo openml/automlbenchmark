@@ -133,12 +133,11 @@ class ContainerBenchmark(Benchmark):
 
     def _build_image(self, cache=True):
         if self.force_branch:
-            run_cmd("git fetch")
             current_branch = rget().git_info.branch
             create_custom_name = False
             status = rget().git_info.status
             if len(status) > 1 or re.search(r'\[(ahead|behind) \d+\]', status[0]):
-                log.info("Branch status:\n%s", status)
+                print("Branch status:\n%s", '\n'.join(status))
                 force = None
                 while force not in ['y', 'n']:
                     force = input(f"""Branch `{current_branch}` is not clean or up-to-date.
@@ -152,7 +151,7 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
 
             expected_branch = rget().project_info.branch
             tags = rget().git_info.tags
-            if expected_branch and not re.search(r'(?m)^{}$'.format(expected_branch), tags+current_branch):
+            if expected_branch and expected_branch not in tags+[current_branch]:
                 force = None
                 while force not in ['y', 'n']:
                     force = input(f"""Branch `{current_branch}` doesn't match `{expected_branch}` (as required by config.project_repository).
