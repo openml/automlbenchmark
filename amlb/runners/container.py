@@ -133,9 +133,10 @@ class ContainerBenchmark(Benchmark):
     def _build_image(self, cache=True):
         if self.force_branch:
             run_cmd("git fetch")
-            current_branch = run_cmd("git rev-parse --abbrev-ref HEAD")[0].strip()
-            status, _ = run_cmd("git status -b --porcelain")
-            if len(status.splitlines()) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
+            current_branch = rget().git_info.branch
+            create_custom_name = False
+            status = rget().git_info.status
+            if len(status) > 1 or re.search(r'\[(ahead|behind) \d+\]', status):
                 log.info("Branch status:\n%s", status)
                 force = None
                 while force not in ['y', 'n']:
@@ -146,21 +147,25 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                         "The image can't be built as the current branch is not clean or up-to-date. "
                         "Please switch to the expected `{}` branch, and ensure that it is clean before building the container image.".format(rget().project_info.branch)
                     )
+                create_custom_name = True
 
-            tag = rget().project_info.tag
-            tags, _ = run_cmd("git tag --points-at HEAD")
-            if tag and not re.search(r'(?m)^{}$'.format(tag), tags+current_branch):
+            expected_branch = rget().project_info.branch
+            tags = rget().git_info.tags
+            if expected_branch and not re.search(r'(?m)^{}$'.format(expected_branch), tags+current_branch):
                 force = None
                 while force not in ['y', 'n']:
-                    force = input(f"""Branch `{current_branch}` isn't tagged as `{tag}` (as required by config.project_repository).
+                    force = input(f"""Branch `{current_branch}` doesn't match `{expected_branch}` (as required by config.project_repository).
 Do you still want to build the container image? (y/[n]) """).lower() or 'n'
-                if force == 'y':
-                    self._custom_image_name = self._custom_image_name or self._container_image_name(current_branch)
-                else:
+                if force == 'n':
                     raise InvalidStateError(
                         "The image can't be built as current branch is not tagged as required `{}`. "
-                        "Please switch to the expected tagged branch before building the container image.".format(tag)
+                        "Please switch to the expected tagged branch before building the container image.".format(expected_branch)
                     )
+                create_custom_name = True
+            if create_custom_name and not self._custom_image_name:
+                # current_commit = rget().git_info.commit[:10]
+                # custom_branch = f"{current_branch}#{current_commit}"
+                self._custom_image_name = self._container_image_name(current_branch)
 
         self._run_container_build_command(cache)
 

@@ -44,12 +44,12 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ### Pre-requisites
 To run the benchmarks, you will need:
 * Python 3.6+.
-* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
+* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install -U pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
 ### Setup
-Clone the repo:
+Clone the repo (in development environment, you should of course remove the `--depth 1` argument):
 ```bash
 git clone https://github.com/openml/automlbenchmark.git --branch stable --depth 1
 cd automlbenchmark
@@ -318,7 +318,7 @@ Deleting uploaded resources `['ec2/input/validation.yaml', 'ec2/input/config.yam
 By default, a benchmark run creates the following subdirectories and files in the output directory (by default a subdirectory of `./results` with unique name identifying the benchmark run):
 * `scores`: this subdirectory contains
     * `results.csv`: a global scoreboard, keeping scores from all benchmark runs. 
-       For safety reasons, this file is automatically backed up to `scores/backup/results_{currentdate}.csv` by the application before any modification. 
+       For safety reasons, this file is automatically backed up to `scores/backup/results.{currentdate}.csv` by the application before any modification. 
     * individual score files keeping scores for each framework+benchmark combination (not backed up). 
 * `predictions`, this subdirectory contains the last predictions in a standardized format made by each framework-dataset combination.
   Those last predictions are systematically backed up with current data to `predictions/backup` subdirectory before a new prediction is written.

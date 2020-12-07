@@ -11,7 +11,7 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, str_sanitize, touch
+from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
 
 
 log = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class Resources:
 
     @lazy_property
     def project_info(self):
-        split_url = self.config.project_repository.split('#', 2)
+        split_url = self.config.project_repository.split('#', 1)
         repo = split_url[0]
         tag = None if len(split_url) == 1 else split_url[1]
         branch = tag or 'master'
@@ -60,6 +60,32 @@ class Resources:
             repo=repo,
             tag=tag,
             branch=branch
+        )
+
+    @lazy_property
+    def git_info(self):
+        def git(cmd, defval=None):
+            try:
+                return run_cmd(f"git {cmd}")[0].strip()
+            except Exception:
+                return defval
+
+        version = git("--version")
+        if version:
+            repo = git("remote get-url origin")
+            branch = git("rev-parse --abbrev-ref HEAD")
+            # commit = git("rev-parse --short=10 HEAD")
+            commit = git("rev-parse HEAD")
+            tags = git("tag --points-at HEAD").splitlines()
+            status = git("status -b --porcelain").splitlines()
+        else:
+            repo = branch = commit = tags = status = "NA"
+        return Namespace(
+            repo=repo,
+            branch=branch,
+            commit=commit,
+            tags=tags,
+            status=status
         )
 
     def seed(self, fold=None):
