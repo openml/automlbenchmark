@@ -73,7 +73,7 @@ class Resources:
         if str(self.config.seed).lower() in ['none', '']:
             return None
         elif str(self.config.seed).lower() in ['auto']:
-            return random.randint(1, (1 << 32) - 1)  # limiting seed to int32
+            return random.randint(1, (1 << 31) - 1)  # limiting seed to signed int32 for R frameworks
         else:
             return self.config.seed
 
