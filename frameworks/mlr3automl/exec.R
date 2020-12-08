@@ -21,34 +21,22 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
   
-  preprocessing = "stability"
-  portfolio = TRUE
-  resampling = rsmp("holdout")
-  terminator = trm("none")
-
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
   print(paste("remaining budget: ", remaining_budget, " seconds"))
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
-    
     if ("twoclass" %in% train$properties) {
       measure = msr("classif.auc")
     } else {
       measure = msr("classif.logloss")
     }
-    
-    model <- AutoML(train, resampling = resampling, terminator = terminator,
-                    measure = measure,
-                    runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = preprocessing, portfolio = portfolio)
+    model <- AutoML(train, runtime = as.integer(remaining_budget * 0.8), measure = measure)
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, resampling = resampling, terminator = terminator,
-                    runtime = as.integer(remaining_budget * 0.8),
-                    preprocessing = preprocessing, portfolio = portfolio)
+    model <- AutoML(train, runtime = as.integer(remaining_budget * 0.8))
   } else {
     stop("Task type not supported!")
   }
