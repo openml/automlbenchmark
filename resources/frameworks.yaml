@@ -20,8 +20,9 @@ __dummy_framework_with_defaults:
 
 AutoGluon:
   version: "stable"
-  description: "AutoGluon-Tabular: Unlike existing AutoML frameworks that primarily focus on model/hyperparameter selection,
-  AutoGluon-Tabular succeeds by ensembling multiple models and stacking them in multiple layers."
+  description: |
+    AutoGluon-Tabular: Unlike existing AutoML frameworks that primarily focus on model/hyperparameter selection,
+    AutoGluon-Tabular succeeds by ensembling multiple models and stacking them in multiple layers.
   project: https://auto.gluon.ai
   refs: [https://arxiv.org/abs/2003.06505]
 #  params:
@@ -29,14 +30,16 @@ AutoGluon:
 
 AutoGluon_bestquality:
   extends: AutoGluon
-  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor."
+  description: |
+    AutoGluon with 'best_quality' preset provides the most accurate overall predictor.
   params:
     presets: best_quality
 
 autosklearn:
   version: 'stable'
-  description: "auto-sklearn frees a machine learning user from algorithm selection and hyperparameter tuning.
-  It leverages recent advantages in Bayesian optimization, meta-learning and ensemble construction."
+  description: |
+    auto-sklearn frees a machine learning user from algorithm selection and hyperparameter tuning.
+    It leverages recent advantages in Bayesian optimization, meta-learning and ensemble construction.
   project: https://automl.github.io/auto-sklearn/
   refs: [http://papers.nips.cc/paper/5872-efficient-and-robust-automated-machine-learning.pdf]
 #  params:
@@ -45,33 +48,39 @@ autosklearn:
 
 AutoWEKA:
   version: 'stable'
-  description: "Auto-WEKA considers the problem of simultaneously selecting a learning algorithm and setting its hyperparameters, going beyond previous methods that address these issues in isolation.
-  Auto-WEKA does this using a fully automated approach, leveraging recent innovations in Bayesian optimization"
+  description: |
+    Auto-WEKA considers the problem of simultaneously selecting a learning algorithm and setting its hyperparameters, going beyond previous methods that address these issues in isolation.
+    Auto-WEKA does this using a fully automated approach, leveraging recent innovations in Bayesian optimization.
   project: https://www.cs.ubc.ca/labs/beta/Projects/autoweka/
   refs: [https://www.cs.ubc.ca/labs/beta/Projects/autoweka/papers/16-599.pdf]
 
 autoxgboost:
   version: 'latest'
-  description: "autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO."
+  description: |
+    autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO.
   project: https://github.com/ja-thomas/autoxgboost
   refs: [https://arxiv.org/abs/1807.03873v2]
 
 GAMA:
   version: 'stable'
-  description: "GAMA tries to find a good machine learning pipeline.
-  For the machine learning pipeline GAMA considers data preprocessing steps, various machine learning algorithms, and their possible hyperparameters configurations."
+  description: |
+    GAMA tries to find a good machine learning pipeline.
+    For the machine learning pipeline GAMA considers data preprocessing steps, various machine learning algorithms, and their possible hyperparameters configurations.
   project: https://github.com/PGijsbers/gama
   refs: [https://joss.theoj.org/papers/10.21105/joss.01132]
 
 H2OAutoML:
   version: 'stable'
-  description: "H2O AutoML is a highly scalable, fully-automated, supervised learning algorithm which automates the process of training a large selection of candidate models and stacked ensembles within a singlefunction"
+  description: |
+    H2O AutoML is a highly scalable, fully-automated, supervised learning algorithm
+    which automates the process of training a large selection of candidate models and stacked ensembles within a singlefunction.
   project: http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
   refs: [https://www.automl.org/wp-content/uploads/2020/07/AutoML_2020_paper_61.pdf]
 
 hyperoptsklearn:
   version: 'latest'
-  description: "hyperopt-sklearn uses Hyperopt to define a search space that encompasses many standard Scikit-Learn components and common patterns of composing them together."
+  description: |
+    hyperopt-sklearn uses Hyperopt to define a search space that encompasses many standard Scikit-Learn components and common patterns of composing them together.
   project: http://hyperopt.github.io/hyperopt-sklearn/
   refs: [http://conference.scipy.org/proceedings/scipy2014/pdfs/komer.pdf]
 #  params:
@@ -81,7 +90,8 @@ hyperoptsklearn:
 
 mljarsupervised:
   version: 'stable'
-  description: "AutoML mljar-supervised abstracts the common way to preprocess the data, construct the machine learning models, and perform hyper-parameters tuning to find the best model."
+  description: |
+    AutoML mljar-supervised abstracts the common way to preprocess the data, construct the machine learning models, and perform hyper-parameters tuning to find the best model.
   project: https://supervised.mljar.com/
 #  params:
 #    algorithms: ["Baseline"]
@@ -89,13 +99,15 @@ mljarsupervised:
 
 mljarsupervised_compete:
   extends: mljarsupervised
-  description: "MLJar using 'Compete' mode to provide most accurate predictor."
+  description: |
+    MLJar using 'Compete' mode to provide most accurate predictor.
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
 MLPlan:
   version: 'stable'
-  description: "ML-Plan is an approach to AutoML based on hierarchical task networks (HTNs)."
+  description: |
+    ML-Plan is an approach to AutoML based on hierarchical task networks (HTNs).
   project: http://mlplan.org
   refs: [https://doi.org/10.1007/s10994-018-5735-z]
 
@@ -111,7 +123,8 @@ MLPlanWEKA:
 
 oboe:
   version: 'latest'
-  description: "oboe is an AutoML model selection system to select estimators or pipelines for a dataset."
+  description: |
+    oboe is an AutoML model selection system to select estimators or pipelines for a dataset.
   project: https://github.com/udellgroup/oboe
 #  params:
 #    build_ensemble: false
@@ -120,7 +133,8 @@ oboe:
 
 TPOT:
   version: 'stable'
-  description: "TPOT is a Python Automated Machine Learning tool that optimizes machine learning pipelines using genetic programming."
+  description: |
+    TPOT is a Python Automated Machine Learning tool that optimizes machine learning pipelines using genetic programming.
   project: https://github.com/EpistasisLab/tpot
   refs:
     - https://academic.oup.com/bioinformatics/article/36/1/250/5511404
@@ -141,23 +155,27 @@ TPOT:
 #######################################
 
 constantpredictor:
-  description: "Fast dummy classifier mainly used to test the app and/or datasets: this doesn't encode data."
+  description: |
+    Fast dummy classifier mainly used to test the app and/or datasets: this doesn't encode data.
   project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
 
 constantpredictor_enc:
   extends: constantpredictor
-  description: "Fast dummy classifier mainly used to test the app and/or datasets: this version encodes data."
+  description: |
+    Fast dummy classifier mainly used to test the app and/or datasets: this version encodes data.
   params:
     encode: true
 
 DecisionTree:
   version: 'stable'
-  description: "A simple decision tree implementation (scikit-learn) used for testing or as a reference base."
+  description: |
+    A simple decision tree implementation (scikit-learn) used for testing or as a reference base.
   project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
 
 RandomForest:
   version: 'stable'
-  description: "A simple Random Forest implementation (scikit-learn) used for testing or as a reference base."
+  description: |
+    A simple Random Forest implementation (scikit-learn) used for testing or as a reference base.
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000
@@ -166,12 +184,14 @@ RandomForest:
 
 ranger:
   version: 'stable'
-  description: "A Random Forest implementation on R, mainly used for testing and as an example of R integration."
+  description: |
+    A Random Forest implementation on R, mainly used for testing and as an example of R integration.
   project: https://github.com/imbs-hl/ranger
 
 TunedRandomForest:
   version: 'stable'
-  description: "A Tuned Random Forest implementation (scikit-learn) trying to optimize over max_features, and used as a reference base."
+  description: |
+    A Tuned Random Forest implementation (scikit-learn) trying to optimize over max_features, and used as a reference base.
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
     n_estimators: 2000
