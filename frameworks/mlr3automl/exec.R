@@ -8,12 +8,8 @@ library(mlr3oml)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed, name) {
   start_time = Sys.time()
-  # AutoML benchmark uses unsigned 32bit integers as seeds, which may be too large for R (32bit signed)
-  if (seed > .Machine$integer.max) {
-    set.seed(42)
-  } else {
-    set.seed(seed)
-  }
+  set.seed(seed)
+  
   train <- mlr3oml::read_arff(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
