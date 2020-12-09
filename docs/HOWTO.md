@@ -327,7 +327,11 @@ The framework definition consists in an entry in a `yaml` file with the framewor
  1. to indicate the Python module with the integration code: `module` or `extends`.
  1. to pass optional parameters to the framework and/or the integration code: `params`.
  
-Default framework definitions are defined in file `resources/frameworks.yaml`.
+Default framework definitions are defined in file `resources/frameworks.yaml` in lexicographic order, where `version` should be set to `stable`, which will point dynamically to the most recent official release available.
+
+Frameworks that offer the possibility to test cutting edge version (e.g. nightly builds, `dev`/`master` repo, ...) can add an entry to `resources/frameworks_latest.yaml`, where `version` should be set to `latest`.
+
+Maintainers of this repository try to regularly — ideally, every quarter — create a framework definition using frozen framework versions in order to favour the reproducibility of the published benchmarks.
 
 Following the [custom configuration](#custom-configuration), it is possible to override and/or add a framework definitions by creating a `frameworks.yaml` file in your `user_dir`.
 
