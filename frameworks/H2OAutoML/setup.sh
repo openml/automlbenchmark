@@ -4,7 +4,7 @@ VERSION=${1:-"stable"}
 H2O_REPO=${2:-"https://h2o-release.s3.amazonaws.com/h2o"}
 echo "setting up H2O version $VERSION"
 
-. ${HERE}/../shared/setup.sh ""
+. ${HERE}/../shared/setup.sh ${HERE}
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y openjdk-8-jdk
@@ -13,8 +13,10 @@ PIP install --no-cache-dir -r ${HERE}/requirements.txt
 
 if  [[ "$VERSION" = "stable" ]]; then
     h2o_package="h2o"
+elif [[ "$VERSION" = "zermelo" ]]; then
+    h2o_package="${H2O_REPO}/rel-zermelo/2/Python/h2o-3.32.0.2-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "zahradnik" ]]; then
-    h2o_package="${H2O_REPO}/rel-zahradnik/4/Python/h2o-3.30.0.4-py2.py3-none-any.whl"
+    h2o_package="${H2O_REPO}/rel-zahradnik/7/Python/h2o-3.30.0.7-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yule" ]]; then
     h2o_package="${H2O_REPO}/rel-yule/3/Python/h2o-3.28.1.3-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yu" ]]; then
