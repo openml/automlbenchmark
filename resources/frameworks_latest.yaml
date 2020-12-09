@@ -19,6 +19,11 @@ AutoGluon_bestquality:
 autosklearn:
   version: 'latest'
 
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
+
 AutoWEKA:
   version: 'latest'
 

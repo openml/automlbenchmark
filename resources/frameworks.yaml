@@ -48,7 +48,6 @@ autosklearn:
 
 autosklearn2:
   extends: autosklearn
-  version: 'stable'
   params:
     _askl2: true
 
