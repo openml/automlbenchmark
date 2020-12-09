@@ -43,8 +43,13 @@ autosklearn:
   project: https://automl.github.io/auto-sklearn/
   refs: [http://papers.nips.cc/paper/5872-efficient-and-robust-automated-machine-learning.pdf]
 #  params:
-#    _save_artifacts: ['models']
+#    _save_artifacts: ['models', 'debug_as_files']
 #    _n_jobs: 1
+
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
 
 AutoWEKA:
   version: 'stable'
