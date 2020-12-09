@@ -74,7 +74,7 @@ def run(dataset, config):
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from %s.", dataset.train.path)
         train = None
-        if version.parse(h2o.__version__) >= version.parse("3.32.0.3"):  # previous versions may fail to parse correctly arff files using single quotes as enum/string delimiters
+        if version.parse(h2o.__version__) >= version.parse("3.32.0.3"):  # previous versions may fail to parse correctly some rare arff files using single quotes as enum/string delimiters (pandas also fails on same datasets)
             import_kwargs['quotechar'] = '"'
             train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config), **import_kwargs)
             if not verify_loaded_frame(train, dataset):
@@ -94,7 +94,6 @@ def run(dataset, config):
                   config.max_runtime_seconds, config.cores, sort_metric)
 
         aml = H2OAutoML(max_runtime_secs=config.max_runtime_seconds,
-                        max_runtime_secs_per_model=round(config.max_runtime_seconds/2),  # to prevent timeout on ensembles
                         sort_metric=sort_metric,
                         seed=config.seed,
                         **training_params)
