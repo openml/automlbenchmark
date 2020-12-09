@@ -11,10 +11,10 @@ from h2o.automl import H2OAutoML
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import to_data_frame, write_csv
-from amlb.results import NoResultError, save_predictions_to_file
+from amlb.results import NoResultError, save_predictions
 from amlb.utils import Monitoring, Timer, walk_apply, zip_path
 from amlb.resources import config as rconfig
-from frameworks.shared.callee import output_subdir
+from frameworks.shared.callee import output_subdir, save_metadata
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,8 @@ class BackendMemoryMonitoring(Monitoring):
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** H2O AutoML ****\n")
+    log.info(f"\n**** H2O AutoML [v{h2o.__version__}] ****\n")
+    save_metadata(config, version=h2o.__version__)
     # Mapping of benchmark metrics to H2O metrics
     metrics_mapping = dict(
         acc='mean_per_class_error',
@@ -101,7 +102,7 @@ def run(dataset: Dataset, config: TaskConfig):
         if not aml.leader:
             raise NoResultError("H2O could not produce any model in the requested time.")
 
-        save_predictions(aml, test, dataset=dataset, config=config)
+        save_preds(aml, test, dataset=dataset, config=config)
         save_artifacts(aml, dataset=dataset, config=config)
 
         return dict(
@@ -154,12 +155,12 @@ def save_artifacts(automl, dataset, config):
             test = h2o.get_frame(frame_name('test', config))
             for mid in lb['model_id']:
                 model = h2o.get_model(mid)
-                save_predictions(model, test,
-                                 dataset=dataset,
-                                 config=config,
-                                 predictions_file=os.path.join(predictions_dir, mid, 'predictions.csv'),
-                                 preview=False
-                                 )
+                save_preds(model, test,
+                           dataset=dataset,
+                           config=config,
+                           predictions_file=os.path.join(predictions_dir, mid, 'predictions.csv'),
+                           preview=False
+                           )
             zip_path(predictions_dir,
                      os.path.join(predictions_dir, "models_predictions.zip"))
 
@@ -184,7 +185,7 @@ def save_model(model_id, dest_dir='.', mformat='mojo'):
         model.save_model_details(path=dest_dir)
 
 
-def save_predictions(model, test, dataset, config, predictions_file=None, preview=True):
+def save_preds(model, test, dataset, config, predictions_file=None, preview=True):
     h2o_preds = model.predict(test).as_data_frame(use_pandas=False)
     preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
     y_pred = preds.iloc[:, 0]
@@ -201,10 +202,10 @@ def save_predictions(model, test, dataset, config, predictions_file=None, previe
         prob_labels = None
     truth = y_truth.values
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file if predictions_file is None else predictions_file,
-                             probabilities=probabilities,
-                             probabilities_labels=prob_labels,
-                             predictions=predictions,
-                             truth=truth,
-                             preview=preview)
+    save_predictions(dataset=dataset,
+                     output_file=config.output_predictions_file if predictions_file is None else predictions_file,
+                     probabilities=probabilities,
+                     probabilities_labels=prob_labels,
+                     predictions=predictions,
+                     truth=truth,
+                     preview=preview)

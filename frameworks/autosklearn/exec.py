@@ -13,13 +13,14 @@ from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** AutoSklearn ****\n")
+    log.info(f"\n**** AutoSklearn [v{autosklearn.__version__}]****\n")
+    save_metadata(config, version=autosklearn.__version__)
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 

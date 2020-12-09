@@ -21,7 +21,8 @@ def simple_resource():
             frameworks=Namespace(
                 root_module="frameworks",
                 definition_file=[],
-                allow_duplicates=False
+                allow_duplicates=False,
+                tags=[]
             )
         )
     )

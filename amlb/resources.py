@@ -10,8 +10,9 @@ import re
 import sys
 
 from amlb.benchmarks.parser import benchmark_load
-from amlb.framework_definitions import load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, str_sanitize, touch
+from amlb.frameworks import default_tag, load_framework_definitions
+from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
+from .__version__ import __version__, _dev_version as dev
 
 
 log = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class Resources:
 
     @lazy_property
     def project_info(self):
-        split_url = self.config.project_repository.split('#', 2)
+        split_url = self.config.project_repository.split('#', 1)
         repo = split_url[0]
         tag = None if len(split_url) == 1 else split_url[1]
         branch = tag or 'master'
@@ -61,6 +62,47 @@ class Resources:
             tag=tag,
             branch=branch
         )
+
+    @lazy_property
+    def git_info(self):
+        def git(cmd, defval=None):
+            try:
+                return run_cmd(f"git {cmd}", _log_level_=logging.DEBUG)[0].strip()
+            except Exception:
+                return defval
+
+        na = "NA"
+        version = git("--version")
+        is_git_repo = version and git("rev-parse --git-dir 2> /dev/null")
+        if is_git_repo:
+            repo = git("remote get-url origin", na)
+            branch = git("rev-parse --abbrev-ref HEAD", na)
+            commit = git("rev-parse HEAD", na)
+            tags = git("tag --points-at HEAD", "").splitlines()
+            status = git("status -b --porcelain", "").splitlines()
+        else:
+            repo = branch = commit = na
+            tags = status = []
+        return Namespace(
+            repo=repo,
+            branch=branch,
+            commit=commit,
+            tags=tags,
+            status=status
+        )
+
+    @lazy_property
+    def app_version(self):
+        v = __version__
+        if v != dev:
+            return v
+        g = self.git_info
+        tokens = []
+        if "/openml/automlbenchmark" not in g.repo:
+            tokens.append(g.repo)
+        tokens.append(g.branch)
+        tokens.append(g.commit[:7])
+        return "{v} [{details}]".format(v=v, details=", ".join(tokens))
 
     def seed(self, fold=None):
         if isinstance(fold, int) and str(self.config.seed).lower() in ['auto']:
@@ -77,13 +119,18 @@ class Resources:
         else:
             return self.config.seed
 
-    def framework_definition(self, name):
+    def framework_definition(self, name, tag=None):
         """
         :param name:
         :return: name of the framework as defined in the frameworks definition file
         """
         lname = name.lower()
-        framework = next((f for n, f in self._frameworks if n.lower() == lname), None)
+        if tag is None:
+            tag = default_tag
+        if tag not in self._frameworks:
+            raise ValueError("Incorrect tag `{}`: only those among {} are allowed.".format(tag, self.config.frameworks.tags))
+        frameworks = self._frameworks[tag]
+        framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
         return framework, framework.name

@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${2:-"latest"}
+AMLB_DIR="$1"
+VERSION=${2:-"stable"}
+if [[ "$VERSION" == "stable" ]]; then
+    VERSION="latest"
+fi
 
 echo "Setup ML-Plan for version $VERSION"
 
 # creating local venv
-. $HERE/../shared/setup.sh $HERE
+. ${HERE}/../shared/setup.sh ${HERE}
 
 if [[ -x "$(command -v apt-get)" ]]; then
     echo "setup system packages"

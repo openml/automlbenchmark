@@ -1,14 +1,20 @@
+import glob
 import logging
 import os
 import json
+import re
 import tempfile
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
 
 log = logging.getLogger(__name__)
 
+
 def run(dataset, config):
-    log.info("\n**** ML-Plans ****\n")
+    jar_file = glob.glob("{here}/lib/mlplan/mlplan-cli*.jar".format(here=os.path.dirname(__file__)))[0]
+    version = re.match(r".*/mlplan-cli-(.*).jar", jar_file)[1]
+    log.info(f"\n**** ML-Plan [v{version}] ****\n")
+    save_metadata(config, version=version)
 
     is_classification = config.type == 'classification'
     
@@ -27,7 +33,7 @@ def run(dataset, config):
 
     metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if metric is None:
-	    raise ValueError('Performance metric {} is not supported.'.format(config.metric))
+        raise ValueError('Performance metric {} is not supported.'.format(config.metric))
     
     train_file = dataset.train.path
     test_file = dataset.test.path
@@ -44,14 +50,15 @@ def run(dataset, config):
     if config.type == 'regression':
         mode += '-regression'
 
-    log.info("Running ML-Plan with backend %s in mode %s and a maximum time of %ss on %s cores with %sMB for the JVM, optimizing %s.", backend, mode, config.max_runtime_seconds, config.cores, config.max_mem_size_mb, metric)
+    log.info("Running ML-Plan with backend %s in mode %s and a maximum time of %ss on %s cores with %sMB for the JVM, optimizing %s.",
+             backend, mode, config.max_runtime_seconds, config.cores, config.max_mem_size_mb, metric)
     log.info("Environment: %s", os.environ)
 
     predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
     statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
     #tmp_dir = output_subdir('mlplan_tmp', config)
 
-    cmd_root = "java -jar -Xmx{mem_mb}M {here}/lib/mlplan/mlplan-cli*.jar ".format(here=os.path.dirname(__file__),mem_mb=mem_limit)
+    cmd_root = f"java -jar -Xmx{mem_limit}M {jar_file}"
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         cmd_params = dict(
@@ -68,7 +75,7 @@ def run(dataset, config):
             **training_params
        )
 
-        cmd = cmd_root + ' '.join(["-{} {}".format(k, v) for k, v in cmd_params.items()])
+        cmd = cmd_root + ''.join([" -{} {}".format(k, v) for k, v in cmd_params.items()])
 
         with utils.Timer() as training:
             utils.run_cmd(cmd, _live_output_=True)
@@ -98,6 +105,7 @@ def run(dataset, config):
         models_count=numEvals,
         training_duration=training.duration
     )
+
 
 if __name__ == '__main__':
     call_run(run)

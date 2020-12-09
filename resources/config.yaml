@@ -37,7 +37,9 @@ setup:
 frameworks:
   definition_file: '{root}/resources/frameworks.yaml'
   root_module: frameworks
-  allow_duplicates: false  # if true, the last definition is used.
+  allow_duplicates: false     # if true, the last definition is used.
+  tags: ['stable', 'latest', '2020Q2']  # the list of supported tags when looking up frameworks:
+                              # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:
   definition_dir:
@@ -46,10 +48,10 @@ benchmarks:
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
-  metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType)
-    binary: ['auc', 'logloss', 'acc']
-    multiclass: ['logloss', 'acc']
-    regression: ['rmse', 'r2']
+  metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType), only the first metric is optimized by the frameworks, the others are computed only for information purpose.
+    binary: ['auc', 'logloss', 'acc', 'balacc']
+    multiclass: ['logloss', 'acc', 'balacc']
+    regression: ['rmse', 'r2', 'mae']
   defaults:
     folds: 10
     max_runtime_seconds: 3600

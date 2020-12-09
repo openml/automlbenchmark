@@ -1,6 +1,6 @@
 import pytest
 from amlb.utils import Namespace
-from amlb.framework_definitions import _sanitize_and_add_defaults, \
+from amlb.frameworks.definitions import _sanitize_and_add_defaults, \
     _add_framework_name, _find_all_parents, \
     _update_frameworks_with_parent_definitions, _remove_self_reference_extensions, \
     _remove_frameworks_with_unknown_parent

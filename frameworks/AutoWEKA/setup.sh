@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${1:-"latest"}
-. $HERE/../shared/setup.sh
+VERSION=${1:-"stable"}
+. ${HERE}/../shared/setup.sh ""
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y wget unzip openjdk-8-jdk

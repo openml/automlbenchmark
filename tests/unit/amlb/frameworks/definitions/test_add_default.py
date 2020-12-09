@@ -1,5 +1,5 @@
 import pytest
-from amlb.framework_definitions import _add_default_module, _add_default_version, \
+from amlb.frameworks.definitions import _add_default_module, _add_default_version, \
     _add_default_setup_args, _add_default_setup_script, _add_default_setup_cmd, \
     _add_default_params, _add_default_image
 from amlb.utils import Namespace
@@ -41,11 +41,11 @@ def test_module_is_not_replaced_if_defined():
     assert framework.module == "custom"
 
 
-def test_version_is_set_to_latest_if_undefined():
+def test_version_is_set_to_stable_if_undefined():
     framework = Namespace()
     _add_default_version(framework)
     assert "version" in framework
-    assert framework.version == "latest"
+    assert framework.version == "stable"
 
 
 def test_version_is_kept_if_defined():

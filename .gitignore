@@ -1,6 +1,7 @@
 #build/run/local
 Dockerfile
 .marker*
+.installed
 my_*
 
 # python env
