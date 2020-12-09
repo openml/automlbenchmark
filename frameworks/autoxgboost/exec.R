@@ -2,7 +2,7 @@ library(mlr)
 library(autoxgboost)
 library(farff)
 
-run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget) {
+run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, meta_results_file) {
   train <- farff::readARFF(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
@@ -17,12 +17,17 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     stop("Task type not supported!")
   }
 
-  mod <- train(lrn, train)
+  mod <- NULL
+  preds <- NULL
+  training <- function() mod <<- train(lrn, train)
+  prediction <- function() preds <<- predict(mod, newdata = test)$data
+
+  train_duration <- system.time(training())[['elapsed']]
 
   test <- farff::readARFF(test_file)
   colnames(test) <- make.names(colnames(test))
+  predict_duration <- system.time(prediction())[['elapsed']]
 
-  preds <- predict(mod, newdata = test)$data
   preds <- preds[c(2:ncol(preds), 1)]
   names(preds)[names(preds) == "response"] <- "predictions"
 
@@ -31,10 +36,11 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   }
   # FIXME: label encoding for predictions and truth?
 
-  write.table(preds, file = output_predictions_file,
-    row.names = FALSE, col.names = TRUE,
-    sep = ",", quote = FALSE
-  )
+  write.csv(preds, file = output_predictions_file, row.names = FALSE)
+
+  meta_results <- data.frame(key=c("training_duration", "predict_duration"),
+                             value=c(train_duration, predict_duration))
+  write.csv(meta_results, file = meta_results_file, row.names = FALSE)
 }
 
 # args = commandArgs(trailingOnly=TRUE)

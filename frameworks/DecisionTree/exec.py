@@ -26,7 +26,8 @@ def run(dataset: Dataset, config: TaskConfig):
 
     with Timer() as training:
         predictor.fit(X_train, y_train)
-    predictions = predictor.predict(X_test)
+    with Timer() as predict:
+        predictions = predictor.predict(X_test)
     probabilities = predictor.predict_proba(X_test) if is_classification else None
 
     save_predictions(dataset=dataset,
@@ -37,5 +38,6 @@ def run(dataset: Dataset, config: TaskConfig):
 
     return dict(
         models_count=1,
-        training_duration=training.duration
+        training_duration=training.duration,
+        predict_duration=predict.duration
     )

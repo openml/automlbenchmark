@@ -41,6 +41,7 @@ def result(output_file=None,
            error_message=None,
            models_count=None,
            training_duration=None,
+           predict_duration=None,
            **others):
     return locals()
 

@@ -73,7 +73,7 @@ def run(dataset, config):
             os=statistics_file,
             tmp=tmp_dir,
             **training_params
-       )
+        )
 
         cmd = cmd_root + ''.join([" -{} {}".format(k, v) for k, v in cmd_params.items()])
 

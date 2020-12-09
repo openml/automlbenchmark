@@ -66,7 +66,8 @@ def run(dataset, config):
         gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
 
     log.info('Predicting on the test set.')
-    predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
+    with utils.Timer() as predict:
+        predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
     if is_classification is not None:
         probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target, encoding='utf-8')
     else:
@@ -78,7 +79,8 @@ def run(dataset, config):
         probabilities=probabilities,
         target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
-        training_duration=training.duration
+        training_duration=training.duration,
+        predict_duration=predict.duration
     )
 
 

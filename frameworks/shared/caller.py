@@ -96,5 +96,6 @@ def run_in_venv(caller_file, script_file: str, *args,
         return dict(
             models_count=res.models_count if res.models_count is not None else 1,
             training_duration=res.training_duration if res.training_duration is not None else proc_timer.duration,
+            predict_duration=res.predict_duration,
             **res.others.__dict__
         )
