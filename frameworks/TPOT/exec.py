@@ -10,16 +10,18 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-from tpot import TPOTClassifier, TPOTRegressor
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from tpot import TPOTClassifier, TPOTRegressor, __version__
+
+from frameworks.shared.callee import call_run, output_subdir, result, save_metadata, utils
 
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** TPOT ****\n")
+    log.info(f"\n**** TPOT [v{__version__}]****\n")
+    save_metadata(config, version=__version__)
 
     is_classification = config.type == 'classification'
     # Mapping of benchmark metrics to TPOT metrics

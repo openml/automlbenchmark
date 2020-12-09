@@ -8,6 +8,7 @@ from .resources import Resources
 from .benchmark import Benchmark, SetupMode
 from .runners import AWSBenchmark, DockerBenchmark, SingularityBenchmark
 from .results import TaskResult
+from .__version__ import __version__
 
 __all__ = [
     "log",
@@ -19,4 +20,5 @@ __all__ = [
     "AWSBenchmark",
     "SetupMode",
     "TaskResult",
+    "__version__"
 ]

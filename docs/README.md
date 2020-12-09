@@ -44,19 +44,19 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ### Pre-requisites
 To run the benchmarks, you will need:
 * Python 3.6+.
-* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install --upgrade pip`.
+* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install -U pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
 ### Setup
-Clone the repo:
+Clone the repo (in development environment, you should of course remove the `--depth 1` argument):
 ```bash
 git clone https://github.com/openml/automlbenchmark.git --branch stable --depth 1
 cd automlbenchmark
 ```
 Optional: create a Python3 virtual environment.
 
-- _**NOTE**: we don't recommend to create your virtual environment with `virtualenv` library here as the application may create additional virtual environments for some frameworks to run in isolation._
+- _**NOTE**: we don't recommend creating your virtual environment with `virtualenv` library here as the application may create additional virtual environments for some frameworks to run in isolation._
 _Those virtual environments are created internally using `python -m venv` and we encountered issues with `pip` when `venv` is used on top of a `virtualenv` environment._
 _Therefore, we rather suggest one of the method below:_ 
 
@@ -105,6 +105,8 @@ python3 runbenchmark.py constantpredictor
 python3 runbenchmark.py tpot test
 python3 runbenchmark.py autosklearn openml/t/59 -m docker
 python3 runbenchmark.py h2oautoml validation 1h4c -m aws
+python3 runbenchmark.py autogluon:latest validation
+python3 runbenchmark.py tpot:2020Q2
 ```
 
 For the complete list of supported arguments, run:
@@ -113,7 +115,7 @@ python3 runbenchmark.py --help
 ```
 
 ```text
-usage: runbenchmark.py [-h] [-m {local,docker,aws}]
+usage: runbenchmark.py [-h] [-m {local,aws,docker,singularity}]
                        [-t [task_id [task_id ...]]]
                        [-f [fold_num [fold_num ...]]] [-i input_dir]
                        [-o output_dir] [-u user_dir] [-p parallel_jobs]
@@ -122,24 +124,30 @@ usage: runbenchmark.py [-h] [-m {local,docker,aws}]
 
 positional arguments:
   framework             The framework to evaluate as defined by default in
-                        resources/frameworks.yaml.
-  benchmark             The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, 
-                        a path to a benchmark description file, or an openml suite or task. 
-                        OpenML references should be formatted as 'openml/s/X'  and 'openml/t/Y', 
-                        for studies and tasks respectively. Defaults to `test`.
-  constraint            The constraint definition to use as defined by default in
-                        resources/constraints.yaml. Defaults to `test`.
+                        resources/frameworks.yaml. To use a labelled framework
+                        (i.e. a framework defined in
+                        resources/frameworks_{label}.yaml), use the syntax
+                        {framework}:{label}.
+  benchmark             The benchmark type to run as defined by default in
+                        resources/benchmarks/{benchmark}.yaml, a path to a
+                        benchmark description file, or an openml suite or
+                        task. OpenML references should be formatted as
+                        'openml/s/X' and 'openml/t/Y', for studies and tasks
+                        respectively. Defaults to `test`.
+  constraint            The constraint definition to use as defined by default
+                        in resources/constraints.yaml. Defaults to `test`.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -m {local,docker,aws}, --mode {local,docker,aws}
+  -m {local,docker,aws,singularity}, --mode {local,docker,aws,singularity}
                         The mode that specifies how/where the benchmark tasks
                         will be running. Defaults to local.
   -t [task_id [task_id ...]], --task [task_id [task_id ...]]
                         The specific task name (as defined in the benchmark
-                        file) to run. When an OpenML reference is used as benchmark, 
-                        the dataset name should be used instead. If not provided, 
-                        then all tasks from the benchmark will be run.
+                        file) to run. When an OpenML reference is used as
+                        benchmark, the dataset name should be used instead. If
+                        not provided, then all tasks from the benchmark will
+                        be run.
   -f [fold_num [fold_num ...]], --fold [fold_num [fold_num ...]]
                         If task is provided, the specific fold(s) to run. If
                         fold is not provided, then all folds from the task
@@ -318,7 +326,7 @@ Deleting uploaded resources `['ec2/input/validation.yaml', 'ec2/input/config.yam
 By default, a benchmark run creates the following subdirectories and files in the output directory (by default a subdirectory of `./results` with unique name identifying the benchmark run):
 * `scores`: this subdirectory contains
     * `results.csv`: a global scoreboard, keeping scores from all benchmark runs. 
-       For safety reasons, this file is automatically backed up to `scores/backup/results_{currentdate}.csv` by the application before any modification. 
+       For safety reasons, this file is automatically backed up to `scores/backup/results.{currentdate}.csv` by the application before any modification. 
     * individual score files keeping scores for each framework+benchmark combination (not backed up). 
 * `predictions`, this subdirectory contains the last predictions in a standardized format made by each framework-dataset combination.
   Those last predictions are systematically backed up with current data to `predictions/backup` subdirectory before a new prediction is written.

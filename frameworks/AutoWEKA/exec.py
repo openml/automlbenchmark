@@ -5,14 +5,17 @@ import os
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import reorder_dataset
-from amlb.results import NoResultError, save_predictions_to_file
+from amlb.results import NoResultError, save_predictions
 from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
+
+from frameworks.shared.callee import save_metadata
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** AutoWEKA ****\n")
+    log.info(f"\n**** AutoWEKA [v{config.framework_version}]****\n")
+    save_metadata(config)
 
     is_classification = config.type == 'classification'
     if not is_classification:
@@ -83,12 +86,12 @@ def run(dataset: Dataset, config: TaskConfig):
             predictions.append(pred)
             truth.append(tru)
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=truth,
-                             probabilities_labels=probabilities_labels)
+    save_predictions(dataset=dataset,
+                     output_file=config.output_predictions_file,
+                     probabilities=probabilities,
+                     predictions=predictions,
+                     truth=truth,
+                     probabilities_labels=probabilities_labels)
 
     return dict(
         training_duration=training.duration

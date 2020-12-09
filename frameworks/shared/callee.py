@@ -1,5 +1,4 @@
 import importlib.util
-import json
 import logging
 import os
 import re
@@ -17,10 +16,8 @@ def load_module(name, path):
 amlb_path = os.environ.get("AMLB_PATH")
 if amlb_path:
     utils = load_module("amlb.utils", os.path.join(amlb_path, "utils", "__init__.py"))
-    NS = utils.Namespace
-    touch = utils.touch
 else:
-    from amlb.utils import Namespace as NS, touch
+    import amlb.utils as utils
 
 
 def setup_logger():
@@ -50,8 +47,14 @@ def result(output_file=None,
 
 def output_subdir(name, config):
     subdir = os.path.join(config.output_dir, name, config.name, str(config.fold))
-    touch(subdir, as_dir=True)
+    utils.touch(subdir, as_dir=True)
     return subdir
+
+
+def save_metadata(config, **kwargs):
+    obj = dict(config.__dict__)
+    obj.update(kwargs)
+    utils.json_dump(obj, config.output_metadata_file, style='pretty')
 
 
 data_keys = re.compile("^(X|y|data)(_.+)?$")
@@ -60,7 +63,7 @@ data_keys = re.compile("^(X|y|data)(_.+)?$")
 def call_run(run_fn):
     import numpy as np
 
-    params = NS.from_dict(json.loads(sys.stdin.read()))
+    params = utils.Namespace.from_dict(utils.json_loads(sys.stdin.read()))
 
     def load_data(name, path, **ignored):
         if isinstance(path, str) and data_keys.match(name):
@@ -68,10 +71,10 @@ def call_run(run_fn):
         return name, path
 
     print(params.dataset)
-    ds = NS.walk(params.dataset, load_data)
+    ds = utils.Namespace.walk(params.dataset, load_data)
 
     config = params.config
-    config.framework_params = NS.dict(config.framework_params)
+    config.framework_params = utils.Namespace.dict(config.framework_params)
 
     try:
         result = run_fn(ds, config)
@@ -89,4 +92,4 @@ def call_run(run_fn):
         )
 
     print(config.result_token)
-    print(json.dumps(res, separators=(',', ':')))
+    print(utils.json_dumps(res, style='compact'))
