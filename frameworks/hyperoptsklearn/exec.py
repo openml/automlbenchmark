@@ -77,7 +77,8 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
-    predictions = estimator.predict(X_test)
+    with Timer() as predict:
+        predictions = estimator.predict(X_test)
 
     if is_classification:
         probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
@@ -90,7 +91,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(estimator.trials),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 if __name__ == '__main__':

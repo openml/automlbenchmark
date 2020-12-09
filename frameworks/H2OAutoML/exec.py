@@ -102,12 +102,16 @@ def run(dataset: Dataset, config: TaskConfig):
         if not aml.leader:
             raise NoResultError("H2O could not produce any model in the requested time.")
 
-        save_preds(aml, test, dataset=dataset, config=config)
+        with Timer() as predict:
+            preds = aml.predict(test)
+
+        save_preds(preds, test, dataset=dataset, config=config)
         save_artifacts(aml, dataset=dataset, config=config)
 
         return dict(
             models_count=len(aml.leaderboard),
-            training_duration=training.duration
+            training_duration=training.duration,
+            predict_duration=predict.duration
         )
 
     finally:
@@ -155,7 +159,8 @@ def save_artifacts(automl, dataset, config):
             test = h2o.get_frame(frame_name('test', config))
             for mid in lb['model_id']:
                 model = h2o.get_model(mid)
-                save_preds(model, test,
+                preds = model.predict(test)
+                save_preds(preds, test,
                            dataset=dataset,
                            config=config,
                            predictions_file=os.path.join(predictions_dir, mid, 'predictions.csv'),
@@ -185,8 +190,8 @@ def save_model(model_id, dest_dir='.', mformat='mojo'):
         model.save_model_details(path=dest_dir)
 
 
-def save_preds(model, test, dataset, config, predictions_file=None, preview=True):
-    h2o_preds = model.predict(test).as_data_frame(use_pandas=False)
+def save_preds(h2o_preds, test, dataset, config, predictions_file=None, preview=True):
+    h2o_preds = h2o_preds.as_data_frame(use_pandas=False)
     preds = to_data_frame(h2o_preds[1:], columns=h2o_preds[0])
     y_pred = preds.iloc[:, 0]
 

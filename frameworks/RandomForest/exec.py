@@ -39,7 +39,8 @@ def run(dataset, config):
     with utils.Timer() as training:
         rf.fit(X_train, y_train)
 
-    predictions = rf.predict(X_test)
+    with utils.Timer() as predict:
+        predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 
     return result(output_file=config.output_predictions_file,
@@ -48,7 +49,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(rf),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 if __name__ == '__main__':

@@ -97,7 +97,8 @@ def run(dataset, config):
     log.info("Predicting on the test set.")
     X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
-    predictions = auto_sklearn.predict(X_test)
+    with utils.Timer() as predict:
+        predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
 
     save_artifacts(auto_sklearn, config)
@@ -108,7 +109,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(auto_sklearn.get_models_with_weights()),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 def save_artifacts(estimator, config):
