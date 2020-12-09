@@ -244,10 +244,10 @@ Then the datasets can be declared in the benchmark definition file as follow:
 - the `folds` attribute is also optional but recommended for those datasets as the default value is `folds=10` (default amount of folds in openml datasets), so if you don't have that many folds for your custom datasets, it is better to declare it explicitly here.
 - Remote files are downloaded to the `input_dir` folder and archives are decompressed there as well, so you may want to change the value of this folder in your [custom config.yaml file](#custom-configuration) or specify it at the command line with the `-i` or `--indir` argument (by default, it points to the `~/.openml/cache` folder).
 
-#### OpenML studies
+#### OpenML suites
 
-[OpenML] studies are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
-You can run the benchmark on an openml study directly, without defining the benchmark in a local file:
+[OpenML] suites are a collection of OpenML tasks, for example <https://www.openml.org/s/218>.
+You can run the benchmark on an openml suite directly, without defining the benchmark in a local file:
 ```bash
 python runbenchmark.py randomforest openml/s/218
 ```

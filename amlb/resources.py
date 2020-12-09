@@ -74,8 +74,7 @@ class Resources:
         na = "NA"
         version = git("--version")
         is_git_repo = version and git("rev-parse --git-dir 2> /dev/null")
-        if version and is_git_repo:
-            # git("fetch")
+        if is_git_repo:
             repo = git("remote get-url origin", na)
             branch = git("rev-parse --abbrev-ref HEAD", na)
             commit = git("rev-parse HEAD", na)
