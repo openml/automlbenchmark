@@ -2,6 +2,7 @@ import os
 import shutil
 import logging
 
+import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("agg")  # no need for tk
@@ -67,7 +68,8 @@ def run(dataset, config):
     predictions, probabilities = None, None
     if is_classification:
         predictions = preds["label"].values
-        probabilities = preds[preds.columns[:-1]].values
+        cols = [f"prediction_{c}" for c in np.unique(y_train)]
+        probabilities = preds[cols].values
     else:
         predictions = preds["prediction"].values
 

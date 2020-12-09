@@ -80,7 +80,7 @@ hyperoptsklearn:
 #    verbose: true
 
 mljarsupervised:
-  version: '0.7.11'
+  version: '0.7.12'
   project: https://github.com/mljar/mljar-supervised
 #  params:
 #    algorithms: ["Baseline"]
