@@ -78,14 +78,12 @@ class Benchmark:
         self.parallel_jobs = rconfig().parallel_jobs
         self.sid = (rconfig().sid if rconfig().sid is not None
                     else rconfig().token_separator.join([
-                        rconfig().token_separator.join([
-                            str_sanitize(framework_name),
-                            str_sanitize(benchmark_name),
-                            constraint_name,
-                            rconfig().run_mode
-                        ]).lower(),
+                        str_sanitize(framework_name),
+                        str_sanitize(benchmark_name),
+                        constraint_name,
+                        rconfig().run_mode,
                         datetime_iso(micros=True, no_sep=True)
-                    ]))
+                    ]).lower())
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -103,7 +101,7 @@ class Benchmark:
         """
         Benchmark.data_loader = DataLoader(rconfig())
 
-        if mode == SetupMode.skip or mode == SetupMode.auto and self._setup_done():
+        if mode == SetupMode.skip or mode == SetupMode.auto and self._is_setup_done():
             return
 
         log.info("Setting up framework {}.".format(self.framework_name))
@@ -138,7 +136,22 @@ class Benchmark:
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
 
-        self._setup_done(mark=True)
+        self._mark_setup_done()
+
+    def _is_setup_done(self):
+        installed = os.path.join(self._framework_dir, '.installed')
+        setup_done = False
+        if os.path.isfile(installed):
+            with open(installed, 'r') as f:
+                version = f.read()
+                setup_done = (version == self.framework_def.version)
+        return setup_done
+
+    def _mark_setup_done(self):
+        if not self._is_setup_done():
+            installed = os.path.join(self._framework_dir, '.installed')
+            with open(installed, 'w') as f:
+                f.write(self.framework_def.version)
 
     def cleanup(self):
         # anything to do?
@@ -262,19 +275,6 @@ class Benchmark:
     def _append(self, board):
         Scoreboard.all().append(board).save()
         Scoreboard.all(rconfig().output_dir).append(board).save()
-
-    def _setup_done(self, mark=False):
-        installed = os.path.join(self._framework_dir, '.installed')
-        setup_done = False
-        if os.path.isfile(installed):
-            with open(installed, 'r') as f:
-                version = f.read()
-                setup_done = (version == self.framework_def.version)
-        if mark and not setup_done:
-            with open(installed, 'w') as f:
-                f.write(self.framework_def.version)
-            setup_done = True
-        return setup_done
 
     @lazy_property
     def output_dirs(self):
