@@ -15,6 +15,8 @@ if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y build-essential swig
 fi
 
+PIP install --no-cache-dir -r $HERE/requirements.txt
+
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U ${PKG}
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
