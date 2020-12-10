@@ -5,21 +5,21 @@ from amlb.frameworks.definitions import default_tag, load_framework_definitions
 here = os.path.realpath(os.path.dirname(__file__))
 res = os.path.join(here, 'resources')
 
-framework_file = f"{res}/frameworks.yaml"
+inheritance_def = f"{res}/frameworks_inheritance.yaml"
 
 
 @pytest.mark.use_disk
 def test_version_inheritance(simple_resource):
-    definitions_by_tag = load_framework_definitions(framework_file, simple_resource.config)
+    definitions_by_tag = load_framework_definitions(inheritance_def, simple_resource.config)
     assert len(definitions_by_tag) == 1
     definitions = definitions_by_tag[default_tag]
-    assert len(definitions) == 10
+    assert len(definitions) == 6
 
-    parent = definitions['unit_test_framework']
-    child1 = definitions['unit_test_framework_child1']
-    grandchild1 = definitions['unit_test_framework_grandchild1']
-    child2 = definitions['unit_test_framework_child2']
-    grandchild2 = definitions['unit_test_framework_grandchild2']
+    parent = definitions['framework']
+    child1 = definitions['framework_child1']
+    grandchild1 = definitions['framework_grandchild1']
+    child2 = definitions['framework_child2']
+    grandchild2 = definitions['framework_grandchild2']
 
     assert parent.version == 'latest'
     assert child1.version == 'child1'
@@ -30,23 +30,23 @@ def test_version_inheritance(simple_resource):
 
 @pytest.mark.use_disk
 def test_docker_image_inheritance(simple_resource):
-    definitions_by_tag = load_framework_definitions(framework_file, simple_resource.config)
+    definitions_by_tag = load_framework_definitions(inheritance_def, simple_resource.config)
     assert len(definitions_by_tag) == 1
     definitions = definitions_by_tag[default_tag]
-    assert len(definitions) == 10
+    assert len(definitions) == 6
 
-    parent = definitions['unit_test_framework']
-    child1 = definitions['unit_test_framework_child1']
-    grandchild1 = definitions['unit_test_framework_grandchild1']
-    child2 = definitions['unit_test_framework_child2']
-    grandchild2 = definitions['unit_test_framework_grandchild2']
-    child3 = definitions['unit_test_framework_child3']
+    parent = definitions['framework']
+    child1 = definitions['framework_child1']
+    grandchild1 = definitions['framework_grandchild1']
+    child2 = definitions['framework_child2']
+    grandchild2 = definitions['framework_grandchild2']
+    child3 = definitions['framework_child3']
 
-    assert _get_image_desc(parent) == ('author', 'unit_test_framework', 'latest')
-    assert _get_image_desc(child1) == ('author', 'unit_test_framework', 'child1')
-    assert _get_image_desc(grandchild1) == ('author', 'unit_test_framework', 'grandchild1')
-    assert _get_image_desc(child2) == ('author', 'unit_test_framework', 'child2')
-    assert _get_image_desc(grandchild2) == ('author', 'unit_test_framework', 'child2')
+    assert _get_image_desc(parent) == ('author', 'framework', 'latest')
+    assert _get_image_desc(child1) == ('author', 'framework', 'child1')
+    assert _get_image_desc(grandchild1) == ('author', 'framework', 'grandchild1')
+    assert _get_image_desc(child2) == ('author', 'framework', 'child2')
+    assert _get_image_desc(grandchild2) == ('author', 'framework', 'child2')
     assert _get_image_desc(child3) == ('author_child3', 'image_child3', 'tag_child3')
 
 

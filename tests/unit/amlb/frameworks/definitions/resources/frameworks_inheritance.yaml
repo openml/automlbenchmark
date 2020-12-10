@@ -1,0 +1,26 @@
+---
+framework:
+  version: 'latest'
+  project: https://some.url
+
+framework_child1:
+  extends: framework
+  version: 'child1'
+
+framework_grandchild1:
+  extends: framework_child1
+  version: 'grandchild1'
+
+framework_child2:
+  extends: framework
+  version: 'child2'
+
+framework_grandchild2:
+  extends: framework_child2
+
+framework_child3:
+  extends: framework
+  image:
+    author: author_child3
+    image: image_child3
+    tag: tag_child3

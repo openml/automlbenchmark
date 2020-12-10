@@ -27,25 +27,3 @@ other_test_framework:
 duplicate_entry:
   version: 'latest'
   project: https://some.url
-
-unit_test_framework_child1:
-  extends: unit_test_framework
-  version: 'child1'
-
-unit_test_framework_grandchild1:
-  extends: unit_test_framework_child1
-  version: 'grandchild1'
-
-unit_test_framework_child2:
-  extends: unit_test_framework
-  version: 'child2'
-
-unit_test_framework_grandchild2:
-  extends: unit_test_framework_child2
-
-unit_test_framework_child3:
-  extends: unit_test_framework
-  image:
-    author: author_child3
-    image: image_child3
-    tag: tag_child3

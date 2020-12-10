@@ -23,7 +23,7 @@ def test_loads_all_definitions(simple_resource):
     assert len(definitions_by_tag) == 1
     definitions = definitions_by_tag[default_tag]
     assert "unit_test_framework" in definitions
-    assert len(definitions) == 10
+    assert len(definitions) == 5
 
 
 @pytest.mark.use_disk
@@ -32,7 +32,7 @@ def test_merges_definitions_of_two_files(simple_resource):
     assert len(definitions_by_tag) == 1
     definitions = definitions_by_tag[default_tag]
     assert "other_test_framework_extended_other_file" in definitions
-    assert len(definitions) == 11
+    assert len(definitions) == 6
 
 
 @pytest.mark.use_disk
