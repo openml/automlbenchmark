@@ -72,6 +72,7 @@ versions:
 
 container: &container
   force_branch: true  # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
+  ignore_labels: ['stable']
   minimize_instances: true
   run_extra_options: ''
   image:      # set this value through -Xcontainer.image=my-image to run benchmark with a specific image

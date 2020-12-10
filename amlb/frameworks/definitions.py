@@ -2,7 +2,7 @@ import copy
 import itertools
 import logging
 import os
-from typing import Union, List
+from typing import List, Optional, Union
 
 from amlb.utils import Namespace, config_load, str_sanitize
 
@@ -17,7 +17,7 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], config: N
     Loads the definition(s) from the file(s),
     :param frameworks_file:
     :param config:
-    :return: Namespace containing each framework definition,
+    :return: Namespace containing all framework definitions per label (definition namespace).
     """
     frameworks = _load_and_merge_framework_definitions(frameworks_file, config)
     for tag, defs in frameworks:
@@ -61,6 +61,7 @@ def _sanitize_and_add_defaults(frameworks, config):
     for _, framework in frameworks:
         if "extends" not in framework:
             _add_default_module(framework, config)
+            _add_default_image(framework, config, props=['image'])
     _update_frameworks_with_parent_definitions(frameworks)
 
     _add_defaults_to_frameworks(frameworks, config)
@@ -138,19 +139,19 @@ def _add_default_params(framework):
         framework.params = Namespace.dict(framework.params)
 
 
-def _add_default_image(framework: Namespace, config: Namespace):
+def _add_default_image(framework: Namespace, config: Namespace, props: Optional[List[str]] = None):
     if "image" not in framework:
         framework.image = copy.deepcopy(config.docker.image_defaults)
     else:
         framework.image = Namespace.merge(config.docker.image_defaults, framework.image)
 
-    if framework.image.tag is None:
+    if framework.image.tag is None and (not props or 'tag' in props):
         framework.image.tag = framework.version.lower()
 
-    if framework.image.image is None:
+    if framework.image.image is None and (not props or 'image' in props):
         framework.image.image = framework.name.lower()
 
-    if framework.image.author is None:
+    if framework.image.author is None and (not props or 'author' in props):
         framework.image.author = ""
 
 

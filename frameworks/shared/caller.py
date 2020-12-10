@@ -68,13 +68,14 @@ def run_in_venv(caller_file, script_file: str, *args,
 
         out = io.StringIO(output)
         res = ns()
+        res_prefix = config.result_token+":"
         for line in out:
             li = line.rstrip()
-            if li == config.result_token:
-                res = json_loads(out.readline(), as_namespace=True)
+            if li.startswith(res_prefix):
+                res = json_loads(line[len(res_prefix):], as_namespace=True)
                 break
 
-        if res.error_message is not None:
+        if res['error_message'] is not None:
             raise NoResultError(res.error_message)
 
         for name in ['predictions', 'truth', 'probabilities']:
@@ -84,7 +85,7 @@ def run_in_venv(caller_file, script_file: str, *args,
         if callable(process_results):
             res = process_results(res)
 
-        if res.output_file:
+        if res['output_file']:
             save_predictions(dataset=dataset,
                              output_file=res.output_file,
                              predictions=res.predictions.reshape(-1) if res.predictions is not None else None,

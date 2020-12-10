@@ -23,13 +23,13 @@ class SingularityBenchmark(ContainerBenchmark):
     """
 
     @classmethod
-    def image_name(cls, framework_def, branch=None, as_docker_image=False, **kwargs):
+    def image_name(cls, framework_def, label=None, as_docker_image=False, **kwargs):
         """
         We prefer to pull from docker, so we have to mind the docker tag
         When downloading from Docker, the colon is changed to underscore
         """
-        if branch is None:
-            branch = rget().project_info.branch
+        if label is None:
+            label = rget().project_info.branch
         di = framework_def.image
 
         # If we want to pull from docker, the separator is a colon for tag
@@ -38,8 +38,8 @@ class SingularityBenchmark(ContainerBenchmark):
         author = '' if not as_docker_image else f"{di.author}/"
         image = di.image if di.image else framework_def.name.lower()
         tags = [di.tag if di.tag else framework_def.version.lower()]
-        if branch != 'master':
-            tags.append(branch)
+        if label not in rconfig().container.ignore_labels:
+            tags.append(label)
         tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
         return f"{author}{image}{separator}{tag}"
 
@@ -60,21 +60,17 @@ class SingularityBenchmark(ContainerBenchmark):
             setup_cmd=self.framework_def._setup_cmd
         ) if hasattr(self.framework_module, 'singularity_commands') else ""
 
-    def _container_image_name(self, branch=None, as_docker_image=False):
+    def _container_image_name(self, label=None, as_docker_image=False):
         """
         Singularity Images would be located on the framework directory
         """
-        image_name = self.image_name(self.framework_def, branch=branch, as_docker_image=as_docker_image)
+        image_name = self.image_name(self.framework_def, label=label, as_docker_image=as_docker_image)
 
         # Make sure image is in the framework directory
         if as_docker_image:
             return image_name
         else:
             return os.path.join(self._framework_dir, image_name + '.sif')
-
-    @property
-    def _image_name(self):
-        return self._custom_image_name or self._container_image_name()
 
     @property
     def _script(self):
@@ -99,7 +95,7 @@ class SingularityBenchmark(ContainerBenchmark):
             input=in_dir,
             output=out_dir,
             custom=custom_dir,
-            image=self._image_name,
+            image=self.image,
             params=script_params,
             extra_params=script_extra_params,
         )
@@ -115,16 +111,16 @@ class SingularityBenchmark(ContainerBenchmark):
             log.warning(f"Container {inst_name} may still be running, please verify and kill it manually.")
             raise Exception
 
-    def _image_exists(self):
+    def _image_exists(self, image):
         """Implements a method to see if the container image is available"""
-        log.info(f"Looking for the image {self._image_name}")
-        if os.path.exists(self._image_name):
+        log.info(f"Looking for the image {image}")
+        if os.path.exists(image):
             return True
         try:
             # We pull from docker as there are not yet singularity org accounts
             run_cmd("singularity pull {output_file} docker://{image}".format(
                 image=self._container_image_name(as_docker_image=True),
-                output_file=self._image_name,
+                output_file=image,
             ), _live_output_=True)
             return True
         except Exception:
@@ -132,7 +128,7 @@ class SingularityBenchmark(ContainerBenchmark):
                 # If no docker image, pull from singularity hub
                 run_cmd("singularity pull {output_file} library://{library}/{image}".format(
                     image=self._container_image_name(as_docker_image=True),
-                    output_file=self._image_name,
+                    output_file=image,
                     library=rconfig().singularity.library
                 ), _live_output_=True)
                 return True
@@ -140,17 +136,16 @@ class SingularityBenchmark(ContainerBenchmark):
                 pass
         return False
 
-    def _run_container_build_command(self, cache):
-        log.info(f"Building singularity image {self._image_name}.")
+    def _run_container_build_command(self, image, cache):
+        log.info(f"Building singularity image {image}.")
         run_cmd("sudo singularity build {options} {container} {script}".format(
             options="" if cache else "--disable-cache",
-            container=self._image_name,
+            container=image,
             script=self._script,
         ), _live_output_=True)
-        log.info(f"Successfully built singularity image {self._image_name}.")
+        log.info(f"Successfully built singularity image {image}.")
 
-    def _upload_image(self):
-        image = self._image_name
+    def _upload_image(self, image):
         library = rconfig().singularity.library
         name = self._container_image_name(as_docker_image=True)
         log.info(f"Publishing Singularity image {image}.")
