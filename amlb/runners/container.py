@@ -175,6 +175,8 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
             if create_dev_image and not image:
                 image = self._container_image_name(dev)
 
+        if not image:
+            image = self._container_image_name()
         self._run_container_build_command(image, cache)
         return image
 
