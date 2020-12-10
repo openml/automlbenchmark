@@ -93,6 +93,12 @@ hyperoptsklearn:
 #    algo: hyperopt.tpe.suggest
 #    verbose: true
 
+lightautoml:
+  project: https://github.com/sberbank-ai-lab/LightAutoML
+  version: 'stable'
+  description: |
+    LightAutoML (LAMA) project from Sberbank AI Lab AutoML group is the framework for automatic classification and regression model creation.
+
 mljarsupervised:
   version: 'stable'
   description: |
@@ -150,9 +156,7 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
-lightautoml:
-  project: https://github.com/sberbank-ai-lab/LightAutoML
-  version: '0.2.5'
+
 
 
 

@@ -39,6 +39,9 @@ H2OAutoML:
 hyperoptsklearn:
   version: 'latest'
 
+lightautoml:
+  version: 'latest'
+
 mljarsupervised:
   version: 'latest'
 

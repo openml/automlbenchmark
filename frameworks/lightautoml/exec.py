@@ -4,17 +4,20 @@ import os
 import pandas as pd
 import numpy as np
 import pickle
-from sklearn.metrics import log_loss, roc_auc_score
+import warnings
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
 from lightautoml.tasks import Task
 from lightautoml.automl.presets.tabular_presets import TabularAutoML, TabularUtilizedAutoML
+from lightautoml import __version__
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** lightautoml (R) ****\n")
+    log.info("\n**** lightautoml (R) [{__version__}] ****\n")
+    save_metadata(config, version=__version__)
+
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
@@ -30,53 +33,45 @@ def run(dataset, config):
     df_train[dataset.target.name] = y_train
 
     max_mem_size_gb = float(config.max_mem_size_mb) / 1024
-    task = Task(dataset.problem_type)
+    task = Task(dataset.problem_type if dataset.problem_type != 'regression' else 'reg')
     automl = TabularUtilizedAutoML(task=task, timeout=config.max_runtime_seconds, cpu_limit=config.cores,
                                    memory_limit=max_mem_size_gb, random_state=config.seed)
 
+    log.info("Training...")
     with utils.Timer() as training:
-        oof_pred = automl.fit_predict(train_data=df_train, roles={'target': label}).data
-
-    log.info("Predicting on the test set.")
+        automl.fit_predict(train_data=df_train, roles={'target': label})
 
     df_test = pd.DataFrame(dataset.test.data, columns=column_names).astype(column_types, copy=False)
     df_x_test = df_test.drop(columns=label)
 
+    log.info("Predicting on the test set...")
     with utils.Timer() as predict:
-        probabilities = automl.predict(df_x_test).data
+        preds = automl.predict(df_x_test).data
 
-    if probabilities is not None:
+    if is_classification:
+        probabilities = preds
+
         if dataset.problem_type == 'binary':
             probabilities = np.vstack([
                 1 - probabilities[:, 0], probabilities[:, 0]
             ]).T
 
-    if dataset.problem_type == 'binary':
-        oof_pred = oof_pred[:, 0]
-        flags = ~np.isnan(oof_pred)
-        y_oof = y_train[flags]
+        predictions = np.argmax(probabilities, axis=1)
 
-        oof_score = roc_auc_score(
-            y_oof,
-            oof_pred[flags]
-        )
-    elif dataset.problem_type == 'multiclass':
-        flags = (np.isnan(oof_pred).sum(axis=1) == 0)
-
-        oof_score = log_loss(
-            y_train[flags],
-            oof_pred[flags, :]
-        )
+    else:
+        probabilities = None
+        predictions = preds
 
     log.debug(probabilities)
     log.debug(config.output_predictions_file)
-    print('OOF score: {}'.format(oof_score))
+
+    save_artifacts(automl, config)
 
     return result(
         output_file=config.output_predictions_file,
-        predictions=np.argmax(probabilities, axis=1),
-        truth=y_test,
         probabilities=probabilities,
+        predictions=predictions,
+        truth=y_test,
         target_is_encoded=is_classification,
         training_duration=training.duration,
         predict_duration=predict.duration,
