@@ -61,6 +61,7 @@ def _sanitize_and_add_defaults(frameworks, config):
     for _, framework in frameworks:
         if "extends" not in framework:
             _add_default_module(framework, config)
+            _add_default_image(framework, config, props=['image'])
     _update_frameworks_with_parent_definitions(frameworks)
 
     _add_defaults_to_frameworks(frameworks, config)
@@ -138,19 +139,19 @@ def _add_default_params(framework):
         framework.params = Namespace.dict(framework.params)
 
 
-def _add_default_image(framework: Namespace, config: Namespace):
+def _add_default_image(framework: Namespace, config: Namespace, props=None):
     if "image" not in framework:
         framework.image = copy.deepcopy(config.docker.image_defaults)
     else:
         framework.image = Namespace.merge(config.docker.image_defaults, framework.image)
 
-    if framework.image.tag is None:
+    if framework.image.tag is None and (not props or 'tag' in props):
         framework.image.tag = framework.version.lower()
 
-    if framework.image.image is None:
+    if framework.image.image is None and (not props or 'image' in props):
         framework.image.image = framework.name.lower()
 
-    if framework.image.author is None:
+    if framework.image.author is None and (not props or 'author' in props):
         framework.image.author = ""
 
 

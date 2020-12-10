@@ -14,7 +14,7 @@ from ..errors import InvalidStateError
 from ..job import Job
 from ..resources import config as rconfig, get as rget
 from ..utils import dir_of, run_cmd
-from ..__version__ import __version__ as dev
+from ..__version__ import __version__, _dev_version as dev
 
 
 log = logging.getLogger(__name__)
@@ -26,16 +26,16 @@ class ContainerBenchmark(Benchmark):
     """
 
     @classmethod
-    def image_name(cls, framework_def, branch=None, **kwargs):
-        if branch is None:
-            branch = rget().project_info.branch
+    def image_name(cls, framework_def, label=None, **kwargs):
+        if label is None:
+            label = rget().project_info.branch
 
         di = framework_def.image
         author = di.author
         image = di.image if di.image else framework_def.name.lower()
         tags = [di.tag if di.tag else framework_def.version.lower()]
-        if branch != 'master':
-            tags.append(branch)
+        if label not in rconfig().container.ignore_labels:
+            tags.append(label)
         tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
         return f"{author}/{image}:{tag}"
 
@@ -53,9 +53,10 @@ class ContainerBenchmark(Benchmark):
         self.container_name = None
         self.force_branch = rconfig().container.force_branch
         self.custom_commands = ""
+        self.image = None
 
-    def _container_image_name(self, branch=None):
-        return self.image_name(self.framework_def, branch)
+    def _container_image_name(self, label=None):
+        return self.image_name(self.framework_def, label)
 
     def _validate(self):
         if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
@@ -66,11 +67,13 @@ class ContainerBenchmark(Benchmark):
         if mode == SetupMode.skip:
             return
 
-        if mode == SetupMode.auto and self._image_exists():
-            return
+        if mode == SetupMode.auto:
+            self.image = self._find_image()
+            if self.image:
+                return
 
         self._generate_script(self.custom_commands)
-        self._build_image(cache=(mode != SetupMode.force))
+        self.image = self._build_image(cache=(mode != SetupMode.force))
         if upload:
             self._upload_image()
 
@@ -123,18 +126,25 @@ class ContainerBenchmark(Benchmark):
         """Implementes the container run method"""
         raise NotImplementedError
 
-    @property
-    def _image_name(self):
-        return self._custom_image_name or self._container_image_name()
+    def _find_image(self):
+        images_lookup = ([self._custom_image_name] if self._custom_image_name
+                         else [self._container_image_name(dev), self._container_image_name()] if __version__ == dev
+                         else [self._container_image_name()])
 
-    def _image_exists(self):
+        for image in images_lookup:
+            if self._image_exists(image):
+                return image
+        return None
+
+    def _image_exists(self, image):
         """Implements a method to see if the container image is available"""
         raise NotImplementedError
 
     def _build_image(self, cache=True):
+        image = self._custom_image_name
         if self.force_branch:
             current_branch = rget().git_info.branch
-            create_custom_name = False
+            create_dev_image = False
             status = rget().git_info.status
             if len(status) > 1 or re.search(r'\[(ahead|behind) \d+\]', status[0]):
                 print("Branch status:\n%s", '\n'.join(status))
@@ -147,7 +157,7 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                         "The image can't be built as the current branch is not clean or up-to-date. "
                         "Please switch to the expected `{}` branch, and ensure that it is clean before building the container image.".format(rget().project_info.branch)
                     )
-                create_custom_name = True
+                create_dev_image = True
 
             expected_branch = rget().project_info.branch
             tags = rget().git_info.tags
@@ -161,11 +171,12 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                         "The image can't be built as current branch is not tagged as required `{}`. "
                         "Please switch to the expected tagged branch before building the container image.".format(expected_branch)
                     )
-                create_custom_name = True
-            if create_custom_name and not self._custom_image_name:
-                self._custom_image_name = self._container_image_name(dev)
+                create_dev_image = True
+            if create_dev_image and not image:
+                image = self._container_image_name(dev)
 
         self._run_container_build_command(cache)
+        return image
 
     def _run_container_build_command(self, cache):
         """Implements a method to build a container image"""

@@ -61,7 +61,7 @@ class DockerBenchmark(ContainerBenchmark):
             input=in_dir,
             output=out_dir,
             custom=custom_dir,
-            image=self._image_name,
+            image=self.image,
             params=script_params,
             extra_params=script_extra_params,
         )
@@ -78,21 +78,21 @@ class DockerBenchmark(ContainerBenchmark):
             finally:
                 raise
 
-    def _image_exists(self):
+    def _image_exists(self, image):
         """Implements a method to see if the container image is available"""
-        output, _ = run_cmd(f"docker images -q {self._image_name}")
+        output, _ = run_cmd(f"docker images -q {image}")
         log.debug("docker image id: %s", output)
         if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
         try:
-            run_cmd(f"docker pull {self._image_name}", _live_output_=True)
+            run_cmd(f"docker pull {image}", _live_output_=True)
             return True
         except Exception:
             pass
         return False
 
     def _run_container_build_command(self, cache):
-        image = self._image_name
+        image = self.image
         log.info(f"Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
@@ -104,7 +104,7 @@ class DockerBenchmark(ContainerBenchmark):
         log.info(f"Successfully built docker image {image}.")
 
     def _upload_image(self):
-        image = self._image_name
+        image = self.image
         log.info(f"Publishing docker image {image}.")
         run_cmd(f"docker login && docker push {image}")
         log.info(f"Successfully published docker image {image}.")
