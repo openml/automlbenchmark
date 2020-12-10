@@ -16,6 +16,7 @@ necessary to run a benchmark on EC2 instances:
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
 import datetime as dt
+from enum import Enum
 import itertools
 import json
 import logging
@@ -33,14 +34,20 @@ import botocore.exceptions
 
 from ..benchmark import Benchmark, SetupMode
 from ..datautils import read_csv, write_csv
-from ..job import Job
+from ..job import Job, JobError, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, Scoreboard, TaskResult
-from ..utils import Namespace as ns, datetime_iso, file_filter, flatten, list_all_files, normalize_path, str_def, tail, touch
+from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, retry_after, retry_policy, str_def, tail, touch
 from .docker import DockerBenchmark
 
 
 log = logging.getLogger(__name__)
+
+
+class InstanceType(Enum):
+    On_Demand = 0
+    Spot = 1
+    Spot_Block = 2
 
 
 class AWSBenchmark(Benchmark):
@@ -80,12 +87,12 @@ class AWSBenchmark(Benchmark):
                 return bench._wait_for_results(job_self)
 
             def _on_done(job_self):
-                terminate = bench._download_results(job_self.instance_id)
+                terminate = bench._download_results(job_self.ext.instance_id)
                 if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
                     log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
                         "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
-                        job_self.instance_id)
-                bench._stop_instance(job_self.instance_id, terminate=terminate)
+                                job_self.ext.instance_id)
+                bench._stop_instance(job_self.ext.instance_id, terminate=terminate)
 
             job._run = _run.__get__(job)
             job._on_done = _on_done.__get__(job)
@@ -107,9 +114,9 @@ class AWSBenchmark(Benchmark):
         """
         super().__init__(framework_name, benchmark_name, constraint_name)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
-        self.region = region if region \
-            else rconfig().aws.region if rconfig().aws['region'] \
-            else boto3.session.Session().region_name
+        self.region = (region if region
+                       else rconfig().aws.region if rconfig().aws['region']
+                       else boto3.session.Session().region_name)
         self.ami = rconfig().aws.ec2.regions[self.region].ami
         self.cloudwatch = None
         self.ec2 = None
@@ -139,6 +146,7 @@ class AWSBenchmark(Benchmark):
     def setup(self, mode):
         if mode == SetupMode.skip:
             log.warning("AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode))
+
         # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._create_s3_bucket()
@@ -220,6 +228,30 @@ class AWSBenchmark(Benchmark):
             except:
                 pass
 
+    def _job_reschedule(self, job, reason=None):
+        spot_config = rconfig().aws.ec2.spot
+        max_attempts = spot_config.max_attempts
+        if not job.ext.retry:
+            start_delay, delay_fn = retry_policy(spot_config.retry_policy)
+            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=max_attempts - 1)
+
+        wait = next(job.ext.retry, None)
+        if wait is None:
+            if spot_config.fallback_to_on_demand:
+                job.ext.instance_type = InstanceType.On_Demand
+                job.ext.wait_min_secs = 0
+                job.reschedule()
+            else:
+                log.error("Aborting job %s after %s attempts: %s.", job.name, max_attempts, reason)
+                raise JobError(reason)
+        else:
+            job.ext.wait_min_secs = wait
+            job.reschedule()
+
+    def _reset_retry(self):
+        for j in self.jobs:
+            j.ext.retry = None
+
     def _make_aws_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
@@ -242,6 +274,8 @@ class AWSBenchmark(Benchmark):
                         else sum([task.max_runtime_seconds for task in self.benchmark_def]))
         timeout_secs += rconfig().aws.overhead_time_seconds
 
+        seed = rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed
+
         job = Job(rconfig().token_separator.join([
             'aws',
             self.benchmark_name,
@@ -250,46 +284,93 @@ class AWSBenchmark(Benchmark):
             ' '.join(folds),
             self.framework_name
         ]))
-        job.instance_id = None
+        job.ext = ns(
+            tasks=task_names,
+            folds=folds,
+            seed=seed,
+            instance_id=None,
+            wait_min_secs=0,
+            retry=None,
+            instance_type=None
+        )
 
-        def _run(job_self):
-            resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
-            job_self.instance_id = self._start_instance(
-                instance_def,
-                script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
-                    framework=self._forward_params['framework_name'],
-                    benchmark=(self._forward_params['benchmark_name']if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
-                               else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
-                    constraint=self._forward_params['constraint_name'],
-                    task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
-                    folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
-                    seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
-                ),
-                # instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
-                instance_key=job.name,
-                timeout_secs=timeout_secs
-            )
+        def _prepare(_self):
+            spot_config = rconfig().aws.ec2.spot
+            if _self.ext.instance_type is None and spot_config.enabled:
+                _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
+            if _self.ext.wait_min_secs:
+                countdown(_self.ext.wait_min_secs,
+                          message=f"starting job {_self.name}",
+                          frequency=rconfig().aws.query_frequency_seconds)
+
+        def _run(_self):
             try:
-                return self._wait_for_results(job_self)
+                resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
+                _self.ext.instance_id = self._start_instance(
+                    instance_def,
+                    script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
+                        framework=self._forward_params['framework_name'],
+                        benchmark=(self._forward_params['benchmark_name']if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
+                                   else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
+                        constraint=self._forward_params['constraint_name'],
+                        task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
+                        folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
+                        seed=seed,
+                    ),
+                    # instance_key='_'.join([job.name, datetime_iso(micros=True, time_sep='.')]),
+                    instance_key=_self.name,
+                    timeout_secs=timeout_secs,
+                    instance_type=_self.ext.instance_type
+                )
+                self._reset_retry()
+                return self._wait_for_results(_self)
             except Exception as e:
-                fold = int(folds[0]) if len(folds) > 0 else -1
-                results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
-                return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
+                log.error("Job %s failed with: %s", _self.name, e)
+                try:
+                    if isinstance(e, botocore.exceptions.ClientError):
+                        error_code = e.response.get('Error', {}).get('Code', '')
+                        if error_code == 'SpotMaxPriceTooLow':
+                            log.info("Job %s couldn't start due to Spot instance unavailability, rescheduling it.", _self.name)
+                            self._job_reschedule(_self, reason=error_code)
+                            return
+                except JobError as je:
+                    e = je
 
-        def _on_done(job_self):
-            terminate = self._download_results(job_self.instance_id)
-            if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
-                log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
-                            "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
-                            job_self.instance_id)
-            self._stop_instance(job_self.instance_id, terminate=terminate)
+                self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
+                                e,
+                                tasks=_self.ext.tasks,
+                                folds=_self.ext.folds,
+                                seed=_self.ext.seed)
 
+                if isinstance(e, JobError):
+                    # don't write a result entry for JobErrors
+                    raise e
+                else:
+                    fold = int(folds[0]) if len(folds) > 0 else -1
+                    results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
+                    return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
+
+        def _on_done(_self):
+            if _self.state is JobState.rescheduled:
+                self._stop_instance(_self.ext.instance_id)
+                self.job_runner.put(_self)
+            else:
+                terminate = self._download_results(_self.ext.instance_id)
+                if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
+                    log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
+                                "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
+                                _self.ext.instance_id)
+                self._stop_instance(_self.ext.instance_id, terminate=terminate)
+                self.jobs.remove(_self)
+
+        job._prepare = _prepare.__get__(job)
         job._run = _run.__get__(job)
         job._on_done = _on_done.__get__(job)
+        self.jobs.append(job)
         return job
 
     def _wait_for_results(self, job):
-        instance = self.instances[job.instance_id].instance
+        instance = self.instances[job.ext.instance_id].instance
         last_console_line = -1
 
         def log_console():
@@ -308,16 +389,16 @@ class AWSBenchmark(Benchmark):
 
         interrupt = threading.Event()
         while not interrupt.is_set():
-            inst_desc = self.instances[job.instance_id] if job.instance_id in self.instances else ns()
+            inst_desc = self.instances[job.ext.instance_id] if job.ext.instance_id in self.instances else ns()
             if inst_desc['abort']:
-                self._update_instance(job.instance_id, status='aborted')
-                raise Exception("Aborting instance {} for job {}.".format(job.instance_id, job.name))
+                self._update_instance(job.ext.instance_id, status='aborted')
+                raise Exception("Aborting instance {} for job {}.".format(job.ext.instance_id, job.name))
             try:
                 state = instance.state['Name']
                 state_code = instance.state['Code']
-                log.info("[%s] checking job %s on instance %s: %s [%s].", datetime_iso(), job.name, job.instance_id, state, state_code)
+                log.info("[%s] checking job %s on instance %s: %s [%s].", datetime_iso(), job.name, job.ext.instance_id, state, state_code)
                 log_console()
-                self._update_instance(job.instance_id, status=state)
+                self._update_instance(job.ext.instance_id, status=state)
 
                 if state_code == 16:
                     if inst_desc['meta_info'] is None:
@@ -331,11 +412,21 @@ class AWSBenchmark(Benchmark):
                             availability_zone=instance.placement['AvailabilityZone'],
                             subnet_id=instance.subnet_id,
                         )
-                        self._update_instance(job.instance_id, meta_info=meta_info)
+                        self._update_instance(job.ext.instance_id, meta_info=meta_info)
                         log.info("Running EC2 instance %s: %s", instance.id, meta_info)
                 elif state_code > 16:     # ended instance
-                    log.info("EC2 instance %s is %s: %s", job.instance_id, state, instance.state_reason['Message'])
-                    interrupt.set()
+                    state_reason_msg = instance.state_reason['Message']
+                    log.info("EC2 instance %s is %s: %s", job.ext.instance_id, state, state_reason_msg)
+                    # self._update_instance(job.ext.instance_id, stop_reason=state_reason_msg)
+                    try:
+                        if state_reason_msg in ['Server.SpotInstanceShutdown', 'Server.SpotInstanceTermination']:
+                            log.warning("Job %s was aborted due to Spot instance unavailability, rescheduling it.", job.name)
+                            self._job_reschedule(job, reason=state_reason_msg)
+                    finally:
+                        interrupt.set()
+            except JobError as je:
+                log.exception(je)
+                raise je
             except Exception as e:
                 log.exception(e)
             finally:
@@ -403,12 +494,12 @@ class AWSBenchmark(Benchmark):
         finally:
             self.monitoring = None
 
-    def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1):
+    def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1, instance_type=None):
         log.info("Starting new EC2 instance with params: %s.", script_params)
-        inst_key = instance_key.lower() if instance_key \
-            else "{}_p{}_i{}".format(self.sid,
-                                     re.sub(r"[\s-]", '', script_params),
-                                     datetime_iso(micros=True, time_sep='.')).lower()
+        inst_key = (instance_key.lower() if instance_key
+                    else "{}_p{}_i{}".format(self.sid,
+                                             re.sub(r"[\s-]", '', script_params),
+                                             datetime_iso(micros=True, time_sep='.')).lower())
         # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
         #   instead of always creating a new one:
         #   would still need to set a new UserData though before restarting the instance.
@@ -449,16 +540,32 @@ class AWSBenchmark(Benchmark):
                 instance_params.update(KeyName=ec2_config.key_name)
             if ec2_config.security_groups:
                 instance_params.update(SecurityGroups=ec2_config.security_groups)
+            if instance_type in [InstanceType.Spot, InstanceType.Spot_Block]:
+                spot_options = dict(
+                    SpotInstanceType='one-time',
+                    InstanceInterruptionBehavior='terminate'
+                )
+                if ec2_config.spot.max_hourly_price:
+                    spot_options.update(MaxPrice=str(ec2_config.spot.max_hourly_price))
+                if instance_type is InstanceType.Spot_Block:
+                    duration_min = (math.ceil(timeout_secs/3600) + 1) * 60  # duration_min most be a multiple of 60, also adding 1h extra to be safe
+                    if duration_min <= 360:  # blocks are only allowed until 6h
+                        spot_options.update(BlockDurationMinutes=duration_min)
+
+                instance_params.update(InstanceMarketOptions=dict(
+                    MarketType='spot',
+                    SpotOptions=spot_options
+                ))
 
             instance = self.ec2.create_instances(**instance_params)[0]
             log.info("Started EC2 instance %s", instance.id)
             self.instances[instance.id] = ns(instance=instance, key=inst_key, status='started', success='',
-                                             start_time=datetime_iso(), stop_time='',
+                                             start_time=datetime_iso(), stop_time='', stop_reason='',
                                              meta_info=None)
         except Exception as e:
             fake_iid = "no_instance_{}".format(len(self.instances)+1)
             self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False,
-                                          start_time=datetime_iso(), stop_time=datetime_iso(),
+                                          start_time=datetime_iso(), stop_time=datetime_iso(), stop_reason=str(e),
                                           meta_info=None)
             raise e
         finally:
@@ -466,6 +573,8 @@ class AWSBenchmark(Benchmark):
         return instance.id
 
     def _stop_instance(self, instance_id, terminate=None):
+        if instance_id not in self.instances:
+            return
         instance = self.instances[instance_id].instance
         self.instances[instance_id].instance = None
         if instance is None:
@@ -495,7 +604,9 @@ class AWSBenchmark(Benchmark):
             try:
                 state = response['TerminatingInstances'][0]['CurrentState']['Name']
                 log.info("Instance %s state: %s.", instance_id, state)
-                self._update_instance(instance_id, status=state, stop_time=datetime_iso())
+                self._update_instance(instance_id, status=state,
+                                      stop_time=datetime_iso(),
+                                      stop_reason=instance.state_reason['Message'])
             except:
                 pass
 
@@ -507,7 +618,7 @@ class AWSBenchmark(Benchmark):
                 inst[k] = v
                 do_save = True
         if do_save:
-            self._exec_send(lambda: self._save_instances())
+            self._exec_send(self._save_instances)
 
     def _stop_all_instances(self):
         for iid in self.instances.keys():
@@ -519,12 +630,13 @@ class AWSBenchmark(Benchmark):
                     self.instances[iid].success,
                     self.instances[iid].start_time,
                     self.instances[iid].stop_time,
+                    self.instances[iid].stop_reason,
                     self.sid,
                     self.instances[iid].key,
                     self._s3_key(self.sid, instance_key_or_id=iid, absolute=True),
                     self.instances[iid].meta_info
                     ) for iid in self.instances.keys()],
-                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'session', 'instance_key', 's3_dir', 'meta_info'],
+                  columns=['ec2', 'status', 'success', 'start_time', 'stop_time', 'stop_reason', 'session', 'instance_key', 's3_dir', 'meta_info'],
                   path=os.path.join(self.output_dirs.session, 'instances.csv'))
 
     def _load_instances(self, instances_file):
@@ -536,6 +648,23 @@ class AWSBenchmark(Benchmark):
             key=row['instance_key'],
             s3_dir=row['s3_dir'],
         ) for idx, row in df.iterrows()}
+
+    def _save_failures(self, reason, **kwargs):
+        try:
+            file = os.path.join(self.output_dirs.session, 'failures.csv')
+            write_csv([(self._forward_params['framework_name'],
+                        self._forward_params['benchmark_name'],
+                        self._forward_params['constraint_name'],
+                        str_def(kwargs.get('tasks', None), if_empty=''),
+                        str_def(kwargs.get('folds', None), if_empty=''),
+                        str_def(kwargs.get('seed', None)),
+                        str_def(reason, if_none="unknown"))],
+                      columns=['framework', 'benchmark', 'constraint', 'task', 'fold', 'seed', 'error'],
+                      header=not os.path.exists(file),
+                      path=file,
+                      append=True)
+        except Exception as e:
+            log.exception(e)
 
     def _s3_key(self, main_dir, *subdirs, instance_key_or_id=None, absolute=False, encode=False):
         root_key = str_def(rconfig().aws.s3.root_key)
@@ -657,6 +786,9 @@ class AWSBenchmark(Benchmark):
         :param instance_id:
         :return: True iff the main result/scoring file has been successfully downloaded. Other failures are only logged.
         """
+        if instance_id not in self.instances:
+            return False
+
         def download_file(obj, dest, dest_display_path=None):
             dest_display_path = dest if dest_display_path is None else dest_display_path
             try:

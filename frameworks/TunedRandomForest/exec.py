@@ -13,13 +13,15 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+
+import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result, save_metadata, utils
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +33,8 @@ def pick_values_uniform(start: int, end: int, length: int):
 
 
 def run(dataset, config):
-    log.info("\n**** Tuned Random Forest (sklearn) ****\n")
+    log.info(f"\n**** Tuned Random Forest [sklearn v{sklearn.__version__}] ****\n")
+    save_metadata(config, version=sklearn.__version__)
 
     is_classification = config.type == 'classification'
 
@@ -114,7 +117,8 @@ def run(dataset, config):
     with utils.Timer() as training:
         rf.fit(X_train, y_train)
 
-    predictions = rf.predict(X_test)
+    with utils.Timer() as predict:
+        predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 
     return result(
@@ -124,7 +128,8 @@ def run(dataset, config):
         probabilities=probabilities,
         target_is_encoded=is_classification,
         models_count=len(rf),
-        training_duration=training.duration+sum(map(lambda t: t[1], tuning_durations))
+        training_duration=training.duration+sum(map(lambda t: t[1], tuning_durations)),
+        predict_duration=predict.duration
     )
 
 

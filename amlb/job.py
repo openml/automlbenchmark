@@ -24,23 +24,29 @@ class State(Enum):
     created = auto()
     cancelled = auto()
     running = auto()
+    rescheduled = auto()
     stopping = auto()
     stopped = auto()
 
 
-class InvalidStateError(Exception):
+class JobError(Exception):
     pass
 
 
-class CancelledError(Exception):
+class InvalidStateError(JobError):
+    pass
+
+
+class CancelledError(JobError):
     pass
 
 
 class Job:
 
-    def __init__(self, name="", timeout_secs=None):
+    def __init__(self, name="", timeout_secs=None, priority=None):
         self.name = name
         self.timeout = timeout_secs
+        self.priority = priority
         self.state = State.created
         self.thread_id = None
 
@@ -56,6 +62,7 @@ class Job:
                 raise InvalidStateError("Job can't be started from state `{}`.".format(self.state))
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
+            self._prepare()
             with Timer() as t:
                 # don't propagate interruption error here (sig=None) so that we can collect the timeout in the result
                 with InterruptTimeout(self.timeout, sig=None):
@@ -79,16 +86,31 @@ class Job:
 
     def done(self):
         try:
-            if self.state in [State.running, State.stopping]:
+            if self.state in [State.rescheduled, State.running, State.stopping]:
                 self._on_done()
         except Exception as e:
             log.error("Job `%s` completion failed with error: %s", self.name, str(e))
             log.exception(e)
         finally:
-            self.state = State.stopped
+            if self.state is State.rescheduled:
+                self.reset()
+            else:
+                self.reset(State.stopped)
+
+    def reschedule(self):
+        self.state = State.rescheduled
+        self.thread_id = None
+
+    def reset(self, state=State.created):
+        self.state = state
+        self.thread_id = None
+
+    def _prepare(self):
+        """hood to execute pre-run logic: this is executed in the same thread as the run logic."""
+        pass
 
     def _run(self):
-        """jobs should implement their run logic in this method"""
+        """jobs should implement their run logic in this method."""
         pass
 
     def _stop(self):
@@ -96,7 +118,7 @@ class Job:
             raise_in_thread(self.thread_id, CancelledError)
 
     def _on_done(self):
-        """hook to execute logic after job completion in a thread-safe way as this is executed in the main thread"""
+        """hook to execute logic after job completion in a thread-safe way as this is executed in the main thread."""
         pass
 
 
@@ -106,10 +128,13 @@ class JobRunner:
         self.jobs = jobs
         self.results = []
         self.state = State.created
+        self._queue = None
+        self._last_priority = 0
 
     def start(self):
         if self.state != State.created:
             raise InvalidStateError(self.state)
+        self._init_queue()
         self.state = State.running
         with Timer() as t:
             self._run()
@@ -119,7 +144,38 @@ class JobRunner:
 
     def stop(self):
         self.state = State.stopping
+        self._queue.put((-1, None))
         return self._stop()
+
+    def stop_if_complete(self):
+        if 0 < len(self.jobs) == len(self.results):
+            self.stop()
+
+    def put(self, job, priority=None):
+        if priority is None:
+            if job.priority is None:
+                job.priority = self._last_priority = self._last_priority+1
+        else:
+            job.priority = priority
+        self._queue.put((job.priority, job))
+
+    def _init_queue(self):
+        self._queue = queue.PriorityQueue(maxsize=len(self.jobs))
+        for job in self.jobs:
+            self.put(job)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._queue is None:
+            return
+        _, job = self._queue.get()
+        self._queue.task_done()
+        if job is None:
+            self._queue = None
+            return
+        return job
 
     def _run(self):
         pass
@@ -132,12 +188,14 @@ class JobRunner:
 class SimpleJobRunner(JobRunner):
 
     def _run(self):
-        for job in self.jobs:
+        for job in self:
             if self.state == State.stopping:
                 break
             result, duration = job.start()
-            self.results.append(Namespace(name=job.name, result=result, duration=duration))
+            if job.state is not State.rescheduled:
+                self.results.append(Namespace(name=job.name, result=result, duration=duration))
             job.done()
+            self.stop_if_complete()
 
 
 class MultiThreadingJobRunner(JobRunner):
@@ -160,9 +218,11 @@ class MultiThreadingJobRunner(JobRunner):
                     q.task_done()
                     break
                 result, duration = job.start()
-                self.results.append(Namespace(name=job.name, result=result, duration=duration))
+                if job.state is not State.rescheduled:
+                    self.results.append(Namespace(name=job.name, result=result, duration=duration))
                 if self._done_async:
                     job.done()
+                self.stop_if_complete()
                 q.task_done()
 
         threads = []
@@ -172,7 +232,7 @@ class MultiThreadingJobRunner(JobRunner):
             threads.append(thread)
 
         try:
-            for job in self.jobs:
+            for job in self:
                 if self.state == State.stopping:
                     break
                 q.put(job)     # TODO: timeout

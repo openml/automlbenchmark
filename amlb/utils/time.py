@@ -1,7 +1,10 @@
 import datetime as dt
 import logging
+import math
 import threading
 import time
+
+from .core import identity, threadsafe_generator
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +36,64 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
             strf += "{_}%f".format(_=micros_sep)
     datetime = dt.datetime.utcnow() if datetime is None else datetime
     return datetime.strftime(strf)
+
+
+def countdown(timeout_secs, on_timeout=None, message=None, frequency=1, log_level=logging.INFO):
+    timeout_epoch = time.time() + timeout_secs
+    remaining = timeout_secs
+    while remaining > 0:
+        mins, secs = divmod(remaining, 60)
+        hours, mins = divmod(mins, 60)
+        if message:
+            log.log(log_level, "in %02d:%02d:%02d : %s", hours, mins, secs, message)
+        else:
+            log.log(log_level, "countdown: %02d:%02d:%02d", hours, mins, secs)
+        next_sleep = min(frequency, remaining)
+        time.sleep(next_sleep)
+        remaining = math.ceil(timeout_epoch - time.time())
+    if on_timeout:
+        on_timeout()
+
+
+@threadsafe_generator
+def retry_after(start=0, fn=identity, max_retries=math.inf):
+    """
+    generator returning a delay (usually interpreted as seconds) before next retry
+    :param start: the first delay
+    :param fn: the function computing the next delay from the previous one
+    :param max_retries:
+    :return:
+    """
+    delay = start
+    retries = 1
+    while True:
+        if 0 <= max_retries < retries:
+            return
+        yield delay
+        retries = retries+1
+        delay = fn(delay)
+
+
+def retry_policy(policy: str):
+    tokens = policy.split(':', 3)
+    type = tokens[0]
+    l = len(tokens)
+    if type == 'constant':
+        interval = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
+        start = float(tokens[1] if l > 2 else interval)
+        return start, (lambda _: interval)
+    elif type == 'linear':
+        max_delay = float(tokens[3] if l > 3 else math.inf)
+        increment = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
+        start = float(tokens[1] if l > 2 else increment)
+        return start, (lambda d: min(d + increment, max_delay))
+    elif type == 'exponential':
+        max_delay = float(tokens[3] if l > 3 else math.inf)
+        factor = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 2)
+        start = float(tokens[1] if l > 2 else 60)
+        return start, (lambda d: min(d * factor, max_delay))
+    else:
+        raise ValueError(f"Unsupported policy {type} in '{policy}': supported policies are [constant, linear, exponential].")
 
 
 class Timer:
@@ -83,5 +144,4 @@ class Timeout:
     def __exit__(self, *args):
         if self.timer:
             self.timer.cancel()
-
 

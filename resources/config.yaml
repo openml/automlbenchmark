@@ -15,7 +15,7 @@ sid:        # session id: set by caller (runbenchmark.py)
 
 test_mode: False
 parallel_jobs: 1
-max_parallel_jobs: 5
+max_parallel_jobs: 10  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
 delay_between_jobs: 5  # delay in seconds between each parallel job start
 monitoring:
   frequency_seconds: 120  # set <= 0 to disable
@@ -37,7 +37,9 @@ setup:
 frameworks:
   definition_file: '{root}/resources/frameworks.yaml'
   root_module: frameworks
-  allow_duplicates: false  # if true, the last definition is used.
+  allow_duplicates: false     # if true, the last definition is used.
+  tags: ['stable', 'latest', '2020Q2']  # the list of supported tags when looking up frameworks:
+                              # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:
   definition_dir:
@@ -46,10 +48,10 @@ benchmarks:
   os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
-  metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType)
-    binary: ['auc', 'logloss', 'acc']
-    multiclass: ['logloss', 'acc']
-    regression: ['rmse', 'r2']
+  metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType), only the first metric is optimized by the frameworks, the others are computed only for information purpose.
+    binary: ['auc', 'logloss', 'acc', 'balacc']
+    multiclass: ['logloss', 'acc', 'balacc']
+    regression: ['rmse', 'r2', 'mae']
   defaults:
     folds: 10
     max_runtime_seconds: 3600
@@ -151,6 +153,15 @@ aws:
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+    spot:
+      enabled: false             # if enabled, aws mode will try to obtain a spot instance instead of on-demand.
+      block_enabled: false       # if enabled, and if spot is enabled, aws mode will try to use block instances (possible only if total instance runtime <= 6h, i.e. for benchmark runtime up to 4h).
+      max_hourly_price: ''       # the max hourly price (in dollar) per instance to bid (defaults to on-demand price).
+      retry_policy: 'exponential:300:2:10800'  # use "constant:interval", "linear:start:increment:max" or "exponential:start:factor:max"
+                                               # e.g. "linear:300:600" will first wait 5min and then add 10min to waiting time between each retry,
+                                               #      "exponential:300:2:10800" with first wait 5min and then double waiting time between each retry, until the maximum of 3h then used for all retries.
+      max_attempts: 10
+      fallback_to_on_demand: false             # if couldn't obtain a spot instance after max retry, starts an on-demand instance.
 
   max_timeout_seconds: 21600
   overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.

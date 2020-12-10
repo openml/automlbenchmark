@@ -1,0 +1,97 @@
+---
+#
+#  Please note: frameworks defined in this file are all set to "stable" which is understood as the most recent stable/release version.
+#
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  version: "stable"
+
+AutoGluon_bestquality:
+  extends: AutoGluon
+  params:
+    presets: best_quality
+
+autosklearn:
+  version: 'stable'
+
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
+
+AutoWEKA:
+  version: 'stable'
+
+autoxgboost:
+  version: 'stable'
+
+GAMA:
+  version: 'stable'
+
+H2OAutoML:
+  version: 'stable'
+
+hyperoptsklearn:
+  version: 'stable'
+
+mljarsupervised:
+  version: 'stable'
+
+mljarsupervised_compete:
+  extends: mljarsupervised
+  params:
+    mode: Compete   # set mode for Compete, default mode is Explain
+
+MLPlan:
+  version: 'stable'
+
+MLPlanSKLearn:
+  extends: MLPlan
+  params:
+    _backend: sklearn
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+oboe:
+  version: 'stable'
+
+TPOT:
+  version: 'stable'
+
+
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor: {}
+
+constantpredictor_enc:
+  extends: constantpredictor
+  params:
+    encode: true
+
+DecisionTree:
+  version: 'stable'
+
+RandomForest:
+  version: 'stable'
+  params:
+    n_estimators: 2000
+
+ranger:
+  version: 'stable'
+
+TunedRandomForest:
+  version: 'stable'
+  params:
+    n_estimators: 2000
+

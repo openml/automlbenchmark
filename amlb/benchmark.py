@@ -52,6 +52,8 @@ class Benchmark:
     data_loader = None
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
+        self.job_runner = None
+
         if rconfig().run_mode == 'script':
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
@@ -61,7 +63,10 @@ class Benchmark:
             return
 
         self._forward_params = locals()
-        self.framework_def, self.framework_name = rget().framework_definition(framework_name)
+        fsplits = framework_name.split(':', 1)
+        framework_name = fsplits[0]
+        tag = fsplits[1] if len(fsplits) > 1 else None
+        self.framework_def, self.framework_name = rget().framework_definition(framework_name, tag)
         log.debug("Using framework definition: %s.", self.framework_def)
 
         self.constraint_def, self.constraint_name = rget().constraint_definition(constraint_name)
@@ -73,14 +78,12 @@ class Benchmark:
         self.parallel_jobs = rconfig().parallel_jobs
         self.sid = (rconfig().sid if rconfig().sid is not None
                     else rconfig().token_separator.join([
-                        rconfig().token_separator.join([
-                            framework_name,
-                            benchmark_name,
-                            constraint_name,
-                            rconfig().run_mode
-                        ]).lower(),
+                        str_sanitize(framework_name),
+                        str_sanitize(benchmark_name),
+                        constraint_name,
+                        rconfig().run_mode,
                         datetime_iso(micros=True, no_sep=True)
-                    ]))
+                    ]).lower())
 
         self._validate()
         self.framework_module = import_module(self.framework_def.module)
@@ -98,7 +101,7 @@ class Benchmark:
         """
         Benchmark.data_loader = DataLoader(rconfig())
 
-        if mode == SetupMode.skip or mode == SetupMode.auto and self._setup_done():
+        if mode == SetupMode.skip or mode == SetupMode.auto and self._is_setup_done():
             return
 
         log.info("Setting up framework {}.".format(self.framework_name))
@@ -133,7 +136,22 @@ class Benchmark:
         invalidate_caches()
         log.info("Setup of framework {} completed successfully.".format(self.framework_name))
 
-        self._setup_done(mark=True)
+        self._mark_setup_done()
+
+    def _is_setup_done(self):
+        installed = os.path.join(self._framework_dir, '.installed')
+        setup_done = False
+        if os.path.isfile(installed):
+            with open(installed, 'r') as f:
+                version = f.read()
+                setup_done = (version == self.framework_def.version)
+        return setup_done
+
+    def _mark_setup_done(self):
+        if not self._is_setup_done():
+            installed = os.path.join(self._framework_dir, '.installed')
+            with open(installed, 'w') as f:
+                f.write(self.framework_def.version)
 
     def cleanup(self):
         # anything to do?
@@ -162,10 +180,12 @@ class Benchmark:
 
     def _run_jobs(self, jobs):
         if self.parallel_jobs == 1:
-            runner = SimpleJobRunner(jobs)
+            self.job_runner = SimpleJobRunner(jobs)
         else:
             # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
-            runner = MultiThreadingJobRunner(jobs, self.parallel_jobs, delay_secs=rconfig().delay_between_jobs, done_async=True)
+            self.job_runner = MultiThreadingJobRunner(jobs, self.parallel_jobs,
+                                                      delay_secs=rconfig().delay_between_jobs,
+                                                      done_async=True)
 
         try:
             with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
@@ -173,11 +193,11 @@ class Benchmark:
                               check_on_exit=True,
                               statistics=rconfig().monitoring.statistics,
                               verbosity=rconfig().monitoring.verbosity):
-                runner.start()
+                self.job_runner.start()
         except (KeyboardInterrupt, InterruptedError):
             pass
         finally:
-            results = runner.results
+            results = self.job_runner.results
 
         for res in results:
             if res.result is not None and math.isnan(res.result.duration):
@@ -226,7 +246,7 @@ class Benchmark:
             log.warning(f"Fold value {fold} is out of range for task {task_def.name}, skipping it.")
             return
 
-        return BenchmarkTask(self, task_def, fold).as_job(self.framework_module, self.framework_name)
+        return BenchmarkTask(self, task_def, fold).as_job()
 
     def _process_results(self, results, task_name=None):
         scores = list(filter(None, flatten([res.result for res in results])))
@@ -256,14 +276,6 @@ class Benchmark:
         Scoreboard.all().append(board).save()
         Scoreboard.all(rconfig().output_dir).append(board).save()
 
-    def _setup_done(self, mark=False):
-        marker_file = os.path.join(self._framework_dir, '.marker_setup_safe_to_delete')
-        setup_done = os.path.isfile(marker_file)
-        if mark and not setup_done:
-            touch(marker_file)
-            setup_done = True
-        return setup_done
-
     @lazy_property
     def output_dirs(self):
         return routput_dirs(rconfig().output_dir, session=self.sid, subdirs=['predictions', 'scores', 'logs'])
@@ -284,6 +296,7 @@ class TaskConfig:
                  input_dir, output_dir):
         self.framework = None
         self.framework_params = None
+        self.framework_version = None
         self.type = None
         self.name = name
         self.fold = fold
@@ -297,6 +310,7 @@ class TaskConfig:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
+        self.ext = ns()  # used if frameworks require extra config points
 
     def __json__(self):
         return self.__dict__
@@ -377,20 +391,20 @@ class BenchmarkTask:
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
-    def as_job(self, framework, framework_name):
+    def as_job(self):
         def _run():
             self.load_data()
-            return self.run(framework, framework_name)
+            return self.run()
         timeout_secs = min(self.task_config.max_runtime_seconds * 2,
                            self.task_config.max_runtime_seconds + rconfig().benchmarks.overhead_time_seconds)
-        job = Job(name=rconfig().token_separator.join(['local', self.task_config.name, str(self.fold), framework_name]),
+        job = Job(name=rconfig().token_separator.join(['local', self.task_config.name, str(self.fold), self.benchmark.framework_name]),
                   timeout_secs=timeout_secs)  # this timeout is just to handle edge cases where framework never completes
         job._run = _run
         return job
         # return Namespace(run=lambda: self.run(framework))
 
     @profile(logger=log)
-    def run(self, framework, framework_name):
+    def run(self):
         """
 
         :param framework:
@@ -399,18 +413,20 @@ class BenchmarkTask:
         results = TaskResult(task_def=self._task_def, fold=self.fold,
                              constraint=self.benchmark.constraint_name,
                              predictions_dir=self.benchmark.output_dirs.predictions)
-        framework_def, _ = rget().framework_definition(framework_name)
+        framework_def = self.benchmark.framework_def
         task_config = copy(self.task_config)
         task_config.estimate_system_params()
         task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
-        task_config.framework = framework_name
+        task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
+        task_config.framework_version = framework_def.version
 
         # allowing to pass framework parameters through command line, e.g.: -Xf.verbose=True -Xf.n_estimators=3000
         if rconfig()['f'] is not None:
             task_config.framework_params = ns.dict(ns(framework_def.params) + rconfig().f)
 
-        task_config.output_predictions_file = results._predictions_file(task_config.framework.lower())
+        task_config.output_predictions_file = results._predictions_file
+        task_config.output_metadata_file = results._metadata_file
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
         if task_config.metrics is None:
             task_config.metrics = as_list(rconfig().benchmarks.metrics[self._dataset.type.name])
@@ -418,15 +434,12 @@ class BenchmarkTask:
 
         result = meta_result = None
         try:
-            log.info("Running task %s on framework %s with config:\n%s", task_config.name, framework_name, repr_def(task_config))
-            meta_result = framework.run(self._dataset, task_config)
+            log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, repr_def(task_config))
+            meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:
             log.exception(e)
             result = ErrorResult(e)
         finally:
             self._dataset.release()
-
-        meta_result = meta_result or {}
-        meta_result['params'] = task_config.framework_params
-        return results.compute_scores(framework_name, task_config.metrics, result=result, meta_result=meta_result)
+        return results.compute_scores(result=result, meta_result=meta_result)
 

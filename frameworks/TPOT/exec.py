@@ -10,16 +10,18 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-from tpot import TPOTClassifier, TPOTRegressor
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from tpot import TPOTClassifier, TPOTRegressor, __version__
+
+from frameworks.shared.callee import call_run, output_subdir, result, save_metadata, utils
 
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** TPOT ****\n")
+    log.info(f"\n**** TPOT [v{__version__}]****\n")
+    save_metadata(config, version=__version__)
 
     is_classification = config.type == 'classification'
     # Mapping of benchmark metrics to TPOT metrics
@@ -61,7 +63,8 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
-    predictions = tpot.predict(X_test)
+    with utils.Timer() as predict:
+        predictions = tpot.predict(X_test)
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
     except RuntimeError:
@@ -76,7 +79,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(tpot.evaluated_individuals_),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 def save_artifacts(estimator, config):

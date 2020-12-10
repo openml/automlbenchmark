@@ -4,9 +4,6 @@ import os
 import signal
 import tempfile as tmp
 
-from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
-from frameworks.shared.callee import call_run, result
-
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -15,11 +12,15 @@ from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 import hyperopt
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
 
+from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
+from frameworks.shared.callee import call_run, result, save_metadata
+
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** Hyperopt-sklearn ****\n")
+    log.info(f"\n**** Hyperopt-sklearn [v{config.framework_version}] ****\n")
+    save_metadata(config)
 
     is_classification = config.type == 'classification'
 
@@ -76,7 +77,8 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
-    predictions = estimator.predict(X_test)
+    with Timer() as predict:
+        predictions = estimator.predict(X_test)
 
     if is_classification:
         probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
@@ -89,7 +91,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(estimator.trials),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 if __name__ == '__main__':

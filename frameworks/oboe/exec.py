@@ -5,13 +5,14 @@ import sys
 sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
 from auto_learner import AutoLearner
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result, save_metadata, utils
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** Oboe ****\n")
+    log.info(f"\n**** Oboe [{config.framework_version}] ****\n")
+    save_metadata(config)
 
     is_classification = config.type == 'classification'
     if not is_classification:
@@ -45,7 +46,9 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc
     y_test = dataset.test.y_enc
-    predictions = aml.predict(X_test).reshape(len(X_test))
+    with utils.Timer() as predict:
+        predictions = aml.predict(X_test)
+    predictions = predictions.reshape(len(X_test))
 
     if is_classification:
         probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
@@ -58,7 +61,8 @@ def run(dataset, config):
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(aml_models()),
-                  training_duration=training.duration)
+                  training_duration=training.duration,
+                  predict_duration=predict.duration)
 
 
 if __name__ == '__main__':

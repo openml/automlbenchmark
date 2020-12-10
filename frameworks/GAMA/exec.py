@@ -9,20 +9,22 @@ os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
+
 from gama import GamaClassifier, GamaRegressor, __version__
 import sklearn
 import category_encoders
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result, save_metadata, utils
 
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** GAMA  %s ****", __version__)
+    log.info("\n**** GAMA [v%s] ****", __version__)
     log.info("sklearn == %s", sklearn.__version__)
     log.info("category_encoders == %s", category_encoders.__version__)
+    save_metadata(config, version=__version__)
 
     is_classification = (config.type == 'classification')
     # Mapping of benchmark metrics to GAMA metrics
@@ -64,7 +66,8 @@ def run(dataset, config):
         gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
 
     log.info('Predicting on the test set.')
-    predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
+    with utils.Timer() as predict:
+        predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
     if is_classification is not None:
         probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target, encoding='utf-8')
     else:
@@ -76,7 +79,8 @@ def run(dataset, config):
         probabilities=probabilities,
         target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
-        training_duration=training.duration
+        training_duration=training.duration,
+        predict_duration=predict.duration
     )
 
 

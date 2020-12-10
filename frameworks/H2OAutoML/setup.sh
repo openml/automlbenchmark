@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-VERSION=${1:-"latest"}
+HERE=$(dirname "$0")
+VERSION=${1:-"stable"}
 H2O_REPO=${2:-"https://h2o-release.s3.amazonaws.com/h2o"}
 echo "setting up H2O version $VERSION"
 
-HERE=$(dirname "$0")
-. ${HERE}/../shared/setup.sh
+. ${HERE}/../shared/setup.sh ${HERE}
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y openjdk-8-jdk
 fi
 PIP install --no-cache-dir -r ${HERE}/requirements.txt
 
-if  [[ "$VERSION" = "latest" ]]; then
+if  [[ "$VERSION" = "stable" ]]; then
     h2o_package="h2o"
+elif [[ "$VERSION" = "zermelo" ]]; then
+    h2o_package="${H2O_REPO}/rel-zermelo/2/Python/h2o-3.32.0.2-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "zahradnik" ]]; then
-    h2o_package="${H2O_REPO}/rel-zahradnik/4/Python/h2o-3.30.0.4-py2.py3-none-any.whl"
+    h2o_package="${H2O_REPO}/rel-zahradnik/7/Python/h2o-3.30.0.7-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yule" ]]; then
     h2o_package="${H2O_REPO}/rel-yule/3/Python/h2o-3.28.1.3-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "yu" ]]; then
@@ -29,7 +31,7 @@ elif [[ "$VERSION" = "xia" ]]; then
     h2o_package="${H2O_REPO}/rel-xia/5/Python/h2o-3.22.0.5-py2.py3-none-any.whl"
 elif [[ "$VERSION" = "wright" ]]; then
     h2o_package="${H2O_REPO}/rel-wright/10/Python/h2o-3.20.0.10-py2.py3-none-any.whl"
-elif [[ "$VERSION" = "nightly" ]]; then
+elif [[ "$VERSION" = "latest" ]]; then
     NIGHTLY=$(curl ${H2O_REPO}/master/latest)
     VERSION=$(curl ${H2O_REPO}/master/${NIGHTLY}/project_version)
     h2o_package="${H2O_REPO}/master/${NIGHTLY}/Python/h2o-${VERSION}-py2.py3-none-any.whl"

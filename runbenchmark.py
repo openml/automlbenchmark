@@ -14,14 +14,16 @@ from amlb import log, AutoMLError
 
 parser = argparse.ArgumentParser()
 parser.add_argument('framework', type=str,
-                    help="The framework to evaluate as defined by default in resources/frameworks.yaml.")
+                    help="The framework to evaluate as defined by default in resources/frameworks.yaml. "
+                         "To use a labelled framework (i.e. a framework defined in resources/frameworks-{label}.yaml), "
+                         "use the syntax {framework}:{label}.")
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
                     help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, "
                          "a path to a benchmark description file, or an openml suite or task. OpenML references should "
                          "be formatted as 'openml/s/X' and 'openml/t/Y', for studies and tasks respectively. Defaults to `%(default)s`.")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
                     help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
-parser.add_argument('-m', '--mode', choices=['local', 'docker', 'aws', 'singularity'], default='local',
+parser.add_argument('-m', '--mode', choices=['local', 'aws', 'docker', 'singularity'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
                     help="The specific task name (as defined in the benchmark file) to run. "

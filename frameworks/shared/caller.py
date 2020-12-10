@@ -10,7 +10,7 @@ import numpy as np
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
-from amlb.results import NoResultError, save_predictions_to_file
+from amlb.results import NoResultError, save_predictions
 from amlb.utils import Namespace as ns, Timer, TmpDir, dir_of, run_cmd, json_dumps, json_loads
 
 log = logging.getLogger(__name__)
@@ -85,16 +85,17 @@ def run_in_venv(caller_file, script_file: str, *args,
             res = process_results(res)
 
         if res.output_file:
-            save_predictions_to_file(dataset=dataset,
-                                     output_file=res.output_file,
-                                     predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
-                                     truth=res.truth.reshape(-1) if res.truth is not None else None,
-                                     probabilities=res.probabilities,
-                                     probabilities_labels=res.probabilities_labels,
-                                     target_is_encoded=res.target_is_encoded)
+            save_predictions(dataset=dataset,
+                             output_file=res.output_file,
+                             predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
+                             truth=res.truth.reshape(-1) if res.truth is not None else None,
+                             probabilities=res.probabilities,
+                             probabilities_labels=res.probabilities_labels,
+                             target_is_encoded=res.target_is_encoded)
 
         return dict(
             models_count=res.models_count if res.models_count is not None else 1,
             training_duration=res.training_duration if res.training_duration is not None else proc_timer.duration,
+            predict_duration=res.predict_duration,
             **res.others.__dict__
         )

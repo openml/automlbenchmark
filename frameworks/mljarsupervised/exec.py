@@ -6,14 +6,16 @@ import pandas as pd
 import matplotlib
 matplotlib.use("agg")  # no need for tk
 
+import supervised
 from supervised.automl import AutoML
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
 
 log = logging.getLogger(os.path.basename(__file__))
 
 def run(dataset, config):
-    log.info("\n**** mljar-supervised ****\n")
+    log.info(f"\n**** mljar-supervised [v{supervised.__version__}] ****\n")
+    save_metadata(config, version=supervised.__version__)
 
     column_names, _ = zip(*dataset.columns)
     column_types = dict(dataset.columns)
@@ -52,7 +54,8 @@ def run(dataset, config):
     with utils.Timer() as training:
         automl.fit(X_train, y_train)
 
-    preds = automl.predict(X_test)
+    with utils.Timer() as predict:
+        preds = automl.predict(X_test)
 
     predictions, probabilities = None, None
     if is_classification:
@@ -72,6 +75,7 @@ def run(dataset, config):
         probabilities=probabilities,
         models_count=len(automl._models),
         training_duration=training.duration,
+        predict_duration=predict.duration
     )
 
 
