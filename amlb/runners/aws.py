@@ -1042,6 +1042,7 @@ runcmd:
   - add-apt-repository -y ppa:deadsnakes/ppa
   - apt-get update
   - apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+  - update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
   - pip3 install -U pip wheel awscli
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
