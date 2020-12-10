@@ -6,7 +6,8 @@ library(mlr3pipelines)
 library(mlr3automl)
 library(mlr3oml)
 
-run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, seed, name) {
+run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, meta_results_file, seed, name) {
+  future::plan(future::multicore)
   start_time = Sys.time()
   set.seed(seed)
   
@@ -20,6 +21,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget = as.integer(start_time - Sys.time() + time.budget)
   print(paste("remaining budget: ", remaining_budget, " seconds"))
+
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
@@ -28,18 +30,26 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     } else {
       measure = msr("classif.logloss")
     }
-    model <- AutoML(train, runtime = as.integer(remaining_budget * 0.8), measure = measure)
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
     test <- TaskRegr$new("benchmark_test", backend = test, target = target)
-    model <- AutoML(train, runtime = as.integer(remaining_budget * 0.8))
+    measure <- msr("regr.rmse")
   } else {
     stop("Task type not supported!")
   }
-  print(paste("Finished creating model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
-  model$train()
+
+  model <- NULL
+  training <- function() {
+    model <<- AutoML(train, runtime = as.integer(remaining_budget * 0.8), measure = measure)
+    model$train()
+  }
+
+  train_duration <- system.time(training())[['elapsed']]
   print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
-  preds <- model$predict(test)
+
+  preds <- NULL
+  prediction <- function() preds <<- model$predict(test)
+  predict_duration <- system.time(prediction())[['elapsed']]
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
 
   if (type == "classification") {
@@ -51,8 +61,9 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     colnames(result) = c('predictions', 'truth')
   }
 
-  write.table(result, file = output_predictions_file,
-              row.names = FALSE, col.names = TRUE,
-              sep = ",", quote = FALSE
-  )
+  write.csv(result, file = output_predictions_file, row.names = FALSE)
+
+  meta_results <- data.frame(key=c("training_duration", "predict_duration"),
+                             value=c(train_duration, predict_duration))
+  write.csv(meta_results, file = meta_results_file, row.names = FALSE)
 }
