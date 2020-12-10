@@ -3,61 +3,32 @@ import report.config as config
 config.renamed_frameworks = dict(
     constantpredictor_enc='constantpredictor'
 )
-config.excluded_frameworks = ['mlr3automl_hyperband_100factorlevels', 'mlr3automl_old']
+config.excluded_frameworks = ['oboe']
 
 # config.impute_missing_with = 'constantpredictor'
 
 all_results_files = {
-    'stable_RF': [
-        "input/mlr3automl_RF.csv",
-        # "input/ranger.csv",
-        "input/results_autosklearn.csv",
-        # "input/constant_pred.csv"
+    'old': [
+        "input/results_valid_ref.csv", "input/results_valid.csv",
+        "input/results_small-2c1h_ref.csv", "input/results_small-2c1h.csv",
+        "input/results_medium-4c1h_ref.csv", "input/results_medium-4c1h.csv",
+        "input/results_medium-4c4h_ref.csv", "input/results_medium-4c4h.csv",
     ],
-    'stable_XGBoost': [
-        "input/mlr3automl_xgboost.csv",
-        "input/results_autosklearn.csv",
+    '1h': [
+        "input/results_small-8c1h_ref.csv", "input/results_small-8c1h.csv",
+        "input/results_medium-8c1h_ref.csv", "input/results_medium-8c1h.csv",
     ],
-    'stable_SVM': [
-        "input/mlr3automl_RF.csv",
-        "input/mlr3automl_xgboost.csv",
-        "input/mlr3automl_svm.csv",
-        "input/mlr3automl_liblinear_svm.csv",
-        "input/results_autosklearn.csv",
+    '4h': [
+        "input/results_small-8c4h_ref.csv", "input/results_small-8c4h.csv",
+        "input/results_medium-8c4h_ref.csv", "input/results_medium-8c4h.csv",
+        "input/results_large-8c4h_ref.csv", "input/results_large-8c4h.csv",
     ],
-    'stable_logreg': [
-        "input/mlr3automl_RF.csv",
-        "input/mlr3automl_xgboost.csv",
-        "input/mlr3automl_svm.csv",
-        "input/mlr3automl_liblinear_svm.csv",
-        "input/results_autosklearn.csv",
-        "input/mlr3automl_logreg.csv"
+    '8h': [
+        "input/results_large-8c8h_ref.csv", "input/results_large-8c8h.csv",
     ],
-    'all_models': [
-        "input/results_autosklearn.csv",
-        "input/mlr3automl_all_models.csv",
-        "input/mlr3automl_all_models_subsample.csv"
-    ],
-    'hyperband': [
-        "input/results_autosklearn.csv",
-        "input/mlr3automl_hyperband.csv"
-    ],
-    'preprocessing': [
-        "input/results_autosklearn.csv",
-        # "input/mlr3automl_preprocessing.csv",
-        "input/mlr3automl_preprocessing2.csv"
-    ],
-    'portfolio': [
-        "input/results_autosklearn.csv",
-        "input/mlr3automl_portfolio.csv"
-    ],
-    'autosklearn_comparison': [
-        "input/autosklearn_old.csv",
-        "input/results_autosklearn.csv",
-        "input/mlr3automl_portfolio.csv"
-    ]
+    
 }
 
-config.results_group = 'autosklearn_comparison'
+config.results_group = '4h'
 config.results_files = all_results_files[config.results_group]
 config.tasks_sort_by = 'nrows'
