@@ -96,5 +96,6 @@ def call_run(run_fn):
             models_count=0
         )
 
-    print(config.result_token)
-    print(utils.json_dumps(res, style='compact'))
+    # something weird is happening if using a print statement for each (only seen in docker):
+    #  the caller output contains only the first print
+    print(':'.join([config.result_token,utils.json_dumps(res, style='compact')]))
