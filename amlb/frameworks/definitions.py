@@ -2,7 +2,7 @@ import copy
 import itertools
 import logging
 import os
-from typing import Union, List
+from typing import List, Optional, Union
 
 from amlb.utils import Namespace, config_load, str_sanitize
 
@@ -139,7 +139,7 @@ def _add_default_params(framework):
         framework.params = Namespace.dict(framework.params)
 
 
-def _add_default_image(framework: Namespace, config: Namespace, props=None):
+def _add_default_image(framework: Namespace, config: Namespace, props: Optional[List[str]] = None):
     if "image" not in framework:
         framework.image = copy.deepcopy(config.docker.image_defaults)
     else:
