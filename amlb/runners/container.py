@@ -75,7 +75,7 @@ class ContainerBenchmark(Benchmark):
         self._generate_script(self.custom_commands)
         self.image = self._build_image(cache=(mode != SetupMode.force))
         if upload:
-            self._upload_image()
+            self._upload_image(self.image)
 
     def cleanup(self):
         # TODO: remove generated script? anything else?
@@ -175,14 +175,14 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
             if create_dev_image and not image:
                 image = self._container_image_name(dev)
 
-        self._run_container_build_command(cache)
+        self._run_container_build_command(image, cache)
         return image
 
-    def _run_container_build_command(self, cache):
+    def _run_container_build_command(self, image, cache):
         """Implements a method to build a container image"""
         raise NotImplementedError
 
-    def _upload_image(self):
+    def _upload_image(self, image):
         """Implements a method to upload images to hub"""
         raise NotImplementedError
 

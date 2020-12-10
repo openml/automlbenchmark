@@ -140,17 +140,16 @@ class SingularityBenchmark(ContainerBenchmark):
                 pass
         return False
 
-    def _run_container_build_command(self, cache):
-        log.info(f"Building singularity image {self.image}.")
+    def _run_container_build_command(self, image, cache):
+        log.info(f"Building singularity image {image}.")
         run_cmd("sudo singularity build {options} {container} {script}".format(
             options="" if cache else "--disable-cache",
-            container=self.image,
+            container=image,
             script=self._script,
         ), _live_output_=True)
-        log.info(f"Successfully built singularity image {self.image}.")
+        log.info(f"Successfully built singularity image {image}.")
 
-    def _upload_image(self):
-        image = self.image
+    def _upload_image(self, image):
         library = rconfig().singularity.library
         name = self._container_image_name(as_docker_image=True)
         log.info(f"Publishing Singularity image {image}.")

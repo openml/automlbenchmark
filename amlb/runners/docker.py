@@ -91,8 +91,7 @@ class DockerBenchmark(ContainerBenchmark):
             pass
         return False
 
-    def _run_container_build_command(self, cache):
-        image = self.image
+    def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
@@ -103,8 +102,7 @@ class DockerBenchmark(ContainerBenchmark):
         )
         log.info(f"Successfully built docker image {image}.")
 
-    def _upload_image(self):
-        image = self.image
+    def _upload_image(self, image):
         log.info(f"Publishing docker image {image}.")
         run_cmd(f"docker login && docker push {image}")
         log.info(f"Successfully published docker image {image}.")
