@@ -37,6 +37,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
     stop("Task type not supported!")
   }
 
+  model <- NULL
   training <- function() {
     model <<- AutoML(train, runtime = as.integer(remaining_budget * 0.8), measure = measure)
     model$train()
@@ -45,6 +46,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   train_duration <- system.time(training())[['elapsed']]
   print(paste("Finished training model after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
 
+  preds <- NULL
   prediction <- function() preds <<- model$predict(test)
   predict_duration <- system.time(prediction())[['elapsed']]
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
