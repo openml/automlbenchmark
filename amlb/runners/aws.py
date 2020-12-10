@@ -1052,7 +1052,7 @@ runcmd:
   - python3 -m venv venv
   - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
-  - alias PIP_REQ='xargs -L 1 /repo/venv/bin/pip3 install --no-cache-dir'
+  - alias PIP_REQ='xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir'
 #  - PIP install -U pip=={pipv}
   - PIP install -U pip
   - PIP_REQ < requirements.txt
