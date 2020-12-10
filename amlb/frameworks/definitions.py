@@ -17,7 +17,7 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], config: N
     Loads the definition(s) from the file(s),
     :param frameworks_file:
     :param config:
-    :return: Namespace containing each framework definition,
+    :return: Namespace containing all framework definitions per label (definition namespace).
     """
     frameworks = _load_and_merge_framework_definitions(frameworks_file, config)
     for tag, defs in frameworks:
