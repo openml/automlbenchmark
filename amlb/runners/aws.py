@@ -1028,9 +1028,10 @@ packages:
   - wget
   - unzip
   - git
-  - python3
-  - python3-pip
-  - python3-venv
+  - software-properties-common
+  #- python3
+  #- python3-pip
+  #- python3-venv
 
 runcmd:
   - apt-get -y remove unattended-upgrades
@@ -1038,7 +1039,10 @@ runcmd:
   - systemctl disable apt-daily.timer
   - systemctl disable apt-daily.service
   - systemctl daemon-reload
-  - pip3 install -U awscli wheel
+  - add-apt-repository -y ppa:deadsnakes/ppa
+  - apt-get update
+  - apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+  - pip3 install -U pip wheel awscli
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
@@ -1046,10 +1050,10 @@ runcmd:
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
   - python3 -m venv venv
-  - alias PIP='/repo/venv/bin/pip3'
+  - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
   - alias PIP_REQ='xargs -L 1 /repo/venv/bin/pip3 install --no-cache-dir'
-#  - PIP install -U pip=={pip_version}
+#  - PIP install -U pip=={pipv}
   - PIP install -U pip
   - PIP_REQ < requirements.txt
 #  - until aws s3 ls '{s3_base_url}'; do echo "waiting for credentials"; sleep 10; done
@@ -1073,7 +1077,8 @@ power_state:
             repo=rget().project_info.repo,
             branch=rget().project_info.branch,
             image=rconfig().docker.image or DockerBenchmark.image_name(self.framework_def),
-            pip_version=rconfig().versions.pip,
+            pyv=rconfig().versions.python,
+            pipv=rconfig().versions.pip,
             s3_base_url=self._s3_session(absolute=True, encode=True),
             s3_user=self._s3_user(absolute=True, encode=True),
             s3_input=self._s3_input(absolute=True, encode=True),
@@ -1104,10 +1109,13 @@ power_state:
 apt-get update
 #apt-get -y upgrade
 apt-get -y install curl wget unzip git
-apt-get -y install python3 python3-pip python3-venv
 #apt-get -y install docker.io
-
-pip3 install -U awscli wheel
+apt-get -y install software-properties-common
+add-apt-repository -y ppa:deadsnakes/ppa
+apt-get update
+apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
+pip3 install -U pip wheel awscli
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
@@ -1117,9 +1125,9 @@ cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
 python3 -m venv venv
-alias PIP='/repo/venv/bin/pip3'
+alias PIP='/repo/venv/bin/python3 -m pip'
 alias PY='/repo/venv/bin/python3 -W ignore'
-#PIP install -U pip=={pip_version}
+#PIP install -U pip=={pipv}
 PIP install -U pip wheel
 xargs -L 1 PIP install --no-cache-dir < requirements.txt
 
@@ -1133,7 +1141,8 @@ shutdown -P +1 "I'm losing power"
 """.format(
             repo=rget().project_info.repo,
             branch=rget().project_info.branch,
-            pip_version=rconfig().versions.pip,
+            pyv=rconfig().versions.python,
+            pipv=rconfig().versions.pip,
             s3_base_url=self._s3_session(absolute=True, encode=True),
             s3_user=self._s3_user(absolute=True, encode=True),
             s3_input=self._s3_input(absolute=True, encode=True),

@@ -67,8 +67,8 @@ openml:
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
 
 versions:
-  pip: 19.3.1
-  python: 3.7.4  # should we also enforce the Python version in docker images/ec2 instances?
+  pip:
+  python: 3.7  # should we also enforce the Python version in docker images/ec2 instances?
 
 container: &container
   force_branch: true  # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.

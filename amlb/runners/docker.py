@@ -114,11 +114,15 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
 RUN apt-get -y install apt-utils dialog locales
 RUN apt-get -y install curl wget unzip git
-RUN apt-get -y install python3 python3-pip python3-venv
+RUN apt-get -y install software-properties-common
+RUN add-apt-repository -y ppa:deadsnakes/ppa
+RUN apt-get update
+RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 RUN pip3 install -U pip wheel
 
 # aliases for the python system
-ENV SPIP pip3
+ENV SPIP python3 -m pip
 ENV SPY python3
 
 # Enforce UTF-8 encoding
@@ -133,9 +137,9 @@ WORKDIR /bench
 # We create a virtual environment so that AutoML systems may use their preferred versions of
 # packages that we need to data pre- and postprocessing without breaking it.
 RUN $SPY -m venv venv
-ENV PIP /bench/venv/bin/pip3
+ENV PIP /bench/venv/bin/python3 -m pip
 ENV PY /bench/venv/bin/python3 -W ignore
-#RUN $PIP install -U pip=={pip_version} wheel
+#RUN $PIP install -U pip=={pipv} wheel
 RUN $PIP install -U pip wheel
 
 VOLUME /input
@@ -160,7 +164,8 @@ CMD ["{framework}", "test"]
                                                           pip="$PIP",
                                                           py="$PY")),
             framework=self.framework_name,
-            pip_version=rconfig().versions.pip,
+            pyv=rconfig().versions.python,
+            pipv=rconfig().versions.pip,
             script=rconfig().script,
             user=rconfig().user_dir,
         )
