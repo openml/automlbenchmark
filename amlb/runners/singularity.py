@@ -73,10 +73,6 @@ class SingularityBenchmark(ContainerBenchmark):
             return os.path.join(self._framework_dir, image_name + '.sif')
 
     @property
-    def _image_name(self):
-        return self._custom_image_name or self._container_image_name()
-
-    @property
     def _script(self):
         return os.path.join(self._framework_dir, 'Singularityfile')
 
