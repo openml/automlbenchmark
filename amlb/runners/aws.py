@@ -280,8 +280,8 @@ class AWSBenchmark(Benchmark):
             'aws',
             self.benchmark_name,
             self.constraint_name,
-            ' '.join(task_names) if len(task_names) > 0 else 'all',
-            ' '.join(folds),
+            ' '.join(task_names) if len(task_names) > 0 else 'all_tasks',
+            ' '.join(folds) if len(folds) > 0 else 'all_folds',
             self.framework_name
         ]))
         job.ext = ns(
