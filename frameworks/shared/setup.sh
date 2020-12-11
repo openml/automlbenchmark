@@ -27,11 +27,11 @@ if [[ -n "$PY_VENV" ]]; then
         python3 -m venv "$PY_VENV"
         $py_exec -m pip install -U pip wheel
     fi
-    py_exec="$py_exec -W ignore"
     pip_exec="$py_exec -m pip"
+    py_exec="$py_exec -W ignore"
 else
     pip_exec="python3 -m pip"
-    py_exec=python3
+    py_exec="python3 -W ignore"
 fi
 
 PY() {
