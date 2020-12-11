@@ -59,7 +59,7 @@ def run(dataset, config):
                             max_total_time=config.max_runtime_seconds,
                             scoring=scoring_metric,
                             random_state=config.seed,
-                            keep_analysis_log=log_file,
+                            # keep_analysis_log=log_file,
                             **training_params)
 
     with utils.Timer() as training:
