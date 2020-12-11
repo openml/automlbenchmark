@@ -210,7 +210,7 @@ class TaskResult:
             return json_load(metadata_file, as_namespace=True)
         else:
             log.warning("Metadata file `%s` is missing: framework either couldn't start or implementation doesn't save metadata.", metadata_file)
-            return NoResult("Missing metadata.")
+            return Namespace(lambda: None)
 
     @staticmethod
     # @profile(logger=log)

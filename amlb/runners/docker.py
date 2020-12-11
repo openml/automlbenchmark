@@ -159,10 +159,12 @@ ENTRYPOINT ["/bin/bash", "-c", "$PY {script} $0 $*"]
 CMD ["{framework}", "test"]
 
 """.format(
-            custom_commands=custom_commands.format(**dict(setup=dir_of(os.path.join(self._framework_dir, "setup/"),
-                                                                       rel_to_project_root=True),
-                                                          pip="$PIP",
-                                                          py="$PY")),
+            custom_commands=custom_commands.format(
+                setup=dir_of(os.path.join(self._framework_dir, "setup/"),
+                             rel_to_project_root=True),
+                pip="$PIP",
+                py="$PY"
+            ),
             framework=self.framework_name,
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,

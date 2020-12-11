@@ -163,11 +163,15 @@ DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -y install apt-utils dialog locales
 apt-get -y install curl wget unzip git
-apt-get -y install python3 python3-pip python3-venv
+apt-get -y install software-properties-common
+add-apt-repository -y ppa:deadsnakes/ppa
+apt-get update
+apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 pip3 install -U pip wheel
 
 # aliases for the python system
-SPIP=pip3
+SPIP=python3 -m pip
 SPY=python3
 
 # Enforce UTF-8 encoding
@@ -182,9 +186,9 @@ cd /bench
 # We create a virtual environment so that AutoML systems may use their preferred versions of
 # packages that we need to data pre- and postprocessing without breaking it.
 $SPY -m venv venv
-PIP=/bench/venv/bin/pip3
+PIP=/bench/venv/bin/python3 -m pip
 PY=/bench/venv/bin/python3
-#$PIP install -U pip=={pip_version} wheel
+#$PIP install -U pip=={pipv} wheel
 $PIP install -U pip wheel
 
 mkdir /input
@@ -199,13 +203,13 @@ RUN $PY {script} {framework} -s only
 
 %environment
 export DEBIAN_FRONTEND=noninteractive
-export SPIP=pip3
+export SPIP=python3 -m pip
 export SPY=python3
 export PYTHONUTF8=1
 export PYTHONIOENCODING=utf-8
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
-export PIP=/bench/venv/bin/pip3
+export PIP=/bench/venv/bin/python3 -m pip
 export PY=/bench/venv/bin/python3
 %runscript
 cd /bench
@@ -216,17 +220,16 @@ exec /bin/bash -c "$PY {script} ""$@"
 
 """.format(
             custom_commands=custom_commands.format(
-                **dict(
-                    setup=dir_of(
-                        os.path.join(self._framework_dir, "setup/"),
-                        rel_to_project_root=True
-                    ),
-                    pip="$PIP",
-                    py="$PY"
-                )
+                setup=dir_of(
+                    os.path.join(self._framework_dir, "setup/"),
+                    rel_to_project_root=True
+                ),
+                pip="$PIP",
+                py="$PY"
             ),
             framework=self.framework_name,
-            pip_version=rconfig().versions.pip,
+            pyv=rconfig().versions.python,
+            pipv=rconfig().versions.pip,
             script=rconfig().script,
             user=rconfig().user_dir,
         )

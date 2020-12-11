@@ -65,7 +65,7 @@ def run_in_venv(caller_file, script_file: str, *args,
                                     ),
                                   )
 
-        res = ns()
+        res = ns(lambda: None)
         if os.path.exists(config.result_file):
             res = json_load(config.result_file, as_namespace=True)
 
