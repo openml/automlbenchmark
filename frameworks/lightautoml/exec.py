@@ -1,15 +1,18 @@
 import logging
 import os
-
-import pandas as pd
-import numpy as np
 import pickle
 import warnings
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
+import matplotlib
+import numpy as np
+import pandas as pd
+matplotlib.use("agg")  # no need for tk
+
 from lightautoml.tasks import Task
 from lightautoml.automl.presets.tabular_presets import TabularAutoML, TabularUtilizedAutoML
 from lightautoml import __version__
+
+from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
 
 log = logging.getLogger(__name__)
 
