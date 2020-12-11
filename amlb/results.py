@@ -204,6 +204,15 @@ class TaskResult:
             return NoResult("Missing predictions.")
 
     @staticmethod
+    def load_metadata(metadata_file):
+        log.info("Loading metadata from `%s`.", metadata_file)
+        if os.path.isfile(metadata_file):
+            return json_load(metadata_file, as_namespace=True)
+        else:
+            log.warning("Metadata file `%s` is missing: framework either couldn't start or implementation doesn't save metadata.", metadata_file)
+            return NoResult("Missing metadata.")
+
+    @staticmethod
     # @profile(logger=log)
     def save_predictions(dataset: Dataset, output_file: str,
                          predictions=None, truth=None,
@@ -337,8 +346,9 @@ class TaskResult:
     def get_result(self):
         return self.load_predictions(self._predictions_file)
 
+    @memoize
     def get_metadata(self):
-        return json_load(self._metadata_file, as_namespace=True)
+        return self.load_metadata(self._metadata_file)
 
     @profile(logger=log)
     def compute_scores(self, result=None, meta_result=None):
