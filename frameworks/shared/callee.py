@@ -89,13 +89,11 @@ def call_run(run_fn):
             if arr is not None:
                 res[name] = os.path.join(config.result_dir, '.'.join([name, 'npy']))
                 np.save(res[name], arr, allow_pickle=True)
-    except Exception as e:
+    except BaseException as e:
         log.exception(e)
         res = dict(
             error_message=str(e),
             models_count=0
         )
 
-    # something weird is happening if using multiple print statements at the end of this method (only seen in docker):
-    #  the caller output sometimes contains only the first print
-    print(':'.join([config.result_token,utils.json_dumps(res, style='compact')]))
+    utils.json_dump(res, config.result_file, style='compact')
