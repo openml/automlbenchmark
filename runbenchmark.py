@@ -2,13 +2,14 @@ import argparse
 import logging
 import os
 import re
+import shutil
 import sys
 
 # prevent asap other modules from defining the root logger using basicConfig
 import amlb.logger
 
 import amlb
-from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize
+from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize, zip_path
 from amlb import log, AutoMLError
 
 
@@ -110,6 +111,8 @@ log.debug("Config args: %s.", config_args)
 # merging all configuration files
 amlb.resources.from_configs(config, config_user, config_args)
 
+code = 0
+bench = None
 try:
     if args.mode == 'local':
         bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
@@ -138,7 +141,17 @@ except (ValueError, AutoMLError) as e:
     log.error('\nERROR:\n%s', e)
     if extras.get('verbose') is True:
         log.exception(e)
-    sys.exit(1)
+    code = 1
 except Exception as e:
     log.exception(e)
-    sys.exit(2)
+    code = 2
+finally:
+    archives = amlb.resources.config().archive
+    if archives and bench:
+        out_dirs = bench.output_dirs
+        for d in archives:
+            if d in out_dirs:
+                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
+                shutil.rmtree(out_dirs[d], ignore_errors=True)
+
+    sys.exit(code)

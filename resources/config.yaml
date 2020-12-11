@@ -29,6 +29,7 @@ seed: auto  # default global seed (used if not set in task definition), can be o
 token_separator: '.'    # set to '_' for backwards compatibility.
                         # This separator is used to generate directory structure and files,
                         # the '_' separator makes the parsing of those names more difficult as it's also used in framework names, task names...
+archive: ['logs']
 
 setup:
   live_output: true      # set to true to stream the output of setup commands, if false they are only printed when setup is complete.
