@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** lightautoml (R) [{__version__}] ****\n")
+    log.info(f"\n**** lightautoml (R) [{__version__}] ****\n")
     save_metadata(config, version=__version__)
 
     warnings.simplefilter(action='ignore', category=FutureWarning)
