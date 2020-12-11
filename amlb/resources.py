@@ -269,9 +269,9 @@ def output_dirs(root, session=None, subdirs=None, create=False):
         session=os.path.join(root, session) if session is not None else root
     )
 
-    subdirs = [] if subdirs is None \
-        else [subdirs] if isinstance(subdirs, str) \
-        else subdirs
+    subdirs = ([] if subdirs is None
+               else [subdirs] if isinstance(subdirs, str)
+               else subdirs)
 
     for d in subdirs:
         dirs[d] = os.path.join(dirs.session, d)
