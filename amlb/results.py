@@ -373,7 +373,7 @@ class TaskResult:
         for m in required_metares:
             scores[m] = meta_result[m] if m in meta_result else nan
         result = self.get_result() if result is None else result
-        for metric in metadata.metrics:
+        for metric in metadata.metrics or []:
             score = result.evaluate(metric)
             scores[metric] = score
         scores.result = scores[scores.metric] if scores.metric in scores else result.evaluate(scores.metric)
