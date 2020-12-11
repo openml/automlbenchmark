@@ -148,7 +148,7 @@ except Exception as e:
 finally:
     if bench:
         out_dirs = bench.output_dirs
-        for d in amlb.resources.config().results.archive:
+        for d in amlb.resources.config().archive:
             if d in out_dirs:
                 zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
