@@ -146,9 +146,10 @@ except Exception as e:
     log.exception(e)
     code = 2
 finally:
-    if bench:
+    archives = amlb.resources.config().archive
+    if archives and bench:
         out_dirs = bench.output_dirs
-        for d in amlb.resources.config().archive:
+        for d in archives:
             if d in out_dirs:
                 zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
