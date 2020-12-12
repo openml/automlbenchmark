@@ -83,7 +83,7 @@ def run(dataset, config):
 
 def save_artifacts(automl, config):
     try:
-        artifacts = config.framework_params.get('_save_artifacts', False)
+        artifacts = config.framework_params.get('_save_artifacts', [])
         models_dir = output_subdir("models", config)
 
         if 'models' in artifacts:
