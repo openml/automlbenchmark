@@ -2,6 +2,7 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
+from itertools import count
 import logging
 import os
 import re
@@ -122,13 +123,18 @@ class OpenmlDataset(Dataset):
 
         has_missing_values = lambda f: f.number_missing_values > 0
         is_target = lambda f: f.name == self._oml_task.target_name
-        return [Feature(f.index,
+        feat_indexer = count()
+        return [Feature(new_idx,
                         f.name,
                         f.data_type,
                         values=get_values(f),
                         has_missing_values=has_missing_values(f),
                         is_target=is_target(f)
-                        ) for i, f in sorted(self._oml_dataset.features.items())]
+                        )
+                for new_idx, f in zip(iter(feat_indexer),
+                                      (f for i, f in sorted(self._oml_dataset.features.items())
+                                       if f.name not in self._oml_dataset.ignore_attribute))
+                ]
 
     @lazy_property
     def target(self):
@@ -140,7 +146,7 @@ class OpenmlDataset(Dataset):
             log.debug("Loading attributes from dataset %s.", self._oml_dataset.data_file)
             with open(self._oml_dataset.data_file) as f:
                 ds = arff.load(f)
-                self._attributes = ds['attributes']
+                self._attributes = [a for a in ds['attributes'] if a[0] not in self._oml_dataset.ignore_attribute]
         return self._attributes
 
     @profile(logger=log)
@@ -172,18 +178,24 @@ class OpenmlDataset(Dataset):
         log.debug("Loading dataset %s.", ods.data_file)
         with open(ods.data_file) as f:
             ds = arff.load(f)
-        self._attributes = ds['attributes']
+        log.info("Removing ignored columns %s.", self._oml_dataset.ignore_attribute)
+        col_selector, attributes = zip(*[(i, a) for i, a in enumerate(ds['attributes'])
+                                         if a[0] not in self._oml_dataset.ignore_attribute])
+        col_selector = list(col_selector)
+        self._attributes = list(attributes)
         self._extract_unique_values(ds)
 
         name_template = "{name}_{{split}}_{fold}".format(name=ods.name, fold=self.fold)
         _save_split_set(path=train_path,
                         name=name_template.format(split='train'),
                         full_dataset=ds,
-                        indexes=train_ind)
+                        rows=train_ind,
+                        cols=col_selector)
         _save_split_set(path=test_path,
                         name=name_template.format(split='test'),
                         full_dataset=ds,
-                        indexes=test_ind)
+                        rows=test_ind,
+                        cols=col_selector)
 
     def _extract_unique_values(self, arff_dataset):
         # TODO: support encoded string columns?
@@ -218,16 +230,30 @@ def _get_split_path_for_dataset(ds_path, split='train', fold=0):
 
 
 @profile(logger=log)
-def _save_split_set(path, name, full_dataset=None, indexes=None):
+def _save_split_set(path, name, full_dataset=None, rows=None, cols=None):
     # X_split = X[indexes, :]
     # y_split = y.reshape(-1, 1)[indexes, :]
     log.debug("Saving %s split dataset to %s.", name, path)
+    if rows is None:
+        rows = slice(None)
+    else:
+        rows = np.array(rows)
+    if cols is None:
+        cols = slice(None)
+        attributes = full_dataset['attributes']
+    elif isinstance(cols, list):
+        cols = np.array(cols)
+        attributes = [full_dataset['attributes'][i] for i in cols]
+    else:
+        attributes = full_dataset['attributes'][cols]
+    if cols is not None:
+        log.info("Keeping only attributes %s", [a for a, _ in attributes])
     with open(path, 'w') as file:
-        split_data = np.asarray(full_dataset['data'], dtype=object)[indexes, :]
+        split_data = np.asarray(full_dataset['data'], dtype=object)[rows[:, None], cols]
         arff.dump({
             'description': full_dataset['description'],
             'relation': name,
-            'attributes': full_dataset['attributes'],
+            'attributes': attributes,
             'data': split_data
         }, file)
 
