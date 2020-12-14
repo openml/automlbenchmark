@@ -238,16 +238,17 @@ def _save_split_set(path, name, full_dataset=None, rows=None, cols=None):
         rows = slice(None)
     else:
         rows = np.array(rows)
+    full_attributes = full_dataset['attributes']
     if cols is None:
         cols = slice(None)
-        attributes = full_dataset['attributes']
+        attributes = full_attributes
     elif isinstance(cols, list):
         cols = np.array(cols)
-        attributes = [full_dataset['attributes'][i] for i in cols]
+        attributes = [full_attributes[i] for i in cols]
     else:
-        attributes = full_dataset['attributes'][cols]
-    if cols is not None:
-        log.info("Keeping only attributes %s", [a for a, _ in attributes])
+        attributes = full_attributes[cols]
+    if len(attributes) != len(full_attributes) :
+        log.debug("Keeping only attributes %s", [a for a, _ in attributes])
     with open(path, 'w') as file:
         split_data = np.asarray(full_dataset['data'], dtype=object)[rows[:, None], cols]
         arff.dump({
