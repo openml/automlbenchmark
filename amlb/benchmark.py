@@ -371,7 +371,7 @@ class Benchmark:
 
 class TaskConfig:
 
-    def __init__(self, name, fold, metrics, seed,
+    def __init__(self, name, openml_task_id, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
                  input_dir, output_dir):
         self.framework = None
@@ -379,6 +379,7 @@ class TaskConfig:
         self.framework_version = None
         self.type = None
         self.name = name
+        self.openml_task_id = openml_task_id
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
         self.seed = seed
@@ -460,6 +461,7 @@ class BenchmarkTask:
         self.fold = fold
         self.task_config = TaskConfig(
             name=task_def.name,
+            openml_task_id=task_def.openml_task_id,
             fold=fold,
             metrics=task_def.metric,
             seed=rget().seed(fold),
