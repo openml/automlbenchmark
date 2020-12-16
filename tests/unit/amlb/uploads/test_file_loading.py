@@ -2,8 +2,9 @@ import os
 
 import openml
 import pandas as pd
+import pytest
 
-from amlb.uploads import _load_predictions, _load_fold
+from amlb.uploads import _load_predictions, _load_fold, _get_flow, _load_task_data
 
 here = os.path.realpath(os.path.dirname(__file__))
 res = os.path.join(here, 'resources')
@@ -35,3 +36,13 @@ def test__load_predictions_loads_all_files():
     assert predictions.shape == (150, 8)
     assert set(predictions.columns) == {"repeat", "fold", "index", "iris-setosa", "iris-versicolor", "iris-virginica", "predictions", "truth"}
     assert set(predictions["fold"]) == set(range(10))
+
+
+@pytest.skip(
+    "I can't think of a meaningful test that doesn't just verify that openml-python works as expected."
+)
+def test__get_flow():
+    metadata = _load_task_data(iris_complete)
+    openml.config.start_using_configuration_for_example()
+    flow = _get_flow(metadata)
+    openml.config.stop_using_configuration_for_example()
