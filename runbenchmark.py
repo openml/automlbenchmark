@@ -6,6 +6,8 @@ import shutil
 import sys
 
 # prevent asap other modules from defining the root logger using basicConfig
+import openml
+
 import amlb.logger
 
 from openml.config import cache_directory
@@ -85,6 +87,9 @@ parser.add_argument('--logging', type=str, default="console:info,app:debug,root:
                          "\n  --logging=root:debug (keeps defaults for non-specified loggers)" 
                          "\n  --logging=console:warning,app:info"
                          "\n(default: '%(default)s')")
+parser.add_argument('--openml-test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
+                    help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
+
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--resume', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
@@ -129,6 +134,10 @@ amlb.logger.setup(log_file=os.path.join(log_dir, '{script}.{now}.log'.format(scr
                   root_level=log_levels.root, app_level=log_levels.app, console_level=log_levels.console, print_to_log=True)
 
 log.info("Running benchmark `%s` on `%s` framework in `%s` mode.", args.framework, args.benchmark, args.mode)
+if args.openml_test_server:
+    openml.config.start_using_configuration_for_example()
+    log.info("Connecting to the OpenML test server.")
+
 log.debug("Script args: %s.", args)
 
 config_default = config_load(os.path.join(default_dirs.root_dir, "resources", "config.yaml"))
@@ -146,6 +155,7 @@ config_args = ns.parse(
     parallel_jobs=args.parallel,
     sid=sid,
     exit_on_error=args.exit_on_error,
+    test_server=args.openml_test_server,
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})
@@ -156,8 +166,8 @@ amlb_res = amlb.resources.from_configs(config_default, config_default_dirs, conf
 if args.resume:
     amlb_res.config.job_history = os.path.join(amlb_res.config.output_dir, amlb.results.Scoreboard.results_file)
 
-code = 0
 bench = None
+exit_code = 0
 try:
     if args.mode == 'local':
         bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
@@ -186,10 +196,10 @@ except (ValueError, AutoMLError) as e:
     log.error('\nERROR:\n%s', e)
     if extras.get('verbose') is True:
         log.exception(e)
-    code = 1
+    exit_code = 1
 except Exception as e:
     log.exception(e)
-    code = 2
+    exit_code = 2
 finally:
     archives = amlb.resources.config().archive
     if archives and bench:
@@ -198,5 +208,7 @@ finally:
             if d in out_dirs:
                 zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arc_path_format='long')
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
+    if args.test_server:
+        openml.config.stop_using_configuration_for_example()
 
-    sys.exit(code)
+    sys.exit(exit_code)
