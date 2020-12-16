@@ -51,31 +51,34 @@ def _load_task_data(task_folder: str, fold: int = 0) -> Namespace:
 #     return completed_folds
 #
 #
-# def _get_flow(metadata: Namespace) -> openml.flows.OpenMLFlow:
-#     amlb_flow = openml.flows.OpenMLFlow(
-#         name=f"amlb_{metadata.framework}",
-#         description=f'{metadata.framework} as set up by the AutoML Benchmark',
-#         # todo: use something more thorough like for image names
-#         external_version=f'amlb=={__version__},framework=={metadata.framework_version}',
-#         # The values below are default values for a flow., the run will record used values.
-#         parameters=OrderedDict(
-#             time='240',
-#             memory='32',
-#             cores='8'
-#         ),
-#         parameters_meta_info=OrderedDict(
-#             time=dict(data_type='int', description='time in minutes'),
-#             memory=dict(data_type='int', description='memory in gigabytes'),
-#             cores=dict(data_type='int', description='number of available cores')
-#         ),
-#         language='English',
-#         # We can use components to describe subflows, e.g. the automl framework with its hyperparameters.
-#         # For now we don't.
-#         # components=OrderedDict(automl_tool=auto_sklearn_flow),
-#     )
-#     # If the flow does not yet exist on the server, it is registered.
-#     # Otherwise the local version is overwritten the
-#     return amlb_flow.publish()
+def _get_flow(metadata: Namespace) -> openml.flows.OpenMLFlow:
+    amlb_flow = openml.flows.OpenMLFlow(
+        name=f"amlb_{metadata.framework}",
+        description=f'{metadata.framework} as set up by the AutoML Benchmark',
+        # todo: use something more thorough like for image names
+        external_version=f'amlb=={__version__},{metadata.framework}=={metadata.framework_version}',
+        # The values below are default values for a flow., the run will record used values.
+        parameters=OrderedDict(
+            time='240',
+            memory='32',
+            cores='8'
+        ),
+        parameters_meta_info=OrderedDict(
+            time=dict(data_type='int', description='time in minutes'),
+            memory=dict(data_type='int', description='memory in gigabytes'),
+            cores=dict(data_type='int', description='number of available cores')
+        ),
+        language='English',
+        # We can use components to describe subflows, e.g. the automl framework with its hyperparameters.
+        # For now we don't.
+        components=OrderedDict(),
+        model=None,
+        tags=["amlb"],
+        dependencies=f'amlb=={__version__},{metadata.framework}=={metadata.framework_version}',
+    )
+    # If the flow does not yet exist on the server, it is registered.
+    # Otherwise the local version is overwritten the
+    return amlb_flow.publish()
 #
 #
 # def _create_run(task_folder: str) -> openml.runs.OpenMLRun:
