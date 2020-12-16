@@ -291,7 +291,7 @@ class Benchmark:
 
 class TaskConfig:
 
-    def __init__(self, name, openml_task_id, fold, metrics, seed,
+    def __init__(self, name, openml_task_id, test_server, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
                  input_dir, output_dir):
         self.framework = None
@@ -300,6 +300,7 @@ class TaskConfig:
         self.type = None
         self.name = name
         self.openml_task_id = openml_task_id
+        self.test_server = test_server
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
         self.metric = metrics[0] if isinstance(metrics, list) else metrics
@@ -368,6 +369,7 @@ class BenchmarkTask:
             min_vol_size_mb=task_def.min_vol_size_mb,
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
+            test_server=rget().config.test_server,
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:
