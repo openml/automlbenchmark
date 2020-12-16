@@ -5,6 +5,8 @@ import re
 import sys
 
 # prevent asap other modules from defining the root logger using basicConfig
+import openml
+
 import amlb.logger
 
 import amlb
@@ -46,6 +48,8 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
+parser.add_argument('--test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
+                    help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
@@ -86,6 +90,9 @@ amlb.logger.setup(log_file=os.path.join(log_dir, '{script}.{now}.log'.format(scr
                   root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
 
 log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
+if args.test_server:
+    openml.config.start_using_configuration_for_example()
+    log.info("Connecting to the OpenML test server.")
 log.debug("Script args: %s.", args)
 
 config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
@@ -102,6 +109,7 @@ config_args = ns.parse(
     run_mode=args.mode,
     parallel_jobs=args.parallel,
     sid=sid,
+    test_server=args.test_server,
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})
@@ -110,6 +118,7 @@ log.debug("Config args: %s.", config_args)
 # merging all configuration files
 amlb.resources.from_configs(config, config_user, config_args)
 
+exit_code = 0
 try:
     if args.mode == 'local':
         bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
@@ -138,7 +147,12 @@ except (ValueError, AutoMLError) as e:
     log.error('\nERROR:\n%s', e)
     if extras.get('verbose') is True:
         log.exception(e)
-    sys.exit(1)
+    exit_code = 1
 except Exception as e:
     log.exception(e)
-    sys.exit(2)
+    exit_code = 2
+finally:
+    if args.test_server:
+        openml.config.stop_using_configuration_for_example()
+
+sys.exit(exit_code)
