@@ -2,9 +2,11 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
+from collections.abc import Iterable
 import logging
 import os
 import re
+from typing import Union
 
 import openml as oml
 import arff
@@ -164,7 +166,7 @@ class OpenmlDataset(Dataset):
         self._test = OpenmlDatasplit(self, test_path)
 
     def _prepare_split_data(self, train_path, test_path):
-        train_ind, test_ind = self._oml_task.get_train_test_split_indices(self.fold)
+        train_ind, test_ind = (list(ind) for ind in self._oml_task.get_train_test_split_indices(self.fold))
         #X, y = self._oml_task.get_X_and_y() #numpy arrays
         ods = self._oml_dataset
 
