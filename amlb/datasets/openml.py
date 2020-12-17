@@ -2,7 +2,6 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
-from itertools import count
 import logging
 import os
 import re
@@ -123,7 +122,6 @@ class OpenmlDataset(Dataset):
 
         has_missing_values = lambda f: f.number_missing_values > 0
         is_target = lambda f: f.name == self._oml_task.target_name
-        feat_indexer = iter(count())
         return [Feature(new_idx,
                         f.name,
                         f.data_type,
@@ -131,9 +129,8 @@ class OpenmlDataset(Dataset):
                         has_missing_values=has_missing_values(f),
                         is_target=is_target(f)
                         )
-                for new_idx, f in zip(feat_indexer,
-                                      (f for i, f in sorted(self._oml_dataset.features.items())
-                                       if f.name not in self._oml_dataset.ignore_attribute))
+                for new_idx, f in enumerate(f for i, f in sorted(self._oml_dataset.features.items())
+                                            if f.name not in (self._oml_dataset.ignore_attribute or []))
                 ]
 
     @lazy_property
@@ -146,7 +143,8 @@ class OpenmlDataset(Dataset):
             log.debug("Loading attributes from dataset %s.", self._oml_dataset.data_file)
             with open(self._oml_dataset.data_file) as f:
                 ds = arff.load(f)
-                self._attributes = [a for a in ds['attributes'] if a[0] not in self._oml_dataset.ignore_attribute]
+                self._attributes = [a for a in ds['attributes']
+                                    if a[0] not in (self._oml_dataset.ignore_attribute or [])]
         return self._attributes
 
     @profile(logger=log)
@@ -237,16 +235,16 @@ def _save_split_set(path, name, full_dataset=None, rows=None, cols=None):
     if rows is None:
         rows = slice(None)
     else:
+        assert isinstance(rows, list)
         rows = np.array(rows)
     full_attributes = full_dataset['attributes']
     if cols is None:
         cols = slice(None)
         attributes = full_attributes
-    elif isinstance(cols, list):
+    else:
+        assert isinstance(cols, list)
         cols = np.array(cols)
         attributes = [full_attributes[i] for i in cols]
-    else:
-        attributes = full_attributes[cols]
     if len(attributes) != len(full_attributes) :
         log.debug("Keeping only attributes %s", [a for a, _ in attributes])
     with open(path, 'w') as file:
