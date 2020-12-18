@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from collections import OrderedDict
-from typing import Set, Optional, Tuple, List, Union
+from typing import Set, Optional, List
 
 import openml
 import pandas as pd
@@ -107,12 +107,15 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
     oml_flow = _get_flow(metadata)
     oml_task = openml.tasks.get_task(metadata.openml_task_id)
 
+    denormalize_map = {label.strip().lower(): label for label in oml_task.class_labels}
+    predictions.columns = [col if col not in denormalize_map else denormalize_map[col] for col in predictions]
+
     formatted_predictions = []
     for _, row in predictions.iterrows():
         if metadata.type != "classification":
             class_probabilities = None
         else:
-            class_probabilities = {c: row[c.lower()] for c in oml_task.class_labels}
+            class_probabilities = {c: row[c] for c in oml_task.class_labels}
         prediction = format_prediction(
                task=oml_task,
                repeat=row["repeat"],

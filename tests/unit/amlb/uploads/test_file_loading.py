@@ -11,7 +11,8 @@ from amlb.uploads import _load_predictions, _load_fold, _get_flow, _load_task_da
 here = os.path.realpath(os.path.dirname(__file__))
 res = os.path.join(here, 'resources')
 
-iris_complete = f"{res}/iris/"
+iris_constant = f"{res}/iris_constant/"
+iris_h2o = f"{res}/iris_h2o/"
 
 
 @pytest.fixture(scope="module")
@@ -61,9 +62,14 @@ def test__extract_flow_hyperparameter_configuration():
     assert parameters == expected_parameters
 
 
-def test__upload_results(with_oml_test_server):
-    run = _upload_results(iris_complete)
-    print(run.id)
+def test__upload_results_constant(with_oml_test_server):
+    run = _upload_results(iris_constant)
+    assert isinstance(run.id, int)
+
+
+def test__upload_results_h2o(with_oml_test_server):
+    run = _upload_results(iris_h2o)
+    assert isinstance(run.id, int)
 
 
 @pytest.mark.skip(
