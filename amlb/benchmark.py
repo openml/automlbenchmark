@@ -475,7 +475,7 @@ class BenchmarkTask:
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
             test_server=rget().config.test_server,
-            tag=rget().config.tag,
+            tag=rget().config.__dict__.get("tag"),
             command=rget().config.command,
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60

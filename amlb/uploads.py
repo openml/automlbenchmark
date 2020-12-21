@@ -128,10 +128,8 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
         formatted_predictions.append(prediction)
 
     parameters = _extract_and_format_hyperparameter_configuration(metadata, oml_flow)
-    # setup string
-    # tags
     tags = ['amlb']
-    if metadata.tag and metadata.tag != 'amlb':
+    if 'tag' in metadata and metadata.tag not in [None, 'amlb']:
         tags.extend([metadata.tag])
 
     return openml.runs.OpenMLRun(
