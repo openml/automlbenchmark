@@ -89,6 +89,8 @@ parser.add_argument('--logging', type=str, default="console:info,app:debug,root:
                          "\n(default: '%(default)s')")
 parser.add_argument('--openml-test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
+parser.add_argument('--openml-run-tag', type=str, default=None,
+                    help="Tag that will be saved in metadata and OpenML runs created during upload.")
 
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--resume', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
@@ -156,6 +158,8 @@ config_args = ns.parse(
     sid=sid,
     exit_on_error=args.exit_on_error,
     test_server=args.openml_test_server,
+    tag=args.openml_run_tag,
+    command=' '.join(sys.argv),
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})
