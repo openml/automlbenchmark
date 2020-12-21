@@ -131,7 +131,7 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
     # setup string
     # tags
     tags = ['amlb']
-    if metadata.tag:
+    if metadata.tag and metadata.tag != 'amlb':
         tags.extend([metadata.tag])
 
     return openml.runs.OpenMLRun(
