@@ -49,7 +49,7 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
 parser.add_argument('--tag', type=str, default=None,
-                    help="Tag that will be saved in metadata and OpenML runs created during upload.")
+                    help="Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.")
 parser.add_argument('--test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
