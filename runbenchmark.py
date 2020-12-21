@@ -48,6 +48,8 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
+parser.add_argument('--tag', type=str, default=None,
+                    help="Tag that will be saved in metadata and OpenML runs created during upload.")
 parser.add_argument('--test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
@@ -110,6 +112,8 @@ config_args = ns.parse(
     parallel_jobs=args.parallel,
     sid=sid,
     test_server=args.test_server,
+    tag=args.tag,
+    command=' '.join(sys.argv),
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})

@@ -293,7 +293,7 @@ class TaskConfig:
 
     def __init__(self, name, openml_task_id, test_server, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
-                 input_dir, output_dir):
+                 input_dir, output_dir, tag, command):
         self.framework = None
         self.framework_params = None
         self.framework_version = None
@@ -312,6 +312,8 @@ class TaskConfig:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
+        self.tag = tag
+        self.command = command
         self.ext = ns()  # used if frameworks require extra config points
 
     def __json__(self):
@@ -370,6 +372,8 @@ class BenchmarkTask:
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
             test_server=rget().config.test_server,
+            tag=rget().config.tag,
+            command=rget().config.command,
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:
