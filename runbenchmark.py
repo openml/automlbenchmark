@@ -90,7 +90,7 @@ parser.add_argument('--logging', type=str, default="console:info,app:debug,root:
 parser.add_argument('--openml-test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
 parser.add_argument('--openml-run-tag', type=str, default=None,
-                    help="Tag that will be saved in metadata and OpenML runs created during upload.")
+                    help="Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.")
 
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--resume', nargs='?', const=True, default=False, help=argparse.SUPPRESS)

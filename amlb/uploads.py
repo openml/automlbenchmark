@@ -130,15 +130,18 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
     parameters = _extract_and_format_hyperparameter_configuration(metadata, oml_flow)
     # setup string
     # tags
+    tags = ['amlb']
+    if metadata.tag:
+        tags.extend([metadata.tag])
 
     return openml.runs.OpenMLRun(
         task_id=oml_task.id,
         flow_id=oml_flow.id,
         dataset_id=oml_task.dataset_id,
         parameter_settings=parameters,
-        setup_string="test command",  # benchmark_command,
+        setup_string=metadata.command,
         data_content=formatted_predictions,
-        tags=['amlb'],
+        tags=tags,
     ).publish()
 
 
