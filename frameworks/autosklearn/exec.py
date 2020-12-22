@@ -83,12 +83,11 @@ def run(dataset, config):
             ),
             3072  # 3072 is autosklearn default and we use it as a lower bound
         )
-    if askl_version >= version.parse("0.11"):
+    if isinstance(askl_version, version.LegacyVersion) or askl_version >= version.parse("0.11"):
         log.info(
             "Using %sMB memory per job and on a total of %s jobs.",
             ml_memory_limit, n_jobs
         )
-        constr_params["memory_limit"] = ml_memory_limit
     else:
         ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
         # when memory is large enough, we should have:
@@ -112,7 +111,7 @@ def run(dataset, config):
             )
         estimator = AutoSklearnRegressor
 
-    if askl_version >= version.parse("0.8"):
+    if isinstance(askl_version, version.LegacyVersion) or askl_version >= version.parse("0.8"):
         constr_params['metric'] = perf_metric
     else:
         fit_extra_params['metric'] = perf_metric
