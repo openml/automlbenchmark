@@ -60,9 +60,9 @@ def test__extract_flow_hyperparameter_configuration():
 
     expected_parameters = [
         OrderedDict([("oml:name", "max_runtime_seconds"), ("oml:value", 3600), ("oml:component", flow.id)]),
-        OrderedDict([("oml:name", "max_mem_size_mb"), ("oml:value", 19443), ("oml:component", flow.id)]),
+        OrderedDict([("oml:name", "max_mem_size_mb"), ("oml:value", 17271), ("oml:component", flow.id)]),
         OrderedDict([("oml:name", "cores"), ("oml:value", 8), ("oml:component", flow.id)]),
-        OrderedDict([("oml:name", "seed"), ("oml:value", 216542127), ("oml:component", flow.id)]),
+        OrderedDict([("oml:name", "seed"), ("oml:value", 1201086883), ("oml:component", flow.id)]),
     ]
     assert parameters == expected_parameters
 

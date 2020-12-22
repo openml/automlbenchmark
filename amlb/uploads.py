@@ -58,7 +58,7 @@ def _get_flow(metadata: Namespace, sync_with_server: bool = True) -> openml.flow
     if metadata.git_info.repo != "NA":
         amlb_version = metadata.git_info.commit[:8] if metadata.git_info.tags == [] else metadata.git_info.tags[0]
 
-        *_, owner, _ = metadata.git_info.repo.repsplit('/')
+        *_, owner, _ = metadata.git_info.repo.rsplit('/')
         if owner != 'openml':
             amlb_version = f"{owner}#{amlb_version}"
 
