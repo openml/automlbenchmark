@@ -180,7 +180,7 @@ class OpenmlDataset(Dataset):
             ds = arff.load(f)
         log.info("Removing ignored columns %s.", self._oml_dataset.ignore_attribute)
         col_selector, attributes = zip(*[(i, a) for i, a in enumerate(ds['attributes'])
-                                         if a[0] not in self._oml_dataset.ignore_attribute])
+                                         if a[0] not in self._oml_dataset.ignore_attribute or []])
         col_selector = list(col_selector)
         self._attributes = list(attributes)
         self._extract_unique_values(ds)
