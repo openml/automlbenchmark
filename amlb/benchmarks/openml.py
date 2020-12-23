@@ -39,10 +39,11 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
 
         # Here we know the (task, dataset) pairs so only download dataset meta-data is sufficient
         tasks = []
+        datasets = openml.datasets.list_datasets(data_id=suite.data, output_format='dataframe')
+        datasets.set_index('did', inplace=True)
         for tid, did in zip(suite.tasks, suite.data):
-            data = openml.datasets.get_dataset(did, download_data=False)
-            tasks.append(Namespace(name=str_sanitize(data.name),
-                                   description=data.description,
+            tasks.append(Namespace(name=str_sanitize(datasets.loc[did]['name']),
+                                   description=f"{openml.config.server.replace('/api/v1/xml', '')}/d/{did}",
                                    openml_task_id=tid))
     else:
         raise ValueError(f"The oml_type is {oml_type} but must be 's' or 't'")
