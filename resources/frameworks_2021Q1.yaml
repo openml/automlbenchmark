@@ -14,7 +14,7 @@ AutoGluon_bestquality:
     presets: best_quality
 
 autosklearn:
-  version: '0.12.1rc1'
+  version: '0.12.1'
 
 AutoWEKA:
   version: '2.6'
