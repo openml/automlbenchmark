@@ -1,0 +1,36 @@
+{
+    "framework": "constantpredictor",
+    "framework_params": {},
+    "framework_version": "stable",
+    "type": "classification",
+    "name": "iris",
+    "openml_task_id": 1196,
+    "test_server": true,
+    "fold": 2,
+    "metrics": [
+        "logloss",
+        "acc",
+        "balacc"
+    ],
+    "metric": "logloss",
+    "seed": 1201086885,
+    "max_runtime_seconds": 3600,
+    "cores": 8,
+    "max_mem_size_mb": 17270,
+    "min_vol_size_mb": 16384,
+    "input_dir": "C:\\Users\\Work\\.openml\\cache",
+    "output_dir": "E:\\repositories\\automlbenchmark\\results\\constantpredictor.openml_t_1196.1h8c.local.20201222T134334",
+    "output_predictions_file": "E:\\repositories\\automlbenchmark\\results\\constantpredictor.openml_t_1196.1h8c.local.20201222T134334\\predictions\\iris\\2\\predictions.csv",
+    "tag": null,
+    "command": "runbenchmark.py constantpredictor openml/t/1196 1h8c --test-server",
+    "git_info": {
+        "repo": "NA",
+        "branch": "NA",
+        "commit": "NA",
+        "tags": [],
+        "status": []
+    },
+    "ext": {},
+    "output_metadata_file": "E:\\repositories\\automlbenchmark\\results\\constantpredictor.openml_t_1196.1h8c.local.20201222T134334\\predictions\\iris\\2\\metadata.json",
+    "version": "0.23.1"
+}

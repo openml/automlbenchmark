@@ -1,0 +1,51 @@
+{
+    "framework": "H2OAutoML",
+    "framework_params": {},
+    "framework_version": "stable",
+    "type": "classification",
+    "name": "iris",
+    "openml_task_id": 1196,
+    "test_server": true,
+    "fold": 9,
+    "metrics": [
+        "logloss",
+        "acc",
+        "balacc"
+    ],
+    "metric": "logloss",
+    "seed": 413415609,
+    "max_runtime_seconds": 60,
+    "cores": 4,
+    "max_mem_size_mb": 22330,
+    "min_vol_size_mb": -1,
+    "input_dir": "/root/.openml/cache",
+    "output_dir": "/automlbenchmark/results/h2oautoml.openml_t_1196.test.local.20201222T135155",
+    "output_predictions_file": "/automlbenchmark/results/h2oautoml.openml_t_1196.test.local.20201222T135155/predictions/iris/9/predictions.csv",
+    "tag": null,
+    "command": "runbenchmark.py h2oautoml openml/t/1196 test --test-server",
+    "git_info": {
+        "repo": "https://github.com/openml/automlbenchmark.git",
+        "branch": "oml_upload",
+        "commit": "482b6e6b61258f3ace36d91a4a72756ac45b61e5",
+        "tags": [],
+        "status": [
+            "## oml_upload...origin/oml_upload",
+            " M resources/constraints.yaml"
+        ]
+    },
+    "ext": {
+        "monitoring": {
+            "frequency_seconds": 120,
+            "statistics": [
+                "cpu",
+                "memory",
+                "volume"
+            ],
+            "verbosity": 0
+        }
+    },
+    "output_metadata_file": "/automlbenchmark/results/h2oautoml.openml_t_1196.test.local.20201222T135155/predictions/iris/9/metadata.json",
+    "result_token": "7468049e-445e-11eb-baf3-0242ac110002",
+    "result_dir": "/tmp/tmpyme85l1y",
+    "version": "3.32.0.2"
+}
