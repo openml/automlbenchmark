@@ -1,0 +1,90 @@
+---
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  version: "0.0.12"
+
+AutoGluon_bestquality:
+  extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
+  params:
+    presets: best_quality
+
+autosklearn:
+  version: '0.12.1rc1'
+
+AutoWEKA:
+  version: '2.6'
+
+autoxgboost:
+  version: 'latest'
+
+GAMA:
+  version: '20.1.0'
+
+H2OAutoML:
+  version: '3.30.0.4'
+  setup_args: 'zahradnik'
+
+hyperoptsklearn:
+  version: 'latest'
+
+mljarsupervised:
+  version: '0.7.15'
+
+mljarsupervised_compete:
+  extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  params:
+    mode: Compete   # set mode for Compete, default mode is Explain
+
+MLPlan:
+  version: '0.2.3'
+
+MLPlanSKLearn:
+  extends: MLPlan
+  params:
+    _backend: sklearn
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+oboe:
+  version: 'latest'
+
+TPOT:
+  version: '0.11.5'
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor: {}
+
+constantpredictor_enc:
+  extends: constantpredictor
+  params:
+    encode: true
+
+DecisionTree:
+  version: '0.22.2'
+
+RandomForest:
+  version: '0.22.2'
+  params:
+    n_estimators: 2000
+
+ranger:
+  version: 'stable'
+
+TunedRandomForest:
+  version: '0.22.2'
+  params:
+    n_estimators: 2000
+
