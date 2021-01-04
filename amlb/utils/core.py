@@ -1,5 +1,6 @@
 from ast import literal_eval
 import base64
+from collections import defaultdict
 from collections.abc import Iterable, Sized
 from functools import reduce, wraps
 import hashlib
@@ -93,6 +94,9 @@ class Namespace:
         return _walk(namespace, fn, inplace=inplace)
 
     def __init__(self, *args, **kwargs):
+        if len(args) > 0 and callable(args[0]):
+            self.__dict__ = defaultdict(args[0])
+            args = args[1:]
         self.__dict__.update(dict(*args, **kwargs))
 
     def __add__(self, other):
@@ -113,6 +117,11 @@ class Namespace:
 
     def __len__(self):
         return len(self.__dict__)
+
+    def __getattr__(self, item):
+        if isinstance(self.__dict__, defaultdict):
+            return self.__dict__[item]
+        raise AttributeError(f"'Namespace' object has no attribute '{item}'")
 
     def __getitem__(self, item):
         return self.__dict__.get(item)

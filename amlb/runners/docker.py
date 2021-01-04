@@ -61,7 +61,7 @@ class DockerBenchmark(ContainerBenchmark):
             input=in_dir,
             output=out_dir,
             custom=custom_dir,
-            image=self._image_name,
+            image=self.image,
             params=script_params,
             extra_params=script_extra_params,
         )
@@ -78,21 +78,20 @@ class DockerBenchmark(ContainerBenchmark):
             finally:
                 raise
 
-    def _image_exists(self):
+    def _image_exists(self, image):
         """Implements a method to see if the container image is available"""
-        output, _ = run_cmd(f"docker images -q {self._image_name}")
+        output, _ = run_cmd(f"docker images -q {image}")
         log.debug("docker image id: %s", output)
         if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
         try:
-            run_cmd(f"docker pull {self._image_name}", _live_output_=True)
+            run_cmd(f"docker pull {image}", _live_output_=True)
             return True
         except Exception:
             pass
         return False
 
-    def _run_container_build_command(self, cache):
-        image = self._image_name
+    def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
@@ -103,8 +102,7 @@ class DockerBenchmark(ContainerBenchmark):
         )
         log.info(f"Successfully built docker image {image}.")
 
-    def _upload_image(self):
-        image = self._image_name
+    def _upload_image(self, image):
         log.info(f"Publishing docker image {image}.")
         run_cmd(f"docker login && docker push {image}")
         log.info(f"Successfully published docker image {image}.")
@@ -116,11 +114,15 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
 RUN apt-get -y install apt-utils dialog locales
 RUN apt-get -y install curl wget unzip git
-RUN apt-get -y install python3 python3-pip python3-venv
+RUN apt-get -y install software-properties-common
+RUN add-apt-repository -y ppa:deadsnakes/ppa
+RUN apt-get update
+RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 RUN pip3 install -U pip wheel
 
 # aliases for the python system
-ENV SPIP pip3
+ENV SPIP python3 -m pip
 ENV SPY python3
 
 # Enforce UTF-8 encoding
@@ -135,9 +137,9 @@ WORKDIR /bench
 # We create a virtual environment so that AutoML systems may use their preferred versions of
 # packages that we need to data pre- and postprocessing without breaking it.
 RUN $SPY -m venv venv
-ENV PIP /bench/venv/bin/pip3
+ENV PIP /bench/venv/bin/python3 -m pip
 ENV PY /bench/venv/bin/python3 -W ignore
-#RUN $PIP install -U pip=={pip_version} wheel
+#RUN $PIP install -U pip=={pipv} wheel
 RUN $PIP install -U pip wheel
 
 VOLUME /input
@@ -157,12 +159,15 @@ ENTRYPOINT ["/bin/bash", "-c", "$PY {script} $0 $*"]
 CMD ["{framework}", "test"]
 
 """.format(
-            custom_commands=custom_commands.format(**dict(setup=dir_of(os.path.join(self._framework_dir, "setup/"),
-                                                                       rel_to_project_root=True),
-                                                          pip="$PIP",
-                                                          py="$PY")),
+            custom_commands=custom_commands.format(
+                setup=dir_of(os.path.join(self._framework_dir, "setup/"),
+                             rel_to_project_root=True),
+                pip="$PIP",
+                py="$PY"
+            ),
             framework=self.framework_name,
-            pip_version=rconfig().versions.pip,
+            pyv=rconfig().versions.python,
+            pipv=rconfig().versions.pip,
             script=rconfig().script,
             user=rconfig().user_dir,
         )

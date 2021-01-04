@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import re
+import shutil
 import sys
 
 # prevent asap other modules from defining the root logger using basicConfig
@@ -10,7 +11,7 @@ import openml
 import amlb.logger
 
 import amlb
-from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize
+from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize, zip_path
 from amlb import log, AutoMLError
 
 
@@ -123,6 +124,7 @@ log.debug("Config args: %s.", config_args)
 amlb.resources.from_configs(config, config_user, config_args)
 
 exit_code = 0
+bench = None
 try:
     if args.mode == 'local':
         bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
@@ -158,5 +160,12 @@ except Exception as e:
 finally:
     if args.test_server:
         openml.config.stop_using_configuration_for_example()
+    archives = amlb.resources.config().archive
+    if archives and bench:
+        out_dirs = bench.output_dirs
+        for d in archives:
+            if d in out_dirs:
+                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
+                shutil.rmtree(out_dirs[d], ignore_errors=True)
 
-sys.exit(exit_code)
+    sys.exit(exit_code)

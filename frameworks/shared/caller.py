@@ -1,9 +1,8 @@
-import io
 import logging
 import os
 import re
+from tempfile import TemporaryDirectory, mktemp
 from typing import Union
-import uuid
 
 import numpy as np
 
@@ -11,7 +10,7 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
-from amlb.utils import Namespace as ns, Timer, TmpDir, dir_of, run_cmd, json_dumps, json_loads
+from amlb.utils import Namespace as ns, Timer, TmpDir, dir_of, run_cmd, json_dumps, json_load, json_loads
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ def run_in_venv(caller_file, script_file: str, *args,
     cmd = f"{python_exec} {script_path}"
 
     input_data = ns.from_dict(input_data)
-    with TmpDir() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         def make_path(k, v, parents=None):
             if isinstance(v, np.ndarray):
@@ -45,8 +44,8 @@ def run_in_venv(caller_file, script_file: str, *args,
         ds = ns.walk(input_data, make_path)
         dataset.release()
 
-        config.result_token = str(uuid.uuid1())
         config.result_dir = tmpdir
+        config.result_file = mktemp(dir=tmpdir)
 
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
         with Timer() as proc_timer:
@@ -66,13 +65,14 @@ def run_in_venv(caller_file, script_file: str, *args,
                                     ),
                                   )
 
-        out = io.StringIO(output)
-        res = ns()
-        for line in out:
-            li = line.rstrip()
-            if li == config.result_token:
-                res = json_loads(out.readline(), as_namespace=True)
-                break
+        res = ns(lambda: None)
+        if os.path.exists(config.result_file):
+            res = json_load(config.result_file, as_namespace=True)
+
+        log.debug("Result from subprocess:\n%s", res)
+
+        if not res:
+            raise NoResultError(f"Process crashed:\n{err}")
 
         if res.error_message is not None:
             raise NoResultError(res.error_message)
@@ -80,7 +80,6 @@ def run_in_venv(caller_file, script_file: str, *args,
         for name in ['predictions', 'truth', 'probabilities']:
             res[name] = np.load(res[name], allow_pickle=True) if res[name] is not None else None
 
-        log.debug("Result from subprocess:\n%s", res)
         if callable(process_results):
             res = process_results(res)
 

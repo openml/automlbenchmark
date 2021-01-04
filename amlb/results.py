@@ -204,6 +204,15 @@ class TaskResult:
             return NoResult("Missing predictions.")
 
     @staticmethod
+    def load_metadata(metadata_file):
+        log.info("Loading metadata from `%s`.", metadata_file)
+        if os.path.isfile(metadata_file):
+            return json_load(metadata_file, as_namespace=True)
+        else:
+            log.warning("Metadata file `%s` is missing: framework either couldn't start or implementation doesn't save metadata.", metadata_file)
+            return Namespace(lambda: None)
+
+    @staticmethod
     # @profile(logger=log)
     def save_predictions(dataset: Dataset, output_file: str,
                          predictions=None, truth=None,
@@ -337,8 +346,9 @@ class TaskResult:
     def get_result(self):
         return self.load_predictions(self._predictions_file)
 
+    @memoize
     def get_metadata(self):
-        return json_load(self._metadata_file, as_namespace=True)
+        return self.load_metadata(self._metadata_file)
 
     @profile(logger=log)
     def compute_scores(self, result=None, meta_result=None):
@@ -350,7 +360,7 @@ class TaskResult:
             constraint=self.constraint,
             framework=metadata.framework,
             version=metadata.version if 'version' in metadata else metadata.framework_version,
-            params=str(metadata.framework_params) if len(metadata.framework_params) > 0 else '',
+            params=str(metadata.framework_params) if metadata.framework_params else '',
             fold=self.fold,
             mode=rconfig().run_mode,
             seed=metadata.seed,
@@ -363,7 +373,7 @@ class TaskResult:
         for m in required_metares:
             scores[m] = meta_result[m] if m in meta_result else nan
         result = self.get_result() if result is None else result
-        for metric in metadata.metrics:
+        for metric in metadata.metrics or []:
             score = result.evaluate(metric)
             scores[metric] = score
         scores.result = scores[scores.metric] if scores.metric in scores else result.evaluate(scores.metric)

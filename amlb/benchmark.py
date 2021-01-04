@@ -407,8 +407,14 @@ class BenchmarkTask:
             return self.run()
         timeout_secs = min(self.task_config.max_runtime_seconds * 2,
                            self.task_config.max_runtime_seconds + rconfig().benchmarks.overhead_time_seconds)
-        job = Job(name=rconfig().token_separator.join(['local', self.task_config.name, str(self.fold), self.benchmark.framework_name]),
-                  timeout_secs=timeout_secs)  # this timeout is just to handle edge cases where framework never completes
+        job = Job(name=rconfig().token_separator.join([
+            'local',
+            self.benchmark.benchmark_name,
+            self.benchmark.constraint_name,
+            self.task_config.name,
+            str(self.fold),
+            self.benchmark.framework_name
+        ]), timeout_secs=timeout_secs)  # this timeout is just to handle edge cases where framework never completes
         job._run = _run
         return job
         # return Namespace(run=lambda: self.run(framework))

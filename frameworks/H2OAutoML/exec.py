@@ -185,7 +185,7 @@ def save_artifacts(automl, dataset, config):
                     preds.probabilities_labels = preds.h2o_labels
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
             utils.zip_path(predictions_dir,
-                     os.path.join(predictions_dir, "models_predictions.zip"))
+                           os.path.join(predictions_dir, "models_predictions.zip"))
 
             def delete(path, isdir):
                 if isdir:
