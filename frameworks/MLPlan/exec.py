@@ -84,7 +84,8 @@ def run(dataset, config):
 
     predictions = stats["predictions"]
     truth = stats["truth"]
-    numEvals = stats["num_evaluations"]
+    num_evals = stats["num_evaluations"]
+    predict_time = stats["final_candidate_predict_time_ms"]
 
     # only for classification tasks we have probabilities available, thus check whether the json contains the respective fields
     if "probabilities" in stats and "probabilities_labels" in stats:
@@ -101,8 +102,9 @@ def run(dataset, config):
         probabilities=probabilities,
         probabilities_labels=probabilities_labels,
         target_is_encoded=is_classification,
-        models_count=numEvals,
-        training_duration=training.duration
+        models_count=num_evals,
+        training_duration=training.duration,
+        predict_duration=predict_time
     )
 
 
