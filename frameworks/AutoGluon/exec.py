@@ -2,16 +2,18 @@ import logging
 import os
 import shutil
 import warnings
+import gc
+from io import StringIO
 warnings.simplefilter("ignore")
 
 import matplotlib
 import pandas as pd
 matplotlib.use('agg')  # no need for tk
 
-from autogluon.task.tabular_prediction.tabular_prediction import TabularPrediction as task
-from autogluon.utils.tabular.utils.savers import save_pd, save_pkl
-import autogluon.utils.tabular.metrics as metrics
-from autogluon.version import __version__
+from autogluon.tabular import TabularPrediction as task
+from autogluon.core.utils.savers import save_pd, save_pkl
+import autogluon.core.metrics as metrics
+from autogluon.tabular.version import __version__
 
 from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
 
@@ -30,9 +32,11 @@ def run(dataset, config):
         mae=metrics.mean_absolute_error,
         mse=metrics.mean_squared_error,
         r2=metrics.r2,
-        # rmse=metrics.root_mean_squared_error,  # metrics.root_mean_squared_error incorrectly registered in autogluon REGRESSION_METRICS
-        rmse=metrics.mean_squared_error,  # for now, we can let autogluon optimize training on mse: anyway we compute final score from predictions.
+        rmse=metrics.root_mean_squared_error,
     )
+
+    label = dataset.target.name
+    problem_type = dataset.problem_type
 
     perf_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if perf_metric is None:
@@ -42,35 +46,48 @@ def run(dataset, config):
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
-    column_names, _ = zip(*dataset.columns)
-    column_types = dict(dataset.columns)
-    train = pd.DataFrame(dataset.train.data, columns=column_names).astype(column_types, copy=False)
-    label = dataset.target.name
-    print(f"Columns dtypes:\n{train.dtypes}")
+    load_raw = config.framework_params.get('_load_raw', False)
+    if load_raw:
+        train, test = load_data_raw(dataset=dataset)
+    else:
+        column_names, _ = zip(*dataset.columns)
+        column_types = dict(dataset.columns)
+        train = pd.DataFrame(dataset.train.data, columns=column_names).astype(column_types, copy=False)
+        print(f"Columns dtypes:\n{train.dtypes}")
+        test = pd.DataFrame(dataset.test.data, columns=column_names).astype(column_types, copy=False)
+
+    del dataset
+    gc.collect()
 
     output_dir = output_subdir("models", config)
     with utils.Timer() as training:
         predictor = task.fit(
             train_data=train,
             label=label,
-            problem_type=dataset.problem_type,
+            problem_type=problem_type,
             output_directory=output_dir,
             time_limits=config.max_runtime_seconds,
             eval_metric=perf_metric.name,
             **training_params
         )
 
-    test = pd.DataFrame(dataset.test.data, columns=column_names).astype(column_types, copy=False)
-    X_test = test.drop(columns=label)
+    del train
+
     y_test = test[label]
+    test = test.drop(columns=label)
 
-    with utils.Timer() as predict:
-        predictions = predictor.predict(X_test)
+    if is_classification:
+        with utils.Timer() as predict:
+            probabilities = predictor.predict_proba(test, as_pandas=True, as_multiclass=True)
+        predictions = probabilities.idxmax(axis=1).to_numpy()
+    else:
+        with utils.Timer() as predict:
+            predictions = predictor.predict(test)
+        probabilities = None
 
-    probabilities = predictor.predict_proba(dataset=X_test, as_pandas=True, as_multiclass=True) if is_classification else None
     prob_labels = probabilities.columns.values.tolist() if probabilities is not None else None
 
-    leaderboard = predictor._learner.leaderboard(X_test, y_test, silent=True)
+    leaderboard = predictor.leaderboard(silent=True)  # Removed test data input to avoid long running computation, remove 7200s timeout limitation to re-enable
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         print(leaderboard)
 
@@ -118,6 +135,39 @@ def save_artifacts(predictor, leaderboard, config):
 
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
+
+
+def load_data_raw(dataset):
+    """
+    Save and load data while removing all preset dtype information.
+    This represents the most challenging scenario of reading from raw CSV without dtype information.
+    """
+    label = dataset.target.name
+    column_names, _ = zip(*dataset.columns)
+    train = pd.DataFrame(dataset.train.data, columns=column_names).infer_objects()
+    test = pd.DataFrame(dataset.test.data, columns=column_names).infer_objects()
+
+    # Save and load data to remove any pre-set dtypes, observe performance from worst-case scenario: raw csv
+    train = convert_to_raw(train, label=label)
+    test = convert_to_raw(test, label=label)
+
+    return train, test
+
+
+# Remove custom type information
+def convert_to_raw(X, label=None):
+    if label is not None:
+        y = X[label]
+        X = X.drop(columns=[label])
+    else:
+        y = None
+    with StringIO() as buffer:
+        X.to_csv(buffer, index=True, header=True)
+        buffer.seek(0)
+        X = pd.read_csv(buffer, index_col=0, header=0, low_memory=False, encoding='utf-8')
+    if label is not None:
+        X[label] = y
+    return X
 
 
 if __name__ == '__main__':
