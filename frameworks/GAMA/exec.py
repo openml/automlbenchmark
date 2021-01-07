@@ -38,7 +38,7 @@ def run(dataset, config):
         mse='neg_mean_squared_error',
         msle='neg_mean_squared_log_error',
         r2='r2',
-        rmse='neg_root_mean_squared_error',
+        rmse='neg_mean_squared_error',
     )
     scoring_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if scoring_metric is None:
@@ -49,7 +49,6 @@ def run(dataset, config):
 
     *_, did, fold = dataset.train_path.split('/')
     fold = fold.split('.')[0].split('_')[-1]
-    log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
     utils.touch(log_file)
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
@@ -61,12 +60,15 @@ def run(dataset, config):
         max_total_time=config.max_runtime_seconds,
         scoring=scoring_metric,
         random_state=config.seed,
-        # keep_analysis_log=log_file,
         **training_params
     )
     version_leq_20_2_0 = version.parse(__version__) <= version.parse('20.2.0')
     if version_leq_20_2_0:
+        log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
         kwargs['keep_analysis_log'] = log_file
+    else:
+        kwargs['max_memory_mb'] = config.max_mem_size_mb
+        kwargs['output_directory'] = os.path.join(config.output_dir, "gama")
     
     gama_automl = estimator(**kwargs)
     fit = gama_automl.fit_arff if version_leq_20_2_0 else gama_automl.fit_from_file
@@ -79,7 +81,7 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     with utils.Timer() as predict_timer:
         predictions = predict(dataset.test_path, dataset.target, encoding='utf-8')
-    if is_classification is not None:
+    if is_classification:
         probabilities = predict_proba(dataset.test_path, dataset.target, encoding='utf-8')
     else:
         probabilities = None
