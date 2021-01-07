@@ -10,6 +10,7 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+from packaging import version
 from gama import GamaClassifier, GamaRegressor, __version__
 import sklearn
 import category_encoders
@@ -55,21 +56,31 @@ def run(dataset, config):
              config.max_runtime_seconds, n_jobs, scoring_metric)
 
     estimator = GamaClassifier if is_classification else GamaRegressor
-    gama_automl = estimator(n_jobs=n_jobs,
-                            max_total_time=config.max_runtime_seconds,
-                            scoring=scoring_metric,
-                            random_state=config.seed,
-                            keep_analysis_log=log_file,
-                            **training_params)
+    kwargs = dict(
+        n_jobs=n_jobs,
+        max_total_time=config.max_runtime_seconds,
+        scoring=scoring_metric,
+        random_state=config.seed,
+        # keep_analysis_log=log_file,
+        **training_params
+    )
+    version_leq_20_2_0 = version.parse(__version__) <= version.parse('20.2.0')
+    if version_leq_20_2_0:
+        kwargs['keep_analysis_log'] = log_file
+    
+    gama_automl = estimator(**kwargs)
+    fit = gama_automl.fit_arff if version_leq_20_2_0 else gama_automl.fit_from_file
+    predict = gama_automl.predict_arff if version_leq_20_2_0 else gama_automl.predict_from_file
+    predict_proba = gama_automl.predict_proba_arff if version_leq_20_2_0 else gama_automl.predict_proba_from_file
 
-    with utils.Timer() as training:
-        gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
+    with utils.Timer() as training_timer:
+        fit(dataset.train_path, dataset.target, encoding='utf-8')
 
     log.info('Predicting on the test set.')
-    with utils.Timer() as predict:
-        predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
+    with utils.Timer() as predict_timer:
+        predictions = predict(dataset.test_path, dataset.target, encoding='utf-8')
     if is_classification is not None:
-        probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target, encoding='utf-8')
+        probabilities = predict_proba(dataset.test_path, dataset.target, encoding='utf-8')
     else:
         probabilities = None
 
@@ -79,8 +90,8 @@ def run(dataset, config):
         probabilities=probabilities,
         target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
-        training_duration=training.duration,
-        predict_duration=predict.duration
+        training_duration=training_timer.duration,
+        predict_duration=predict_timer.duration
     )
 
 
