@@ -49,7 +49,6 @@ def run(dataset, config):
 
     *_, did, fold = dataset.train_path.split('/')
     fold = fold.split('.')[0].split('_')[-1]
-    utils.touch(log_file)
 
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
@@ -65,6 +64,7 @@ def run(dataset, config):
     version_leq_20_2_0 = version.parse(__version__) <= version.parse('20.2.0')
     if version_leq_20_2_0:
         log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
+        utils.touch(log_file)
         kwargs['keep_analysis_log'] = log_file
     else:
         kwargs['max_memory_mb'] = config.max_mem_size_mb
