@@ -1,3 +1,1 @@
 packaging
-scikit-learn == 0.21.3
-category-encoders == 2.0.0
