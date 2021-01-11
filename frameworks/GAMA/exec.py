@@ -10,6 +10,7 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+from gama.data_loading import file_to_pandas
 from gama import GamaClassifier, GamaRegressor, __version__
 import sklearn
 import category_encoders
@@ -61,15 +62,19 @@ def run(dataset, config):
                             random_state=config.seed,
                             keep_analysis_log=log_file,
                             **training_params)
+    data = file_to_pandas(dataset.train_path, encoding='utf-8')
+    x, y = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
 
     with utils.Timer() as training:
-        gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
+        gama_automl.fit(x, y)
 
+    data = file_to_pandas(dataset.test_path, encoding='utf-8')
+    x, _ = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
     log.info('Predicting on the test set.')
     with utils.Timer() as predict:
-        predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
+        predictions = gama_automl.predict(x)
     if is_classification is not None:
-        probabilities = gama_automl.predict_proba_arff(dataset.test_path, dataset.target, encoding='utf-8')
+        probabilities = gama_automl.predict_proba_arff(x)
     else:
         probabilities = None
 
