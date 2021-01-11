@@ -95,7 +95,7 @@ To run a benchmark call the `runbenchmark.py` script with at least the following
 
 1. The AutoML framework that should be evaluated, see [frameworks.yaml](../resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [HOWTO](./HOWTO.md#add-an-automl-framework).
 2. The benchmark suite to run should be one implemented in [benchmarks folder](../resources/benchmarks), or an OpenML study or task (formatted as `openml/s/X` or `openml/t/Y` respectively).
-3. (Optional) The constraints applied to the benchmark as defined by default in [constraints.yaml](../resources/constraints.yaml). Default constraint is `test` (1 single fold for 10 min).
+3. (Optional) The constraints applied to the benchmark as defined by default in [constraints.yaml](../resources/constraints.yaml). Default constraint is `test` (2 folds for 10 min each).
 4. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
 
 Examples:
