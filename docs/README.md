@@ -29,15 +29,10 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 
 ### Features:
 * Curated suites of [benchmarking datasets](https://openml.github.io/automlbenchmark/benchmark_datasets.html) from [OpenML](https://www.openml.org/s/218/data).
-* Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
+* Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html) on regression and classification tasks.
 * [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework)
 * Experiments can be run in Docker or Singularity containers
 * Execute experiments locally or on AWS (see below)
-
-### Roadmap: 
-* Add a regression benchmark to the framework.
-* More benchmark datasets (especially bigger datasets).
-* Automatic sharing of benchmarking results on OpenML.
 
 
 ## Installation
