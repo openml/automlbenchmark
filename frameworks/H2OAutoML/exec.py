@@ -77,7 +77,7 @@ def run(dataset, config):
         if version.parse(h2o.__version__) >= version.parse("3.32.0.3"):  # previous versions may fail to parse correctly some rare arff files using single quotes as enum/string delimiters (pandas also fails on same datasets)
             import_kwargs['quotechar'] = '"'
             train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config), **import_kwargs)
-            if not verify_loaded_frame(train, dataset):
+            if train.nlevels() != dataset.domains.cardinalities:
                 h2o.remove(train)
                 train = None
                 import_kwargs['quotechar'] = "'"
@@ -129,19 +129,14 @@ def run(dataset, config):
         )
 
     finally:
-        if h2o.connection():
+        con = h2o.connection()
+        if con:
             # h2o.remove_all()
-            h2o.connection().close()
-        if h2o.connection().local_server:
-            h2o.connection().local_server.shutdown()
+            con.close()
+            if con.local_server:
+                con.local_server.shutdown()
         # if h2o.cluster():
         #     h2o.cluster().shutdown()
-
-
-def verify_loaded_frame(fr, dataset):
-    nlevels = fr.nlevels()
-    expected_nlevels = [0 if f.values is None else len(f.values) for f in dataset.features]
-    return nlevels == expected_nlevels
 
 
 def frame_name(fr_type, config):
