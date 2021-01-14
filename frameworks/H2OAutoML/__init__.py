@@ -14,7 +14,8 @@ def run(dataset: Dataset, config: TaskConfig):
     data = dict(
         train=dict(path=dataset.train.path),
         test=dict(path=dataset.test.path),
-        target=dict(index=dataset.target.index)
+        target=dict(index=dataset.target.index),
+        domains=dict(cardinalities=[0 if f.values is None else len(f.values) for f in dataset.features])
     )
 
     config.ext.monitoring = rconfig().monitoring
