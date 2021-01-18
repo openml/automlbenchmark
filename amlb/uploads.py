@@ -171,15 +171,19 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
     ).publish()
 
 
+def missing_folds(task_folder: str) -> Set[str]:
+    completed_folds = _list_completed_folds(task_folder)
+    all_folds = {str(f) for f in range(10)}
+    return all_folds.difference(completed_folds)
+
+
 def process_task_folder(task_folder: str) -> Optional[openml.runs.OpenMLRun]:
     """ Uploads """
-    completed_folds = _list_completed_folds(task_folder)
-    is_ready_for_upload = (len(completed_folds) == 10)
-    if not is_ready_for_upload:
+    if len(missing_folds(task_folder)) > 0:
         log.warning(
             "Task %s is missing predictions for folds %s.",
             task_folder,
-            ', '.join(completed_folds)
+            ', '.join(missing_folds(task_folder))
         )
         return None
 
