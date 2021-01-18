@@ -1,7 +1,7 @@
 From the automlbenchmark app, you can now directly run additional frameworks (here various versions of H2O-3) and benchmarks (here `h2obench`):
 ```bash
 python runbenchmark.py randomforest filedatasets -u examples/custom
-python runbenchmark.py GradientBoosting myvalidation 30m4c2f -t miniboone -u examples/custom
+python runbenchmark.py gradientboosting myvalidation 30m4c2f -t miniboone -u examples/custom
 ```
 
 **Note:**
