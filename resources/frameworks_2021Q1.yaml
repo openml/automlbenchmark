@@ -23,7 +23,7 @@ autoxgboost:
   version: 'latest'
 
 GAMA:
-  version: '20.1.0'
+  version: '21.0.0'
 
 H2OAutoML:
   version: '3.30.0.4'
@@ -42,7 +42,7 @@ mljarsupervised_compete:
     mode: Compete   # set mode for Compete, default mode is Explain
 
 MLPlan:
-  version: '0.2.3'
+  version: '0.2.4'
 
 MLPlanSKLearn:
   extends: MLPlan
