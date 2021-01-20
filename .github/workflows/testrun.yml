@@ -43,7 +43,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: user/runbenchmark@v1
+    - uses: ./.github/actions/runbenchmark
       with:
         framework: autosklearn
         task: ${{ matrix.task }}
