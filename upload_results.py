@@ -10,6 +10,7 @@ import os
 from typing import Optional
 
 import openml
+from openml import OpenMLRun
 
 from amlb.resources import config_load
 from amlb.uploads import process_task_folder, missing_folds, _load_task_data
@@ -44,6 +45,10 @@ def parse_args():
     parser.add_argument(
         '-v', '--verbose', action='store_true', dest='verbose',
         help="Output progress to console."
+    )
+    parser.add_argument(
+        '-t', '--task', type=str, dest='task', default=None,
+        help="Only upload results for this specific task."
     )
     args = parser.parse_args()
 
@@ -107,27 +112,42 @@ def server_for_task(task: str):
     return server_connection
 
 
+def upload_task(task_directory: str) -> OpenMLRun:
+    task_name = os.path.basename(task_directory)
+    try:
+        with server_for_task(task_directory):
+            log.debug("Starting upload for '%s'." % task_name)
+            run = process_task_folder(task_directory)
+            log.info("%s result stored at %s/r/%d"
+                     % (task_name, openml.config.server[:-11], run.id))
+    except Exception as e:
+        message = e.message if hasattr(e, "message") else e.args[0]
+        log.warning("Task %s failed to upload: %s" % (task_name, message))
+        if args.fail_fast:
+            raise
+
+
 def process_results(result_dir: str, mode: str = 'check'):
     prediction_directory = os.path.join(result_dir, 'predictions')
-    for task_directory in os.listdir(prediction_directory):
-        full_task_directory = os.path.join(prediction_directory, task_directory)
+
+    if args.task is None:
+        tasks_to_process = os.listdir(prediction_directory)
+    elif os.path.isdir(os.path.join(prediction_directory, args.task)):
+        tasks_to_process = [args.task]
+    else:
+        log.error(f"Task '%s' not in '%s'." % (args.task, prediction_directory))
+        quit()
+
+    for task_name in tasks_to_process:
+        full_task_directory = os.path.join(prediction_directory, task_name)
 
         folds = missing_folds(full_task_directory)
         if len(folds) > 0:
-            log.info("%s has missing folds: %s" % (task_directory, ', '.join(sorted(folds))))
+            log.info("%s has missing folds: %s" % (task_name, ', '.join(sorted(folds))))
         elif mode == 'check':
-            log.info("%s is ready for upload." % task_directory)
+            log.info("%s is ready for upload." % task_name)
         elif mode == 'upload':
-            try:
-                with server_for_task(full_task_directory):
-                    run = process_task_folder(full_task_directory)
-                    log.info("%s result stored at %s/r/%d"
-                             % (task_directory, openml.config.server[:-11],  run.id))
-            except Exception as e:
-                message = e.message if hasattr(e, "message") else e.args[0]
-                log.warning("Task %s failed to upload: %s" % (task_directory, message))
-                if args.fail_fast:
-                    raise
+            upload_task(full_task_directory)
 
 
 def configure_apikey(key: Optional[str]) -> bool:
