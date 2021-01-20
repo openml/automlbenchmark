@@ -16,7 +16,7 @@ jobs:
         git checkout $GITHUB_HEAD_REF
     - name: store changed frameworks
       id: diff
-      run: echo "::set-output name=changed::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///'`"
+      run: echo "::set-output name=changed::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`"
 
   echo-output:
     runs-on: ubuntu-latest
