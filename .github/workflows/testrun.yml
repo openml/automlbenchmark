@@ -3,13 +3,35 @@ name: Tests
 on: pull_request
 
 jobs:
-  ubuntu:
-
+  autoxgboost:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.8]
-        framework: [autogluon, gama, h2oautoml, mlplan, tpot, autosklearn, autoxgboost, lightautoml, mljarsupervised]
+        framework: [autoxgboost]  # autogluon, gama, h2oautoml, mlplan, tpot, autosklearn,
+        task: [bioresponse, dresses-sales, eucalyptus, internet-advertisements, micro-mass, kc1, APSFailure]
+      fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run Task
+      run: |
+        python runbenchmark.py ${{ matrix.framework }} validation test -f 0 -t ${{ matrix.task }}
+
+  autosklearn:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+        framework: [autosklearn]
         task: [bioresponse, dresses-sales, eucalyptus, internet-advertisements, micro-mass, kc1, APSFailure]
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
 
