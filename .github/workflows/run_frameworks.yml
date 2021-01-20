@@ -9,9 +9,13 @@ jobs:
       output1: ${{ steps.diff.outputs.changed }}
     steps:
     - uses: actions/checkout@v2
+    - name: pull base branch
+      run: |
+        git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
+        git checkout $GITHUB_HEAD_REF
     - name: store changed frameworks
       id: diff
-      run: echo "::set-output name=changed::`git diff --name-only HEAD..master | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///'`"
+      run: echo "::set-output name=changed::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///'`"
 
   echo-output:
     runs-on: ubuntu-latest
@@ -49,6 +53,7 @@ jobs:
         python runbenchmark.py ${{ matrix.framework }} validation test -f 0 -t ${{ matrix.task }}
 
   autosklearn:
+    if: contains(github.ref, 'develop')
     runs-on: ubuntu-latest
     strategy:
       matrix:
