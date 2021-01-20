@@ -160,6 +160,12 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
     if 'tag' in metadata and metadata.tag not in [None, 'amlb']:
         tags.extend([metadata.tag])
 
+    if len(metadata.framework_params) > 0:
+        description = "Framework_Hyperparameters-"
+        description += '-'.join(f"{hp}:{value}" for hp, value in Namespace.dict(metadata.framework_params).items())
+    else:
+        description = ''
+
     return openml.runs.OpenMLRun(
         task_id=oml_task.id,
         flow_id=oml_flow.id,
@@ -168,6 +174,7 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
         setup_string=metadata.command,
         data_content=formatted_predictions,
         tags=tags,
+        run_details=description,
     ).publish()
 
 
