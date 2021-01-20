@@ -5,19 +5,19 @@ on: pull_request
 jobs:
   changed-frameworks:
     runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.diff.outputs.changed }}
     steps:
     - uses: actions/checkout@v2
     - name: store changed frameworks
       id: diff
-      run: echo "::set-output name=changed::`git diff --name-only HEAD..$GITHUB_REF | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///'`"
-    outputs:
-      changed-frameworks: ${{ steps.diff }}
+      run: echo "::set-output name=changed::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///'`"
 
   echo-output:
     runs-on: ubuntu-latest
     needs: changed-frameworks
     steps:
-    - run: echo ${{needs.changed-frameworks.outputs.changed-frameworks}}
+    - run: echo ${{needs.changed-frameworks.outputs.output1}}
 
   autoxgboost:
     runs-on: ubuntu-latest
