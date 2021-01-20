@@ -3,6 +3,20 @@ name: Tests
 on: pull_request
 
 jobs:
+  changed-frameworks:
+    - steps:
+      - uses: actions/checkout@v2
+      - name: store changed frameworks
+        id: diff
+        run: echo "::set-output name=changed::`git diff --name-only HEAD..$GITHUB_REF | grep -o -i 'frameworks/.*/' | uniq | sed -e 's/frameworks//' -e 's/\///'`"
+      outputs:
+        changed-frameworks: ${{ steps.diff }}
+
+  echo-output:
+    needs: changed-frameworks
+    steps:
+      - run: echo ${{needs.changed-frameworks.outputs.changed-frameworks}}
+  
   autoxgboost:
     runs-on: ubuntu-latest
     strategy:
