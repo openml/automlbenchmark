@@ -25,6 +25,8 @@ jobs:
     - run: echo ${{needs.changed-frameworks.outputs.output1}}
 
   autoxgboost:
+    needs: changed-frameworks
+    if: contains(needs.changed-frameworks.outputs.output1, 'autoxgboost')
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -54,7 +56,10 @@ jobs:
         python runbenchmark.py ${{ matrix.framework }} validation test -f 0 -t ${{ matrix.task }}
 
   autosklearn:
-    if: contains(github.ref, 'develop')
+    # steps.changed-my-tools.outputs.changed == 'true'
+    # contains(github.ref, 'develop')
+    needs: changed-frameworks
+    if: contains(needs.changed-frameworks.outputs.output1, 'autosklearn')
     runs-on: ubuntu-latest
     strategy:
       matrix:
