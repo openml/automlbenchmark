@@ -4,6 +4,7 @@ on: pull_request
 
 jobs:
   changed-frameworks:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: store changed frameworks
@@ -13,6 +14,7 @@ jobs:
       changed-frameworks: ${{ steps.diff }}
 
   echo-output:
+    runs-on: ubuntu-latest
     needs: changed-frameworks
     steps:
     - run: echo ${{needs.changed-frameworks.outputs.changed-frameworks}}
