@@ -151,25 +151,30 @@ def save_artifacts(automl, dataset, config):
         if 'leaderboard' in artifacts:
             models_dir = output_subdir("models", config)
             write_csv(lb, os.path.join(models_dir, "leaderboard.csv"))
-        if 'models' in artifacts:
+
+        models_pat = re.compile(r"models(\[(json|binary|mojo)\])?")
+        models = filter(models_pat.fullmatch, artifacts)
+        models_archives = []
+        for m in models:
             models_dir = output_subdir("models", config)
             all_models_se = next((mid for mid in lb['model_id'] if mid.startswith("StackedEnsemble_AllModels")),
                                  None)
-            mformat = 'mojo' if 'mojos' in artifacts else 'json'
-            if all_models_se and mformat == 'mojo':
+            mformat = models_pat.fullmatch(m).group(2) or 'json'
+            if all_models_se and mformat != 'json':
                 save_model(all_models_se, dest_dir=models_dir, mformat=mformat)
             else:
                 for mid in lb['model_id']:
                     save_model(mid, dest_dir=models_dir, mformat=mformat)
-                models_archive = os.path.join(models_dir, "models.zip")
-                utils.zip_path(models_dir, models_archive)
+                models_archive = os.path.join(models_dir, f"models_{mformat}.zip")
+                utils.zip_path(models_dir, models_archive, filtr=lambda p: p not in models_archives)
+                models_archives.append(models_archive)
 
                 def delete(path, isdir):
-                    if path != models_archive and os.path.splitext(path)[1] in ['.json', '.zip']:
+                    if not isdir and path not in models_archives and os.path.splitext(path)[1] in ['.json', '.zip', '']:
                         os.remove(path)
                 utils.walk_apply(models_dir, delete, max_depth=0)
 
-        if 'models_predictions' in artifacts:
+        if 'model_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
             test = h2o.get_frame(frame_name('test', config))
             for mid in lb['model_id']:
@@ -180,7 +185,7 @@ def save_artifacts(automl, dataset, config):
                     preds.probabilities_labels = preds.h2o_labels
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
             utils.zip_path(predictions_dir,
-                           os.path.join(predictions_dir, "models_predictions.zip"))
+                           os.path.join(predictions_dir, "model_predictions.zip"))
 
             def delete(path, isdir):
                 if isdir:
@@ -208,6 +213,8 @@ def save_model(model_id, dest_dir='.', mformat='mojo'):
     if mformat == 'mojo':
         model.save_mojo(path=dest_dir)
         # model.download_mojo(path=dest_dir, get_genmodel_jar=True)
+    elif mformat == 'binary':
+        h2o.download_model(model, path=dest_dir)
     else:
         model.save_model_details(path=dest_dir)
 
