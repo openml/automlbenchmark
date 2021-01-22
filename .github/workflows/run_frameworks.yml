@@ -25,7 +25,7 @@ jobs:
       run: echo "::set-output name=frameworks::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`"
 
   autoxgboost:
-    needs: changes
+    needs: framework_changes
     if: contains(needs.framework_changes.outputs.output1, 'autoxgboost')
     runs-on: ubuntu-latest
     strategy:
@@ -58,7 +58,7 @@ jobs:
   autosklearn:
     # steps.changed-my-tools.outputs.changed == 'true'
     # contains(github.ref, 'develop')
-    needs: changes
+    needs: framework_changes
     if: contains(needs.framework_changes.outputs.output1, 'autosklearn')
     runs-on: ubuntu-latest
     strategy:
