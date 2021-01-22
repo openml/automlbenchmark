@@ -1,0 +1,64 @@
+name: IntegrationTests
+
+on:
+  pull_request:
+    paths:
+      - 'amlb/**'
+      - 'frameworks/shared/**'
+      - '.github/**'
+      - 'runbenchmark.py'
+      - 'requirements.txt'
+
+
+jobs:
+  baseline:
+    name: Run Baseline on OpenML Iris
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            pip-
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run Constantpredictor on Iris
+        run: |
+          python runbenchmark.py constantpredictor openml/t/59 1h4c
+
+  run_frameworks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+        framework: [autoxgboost, autogluon, gama, h2oautoml, mlplan, tpot, autosklearn]
+        task: [bioresponse, dresses-sales, eucalyptus, internet-advertisements, micro-mass, kc1, APSFailure]
+      fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          pip-
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run Task
+      run: |
+        python runbenchmark.py ${{ matrix.framework }} validation test -f 0 -t ${{ matrix.task }}
