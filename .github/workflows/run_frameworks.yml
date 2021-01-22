@@ -40,7 +40,7 @@ jobs:
       matrix:
         framework: [autoxgboost, autogluon, gama, h2oautoml, mlplan, tpot, autosklearn]
         task: [bioresponse, dresses-sales, eucalyptus, internet-advertisements, micro-mass, kc1, APSFailure]
-      fail-fast:  false
+      fail-fast:  true
 
     steps:
       - name: Debug Echo
@@ -51,8 +51,9 @@ jobs:
         if: contains('what', 'is going on')
         run: echo What is going on?
       - name: Cancel if ${{ matrix.framework }} not changed
-        if: contains(${{ needs.framework_changes.outputs.output1 }}, ${{ matrix.framework }} )
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
         run: echo ${{ matrix.framework }} is a substring of ${{ needs.framework_changes.outputs.output1 }}
+      - uses: andymckay/cancel-action@0.2
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
