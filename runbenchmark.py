@@ -117,6 +117,7 @@ config_args = ns.parse(
     test_server=args.test_server,
     tag=args.tag,
     command=' '.join(sys.argv),
+    exit_on_error=args.exit_on_error,
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})
