@@ -43,6 +43,8 @@ jobs:
       fail-fast:  true
 
     steps:
+      - name: debug
+        run: echo ${{ needs.framework_changes.outputs.output1 }}
       - uses: actions/checkout@v2
         if: contains(needs.framework_changes.outputs.output1, matrix.framework)
       - uses: actions/cache@v2
