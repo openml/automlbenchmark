@@ -15,6 +15,7 @@ import signal
 import threading
 import time
 
+from .resources import config as rconfig
 from .utils import Namespace, Timer, InterruptTimeout, raise_in_thread, signal_handler
 
 log = logging.getLogger(__name__)
@@ -71,6 +72,8 @@ class Job:
             log.debug("Job %s returned: %s", self.name, result)
             return result, t.duration
         except Exception as e:
+            if rconfig().exit_on_error:
+                raise
             log.error("Job `%s` failed with error: %s", self.name, str(e))
             log.exception(e)
             return None, -1
