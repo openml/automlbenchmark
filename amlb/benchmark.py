@@ -453,6 +453,8 @@ class BenchmarkTask:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, repr_def(task_config))
             meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:
+            if rconfig().exit_on_error:
+                raise
             log.exception(e)
             result = ErrorResult(e)
         finally:

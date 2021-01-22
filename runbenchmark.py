@@ -53,6 +53,8 @@ parser.add_argument('--tag', type=str, default=None,
                     help="Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.")
 parser.add_argument('--test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
+parser.add_argument('-e', action='store_true', dest="exit_on_error",
+                    help="If set, *any* task that does not complete with a model will cause the script to terminate.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
