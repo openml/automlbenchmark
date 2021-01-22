@@ -34,7 +34,7 @@ jobs:
 
 
   run_frameworks:
-    name: Run ${{ matrix.framework }} on ${{ matrix.task }}
+    name: ${{ matrix.framework }}/${{ matrix.task }}
     runs-on: ubuntu-latest
     needs: framework_changes
     strategy:
@@ -44,8 +44,6 @@ jobs:
       fail-fast:  true
 
     steps:
-      - name: debug
-        run: echo ${{ needs.framework_changes.outputs.output1 }}
       - uses: actions/checkout@v2
         if: contains(needs.framework_changes.outputs.output1, matrix.framework)
       - uses: actions/cache@v2
