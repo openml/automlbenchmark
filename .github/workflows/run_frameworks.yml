@@ -48,8 +48,8 @@ jobs:
           echo ${{ needs.framework_changes.outputs.output1 }}
           echo ${{ matrix.framework }}
       - name: Cancel if ${{ matrix.framework }} not changed
-        if: contains(needs.framework_changes.outputs.output1, ${{ matrix.framework }} )
-        run: echo "I'm running"
+        if: contains(${{ needs.framework_changes.outputs.output1 }}, ${{ matrix.framework }} )
+        run: echo ${{ matrix.framework }} is a substring of ${{ needs.framework_changes.outputs.output1 }}
       - uses: andymckay/cancel-action@0.2
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
