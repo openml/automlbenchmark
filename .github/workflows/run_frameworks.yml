@@ -31,57 +31,33 @@ jobs:
       id: frameworks-diff
       run: echo "::set-output name=frameworks::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`"
 
-  autoxgboost:
-    needs: framework_changes
-    if: contains(needs.framework_changes.outputs.output1, 'autoxgboost')
+
+  run_frameworks:
+    name: Run ${{ matrix.framework }} on ${{ matrix.task }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
-        framework: [autoxgboost]  # autogluon, gama, h2oautoml, mlplan, tpot, autosklearn,
+        framework: [autoxgboost, autogluon, gama, h2oautoml, mlplan, tpot, autosklearn]
         task: [bioresponse, dresses-sales, eucalyptus, internet-advertisements, micro-mass, kc1, APSFailure]
-      fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
+      fail-fast:  true
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          pip-
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Requirements
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Run Task
-      run: |
-        python runbenchmark.py ${{ matrix.framework }} validation test -f 0 -t ${{ matrix.task }}
-
-  autosklearn:
-    # steps.changed-my-tools.outputs.changed == 'true'
-    # contains(github.ref, 'develop')
-    needs: framework_changes
-    if: contains(needs.framework_changes.outputs.output1, 'autosklearn')
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8]
-        framework: [autosklearn]
-        task: [bioresponse, dresses-sales, eucalyptus, internet-advertisements, micro-mass, kc1, APSFailure]
-      fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - uses: ./.github/actions/runbenchmark
-      with:
-        framework: autosklearn
-        task: ${{ matrix.task }}
+      - name: Cancel if ${{ matrix.framework }} not changed
+        if: !contains(needs.framework_changes.outputs.output1, ${{ matrix.framework }} )
+        uses: andymckay/cancel-action@0.2
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            pip-
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Run benchmark
+        uses: ./.github/actions/runbenchmark
+        with:
+          framework: ${{ matrix.framework }}
+          task: ${{ matrix.task }}
