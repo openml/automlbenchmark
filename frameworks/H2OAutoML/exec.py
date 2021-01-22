@@ -224,7 +224,8 @@ def save_model(model_id, dest_dir='.', mformat='json'):
         return model.save_mojo(path=dest_dir)
         # model.download_mojo(path=dest_dir, get_genmodel_jar=True)
     elif mformat == 'binary':
-        return h2o.download_model(model, path=dest_dir)
+        return h2o.save_model(model, path=dest_dir)
+        # return h2o.download_model(model, path=dest_dir)
     else:
         return model.save_model_details(path=dest_dir)
 
