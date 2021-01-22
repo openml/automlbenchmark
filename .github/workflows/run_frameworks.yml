@@ -12,7 +12,7 @@ jobs:
     name: Detect Changed AutoML Frameworks
     runs-on: ubuntu-latest
     outputs:
-      output1: ${{ steps.frameworks-diff.outputs.changed_frameworks }}
+      output1: ${{ steps.frameworks-diff.outputs.frameworks }}
     steps:
     - uses: actions/checkout@v2
     - name: pull base branch
@@ -23,8 +23,8 @@ jobs:
     - name: store changed frameworks
       id: frameworks-diff
       run: |
-      changed_frameworks=`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`
-      echo "::set-output name=changed_frameworks::$changed_frameworks"
+      frameworks=`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`
+      echo "::set-output name=frameworks::$frameworks"
 
   autoxgboost:
     needs: changes
