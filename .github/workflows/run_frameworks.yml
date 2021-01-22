@@ -35,6 +35,7 @@ jobs:
   run_frameworks:
     name: Run ${{ matrix.framework }} on ${{ matrix.task }}
     runs-on: ubuntu-latest
+    needs: framework_changes
     strategy:
       matrix:
         framework: [autoxgboost, autogluon, gama, h2oautoml, mlplan, tpot, autosklearn]
