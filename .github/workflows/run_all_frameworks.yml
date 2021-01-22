@@ -26,12 +26,15 @@ jobs:
       - name: Setup Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: '3.8'
     - name: Run constantpredictor on iris
       uses: ./.github/actions/runbenchmark
       with:
         framework: constantpredictor
         task: iris
+    - name: Echo Python Files
+      run: |
+        python3 -c "import numpy; print(numpy.__file__)"
 
   run_frameworks:
     runs-on: ubuntu-latest
