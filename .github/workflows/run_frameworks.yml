@@ -29,7 +29,9 @@ jobs:
         git checkout $GITHUB_HEAD_REF
     - name: store changed frameworks
       id: frameworks-diff
-      run: echo "::set-output name=frameworks::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`"
+      run: |
+        git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'
+        echo "::set-output name=frameworks::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`"
 
 
   run_frameworks:
