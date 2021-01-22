@@ -31,12 +31,13 @@ jobs:
         uses: ./.github/actions/runbenchmark
         with:
           framework: constantpredictor
-          task: iris
+          task: openml/t/59
       - name: Echo Python Files
         run: |
           python -c "import numpy; print(numpy.__file__)"
 
   run_frameworks:
+    name: Run validation on all frameworks
     runs-on: ubuntu-latest
     needs: baseline
     strategy:
