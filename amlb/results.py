@@ -360,7 +360,7 @@ class TaskResult:
             constraint=self.constraint,
             framework=metadata.framework,
             version=metadata.version if 'version' in metadata else metadata.framework_version,
-            params=str(metadata.framework_params) if metadata.framework_params else '',
+            params=repr(metadata.framework_params) if metadata.framework_params else '',
             fold=self.fold,
             mode=rconfig().run_mode,
             seed=metadata.seed,
