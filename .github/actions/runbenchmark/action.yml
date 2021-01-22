@@ -8,7 +8,7 @@ inputs:
     required: true
   task:
     description: 'Task to run the framework on'
-    default: 'kc1'
+    default: 'openml/t/59'
     required: true
 
 runs:

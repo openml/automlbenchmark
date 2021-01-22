@@ -1,10 +1,17 @@
-name: IntegrationTests
+name: Run Specific Frameworks
 
+# run either if *only* frameworks are edited, or always if the workflow or action is edited.
 on:
   pull_request:
     paths:
       - 'frameworks/**'
       - '!frameworks/shared/**'
+      - '!amlb/**'
+      - '!frameworks/shared/**'
+      - '!runbenchmark.py'
+      - '!requirements.txt'
+      - '.github/workflows/run_frameworks.yml'
+      - '.github/actions/runbenchmark/action.yml'
 
 
 jobs:
