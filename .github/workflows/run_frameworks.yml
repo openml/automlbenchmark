@@ -52,8 +52,7 @@ jobs:
           key: pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
+      - uses: actions/setup-python@v2
         if: contains(needs.framework_changes.outputs.output1, matrix.framework)
         with:
           python-version: '3.8'

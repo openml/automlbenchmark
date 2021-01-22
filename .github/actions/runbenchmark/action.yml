@@ -19,7 +19,7 @@ runs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
       shell: bash
-    - name: Run Task
+    - name: Run ${{ inputs.framework }} on ${{ inputs.task }}
       run: |
         python runbenchmark.py ${{ inputs.framework }} validation test -f 0 -t ${{ inputs.task }}
       shell: bash
