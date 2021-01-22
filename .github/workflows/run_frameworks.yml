@@ -43,18 +43,10 @@ jobs:
       fail-fast:  true
 
     steps:
-      - name: Debug Echo
-        run: |
-          echo ${{ needs.framework_changes.outputs.output1 }}
-          echo ${{ matrix.framework }}
-      - name: Cancel if ${{ matrix.framework }} not changed
-        if: contains('what', 'is going on')
-        run: echo What is going on?
-      - name: Cancel if ${{ matrix.framework }} not changed
-        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
-        run: echo ${{ matrix.framework }} is a substring of ${{ needs.framework_changes.outputs.output1 }}
       - uses: actions/checkout@v2
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
       - uses: actions/cache@v2
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
         with:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('**/requirements.txt') }}
@@ -62,9 +54,11 @@ jobs:
             pip-
       - name: Setup Python 3.8
         uses: actions/setup-python@v2
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
         with:
           python-version: '3.8'
       - name: Run benchmark
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
         uses: ./.github/actions/runbenchmark
         with:
           framework: ${{ matrix.framework }}
