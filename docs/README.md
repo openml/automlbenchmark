@@ -29,15 +29,10 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 
 ### Features:
 * Curated suites of [benchmarking datasets](https://openml.github.io/automlbenchmark/benchmark_datasets.html) from [OpenML](https://www.openml.org/s/218/data).
-* Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html)
+* Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html) on regression and classification tasks.
 * [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework)
 * Experiments can be run in Docker or Singularity containers
 * Execute experiments locally or on AWS (see below)
-
-### Roadmap: 
-* Add a regression benchmark to the framework.
-* More benchmark datasets (especially bigger datasets).
-* Automatic sharing of benchmarking results on OpenML.
 
 
 ## Installation
@@ -95,7 +90,7 @@ To run a benchmark call the `runbenchmark.py` script with at least the following
 
 1. The AutoML framework that should be evaluated, see [frameworks.yaml](../resources/frameworks.yaml) for supported frameworks. If you want to add a framework see [HOWTO](./HOWTO.md#add-an-automl-framework).
 2. The benchmark suite to run should be one implemented in [benchmarks folder](../resources/benchmarks), or an OpenML study or task (formatted as `openml/s/X` or `openml/t/Y` respectively).
-3. (Optional) The constraints applied to the benchmark as defined by default in [constraints.yaml](../resources/constraints.yaml). Default constraint is `test` (1 single fold for 10 min).
+3. (Optional) The constraints applied to the benchmark as defined by default in [constraints.yaml](../resources/constraints.yaml). Default constraint is `test` (2 folds for 10 min each).
 4. (Optional) If the benchmark should be run `local` (default, tested on Linux and macOS only), in a `docker` container or on `aws` using multiple ec2 instances.
 
 Examples:
