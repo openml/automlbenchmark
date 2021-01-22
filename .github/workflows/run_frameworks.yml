@@ -34,8 +34,7 @@ jobs:
       id: frameworks-diff
       run: |
       changed_frameworks=`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g'`
-      (( ${#changed_files} > 0 ))
-      frameworks_changed=$?
+      frameworks_changed=$(( ${#changed_files} > 0 ))
       echo "::set-output name=changed_frameworks::$changed_frameworks"
       echo "::set-output name=frameworks_changed::$frameworks_changed"
 
@@ -55,8 +54,7 @@ jobs:
         id: count-changes
         run: |
         changed_files=`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P '(amlb|runbenchmark|frameworks/shared|requirements)'`
-        (( ${#changed_files} > 0 ))
-        files_changed=$?
+        files_changed=$(( ${#changed_files} > 0 ))
         echo "::set-output name=files_changed::$files_changed"
 
   echo-framework-changed:
