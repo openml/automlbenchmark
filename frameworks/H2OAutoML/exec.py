@@ -156,14 +156,14 @@ def save_artifacts(automl, dataset, config):
             models_artifacts.append(lb_path)
 
         models_pat = re.compile(r"models(\[(json|binary|mojo)(?:,(\d+))?\])?")
-        models = filter(models_pat.fullmatch, artifacts)
+        models = list(filter(models_pat.fullmatch, artifacts))
         for m in models:
             models_dir = output_subdir("models", config)
             all_models_se = next((mid for mid in lb['model_id'] if mid.startswith("StackedEnsemble_AllModels")),
                                  None)
             match = models_pat.fullmatch(m)
             mformat = match.group(2) or 'json'
-            topN = int(match.group(3)) or -1
+            topN = int(match.group(3) or -1)
             if topN < 0 and mformat != 'json' and all_models_se:
                 models_artifacts.append(save_model(all_models_se, dest_dir=models_dir, mformat=mformat))
             else:
