@@ -47,8 +47,8 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
-parser.add_argument('-e', action='store_true', dest="exit_on_error",
-                    help="If set, *any* task that does not complete with a model will cause the script to terminate.")
+parser.add_argument('-e', '--exit-on-error', action='store_true', dest="exit_on_error",
+                    help="If set, the first task that does not complete with a model will cause the entire script to terminate.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
