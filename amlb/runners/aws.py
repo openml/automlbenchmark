@@ -80,7 +80,7 @@ class AWSBenchmark(Benchmark):
 
         def to_job(iid, inst):
             inst.instance = bench.ec2.Instance(iid)
-            job = Job(inst.key)
+            job = Job(inst.key, raise_exceptions=rconfig().exit_on_error)
             job.instance_id = iid
 
             def _run(job_self):
@@ -283,7 +283,8 @@ class AWSBenchmark(Benchmark):
             ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
             ','.join(folds) if len(folds) > 0 else 'all_folds',
             self.framework_name
-        ]))
+        ]), raise_exceptions=rconfig().exit_on_error,
+        )
         job.ext = ns(
             tasks=task_names,
             folds=folds,
