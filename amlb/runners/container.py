@@ -118,7 +118,7 @@ class ContainerBenchmark(Benchmark):
             ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
             ','.join(folds) if len(folds) > 0 else 'all_folds',
             self.framework_name
-        ]))
+        ]), raise_exceptions=rconfig().exit_on_error)
         job._run = _run
         return job
 

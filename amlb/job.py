@@ -6,10 +6,9 @@
   - SimpleJobRunner runs the jobs sequentially.
   - ParallelJobRunner queues the jobs and run them in a dedicated thread
 """
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
-import multiprocessing
 import queue
 import signal
 import threading
@@ -43,12 +42,22 @@ class CancelledError(JobError):
 
 class Job:
 
-    def __init__(self, name="", timeout_secs=None, priority=None):
+    def __init__(self, name="", timeout_secs=None, priority=None, raise_exceptions=False):
+        """
+
+        :param name:
+        :param timeout_secs:
+        :param priority:
+        :param raise_exceptions: bool (default=False)
+            If True, log and raise any Exception that caused a job failure.
+            If False, only log the exception.
+        """
         self.name = name
         self.timeout = timeout_secs
         self.priority = priority
         self.state = State.created
         self.thread_id = None
+        self.raise_exceptions = raise_exceptions
 
     def start(self):
         try:
@@ -73,6 +82,8 @@ class Job:
         except Exception as e:
             log.error("Job `%s` failed with error: %s", self.name, str(e))
             log.exception(e)
+            if self.raise_exceptions:
+                raise
             return None, -1
 
     def stop(self):

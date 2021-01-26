@@ -404,7 +404,9 @@ class BenchmarkTask:
             self.task_config.name,
             str(self.fold),
             self.benchmark.framework_name
-        ]), timeout_secs=timeout_secs)  # this timeout is just to handle edge cases where framework never completes
+        ]), timeout_secs=timeout_secs,  # this timeout is just to handle edge cases where framework never completes
+            raise_exceptions=rconfig().exit_on_error,
+        )
         job._run = _run
         return job
         # return Namespace(run=lambda: self.run(framework))
@@ -443,6 +445,8 @@ class BenchmarkTask:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, repr_def(task_config))
             meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:
+            if rconfig().exit_on_error:
+                raise
             log.exception(e)
             result = ErrorResult(e)
         finally:
