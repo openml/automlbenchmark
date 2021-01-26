@@ -241,7 +241,7 @@ def extract_preds(h2o_preds, test, dataset, ):
     predictions = y_pred.values
     probabilities = preds.iloc[:, 1:].values
     prob_labels = h2o_labels = h2o_preds[0][1:]
-    if all([re.fullmatch(r"p\d+", p) for p in prob_labels]):
+    if all([re.fullmatch(r"p(-?\d)+", p) for p in prob_labels]):
         # for categories represented as numerical values, h2o prefixes the probabilities columns with p
         # in this case, we let the app setting the labels to avoid mismatch
         prob_labels = None

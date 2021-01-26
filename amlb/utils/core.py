@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class Namespace:
 
-    printer = pprint.PrettyPrinter(indent=2)
+    printer = pprint.PrettyPrinter(indent=2, compact=True)
 
     @staticmethod
     def parse(*args, **kwargs):

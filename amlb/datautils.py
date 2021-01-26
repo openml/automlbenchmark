@@ -17,7 +17,7 @@ from sklearn.base import TransformerMixin
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score  # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
 
-from .utils import profile, path_from_split, split_path, touch
+from .utils import profile, path_from_split, repr_def, split_path, touch
 
 try:
     from sklearn.preprocessing import OrdinalEncoder    # from sklearn 0.20
@@ -236,6 +236,9 @@ class Encoder(TransformerMixin):
         :param params:
         :return:
         """
+        if log.isEnabledFor(5):  # logging.TRACE
+            log.debug("Transforming %s using %s", vec, repr_def(self))
+
         return_value = lambda v: v
         if isinstance(vec, str):
             vec = [vec]
