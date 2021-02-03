@@ -98,13 +98,29 @@ def sorted_ints(arr):
     return sorted(list(map(int, arr[~np.isnan(arr)])))
 
 
+def remove_duplicates(df, handling='fail'):
+    if not df.index.is_unique:
+        print("Duplicate entries:")
+        display(df[df.index.duplicated(keep=False)].sort_values(by=df.index.names),
+                pretty=False)
+    assert df.index.is_unique or handling != 'fail'
+    duplicated = (df.index.duplicated(keep='first') if handling == 'keep_first'
+                  else df.index.duplicated(keep='last') if handling == 'keep_last'
+                  else df.index.duplicated(keep=False) if handling == 'keep_none'
+                  else np.full((len(df), 1), False))
+    return df[~duplicated]
+
+
 def prepare_results(results_files,
                     renamings=None,
                     exclusions=None,
                     imputation=None,
                     normalization=None,
-                    ref_results=None
+                    ref_results=None,
+                    duplicates_handling='fail'  # other options are 'keep_first', 'keep_last', 'keep_none'
                     ):
+    if not results_files:
+        return None
     results = load_results(results_files)
     if renamings:
         results.replace(renamings, inplace=True)
@@ -125,11 +141,7 @@ def prepare_results(results_files,
     metadata = load_dataset_metadata(results)
 
     done = results.set_index(['task', 'fold', 'framework'])
-    if not done.index.is_unique:
-        print("Duplicate entries:")
-        display(done[done.index.duplicated(keep=False)].sort_values(by=done.index.names),
-                pretty=False)
-    assert done.index.is_unique
+    done = remove_duplicates(done, handling=duplicates_handling)
 
     missing = (pd.DataFrame([(task, fold, framework, 'missing')
                              for task in tasks
@@ -138,10 +150,10 @@ def prepare_results(results_files,
                              if (task, fold, framework) not in done.index],
                             columns=[*done.index.names, 'info'])
                .set_index(done.index.names))
-    assert missing.index.is_unique
+    missing = remove_duplicates(missing, handling=duplicates_handling)
     failed = (results.loc[pd.notna(results['info'])]
               .set_index(done.index.names))
-    assert failed.index.is_unique
+    failed = remove_duplicates(failed, handling=duplicates_handling)
 
     # extending the data frame
     results = results.append(missing.reset_index())
