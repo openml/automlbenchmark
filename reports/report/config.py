@@ -20,6 +20,7 @@ impute_missing_with = 'randomforest'
 zero_one_refs = ('constantpredictor', 'tunedrandomforest')
 
 tasks_sort_by = 'nrows'
+frameworks_sort_key = None
 
 results_files = []
 results_group = ''
