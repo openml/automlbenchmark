@@ -9,7 +9,7 @@ if [[ "$VERSION" == "latest" ]]; then
 fi
 # TODO: Hacked in until 0.1 releases
 if [[ "$VERSION" == "stable" ]]; then
-    VERSION="0.0.16b20210104"
+    VERSION="0.0.16b20210204"
 fi
 
 # creating local venv
@@ -35,6 +35,7 @@ else
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
     cd ${TARGET_DIR}
     PIP install -e core/
+    PIP install -e features/
     PIP install -e tabular/
     PIP install -e mxnet/
     PIP install -e extra/

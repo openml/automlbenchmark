@@ -10,7 +10,7 @@ import matplotlib
 import pandas as pd
 matplotlib.use('agg')  # no need for tk
 
-from autogluon.tabular import TabularPrediction as task
+from autogluon.tabular import TabularPredictor
 from autogluon.core.utils.savers import save_pd, save_pkl
 import autogluon.core.metrics as metrics
 from autogluon.tabular.version import __version__
@@ -61,13 +61,14 @@ def run(dataset, config):
 
     output_dir = output_subdir("models", config)
     with utils.Timer() as training:
-        predictor = task.fit(
-            train_data=train,
+        predictor = TabularPredictor(
             label=label,
-            problem_type=problem_type,
-            output_directory=output_dir,
-            time_limits=config.max_runtime_seconds,
             eval_metric=perf_metric.name,
+            path=output_dir,
+            problem_type=problem_type,
+        ).fit(
+            train_data=train,
+            time_limit=config.max_runtime_seconds,
             **training_params
         )
 
@@ -78,11 +79,11 @@ def run(dataset, config):
 
     if is_classification:
         with utils.Timer() as predict:
-            probabilities = predictor.predict_proba(test, as_pandas=True, as_multiclass=True)
+            probabilities = predictor.predict_proba(test, as_multiclass=True)
         predictions = probabilities.idxmax(axis=1).to_numpy()
     else:
         with utils.Timer() as predict:
-            predictions = predictor.predict(test)
+            predictions = predictor.predict(test, as_pandas=False)
         probabilities = None
 
     prob_labels = probabilities.columns.values.tolist() if probabilities is not None else None
