@@ -27,6 +27,9 @@ class NoResultError(Exception):
     pass
 
 
+class ResultError(Exception):
+    pass
+
 # TODO: reconsider organisation of output files:
 #   predictions: add framework version to name, timestamp? group into subdirs?
 
@@ -191,14 +194,17 @@ class TaskResult:
     def load_predictions(predictions_file):
         log.info("Loading predictions from `%s`.", predictions_file)
         if os.path.isfile(predictions_file):
-            df = read_csv(predictions_file, dtype=object)
-            log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
-            if rconfig().test_mode:
-                TaskResult.validate_predictions(df)
-            if df.shape[1] > 2:
-                return ClassificationResult(df)
-            else:
-                return RegressionResult(df)
+            try:
+                df = read_csv(predictions_file, dtype=object)
+                log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
+                if rconfig().test_mode:
+                    TaskResult.validate_predictions(df)
+                if df.shape[1] > 2:
+                    return ClassificationResult(df)
+                else:
+                    return RegressionResult(df)
+            except Exception as e:
+                return ErrorResult(ResultError(e))
         else:
             log.warning("Predictions file `%s` is missing: framework either failed or could not produce any prediction.", predictions_file)
             return NoResult("Missing predictions.")
@@ -373,11 +379,23 @@ class TaskResult:
         for m in required_metares:
             scores[m] = meta_result[m] if m in meta_result else nan
         result = self.get_result() if result is None else result
+
+        scoring_errors = []
+
+        def do_score(m):
+            res = result.evaluate(m)
+            print(m, res)
+            score, err = res
+            if err:
+                scoring_errors.append(err)
+            return score
+
         for metric in metadata.metrics or []:
-            score = result.evaluate(metric)
-            scores[metric] = score
-        scores.result = scores[scores.metric] if scores.metric in scores else result.evaluate(scores.metric)
+            scores[metric] = do_score(metric)
+        scores.result = scores[scores.metric] if scores.metric in scores else do_score(scores.metric)
         scores.info = result.info
+        if scoring_errors:
+            scores.info = "; ".join(filter(lambda it: it, [scores.info, *scoring_errors]))
         scores % Namespace({k: v for k, v in meta_result if k not in required_metares})
         log.info("Metric scores: %s", scores)
         return scores
@@ -403,10 +421,14 @@ class Result:
 
     def evaluate(self, metric):
         if hasattr(self, metric):
-            return getattr(self, metric)()
+            try:
+                return getattr(self, metric)(), None
+            except Exception as e:
+                log.exception("Failed to compute metric %s: ", metric, e)
+                return nan, f"scoring {metric}: {str(e)}"
         # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
         log.warning("Metric %s is not supported for %s!", metric, self.type)
-        return nan
+        return nan, f"Unsupported metric {metric} for {self.type}"
 
 
 class NoResult(Result):
@@ -416,7 +438,7 @@ class NoResult(Result):
         self.missing_result = np.nan
 
     def evaluate(self, metric):
-        return self.missing_result
+        return self.missing_result, None
 
 
 class ErrorResult(NoResult):
