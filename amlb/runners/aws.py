@@ -336,7 +336,7 @@ class AWSBenchmark(Benchmark):
                 log.error("Job %s failed with: %s", _self.name, e)
                 try:
                     if isinstance(e, AWSError) and e.retry:
-                        log.info("Job %s couldn't start (%s), rescheduling it.", _self.name, str(e))
+                        log.info("Job %s couldn't start (%s), rescheduling it.", _self.name, e)
                         self._job_reschedule(_self, reason=str(e))
                         return
 
@@ -515,6 +515,7 @@ class AWSBenchmark(Benchmark):
             if ec2_config.subnet_id:
                 subnet = self.ec2.Subnet(ec2_config.subnet_id)
                 if subnet.available_ip_address_count == 0:
+                    log.warning("No IP available on subnet %s, parallelism (%s) may be too high for this subnet.", subnet.id, self.parallel_jobs)
                     raise AWSError("InsufficientFreeAddressesInSubnet", retry=True)
             ebs = dict(VolumeType=instance_def.volume_type)
             if instance_def.volume_size:
@@ -581,6 +582,7 @@ class AWSBenchmark(Benchmark):
             if isinstance(e, botocore.exceptions.ClientError):
                 error_code = e.response.get('Error', {}).get('Code', '')
                 retry = error_code in ['SpotMaxPriceTooLow', 'InsufficientFreeAddressesInSubnet']
+                log.error(e)
                 raise AWSError(error_code, retry=retry) from e
             else:
                 raise e
