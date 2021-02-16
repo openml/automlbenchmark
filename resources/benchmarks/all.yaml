@@ -1,0 +1,209 @@
+
+##Small
+---
+
+- name: Australian
+  openml_task_id: 146818
+
+- name: blood-transfusion
+  openml_task_id: 10101
+
+- name: car
+  openml_task_id: 146821
+
+- name: christine
+  openml_task_id: 168908
+
+- name: cnae-9
+  openml_task_id: 9981
+
+- name: credit-g
+  openml_task_id: 31
+
+- name: dilbert
+  openml_task_id: 168909
+
+- name: fabert
+  openml_task_id: 168910
+
+- name: jasmine
+  openml_task_id: 168911
+
+- name: kc1
+  openml_task_id: 3917
+
+- name: kr-vs-kp
+  openml_task_id: 3
+
+- name: mfeat-factors
+  openml_task_id: 12
+
+- name: phoneme
+  openml_task_id: 9952
+
+- name: segment
+  openml_task_id: 146822
+
+- name: sylvine
+  openml_task_id: 168912
+
+- name: vehicle
+  openml_task_id: 53
+
+##Medium
+
+- name: adult
+  openml_task_id: 7592
+
+- name: Amazon_employee_access
+  openml_task_id: 34539
+
+- name: APSFailure
+  openml_task_id: 168868
+
+- name: bank-marketing
+  openml_task_id: 14965
+
+- name: connect-4
+  openml_task_id: 146195
+
+- name: Fashion-MNIST
+  openml_task_id: 146825
+
+- name: guillermo
+  openml_task_id: 168337
+
+- name: Helena
+  openml_task_id: 168329
+
+- name: higgs
+  openml_task_id: 146606
+
+- name: Jannis
+  openml_task_id: 168330
+
+- name: jungle_chess_2pcs_raw_endgame_complete
+  openml_task_id: 167119
+
+- name: KDDCup09_appetency
+  openml_task_id: 3945
+
+- name: MiniBooNE
+  openml_task_id: 168335
+
+- name: nomao
+  openml_task_id: 9977
+
+- name: numerai28.6
+  openml_task_id: 167120
+
+- name: riccardo
+  openml_task_id: 168338
+
+- name: Robert
+  openml_task_id: 168332
+
+- name: Shuttle
+  openml_task_id: 146212
+
+- name: Volkert
+  openml_task_id: 168331
+
+
+- name: Airlines
+  openml_task_id: 189354
+
+- name: Albert
+  openml_task_id: 189356
+
+- name: Covertype
+  openml_task_id: 7593
+
+- name: Dionis
+  openml_task_id: 189355
+
+#Regression
+
+- name: poker
+  openml_task_id: 10102
+  metric:
+    - r2
+    - rmse
+
+- name: pol
+  openml_task_id: 2292
+  metric:
+    - r2
+    - rmse
+
+- name: 2dplanes
+  openml_task_id: 2306
+  metric:
+    - r2
+    - rmse
+
+- name: bng_breastTumor
+  openml_task_id: 7324
+  metric:
+    - r2
+    - rmse
+
+- name: bng_echomonths
+  openml_task_id: 7323
+  metric:
+    - r2
+    - rmse
+
+- name: bng_lowbwt
+  openml_task_id: 7320
+  metric:
+    - r2
+    - rmse
+
+- name: bng_pbc
+  openml_task_id: 7318
+  metric:
+    - r2
+    - rmse
+
+- name: bng_pharynx
+  openml_task_id: 7322
+  metric:
+    - r2
+    - rmse
+
+- name: bng_pwLinear
+  openml_task_id: 7325
+  metric:
+    - r2
+    - rmse
+
+- name: fried
+  openml_task_id: 4885
+  metric:
+      - r2
+      - rmse
+
+- name: house_16H
+  openml_task_id: 4893
+  metric:
+    - r2
+    - rmse
+
+- name: house_8L
+  openml_task_id: 2309
+  metric:
+    - r2
+    - rmse
+
+- name: houses
+  openml_task_id: 5165
+  metric:
+    - r2
+    - rmse
+
+- name: mv
+  openml_task_id: 4774
+  metric:
+    - r2
+    - rmse
