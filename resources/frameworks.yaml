@@ -18,6 +18,16 @@ __dummy_framework_with_defaults:
 ### AutoML frameworks ###
 #########################
 
+flaml:
+  version: "0.2.3"
+  description: |
+    FLAML is a lightweight Python library that finds accurate machine learning models 
+    automatically, efficiently and economically. It frees users from selecting learners 
+    and hyperparameters for each learner. It is fast and cheap. 
+  project: https://github.com/microsoft/FLAML
+  refs: [https://arxiv.org/pdf/1911.04706.pdf]
+
+
 AutoGluon:
   version: "stable"
   description: |
