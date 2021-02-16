@@ -39,11 +39,6 @@ def run(dataset: Dataset, config: TaskConfig):
     save_metadata(config)
 
     is_classification = config.type == 'classification'
-    if not is_classification:
-        raise ValueError('Regression is not supported.')
-
-    is_classification = config.type == 'classification'
-
     enc = config.framework_params.get('_enc', False)
     if enc:
         import numpy as np
@@ -74,7 +69,8 @@ def run(dataset: Dataset, config: TaskConfig):
         logloss='log_loss',
         mae='mae',
         mse='mse',
-        r2='r2'
+        rmse='rmse',
+        r2='r2',
     )
 
     metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
