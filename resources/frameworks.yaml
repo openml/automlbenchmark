@@ -19,7 +19,7 @@ __dummy_framework_with_defaults:
 #########################
 
 flaml:
-  version: "0.2.3"
+  version: 'latest'
   description: |
     FLAML is a lightweight Python library that finds accurate machine learning models 
     automatically, efficiently and economically. It frees users from selecting learners 
