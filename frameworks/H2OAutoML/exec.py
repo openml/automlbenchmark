@@ -99,10 +99,11 @@ def run(dataset, config):
                         **training_params)
 
         monitor = (BackendMemoryMonitoring(frequency_seconds=config.ext.monitoring.frequency_seconds,
-                                          check_on_exit=True,
-                                          verbosity=config.ext.monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
+                                           check_on_exit=True,
+                                           verbosity=config.ext.monitoring.verbosity)
+                   if config.framework_params.get('_monitor_backend', False)
                    # else contextlib.nullcontext  # Py 3.7+ only
-                   else contextlib.contextmanager(iter)([0])
+                   else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
                    )
         with utils.Timer() as training:
             with monitor:
