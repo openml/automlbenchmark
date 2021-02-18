@@ -6,7 +6,14 @@ from .util import Namespace
 
 def dataset_metadata(task_id):
     # print(f"loading {task_id}")
-    tid = int(task_id.split("/")[2]) if task_id.startswith('openml.org') else int(task_id)
+    if task_id.startswith('openml.org'):
+        tid = int(task_id.split("/")[2])
+        return openml_metadata(tid)
+    else:
+        return file_metadata(task_id)
+
+
+def openml_metadata(tid):
     task = oml.tasks.get_task(task_id=tid, download_data=False)
     dataset = oml.datasets.get_dataset(task.dataset_id, download_data=False)
     did = dataset.dataset_id
@@ -17,9 +24,9 @@ def dataset_metadata(task_id):
     nclasses = int(dq['NumberOfClasses'])
     # class_entropy = float(dq['ClassEntropy'])
     class_imbalance = float(dq['MajorityClassPercentage'])/float(dq['MinorityClassPercentage'])
-    task_type = ('regression' if nclasses == 0 
-                 else 'binary' if nclasses == 2 
-                 else 'multiclass' if nclasses > 2 
+    task_type = ('regression' if nclasses == 0
+                 else 'binary' if nclasses == 2
+                 else 'multiclass' if nclasses > 2
                  else 'unknown')
     # print(f"loaded {name}")
     return Namespace(
@@ -32,6 +39,20 @@ def dataset_metadata(task_id):
         nclasses=nclasses,
         # class_entropy=class_entropy,
         class_imbalance=class_imbalance,
+    )
+
+
+def file_metadata(url):
+    return Namespace(
+        task=url,
+        dataset=url,
+        type='unknwown',
+        name=url,
+        nrows=-1,
+        nfeatures=-1,
+        nclasses=-1,
+        # class_entropy=-1,
+        class_imbalance=-1
     )
 
 

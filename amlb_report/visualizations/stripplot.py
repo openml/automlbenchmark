@@ -1,7 +1,7 @@
 import matplotlib as mp
 import seaborn as sb
 
-import report.config as config
+import amlb_report.config as config
 from ..util import create_file, sort_dataframe
 from .util import savefig, set_scales, set_labels, task_labels
 

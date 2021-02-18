@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from tabulate import tabulate
 
-import report.config as config
+import amlb_report.config as config
 
 
 class Namespace:

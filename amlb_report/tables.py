@@ -10,7 +10,7 @@ import functools as ft
 import numpy as np
 import pandas as pd
 
-import report.config as config
+import amlb_report.config as config
 from .results import imputed
 from .util import create_file, display
 
@@ -51,7 +51,7 @@ def rank(scores):
     return ranks
 
 
-def render_leaderboard(col, results, aggregate=False, show_imputations=False, filename=None):
+def render_leaderboard(col, results, aggregate=False, show_imputations=True, filename=None):
     res_group = results.groupby(['type', 'task', 'framework'])
     df = (res_group[col].mean().unstack() if aggregate
           else results.pivot_table(index=['type','task', 'fold'], columns='framework', values=col))
