@@ -123,6 +123,9 @@ aws:
                                     #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
                                     #               (don't forget to delete the instance UserData before restarting it).
                                     # if `never`, the instances are only stopped.
+    terminate_waiter:  # the config used to wait for instance complete stop or termination (to completely disable the waiter, set it to None, or set max_attempts to 0)
+      delay: 0          # delay between each request during waiting period: 0 defaults to `aws.query_frequency_seconds` instead of aws defaults (15).
+      max_attempts: 40  # max requests during waiting period: using aws defaults (40)
     monitoring:
       cpu:
         period_minutes: 5
