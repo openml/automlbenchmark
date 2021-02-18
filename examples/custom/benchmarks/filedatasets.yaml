@@ -53,4 +53,18 @@
   dataset: 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/iris_single_fold.zip'
   folds: 1
 
+- name: iris_remote_files
+  dataset:
+    train:
+      - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_train_0.csv'
+      - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_train_1.csv'
+      - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_train_2.csv'
+    test:
+      - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_test_0.csv'
+      - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_test_1.csv'
+      - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_test_2.csv'
+    target: species
+  folds: 3
+
+
 
