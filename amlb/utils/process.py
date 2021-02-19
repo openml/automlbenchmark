@@ -334,7 +334,7 @@ class InterruptTimeout(Timeout):
                 except Exception:
                     raise
                 finally:
-                    self.interrupt_event.wait(1000)  # retry every second if interruption didn't work
+                    self.interrupt_event.wait(1)  # retry every second if interruption didn't work
 
         super().__init__(timeout_secs, on_timeout=interruption)
         if interrupt not in ['thread', 'process']:
