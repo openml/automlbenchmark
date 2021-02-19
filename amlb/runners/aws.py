@@ -455,7 +455,6 @@ class AWSBenchmark(Benchmark):
 
     def _is_hanging(self, iid):
         cpu_config = rconfig().aws.ec2.monitoring.cpu
-        inst_desc = self.instances[iid]
         activity = self._get_cpu_activity(iid,
                                           delta_minutes=cpu_config.delta_minutes,
                                           period_minutes=cpu_config.period_minutes)
