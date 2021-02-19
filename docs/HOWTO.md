@@ -3,6 +3,7 @@
   * [Run a benchmark](#run-a-benchmark)
      * [Custom configuration](#custom-configuration)
         * [Run a framework with different (hyper-)parameters](#run-a-framework-with-different-hyper-parameters)
+     * [Advanced AWS Support](#advanced-aws-support) 
   * [Add a benchmark](#add-a-benchmark)
      * [Datasets definition](#datasets-definition)
         * [OpenML datasets](#openml-datasets)
@@ -74,6 +75,9 @@ aws:
 - `{user}`: replaced by the value of config `user_dir`. Folder containing customizations (`config.yaml`, benchmark definitions, framework definitions...). Defaults to `~/.config/automlbenchmark`, but can be overridden at the command line using `-u` or `--userdir`.
 - `{root}`: replaced by the value of config `root_dir`. The root folder of the `automlbenchmark` application: this is detected at runtime.
 
+**Note:** It is possible to have multiple configuration files: just create a folder for each `config.yaml` file and use that folder as your `user_dir` using `-u /path/to/config/folder`
+
+
 #### Run a framework with different (hyper-)parameters
 
 Framework definitions accept a `params` dictionary for pass-through parameters, i.e. parameters that are directly accessible from the `exec.py` file in the framework integration executing the AutoML training.
@@ -100,6 +104,34 @@ RandomForest_custom:
   params:
     n_estimators: 2000
     _n_jobs: 1
+```
+
+### Advanced AWS Support
+
+When using AWS mode, the application with use `on-demand` EC2 instances from the `m5` series by default.
+
+However, it is also possible to use `Spot` instances, specify a `max_hourly_price`, or customize your experience when using this mode in general.
+
+All configuration points are grouped and documented under the `aws` yaml namespace in the main [config] file.
+
+When setting  your own configuration, it is strongly recommended to first create your own `config.yaml` file as described in [Custom configuration](#custom-configuration).
+
+_Example:_
+
+A sample of a config file using Spot instances on a non-default region:
+```yaml
+
+aws:
+  region: 'us-east-1'
+  resource_files:
+    - '{user}/config.yaml'
+    - '{user}/frameworks.yaml'
+
+  ec2:
+    subnet_id: subnet-123456789   # subnet for account on us-east-1 region
+    spot:
+      enabled: true
+      max_hourly_price: 0.40  # comment out to use default
 ```
 
 ## Add a benchmark
@@ -954,3 +986,4 @@ If the setup fails on a supported environment, please try the following:
 [ARFF]: https://waikato.github.io/weka-wiki/formats_and_processing/arff_stable/
 [CSV]: https://tools.ietf.org/html/rfc4180
 [Docker]: https://docs.docker.com/
+[config]: ../resources/config.yaml
