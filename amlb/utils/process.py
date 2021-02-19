@@ -190,7 +190,7 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
 def get_thread(tid=None):
     return (threading.current_thread() if tid is None
             else threading.main_thread() if tid == 0
-            else next(filter(lambda t: t.ident == tid, threading.enumerate())))
+            else next(filter(lambda t: t.ident == tid, threading.enumerate()), None))
 
 
 def get_process(pid=None):
@@ -320,28 +320,40 @@ class InterruptTimeout(Timeout):
             log.log(log_level, self.message)
             if before_interrupt is not None:
                 before_interrupt()
-            if interrupt == 'thread':
-                if isinstance(self.sig, (type(None), BaseException)):
-                    raise_in_thread(self.ident, TimeoutError(self.message) if self.sig is None else self.sig)
-                else:
-                    # _thread.interrupt_main()
-                    signal.pthread_kill(self.ident, self.sig)
-            elif interrupt == 'process':
-                os.kill(self.ident, self.sig)
+            while not self.interrupt_event.is_set():
+                try:
+                    if interrupt == 'thread':
+                        if isinstance(self.sig, (type(None), BaseException)):
+                            exc = TimeoutError(self.message) if self.sig is None else self.sig
+                            raise_in_thread(self.ident, exc)
+                        else:
+                            # _thread.interrupt_main()
+                            signal.pthread_kill(self.ident, self.sig)
+                    elif interrupt == 'process':
+                        os.kill(self.ident, self.sig)
+                except Exception:
+                    raise
+                finally:
+                    self.interrupt_event.wait(1000)  # retry every second if interruption didn't work
 
         super().__init__(timeout_secs, on_timeout=interruption)
         if interrupt not in ['thread', 'process']:
             raise ValueError("`interrupt` value should be one of ['thread', 'process'].")
+        tp = get_thread(ident) if interrupt == 'thread' else get_process(ident)
+        if tp is None:
+            raise ValueError(f"no {interrupt} with id {ident}")
         if message is None:
-            desc = 'current' if ident is None else 'main' if ident == 0 else self.ident
-            self.message = f"Interrupting {interrupt} {desc} after {timeout_secs}s timeout."
+            id = f"ident={tp.ident}" if isinstance(tp, threading.Thread) else f"pid={tp.pid}"
+            self.message = f"Interrupting {interrupt} {tp.name} [{id}] after {timeout_secs}s timeout."
         else:
             self.message = message
-        self.ident = get_thread(ident).ident if interrupt == 'thread' else get_process(ident).pid
+        self.ident = tp.ident if tp is not None else None
         self.sig = sig(self.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
+        self.interrupt_event = threading.Event()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
+        self.interrupt_event.set()
         if self.timed_out:
             if isinstance(self.sig, BaseException):
                 raise self.sig
