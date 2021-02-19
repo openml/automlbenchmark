@@ -451,26 +451,17 @@ class AWSBenchmark(Benchmark):
             Statistics=['Average'],
             Unit='Percent'
         )
-        log.info(resp)
         return [activity['Average'] for activity in sorted(resp['Datapoints'], key=op.itemgetter('Timestamp'), reverse=True)]
 
     def _is_hanging(self, iid):
         cpu_config = rconfig().aws.ec2.monitoring.cpu
         inst_desc = self.instances[iid]
-        try:
-            log.info("***** Check for hanging *****")
-            activity = self._get_cpu_activity(iid,
-                                              delta_minutes=cpu_config.delta_minutes,
-                                              period_minutes=cpu_config.period_minutes)
-            inst_desc.monitor_failure_start = 0
-            threshold = cpu_config.threshold
-            min_activity_len = int(cpu_config.delta_minutes / cpu_config.period_minutes)
-            return len(activity) >= min_activity_len and all([a < threshold for a in activity])
-        except Exception as e:
-            log.exception(e)
-            if inst_desc.monitor_failure_start == 0:
-                inst_desc.monitor_failure_start = time.time()
-            return time.time() - inst_desc.monitor_failure_start >= cpu_config.delta_minutes*60
+        activity = self._get_cpu_activity(iid,
+                                          delta_minutes=cpu_config.delta_minutes,
+                                          period_minutes=cpu_config.period_minutes)
+        threshold = cpu_config.threshold
+        min_activity_len = int(cpu_config.delta_minutes / cpu_config.period_minutes)
+        return len(activity) >= min_activity_len and all([a < threshold for a in activity])
 
     def _monitoring_start(self):
         if self.monitoring is not None:
