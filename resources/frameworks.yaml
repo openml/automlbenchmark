@@ -19,7 +19,7 @@ __dummy_framework_with_defaults:
 #########################
 
 flaml:
-  version: "0.2.3"
+  version: "0.2.4"
   description: |
     FLAML is a lightweight Python library that finds accurate machine learning models 
     automatically, efficiently and economically. It frees users from selecting learners 
@@ -27,6 +27,10 @@ flaml:
   project: https://github.com/microsoft/FLAML
   refs: [https://arxiv.org/pdf/1911.04706.pdf]
 
+flaml-lgbm:
+  extends: flaml
+  params:
+    estimator_list: ['lgbm']
 
 flaml_old:
   version: "0.1.3"
@@ -230,3 +234,5 @@ TunedRandomForest:
 #    _tuning:
 #      n_estimators: 500
 
+optunalgbm:
+  version: 'stable'
