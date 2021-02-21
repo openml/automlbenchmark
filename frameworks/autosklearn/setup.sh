@@ -28,4 +28,4 @@ else
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
     PIP install -U -e ${TARGET_DIR}
 fi
-
+# sudo apt-get install python3-dev

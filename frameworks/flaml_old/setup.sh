@@ -6,4 +6,4 @@ HERE=$(dirname "$0")
 . $HERE/../shared/setup.sh $HERE
 #. $AMLB_DIR/frameworks/shared/setup.sh $HERE
 PIP install -r $HERE/requirements.txt
-PIP install  flaml
+PIP install  flaml==0.1.3
