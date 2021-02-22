@@ -78,9 +78,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     with Timer() as training:
         model = lgb.train(
-            params, dtrain, valid_sets=[dtrain, dval], verbose_eval=100,
-            early_stopping_rounds=100
-        )        
+            params, dtrain, valid_sets=[dtrain, dval], verbose_eval=10000)        
     
     predictions = model.predict(X_test)
     probabilities = model.predict_proba(X_test) if is_classification else None
