@@ -44,7 +44,7 @@ screen -Sdm credit-g_flaml python runbenchmark.py flaml  all 1m1c -t credit-g
 sleep 10s
 screen -Sdm houses_flaml python runbenchmark.py flaml  all 1m1c -t houses
 sleep 10s
-# sleep 600s
+sleep 600s
 screen -Sdm riccardo_flaml python runbenchmark.py flaml  all 1m1c -t riccardo
 sleep 10s
 screen -Sdm Robert_flaml python runbenchmark.py flaml  all 1m1c -t Robert

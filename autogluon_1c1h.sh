@@ -48,7 +48,7 @@ screen -Sdm credit-g_AutoGluon python runbenchmark.py AutoGluon  all 1h1c  -t cr
 sleep 10s
 screen -Sdm houses_AutoGluon python runbenchmark.py AutoGluon  all 1h1c  -t houses
 sleep 10s
-# sleep 40000s
+sleep 40000s
 screen -Sdm riccardo_AutoGluon python runbenchmark.py AutoGluon  all 1h1c  -t riccardo
 sleep 10s
 screen -Sdm Robert_AutoGluon python runbenchmark.py AutoGluon  all 1h1c  -t Robert

@@ -44,7 +44,7 @@ screen -Sdm credit-g_tpot python runbenchmark.py tpot  all 10m1c -t credit-g
 sleep 10s
 screen -Sdm houses_tpot python runbenchmark.py tpot  all 10m1c -t houses
 sleep 10s
-# sleep 6000s
+sleep 6000s
 screen -Sdm riccardo_tpot python runbenchmark.py tpot  all 10m1c -t riccardo
 sleep 10s
 screen -Sdm Robert_tpot python runbenchmark.py tpot  all 10m1c -t Robert

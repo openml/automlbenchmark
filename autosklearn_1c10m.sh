@@ -44,7 +44,7 @@ screen -Sdm credit-g_autosklearn2 python runbenchmark.py autosklearn2  all 10m1c
 sleep 10s
 screen -Sdm houses_autosklearn2 python runbenchmark.py autosklearn2  all 10m1c -t houses
 sleep 10s
-# sleep 6000s
+sleep 6000s
 screen -Sdm riccardo_autosklearn2 python runbenchmark.py autosklearn2  all 10m1c -t riccardo
 sleep 10s
 screen -Sdm Robert_autosklearn2 python runbenchmark.py autosklearn2  all 10m1c -t Robert

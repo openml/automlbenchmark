@@ -48,7 +48,7 @@ screen -Sdm credit-g_h2oautoml python runbenchmark.py h2oautoml  all 1h1c  -t cr
 sleep 10s
 screen -Sdm houses_h2oautoml python runbenchmark.py h2oautoml  all 1h1c  -t houses
 sleep 10s
-# sleep 40000s
+sleep 40000s
 screen -Sdm riccardo_h2oautoml python runbenchmark.py h2oautoml  all 1h1c  -t riccardo
 sleep 10s
 screen -Sdm Robert_h2oautoml python runbenchmark.py h2oautoml  all 1h1c  -t Robert
