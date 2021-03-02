@@ -87,10 +87,11 @@ def call_run(run_fn):
                                     interruptions=[
                                         dict(sig=TimeoutError),
                                         dict(),  # thread sigint
-                                        dict(interrupt='process'),
+                                        dict(sig=signal.SIGQUIT),
+                                        dict(sig=signal.SIGKILL),
                                         dict(interrupt='process', sig=signal.SIGKILL)
                                     ],
-                                    wait_retry_secs=5):
+                                    wait_retry_secs=10):
             result = run_fn(ds, config)
             res = dict(result)
             for name in ['predictions', 'truth', 'probabilities']:

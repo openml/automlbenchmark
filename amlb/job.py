@@ -9,6 +9,7 @@
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
+import math
 import queue
 import signal
 import threading
@@ -73,8 +74,15 @@ class Job:
             self.state = State.running
             self._prepare()
             with Timer() as t:
-                # don't propagate interruption error here (sig=None) so that we can collect the timeout in the result
-                with InterruptTimeout(self.timeout, sig=None):
+                with InterruptTimeout(self.timeout,
+                                      interruptions=[
+                                          dict(sig=None),  # first trying sig=None to avoid propagation of the interruption error: this way we can collect the timeout in the result
+                                          dict(sig=signal.SIGINT),
+                                          dict(sig=signal.SIGQUIT),
+                                          dict(sig=signal.SIGKILL),
+                                      ],
+                                      wait_retry_secs=60  # escalates every minute if the previous interruption was ineffective
+                                      ):
                     result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)

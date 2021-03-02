@@ -411,8 +411,8 @@ class BenchmarkTask:
                 self.benchmark.framework_name
             ]),
             # specifying a job timeout to handle edge cases where framework never completes or hangs
-            # (adding 1 min to let the potential subprocess handle the interruption first).
-            timeout_secs=self.task_config.job_timeout_seconds+60,
+            # (adding 5min safety to let the potential subprocess handle the interruption first).
+            timeout_secs=self.task_config.job_timeout_seconds+5*60,
             raise_exceptions=rconfig().exit_on_error,
         )
         job._run = _run
