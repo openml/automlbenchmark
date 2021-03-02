@@ -228,7 +228,7 @@ exec /bin/bash -c "$PY {script} ""$@"
                 pip="$PIP",
                 py="$PY"
             ),
-            framework=self.framework_name,
+            framework=self._forward_params['framework_name'],
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,

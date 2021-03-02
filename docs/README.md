@@ -38,7 +38,7 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ## Installation
 ### Pre-requisites
 To run the benchmarks, you will need:
-* Python 3.6+.
+* Python 3.7+.
 * PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install -U pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
