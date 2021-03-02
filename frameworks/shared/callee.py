@@ -2,6 +2,7 @@ import importlib.util
 import logging
 import os
 import re
+import signal
 import sys
 
 
@@ -83,10 +84,13 @@ def call_run(run_fn):
 
     try:
         with utils.InterruptTimeout(config.job_timeout_seconds,
-                                    sig=TimeoutError,
-                                    # interrupt='process',
-                                    # before_interrupt=lambda: utils.kill_proc_tree(include_parent=False)
-                                    ):
+                                    interruptions=[
+                                        dict(sig=TimeoutError),
+                                        dict(),  # thread sigint
+                                        dict(interrupt='process'),
+                                        dict(interrupt='process', sig=signal.SIGKILL)
+                                    ],
+                                    wait_retry_secs=5):
             result = run_fn(ds, config)
             res = dict(result)
             for name in ['predictions', 'truth', 'probabilities']:
@@ -102,6 +106,6 @@ def call_run(run_fn):
         )
     finally:
         # ensure there's no subprocess left
-        utils.kill_proc_tree(include_parent=False)
+        utils.kill_proc_tree(include_parent=False, timeout=5)
 
     utils.json_dump(res, config.result_file, style='compact')
