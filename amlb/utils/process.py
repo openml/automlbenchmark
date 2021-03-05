@@ -313,6 +313,7 @@ class InterruptTimeout(Timeout):
     A :class:`Timeout` implementation that can send a signal to the interrupted thread or process,
     or raise an exception in the thread (works only for thread interruption)
     if the passed signal is an exception class or instance.
+    If sig is None, then it raises a TimeoutError internally that is not propagated outside the context manager.
     """
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
@@ -320,9 +321,9 @@ class InterruptTimeout(Timeout):
                  interruptions: Union[Dict, List[Dict]] = None, wait_retry_secs=1,
                  before_interrupt=None):
         def interruption():
-            inter = None
+            inter_iter = iter(self._interruptions)
             while not self._interrupt_event.is_set():
-                inter = next(self._interruptions, inter)
+                inter = self._last_attempt = next(inter_iter, self._last_attempt)
                 log.log(self._log_level, inter.message)
                 if inter.before_interrupt is not None:
                     try:
@@ -353,9 +354,9 @@ class InterruptTimeout(Timeout):
         self._id = id
         self._wait_retry_secs = wait_retry_secs
         self._before_interrupt = before_interrupt
-        self._interruptions = iter([self._make_interruption(i) for i in (interruptions if isinstance(interruptions, list)
-                                                                         else [interruptions] if isinstance(interruptions, dict)
-                                                                         else [dict()])])
+        self._interruptions = [self._make_interruption(i) for i in (interruptions if isinstance(interruptions, list)
+                                                                    else [interruptions] if isinstance(interruptions, dict)
+                                                                    else [dict()])]
         self._interrupt_event = threading.Event()
         self._last_attempt = None
 
@@ -382,10 +383,13 @@ class InterruptTimeout(Timeout):
         inter.id = tp.ident if isinstance(tp, threading.Thread) else tp.pid
         inter.sig = sig(inter.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
         inter.wait = wait
+        return inter
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
         self._interrupt_event.set()
+        if not self._last_attempt:
+            return False
         if self.timed_out:
             sig = self._last_attempt.sig
             if isinstance(sig, BaseException):
