@@ -86,7 +86,7 @@ def call_run(run_fn):
         with utils.InterruptTimeout(config.job_timeout_seconds,
                                     interruptions=[
                                         dict(sig=TimeoutError),
-                                        dict(),  # thread sigint
+                                        dict(sig=signal.SIGTERM),
                                         dict(sig=signal.SIGQUIT),
                                         dict(sig=signal.SIGKILL),
                                         dict(interrupt='process', sig=signal.SIGKILL)
