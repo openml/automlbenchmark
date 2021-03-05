@@ -325,7 +325,10 @@ class InterruptTimeout(Timeout):
                 inter = next(self._interruptions, inter)
                 log.log(self._log_level, inter.message)
                 if inter.before_interrupt is not None:
-                    inter.before_interrupt()
+                    try:
+                        inter.before_interrupt()
+                    except Exception:
+                        log.warning("Swallowing the error raised by `before_interrupt` hook: %s", inter.before_interrupt, exc_info=True)
                 try:
                     if inter.interrupt == 'thread':
                         if isinstance(inter.sig, (type(None), BaseException)):
