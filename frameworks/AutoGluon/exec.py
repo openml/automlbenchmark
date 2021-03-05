@@ -95,7 +95,10 @@ def run(dataset, config):
     save_artifacts(predictor, leaderboard, config)
 
     num_models_trained = len(leaderboard)
-    num_models_ensemble = len(predictor._trainer.get_minimum_model_set(predictor._trainer.model_best))
+    if predictor._trainer.model_best is not None:
+        num_models_ensemble = len(predictor._trainer.get_minimum_model_set(predictor._trainer.model_best))
+    else:
+        num_models_ensemble = 1
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,

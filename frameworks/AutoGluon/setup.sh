@@ -7,10 +7,6 @@ PKG=${4:-"autogluon"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
-# TODO: Hacked in until 0.1 releases
-if [[ "$VERSION" == "stable" ]]; then
-    VERSION="0.0.16b20210204"
-fi
 
 # creating local venv
 . ${HERE}/../shared/setup.sh ${HERE}
@@ -21,7 +17,7 @@ if [[ -x "$(command -v brew)" ]]; then
 fi
 
 PIP install --upgrade pip
-PIP install --upgrade setuptools
+PIP install --upgrade setuptools wheel
 PIP install "mxnet<2.0.0"
 
 if [[ "$VERSION" == "stable" ]]; then
@@ -29,14 +25,13 @@ if [[ "$VERSION" == "stable" ]]; then
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
     PIP install --no-cache-dir -U ${PKG}==${VERSION}
 else
-#    PIP install --no-cache-dir -e git+${REPO}@${VERSION}#egg={PKG}
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
     cd ${TARGET_DIR}
     PIP install -e core/
     PIP install -e features/
-    PIP install -e tabular/
+    PIP install -e tabular/[all]
     PIP install -e mxnet/
     PIP install -e extra/
     PIP install -e text/
