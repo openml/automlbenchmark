@@ -188,6 +188,10 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     return run_script(script_path, *args, **kwargs)
 
 
+def is_main_thread():
+    return threading.current_thread() == threading.main_thread()
+
+
 def get_thread(tid=None):
     return (threading.current_thread() if tid is None
             else threading.main_thread() if tid == 0

@@ -15,7 +15,7 @@ import signal
 import threading
 import time
 
-from .utils import Namespace, Timer, InterruptTimeout, raise_in_thread, signal_handler
+from .utils import Namespace, Timer, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
 
 log = logging.getLogger(__name__)
 
@@ -76,8 +76,8 @@ class Job:
             with Timer() as t:
                 with InterruptTimeout(self.timeout,
                                       interruptions=[
-                                          dict(sig=None),  # first trying sig=None to avoid propagation of the interruption error: this way we can collect the timeout in the result
-                                          dict(sig=signal.SIGINT),  # at job level, we can then try a graceful interruption.
+                                          dict(sig=None),            # first trying sig=None to avoid propagation of the interruption error: this way we can collect the timeout in the result
+                                          dict(sig=signal.SIGINT if is_main_thread() else signal.SIGTERM),  # if main thread, try a graceful interruption.
                                           dict(sig=signal.SIGQUIT),  # graceful doesn't work, let's talk seriously.
                                           dict(sig=signal.SIGKILL),
                                       ],
