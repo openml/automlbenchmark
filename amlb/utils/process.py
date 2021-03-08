@@ -15,6 +15,7 @@ import sys
 import threading
 import _thread
 import traceback
+from typing import Dict, List, Union
 
 import psutil
 
@@ -187,6 +188,10 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     return run_script(script_path, *args, **kwargs)
 
 
+def is_main_thread():
+    return threading.current_thread() == threading.main_thread()
+
+
 def get_thread(tid=None):
     return (threading.current_thread() if tid is None
             else threading.main_thread() if tid == 0
@@ -312,52 +317,88 @@ class InterruptTimeout(Timeout):
     A :class:`Timeout` implementation that can send a signal to the interrupted thread or process,
     or raise an exception in the thread (works only for thread interruption)
     if the passed signal is an exception class or instance.
+    If sig is None, then it raises a TimeoutError internally that is not propagated outside the context manager.
     """
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
-                 interrupt='thread', sig=signal.SIGINT, ident=None, before_interrupt=None):
+                 interrupt='thread', sig=signal.SIGINT, id=None,
+                 interruptions: Union[Dict, List[Dict]] = None, wait_retry_secs=1,
+                 before_interrupt=None):
         def interruption():
-            log.log(log_level, self.message)
-            if before_interrupt is not None:
-                before_interrupt()
-            while not self.interrupt_event.is_set():
+            inter_iter = iter(self._interruptions)
+            while not self._interrupt_event.is_set():
+                inter = self._last_attempt = next(inter_iter, self._last_attempt)
+                log.log(self._log_level, inter.message)
+                if inter.before_interrupt is not None:
+                    try:
+                        inter.before_interrupt()
+                    except Exception:
+                        log.warning("Swallowing the error raised by `before_interrupt` hook: %s", inter.before_interrupt, exc_info=True)
                 try:
-                    if interrupt == 'thread':
-                        if isinstance(self.sig, (type(None), BaseException)):
-                            exc = TimeoutError(self.message) if self.sig is None else self.sig
-                            raise_in_thread(self.ident, exc)
+                    if inter.interrupt == 'thread':
+                        if isinstance(inter.sig, (type(None), BaseException)):
+                            exc = TimeoutError(inter.message) if inter.sig is None else inter.sig
+                            raise_in_thread(inter.id, exc)
                         else:
                             # _thread.interrupt_main()
-                            signal.pthread_kill(self.ident, self.sig)
-                    elif interrupt == 'process':
-                        os.kill(self.ident, self.sig)
+                            signal.pthread_kill(inter.id, inter.sig)
+                    elif inter.interrupt == 'process':
+                        os.kill(inter.id, inter.sig)
                 except Exception:
                     raise
                 finally:
-                    self.interrupt_event.wait(1)  # retry every second if interruption didn't work
+                    self._interrupt_event.wait(inter.wait)  # retry every second if interruption didn't work
 
         super().__init__(timeout_secs, on_timeout=interruption)
+        self._timeout_secs = timeout_secs
+        self._message = message
+        self._log_level = log_level
+        self._interrupt = interrupt
+        self._sig = sig
+        self._id = id
+        self._wait_retry_secs = wait_retry_secs
+        self._before_interrupt = before_interrupt
+        self._interruptions = [self._make_interruption(i) for i in (interruptions if isinstance(interruptions, list)
+                                                                    else [interruptions] if isinstance(interruptions, dict)
+                                                                    else [dict()])]
+        self._interrupt_event = threading.Event()
+        self._last_attempt = None
+
+    def _make_interruption(self, interruption: dict):
+        interrupt = interruption.get('interrupt', self._interrupt)
+        sig = interruption.get('sig', self._sig)
+        id = interruption.get('id', self._id)
+        message = interruption.get('message', self._message)
+        wait = interruption.get('wait', self._wait_retry_secs)
+
+        inter = Namespace()
         if interrupt not in ['thread', 'process']:
             raise ValueError("`interrupt` value should be one of ['thread', 'process'].")
-        tp = get_thread(ident) if interrupt == 'thread' else get_process(ident)
+        inter.interrupt = interrupt
+        inter.before_interrupt = self._before_interrupt
+        tp = get_thread(id) if interrupt == 'thread' else get_process(id)
         if tp is None:
-            raise ValueError(f"no {interrupt} with id {ident}")
+            raise ValueError(f"no {interrupt} with id {id}")
         if message is None:
-            id = f"ident={tp.ident}" if isinstance(tp, threading.Thread) else f"pid={tp.pid}"
-            self.message = f"Interrupting {interrupt} {tp.name} [{id}] after {timeout_secs}s timeout."
+            sid = f"ident={tp.ident}" if isinstance(tp, threading.Thread) else f"pid={tp.pid}"
+            inter.message = f"Interrupting {interrupt} {tp.name} [{sid}] after {self._timeout_secs}s timeout."
         else:
-            self.message = message
-        self.ident = tp.ident if tp is not None else None
-        self.sig = sig(self.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
-        self.interrupt_event = threading.Event()
+            inter.message = message
+        inter.id = tp.ident if isinstance(tp, threading.Thread) else tp.pid
+        inter.sig = sig(inter.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
+        inter.wait = wait
+        return inter
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        self.interrupt_event.set()
+        self._interrupt_event.set()
+        if not self._last_attempt:
+            return False
         if self.timed_out:
-            if isinstance(self.sig, BaseException):
-                raise self.sig
-            elif self.sig is None:
+            sig = self._last_attempt.sig
+            if isinstance(sig, BaseException):
+                raise sig
+            elif sig is None:
                 return True
 
 
