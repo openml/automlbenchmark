@@ -167,8 +167,11 @@ class JobRunner:
         return self.results
 
     def stop(self):
+        if self.state in [State.stopping, State.stopped]:
+            return
         self.state = State.stopping
-        self._queue.put((-1, None))
+        if self._queue:
+            self._queue.put((-1, None))
         return self._stop()
 
     def stop_if_complete(self):
@@ -181,7 +184,10 @@ class JobRunner:
                 job.priority = self._last_priority = self._last_priority+1
         else:
             job.priority = priority
-        self._queue.put((job.priority, job))
+        if self._queue:
+            self._queue.put((job.priority, job))
+        else:
+            log.warning("Ignoring job `%s`. Runner state: `%s`", job.name, self.state)
 
     def _init_queue(self):
         self._queue = queue.PriorityQueue(maxsize=len(self.jobs))
@@ -198,7 +204,6 @@ class JobRunner:
         self._queue.task_done()
         if job is None:
             self._queue = None
-            return
         return job
 
     def _run(self):
@@ -213,7 +218,7 @@ class SimpleJobRunner(JobRunner):
 
     def _run(self):
         for job in self:
-            if self.state == State.stopping:
+            if job is None or self.state == State.stopping:
                 break
             result, duration = job.start()
             if job.state is not State.rescheduled:
@@ -234,7 +239,7 @@ class MultiThreadingJobRunner(JobRunner):
     def _run(self):
         signal_handler(signal.SIGINT, self.stop)
         signal_handler(signal.SIGTERM, self.stop)
-        q = queue.Queue()
+        q = queue.Queue(1)  # block one at a time to allow prioritization of rescheduled jobs
 
         def worker():
             while True:
@@ -242,13 +247,15 @@ class MultiThreadingJobRunner(JobRunner):
                 if job is None or self.state == State.stopping:
                     q.task_done()
                     break
-                result, duration = job.start()
-                if job.state is not State.rescheduled:
-                    self.results.append(Namespace(name=job.name, result=result, duration=duration))
-                if self._done_async:
-                    job.done()
-                self.stop_if_complete()
-                q.task_done()
+                try:
+                    result, duration = job.start()
+                    if job.state is not State.rescheduled:
+                        self.results.append(Namespace(name=job.name, result=result, duration=duration))
+                    if self._done_async:
+                        job.done()
+                    self.stop_if_complete()
+                finally:
+                    q.task_done()
 
         threads = []
         for thread in range(self.parallel_jobs):
@@ -260,13 +267,19 @@ class MultiThreadingJobRunner(JobRunner):
             for job in self:
                 if self.state == State.stopping:
                     break
-                q.put(job)     # TODO: timeout
+                print(f"queueing job {job.name}")
+                q.put(job)
+                print(f"queued job {job.name}")
                 if self._delay > 0:
                     time.sleep(self._delay)
             q.join()
         finally:
+            q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
             for _ in range(self.parallel_jobs):
-                q.put(None)     # stopping workers
+                try:
+                    q.put_nowait(None)     # stopping workers
+                except:
+                    pass
             for thread in threads:
                 thread.join()
             if not self._done_async:
