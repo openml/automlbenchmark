@@ -265,7 +265,15 @@ class Benchmark:
         if rconfig().results.save:
             self._save(board)
 
-        log.info("Summing up scores for current run:\n%s", board.as_printable_data_frame().dropna(how='all', axis='columns').to_string())
+        df = board.as_printable_data_frame().dropna(how='all', axis='columns')
+        show_in_table = [
+            'result', 'duration', 'training_duration', 'predict_duration',
+            'models_count', "acc", "auc", "balacc", "logloss", "mae", "r2", "rmse"
+        ]
+        constants = [c for c in df.columns[df.nunique() == 1] if c not in show_in_table]
+        log.info("\nSumming up scores for current run:")
+        log.info(''.join(f"{c}: {df[c].iloc[0]}\n" for c in constants))
+        log.info(df[(c for c in df.columns if c not in constants)].to_string())
         return board.as_data_frame()
 
     def _save(self, board):
