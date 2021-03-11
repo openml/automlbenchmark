@@ -9,7 +9,7 @@
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
-import math
+import platform
 import queue
 import signal
 import threading
@@ -73,16 +73,23 @@ class Job:
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
             self._prepare()
+
+            interruption_sequence = [
+                dict(sig=None),
+                # first trying sig=None to avoid propagation of the interruption error: this way we can collect the timeout in the result
+                dict(sig=signal.SIGINT if is_main_thread() else signal.SIGTERM),
+                # if main thread, try a graceful interruption.
+            ]
+            if platform.system() != "Windows":
+                interruption_sequence.append(dict(sig=signal.SIGQUIT))
+                interruption_sequence.append(dict(sig=signal.SIGKILL))
+
             with Timer() as t:
-                with InterruptTimeout(self.timeout,
-                                      interruptions=[
-                                          dict(sig=None),            # first trying sig=None to avoid propagation of the interruption error: this way we can collect the timeout in the result
-                                          dict(sig=signal.SIGINT if is_main_thread() else signal.SIGTERM),  # if main thread, try a graceful interruption.
-                                          dict(sig=signal.SIGQUIT),  # graceful doesn't work, let's talk seriously.
-                                          dict(sig=signal.SIGKILL),
-                                      ],
-                                      wait_retry_secs=60  # escalates every minute if the previous interruption was ineffective
-                                      ):
+                with InterruptTimeout(
+                        self.timeout,
+                        interruptions=interruption_sequence,
+                        wait_retry_secs=60
+                ):  # escalates every minute if the previous interruption was ineffective
                     result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)
