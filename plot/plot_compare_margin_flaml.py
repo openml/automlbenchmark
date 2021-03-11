@@ -7,14 +7,14 @@ from plot_res_flaml import get_tunedRF_constPredictor, get_data_size, \
     get_res_mean_std, get_best_Predictor, remove_nonplot_tasks, scale_score, \
     get_res_mean_std_all, get_task_min_max_dic
 from plot_radar_flaml import get_framework_alias
-
+from util import data_stat_file
 
 SMALL_LARGE_threshold = 200000
 
 def main():
     task_tunedRF_dic, task_constPredictor_dic, task_type_dic = get_tunedRF_constPredictor('../results/benchmark_results/')
     best_bench_dic = get_best_Predictor('../results/benchmark_results/')                 
-    data_size_dic = get_data_size('../results/data_stat.csv')
+    data_size_dic = get_data_size(data_stat_file)
     
     multi_class_list = []
 
@@ -72,7 +72,8 @@ def main():
     parser.add_argument('-f1', '--framework_1', metavar='framework_id_1',  default=None,
                         help="The specific framework name (as defined in the benchmark file) to run. "
                             "If not provided, then all tasks from the benchmark will be run.")
-
+    parser.add_argument('-flist', '--flist', dest='flist', nargs='*' , 
+        default= None, help="The framework list") #'BOHB',
     parser.add_argument('-t2', '--time_2', metavar='time_2', type = float, default=None,
                         help="time_budget_1")
     parser.add_argument('-f2', '--framework_2', metavar='framework_id_2', default=None,
@@ -265,8 +266,8 @@ def main():
         plot_dataset_type = str(args.dataset_type)
         for t in [60,600,3600]:
             alias = str(t)         
-            for framework_1 in ['flaml','lightautoml']:
-
+            # for framework_1 in ['flaml','lightautoml', 'lightautoml-reallynoblend']:
+            for framework_1 in ['flaml','flaml_old', ]:
                 task_dic = {}
                 framework_dic = {}
                 task_dic_all = {}
@@ -279,6 +280,12 @@ def main():
                         _, openmlid, task, framework, res_mean, res_std, duration = info
                     except:
                         continue
+
+                    if len(info) == 7:
+                        _, openmlid, task, framework, res_mean, res_std, duration = info
+                    elif len(info) == 8:
+                        _, openmlid, task, framework, _, res_mean, res_std, duration = info
+                    print('framework', framework)
                     framework = framework.replace('_from_log', '')
                     if 'TPOT' in framework and 'xgboost' in framework:
                         framework = 'TPOT_xgboost'
@@ -331,125 +338,125 @@ def main():
             
     else:
         compared_budget = [(60,60),(600,600),(3600,3600),(60,600),(600,3600),(60,3600)]
-        for g,f in enumerate(
-            [('flaml',['lightautoml']),            
-            ]):
-            # [('flaml',['lightautoml',]),            
-            # ]):
-            labels = []
-            framework_1, flist = f
-            margin = [[[] for method in flist] for t in compared_budget]
-            for i, framework_2 in enumerate(flist):
-                plot_dataset_type = str(args.dataset_type) if framework_2!='autosklearn_xgboost' else 'all_reg'
-                alias = get_framework_alias(framework_2)    
-                labels.append(alias)  
-                for j, t in enumerate(compared_budget):
-                    time_1,time_2 = t
-                    task_dic = {}
-                    framework_dic = {}
+        labels = []
+        framework_1 = args.framework_1
+        flist = args.flist
+        margin = [[[] for method in flist] for t in compared_budget]
+        for i, framework_2 in enumerate(flist):
+            plot_dataset_type = str(args.dataset_type) if framework_2!='autosklearn_xgboost' else 'all_reg'
+            alias = get_framework_alias(framework_2)    
+            labels.append(alias)  
+            for j, t in enumerate(compared_budget):
+                time_1,time_2 = t
+                task_dic = {}
+                framework_dic = {}
 
-                    task_dic_2 = {}
-                    framework_dic_2 = {}
+                task_dic_2 = {}
+                framework_dic_2 = {}
 
-                    task_dic_all = {}
-                    framework_dic_all = {}
-                    for line in lines[1:]:
-                        info = line.split(',')
-                        if len(info) ==1:
-                            info = line.split(' ')
-                        try:
-                            _, openmlid, task, framework, _, res_mean, res_std, duration = info
-                        except:
-                            continue
-                        framework = framework.replace('_from_log', '')
-                        task= task.lower()
-                        task = task.replace('_full', '')
-                        if task not in best_bench_dic.keys() and normalize_type == 'best':
-                            continue
-                        if task in multi_class_list:
-                            res_mean = -float(res_mean)
-                        try:
-                            duration = float(duration)
-                            framework_dic_all = get_res_mean_std_all(framework_dic_all, task, framework, res_mean, res_std)
-                            if float(duration) <= 1.3*float(time_1):
-                                task_dic, framework_dic = get_res_mean_std(task_dic, framework_dic, task, framework, res_mean, res_std)
+                task_dic_all = {}
+                framework_dic_all = {}
+                for line in lines[1:]:
+                    info = line.split(',')
+                    if len(info) ==1:
+                        info = line.split(' ')
+                    # try:
+                    #     _, openmlid, task, framework, _, res_mean, res_std, duration = info
+                    # except:
+                    #     continue
+                    if len(info) == 7:
+                        _, openmlid, task, framework, res_mean, res_std, duration = info
+                    elif len(info) == 8:
+                        _, openmlid, task, framework, _, res_mean, res_std, duration = info
+                    print('framework', framework)
+                    framework = framework.replace('_from_log', '')
+                    task= task.lower()
+                    task = task.replace('_full', '')
+                    if task not in best_bench_dic.keys() and normalize_type == 'best':
+                        continue
+                    if task in multi_class_list:
+                        res_mean = -float(res_mean)
+                    try:
+                        duration = float(duration)
+                        framework_dic_all = get_res_mean_std_all(framework_dic_all, task, framework, res_mean, res_std)
+                        if float(duration) <= 1.3*float(time_1):
+                            task_dic, framework_dic = get_res_mean_std(task_dic, framework_dic, task, framework, res_mean, res_std)
 
-                            if float(duration) <= 1.3*float(time_2):
-                                task_dic_2, framework_dic_2 = get_res_mean_std(task_dic_2, framework_dic_2, task, framework, res_mean, res_std)
-                        except:
-                            pass
-                    # print(list(framework_dic.keys()))
-                    if not framework_2 in framework_dic_2: continue
-                    if not framework_1 in framework_dic: continue
-                    task_list = sorted(list(task_dic.keys()))
-                    task_list = remove_nonplot_tasks(task_list, dataset_list_dic[plot_dataset_type])
-                    for t in dataset_list_dic[plot_dataset_type]:
-                        if t not in task_list:
-                            print('missing task', t)
+                        if float(duration) <= 1.3*float(time_2):
+                            task_dic_2, framework_dic_2 = get_res_mean_std(task_dic_2, framework_dic_2, task, framework, res_mean, res_std)
+                    except:
+                        pass
+                # print(list(framework_dic.keys()))
+                if not framework_2 in framework_dic_2: continue
+                if not framework_1 in framework_dic: continue
+                task_list = sorted(list(task_dic.keys()))
+                task_list = remove_nonplot_tasks(task_list, dataset_list_dic[plot_dataset_type])
+                for t in dataset_list_dic[plot_dataset_type]:
+                    if t not in task_list:
+                        print('missing task', t)
 
-                    better_equ_num = 0
-                    better_num = 0
-                    worse_num = 0
-                    total_num = 0
-                    worse_than_task_list = []
+                better_equ_num = 0
+                better_num = 0
+                worse_num = 0
+                total_num = 0
+                worse_than_task_list = []
 
-                    task_max, task_min = get_task_min_max_dic(task_list, framework_dic_all, task_tunedRF_dic, best_bench_dic, task_constPredictor_dic,  normalize_type)
+                task_max, task_min = get_task_min_max_dic(task_list, framework_dic_all, task_tunedRF_dic, best_bench_dic, task_constPredictor_dic,  normalize_type)
 
-                    framework_dic_scaled = {}
-                    framework_dic_2_scaled = {}
-                    for task in task_list:
-                        mean_max = task_max[task]
-                        mean_min = task_min[task]
-                        total_num +=1
-                        if task in framework_dic[framework_1].keys():
-                            org_score, org_score_std = float(framework_dic[framework_1][task][0]), float(framework_dic[framework_1][task][1])
-                            max_score, min_score = mean_max, mean_min
-                            res_mean_1, res_std_1 = scale_score(org_score, org_score_std, max_score, min_score)
-                        else:
-                            res_mean_1, res_std_1 = 0,0
-                        if task in framework_dic_2[framework_2].keys():
-                                org_score, org_score_std = float(framework_dic_2[framework_2][task][0]), float(framework_dic_2[framework_2][task][1])
-                                res_mean_2, res_std_2 = scale_score(org_score, org_score_std, mean_max, mean_min)
-                        else:
-                            res_mean_2,res_std_2 = 0,0
+                framework_dic_scaled = {}
+                framework_dic_2_scaled = {}
+                for task in task_list:
+                    mean_max = task_max[task]
+                    mean_min = task_min[task]
+                    total_num +=1
+                    if task in framework_dic[framework_1].keys():
+                        org_score, org_score_std = float(framework_dic[framework_1][task][0]), float(framework_dic[framework_1][task][1])
+                        max_score, min_score = mean_max, mean_min
+                        res_mean_1, res_std_1 = scale_score(org_score, org_score_std, max_score, min_score)
+                    else:
+                        res_mean_1, res_std_1 = 0,0
+                    if task in framework_dic_2[framework_2].keys():
+                            org_score, org_score_std = float(framework_dic_2[framework_2][task][0]), float(framework_dic_2[framework_2][task][1])
+                            res_mean_2, res_std_2 = scale_score(org_score, org_score_std, mean_max, mean_min)
+                    else:
+                        res_mean_2,res_std_2 = 0,0
 
-                        if res_mean_1 >= (1-tolerance_ratio)*res_mean_2:
-                                    better_equ_num +=1
-                        margin[j][i].append(res_mean_1-res_mean_2)
-                        if res_mean_1-res_mean_2<-0.05:
-                            print(task, compared_budget[j], framework_1,
-                             framework_2, res_mean_1-res_mean_2)
-                    better_eq_ratio, better_ratio, worse_ratio =  "{0:.0f}\%".format(100*better_equ_num/total_num), "{0:.0f}\%".format(100*better_num/total_num), "{0:.0f}\%".format(100*worse_num/total_num)
-                    alias += ' & '+better_eq_ratio
-                print(alias+r'\\')
-            matplotlib.rcParams.update({'font.size': 18})
-            title = ['60s vs. 60s', '600s vs. 600s', '3600s vs. 3600s', '60s vs. 600s', '600s vs. 3600s', '60s vs. 3600s']
-            num_methods = len(labels)
-            print(labels)
-            # labels = ['Auto-sk.', 'HpBand.', 'H2O', 'TPOT', 'A.Gluon'][::-1]
-            labels = ['lightautoml']#[::-1]
-            for j,t in enumerate(compared_budget):
-                if j and j!=3 and num_methods>3:
-                    fig,ax = plt.subplots(1,1,figsize=(5,3))
-                    fig.subplots_adjust(left=0.05, right=0.95, top=0.9)
-                    ax.boxplot(margin[j][::-1], labels = ['']*num_methods,
-                     vert=False)
-                else:
-                    fig,ax = plt.subplots(1,1,figsize=(6.5,3))
-                    fig.subplots_adjust(left=0.25, right=0.95, top=0.9)
-                    ax.boxplot(margin[j][::-1], labels = labels, vert=False)
-                plt.plot([0]*(num_methods+1), [i+0.5 for i in range(num_methods+1)], markersize=18, label = 'FLAML',
-                    linewidth=3, linestyle = 'dashed')
-                for label in ax.get_yticklabels():
-                    label.set_fontsize('large')
-                plt.title(title[j])
-                plt.xlim(-.21,2.5)
-                fig.savefig(f'./plots/flaml/drilldown_{t}.pdf')
-                try:
-                    print(title[j], max(max(x) for x in margin[j] if x),
-                 min(min(x) for x in margin[j] if x))
-                except:
-                    pass
+                    if res_mean_1 >= (1-tolerance_ratio)*res_mean_2:
+                                better_equ_num +=1
+                    margin[j][i].append(res_mean_1-res_mean_2)
+                    if res_mean_1-res_mean_2<-0.05:
+                        print(task, compared_budget[j], framework_1,
+                            framework_2, res_mean_1-res_mean_2)
+                better_eq_ratio, better_ratio, worse_ratio =  "{0:.0f}\%".format(100*better_equ_num/total_num), "{0:.0f}\%".format(100*better_num/total_num), "{0:.0f}\%".format(100*worse_num/total_num)
+                alias += ' & '+better_eq_ratio
+            print(alias+r'\\')
+        matplotlib.rcParams.update({'font.size': 18})
+        title = ['60s vs. 60s', '600s vs. 600s', '3600s vs. 3600s', '60s vs. 600s', '600s vs. 3600s', '60s vs. 3600s']
+        num_methods = len(labels)
+        print(labels)
+        labels = flist[::-1]
+        for j,t in enumerate(compared_budget):
+            if j and j!=3 and num_methods>3:
+                fig,ax = plt.subplots(1,1,figsize=(5,3))
+                fig.subplots_adjust(left=0.05, right=0.95, top=0.9)
+                ax.boxplot(margin[j][::-1], labels = ['']*num_methods,
+                    vert=False)
+            else:
+                fig,ax = plt.subplots(1,1,figsize=(6.5,3))
+                fig.subplots_adjust(left=0.25, right=0.95, top=0.9)
+                ax.boxplot(margin[j][::-1], labels = labels, vert=False)
+            plt.plot([0]*(num_methods+1), [i+0.5 for i in range(num_methods+1)], markersize=18, label = 'FLAML',
+                linewidth=3, linestyle = 'dashed')
+            for label in ax.get_yticklabels():
+                label.set_fontsize('large')
+            plt.title(title[j])
+            plt.xlim(-.21,2.5)
+            fig.savefig(f'./plots/flaml/drilldown_{t}.pdf')
+            try:
+                print(title[j], max(max(x) for x in margin[j] if x),
+                min(min(x) for x in margin[j] if x))
+            except:
+                pass
 
 if __name__ == '__main__':
     main()

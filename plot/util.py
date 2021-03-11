@@ -1,0 +1,1 @@
+data_stat_file = '../resources/data_stat.csv'
