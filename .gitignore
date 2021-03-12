@@ -41,6 +41,9 @@ _site/
 Singularityfile
 *.sif
 
+# Dotnet
+**/.dotnet/**
+
 #whitelist
 !reports/**/*.csv
 !reports/**/*.png
