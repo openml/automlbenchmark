@@ -9,18 +9,24 @@ from amlb.datautils import reorder_dataset
 from amlb.results import NoResultError, save_predictions
 from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
 import json
-from frameworks.shared.callee import save_metadata
+from frameworks.shared.callee import result, save_metadata
 
 log = logging.getLogger(__name__)
 os.environ['ModelBuilder.AutoMLType'] = 'NNI'
 
 
-def run(dataset: Dataset, config: TaskConfig, mlnet):
+def run(dataset: Dataset, config: TaskConfig):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    DOTNET_INSTALL_DIR = os.path.join(dir_path, '.dotnet')
+    mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
+
     log.info(f"\n**** MLNet [v{config.framework_version}]****\n")
-    temp_output_folder = config.output_dir
-    train_time_in_seconds = config.max_runtime_seconds
     name = config.name
-    log_path = os.path.join(temp_output_folder, name, 'log.txt')
+    temp_output_folder = os.path.join(config.output_dir,name)
+    if not os.path.exists(temp_output_folder):
+        os.mkdir(temp_output_folder)
+    train_time_in_seconds = config.max_runtime_seconds
+    log_path = os.path.join(temp_output_folder, 'log.txt')
     sub_command = config.type
     column_num = dataset.train.X.shape[1]
     columns=['column_{}'.format(i) for i in range(column_num)]
@@ -33,7 +39,7 @@ def run(dataset: Dataset, config: TaskConfig, mlnet):
     log.info("saving train to {}".format(train_dataset))
     train_df.to_csv(train_dataset, index=False, header=True)
     test_df.to_csv(test_dataset, index=False, header=True)
-
+    save_metadata(config)
     with Timer() as training:
         cmd = '{} {}'.format(mlnet, sub_command)
 
@@ -47,24 +53,36 @@ def run(dataset: Dataset, config: TaskConfig, mlnet):
         cmd += ' --label-col label'
 
         # output folder & name
-        cmd += ' --output {} --name {}'.format(temp_output_folder, name)
+        cmd += ' --output {} --name {}'.format(config.output_dir, name)
 
         # log level & log file place
         cmd += ' --verbosity q --log-file-path {}'.format(log_path)
         run_cmd(cmd)
 
-        train_result_json = os.path.join(temp_output_folder, name, '{}.mbconfig'.format(name))
+        train_result_json = os.path.join(temp_output_folder, '{}.mbconfig'.format(name))
         if not os.path.exists(train_result_json):
             raise NoResultError("MLNet failed producing any prediction.")
         
-        with open(train_result_json, 'r') as f:
-            json_str = f.read()
-            mb_config = json.loads(json_str)
-            metric = mb_config['RunHistory']['EvaluationMetrics']
-            log.info(metric)
+    with open(train_result_json, 'r') as f:
+        json_str = f.read()
+        mb_config = json.loads(json_str)
+        model_path = mb_config['Artifact']['MLNetModelPath']
+        output_prediction_txt = config.output_predictions_file.replace('.csv', '.txt')
+        # predict
+        if config.type == 'classification':
+            predict_cmd = '{} {}'.format(mlnet, 'predict')
+            predict_cmd += ' --model {} --dataset {} --predict-column {} --task-type classification'.format(model_path, test_dataset, 'label')
+            predict_cmd += ' > {}'.format(output_prediction_txt)
+            with Timer() as prediction:
+                run_cmd(predict_cmd)
+            prediction_df = pd.read_csv(output_prediction_txt)
+            rename_df = prediction_df.rename({'PredictedLabel':'predictions'})
+            rename_df['truth'] = dataset.test.y
+            rename_df.to_csv(config.output_predictions_file)
 
-            return dict(
-                training_duration=training.duration
+            return result(
+                training_duration=training.duration,
+                predict_duration=prediction.duration,
             )
 
 
