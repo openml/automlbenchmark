@@ -9,15 +9,15 @@ from amlb.datautils import reorder_dataset
 from amlb.results import NoResultError, save_predictions
 from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
 import json
-from frameworks.shared.callee import result, save_metadata
+from frameworks.shared.callee import call_run, result, save_metadata
 
 log = logging.getLogger(__name__)
-os.environ['ModelBuilder.AutoMLType'] = 'NNI'
-
 
 def run(dataset: Dataset, config: TaskConfig):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     DOTNET_INSTALL_DIR = os.path.join(dir_path, '.dotnet')
+    os.environ['ModelBuilder.AutoMLType'] = 'NNI'
+    os.environ['DOTNET_ROOT'] = DOTNET_INSTALL_DIR
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
 
     log.info(f"\n**** MLNet [v{config.framework_version}]****\n")
@@ -86,5 +86,5 @@ def run(dataset: Dataset, config: TaskConfig):
             )
 
 
-
-
+if __name__ == '__main__':
+    call_run(run)
