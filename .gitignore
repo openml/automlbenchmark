@@ -43,6 +43,7 @@ Singularityfile
 
 # Dotnet
 **/.dotnet/**
+**/dotnet-install.sh**
 
 #whitelist
 !reports/**/*.csv
