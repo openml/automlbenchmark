@@ -2,7 +2,6 @@ import logging
 import math
 import os
 import pandas as pd
-import subprocess
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import reorder_dataset
@@ -16,11 +15,10 @@ log = logging.getLogger(__name__)
 def run(dataset: Dataset, config: TaskConfig):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     DOTNET_INSTALL_DIR = os.path.join(dir_path, '.dotnet')
-    os.environ['ModelBuilder.AutoMLType'] = 'NNI'
+    os.environ['MODELBUILDER_AUTOML'] = 'NNI'
     os.environ['DOTNET_ROOT'] = DOTNET_INSTALL_DIR
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
-
-    log.info(f"\n**** MLNet [v{config.framework_version}]****\n")
+    save_metadata(config)
     name = config.name
     temp_output_folder = os.path.join(config.output_dir,name)
     if not os.path.exists(temp_output_folder):
@@ -39,7 +37,6 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("saving train to {}".format(train_dataset))
     train_df.to_csv(train_dataset, index=False, header=True)
     test_df.to_csv(test_dataset, index=False, header=True)
-    save_metadata(config)
     with Timer() as training:
         cmd = '{} {}'.format(mlnet, sub_command)
 
@@ -57,7 +54,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
         # log level & log file place
         cmd += ' --verbosity q --log-file-path {}'.format(log_path)
-        run_cmd(cmd)
+        run_cmd(cmd, _env_=os.environ)
 
         train_result_json = os.path.join(temp_output_folder, '{}.mbconfig'.format(name))
         if not os.path.exists(train_result_json):
@@ -80,7 +77,7 @@ def run(dataset: Dataset, config: TaskConfig):
             rename_df['truth'] = dataset.test.y
             rename_df.to_csv(config.output_predictions_file)
 
-            return result(
+            return dict(
                 training_duration=training.duration,
                 predict_duration=prediction.duration,
             )
