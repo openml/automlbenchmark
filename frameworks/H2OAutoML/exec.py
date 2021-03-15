@@ -99,10 +99,11 @@ def run(dataset, config):
                         **training_params)
 
         monitor = (BackendMemoryMonitoring(frequency_seconds=config.ext.monitoring.frequency_seconds,
-                                          check_on_exit=True,
-                                          verbosity=config.ext.monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
+                                           check_on_exit=True,
+                                           verbosity=config.ext.monitoring.verbosity)
+                   if config.framework_params.get('_monitor_backend', False)
                    # else contextlib.nullcontext  # Py 3.7+ only
-                   else contextlib.contextmanager(iter)([0])
+                   else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
                    )
         with utils.Timer() as training:
             with monitor:
@@ -146,31 +147,41 @@ def frame_name(fr_type, config):
 def save_artifacts(automl, dataset, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
+        models_artifacts = []
         lb = automl.leaderboard.as_data_frame()
         log.debug("Leaderboard:\n%s", lb.to_string())
         if 'leaderboard' in artifacts:
             models_dir = output_subdir("models", config)
-            write_csv(lb, os.path.join(models_dir, "leaderboard.csv"))
+            lb_path = os.path.join(models_dir, "leaderboard.csv")
+            write_csv(lb, lb_path)
+            models_artifacts.append(lb_path)
 
-        models_pat = re.compile(r"models(\[(json|binary|mojo)\])?")
-        models = filter(models_pat.fullmatch, artifacts)
-        models_archives = []
+        models_pat = re.compile(r"models(\[(json|binary|mojo)(?:,(\d+))?\])?")
+        models = list(filter(models_pat.fullmatch, artifacts))
         for m in models:
             models_dir = output_subdir("models", config)
             all_models_se = next((mid for mid in lb['model_id'] if mid.startswith("StackedEnsemble_AllModels")),
                                  None)
-            mformat = models_pat.fullmatch(m).group(2) or 'json'
-            if all_models_se and mformat != 'json':
-                save_model(all_models_se, dest_dir=models_dir, mformat=mformat)
+            match = models_pat.fullmatch(m)
+            mformat = match.group(2) or 'json'
+            topN = int(match.group(3) or -1)
+            if topN < 0 and mformat != 'json' and all_models_se:
+                models_artifacts.append(save_model(all_models_se, dest_dir=models_dir, mformat=mformat))
             else:
+                count = 0
                 for mid in lb['model_id']:
-                    save_model(mid, dest_dir=models_dir, mformat=mformat)
+                    if topN < 0 or count < topN:
+                        save_model(mid, dest_dir=models_dir, mformat=mformat)
+                        count += 1
+                    else:
+                        break
+
                 models_archive = os.path.join(models_dir, f"models_{mformat}.zip")
-                utils.zip_path(models_dir, models_archive, filtr=lambda p: p not in models_archives)
-                models_archives.append(models_archive)
+                utils.zip_path(models_dir, models_archive, filtr=lambda p: p not in models_artifacts)
+                models_artifacts.append(models_archive)
 
                 def delete(path, isdir):
-                    if not isdir and path not in models_archives and os.path.splitext(path)[1] in ['.json', '.zip', '']:
+                    if not isdir and path not in models_artifacts and os.path.splitext(path)[1] in ['.json', '.zip', '']:
                         os.remove(path)
                 utils.walk_apply(models_dir, delete, max_depth=0)
 
@@ -208,15 +219,16 @@ def save_artifacts(automl, dataset, config):
         log.debug("Error when saving artifacts.", exc_info=True)
 
 
-def save_model(model_id, dest_dir='.', mformat='mojo'):
+def save_model(model_id, dest_dir='.', mformat='json'):
     model = h2o.get_model(model_id)
     if mformat == 'mojo':
-        model.save_mojo(path=dest_dir)
+        return model.save_mojo(path=dest_dir)
         # model.download_mojo(path=dest_dir, get_genmodel_jar=True)
     elif mformat == 'binary':
-        h2o.download_model(model, path=dest_dir)
+        return h2o.save_model(model, path=dest_dir)
+        # return h2o.download_model(model, path=dest_dir)
     else:
-        model.save_model_details(path=dest_dir)
+        return model.save_model_details(path=dest_dir)
 
 
 def extract_preds(h2o_preds, test, dataset, ):
@@ -230,7 +242,7 @@ def extract_preds(h2o_preds, test, dataset, ):
     predictions = y_pred.values
     probabilities = preds.iloc[:, 1:].values
     prob_labels = h2o_labels = h2o_preds[0][1:]
-    if all([re.fullmatch(r"p\d+", p) for p in prob_labels]):
+    if all([re.fullmatch(r"p(-?\d)+", p) for p in prob_labels]):
         # for categories represented as numerical values, h2o prefixes the probabilities columns with p
         # in this case, we let the app setting the labels to avoid mismatch
         prob_labels = None

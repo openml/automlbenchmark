@@ -49,12 +49,13 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
+
 parser.add_argument('--tag', type=str, default=None,
                     help="Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.")
 parser.add_argument('--test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
-parser.add_argument('-e', action='store_true', dest="exit_on_error",
-                    help="If set, *any* task that does not complete with a model will cause the script to terminate.")
+parser.add_argument('-e', '--exit-on-error', action='store_true', dest="exit_on_error",
+                    help="If set, the first task that does not complete with a model will cause the entire script to terminate.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
@@ -102,7 +103,7 @@ log.debug("Script args: %s.", args)
 
 config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},
