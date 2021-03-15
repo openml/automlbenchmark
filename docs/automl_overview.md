@@ -28,6 +28,7 @@ Some other frameworks worth mentioning are, again in alphabetical order:
 - [GAMA](#gama)
 - [hyperopt-sklearn](#hyperopt-sklearn)
 - [ML-Plan](#ml-plan)
+- [mlr3automl](#mlr3automl)  
 - [oboe](#oboe)
 
 For completeness, the baseline methods are also described:
@@ -242,6 +243,20 @@ Marcel Wever, Felix Mohr and Eyke Hüllermeier (2018).
 Marcel Wever, Felix Mohr, Alexander Tornede and Eyke Hüllermeier (2019).
 [Automating Multi-Label Classification Extending ML-Plan](https://ris.uni-paderborn.de/download/10232/13177/Automating_MultiLabel_Classification_Extending_ML-Plan.pdf)
 * ICML workshop on AutoML 2019*.
+
+## mlr3automl
+[source](https://github.com/a-hanf/mlr3automl) |
+[documentation](https://github.com/a-hanf/mlr3automl/blob/master/vignettes/mlr3automl.md) |
+R |
+Optimization: Hyperband | License LGPL-3.0
+
+> mlr3automl combines a static portfolio with Hyperband tuning. 
+
+mlr3automl is built on top of mlr3. It combines a static portfolio of known successful pipelines
+with Hyperband tuning. mlr3automl currently supports classification and regression tasks.
+
+#### Papers
+\-
 
 ## OBOE 
 [source](https://github.com/udellgroup/oboe) |

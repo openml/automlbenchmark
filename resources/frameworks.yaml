@@ -131,6 +131,10 @@ MLPlanWEKA:
   params:
     _backend: weka
 
+mlr3automl:
+  version: 'stable'
+  project: https://github.com/a-hanf/mlr3automl
+
 oboe:
   version: 'latest'
   description: |
@@ -154,6 +158,7 @@ TPOT:
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
+
 
 
 
