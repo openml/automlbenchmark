@@ -39,7 +39,7 @@ jobs:
     needs: framework_changes
     strategy:
       matrix:
-        framework: [autogluon, autosklearn, autoxgboost, gama, h2oautoml, mlplan, tpot, constantpredictor, randomforest, tunedrandomforest]
+        framework: [autogluon, autosklearn, gama, h2oautoml, mlplan, tpot, constantpredictor, randomforest, tunedrandomforest]
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
       fail-fast:  true
 
