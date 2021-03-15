@@ -13,6 +13,10 @@ from frameworks.shared.callee import call_run, result, save_metadata
 log = logging.getLogger(__name__)
 
 def run(dataset: Dataset, config: TaskConfig):
+    avaible_task_list = ['classification', 'regression']
+    if config.type not in avaible_task_list:
+        raise ValueError('{} is not supported.'.format(config.type))
+
     dir_path = os.path.dirname(os.path.realpath(__file__))
     DOTNET_INSTALL_DIR = os.path.join(dir_path, '.dotnet')
     os.environ['MODELBUILDER_AUTOML'] = 'NNI'
@@ -68,12 +72,36 @@ def run(dataset: Dataset, config: TaskConfig):
         # predict
         if config.type == 'classification':
             predict_cmd = '{} {}'.format(mlnet, 'predict')
-            predict_cmd += ' --model {} --dataset {} --predict-column {} --task-type classification'.format(model_path, test_dataset, 'label')
+            predict_cmd += ' --model {} --dataset {} --task-type classification'.format(model_path, test_dataset)
+            predict_cmd += ' > {}'.format(output_prediction_txt)
+            with Timer() as prediction:
+                run_cmd(predict_cmd)
+            prediction_df = pd.read_csv(output_prediction_txt, dtype={'PredictedLabel':'object'})
+            #rename_df = prediction_df.rename(columns={'PredictedLabel':'predictions'})
+            #rename_df['truth'] = dataset.test.y
+            #rename_df.to_csv(config.output_predictions_file)
+            save_predictions(
+                dataset=dataset,
+                output_file=config.output_predictions_file,
+                predictions=prediction_df['PredictedLabel'].values,
+                truth=dataset.test.y,
+                probabilities=prediction_df.values[:,:-1],
+                probabilities_labels=list(prediction_df.columns.values[:-1]),
+            )
+
+            return dict(
+                training_duration=training.duration,
+                predict_duration=prediction.duration,
+            )
+        
+        if config.type == 'regression':
+            predict_cmd = '{} {}'.format(mlnet, 'predict')
+            predict_cmd += ' --model {} --dataset {} --task-type regression'.format(model_path, test_dataset)
             predict_cmd += ' > {}'.format(output_prediction_txt)
             with Timer() as prediction:
                 run_cmd(predict_cmd)
             prediction_df = pd.read_csv(output_prediction_txt)
-            rename_df = prediction_df.rename({'PredictedLabel':'predictions'})
+            rename_df = prediction_df.rename(columns={'Score':'predictions'})
             rename_df['truth'] = dataset.test.y
             rename_df.to_csv(config.output_predictions_file)
 
@@ -81,6 +109,7 @@ def run(dataset: Dataset, config: TaskConfig):
                 training_duration=training.duration,
                 predict_duration=prediction.duration,
             )
+        
 
 
 if __name__ == '__main__':
