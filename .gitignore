@@ -41,10 +41,6 @@ _site/
 Singularityfile
 *.sif
 
-# Dotnet
-**/.dotnet/**
-**/dotnet-install.sh**
-
 #whitelist
 !reports/**/*.csv
 !reports/**/*.png
