@@ -301,6 +301,25 @@ def json_dumps(o, style='default'):
     return json.dumps(o, indent=indent, separators=separators, default=default_encode)
 
 
+#################################
+# Thread-safe utility functions #
+#################################
+
+class ThreadSafeCounter:
+
+    def __init__(self, value=0):
+        self.value = value
+        self._lock = threading.Lock()
+
+    def inc(self):
+        with self._lock:
+            self.value += 1
+
+    def dec(self):
+        with self._lock:
+            self.value -= 1
+
+
 def threadsafe_iterator(it):
     """
     Wrapper making an iterator thread-safe.

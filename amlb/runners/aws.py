@@ -229,7 +229,7 @@ class AWSBenchmark(Benchmark):
         if self.exec is not None:
             self.exec.submit(fn, *args, **kwargs)
         else:
-            log.warning("Sending exec function while executor is not started: executing the function in the calling thread.")
+            log.warning("Application is submitting a function while the thread executor is not running: executing the function in the calling thread.")
             try:
                 fn(*args, **kwargs)
             except:
@@ -247,13 +247,12 @@ class AWSBenchmark(Benchmark):
             if spot_config.fallback_to_on_demand:
                 job.ext.instance_type = InstanceType.On_Demand
                 job.ext.wait_min_secs = 0
-                job.reschedule()
             else:
                 log.error("Aborting job %s after %s attempts: %s.", job.name, max_attempts, reason)
                 raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
-            job.reschedule()
+        self.job_runner.reschedule(job)
 
     def _reset_retry(self):
         for j in self.jobs:
@@ -299,10 +298,11 @@ class AWSBenchmark(Benchmark):
             instance_id=None,
             wait_min_secs=0,
             retry=None,
-            instance_type=None
+            instance_type=None,
+            terminate=None
         )
 
-        def _prepare(_self):
+        def _setup(_self):
             spot_config = rconfig().aws.ec2.spot
             if _self.ext.instance_type is None and spot_config.enabled:
                 _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
@@ -357,22 +357,25 @@ class AWSBenchmark(Benchmark):
                     results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
                     return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
 
-        def _on_done(_self):
-            if _self.state is JobState.rescheduled:
-                self._stop_instance(_self.ext.instance_id)
-                self.job_runner.put(_self)
-            else:
+        def _on_state(_self, state):
+            if state == JobState.completing:
                 terminate = self._download_results(_self.ext.instance_id)
                 if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
                     log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
                                 _self.ext.instance_id)
-                self._stop_instance(_self.ext.instance_id, terminate=terminate)
+                _self.ext.terminate = terminate
+
+            elif state == JobState.rescheduled:
+                self._stop_instance(_self.ext.instance_id, terminate=True)
+
+            elif state == JobState.stopping:
+                self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate)
                 self.jobs.remove(_self)
 
-        job._prepare = _prepare.__get__(job)
+        job._setup = _setup.__get__(job)
         job._run = _run.__get__(job)
-        job._on_done = _on_done.__get__(job)
+        job._on_state = _on_state.__get__(job)
         self.jobs.append(job)
         return job
 
@@ -581,7 +584,7 @@ class AWSBenchmark(Benchmark):
                                           meta_info=None)
             if isinstance(e, botocore.exceptions.ClientError):
                 error_code = e.response.get('Error', {}).get('Code', '')
-                retry = error_code in ['SpotMaxPriceTooLow', 'InsufficientFreeAddressesInSubnet']
+                retry = error_code in ['SpotMaxPriceTooLow', 'MaxSpotInstanceCountExceeded', 'InsufficientFreeAddressesInSubnet']
                 log.error(e)
                 raise AWSError(error_code, retry=retry) from e
             else:
