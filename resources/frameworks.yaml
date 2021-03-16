@@ -157,7 +157,6 @@ TPOT:
 
 MLNet:
   version: '16.5.8-dev'
-  setup_args: '16.5.8-dev /mnt/c/Users/xiaoyuz/source/repos/machinelearning-tools/artifacts/packages/Release/Shipping/'
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
 
