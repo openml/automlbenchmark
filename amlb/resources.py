@@ -8,6 +8,7 @@ import os
 import random
 import re
 import sys
+import warnings
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
@@ -72,9 +73,21 @@ class Resources:
                 return defval
 
         na = "NA"
-        version = git("--version")
-        is_git_repo = version and git("rev-parse --git-dir 2> /dev/null")
-        if is_git_repo:
+        git_version = git("--version")
+        if git_version is None:
+            warnings.warn(
+                "Cannot identify git version. Is git in path?",
+                RuntimeWarning
+            )
+
+        is_repo = git("rev-parse") is not None
+        if not is_repo:
+            warnings.warn(
+                "Directory '{}' is not a git repository.".format(os.getcwd()),
+                RuntimeWarning
+            )
+
+        if git_version and is_repo:
             repo = git("remote get-url origin", na)
             branch = git("rev-parse --abbrev-ref HEAD", na)
             commit = git("rev-parse HEAD", na)
