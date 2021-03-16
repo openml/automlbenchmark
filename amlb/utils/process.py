@@ -5,6 +5,7 @@ import io
 import logging
 import multiprocessing as mp
 import os
+import platform
 import queue
 import re
 import select
@@ -15,7 +16,7 @@ import sys
 import threading
 import _thread
 import traceback
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple
 
 import psutil
 
@@ -83,6 +84,47 @@ def as_cmd_args(*args, **kwargs):
                        ))
 
 
+def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]:
+    """ Custom output forwarder, because select.select is not Windows compatible. """
+    def wrap_if_needed(s):
+        """ Wrap the stream in TextIO if stream produces bytes. """
+        if hasattr(process, "text_mode") and process.text_mode:
+            return s
+        return io.TextIOWrapper(s, encoding="utf-8")
+
+    outputs = dict(
+        out=dict(
+            stream=wrap_if_needed(process.stdout),
+            queue=queue.Queue(),
+            lines=[],
+        ),
+        err=dict(
+            stream=wrap_if_needed(process.stderr),
+            queue=queue.Queue(),
+            lines=[],
+        ),
+    )
+
+    def forward_output(stream, queue_):
+        for line in stream:
+            queue_.put(line)
+
+    for output in outputs.values():
+        t = threading.Thread(target=forward_output, args=(output["stream"], output["queue"]))
+        t.daemon = True
+        t.start()
+
+    while process.poll() is None:
+        for output in outputs.values():
+            try:
+                line = output["queue"].get(timeout=0.5)
+                output["lines"].append(line)
+                print(line.rstrip())
+            except queue.Empty:
+                pass
+    return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
+
+
 def run_cmd(cmd, *args, **kwargs):
     params = Namespace(
         input_str=None,
@@ -112,7 +154,7 @@ def run_cmd(cmd, *args, **kwargs):
     log.log(params.log_level, "Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
-    def live_output(process, input=None, **ignored):
+    def live_output_linux(process, input=None, **ignored):
         mode = params.live_output
         if mode is True:
             mode = 'line'
@@ -128,8 +170,10 @@ def run_cmd(cmd, *args, **kwargs):
 
         def read_pipe(pipe, timeout):
             pipes = as_list(pipe)
+            # wait until a pipe is ready for reading, non-Windows only.
             ready, *_ = select.select(pipes, [], [], timeout)
             reads = [''] * len(pipes)
+            # print update for each pipe that is ready for reading
             for i, p in enumerate(pipes):
                 if p in ready:
                     line = p.readline()
@@ -146,6 +190,7 @@ def run_cmd(cmd, *args, **kwargs):
         print()  # ensure that the log buffer is flushed at the end
         return ''.join(output), ''.join(error)
 
+    live_output = live_output_windows if platform.system() == "Windows" else live_output_linux
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
                                    input=params.input_str,
