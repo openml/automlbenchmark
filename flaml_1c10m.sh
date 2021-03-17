@@ -4,8 +4,8 @@ screen -Sdm Covertype_flaml python runbenchmark.py flaml  all 10m1c -t Covertype
 sleep 10s
 screen -Sdm Fashion-MNIST_flaml python runbenchmark.py flaml  all 10m1c -t Fashion-MNIST
 sleep 10s
-# screen -Sdm bng_pharynx_flaml python runbenchmark.py flaml  all 10m1c -t bng_pharynx
-# sleep 10s
+screen -Sdm bng_pharynx_flaml python runbenchmark.py flaml  all 10m1c -t bng_pharynx
+sleep 10s
 screen -Sdm Airlines_flaml python runbenchmark.py flaml  all 10m1c -t Airlines
 sleep 10s
 screen -Sdm fabert_flaml python runbenchmark.py flaml  all 10m1c -t fabert
@@ -14,7 +14,7 @@ screen -Sdm nomao_flaml python runbenchmark.py flaml  all 10m1c -t nomao
 sleep 10s
 screen -Sdm Amazon_employee_access_flaml python runbenchmark.py flaml  all 10m1c -t Amazon_employee_access
 sleep 10s
-screen -Sdm bank_marketing_flaml python runbenchmark.py flaml  all 10m1c -t bank_marketing
+screen -Sdm bank_marketing_flaml python runbenchmark.py flaml  all 10m1c -t bank-marketing
 sleep 10s
 screen -Sdm bng_pwLinear_flaml python runbenchmark.py flaml  all 10m1c -t bng_pwLinear
 sleep 10s
@@ -92,3 +92,15 @@ sleep 10s
 screen -Sdm jasmine_flaml python runbenchmark.py flaml  all 10m1c -t jasmine
 sleep 10s
 screen -Sdm kc1_flaml python runbenchmark.py flaml  all 10m1c -t kc1
+sleep 10s
+screen -Sdm guillermo_flaml python runbenchmark.py flaml  all 10m1c  -t guillermo
+sleep 10s
+screen -Sdm christine_flaml python runbenchmark.py flaml  all 10m1c   -t christine
+sleep 10s
+screen -Sdm kr-vs-kp_flaml python runbenchmark.py flaml  all 10m1c  -t kr-vs-kp
+sleep 10s
+screen -Sdm segment_flaml python runbenchmark.py flaml  all 10m1c  -t segment
+sleep 10s
+screen -Sdm sylvine_flaml python runbenchmark.py flaml  all 10m1c   -t sylvine
+sleep 10s
+screen -Sdm vehicle_flaml python runbenchmark.py flaml  all 10m1c  -t vehicle
