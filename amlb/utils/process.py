@@ -86,20 +86,14 @@ def as_cmd_args(*args, **kwargs):
 
 def live_output_windows(process: subprocess.Popen, timeout, **ignored) -> Tuple[str, str]:
     """ Custom output forwarder, because select.select is not Windows compatible. """
-    def wrap_if_needed(s):
-        """ Wrap the stream in TextIO if stream produces bytes. """
-        if hasattr(process, "text_mode") and process.text_mode:
-            return s
-        return io.TextIOWrapper(s, encoding="utf-8")
-
     outputs = dict(
         out=dict(
-            stream=wrap_if_needed(process.stdout),
+            stream=process.stdout,
             queue=queue.Queue(),
             lines=[],
         ),
         err=dict(
-            stream=wrap_if_needed(process.stderr),
+            stream=process.stderr,
             queue=queue.Queue(),
             lines=[],
         ),
