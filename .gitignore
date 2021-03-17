@@ -44,6 +44,3 @@ Singularityfile
 #whitelist
 !reports/**/*.csv
 !reports/**/*.png
-
-catboost_info/*
-plot/*
