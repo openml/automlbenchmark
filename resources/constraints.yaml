@@ -28,4 +28,3 @@ test:
   cores: 8
   min_vol_size_mb: 131072
 
-  
