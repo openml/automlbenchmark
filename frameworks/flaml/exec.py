@@ -1,34 +1,21 @@
-import logging
-import math
-import os
-
 from frameworks.shared.callee import save_metadata
-
 import logging
-import os
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-import tempfile as tmp
 import warnings
-from flaml import AutoML
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from flaml import AutoML, __version__
+from frameworks.shared.callee import call_run, result
 from amlb.utils import Timer
 import pandas as pd
-import time, threading, _thread
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
     log.info("\n**** FLAML ****\n")
+    save_metadata(config, version=__version__)
     time_budget = config.max_runtime_seconds
     n_jobs = config.framework_params.get('_n_jobs', config.cores)
 
     print("Running FLAML with {} number of cores".format(config.cores))
-
-    save_metadata(config)
 
     is_classification = config.type == 'classification'
     column_names, _ = zip(*dataset.columns)
