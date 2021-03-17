@@ -301,7 +301,6 @@ class TaskConfig:
         self.name = name
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
-        self.metric = metrics[0] if isinstance(metrics, list) else metrics
         self.seed = seed
         self.max_runtime_seconds = max_runtime_seconds
         self.cores = cores
@@ -311,6 +310,14 @@ class TaskConfig:
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
         self.ext = ns()  # used if frameworks require extra config points
+
+    def __setattr__(self, name, value):
+        if name == 'metrics':
+            self.metric = value[0] if isinstance(value, list) else value
+        elif name == 'max_runtime_seconds':
+            self.job_timeout_seconds = min(value * 2,
+                                           value + rconfig().benchmarks.overhead_time_seconds)
+        super().__setattr__(name, value)
 
     def __json__(self):
         return self.__dict__
@@ -395,16 +402,17 @@ class BenchmarkTask:
         def _run():
             self.load_data()
             return self.run()
-        timeout_secs = min(self.task_config.max_runtime_seconds * 2,
-                           self.task_config.max_runtime_seconds + rconfig().benchmarks.overhead_time_seconds)
         job = Job(name=rconfig().token_separator.join([
-            'local',
-            self.benchmark.benchmark_name,
-            self.benchmark.constraint_name,
-            self.task_config.name,
-            str(self.fold),
-            self.benchmark.framework_name
-        ]), timeout_secs=timeout_secs,  # this timeout is just to handle edge cases where framework never completes
+                'local',
+                self.benchmark.benchmark_name,
+                self.benchmark.constraint_name,
+                self.task_config.name,
+                str(self.fold),
+                self.benchmark.framework_name
+            ]),
+            # specifying a job timeout to handle edge cases where framework never completes or hangs
+            # (adding 5min safety to let the potential subprocess handle the interruption first).
+            timeout_secs=self.task_config.job_timeout_seconds+5*60,
             raise_exceptions=rconfig().exit_on_error,
         )
         job._run = _run

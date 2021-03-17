@@ -2,6 +2,7 @@ import importlib.util
 import logging
 import os
 import re
+import signal
 import sys
 
 
@@ -82,18 +83,30 @@ def call_run(run_fn):
     config.framework_params = utils.Namespace.dict(config.framework_params)
 
     try:
-        result = run_fn(ds, config)
-        res = dict(result)
-        for name in ['predictions', 'truth', 'probabilities']:
-            arr = result[name]
-            if arr is not None:
-                res[name] = os.path.join(config.result_dir, '.'.join([name, 'npy']))
-                np.save(res[name], arr, allow_pickle=True)
+        with utils.InterruptTimeout(config.job_timeout_seconds,
+                                    interruptions=[
+                                        dict(sig=TimeoutError),
+                                        dict(sig=signal.SIGTERM),
+                                        dict(sig=signal.SIGQUIT),
+                                        dict(sig=signal.SIGKILL),
+                                        dict(interrupt='process', sig=signal.SIGKILL)
+                                    ],
+                                    wait_retry_secs=10):
+            result = run_fn(ds, config)
+            res = dict(result)
+            for name in ['predictions', 'truth', 'probabilities']:
+                arr = result[name]
+                if arr is not None:
+                    res[name] = os.path.join(config.result_dir, '.'.join([name, 'npy']))
+                    np.save(res[name], arr, allow_pickle=True)
     except BaseException as e:
         log.exception(e)
         res = dict(
             error_message=str(e),
             models_count=0
         )
+    finally:
+        # ensure there's no subprocess left
+        utils.kill_proc_tree(include_parent=False, timeout=5)
 
     utils.json_dump(res, config.result_file, style='compact')

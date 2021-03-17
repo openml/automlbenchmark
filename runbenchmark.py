@@ -93,7 +93,7 @@ log.debug("Script args: %s.", args)
 
 config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},

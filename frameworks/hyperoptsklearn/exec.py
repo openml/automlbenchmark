@@ -1,5 +1,6 @@
 import functools as ft
 import logging
+import math
 import os
 import signal
 import tempfile as tmp
@@ -69,10 +70,15 @@ def run(dataset, config):
                                   seed=config.seed,
                                   **training_params)
 
-    with InterruptTimeout(config.max_runtime_seconds * 4/3, sig=signal.SIGQUIT):
-        with InterruptTimeout(config.max_runtime_seconds, before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):
-            with Timer() as training:
-                estimator.fit(X_train, y_train)
+    with InterruptTimeout(config.max_runtime_seconds,
+                          interruptions=[
+                              dict(),  # default interruption
+                              dict(sig=signal.SIGKILL)
+                          ],
+                          wait_retry_secs=math.ceil(config.max_runtime_seconds/60),
+                          before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):
+        with Timer() as training:
+            estimator.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc

@@ -50,6 +50,13 @@ class InstanceType(Enum):
     Spot_Block = 2
 
 
+class AWSError(Exception):
+
+    def __init__(self, message=None, retry=False):
+        self.retry = retry
+        super().__init__(message)
+
+
 class AWSBenchmark(Benchmark):
     """AWSBenchmark
     an extension of Benchmark class, to run benchmarks on AWS
@@ -328,12 +335,11 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.error("Job %s failed with: %s", _self.name, e)
                 try:
-                    if isinstance(e, botocore.exceptions.ClientError):
-                        error_code = e.response.get('Error', {}).get('Code', '')
-                        if error_code == 'SpotMaxPriceTooLow':
-                            log.info("Job %s couldn't start due to Spot instance unavailability, rescheduling it.", _self.name)
-                            self._job_reschedule(_self, reason=error_code)
-                            return
+                    if isinstance(e, AWSError) and e.retry:
+                        log.info("Job %s couldn't start (%s), rescheduling it.", _self.name, e)
+                        self._job_reschedule(_self, reason=str(e))
+                        return
+
                 except JobError as je:
                     e = je
 
@@ -393,7 +399,7 @@ class AWSBenchmark(Benchmark):
             inst_desc = self.instances[job.ext.instance_id] if job.ext.instance_id in self.instances else ns()
             if inst_desc['abort']:
                 self._update_instance(job.ext.instance_id, status='aborted')
-                raise Exception("Aborting instance {} for job {}.".format(job.ext.instance_id, job.name))
+                raise AWSError("Aborting instance {} for job {}.".format(job.ext.instance_id, job.name))
             try:
                 state = instance.state['Name']
                 state_code = instance.state['Code']
@@ -506,6 +512,11 @@ class AWSBenchmark(Benchmark):
         #   would still need to set a new UserData though before restarting the instance.
         ec2_config = rconfig().aws.ec2
         try:
+            if ec2_config.subnet_id:
+                subnet = self.ec2.Subnet(ec2_config.subnet_id)
+                if subnet.available_ip_address_count == 0:
+                    log.warning("No IP available on subnet %s, parallelism (%s) may be too high for this subnet.", subnet.id, self.parallel_jobs)
+                    raise AWSError("InsufficientFreeAddressesInSubnet", retry=True)
             ebs = dict(VolumeType=instance_def.volume_type)
             if instance_def.volume_size:
                 ebs['VolumeSize'] = instance_def.volume_size
@@ -568,12 +579,18 @@ class AWSBenchmark(Benchmark):
             self.instances[fake_iid] = ns(instance=None, key=inst_key, status='failed', success=False,
                                           start_time=datetime_iso(), stop_time=datetime_iso(), stop_reason=str(e),
                                           meta_info=None)
-            raise e
+            if isinstance(e, botocore.exceptions.ClientError):
+                error_code = e.response.get('Error', {}).get('Code', '')
+                retry = error_code in ['SpotMaxPriceTooLow', 'InsufficientFreeAddressesInSubnet']
+                log.error(e)
+                raise AWSError(error_code, retry=retry) from e
+            else:
+                raise e
         finally:
             self._exec_send(self._save_instances)
         return instance.id
 
-    def _stop_instance(self, instance_id, terminate=None):
+    def _stop_instance(self, instance_id, terminate=None, wait=True):
         if instance_id not in self.instances:
             return
         instance = self.instances[instance_id].instance
@@ -591,10 +608,21 @@ class AWSBenchmark(Benchmark):
 
         try:
             log.info("%s EC2 instances %s.", "Terminating" if terminate else "Stopping", instance_id)
+            wait_config = rconfig().aws.ec2.terminate_waiter
+            wait = wait and wait_config is not None and wait_config.max_attempts > 0
+            waiter = self.ec2.meta.client.get_waiter('instance_terminated' if terminate else 'instance_stopped') if wait else None
             if terminate:
                 response = instance.terminate()
             else:
                 response = instance.stop()
+            if waiter:
+                waiter.wait(
+                    InstanceIds=[instance.id],
+                    WaiterConfig=dict(
+                        Delay=wait_config.delay or rconfig().aws.query_frequency_seconds,
+                        MaxAttempts=wait_config.max_attempts
+                    )
+                )
             log.info("%s EC2 instances %s with response %s.", "Terminated" if terminate else "Stopped", instance_id, response)
         except Exception as e:
             log.error("ERROR: EC2 instance %s could not be %s!\n"
@@ -623,7 +651,7 @@ class AWSBenchmark(Benchmark):
 
     def _stop_all_instances(self):
         for iid in self.instances.keys():
-            self._stop_instance(iid)
+            self._stop_instance(iid, wait=False)
 
     def _save_instances(self):
         write_csv([(iid,

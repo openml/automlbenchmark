@@ -10,7 +10,7 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
-from amlb.utils import Namespace as ns, Timer, TmpDir, dir_of, run_cmd, json_dumps, json_load, json_loads
+from amlb.utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load
 
 log = logging.getLogger(__name__)
 
