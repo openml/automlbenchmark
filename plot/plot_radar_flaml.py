@@ -8,6 +8,7 @@ from matplotlib.spines import Spine
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 from plot_res import  get_res_mean_std_all, get_task_min_max_dic
+from util import data_stat_file
 
 def radar_factory(num_vars, frame='circle'):
     """Create a radar chart with `num_vars` axes.
@@ -226,7 +227,7 @@ def get_framework_alias(framework_name):
 def main():
     task_tunedRF_dic, task_constPredictor_dic, task_type_dic = get_tunedRF_constPredictor('../results/benchmark_results/')
     best_bench_dic = get_best_Predictor('../results/benchmark_results/')                 
-    data_size_dic = get_data_size('../results/data_stat.csv')
+    data_size_dic = get_data_size(data_stat_file)
     
     multi_class_list = []
 
