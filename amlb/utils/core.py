@@ -223,6 +223,10 @@ def str_def(o, if_none='', if_empty=_empty_):
     return str(o)
 
 
+def str_iter(col, sep=", "):
+    return sep.join(map(str, col))
+
+
 def str_sanitize(s):
     return re.sub(r"[^\w-]", "_", s)
 
