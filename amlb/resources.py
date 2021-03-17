@@ -74,18 +74,7 @@ class Resources:
 
         na = "NA"
         git_version = git("--version")
-        if git_version is None:
-            warnings.warn(
-                "Cannot identify git version. Is git in path?",
-                RuntimeWarning
-            )
-
         is_repo = git("rev-parse") is not None
-        if not is_repo:
-            warnings.warn(
-                "Directory '{}' is not a git repository.".format(os.getcwd()),
-                RuntimeWarning
-            )
 
         if git_version and is_repo:
             repo = git("remote get-url origin", na)
