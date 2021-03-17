@@ -5,11 +5,14 @@ VERSION="$1"
 DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
-SOURCE="/mnt/c/Users/xiaoyuz/source/repos/machinelearning-tools/artifacts/packages/Release/Shipping/"
+SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
+
+rm -rf DOTNET_INSTALL_DIR
 # install mlnet if necessary
 if [[ ! -x "$MLNET" ]]; then
     if [[ ! -x "$DOTNET" ]]; then
-        wget -P "$DOTNET_INSTALL_DIR" https://dot.net/v1/dotnet-install.sh   
+        wget -P "$DOTNET_INSTALL_DIR" https://dot.net/v1/dotnet-install.sh
+        chmod +x "$DOTNET_INSTALL_DIR/dotnet-install.sh"
         "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 3.1
     fi
 

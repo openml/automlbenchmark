@@ -156,7 +156,7 @@ TPOT:
 #    verbosity: 2
 
 MLNet:
-  version: '16.5.8-dev'
+  version: '16.5.8'
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
 

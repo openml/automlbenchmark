@@ -29,8 +29,8 @@ def run(dataset: Dataset, config: TaskConfig):
     train_time_in_seconds = config.max_runtime_seconds
     log_path = os.path.join(temp_output_folder, 'log.txt')
     sub_command = config.type
-    train_dataset = os.path.join(config.output_dir, f'train_{config.fold}.csv')
-    test_dataset = os.path.join(config.output_dir, f'test_{config.fold}.csv')
+    train_dataset = os.path.join(config.output_dir, config.name, f'train_{config.fold}.csv')
+    test_dataset = os.path.join(config.output_dir, config.name, f'test_{config.fold}.csv')
     if not os.path.exists(train_dataset) or not os.path.exists(test_dataset):
         column_num = dataset.train.X.shape[1]
         columns=[f'column_{i}' for i in range(column_num)]
