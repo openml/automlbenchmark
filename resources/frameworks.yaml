@@ -27,7 +27,6 @@ flaml:
   project: https://github.com/microsoft/FLAML
   refs: [https://arxiv.org/pdf/1911.04706.pdf]
 
-
 AutoGluon:
   version: "stable"
   description: |
@@ -52,14 +51,16 @@ autosklearn:
     It leverages recent advantages in Bayesian optimization, meta-learning and ensemble construction.
   project: https://automl.github.io/auto-sklearn/
   refs: [http://papers.nips.cc/paper/5872-efficient-and-robust-automated-machine-learning.pdf]
-#  params:
-#    _save_artifacts: ['models', 'debug_as_files']
-#    _n_jobs: 1
+  params:
+    _save_artifacts: ['models',]
+    # _save_artifacts: ['models', 'debug_as_files']
+    # _n_jobs: 1
 
 autosklearn2:
   extends: autosklearn
   params:
     _askl2: true
+    _save_artifacts: ['models',]
 
 AutoWEKA:
   version: 'stable'
@@ -219,3 +220,5 @@ TunedRandomForest:
 #    _tuning:
 #      n_estimators: 500
 
+optunalgbm:
+  version: 'stable'
