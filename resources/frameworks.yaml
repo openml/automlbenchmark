@@ -98,10 +98,10 @@ hyperoptsklearn:
     hyperopt-sklearn uses Hyperopt to define a search space that encompasses many standard Scikit-Learn components and common patterns of composing them together.
   project: http://hyperopt.github.io/hyperopt-sklearn/
   refs: [http://conference.scipy.org/proceedings/scipy2014/pdfs/komer.pdf]
-#  params:
-#    max_evals: 1000
-#    algo: hyperopt.tpe.suggest
-#    verbose: true
+  # params:
+  #   max_evals: 1000
+  #   algo: hyperopt.tpe.suggest
+  #   verbose: true
 
 lightautoml:
   project: https://github.com/sberbank-ai-lab/LightAutoML
