@@ -110,12 +110,13 @@ def live_output_windows(process: subprocess.Popen, timeout, **ignored) -> Tuple[
 
     while process.poll() is None:
         for output in outputs.values():
-            try:
-                line = output["queue"].get(timeout=timeout)
-                output["lines"].append(line)
-                print(line.rstrip())
-            except queue.Empty:
-                pass
+            while True:
+                try:
+                    line = output["queue"].get(timeout=0.5)
+                    output["lines"].append(line)
+                    print(line.rstrip())
+                except queue.Empty:
+                    break
     return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
 
 
