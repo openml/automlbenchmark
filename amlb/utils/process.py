@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from functools import reduce, wraps
+from functools import reduce, wraps, partial
 import inspect
 import io
 import logging
@@ -84,7 +84,7 @@ def as_cmd_args(*args, **kwargs):
                        ))
 
 
-def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]:
+def live_output_windows(process: subprocess.Popen, timeout, **ignored) -> Tuple[str, str]:
     """ Custom output forwarder, because select.select is not Windows compatible. """
     def wrap_if_needed(s):
         """ Wrap the stream in TextIO if stream produces bytes. """
@@ -117,12 +117,45 @@ def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]
     while process.poll() is None:
         for output in outputs.values():
             try:
-                line = output["queue"].get(timeout=0.5)
+                line = output["queue"].get(timeout=timeout)
                 output["lines"].append(line)
                 print(line.rstrip())
             except queue.Empty:
                 pass
     return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
+
+
+def live_output_unix(process, timeout, input=None, mode='line', **ignored):
+    if input is not None:
+        try:
+            with process.stdin as stream:
+                stream.write(input)
+        except BrokenPipeError:
+            pass
+        except:
+            raise
+
+    def read_pipe(pipe, timeout):
+        pipes = as_list(pipe)
+        # wait until a pipe is ready for reading, non-Windows only.
+        ready, *_ = select.select(pipes, [], [], timeout)
+        reads = [''] * len(pipes)
+        # print update for each pipe that is ready for reading
+        for i, p in enumerate(pipes):
+            if p in ready:
+                line = p.readline()
+                if mode == 'line':
+                    print(re.sub(r'\n$', '', line, count=1))
+                elif mode == 'block':
+                    print(line, end='')
+                reads[i] = line
+        return reads if len(pipes) > 1 else reads[0]
+
+    output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
+                                                 process.stderr if process.stderr else 2], timeout),
+                              ['', '']))
+    print()  # ensure that the log buffer is flushed at the end
+    return ''.join(output), ''.join(error)
 
 
 def run_cmd(cmd, *args, **kwargs):
@@ -154,43 +187,11 @@ def run_cmd(cmd, *args, **kwargs):
     log.log(params.log_level, "Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
-    def live_output_linux(process, input=None, **ignored):
-        mode = params.live_output
-        if mode is True:
-            mode = 'line'
+    if platform.system() == "Windows":
+        live_output = partial(live_output_windows, timeout=params.activity_timeout)
+    else:
+        live_output = partial(live_output_unix, timeout=params.activity_timeout)
 
-        if input is not None:
-            try:
-                with process.stdin as stream:
-                    stream.write(input)
-            except BrokenPipeError:
-                pass
-            except:
-                raise
-
-        def read_pipe(pipe, timeout):
-            pipes = as_list(pipe)
-            # wait until a pipe is ready for reading, non-Windows only.
-            ready, *_ = select.select(pipes, [], [], timeout)
-            reads = [''] * len(pipes)
-            # print update for each pipe that is ready for reading
-            for i, p in enumerate(pipes):
-                if p in ready:
-                    line = p.readline()
-                    if mode == 'line':
-                        print(re.sub(r'\n$', '', line, count=1))
-                    elif mode == 'block':
-                        print(line, end='')
-                    reads[i] = line
-            return reads if len(pipes) > 1 else reads[0]
-
-        output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                     process.stderr if process.stderr else 2], params.activity_timeout),
-                                  ['', '']))
-        print()  # ensure that the log buffer is flushed at the end
-        return ''.join(output), ''.join(error)
-
-    live_output = live_output_windows if platform.system() == "Windows" else live_output_linux
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
                                    input=params.input_str,
