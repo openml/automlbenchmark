@@ -84,7 +84,7 @@ def as_cmd_args(*args, **kwargs):
                        ))
 
 
-def live_output_windows(process: subprocess.Popen, timeout, **ignored) -> Tuple[str, str]:
+def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]:
     """ Custom output forwarder, because select.select is not Windows compatible. """
     outputs = dict(
         out=dict(
@@ -120,7 +120,10 @@ def live_output_windows(process: subprocess.Popen, timeout, **ignored) -> Tuple[
     return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
 
 
-def live_output_unix(process, timeout, input=None, mode='line', **ignored):
+def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **ignored):
+    if mode is True:
+        mode = 'line'
+
     if input is not None:
         try:
             with process.stdin as stream:
@@ -147,7 +150,7 @@ def live_output_unix(process, timeout, input=None, mode='line', **ignored):
         return reads if len(pipes) > 1 else reads[0]
 
     output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                 process.stderr if process.stderr else 2], timeout),
+                                                 process.stderr if process.stderr else 2], activity_timeout),
                               ['', '']))
     print()  # ensure that the log buffer is flushed at the end
     return ''.join(output), ''.join(error)
@@ -183,7 +186,7 @@ def run_cmd(cmd, *args, **kwargs):
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
     if platform.system() == "Windows":
-        live_output = partial(live_output_windows, timeout=params.activity_timeout)
+        live_output = partial(live_output_windows, activity_timeout=params.activity_timeout)
     else:
         live_output = partial(live_output_unix, mode=params.live_output, activity_timeout=params.activity_timeout)
 
