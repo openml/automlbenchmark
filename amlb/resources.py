@@ -8,7 +8,6 @@ import os
 import random
 import re
 import sys
-import warnings
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
