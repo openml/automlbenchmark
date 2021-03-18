@@ -185,7 +185,7 @@ def run_cmd(cmd, *args, **kwargs):
     if platform.system() == "Windows":
         live_output = partial(live_output_windows, timeout=params.activity_timeout)
     else:
-        live_output = partial(live_output_unix, timeout=params.activity_timeout)
+        live_output = partial(live_output_unix, mode=params.live_output, activity_timeout=params.activity_timeout)
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
@@ -631,6 +631,5 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
         return profiler
 
     return decorator
-
 
 
