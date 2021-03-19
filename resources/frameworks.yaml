@@ -26,7 +26,7 @@ flaml:
     and hyperparameters for each learner. It is fast and cheap. 
   project: https://github.com/microsoft/FLAML
   refs: [https://arxiv.org/pdf/1911.04706.pdf]
-
+  
 AutoGluon:
   version: "stable"
   description: |
@@ -51,15 +51,14 @@ autosklearn:
     It leverages recent advantages in Bayesian optimization, meta-learning and ensemble construction.
   project: https://automl.github.io/auto-sklearn/
   refs: [http://papers.nips.cc/paper/5872-efficient-and-robust-automated-machine-learning.pdf]
-# params:
-#   _save_artifacts: ['models', 'debug_as_files']
-#   _n_jobs: 1
+#  params:
+#    _save_artifacts: ['models', 'debug_as_files']
+#    _n_jobs: 1
 
 autosklearn2:
   extends: autosklearn
   params:
     _askl2: true
-    _save_artifacts: ['models',]
 
 AutoWEKA:
   version: 'stable'
@@ -98,10 +97,10 @@ hyperoptsklearn:
     hyperopt-sklearn uses Hyperopt to define a search space that encompasses many standard Scikit-Learn components and common patterns of composing them together.
   project: http://hyperopt.github.io/hyperopt-sklearn/
   refs: [http://conference.scipy.org/proceedings/scipy2014/pdfs/komer.pdf]
-  # params:
-  #   max_evals: 1000
-  #   algo: hyperopt.tpe.suggest
-  #   verbose: true
+#  params:
+#    max_evals: 1000
+#    algo: hyperopt.tpe.suggest
+#    verbose: true
 
 lightautoml:
   project: https://github.com/sberbank-ai-lab/LightAutoML
@@ -219,5 +218,3 @@ TunedRandomForest:
 #    _tuning:
 #      n_estimators: 500
 
-optunalgbm:
-  version: 'stable'

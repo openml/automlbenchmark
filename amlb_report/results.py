@@ -5,13 +5,13 @@ score ensures a standard comparison between tasks: higher is always better.
 norm_score is a normalization of score on a [0, 1] scale, with {{zero_one_refs[0]}} score as 0 and {{zero_one_refs[1]}} score as 1.
 imp_result and imp_score for imputed results/scores. Given a task and a framework:
 if all folds results/scores are missing, then no imputation occurs, and the result is nan for each fold.
-if only some folds results/scores are missing, then the missing result is imputed by the {{impute_missing_with}} result for this fold.
+if only some folds results/scores are missing, then the missing result is imputed by the {{imp_framework}} result for this fold.
 """
 
 import numpy as np
 import pandas as pd
 
-import report.config as config
+import amlb_report.config as config
 from .metadata import load_dataset_metadata
 from .util import Namespace, display
 
@@ -111,7 +111,7 @@ def remove_duplicates(df, handling='fail'):
     return df[~duplicated]
 
 
-def prepare_results(results_files,
+def prepare_results(results,
                     renamings=None,
                     exclusions=None,
                     imputation=None,
@@ -119,9 +119,10 @@ def prepare_results(results_files,
                     ref_results=None,
                     duplicates_handling='fail'  # other options are 'keep_first', 'keep_last', 'keep_none'
                     ):
-    if not results_files:
+    if results is None or len(results) == 0:
         return None
-    results = load_results(results_files)
+    if isinstance(results, list):
+        results = load_results(results) if all(isinstance(r, str) for r in results) else pd.concat(results, ignore_index=True)
     if renamings:
         results.replace(renamings, inplace=True)
     if exclusions:

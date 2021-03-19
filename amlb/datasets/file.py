@@ -31,7 +31,7 @@ class FileLoader:
     def load(self, dataset, fold=0):
         dataset = dataset if isinstance(dataset, Namespace) else Namespace(path=dataset)
         log.debug("Loading dataset %s", dataset)
-        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset)
+        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold)
         assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
         # seed = rget().seed(fold)
         # if len(paths['test']) == 0:
@@ -41,7 +41,7 @@ class FileLoader:
 
         target = dataset['target']
         type_ = dataset['type']
-        ext = os.path.splitext(paths['train'][0])[1].lower()
+        ext = os.path.splitext(paths['train'][fold])[1].lower()
         train_path = paths['train'][fold]
         test_path = paths['test'][fold] if len(paths['test']) > 0 else None
         log.info(f"Using training set {train_path} with test set {test_path}.")
@@ -52,14 +52,19 @@ class FileLoader:
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
-    def _extract_train_test_paths(self, dataset):
+    def _extract_train_test_paths(self, dataset, fold=None):
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
             return self._extract_train_test_paths(Namespace(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
-                                                            test=[p for i, p in enumerate(dataset) if i % 2 == 1]))
+                                                            test=[p for i, p in enumerate(dataset) if i % 2 == 1]),
+                                                  fold=fold)
         elif isinstance(dataset, Namespace):
-            return dict(train=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset.train)],
-                        test=[self._extract_train_test_paths(p)['train'][0] for p in as_list(dataset.test)])
+            return dict(train=[self._extract_train_test_paths(p)['train'][0]
+                               if i == fold else None
+                               for i, p in enumerate(as_list(dataset.train))],
+                        test=[self._extract_train_test_paths(p)['train'][0]
+                              if i == fold else None
+                              for i, p in enumerate(as_list(dataset.test))])
         else:
             assert isinstance(dataset, str)
             dataset = os.path.expanduser(dataset)

@@ -14,6 +14,7 @@ from frameworks.shared.callee import call_run, result, output_subdir, save_metad
 
 log = logging.getLogger(os.path.basename(__file__))
 
+
 def run(dataset, config):
     log.info(f"\n**** mljar-supervised [v{supervised.__version__}] ****\n")
     save_metadata(config, version=supervised.__version__)

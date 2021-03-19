@@ -9,12 +9,13 @@
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
+import platform
 import queue
 import signal
 import threading
 import time
 
-from .utils import Namespace, Timer, InterruptTimeout, raise_in_thread, signal_handler
+from .utils import Namespace, Timer, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
 
 log = logging.getLogger(__name__)
 
@@ -72,16 +73,29 @@ class Job:
             log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
             self.state = State.running
             self._prepare()
+
+            interruption_sequence = [
+                dict(sig=None),
+                # first trying sig=None to avoid propagation of the interruption error: this way we can collect the timeout in the result
+                dict(sig=signal.SIGINT if is_main_thread() else signal.SIGTERM),
+                # if main thread, try a graceful interruption.
+            ]
+            if platform.system() != "Windows":
+                interruption_sequence.append(dict(sig=signal.SIGQUIT))
+                interruption_sequence.append(dict(sig=signal.SIGKILL))
+
             with Timer() as t:
-                # don't propagate interruption error here (sig=None) so that we can collect the timeout in the result
-                with InterruptTimeout(self.timeout, sig=None):
+                with InterruptTimeout(
+                        self.timeout,
+                        interruptions=interruption_sequence,
+                        wait_retry_secs=60
+                ):  # escalates every minute if the previous interruption was ineffective
                     result = self._run()
             log.info("Job %s executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job %s returned: %s", self.name, result)
             return result, t.duration
         except Exception as e:
-            log.error("Job `%s` failed with error: %s", self.name, str(e))
-            log.exception(e)
+            log.exception("Job `%s` failed with error: %s", self.name, str(e))
             if self.raise_exceptions:
                 raise
             return None, -1
@@ -92,7 +106,7 @@ class Job:
             self._stop()
             return 0
         except Exception as e:
-            log.exception(e)
+            log.exception("Job `%s` did not stop gracefully: %s", self.name, str(e))
             return 1
 
     def done(self):
@@ -100,8 +114,7 @@ class Job:
             if self.state in [State.rescheduled, State.running, State.stopping]:
                 self._on_done()
         except Exception as e:
-            log.error("Job `%s` completion failed with error: %s", self.name, str(e))
-            log.exception(e)
+            log.exception("Job `%s` completion failed with error: %s", self.name, str(e))
         finally:
             if self.state is State.rescheduled:
                 self.reset()
@@ -220,6 +233,7 @@ class MultiThreadingJobRunner(JobRunner):
 
     def _run(self):
         signal_handler(signal.SIGINT, self.stop)
+        signal_handler(signal.SIGTERM, self.stop)
         q = queue.Queue()
 
         def worker():

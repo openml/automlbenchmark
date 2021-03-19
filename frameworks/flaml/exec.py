@@ -1,63 +1,33 @@
-import logging
-import math
-import os
-
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
-from amlb.datautils import reorder_dataset
-from amlb.results import NoResultError, save_predictions
-from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
-
 from frameworks.shared.callee import save_metadata
-
 import logging
-import os
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-import tempfile as tmp
 import warnings
-from flaml import AutoML
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from flaml import AutoML, __version__
+from frameworks.shared.callee import call_run, result
 from amlb.utils import Timer
 import pandas as pd
-import time, threading, _thread
-from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
 
 log = logging.getLogger(__name__)
 
 
-def run(dataset: Dataset, config: TaskConfig):
+def run(dataset, config):
     log.info("\n**** FLAML ****\n")
+    save_metadata(config, version=__version__)
     time_budget = config.max_runtime_seconds
     n_jobs = config.framework_params.get('_n_jobs', config.cores)
 
     print("Running FLAML with {} number of cores".format(config.cores))
 
-    save_metadata(config)
-
     is_classification = config.type == 'classification'
-    enc = config.framework_params.get('_enc', False)
-    if enc:
-        import numpy as np
-        X_train = dataset.train.X_enc
-        y_train = dataset.train.y_enc
-        X_test = dataset.test.X_enc
-        y_test = dataset.test.y_enc
-        train = label = None
-    else:
-        column_names, _ = zip(*dataset.columns)
-        column_types = dict(dataset.columns)
-        train = pd.DataFrame(dataset.train.data, columns=column_names).astype(
-            column_types, copy=False)
-        label = dataset.target.name
-        X_train = y_train = None
-        test = pd.DataFrame(dataset.test.data, columns=column_names).astype(
-            column_types, copy=False)
-        X_test = test.drop(columns=label)
-        y_test = test[label]
+    column_names, _ = zip(*dataset.columns)
+    column_types = dict(dataset.columns)
+    train = pd.DataFrame(dataset.train.data, columns=column_names).astype(
+        column_types, copy=False)
+    label = dataset.target.name
+    X_train = y_train = None
+    test = pd.DataFrame(dataset.test.data, columns=column_names).astype(
+        column_types, copy=False)
+    X_test = test.drop(columns=label)
+    y_test = test[label]
 
     aml = AutoML()
 
@@ -98,7 +68,6 @@ def run(dataset: Dataset, config: TaskConfig):
                     output_file=config.output_predictions_file,
                     probabilities=probabilities,
                     predictions=predictions,
-                    # target_is_encoded=is_classification and enc,
                     truth=y_test,
                     models_count=len(aml.config_history),
                     training_duration=training.duration,
