@@ -1,10 +1,12 @@
-from frameworks.shared.callee import save_metadata
 import logging
 import warnings
-from flaml import AutoML, __version__
-from frameworks.shared.callee import call_run, result
-from amlb.utils import Timer
 import pandas as pd
+
+from amlb.utils import Timer
+
+from flaml import AutoML, __version__
+
+from frameworks.shared.callee import call_run, result, save_metadata
 
 log = logging.getLogger(__name__)
 
