@@ -85,7 +85,10 @@ def run(dataset, config):
     predictions = stats["predictions"]
     truth = stats["truth"]
     num_evals = stats["num_evaluations"]
-    predict_time = stats["final_candidate_predict_time_ms"]
+    if "final_candidate_predict_time_ms" in stats:
+        predict_time = stats["final_candidate_predict_time_ms"]
+    else:
+        predict_time = float("NaN")
 
     # only for classification tasks we have probabilities available, thus check whether the json contains the respective fields
     if "probabilities" in stats and "probabilities_labels" in stats:
@@ -95,13 +98,18 @@ def run(dataset, config):
         probabilities = []
         probabilities_labels = []
 
+    if version == "0.2.3":
+        target_encoded = is_classification
+    else:
+        target_encoded = False
+
     return result(
         output_file=config.output_predictions_file,
         predictions=predictions,
         truth=truth,
         probabilities=probabilities,
         probabilities_labels=probabilities_labels,
-        target_is_encoded=is_classification,
+        target_is_encoded=target_encoded,
         models_count=num_evals,
         training_duration=training.duration,
         predict_duration=predict_time
