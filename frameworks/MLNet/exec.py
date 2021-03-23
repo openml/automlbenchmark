@@ -24,6 +24,7 @@ def run(dataset: Dataset, config: TaskConfig):
     DOTNET_INSTALL_DIR = os.path.join(dir_path, 'lib')
     os.environ['MODELBUILDER_AUTOML'] = 'NNI'
     os.environ['DOTNET_ROOT'] = DOTNET_INSTALL_DIR
+    os.environ['MLNetCLIEnablePredict'] = 'True'
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
     temp_output_folder = output_subdir('', config=config)
     train_time_in_seconds = config.max_runtime_seconds
