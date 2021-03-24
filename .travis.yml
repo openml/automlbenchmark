@@ -7,4 +7,4 @@ install:
   - pip install -r dev-requirements.txt
 
 script:
-  - python -m pytest -s
+  - python -m pytest -m "not no_ci"

@@ -324,7 +324,6 @@ class MultiThreadingJobRunner(JobRunner):
                         result = job.start()
                         if job.state is not State.rescheduled:
                             self.results.append(result)
-                            print(len(self.results), result)
                         if self._done_async:
                             job.done()
                         self.stop_if_complete()
