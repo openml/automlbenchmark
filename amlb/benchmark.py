@@ -14,6 +14,7 @@ from importlib import import_module, invalidate_caches
 import logging
 import math
 import os
+import signal
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
 from .datasets import DataLoader, DataSourceType
@@ -21,7 +22,7 @@ from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
 from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
-    run_cmd, run_script, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
+    run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -190,13 +191,21 @@ class Benchmark:
                                                       done_async=True,
                                                       queueing_strategy=queueing_strategy)
 
+        def on_interrupt(*_):
+            log.warning("**** SESSION CANCELLED BY USER ****")
+            self.job_runner.stop()
+            self.cleanup()
+            # threading.Thread(target=self.job_runner.stop)
+            # threading.Thread(target=self.cleanup)
+
         try:
-            with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
-                              frequency_seconds=rconfig().monitoring.frequency_seconds,
-                              check_on_exit=True,
-                              statistics=rconfig().monitoring.statistics,
-                              verbosity=rconfig().monitoring.verbosity):
-                self.job_runner.start()
+            with signal_handler(signal.SIGINT, on_interrupt):
+                with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
+                                  frequency_seconds=rconfig().monitoring.frequency_seconds,
+                                  check_on_exit=True,
+                                  statistics=rconfig().monitoring.statistics,
+                                  verbosity=rconfig().monitoring.verbosity):
+                    self.job_runner.start()
         except (KeyboardInterrupt, InterruptedError):
             pass
         finally:

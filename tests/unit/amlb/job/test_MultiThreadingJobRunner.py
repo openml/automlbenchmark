@@ -22,7 +22,10 @@ def test_run_multiple_jobs():
     assert all(step == 'created' for _, step in seq_steps)
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3)
-    runner.start()
+    results = runner.start()
+    print(results)
+
+    assert len(results) == n_jobs
     assert len(seq_steps) == n_jobs * steps_per_job
 
 
@@ -34,7 +37,10 @@ def test_run_multiple_jobs_with_delay():
             for i in range(n_jobs)]
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2)
-    runner.start()
+    results = runner.start()
+    print(results)
+
+    assert len(results) == n_jobs
     assert len(seq_steps) == n_jobs * steps_per_job
 
 
@@ -47,8 +53,24 @@ def test_stop_runner_during_job_run():
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2)
     with Timeout(timeout_secs=1, on_timeout=runner.stop):
-        runner.start()
+        results = runner.start()
+    print(results)
+
+    assert len(results) < n_jobs
     assert len(seq_steps) < n_jobs * steps_per_job
+    cancelled_jobs = [j for j, s in seq_steps if s == 'cancelling']
+    assert len(cancelled_jobs) > 1
+    first_cancelled = cancelled_jobs[0]
+    first_cancelled_idx = int(first_cancelled.split('_')[1])
+    last_result = results[-1]
+    assert last_result.result is None
+    assert last_result.duration > 0
+    assert cancelled_jobs == [f"job_{i}" for i in range(first_cancelled_idx, n_jobs)]
+
+    for state in ['created', 'stopping', 'stopped']:
+        assert len(list(filter(lambda s: s[1] == state, seq_steps))) == n_jobs
+    assert len(list(filter(lambda s: s[1] == 'starting', seq_steps))) == len(results)
+    assert len(list(filter(lambda s: s[1] == 'completing', seq_steps))) + len(cancelled_jobs) == n_jobs
 
 
 @pytest.mark.slow
@@ -70,8 +92,10 @@ def test_reschedule_job_default():
     ori = rescheduled_job._run
     with patch.object(rescheduled_job, "_run") as mock:
         mock.side_effect = ft.partial(_run, rescheduled_job, mock, ori)
-        runner.start()
+        results = runner.start()
+    print(results)
 
+    assert len(results) == n_jobs
     assert len(seq_steps) > n_jobs * steps_per_job
     normal_job_steps = [s for n, s in seq_steps if n != rescheduled_job.name]
     rescheduled_job_steps = [s for n, s in seq_steps if n == rescheduled_job.name]
@@ -82,12 +106,13 @@ def test_reschedule_job_default():
     assert len(list(filter(lambda s: s == 'created', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == 3
     assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == 3
-    assert len(list(filter(lambda s: s == 'rescheduled', rescheduled_job_steps))) == 2
+    assert len(list(filter(lambda s: s == 'rescheduling', rescheduled_job_steps))) == 2
     assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1
 
     assert seq_steps.index(('job_4', 'completing')) > seq_steps.index(('job_5', 'completing'))
+
 
 @pytest.mark.slow
 def test_reschedule_job_enforce_job_priority():
@@ -110,8 +135,10 @@ def test_reschedule_job_enforce_job_priority():
     ori = rescheduled_job._run
     with patch.object(rescheduled_job, "_run") as mock:
         mock.side_effect = ft.partial(_run, rescheduled_job, mock, ori)
-        runner.start()
+        results = runner.start()
+    print(results)
 
+    assert len(results) == n_jobs
     assert len(seq_steps) > n_jobs * steps_per_job
     normal_job_steps = [s for n, s in seq_steps if n != rescheduled_job.name]
     rescheduled_job_steps = [s for n, s in seq_steps if n == rescheduled_job.name]
@@ -122,7 +149,7 @@ def test_reschedule_job_enforce_job_priority():
     assert len(list(filter(lambda s: s == 'created', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == 3
     assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == 3
-    assert len(list(filter(lambda s: s == 'rescheduled', rescheduled_job_steps))) == 2
+    assert len(list(filter(lambda s: s == 'rescheduling', rescheduled_job_steps))) == 2
     assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1
@@ -154,19 +181,20 @@ def test_reschedule_job_high_parallelism():
         ori = job._run
         mock = patch.object(job, "_run").start()
         mock.side_effect = ft.partial(_run, job, mock, ori)
-    runner.start()
+    results = runner.start()
 
     rescheduled_job_names = [j.name for j in rescheduled_jobs]
     normal_job_steps = [s for n, s in seq_steps if n not in rescheduled_job_names]
     rescheduled_job_steps = [s for n, s in seq_steps if n in rescheduled_job_names]
 
+    assert len(results) == n_jobs
     for state in ['created', 'starting', 'running', 'completing', 'stopping', 'stopped']:
         assert len(list(filter(lambda s: s == state, normal_job_steps))) == n_jobs - len(rescheduled_job_names)
 
     assert len(list(filter(lambda s: s == 'created', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == 3 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == 3 * len(rescheduled_job_names)
-    assert len(list(filter(lambda s: s == 'rescheduled', rescheduled_job_steps))) == 2 * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'rescheduling', rescheduled_job_steps))) == 2 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)

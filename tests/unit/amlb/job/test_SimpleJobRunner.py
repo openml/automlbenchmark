@@ -23,6 +23,10 @@ def test_run_multiple_jobs():
     runner = SimpleJobRunner(jobs)
     results = runner.start()
     print(results)
+
+    assert len(results) == n_jobs
+    assert [r.result for r in results] == list(range(n_jobs))
+
     assert len(seq_steps) == n_jobs * steps_per_job
     run_steps = seq_steps[n_jobs:]  # ignoring the created step
     run_steps_per_job = steps_per_job - 1
@@ -30,8 +34,6 @@ def test_run_multiple_jobs():
         job_steps = run_steps[run_steps_per_job*i : run_steps_per_job*(i+1)]
         assert all(job == f"job_{i}" for job, _ in job_steps)
         assert ['starting', 'running', 'completing', 'stopping', 'stopped'] == [step for _, step in job_steps]
-    assert len(results) == n_jobs
-    assert [r.result for r in results] == list(range(n_jobs))
 
 
 @pytest.mark.slow
@@ -45,8 +47,23 @@ def test_stop_runner_during_job_run():
     with Timeout(timeout_secs=2, on_timeout=runner.stop):
         results = runner.start()
     print(results)
+
+    assert len(results) < n_jobs
     assert len(seq_steps) < n_jobs * steps_per_job
-    # assert results only for started jobs
+    cancelled_jobs = [j for j, s in seq_steps if s == 'cancelling']
+    assert len(cancelled_jobs) > 1
+    first_cancelled = cancelled_jobs[0]
+    first_cancelled_idx = int(first_cancelled.split('_')[1])
+    last_result = results[-1]
+    assert last_result.name == first_cancelled
+    assert last_result.result is None
+    assert last_result.duration > 0
+    assert cancelled_jobs == [f"job_{i}" for i in range(first_cancelled_idx, n_jobs)]
+
+    for state in ['created', 'stopping', 'stopped']:
+        assert len(list(filter(lambda s: s[1] == state, seq_steps))) == n_jobs
+    assert len(list(filter(lambda s: s[1] == 'starting', seq_steps))) == len(results)
+    assert len(list(filter(lambda s: s[1] == 'completing', seq_steps))) + len(cancelled_jobs) == n_jobs
 
 
 @pytest.mark.slow
@@ -68,8 +85,10 @@ def test_reschedule_job():
     ori = rescheduled_job._run
     with patch.object(rescheduled_job, "_run") as mock:
         mock.side_effect = ft.partial(_run, rescheduled_job, mock, ori)
-        runner.start()
+        results = runner.start()
+    print(results)
 
+    assert len(results) == n_jobs
     assert len(seq_steps) > n_jobs * steps_per_job
     normal_job_steps = [s for n, s in seq_steps if n != rescheduled_job.name]
     rescheduled_job_steps = [s for n, s in seq_steps if n == rescheduled_job.name]
@@ -80,7 +99,7 @@ def test_reschedule_job():
     assert len(list(filter(lambda s: s == 'created', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == 3
     assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == 3
-    assert len(list(filter(lambda s: s == 'rescheduled', rescheduled_job_steps))) == 2
+    assert len(list(filter(lambda s: s == 'rescheduling', rescheduled_job_steps))) == 2
     assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1

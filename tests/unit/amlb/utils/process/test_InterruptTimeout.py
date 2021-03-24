@@ -52,7 +52,7 @@ def test_interruption_with_sig_as_error_instance():
 
 
 def test_interruption_with_sig_as_signal():
-    def _handler(*ignored):
+    def _handler(*_):
         raise TimeoutError("from handler")
     with signal_handler(signal.SIGTERM, _handler):
         timeout = 1
@@ -75,7 +75,7 @@ def test_before_interrupt_hook():
 
 
 def test_interruptions_escalation():
-    def _handler(*ignored):
+    def _handler(*_):
         raise TimeoutError("from handler")
     with signal_handler(signal.SIGINT, lambda *_: 0), signal_handler(signal.SIGTERM, _handler):
         before = Mock()
@@ -97,7 +97,7 @@ def test_interruptions_escalation():
 
 
 def test_wait_retry_in_interruptions_escalation():
-    def _handler(*ignored):
+    def _handler(*_):
         raise TimeoutError("from handler")
     with signal_handler(signal.SIGINT, lambda *_: 0), signal_handler(signal.SIGTERM, _handler):
         timeout = 1

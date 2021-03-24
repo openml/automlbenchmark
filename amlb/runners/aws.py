@@ -366,8 +366,11 @@ class AWSBenchmark(Benchmark):
                                 _self.ext.instance_id)
                 _self.ext.terminate = terminate
 
-            elif state == JobState.rescheduled:
+            elif state == JobState.rescheduling:
                 self._stop_instance(_self.ext.instance_id, terminate=True)
+
+            elif state == JobState.cancelling:
+                return True  # job is running remotely: no need to try to cancel what is running here, we just need to stop the instance
 
             elif state == JobState.stopping:
                 self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate)

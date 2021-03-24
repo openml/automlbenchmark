@@ -22,11 +22,11 @@ log = logging.getLogger(__name__)
 
 class State(Enum):
     created = auto()
-    cancelled = auto()
     starting = auto()
     running = auto()
     completing = auto()
-    rescheduled = auto()
+    rescheduling = auto()
+    cancelling = auto()
     stopping = auto()
     stopped = auto()
 
@@ -47,12 +47,12 @@ class Job:
     """
     Job state machine:
     [] -> created
-    created -> cancelled, starting
-    cancelled -> stopped
-    starting -> running, rescheduled, stopping
-    running -> completing, rescheduled, stopping
+    created -> starting, cancelling
+    starting -> running, rescheduled, cancelling
+    running -> completing, rescheduled, cancelling
     completing -> stopping
-    rescheduled -> starting, stopping
+    rescheduling -> starting, stopping
+    cancelling -> stopping
     stopping -> stopped
     stopped -> []
     """
@@ -76,18 +76,15 @@ class Job:
         self.set_state(State.created)
 
     def start(self):
+        t = None
         try:
             self.thread_id = threading.current_thread().ident
-            if self.state in [State.stopping, State.stopped]:
-                self.set_state(State.cancelled)
-                raise CancelledError(f"Job `{self.name}` was cancelled.")
-            elif self.state not in [State.created, State.rescheduled]:
-                self.set_state(State.cancelled)
+            if self.state not in [State.created, State.rescheduling]:
                 raise InvalidStateError(f"Job `{self.name}` can't be started from state `{self.state}`.")
-            self.set_state(State.starting)
-            start_msg = f"Starting job {self.name}."
-            log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
-            self._setup()
+            if self.set_state(State.starting):
+                start_msg = f"Starting job {self.name}."
+                log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
+                self._setup()
 
             interruption_sequence = [
                 # first trying sig=None to avoid propagation of the interruption error:
@@ -106,8 +103,8 @@ class Job:
                         interruptions=interruption_sequence,
                         wait_retry_secs=60
                 ):  # escalates every minute if the previous interruption was ineffective
-                    self.set_state(State.running)
-                    result = self._run()
+                    if self.set_state(State.running):
+                        result = self._run()
             log.info("Job `%s` executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job `%s` returned: %s", self.name, result)
             return Namespace(name=self.name, result=result, duration=t.duration)
@@ -115,13 +112,27 @@ class Job:
             log.exception("Job `%s` failed with error: %s", self.name, str(e))
             if self.raise_exceptions:
                 raise
-            return Namespace(name=self.name, result=None, duration=-1)
+            return Namespace(name=self.name, result=None, duration=t.duration if t else -1)
+
+    def reschedule(self):
+        """Called  when the runner plans to restart the job at a later time."""
+        if self.state in [State.starting, State.running]:
+            self.reset(State.rescheduling)
+
+    def done(self):
+        """Happy ending scenario."""
+        if self.state in [State.running]:
+            self.set_state(State.completing)
+            self.set_state(State.stopping)
+            self.reset(State.stopped)
 
     def stop(self):
-        if self.state not in [State.completing, State.stopping, State.stopped]:
+        """Sad ending scenario."""
+        if self.state not in [State.cancelling, State.completing, State.stopping, State.stopped]:
             try:
+                if self.set_state(State.cancelling):
+                    self._cancel()
                 self.set_state(State.stopping)
-                self._stop()
                 return 0
             except Exception as e:
                 log.exception("Job `%s` did not stop gracefully: %s", self.name, str(e))
@@ -129,24 +140,16 @@ class Job:
             finally:
                 self.reset(State.stopped)
 
-    def done(self):
-        if self.state in [State.running, State.stopping]:
-            self.set_state(State.completing)
-            self.set_state(State.stopping)
-            self.reset(State.stopped)
-
-    def reschedule(self):
-        if self.state in [State.starting, State.running]:
-            self.reset(State.rescheduled)
-
     def set_state(self, state: State):
         old_state = self.state
         self.state = state
         log.debug("Changing job `%s` from state %s to %s.", self.name, old_state, state)
+        skip_default = False
         try:
-            self._on_state(state)
+            skip_default = bool(self._on_state(state))
         except Exception as e:
             log.exception("Error when handling state change to %s for job `%s`: %s", state, self.name, str(e))
+        return not skip_default
 
     def reset(self, state=State.created):
         self.thread_id = None
@@ -160,10 +163,11 @@ class Job:
         """jobs should implement their run logic in this method."""
         pass
 
-    def _stop(self):
-        """hook executed on the job once the runner is stopping:
+    def _cancel(self):
+        """hook executed on the job once it's being cancelled by the runner:
         this is called only once on the job, and only if it didn't complete"""
         if self.thread_id is not None:
+
             raise_in_thread(self.thread_id, CancelledError)
 
     def _on_state(self, state: State):
@@ -174,9 +178,10 @@ class JobRunner:
     """
     Job runner state machine:
     [] -> created
-    created -> starting
+    created -> starting, stopping
     starting -> running, stopping
     running -> stopping
+    cancelling -> stopping
     stopping -> stopped
     stopped -> []
     """
@@ -190,23 +195,27 @@ class JobRunner:
         self.set_state(State.created)
 
     def start(self):
-        if self.state not in [State.created]:
-            raise InvalidStateError(self.state)
-        self.set_state(State.starting)
-        self._setup()
-        with Timer() as t:
-            self.set_state(State.running)
-            self._run()
-        self.set_state(State.stopping)
-        self.set_state(State.stopped)
-        log.info("All jobs executed in %.3f seconds.", t.duration)
-        return self.results
+        t = None
+        try:
+            if self.state not in [State.created]:
+                raise InvalidStateError(self.state)
+            if self.set_state(State.starting):
+                self._setup()
+            with Timer() as t:
+                if self.set_state(State.running):
+                    self._run()
+        finally:
+            self.set_state(State.stopping)
+            self.set_state(State.stopped)
+            if t is not None:
+                log.info("All jobs executed in %.3f seconds.", t.duration)
+            return self.results
 
     def stop(self):
         if self.state not in [State.stopping, State.stopped]:
             try:
-                self.set_state(State.stopping)
-                return self._stop()
+                if self.set_state(State.stopping):
+                    return self._stop()
             finally:
                 self.set_state(State.stopped)
 
@@ -233,10 +242,12 @@ class JobRunner:
         old_state = self.state
         self.state = state
         log.debug("Changing job runner from state %s to %s.", old_state, state)
+        skip_default = False
         try:
-            self._on_state(state)
+            skip_default = bool(self._on_state(state))
         except Exception as e:
             log.exception("Error when handling state change to %s for job runner: %s", state, str(e))
+        return not skip_default
 
     def __iter__(self):
         return self
@@ -261,7 +272,9 @@ class JobRunner:
     def _stop(self):
         if self._queue:
             self._queue.put((-1, None))
-        for job in self.jobs:
+        jobs = self.jobs.copy()
+        self.jobs.clear()
+        for job in jobs:
             job.stop()
 
     def _on_state(self, state: State):
@@ -272,21 +285,21 @@ class SimpleJobRunner(JobRunner):
 
     def __init__(self, jobs):
         super().__init__(jobs)
-        self._abort = False
+        self._interrupt = threading.Event()
 
     def _run(self):
         for job in self:
-            if job is None or self._abort:
+            if job is None or self._interrupt.is_set():
                 break
             result = job.start()
-            if job.state is not State.rescheduled:
+            if job.state is not State.rescheduling:
                 self.results.append(result)
             job.done()
             self.stop_if_complete()
 
     def _on_state(self, state: State):
         if state is State.stopping:
-            self._abort = True
+            self._interrupt.set()
 
 
 class MultiThreadingJobRunner(JobRunner):
@@ -303,70 +316,67 @@ class MultiThreadingJobRunner(JobRunner):
         self._done_async = done_async
         self._delay = delay_secs  # short sleep between enqueued jobs to make console more readable
         self._daemons = use_daemons
-        self._abort = False
         self._queueing_strategy = queueing_strategy
+        self._interrupt = threading.Event()
 
     def _run(self):
-        def _stop(*ignored):
-            self.stop()
-        with signal_handler(signal.SIGINT, _stop), signal_handler(signal.SIGTERM, _stop):
-            q = queue.Queue()
-            available_workers = ThreadSafeCounter(self.parallel_jobs)
-            wc = threading.Condition()
+        q = queue.Queue()
+        available_workers = ThreadSafeCounter(self.parallel_jobs)
+        wc = threading.Condition()
 
-            def worker():
-                while True:
-                    job = q.get()
-                    available_workers.dec()
-                    try:
-                        if job is None or self._abort:
-                            break
-                        result = job.start()
-                        if job.state is not State.rescheduled:
-                            self.results.append(result)
-                        if self._done_async:
-                            job.done()
-                        self.stop_if_complete()
-                    finally:
-                        q.task_done()
-                        available_workers.inc()
-                        with wc:
-                            wc.notify_all()
-
-            threads = []
-            for t in range(self.parallel_jobs):
-                thread = threading.Thread(target=worker, daemon=self._daemons)
-                thread.start()
-                threads.append(thread)
-
-            try:
-                while not self._abort:
-                    if self._queueing_strategy == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority:
-                        with wc:
-                            wc.wait_for(lambda: available_workers.value > 0)
-                    job = next(self, None)
-                    if self._abort or job is None:
+        def worker():
+            while True:
+                job = q.get()
+                available_workers.dec()
+                try:
+                    if job is None or self._interrupt.is_set():
                         break
-                    q.put(job)
-                    if self._delay > 0:
-                        time.sleep(self._delay)
-                q.join()
-            finally:
-                q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
-                for _ in range(self.parallel_jobs):
-                    try:
-                        q.put_nowait(None)     # stopping workers
-                    except:
-                        pass
-                for thread in threads:
-                    thread.join()
-                if not self._done_async:
-                    for job in self.jobs:
+                    result = job.start()
+                    if job.state is not State.rescheduling:
+                        self.results.append(result)
+                    if self._done_async:
                         job.done()
+                    self.stop_if_complete()
+                finally:
+                    q.task_done()
+                    available_workers.inc()
+                    with wc:
+                        wc.notify_all()
+
+        threads = []
+        for t in range(self.parallel_jobs):
+            thread = threading.Thread(target=worker, daemon=self._daemons)
+            thread.start()
+            threads.append(thread)
+
+        try:
+            while not self._interrupt.is_set():
+                if self._queueing_strategy == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority:
+                    with wc:
+                        wc.wait_for(lambda: available_workers.value > 0)
+                job = next(self, None)
+                if self._interrupt.is_set() or job is None:
+                    break
+                q.put(job)
+                if self._delay > 0:
+                    self._interrupt.wait(self._delay)
+            q.join()
+        finally:
+            q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
+            for _ in range(self.parallel_jobs):
+                try:
+                    q.put_nowait(None)     # stopping workers
+                except:
+                    pass
+            for thread in threads:
+                thread.join()
+            if not self._done_async:
+                for job in self.jobs:
+                    job.done()
 
     def _on_state(self, state: State):
         if state is State.stopping:
-            self._abort = True
+            self._interrupt.set()
 
 
 class MultiProcessingJobRunner(JobRunner):
