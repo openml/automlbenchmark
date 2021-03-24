@@ -15,7 +15,8 @@ steps_per_job = 6
 def test_run_multiple_jobs():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", steps=seq_steps, verbose=True, duration_secs=0.1) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", result=i, steps=seq_steps, verbose=True, duration_secs=0.1)
+            for i in range(n_jobs)]
     assert len(seq_steps) == n_jobs
     assert all(step == 'created' for _, step in seq_steps)
 
@@ -27,7 +28,8 @@ def test_run_multiple_jobs():
 def test_run_multiple_jobs_with_delay():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", steps=seq_steps, verbose=True, duration_secs=1) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", result=i, steps=seq_steps, verbose=True, duration_secs=1)
+            for i in range(n_jobs)]
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2)
     runner.start()
@@ -37,7 +39,8 @@ def test_run_multiple_jobs_with_delay():
 def test_stop_runner_during_job_run():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, result=i, steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2)
     with Timeout(timeout_secs=1, on_timeout=runner.stop):
@@ -48,7 +51,8 @@ def test_stop_runner_during_job_run():
 def test_reschedule_job_default():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", duration_secs=1, result=i, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=1, result=i, steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2)
 
@@ -84,7 +88,8 @@ def test_reschedule_job_default():
 def test_reschedule_job_enforce_job_priority():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", duration_secs=1, result=i, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=1, result=i, steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2,
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
@@ -121,7 +126,9 @@ def test_reschedule_job_enforce_job_priority():
 def test_reschedule_job_high_parallelism():
     seq_steps = []
     n_jobs = 600
-    jobs = [DummyJob(name=f"job_{i}", duration_secs=random.randint(150, 250)/10, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=random.randint(150, 250)/10, result=i,
+                     steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=200, delay_secs=0.1,
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)

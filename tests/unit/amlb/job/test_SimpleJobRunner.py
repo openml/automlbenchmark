@@ -12,7 +12,8 @@ steps_per_job = 6
 def test_run_multiple_jobs():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", result=i, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", result=i, steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
     assert len(seq_steps) == n_jobs
     assert all(step == 'created' for _, step in seq_steps)
 
@@ -33,7 +34,8 @@ def test_run_multiple_jobs():
 def test_stop_runner_during_job_run():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, result=i, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, result=i, steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
 
     runner = SimpleJobRunner(jobs)
     with Timeout(timeout_secs=2, on_timeout=runner.stop):
@@ -46,7 +48,8 @@ def test_stop_runner_during_job_run():
 def test_reschedule_job():
     seq_steps = []
     n_jobs = 10
-    jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, steps=seq_steps, verbose=True) for i in range(n_jobs)]
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, result=i, steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
 
     runner = SimpleJobRunner(jobs)
 
