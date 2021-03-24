@@ -53,15 +53,16 @@ def test_reschedule_job():
 
     runner = SimpleJobRunner(jobs)
 
-    def _run(self, mock):
+    def _run(self, mock, ori):
         if mock.call_count < 3:
             runner.reschedule(self)
             return
-        return DEFAULT  # ensures that the wrapped function is called after the side effect
+        return ori()
 
     rescheduled_job = jobs[4]
-    with patch.object(rescheduled_job, "_run", wraps=rescheduled_job._run) as mock:
-        mock.side_effect = ft.partial(_run, rescheduled_job, mock)
+    ori = rescheduled_job._run
+    with patch.object(rescheduled_job, "_run") as mock:
+        mock.side_effect = ft.partial(_run, rescheduled_job, mock, ori)
         runner.start()
 
     assert len(seq_steps) > n_jobs * steps_per_job

@@ -56,15 +56,16 @@ def test_reschedule_job_default():
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2)
 
-    def _run(self, mock):
+    def _run(self, mock, ori):
         if mock.call_count < 3:
             runner.reschedule(self)
             return
-        return DEFAULT  # ensures that the wrapped function is called after the side effect
+        return ori()
 
     rescheduled_job = jobs[4]
-    with patch.object(rescheduled_job, "_run", wraps=rescheduled_job._run) as mock:
-        mock.side_effect = ft.partial(_run, rescheduled_job, mock)
+    ori = rescheduled_job._run
+    with patch.object(rescheduled_job, "_run") as mock:
+        mock.side_effect = ft.partial(_run, rescheduled_job, mock, ori)
         runner.start()
 
     assert len(seq_steps) > n_jobs * steps_per_job
@@ -93,15 +94,18 @@ def test_reschedule_job_enforce_job_priority():
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2,
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
-    def _run(self, mock):
+    def _run(self, mock, ori):
         if mock.call_count < 3:
             runner.reschedule(self)
             return
-        return DEFAULT  # ensures that the wrapped function is called after the side effect
+        return ori()
+        # return DEFAULT  # ensures that the wrapped function is called after the side effect
+                          # (doesn't work as expected on linux, even when using patch.object(job, '_run', wraps=job._run)
 
     rescheduled_job = jobs[4]
-    with patch.object(rescheduled_job, "_run", wraps=rescheduled_job._run) as mock:
-        mock.side_effect = ft.partial(_run, rescheduled_job, mock)
+    ori = rescheduled_job._run
+    with patch.object(rescheduled_job, "_run") as mock:
+        mock.side_effect = ft.partial(_run, rescheduled_job, mock, ori)
         runner.start()
 
     assert len(seq_steps) > n_jobs * steps_per_job
@@ -133,16 +137,18 @@ def test_reschedule_job_high_parallelism():
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=200, delay_secs=0.1,
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
 
-    def _run(self, mock):
+    def _run(self, mock, ori):
         if mock.call_count < 3:
             runner.reschedule(self)
             return
-        return DEFAULT  # ensures that the wrapped function is called after the side effect
+        return ori()
 
     rescheduled_jobs = [j for i, j in enumerate(jobs) if i % 17 == 0]
+
     for job in rescheduled_jobs:
-        mock = patch.object(job, "_run", wraps=job._run).start()
-        mock.side_effect = ft.partial(_run, job, mock)
+        ori = job._run
+        mock = patch.object(job, "_run").start()
+        mock.side_effect = ft.partial(_run, job, mock, ori)
     runner.start()
 
     rescheduled_job_names = [j.name for j in rescheduled_jobs]
