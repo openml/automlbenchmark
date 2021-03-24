@@ -1,10 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
-from functools import reduce, wraps
+from functools import reduce, wraps, partial
 import inspect
 import io
 import logging
 import multiprocessing as mp
 import os
+import platform
 import queue
 import re
 import select
@@ -15,7 +16,7 @@ import sys
 import threading
 import _thread
 import traceback
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple
 
 import psutil
 
@@ -83,6 +84,78 @@ def as_cmd_args(*args, **kwargs):
                        ))
 
 
+def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]:
+    """ Custom output forwarder, because select.select is not Windows compatible. """
+    outputs = dict(
+        out=dict(
+            stream=process.stdout,
+            queue=queue.Queue(),
+            lines=[],
+        ),
+        err=dict(
+            stream=process.stderr,
+            queue=queue.Queue(),
+            lines=[],
+        ),
+    )
+
+    def forward_output(stream, queue_):
+        for line in stream:
+            queue_.put(line)
+
+    for output in outputs.values():
+        t = threading.Thread(target=forward_output, args=(output["stream"], output["queue"]))
+        t.daemon = True
+        t.start()
+
+    while process.poll() is None:
+        for output in outputs.values():
+            while True:
+                try:
+                    line = output["queue"].get(timeout=0.5)
+                    output["lines"].append(line)
+                    print(line.rstrip())
+                except queue.Empty:
+                    break
+    return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
+
+
+def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **ignored):
+    if mode is True:
+        mode = 'line'
+
+    if input is not None:
+        try:
+            with process.stdin as stream:
+                stream.write(input)
+        except BrokenPipeError:
+            pass
+        except:
+            raise
+
+    def read_pipe(pipe, timeout):
+        pipes = as_list(pipe)
+        # wait until a pipe is ready for reading, non-Windows only.
+        ready, *_ = select.select(pipes, [], [], timeout)
+        reads = [''] * len(pipes)
+        # print update for each pipe that is ready for reading
+        for i, p in enumerate(pipes):
+            if p in ready:
+                line = p.readline()
+                if mode == 'line':
+                    print(re.sub(r'\n$', '', line, count=1))
+                elif mode == 'block':
+                    print(line, end='')
+                reads[i] = line
+        return reads if len(pipes) > 1 else reads[0]
+
+    output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
+                                                 process.stderr if process.stderr else 2], activity_timeout),
+                              ['', '']))
+    print()  # ensure that the log buffer is flushed at the end
+    return ''.join(output), ''.join(error)
+
+
 def run_cmd(cmd, *args, **kwargs):
     params = Namespace(
         input_str=None,
@@ -112,39 +185,10 @@ def run_cmd(cmd, *args, **kwargs):
     log.log(params.log_level, "Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
-    def live_output(process, input=None, **ignored):
-        mode = params.live_output
-        if mode is True:
-            mode = 'line'
-
-        if input is not None:
-            try:
-                with process.stdin as stream:
-                    stream.write(input)
-            except BrokenPipeError:
-                pass
-            except:
-                raise
-
-        def read_pipe(pipe, timeout):
-            pipes = as_list(pipe)
-            ready, *_ = select.select(pipes, [], [], timeout)
-            reads = [''] * len(pipes)
-            for i, p in enumerate(pipes):
-                if p in ready:
-                    line = p.readline()
-                    if mode == 'line':
-                        print(re.sub(r'\n$', '', line, count=1))
-                    elif mode == 'block':
-                        print(line, end='')
-                    reads[i] = line
-            return reads if len(pipes) > 1 else reads[0]
-
-        output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                     process.stderr if process.stderr else 2], params.activity_timeout),
-                                  ['', '']))
-        print()  # ensure that the log buffer is flushed at the end
-        return ''.join(output), ''.join(error)
+    if platform.system() == "Windows":
+        live_output = partial(live_output_windows, activity_timeout=params.activity_timeout)
+    else:
+        live_output = partial(live_output_unix, mode=params.live_output, activity_timeout=params.activity_timeout)
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
@@ -590,6 +634,5 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
         return profiler
 
     return decorator
-
 
 
