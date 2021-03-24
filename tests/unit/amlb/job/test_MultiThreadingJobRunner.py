@@ -2,6 +2,8 @@ import functools as ft
 import random
 from unittest.mock import patch, DEFAULT
 
+import pytest
+
 from amlb.job import MultiThreadingJobRunner
 from amlb.utils import Timeout
 
@@ -115,6 +117,7 @@ def test_reschedule_job_enforce_job_priority():
     assert seq_steps.index(('job_4', 'completing')) < seq_steps.index(('job_5', 'completing'))
 
 
+@pytest.mark.no_ci
 def test_reschedule_job_high_parallelism():
     seq_steps = []
     n_jobs = 600

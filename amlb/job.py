@@ -307,61 +307,60 @@ class MultiThreadingJobRunner(JobRunner):
         self._queueing_strategy = queueing_strategy
 
     def _run(self):
-        signal_handler(signal.SIGINT, self.stop)
-        signal_handler(signal.SIGTERM, self.stop)
-        q = queue.Queue()
-        available_workers = ThreadSafeCounter(self.parallel_jobs)
-        wc = threading.Condition()
+        with signal_handler(signal.SIGINT, self.stop), signal_handler(signal.SIGTERM, self.stop):
+            q = queue.Queue()
+            available_workers = ThreadSafeCounter(self.parallel_jobs)
+            wc = threading.Condition()
 
-        def worker():
-            while True:
-                job = q.get()
-                available_workers.dec()
-                try:
-                    if job is None or self._abort:
+            def worker():
+                while True:
+                    job = q.get()
+                    available_workers.dec()
+                    try:
+                        if job is None or self._abort:
+                            break
+                        result = job.start()
+                        if job.state is not State.rescheduled:
+                            self.results.append(result)
+                        if self._done_async:
+                            job.done()
+                        self.stop_if_complete()
+                    finally:
+                        q.task_done()
+                        available_workers.inc()
+                        with wc:
+                            wc.notify_all()
+
+            threads = []
+            for t in range(self.parallel_jobs):
+                thread = threading.Thread(target=worker, daemon=self._daemons)
+                thread.start()
+                threads.append(thread)
+
+            try:
+                while not self._abort:
+                    if self._queueing_strategy == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority:
+                        with wc:
+                            wc.wait_for(lambda: available_workers.value > 0)
+                    job = next(self, None)
+                    if self._abort or job is None:
                         break
-                    result = job.start()
-                    if job.state is not State.rescheduled:
-                        self.results.append(result)
-                    if self._done_async:
+                    q.put(job)
+                    if self._delay > 0:
+                        time.sleep(self._delay)
+                q.join()
+            finally:
+                q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
+                for _ in range(self.parallel_jobs):
+                    try:
+                        q.put_nowait(None)     # stopping workers
+                    except:
+                        pass
+                for thread in threads:
+                    thread.join()
+                if not self._done_async:
+                    for job in self.jobs:
                         job.done()
-                    self.stop_if_complete()
-                finally:
-                    q.task_done()
-                    available_workers.inc()
-                    with wc:
-                        wc.notify_all()
-
-        threads = []
-        for t in range(self.parallel_jobs):
-            thread = threading.Thread(target=worker, daemon=self._daemons)
-            thread.start()
-            threads.append(thread)
-
-        try:
-            while not self._abort:
-                if self._queueing_strategy == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority:
-                    with wc:
-                        wc.wait_for(lambda: available_workers.value > 0)
-                job = next(self, None)
-                if self._abort or job is None:
-                    break
-                q.put(job)
-                if self._delay > 0:
-                    time.sleep(self._delay)
-            q.join()
-        finally:
-            q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
-            for _ in range(self.parallel_jobs):
-                try:
-                    q.put_nowait(None)     # stopping workers
-                except:
-                    pass
-            for thread in threads:
-                thread.join()
-            if not self._done_async:
-                for job in self.jobs:
-                    job.done()
 
     def _on_state(self, state: State):
         if state is State.stopping:
