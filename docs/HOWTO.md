@@ -405,9 +405,9 @@ autosklearn_oldgen:
   description: "this will use the latest autosklearn version from the old generation"
 
 H2OAutoML_nightly:
-  extends: H2OAutoML
-  version: 'latest'
-  description: "this will use the nightly H2O build if there's no H2O version already installed (use --setup=force to refresh the version)"
+  module: frameworks.H2OAutoML
+  setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.29.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
+  version: 'nightly'
 
 H2OAutoML_custom:
   extends: H2OAutoML
@@ -532,7 +532,7 @@ frameworks/RandomForest/
 
 Noticeable differences with a basic integration:
 - the `venv` is created in `setup.sh` by passing the current dir when sourcing the `shared/setup.sh` script: `. $HERE/../shared/setup.sh $HERE`.
-- the `run` function in `__init__py` prepares the data (in the application environment) before executing the `exec.py` in the dedicated `venv`. The call to `run_in_venv` is in charge of serializing the input, calling `exec.py` and deserializing + saving the results from `exec`.
+- the `run` function in `__init__.py` prepares the data (in the application environment) before executing the `exec.py` in the dedicated `venv`. The call to `run_in_venv` is in charge of serializing the input, calling `exec.py` and deserializing + saving the results from `exec`.
 - `exec.py`, when calls in the subprocess (function `__main__`), calls `call_run(run)` which deserializes the input (dataset + config) and passes it to the `run` function that just need to return a `result` object.
 
 *Note*:
@@ -654,6 +654,7 @@ Using the instructions above:
     > python runbenchmark.py myframework -m docker
  1. if this works, try to run it in aws: 
     > python runbenchmark.py myframework -m aws
+ 1. add a brief description of the framework to the documentation in [docs/automl_overview](./automl_overview.md) following the same formatting as the other entries.
  1. create a pull request, and ask a review from authors of `automlbenchmark`: they'll also be happy to help you during this integration.
 
 #### Add a custom framework
