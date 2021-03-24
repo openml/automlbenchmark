@@ -1,3 +1,4 @@
+import functools as ft
 from unittest.mock import patch, DEFAULT
 
 from amlb.job import SimpleJobRunner
@@ -5,7 +6,7 @@ from amlb.utils import Timeout
 
 from dummy import DummyJob
 
-steps_per_job = 5
+steps_per_job = 6
 
 
 def test_run_multiple_jobs():
@@ -14,14 +15,15 @@ def test_run_multiple_jobs():
     jobs = [DummyJob(name=f"job_{i}", result=i, steps=seq_steps, verbose=True) for i in range(n_jobs)]
     assert len(seq_steps) == n_jobs
     assert all(step == 'created' for _, step in seq_steps)
-    seq_steps.clear()
 
     runner = SimpleJobRunner(jobs)
     results = runner.start()
     print(results)
     assert len(seq_steps) == n_jobs * steps_per_job
+    run_steps = seq_steps[n_jobs:]  # ignoring the created step
+    run_steps_per_job = steps_per_job - 1
     for i in range(n_jobs):
-        job_steps = seq_steps[steps_per_job*i : steps_per_job*(i+1)]
+        job_steps = run_steps[run_steps_per_job*i : run_steps_per_job*(i+1)]
         assert all(job == f"job_{i}" for job, _ in job_steps)
         assert ['starting', 'running', 'completing', 'stopping', 'stopped'] == [step for _, step in job_steps]
     assert len(results) == n_jobs
@@ -32,7 +34,6 @@ def test_stop_runner_during_job_run():
     seq_steps = []
     n_jobs = 10
     jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, result=i, steps=seq_steps, verbose=True) for i in range(n_jobs)]
-    seq_steps.clear()
 
     runner = SimpleJobRunner(jobs)
     with Timeout(timeout_secs=2, on_timeout=runner.stop):
@@ -46,15 +47,34 @@ def test_reschedule_job():
     seq_steps = []
     n_jobs = 10
     jobs = [DummyJob(name=f"job_{i}", duration_secs=0.5, steps=seq_steps, verbose=True) for i in range(n_jobs)]
-    seq_steps.clear()
 
     runner = SimpleJobRunner(jobs)
+
+    def _run(self, mock):
+        if mock.call_count < 3:
+            runner.reschedule(self)
+            return
+        return DEFAULT  # ensures that the wrapped function is called after the side effect
+
     rescheduled_job = jobs[4]
     with patch.object(rescheduled_job, "_run", wraps=rescheduled_job._run) as mock:
-        def _run():
-            if mock.call_count < 3:
-                runner.reschedule(rescheduled_job)
-            return DEFAULT # ensures that the wrapped function is called after the side effect
-        mock.side_effect = _run
+        mock.side_effect = ft.partial(_run, rescheduled_job, mock)
         runner.start()
+
+    assert len(seq_steps) > n_jobs * steps_per_job
+    normal_job_steps = [s for n, s in seq_steps if n != rescheduled_job.name]
+    rescheduled_job_steps = [s for n, s in seq_steps if n == rescheduled_job.name]
+
+    for state in ['created', 'starting', 'running', 'completing', 'stopping', 'stopped']:
+        assert len(list(filter(lambda s: s == state, normal_job_steps))) == n_jobs - 1
+
+    assert len(list(filter(lambda s: s == 'created', rescheduled_job_steps))) == 1
+    assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == 3
+    assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == 3
+    assert len(list(filter(lambda s: s == 'rescheduled', rescheduled_job_steps))) == 2
+    assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1
+    assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1
+    assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1
+
+    assert seq_steps.index(('job_4', 'completing')) < seq_steps.index(('job_5', 'completing'))
 

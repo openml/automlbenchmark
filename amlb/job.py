@@ -142,7 +142,7 @@ class Job:
     def set_state(self, state: State):
         old_state = self.state
         self.state = state
-        log.info("Changing job `%s` from state %s to %s.", self.name, old_state, state)
+        log.debug("Changing job `%s` from state %s to %s.", self.name, old_state, state)
         try:
             self._on_state(state)
         except Exception as e:
@@ -232,7 +232,7 @@ class JobRunner:
     def set_state(self, state: State):
         old_state = self.state
         self.state = state
-        log.info("Changing job runner from state %s to %s.", old_state, state)
+        log.debug("Changing job runner from state %s to %s.", old_state, state)
         try:
             self._on_state(state)
         except Exception as e:
@@ -291,28 +291,35 @@ class SimpleJobRunner(JobRunner):
 
 class MultiThreadingJobRunner(JobRunner):
 
-    def __init__(self, jobs, parallel_jobs=1, done_async=True, delay_secs=0, use_daemons=False):
+    class QueueingStrategy:
+        keep_queue_full = 0
+        enforce_job_priority = 1
+
+    def __init__(self, jobs, parallel_jobs=1, done_async=True, delay_secs=0,
+                 queueing_strategy: QueueingStrategy = QueueingStrategy.keep_queue_full,
+                 use_daemons=False):
         super().__init__(jobs)
         self.parallel_jobs = parallel_jobs
         self._done_async = done_async
         self._delay = delay_secs  # short sleep between enqueued jobs to make console more readable
         self._daemons = use_daemons
         self._abort = False
+        self._queueing_strategy = queueing_strategy
 
     def _run(self):
         signal_handler(signal.SIGINT, self.stop)
         signal_handler(signal.SIGTERM, self.stop)
-        q = queue.Queue(1)  # block one at a time to allow prioritization of rescheduled jobs
+        q = queue.Queue()
         available_workers = ThreadSafeCounter(self.parallel_jobs)
-        has_work = threading.Condition()
+        wc = threading.Condition()
 
         def worker():
             while True:
                 job = q.get()
-                if job is None or self._abort:
-                    q.task_done()
-                    break
+                available_workers.dec()
                 try:
+                    if job is None or self._abort:
+                        break
                     result = job.start()
                     if job.state is not State.rescheduled:
                         self.results.append(result)
@@ -321,6 +328,9 @@ class MultiThreadingJobRunner(JobRunner):
                     self.stop_if_complete()
                 finally:
                     q.task_done()
+                    available_workers.inc()
+                    with wc:
+                        wc.notify_all()
 
         threads = []
         for t in range(self.parallel_jobs):
@@ -328,11 +338,13 @@ class MultiThreadingJobRunner(JobRunner):
             thread.start()
             threads.append(thread)
 
-        # while has_work.wait_for(lambda : available_workers.value > 0):
-
         try:
-            for job in self:
-                if self._abort:
+            while not self._abort:
+                if self._queueing_strategy == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority:
+                    with wc:
+                        wc.wait_for(lambda: available_workers.value > 0)
+                job = next(self, None)
+                if self._abort or job is None:
                     break
                 q.put(job)
                 if self._delay > 0:

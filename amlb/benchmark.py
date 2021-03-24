@@ -183,9 +183,12 @@ class Benchmark:
             self.job_runner = SimpleJobRunner(jobs)
         else:
             # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
+            queueing_strategy = (MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority if rconfig().mode is 'aws'
+                                 else MultiThreadingJobRunner.QueueingStrategy.keep_queue_full)
             self.job_runner = MultiThreadingJobRunner(jobs, self.parallel_jobs,
                                                       delay_secs=rconfig().delay_between_jobs,
-                                                      done_async=True)
+                                                      done_async=True,
+                                                      queueing_strategy=queueing_strategy)
 
         try:
             with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
