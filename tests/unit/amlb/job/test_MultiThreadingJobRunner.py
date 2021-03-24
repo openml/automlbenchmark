@@ -12,6 +12,7 @@ from dummy import DummyJob
 steps_per_job = 6
 
 
+@pytest.mark.slow
 def test_run_multiple_jobs():
     seq_steps = []
     n_jobs = 10
@@ -25,6 +26,7 @@ def test_run_multiple_jobs():
     assert len(seq_steps) == n_jobs * steps_per_job
 
 
+@pytest.mark.slow
 def test_run_multiple_jobs_with_delay():
     seq_steps = []
     n_jobs = 10
@@ -36,6 +38,7 @@ def test_run_multiple_jobs_with_delay():
     assert len(seq_steps) == n_jobs * steps_per_job
 
 
+@pytest.mark.slow
 def test_stop_runner_during_job_run():
     seq_steps = []
     n_jobs = 10
@@ -48,6 +51,7 @@ def test_stop_runner_during_job_run():
     assert len(seq_steps) < n_jobs * steps_per_job
 
 
+@pytest.mark.slow
 def test_reschedule_job_default():
     seq_steps = []
     n_jobs = 10
@@ -85,7 +89,7 @@ def test_reschedule_job_default():
 
     assert seq_steps.index(('job_4', 'completing')) > seq_steps.index(('job_5', 'completing'))
 
-
+@pytest.mark.slow
 def test_reschedule_job_enforce_job_priority():
     seq_steps = []
     n_jobs = 10
@@ -126,7 +130,8 @@ def test_reschedule_job_enforce_job_priority():
     assert seq_steps.index(('job_4', 'completing')) < seq_steps.index(('job_5', 'completing'))
 
 
-# @pytest.mark.no_ci
+@pytest.mark.slow
+@pytest.mark.stress
 def test_reschedule_job_high_parallelism():
     seq_steps = []
     n_jobs = 600

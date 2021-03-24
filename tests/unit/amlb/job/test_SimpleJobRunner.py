@@ -1,6 +1,8 @@
 import functools as ft
 from unittest.mock import patch, DEFAULT
 
+import pytest
+
 from amlb.job import SimpleJobRunner
 from amlb.utils import Timeout
 
@@ -9,6 +11,7 @@ from dummy import DummyJob
 steps_per_job = 6
 
 
+@pytest.mark.slow
 def test_run_multiple_jobs():
     seq_steps = []
     n_jobs = 10
@@ -31,6 +34,7 @@ def test_run_multiple_jobs():
     assert [r.result for r in results] == list(range(n_jobs))
 
 
+@pytest.mark.slow
 def test_stop_runner_during_job_run():
     seq_steps = []
     n_jobs = 10
@@ -45,6 +49,7 @@ def test_stop_runner_during_job_run():
     # assert results only for started jobs
 
 
+@pytest.mark.slow
 def test_reschedule_job():
     seq_steps = []
     n_jobs = 10
