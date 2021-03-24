@@ -307,7 +307,9 @@ class MultiThreadingJobRunner(JobRunner):
         self._queueing_strategy = queueing_strategy
 
     def _run(self):
-        with signal_handler(signal.SIGINT, self.stop), signal_handler(signal.SIGTERM, self.stop):
+        def _stop(*ignored):
+            self.stop()
+        with signal_handler(signal.SIGINT, _stop), signal_handler(signal.SIGTERM, _stop):
             q = queue.Queue()
             available_workers = ThreadSafeCounter(self.parallel_jobs)
             wc = threading.Condition()
