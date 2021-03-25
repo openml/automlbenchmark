@@ -16,7 +16,7 @@ import math
 import os
 import signal
 
-from .job import Job, SimpleJobRunner, MultiThreadingJobRunner, ThreadPoolExecutorJobRunner, ProcessPoolExecutorJobRunner
+from .job import Job, SimpleJobRunner, MultiThreadingJobRunner
 from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
@@ -179,17 +179,17 @@ class Benchmark:
         finally:
             self.cleanup()
 
-    def _run_jobs(self, jobs):
+    def _create_job_runner(self, jobs):
         if self.parallel_jobs == 1:
-            self.job_runner = SimpleJobRunner(jobs)
+            return SimpleJobRunner(jobs)
         else:
-            # runner = ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
-            queueing_strategy = (MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority if rconfig().mode is 'aws'
-                                 else MultiThreadingJobRunner.QueueingStrategy.keep_queue_full)
-            self.job_runner = MultiThreadingJobRunner(jobs, self.parallel_jobs,
-                                                      delay_secs=rconfig().delay_between_jobs,
-                                                      done_async=True,
-                                                      queueing_strategy=queueing_strategy)
+            # return ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
+            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+                                           delay_secs=rconfig().delay_between_jobs,
+                                           done_async=True)
+
+    def _run_jobs(self, jobs):
+        self.job_runner = self._create_job_runner(jobs)
 
         def on_interrupt(*_):
             log.warning("**** SESSION CANCELLED BY USER ****")

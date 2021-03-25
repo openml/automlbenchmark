@@ -167,7 +167,6 @@ class Job:
         """hook executed on the job once it's being cancelled by the runner:
         this is called only once on the job, and only if it didn't complete"""
         if self.thread_id is not None:
-
             raise_in_thread(self.thread_id, CancelledError)
 
     def _on_state(self, state: State):

@@ -34,7 +34,7 @@ import botocore.exceptions
 
 from ..benchmark import Benchmark, SetupMode
 from ..datautils import read_csv, write_csv
-from ..job import Job, JobError, State as JobState
+from ..job import Job, JobError, MultiThreadingJobRunner, SimpleJobRunner, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, Scoreboard, TaskResult
 from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, retry_after, retry_policy, str_def, tail, touch
@@ -207,6 +207,16 @@ class AWSBenchmark(Benchmark):
             finally:
                 self.cleanup()
 
+    def _create_job_runner(self, jobs):
+        if self.parallel_jobs == 1:
+            return SimpleJobRunner(jobs)
+        else:
+            queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
+            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+                                           delay_secs=rconfig().delay_between_jobs,
+                                           done_async=True,
+                                           queueing_strategy=queueing_strategy)
+
     def _make_job(self, task_def, fold=int):
         return self._make_aws_job([task_def.name], [fold])
 
@@ -299,6 +309,7 @@ class AWSBenchmark(Benchmark):
             wait_min_secs=0,
             retry=None,
             instance_type=None,
+            interrupt=None,
             terminate=None
         )
 
@@ -367,9 +378,12 @@ class AWSBenchmark(Benchmark):
                 _self.ext.terminate = terminate
 
             elif state == JobState.rescheduling:
-                self._stop_instance(_self.ext.instance_id, terminate=True)
+                self._stop_instance(_self.ext.instance_id, terminate=True, wait=False)
 
             elif state == JobState.cancelling:
+                self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate, wait=False)
+                if _self.ext.interrupt is not None:
+                    _self.ext.interrupt.set()
                 return True  # job is running remotely: no need to try to cancel what is running here, we just need to stop the instance
 
             elif state == JobState.stopping:
@@ -400,7 +414,7 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.exception(e)
 
-        interrupt = threading.Event()
+        job.ext.interrupt = interrupt = threading.Event()
         while not interrupt.is_set():
             inst_desc = self.instances[job.ext.instance_id] if job.ext.instance_id in self.instances else ns()
             if inst_desc['abort']:
