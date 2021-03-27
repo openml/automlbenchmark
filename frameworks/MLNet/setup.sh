@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 MLNET='mlnet'
-VERSION="$1"
+VERSION=${1:-"latest"}
 DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
 SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
+
+# if version eq latest, set Version to empty string so it will install the latest version.
+if [[ "$VERSION" == "latest" ]]; then
+    VERSION=""
+fi
 
 rm -rf DOTNET_INSTALL_DIR
 # install mlnet if necessary
