@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
-from functools import reduce, wraps, partial
+from contextlib import contextmanager
+from functools import partial, reduce, wraps
 import inspect
 import io
 import logging
@@ -320,21 +321,19 @@ def system_volume_mb(root="/"):
     )
 
 
+@contextmanager
 def signal_handler(sig, handler):
     """
     :param sig: a signal as defined in https://docs.python.org/3.7/library/signal.html#module-contents
     :param handler: a handler function executed when the given signal is raised in the current thread.
     """
     prev_handler = None
-
-    def handle(signum, frame):
-        try:
-            handler()
-        finally:
-            # restore previous signal handler
-            signal.signal(sig, prev_handler or signal.SIG_DFL)
-
-    prev_handler = signal.signal(sig, handle)
+    try:
+        prev_handler = signal.signal(sig, handler)
+        yield
+    finally:
+        # restore previous signal handler
+        signal.signal(sig, prev_handler or signal.SIG_DFL)
 
 
 def raise_in_thread(thread_id, exc):
