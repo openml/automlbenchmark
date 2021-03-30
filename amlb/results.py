@@ -33,6 +33,7 @@ class ResultError(Exception):
 # TODO: reconsider organisation of output files:
 #   predictions: add framework version to name, timestamp? group into subdirs?
 
+
 class Scoreboard:
 
     results_file = 'results.csv'
