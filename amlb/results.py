@@ -121,7 +121,7 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'result', 'metric', 'mode', 'version',
+        fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'type', 'result', 'metric', 'mode', 'version',
                       'params', 'app_version', 'utc', 'duration', 'training_duration', 'predict_duration', 'models_count', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
         dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
@@ -364,6 +364,7 @@ class TaskResult:
         scores = Namespace(
             id=self.task.id,
             task=self.task.name,
+            type=metadata.type_,
             constraint=self.constraint,
             framework=metadata.framework,
             version=metadata.version if 'version' in metadata else metadata.framework_version,
