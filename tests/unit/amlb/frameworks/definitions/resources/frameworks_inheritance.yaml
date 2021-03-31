@@ -1,5 +1,6 @@
 ---
 framework:
+  abstract: true
   version: 'latest'
   project: https://some.url
 
