@@ -16,8 +16,9 @@ from numpy import nan, sort
 import pandas as pd
 
 from .data import Dataset, DatasetType, Feature
-from .datautils import accuracy_score, confusion_matrix, fbeta_score, log_loss, balanced_accuracy_score, \
-    mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
+from .datautils import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, log_loss, \
+    mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, r2_score, roc_auc_score, \
+    read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, json_load, memoize, profile
 
@@ -458,6 +459,8 @@ class ErrorResult(NoResult):
 
 class ClassificationResult(Result):
 
+    multi_class_average = 'weighted'  # used by metrics like fbeta or auc
+
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
         self.classes = self.df.columns[:-2].values.astype(str, copy=False)
@@ -469,47 +472,72 @@ class ClassificationResult(Result):
         self.labels = self._autoencode(self.classes)
 
     def acc(self):
+        """Accuracy"""
         return float(accuracy_score(self.truth, self.predictions))
 
+    def auc(self):
+        """AUC computed based on probabilities, not on predictions"""
+        if self.type != DatasetType.binary:
+            log.warning("For multiclass problems, please use `auc_ovr` or `auc_ovo` metrics instead of `auc`.")
+            return nan
+        return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
+
+    def auc_ovo(self):
+        return self._auc_multi(mc='ovo')
+
+    def auc_ovr(self):
+        return self._auc_multi(mc='ovr')
+
     def balacc(self):
+        """Balanced accuracy"""
         return float(balanced_accuracy_score(self.truth, self.predictions))
 
-    def auc(self):
-        if self.type != DatasetType.binary:
-            # raise ValueError("AUC metric is only supported for binary classification: {}.".format(self.classes))
-            log.warning("AUC metric is only supported for binary classification: %s.", self.labels)
-            return nan
-        return float(roc_auc_score(self.truth, self.probabilities[:, 1], labels=self.labels))
+    def f05(self):
+        return self._fbeta(0.5)
 
-    def cm(self):
-        return confusion_matrix(self.truth, self.predictions, labels=self.labels)
+    def f1(self):
+        return self._fbeta(1)
 
-    def _per_class_errors(self):
-        return [(s-d)/s for s, d in ((sum(r), r[i]) for i, r in enumerate(self.cm()))]
+    def f2(self):
+        return self._fbeta(2)
 
-    def mean_pce(self):
-        """mean per class error"""
-        return statistics.mean(self._per_class_errors())
+    def logloss(self):
+        return float(log_loss(self.truth, self.probabilities, labels=self.labels))
 
     def max_pce(self):
         """max per class error"""
         return max(self._per_class_errors())
 
-    def f05(self):
-        return float(fbeta_score(self.truth, self.predictions, beta=0.5, labels=self.labels))
+    def mean_pce(self):
+        """mean per class error"""
+        return statistics.mean(self._per_class_errors())
 
-    def f1(self):
-        return float(fbeta_score(self.truth, self.predictions, beta=1, labels=self.labels))
-
-    def f2(self):
-        return float(fbeta_score(self.truth, self.predictions, beta=2, labels=self.labels))
-
-    def logloss(self):
-        return float(log_loss(self.truth, self.probabilities, labels=self.labels))
+    def pr_auc(self):
+        if self.type != DatasetType.binary:
+            log.warning("PR AUC metric is only available for binary problems.")
+            return nan
+        # precision, recall, thresholds = precision_recall_curve(self.truth, self.probabilities[:, 1])
+        # return float(auc(recall, precision))
+        return float(average_precision_score(self.truth, self.probabilities[:, 1]))
 
     def _autoencode(self, vec):
         needs_encoding = not _encode_predictions_and_truth_ or (isinstance(vec[0], str) and not vec[0].isdigit())
         return self.target.label_encoder.transform(vec) if needs_encoding else vec
+
+    def _auc_multi(self, mc='raise'):
+        average = ClassificationResult.multi_class_average
+        return float(roc_auc_score(self.truth, self.probabilities, average=average, labels=self.labels, multi_class=mc))
+
+    def _cm(self):
+        return confusion_matrix(self.truth, self.predictions, labels=self.labels)
+
+    def _fbeta(self, beta):
+        average = ClassificationResult.multi_class_average if self.truth == DatasetType.multiclass else 'binary'
+        return float(fbeta_score(self.truth, self.predictions, beta=beta, average=average, labels=self.labels))
+
+    def _per_class_errors(self):
+        return [(s-d)/s for s, d in ((sum(r), r[i]) for i, r in enumerate(self._cm()))]
+
 
 
 class RegressionResult(Result):
@@ -540,7 +568,7 @@ class RegressionResult(Result):
 
 
 def higher_is_better(metric):
-    return re.fullmatch(r"(auc)|(\w*acc)|(f\d+)|(r2)", metric)
+    return re.fullmatch(r"((pr_)?auc(_\w*)?)|(\w*acc)|(f\d+)|(r2)", metric)
 
 
 _encode_predictions_and_truth_ = False
