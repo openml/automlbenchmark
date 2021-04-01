@@ -476,16 +476,18 @@ class ClassificationResult(Result):
         return float(accuracy_score(self.truth, self.predictions))
 
     def auc(self):
-        """AUC computed based on probabilities, not on predictions"""
+        """Array Under (ROC) Curve, computed on probabilities, not on predictions"""
         if self.type != DatasetType.binary:
             log.warning("For multiclass problems, please use `auc_ovr` or `auc_ovo` metrics instead of `auc`.")
             return nan
         return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
 
     def auc_ovo(self):
+        """AUC One-vs-One"""
         return self._auc_multi(mc='ovo')
 
     def auc_ovr(self):
+        """AUC One-vs-Rest"""
         return self._auc_multi(mc='ovr')
 
     def balacc(self):
@@ -493,26 +495,31 @@ class ClassificationResult(Result):
         return float(balanced_accuracy_score(self.truth, self.predictions))
 
     def f05(self):
+        """F-beta 0.5"""
         return self._fbeta(0.5)
 
     def f1(self):
+        """F-beta 1"""
         return self._fbeta(1)
 
     def f2(self):
+        """F-beta 2"""
         return self._fbeta(2)
 
     def logloss(self):
+        """Log Loss"""
         return float(log_loss(self.truth, self.probabilities, labels=self.labels))
 
     def max_pce(self):
-        """max per class error"""
+        """Max per Class Error"""
         return max(self._per_class_errors())
 
     def mean_pce(self):
-        """mean per class error"""
+        """Mean per Class Error"""
         return statistics.mean(self._per_class_errors())
 
     def pr_auc(self):
+        """Precision Recall AUC"""
         if self.type != DatasetType.binary:
             log.warning("PR AUC metric is only available for binary problems.")
             return nan
@@ -549,21 +556,27 @@ class RegressionResult(Result):
         self.type = DatasetType.regression
 
     def mae(self):
+        """Mean Absolute Error"""
         return float(mean_absolute_error(self.truth, self.predictions))
 
     def mse(self):
+        """Mean Squared Error"""
         return float(mean_squared_error(self.truth, self.predictions))
 
     def msle(self):
+        """Mean Squared Logarithmic Error"""
         return float(mean_squared_log_error(self.truth, self.predictions))
 
     def rmse(self):
+        """Root Mean Square Error"""
         return math.sqrt(self.mse())
 
     def rmsle(self):
+        """Root Mean Square Logarithmic Error"""
         return math.sqrt(self.msle())
 
     def r2(self):
+        """R^2"""
         return float(r2_score(self.truth, self.predictions))
 
 
