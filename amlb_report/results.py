@@ -1,11 +1,12 @@
 """
-Loading results, formatting and adding columns
-result is the raw result metric computed from predictions at the end the benchmark. For classification problems, it is usually auc for binomial classification and logloss for multinomial classification.
-score ensures a standard comparison between tasks: higher is always better.
-norm_score is a normalization of score on a [0, 1] scale, with {{zero_one_refs[0]}} score as 0 and {{zero_one_refs[1]}} score as 1.
-imp_result and imp_score for imputed results/scores. Given a task and a framework:
-if all folds results/scores are missing, then no imputation occurs, and the result is nan for each fold.
-if only some folds results/scores are missing, then the missing result is imputed by the {{imp_framework}} result for this fold.
+Loading results, formatting and adding columns.
+result is the raw result metric computed from predictions at the end the benchmark: higher is always better!
+ - For classification problems, it is usually auc for binary problems and negative log loss for multiclass problems.
+ - For regression problems, it is usually negative rmse.
+norm_result is a normalization of result on a [0, 1] scale, with {{zero_one_refs[0]}} scoring as 0 and {{zero_one_refs[1]}} scoring as 1.
+imp_result for imputed results. Given a task and a framework:
+ - if all folds results are missing, then no imputation occurs, and the result is nan for each fold.
+ - if only some folds results are missing, then the missing result is imputed by the {{imp_framework}} result for this fold.
 """
 
 import numpy as np
@@ -52,35 +53,21 @@ def imputed(row):
     return pd.isna(row.result) and pd.notna(row.imp_result)
 
 
-fit_metrics = ['auc', 'acc', 'r2']
-
-
-def metric_type(row, res_col='result'):
-    return 'fit' if any([row[res_col] == getattr(row, m, None) for m in fit_metrics]) else 'loss'
-
-
-def score(row, res_col='result'):
-    return (row[res_col] if row['metric_type'] == 'fit'
-            else - row[res_col])
-
-
-def norm_score(row, score_col='score',
-               zero_one_refs=None, ref_results=None,
-               aggregation=None):
+def norm_result(row, res_col='result', zero_one_refs=None, ref_results=None, aggregation=None):
     if zero_one_refs is None:
-        return row[score_col]
+        return row[res_col]
 
     def get_val(ref, default):
         try:
             if isinstance(ref, str):
                 return (ref_results.loc[(ref_results.framework == ref)
                                         & (ref_results.task == row.task)]
-                                       [score_col]
+                                       [res_col]
                                    .agg(aggregation) if aggregation
                         else ref_results.loc[(ref_results.framework == ref)
                                              & (ref_results.task == row.task)
                                              & (ref_results.fold == row.fold)]
-                                            [score_col]
+                                            [res_col]
                                         .item())
             else:
                 return ref
@@ -89,9 +76,9 @@ def norm_score(row, score_col='score',
             # return default
 
     zero, one = (get_val(ref, i) for i, ref in enumerate(zero_one_refs))
-    rel_score = (row[score_col] - zero) / (one - zero)
-    return (- rel_score if row['metric_type'] == 'loss' and one < 0 <= zero
-            else rel_score)
+    norm_res = (row[res_col] - zero) / (one - zero)
+    return (- norm_res if row['metric'].startswith("neg_") and one < 0 <= zero
+            else norm_res)
 
 
 def sorted_ints(arr):
@@ -158,9 +145,8 @@ def prepare_results(results,
 
     # extending the data frame
     results = results.append(missing.reset_index())
-    results['type'] = [task_prop(row, metadata, 'type') for _, row in results.iterrows()]
-    results['metric_type'] = [metric_type(row) for _, row in results.iterrows()]
-    results['score'] = [score(row) for _, row in results.iterrows()]
+    if 'type' not in results:
+        results['type'] = [task_prop(row, metadata, 'type') for _, row in results.iterrows()]
 
     if ref_results is None:
         ref_results = results
@@ -177,18 +163,14 @@ def prepare_results(results,
                                                imp_framework=imp_fr, imp_results=ref_results,
                                                imp_value=imp_val, aggregation=aggr)
                                  for _, row in results.iterrows()]
-        results['imp_score'] = [impute_result(row, results, 'score',
-                                              imp_framework=imp_fr, imp_results=ref_results,
-                                              imp_value=imp_val, aggregation=aggr)
-                                for _, row in results.iterrows()]
 
     if normalization is not None:
-        score_col = 'imp_score' if imputation is not None else 'score'
+        res_col = 'imp_result' if imputation is not None else 'result'
         zero_one = normalization[0:2]
         aggr = normalization[2] if len(normalization) > 2 else None
-        results['norm_score'] = [norm_score(row, score_col,
-                                            zero_one_refs=zero_one, ref_results=ref_results, aggregation=aggr)
-                                 for _, row in results.iterrows()]
+        results['norm_result'] = [norm_result(row, res_col,
+                                              zero_one_refs=zero_one, ref_results=ref_results, aggregation=aggr)
+                                  for _, row in results.iterrows()]
 
     return Namespace(
         results=results,
