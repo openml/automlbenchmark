@@ -16,7 +16,8 @@ from numpy import nan, sort
 import pandas as pd
 
 from .data import Dataset, DatasetType, Feature
-from .datautils import accuracy_score, confusion_matrix, f1_score, log_loss, balanced_accuracy_score, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
+from .datautils import accuracy_score, confusion_matrix, fbeta_score, log_loss, balanced_accuracy_score, \
+    mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score, roc_auc_score, read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, json_load, memoize, profile
 
@@ -394,6 +395,10 @@ class TaskResult:
         for metric in metadata.metrics or []:
             scores[metric] = do_score(metric)
         scores.result = scores[scores.metric] if scores.metric in scores else do_score(scores.metric)
+        if not higher_is_better(scores.metric):
+            scores.metric = f"neg_{scores.metric}"
+            scores.result = - scores.result
+
         scores.info = result.info
         if scoring_errors:
             scores.info = "; ".join(filter(lambda it: it, [scores.info, *scoring_errors]))
@@ -490,8 +495,14 @@ class ClassificationResult(Result):
         """max per class error"""
         return max(self._per_class_errors())
 
+    def f05(self):
+        return float(fbeta_score(self.truth, self.predictions, beta=0.5, labels=self.labels))
+
     def f1(self):
-        return float(f1_score(self.truth, self.predictions, labels=self.labels))
+        return float(fbeta_score(self.truth, self.predictions, beta=1, labels=self.labels))
+
+    def f2(self):
+        return float(fbeta_score(self.truth, self.predictions, beta=2, labels=self.labels))
 
     def logloss(self):
         return float(log_loss(self.truth, self.probabilities, labels=self.labels))
@@ -526,6 +537,10 @@ class RegressionResult(Result):
 
     def r2(self):
         return float(r2_score(self.truth, self.predictions))
+
+
+def higher_is_better(metric):
+    return re.fullmatch(r"(auc)|(\w*acc)|(f\d+)|(r2)", metric)
 
 
 _encode_predictions_and_truth_ = False
