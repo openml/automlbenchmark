@@ -104,7 +104,8 @@ def prepare_results(results,
                     imputation=None,
                     normalization=None,
                     ref_results=None,
-                    duplicates_handling='fail'  # other options are 'keep_first', 'keep_last', 'keep_none'
+                    duplicates_handling='fail',  # other options are 'keep_first', 'keep_last', 'keep_none'
+                    include_metadata=False
                     ):
     if results is None or len(results) == 0:
         return None
@@ -126,7 +127,7 @@ def prepare_results(results,
 
     folds = results.fold.unique()
 
-    metadata = load_dataset_metadata(results)
+    metadata = load_dataset_metadata(results) if include_metadata else {}
 
     done = results.set_index(['task', 'fold', 'framework'])
     done = remove_duplicates(done, handling=duplicates_handling)
