@@ -1,15 +1,21 @@
-import logging
+# import standard_lib
 import tempfile
-import psutil
 import os
+import logging
+import psutil
+import json
+
+# import 3rd_parties
 import pandas as pd
+import numpy as np
+import arff
+
+# import amlb
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.datautils import reorder_dataset
 from amlb.results import NoResultError, save_predictions
-from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
-import json
-from frameworks.shared.callee import call_run, result, save_metadata,  output_subdir
+from amlb.utils import run_cmd, Timer
+from frameworks.shared.callee import output_subdir, save_metadata
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +29,6 @@ def run(dataset: Dataset, config: TaskConfig):
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     DOTNET_INSTALL_DIR = os.path.join(dir_path, 'lib')
-    os.environ['MODELBUILDER_AUTOML'] = 'NNI'
     os.environ['DOTNET_ROOT'] = DOTNET_INSTALL_DIR
     os.environ['MLNetCLIEnablePredict'] = 'True'
     threads_count_per_core = psutil.cpu_count() / psutil.cpu_count(logical=False)
@@ -32,69 +37,86 @@ def run(dataset: Dataset, config: TaskConfig):
     train_time_in_seconds = config.max_runtime_seconds
     sub_command = config.type
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        train_dataset = os.path.join(tmpdir, f'train.csv')
-        test_dataset = os.path.join(tmpdir, f'test.csv')
-        column_num = dataset.train.X.shape[1]
-        columns=[f'column_{i}' for i in range(column_num)]
-        train_df = pd.DataFrame(dataset.train.X, columns=columns)
-        train_df['label'] = dataset.train.y
-        test_df = pd.DataFrame(dataset.test.X, columns=columns)
-        test_df['label'] = dataset.test.y
+    # set up MODELBUILDER_AUTOML
+    MODELBUILDER_AUTOML = config.framework_params.get('automl_type', 'NNI')
+    os.environ['MODELBUILDER_AUTOML'] = MODELBUILDER_AUTOML
+    is_save_artifacts = config.framework_params.get('_save_artifacts', False)
+    tmpdir = tempfile.mkdtemp()
+    if is_save_artifacts:
+        tmpdir = output_subdir('artifacts', config=config)
 
-        log.info(f'saving train to {train_dataset}')
-        train_df.to_csv(train_dataset, index=False, header=True)
-        log.info(f'saving test to {test_dataset}')
-        test_df.to_csv(test_dataset, index=False, header=True)
-        temp_output_folder = os.path.join(tmpdir, str(config.fold))
-        log_path = os.path.join(temp_output_folder, 'log.txt')
-        cmd =   f"{mlnet} {sub_command}"\
-                f" --dataset {train_dataset} --test-dataset {test_dataset} --train-time {train_time_in_seconds}"\
-                f" --label-col label --output {os.path.dirname(temp_output_folder)} --name {config.fold}"\
-                f" --verbosity q --log-file-path {log_path}"
-        
-        with Timer() as training:
-            run_cmd(cmd)
+    train_dataset_path: str
+    test_dataset_path: str
+    label: str = 'label'
+    temp_output_folder = os.path.join(tmpdir, str(config.fold))
+    log_path = os.path.join(temp_output_folder, 'log.txt')
+    label = dataset.target.index
 
-        train_result_json = os.path.join(temp_output_folder, '{}.mbconfig'.format(config.fold))
-        if not os.path.exists(train_result_json):
-            raise NoResultError("MLNet failed producing any prediction.")
-        
-        with open(train_result_json, 'r') as f:
-            json_str = f.read()
-            mb_config = json.loads(json_str)
-            model_path = mb_config['Artifact']['MLNetModelPath']
-            output_prediction_txt = os.path.join(tmpdir, "prediction.txt")
-            models_count = len(mb_config['RunHistory']['Trials'])
+    if dataset.train.format == 'csv':
+        train_dataset_path = dataset.train.path
+        test_dataset_path = dataset.test.path
+    else:
+        # .arff
+        process = psutil.Process(os.getpid())
+        log.info("before creating train/test dataframe")
+        log.info(process.memory_info())
+        train_dataset_path = os.path.join(tmpdir, f'train.csv')
+        test_dataset_path = os.path.join(tmpdir, f'test.csv')
+        columns = [f'col_{i}' for i in range(dataset.train.data.shape[-1])]
+        columns[label] = 'label'
 
-            # predict
-            predict_cmd =   f"{mlnet} predict --task-type {config.type}" \
-                            f" --model {model_path} --dataset {test_dataset} > {output_prediction_txt}"
-            with Timer() as prediction:
-                run_cmd(predict_cmd)
+        # might use a bit extra memory, but it's faster
+        pd.DataFrame(dataset.train.data, columns=columns).to_csv(train_dataset_path, index=None)
+        pd.DataFrame(dataset.test.data, columns=columns).to_csv(test_dataset_path, index=None)
 
-            if config.type == 'classification':
-                prediction_df = pd.read_csv(output_prediction_txt, dtype={'PredictedLabel':'object'})
-                save_predictions(
-                    dataset=dataset,
-                    output_file=config.output_predictions_file,
-                    predictions=prediction_df['PredictedLabel'].values,
-                    truth=dataset.test.y,
-                    probabilities=prediction_df.values[:,:-1],
-                    probabilities_labels=list(prediction_df.columns.values[:-1]),
-                )
-        
-            if config.type == 'regression':
-                prediction_df = pd.read_csv(output_prediction_txt)
-                save_predictions(
-                    dataset=dataset,
-                    output_file=config.output_predictions_file,
-                    predictions=prediction_df['Score'].values,
-                    truth=dataset.test.y,
-                )
+    log.info(f'train dataset: {train_dataset_path}')
+    log.info(f'test dataset: {test_dataset_path}')
+    
+    cmd =   f"{mlnet} {sub_command}"\
+            f" --dataset {train_dataset_path} --test-dataset {test_dataset_path} --train-time {train_time_in_seconds}"\
+            f" --label-col {label} --output {os.path.dirname(temp_output_folder)} --name {config.fold}"\
+            f" --verbosity q --log-file-path {log_path}"
+    
+    with Timer() as training:
+        run_cmd(cmd)
 
-            return dict(
-                    models_count = models_count,
-                    training_duration=training.duration,
-                    predict_duration=prediction.duration,
-                )
+    train_result_json = os.path.join(temp_output_folder, '{}.mbconfig'.format(config.fold))
+    if not os.path.exists(train_result_json):
+        raise NoResultError("MLNet failed producing any prediction.")
+    
+    with open(train_result_json, 'r') as f:
+        json_str = f.read()
+        mb_config = json.loads(json_str)
+        model_path = mb_config['Artifact']['MLNetModelPath']
+        output_prediction_txt = os.path.join(tmpdir, "prediction.txt")
+        models_count = len(mb_config['RunHistory']['Trials'])
+        # predict
+        predict_cmd =   f"{mlnet} predict --task-type {config.type}" \
+                        f" --model {model_path} --dataset {test_dataset_path} > {output_prediction_txt}"
+        with Timer() as prediction:
+            run_cmd(predict_cmd)
+        if config.type == 'classification':
+            prediction_df = pd.read_csv(output_prediction_txt, dtype={'PredictedLabel':'object'})
+            save_predictions(
+                dataset=dataset,
+                output_file=config.output_predictions_file,
+                predictions=prediction_df['PredictedLabel'].values,
+                truth=dataset.test.y,
+                probabilities=prediction_df.values[:,:-1],
+                probabilities_labels=list(prediction_df.columns.values[:-1]),
+            )
+    
+        if config.type == 'regression':
+            prediction_df = pd.read_csv(output_prediction_txt)
+            save_predictions(
+                dataset=dataset,
+                output_file=config.output_predictions_file,
+                predictions=prediction_df['Score'].values,
+                truth=dataset.test.y,
+            )
+
+        return dict(
+                models_count = models_count,
+                training_duration=training.duration,
+                predict_duration=prediction.duration,
+            )
