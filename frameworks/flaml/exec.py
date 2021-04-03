@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** FLAML ****\n")
+    log.info(f"\n**** FLAML [v{__version__}] ****\n")
     save_metadata(config, version=__version__)
     time_budget = config.max_runtime_seconds
     n_jobs = config.framework_params.get('_n_jobs', config.cores)
