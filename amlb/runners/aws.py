@@ -34,10 +34,11 @@ import botocore.exceptions
 
 from ..benchmark import Benchmark, SetupMode
 from ..datautils import read_csv, write_csv
-from ..job import Job, JobError, State as JobState
+from ..job import Job, JobError, MultiThreadingJobRunner, SimpleJobRunner, State as JobState
 from ..resources import config as rconfig, get as rget
-from ..results import ErrorResult, Scoreboard, TaskResult
-from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, retry_after, retry_policy, str_def, tail, touch
+from ..results import ErrorResult, NoResultError, Scoreboard, TaskResult
+from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, \
+    retry_after, retry_policy, str_def, str_iter, tail, touch
 from .docker import DockerBenchmark
 
 
@@ -207,6 +208,16 @@ class AWSBenchmark(Benchmark):
             finally:
                 self.cleanup()
 
+    def _create_job_runner(self, jobs):
+        if self.parallel_jobs == 1:
+            return SimpleJobRunner(jobs)
+        else:
+            queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
+            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+                                           delay_secs=rconfig().delay_between_jobs,
+                                           done_async=True,
+                                           queueing_strategy=queueing_strategy)
+
     def _make_job(self, task_def, fold=int):
         return self._make_aws_job([task_def.name], [fold])
 
@@ -229,7 +240,7 @@ class AWSBenchmark(Benchmark):
         if self.exec is not None:
             self.exec.submit(fn, *args, **kwargs)
         else:
-            log.warning("Sending exec function while executor is not started: executing the function in the calling thread.")
+            log.warning("Application is submitting a function while the thread executor is not running: executing the function in the calling thread.")
             try:
                 fn(*args, **kwargs)
             except:
@@ -247,13 +258,12 @@ class AWSBenchmark(Benchmark):
             if spot_config.fallback_to_on_demand:
                 job.ext.instance_type = InstanceType.On_Demand
                 job.ext.wait_min_secs = 0
-                job.reschedule()
             else:
                 log.error("Aborting job %s after %s attempts: %s.", job.name, max_attempts, reason)
                 raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
-            job.reschedule()
+        self.job_runner.reschedule(job)
 
     def _reset_retry(self):
         for j in self.jobs:
@@ -279,6 +289,7 @@ class AWSBenchmark(Benchmark):
 
         timeout_secs = (task_def.max_runtime_seconds if 'max_runtime_seconds' in task_def
                         else sum([task.max_runtime_seconds for task in self.benchmark_def]))
+        timeout_secs += rconfig().benchmarks.overhead_time_seconds
         timeout_secs += rconfig().aws.overhead_time_seconds
 
         seed = rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed
@@ -299,10 +310,12 @@ class AWSBenchmark(Benchmark):
             instance_id=None,
             wait_min_secs=0,
             retry=None,
-            instance_type=None
+            instance_type=None,
+            interrupt=None,
+            terminate=None
         )
 
-        def _prepare(_self):
+        def _setup(_self):
             spot_config = rconfig().aws.ec2.spot
             if _self.ext.instance_type is None and spot_config.enabled:
                 _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
@@ -357,22 +370,40 @@ class AWSBenchmark(Benchmark):
                     results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
                     return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
 
-        def _on_done(_self):
-            if _self.state is JobState.rescheduled:
-                self._stop_instance(_self.ext.instance_id)
-                self.job_runner.put(_self)
-            else:
-                terminate = self._download_results(_self.ext.instance_id)
+        def _on_state(_self, state):
+            if state == JobState.completing:
+                terminate, failure = self._download_results(_self.ext.instance_id)
                 if not terminate and rconfig().aws.ec2.terminate_instances == 'success':
                     log.warning("[WARNING]: EC2 Instance %s won't be terminated as we couldn't download the results: "
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
                                 _self.ext.instance_id)
-                self._stop_instance(_self.ext.instance_id, terminate=terminate)
-                self.jobs.remove(_self)
+                _self.ext.terminate = terminate
+                if failure:
+                    self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
+                                    failure,
+                                    tasks=_self.ext.tasks,
+                                    folds=_self.ext.folds,
+                                    seed=_self.ext.seed)
 
-        job._prepare = _prepare.__get__(job)
+            elif state == JobState.rescheduling:
+                self._stop_instance(_self.ext.instance_id, terminate=True, wait=False)
+
+            elif state == JobState.cancelling:
+                self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate, wait=False)
+                if _self.ext.interrupt is not None:
+                    _self.ext.interrupt.set()
+                return True  # job is running remotely: no need to try to cancel what is running here, we just need to stop the instance
+
+            elif state == JobState.stopping:
+                self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate)
+                try:
+                    self.jobs.remove(_self)
+                except ValueError:
+                    pass
+
+        job._setup = _setup.__get__(job)
         job._run = _run.__get__(job)
-        job._on_done = _on_done.__get__(job)
+        job._on_state = _on_state.__get__(job)
         self.jobs.append(job)
         return job
 
@@ -394,7 +425,7 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.exception(e)
 
-        interrupt = threading.Event()
+        job.ext.interrupt = interrupt = threading.Event()
         while not interrupt.is_set():
             inst_desc = self.instances[job.ext.instance_id] if job.ext.instance_id in self.instances else ns()
             if inst_desc['abort']:
@@ -560,7 +591,7 @@ class AWSBenchmark(Benchmark):
                 if ec2_config.spot.max_hourly_price:
                     spot_options.update(MaxPrice=str(ec2_config.spot.max_hourly_price))
                 if instance_type is InstanceType.Spot_Block:
-                    duration_min = (math.ceil(timeout_secs/3600) + 1) * 60  # duration_min most be a multiple of 60, also adding 1h extra to be safe
+                    duration_min = math.ceil(timeout_secs/3600) * 60  # duration_min must be a multiple of 60
                     if duration_min <= 360:  # blocks are only allowed until 6h
                         spot_options.update(BlockDurationMinutes=duration_min)
 
@@ -581,7 +612,7 @@ class AWSBenchmark(Benchmark):
                                           meta_info=None)
             if isinstance(e, botocore.exceptions.ClientError):
                 error_code = e.response.get('Error', {}).get('Code', '')
-                retry = error_code in ['SpotMaxPriceTooLow', 'InsufficientFreeAddressesInSubnet']
+                retry = error_code in ['SpotMaxPriceTooLow', 'MaxSpotInstanceCountExceeded', 'InsufficientFreeAddressesInSubnet']
                 log.error(e)
                 raise AWSError(error_code, retry=retry) from e
             else:
@@ -684,11 +715,11 @@ class AWSBenchmark(Benchmark):
             write_csv([(self._forward_params['framework_name'],
                         self._forward_params['benchmark_name'],
                         self._forward_params['constraint_name'],
-                        str_def(kwargs.get('tasks', None), if_empty=''),
-                        str_def(kwargs.get('folds', None), if_empty=''),
+                        str_iter(kwargs.get('tasks', [])),
+                        str_iter(kwargs.get('folds', [])),
                         str_def(kwargs.get('seed', None)),
                         str_def(reason, if_none="unknown"))],
-                      columns=['framework', 'benchmark', 'constraint', 'task', 'fold', 'seed', 'error'],
+                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'error'],
                       header=not os.path.exists(file),
                       path=file,
                       append=True)
@@ -828,31 +859,46 @@ class AWSBenchmark(Benchmark):
                 else:
                     obj.download_fileobj(dest)
             except Exception as e:
-                log.error("Failed downloading `%s` from s3 bucket %s: %s", obj.key, self.bucket.name, str(e))
-                log.exception(e)
+                log.exception("Failed downloading `%s` from s3 bucket %s: %s", obj.key, self.bucket.name, str(e))
+                raise e
 
         success = self.instances[instance_id].success is True
+        error = None
+        objs = []
         try:
             instance_output_key = self._s3_output(instance_id, encode=True)
             objs = [o.Object() for o in self.bucket.objects.filter(Prefix=instance_output_key)]
             session_key = self._s3_session(encode=True)
             # result_key = self._s3_output(instance_id, Scoreboard.results_file, encode=True)
             for obj in objs:
+                is_result = os.path.basename(obj.key) == Scoreboard.results_file
                 rel_path = url_relpath(obj.key, start=session_key)
                 dest_path = os.path.join(self.output_dirs.session, rel_path)
-                download_file(obj, dest_path)
-                # if obj.key == result_key:
-                if not success and os.path.basename(obj.key) == Scoreboard.results_file:
-                    if rconfig().results.save:
-                        self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
-                    success = True
+                try:
+                    download_file(obj, dest_path)
+                    # if obj.key == result_key:
+                    if is_result and not success:
+                        if rconfig().results.save:
+                            self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
+                        success = True
+                except Exception as e:
+                    if is_result:
+                        error = e
         except Exception as e:
-            log.error("Failed downloading benchmark results from s3 bucket %s: %s", self.bucket.name, str(e))
-            log.exception(e)
+            log.exception("Failed downloading benchmark results from s3 bucket %s: %s", self.bucket.name, str(e))
+            error = e
+
+        if not success and error is None:
+            if len(objs) > 0:
+                error = NoResultError(f"No {Scoreboard.results_file} file found among the result artifacts: "
+                                      f"check the remote logs if available or the local logs to understand what happened on the instance.")
+            else:
+                error = NoResultError(f"No result artifacts, either the benchmark failed to start, or the instance got killed: "
+                                      f"check the local logs to understand what happened on the instance.")
 
         log.info("Instance `%s` success=%s", instance_id, success)
         self._update_instance(instance_id, success=success)
-        return success
+        return success, error
 
     def _create_instance_profile(self):
         """

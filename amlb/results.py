@@ -33,6 +33,7 @@ class ResultError(Exception):
 # TODO: reconsider organisation of output files:
 #   predictions: add framework version to name, timestamp? group into subdirs?
 
+
 class Scoreboard:
 
     results_file = 'results.csv'
@@ -446,7 +447,7 @@ class ErrorResult(NoResult):
     def __init__(self, error):
         msg = "{}: {}".format(type(error).__qualname__ if error is not None else "Error", error)
         max_len = rconfig().results.error_max_length
-        msg = msg if len(msg) <= max_len else (msg[:max_len - 3] + '...')
+        msg = msg if len(msg) <= max_len else (msg[:max_len - 1] + '…')
         super().__init__(msg)
 
 

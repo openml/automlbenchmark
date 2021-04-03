@@ -223,6 +223,10 @@ def str_def(o, if_none='', if_empty=_empty_):
     return str(o)
 
 
+def str_iter(col, sep=", "):
+    return sep.join(map(str, col))
+
+
 def str_sanitize(s):
     return re.sub(r"[^\w-]", "_", s)
 
@@ -299,6 +303,25 @@ def json_dumps(o, style='default'):
         return json.encoder.JSONEncoder.default(None, o)
 
     return json.dumps(o, indent=indent, separators=separators, default=default_encode)
+
+
+#################################
+# Thread-safe utility functions #
+#################################
+
+class ThreadSafeCounter:
+
+    def __init__(self, value=0):
+        self.value = value
+        self._lock = threading.Lock()
+
+    def inc(self):
+        with self._lock:
+            self.value += 1
+
+    def dec(self):
+        with self._lock:
+            self.value -= 1
 
 
 def threadsafe_iterator(it):
