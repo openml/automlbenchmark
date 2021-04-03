@@ -55,9 +55,6 @@ def run(dataset: Dataset, config: TaskConfig):
         test_dataset_path = dataset.test.path
     else:
         # .arff
-        process = psutil.Process(os.getpid())
-        log.info("before creating train/test dataframe")
-        log.info(process.memory_info())
         train_dataset_path = os.path.join(tmpdir, f'train.csv')
         test_dataset_path = os.path.join(tmpdir, f'test.csv')
         columns = [f'col_{i}' for i in range(dataset.train.data.shape[-1])]
