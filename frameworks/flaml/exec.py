@@ -1,12 +1,11 @@
 import logging
+import os
 import warnings
 import pandas as pd
 
-from amlb.utils import Timer
-
 from flaml import AutoML, __version__
 
-from frameworks.shared.callee import call_run, result, save_metadata
+from frameworks.shared.callee import call_run, result, save_metadata, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
@@ -16,10 +15,10 @@ def run(dataset, config):
     save_metadata(config, version=__version__)
     time_budget = config.max_runtime_seconds
     n_jobs = config.framework_params.get('_n_jobs', config.cores)
-
     print("Running FLAML with {} number of cores".format(config.cores))
 
     is_classification = config.type == 'classification'
+    log_dir = output_subdir("logs", config)
     column_names, _ = zip(*dataset.columns)
     column_types = dict(dataset.columns)
     train = pd.DataFrame(dataset.train.data, columns=column_names).astype(
@@ -56,11 +55,11 @@ def run(dataset, config):
 
     training_params = {k: v for k, v in config.framework_params.items()
      if not k.startswith('_')}
-
-    with Timer() as training:
+    flaml_log_file_name=os.path.join(log_dir, "flaml.log")
+    with utils.Timer() as training:
         aml.fit(X_train, y_train, train, label, perf_metric, config.type, 
             n_jobs=n_jobs, 
-            log_file_name=config.output_predictions_file.replace('.csv','.log'),
+            log_file_name= flaml_log_file_name,
             time_budget=time_budget, **training_params)
     
     predictions = aml.predict(X_test)
