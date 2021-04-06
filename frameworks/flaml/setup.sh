@@ -5,7 +5,7 @@ VERSION=${2:-"stable"}
 REPO=${3:-"https://github.com/microsoft/FLAML.git"}
 PKG=${4:-"flaml"}
 if [[ "$VERSION" == "latest" ]]; then
-    VERSION="master"
+    VERSION="main"
 fi
 
 # by passing the module directory to `setup.sh`, it tells it to automatically create a virtual env under the current module.
