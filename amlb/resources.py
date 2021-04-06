@@ -134,6 +134,8 @@ class Resources:
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
+        if framework['abstract']:
+            raise ValueError("Framework definition `{}` is abstract and cannot be run directly.".format(name))
         return framework, framework.name
 
     @lazy_property
