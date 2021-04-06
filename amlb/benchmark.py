@@ -445,6 +445,7 @@ class BenchmarkTask:
         task_config = copy(self.task_config)
         task_config.estimate_system_params()
         task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
+        task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
         task_config.framework_version = framework_def.version
