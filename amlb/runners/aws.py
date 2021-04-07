@@ -368,7 +368,7 @@ class AWSBenchmark(Benchmark):
                 else:
                     fold = int(folds[0]) if len(folds) > 0 else -1
                     results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
-                    return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
+                    return results.compute_score(self.framework_name, [], result=ErrorResult(e))
 
         def _on_state(_self, state):
             if state == JobState.completing:

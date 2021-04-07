@@ -472,5 +472,5 @@ class BenchmarkTask:
             result = ErrorResult(e)
         finally:
             self._dataset.release()
-        return results.compute_scores(result=result, meta_result=meta_result)
+        return results.compute_score(result=result, meta_result=meta_result)
 

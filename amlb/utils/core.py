@@ -169,6 +169,37 @@ def identity(x, *args):
     return (x,) + args if args else x
 
 
+_metadata_attr_ = '_metadata_'
+
+
+def get_metadata(fn, key, default=None):
+    return getattr(fn, _metadata_attr_, {}).get(key, default)
+
+
+def set_metadata(fn, **kwargs):
+    if not hasattr(fn, _metadata_attr_):
+        setattr(fn, _metadata_attr_, {})
+    getattr(fn, _metadata_attr_).update(kwargs)
+
+
+def del_metadata(fn, *keys):
+    if not hasattr(fn, _metadata_attr_):
+        return
+    if keys:
+        md = getattr(fn, _metadata_attr_)
+        for k in keys:
+            md.pop(k, None)
+    else:
+        delattr(fn, _metadata_attr_)
+
+
+def metadata(**kwargs):
+    def decorator(fn):
+        set_metadata(fn, **kwargs)
+        return fn
+    return decorator
+
+
 def as_list(*args):
     if len(args) == 0:
         return list()
