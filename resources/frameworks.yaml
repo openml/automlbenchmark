@@ -122,7 +122,12 @@ mljarsupervised_compete:
   description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
-
+    
+MLNet:
+  version: 'latest'
+  description: |
+    MLNET.CLI is a automated machine learning tool implemented by ml.net.
+    
 MLPlan:
   version: 'stable'
   abstract: true
@@ -164,9 +169,6 @@ TPOT:
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
-
-
-
 
 
 
