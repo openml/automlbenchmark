@@ -73,6 +73,7 @@ def run(dataset, config):
                     truth=y_test,
                     models_count=len(aml.config_history),
                     training_duration=training.duration,
+                    predict_duration=predict.duration,
                     probabilities_labels=labels,
                 )
 
