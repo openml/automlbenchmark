@@ -20,9 +20,20 @@ from .datautils import accuracy_score, auc, average_precision_score, balanced_ac
     mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, r2_score, roc_auc_score, \
     read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
-from .utils import Namespace, backup_file, cached, datetime_iso, json_load, memoize, profile
+from .utils import Namespace, backup_file, cached, datetime_iso, get_metadata, json_load, memoize, profile, set_metadata
 
 log = logging.getLogger(__name__)
+
+
+_supported_metrics_ = {}
+
+
+def metric(higher_is_better=True):
+    def decorator(fn):
+        set_metadata(fn, higher_is_better=higher_is_better)
+        _supported_metrics_[fn.__name__] = fn
+        return fn
+    return decorator
 
 
 class NoResultError(Exception):
@@ -335,14 +346,14 @@ class TaskResult:
         if benchmark:
             try:
                 tasks, _, _ = rget().benchmark_definition(benchmark)
-                task = next(t for t in tasks if t.name==task_name)
+                task = next(t for t in tasks if t.name == task_name)
             except:
                 pass
 
         result = cls.load_predictions(path)
         task_result = cls(task, fold, constraint, '')
-        metrics = rconfig().benchmarks.metrics[result.type.name]
-        return task_result.compute_scores(framework_name, metrics, result=result)
+        metrics = rconfig().benchmarks.metrics.get(result.type.name if result.type is not None else None, [])
+        return task_result.compute_score(framework_name, metrics, result=result)
 
     def __init__(self, task_def, fold: int, constraint: str, predictions_dir=None):
         self.task = task_def
@@ -356,14 +367,14 @@ class TaskResult:
         return self.load_predictions(self._predictions_file)
 
     @memoize
-    def get_metadata(self):
+    def get_result_metadata(self):
         return self.load_metadata(self._metadata_file)
 
     @profile(logger=log)
-    def compute_scores(self, result=None, meta_result=None):
+    def compute_score(self, result=None, meta_result=None):
         meta_result = Namespace({} if meta_result is None else meta_result)
-        metadata = self.get_metadata()
-        scores = Namespace(
+        metadata = self.get_result_metadata()
+        entry = Namespace(
             id=self.task.id,
             task=self.task.name,
             type=metadata.type_,
@@ -379,34 +390,41 @@ class TaskResult:
             metric=metadata.metric,
             duration=nan
         )
-        required_metares = ['training_duration', 'predict_duration', 'models_count']
-        for m in required_metares:
-            scores[m] = meta_result[m] if m in meta_result else nan
+        required_meta_res = ['training_duration', 'predict_duration', 'models_count']
+        for m in required_meta_res:
+            entry[m] = meta_result[m] if m in meta_result else nan
         result = self.get_result() if result is None else result
 
         scoring_errors = []
 
         def do_score(m):
-            res = result.evaluate(m)
-            print(m, res)
-            score, err = res
-            if err:
-                scoring_errors.append(err)
+            score = result.evaluate(m)
+            if 'message' in score:
+                scoring_errors.append(score.message)
             return score
 
-        for metric in metadata.metrics or []:
-            scores[metric] = do_score(metric)
-        scores.result = scores[scores.metric] if scores.metric in scores else do_score(scores.metric)
-        if not higher_is_better(scores.metric):
-            scores.metric = f"neg_{scores.metric}"
-            scores.result = - scores.result
+        def set_score(score):
+            entry.metric = score.metric
+            entry.result = score.value
+            if score.higher_is_better is False:  # if unknown metric, and higher_is_better is None, then no change
+                entry.metric = f"neg_{entry.metric}"
+                entry.result = - entry.result
 
-        scores.info = result.info
+        for metric in metadata.metrics or []:
+            sc = do_score(metric)
+            entry[metric] = sc.value
+            if metric == entry.metric:
+                set_score(sc)
+
+        if 'result' not in entry:
+            set_score(do_score(entry.metric))
+
+        entry.info = result.info
         if scoring_errors:
-            scores.info = "; ".join(filter(lambda it: it, [scores.info, *scoring_errors]))
-        scores % Namespace({k: v for k, v in meta_result if k not in required_metares})
-        log.info("Metric scores: %s", scores)
-        return scores
+            entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
+        entry % Namespace({k: v for k, v in meta_result if k not in required_meta_res})
+        log.info("Metric scores: %s", entry)
+        return entry
 
     @property
     def _predictions_file(self):
@@ -428,15 +446,21 @@ class Result:
         self.type = None
 
     def evaluate(self, metric):
+        eval_res = Namespace(metric=metric)
         if hasattr(self, metric):
+            metric_fn = getattr(self, metric)
+            eval_res.higher_is_better = get_metadata(metric_fn, 'higher_is_better')
             try:
-                return getattr(self, metric)(), None
+                eval_res.value = metric_fn()
             except Exception as e:
                 log.exception("Failed to compute metric %s: ", metric, e)
-                return nan, f"scoring {metric}: {str(e)}"
-        # raise ValueError("Metric {metric} is not supported for {type}.".format(metric=metric, type=self.type))
-        log.warning("Metric %s is not supported for %s!", metric, self.type)
-        return nan, f"Unsupported metric {metric} for {self.type}"
+                eval_res += Namespace(value=nan, message=f"Scoring {metric}: {str(e)}")
+        else:
+            pb_type = self.type.name if self.type is not None else 'unknown'
+            # raise ValueError(f"Metric {metric} is not supported for {pb_type}.")
+            log.warning("Metric %s is not supported for %s problems!", metric, pb_type)
+            eval_res += Namespace(value=nan, higher_is_better=None, message=f"Unsupported metric `{metric}` for {pb_type} problems")
+        return eval_res
 
 
 class NoResult(Result):
@@ -446,7 +470,12 @@ class NoResult(Result):
         self.missing_result = np.nan
 
     def evaluate(self, metric):
-        return self.missing_result, None
+        eval_res = Namespace(metric=metric, value=self.missing_result)
+        if metric not in _supported_metrics_:
+            eval_res += Namespace(higher_is_better=None, message=f"Unsupported metric `{metric}`")
+        else:
+            eval_res.higher_is_better = get_metadata(_supported_metrics_.get(metric), 'higher_is_better')
+        return eval_res
 
 
 class ErrorResult(NoResult):
@@ -472,61 +501,73 @@ class ClassificationResult(Result):
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))
         self.labels = self._autoencode(self.classes)
 
+    @metric(higher_is_better=True)
     def acc(self):
         """Accuracy"""
         return float(accuracy_score(self.truth, self.predictions))
 
+    @metric(higher_is_better=True)
     def auc(self):
-        """Array Under (ROC) Curve, computed on probabilities, not on predictions"""
-        if self.type != DatasetType.binary:
-            log.warning("For multiclass problems, please use `auc_ovr` or `auc_ovo` metrics instead of `auc`.")
-            return nan
-        return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
+        """Area Under (ROC) Curve, computed on probabilities, not on predictions"""
+        if self.type == DatasetType.multiclass:
+            raise ResultError("For multiclass problems, use `auc_ovr` or `auc_ovo` metrics instead of `auc`.")
+        else:
+            return float(roc_auc_score(self.truth, self.probabilities[:, 1]))
 
+    @metric(higher_is_better=True)
     def auc_ovo(self):
         """AUC One-vs-One"""
         return self._auc_multi(mc='ovo')
 
+    @metric(higher_is_better=True)
     def auc_ovr(self):
         """AUC One-vs-Rest"""
         return self._auc_multi(mc='ovr')
 
+    @metric(higher_is_better=True)
     def balacc(self):
         """Balanced accuracy"""
         return float(balanced_accuracy_score(self.truth, self.predictions))
 
+    @metric(higher_is_better=True)
     def f05(self):
         """F-beta 0.5"""
         return self._fbeta(0.5)
 
+    @metric(higher_is_better=True)
     def f1(self):
         """F-beta 1"""
         return self._fbeta(1)
 
+    @metric(higher_is_better=True)
     def f2(self):
         """F-beta 2"""
         return self._fbeta(2)
 
+    @metric(higher_is_better=False)
     def logloss(self):
         """Log Loss"""
         return float(log_loss(self.truth, self.probabilities, labels=self.labels))
 
+    @metric(higher_is_better=False)
     def max_pce(self):
         """Max per Class Error"""
         return max(self._per_class_errors())
 
+    @metric(higher_is_better=False)
     def mean_pce(self):
         """Mean per Class Error"""
         return statistics.mean(self._per_class_errors())
 
+    @metric(higher_is_better=True)
     def pr_auc(self):
         """Precision Recall AUC"""
         if self.type != DatasetType.binary:
-            log.warning("PR AUC metric is only available for binary problems.")
-            return nan
-        # precision, recall, thresholds = precision_recall_curve(self.truth, self.probabilities[:, 1])
-        # return float(auc(recall, precision))
-        return float(average_precision_score(self.truth, self.probabilities[:, 1]))
+            raise ResultError("PR AUC metric is only available for binary problems.")
+        else:
+            # precision, recall, thresholds = precision_recall_curve(self.truth, self.probabilities[:, 1])
+            # return float(auc(recall, precision))
+            return float(average_precision_score(self.truth, self.probabilities[:, 1]))
 
     def _autoencode(self, vec):
         needs_encoding = not _encode_predictions_and_truth_ or (isinstance(vec[0], str) and not vec[0].isdigit())
@@ -540,12 +581,11 @@ class ClassificationResult(Result):
         return confusion_matrix(self.truth, self.predictions, labels=self.labels)
 
     def _fbeta(self, beta):
-        average = ClassificationResult.multi_class_average if self.truth == DatasetType.multiclass else 'binary'
+        average = ClassificationResult.multi_class_average if self.type == DatasetType.multiclass else 'binary'
         return float(fbeta_score(self.truth, self.predictions, beta=beta, average=average, labels=self.labels))
 
     def _per_class_errors(self):
         return [(s-d)/s for s, d in ((sum(r), r[i]) for i, r in enumerate(self._cm()))]
-
 
 
 class RegressionResult(Result):
@@ -556,33 +596,35 @@ class RegressionResult(Result):
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = DatasetType.regression
 
+    @metric(higher_is_better=False)
     def mae(self):
         """Mean Absolute Error"""
         return float(mean_absolute_error(self.truth, self.predictions))
 
+    @metric(higher_is_better=False)
     def mse(self):
         """Mean Squared Error"""
         return float(mean_squared_error(self.truth, self.predictions))
 
+    @metric(higher_is_better=False)
     def msle(self):
         """Mean Squared Logarithmic Error"""
         return float(mean_squared_log_error(self.truth, self.predictions))
 
+    @metric(higher_is_better=False)
     def rmse(self):
         """Root Mean Square Error"""
         return math.sqrt(self.mse())
 
+    @metric(higher_is_better=False)
     def rmsle(self):
         """Root Mean Square Logarithmic Error"""
         return math.sqrt(self.msle())
 
+    @metric(higher_is_better=True)
     def r2(self):
         """R^2"""
         return float(r2_score(self.truth, self.predictions))
-
-
-def higher_is_better(metric):
-    return re.fullmatch(r"((pr_)?auc(_\w*)?)|(\w*acc)|(f\d+)|(r2)", metric)
 
 
 _encode_predictions_and_truth_ = False
