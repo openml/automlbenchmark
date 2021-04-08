@@ -125,6 +125,7 @@ mljarsupervised_compete:
 
 MLPlan:
   version: 'stable'
+  abstract: true
   description: |
     ML-Plan is an approach to AutoML based on hierarchical task networks (HTNs).
   project: http://mlplan.org

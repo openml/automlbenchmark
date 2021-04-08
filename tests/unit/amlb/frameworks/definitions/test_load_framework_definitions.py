@@ -27,6 +27,10 @@ def test_version_inheritance(simple_resource):
     assert child2.version == 'child2'
     assert grandchild2.version == 'child2'
 
+    assert parent.abstract
+    for f in [child1, child2, grandchild1, grandchild2]:
+        assert not f.abstract, f"{f.name} unexpectedly abstract"
+
 
 @pytest.mark.use_disk
 def test_docker_image_inheritance(simple_resource):

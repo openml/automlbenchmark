@@ -52,17 +52,17 @@ def test_interruption_with_sig_as_error_instance():
 
 
 def test_interruption_with_sig_as_signal():
-    def _handler():
+    def _handler(*_):
         raise TimeoutError("from handler")
-    signal_handler(signal.SIGTERM, _handler)
-    timeout = 1
-    with Timer() as t:
-        with pytest.raises(TimeoutError, match=r"from handler"):
-            with InterruptTimeout(timeout_secs=timeout, sig=signal.SIGTERM):
-                for i in range(100):
-                    time.sleep(.1)
-    assert t.duration - timeout < 1
-    assert i < 11
+    with signal_handler(signal.SIGTERM, _handler):
+        timeout = 1
+        with Timer() as t:
+            with pytest.raises(TimeoutError, match=r"from handler"):
+                with InterruptTimeout(timeout_secs=timeout, sig=signal.SIGTERM):
+                    for i in range(100):
+                        time.sleep(.1)
+        assert t.duration - timeout < 1
+        assert i < 11
 
 
 def test_before_interrupt_hook():
@@ -75,45 +75,42 @@ def test_before_interrupt_hook():
 
 
 def test_interruptions_escalation():
-    def _handler():
+    def _handler(*_):
         raise TimeoutError("from handler")
-    signal_handler(signal.SIGINT, lambda: 0)  # shouldn't interrupt anything
-    signal_handler(signal.SIGTERM, _handler)
-    before = Mock()
+    with signal_handler(signal.SIGINT, lambda *_: 0), signal_handler(signal.SIGTERM, _handler):
+        before = Mock()
 
-    timeout = 1
-    with Timer() as t:
-        with pytest.raises(TimeoutError, match=r"from handler"):
-            with InterruptTimeout(timeout_secs=timeout,
-                                  interruptions=[
-                                      dict(sig=signal.SIGINT),
-                                      dict(sig=signal.SIGTERM)
-                                  ],
-                                  before_interrupt=before):
-                for i in range(100):
-                    time.sleep(.1)
-    assert t.duration - timeout < 2  # default wait_retry_secs is 1s
-    assert 15 < i < 25
-    assert before.call_count == 2
+        timeout = 1
+        with Timer() as t:
+            with pytest.raises(TimeoutError, match=r"from handler"):
+                with InterruptTimeout(timeout_secs=timeout,
+                                      interruptions=[
+                                          dict(sig=signal.SIGINT),
+                                          dict(sig=signal.SIGTERM)
+                                      ],
+                                      before_interrupt=before):
+                    for i in range(100):
+                        time.sleep(.1)
+        assert t.duration - timeout < 2  # default wait_retry_secs is 1s
+        assert 15 < i < 25
+        assert before.call_count == 2
 
 
 def test_wait_retry_in_interruptions_escalation():
-    def _handler():
+    def _handler(*_):
         raise TimeoutError("from handler")
-    signal_handler(signal.SIGINT, lambda: 0)  # shouldn't interrupt anything
-    signal_handler(signal.SIGTERM, _handler)
-
-    timeout = 1
-    with Timer() as t:
-        with pytest.raises(TimeoutError, match=r"from handler"):
-            with InterruptTimeout(timeout_secs=timeout,
-                                  interruptions=[
-                                      dict(sig=signal.SIGINT),
-                                      dict(sig=signal.SIGTERM)
-                                  ],
-                                  wait_retry_secs=0.3):
-                for i in range(100):
-                    time.sleep(.1)
-    assert t.duration - timeout < 1
-    assert 10 < i < 15
+    with signal_handler(signal.SIGINT, lambda *_: 0), signal_handler(signal.SIGTERM, _handler):
+        timeout = 1
+        with Timer() as t:
+            with pytest.raises(TimeoutError, match=r"from handler"):
+                with InterruptTimeout(timeout_secs=timeout,
+                                      interruptions=[
+                                          dict(sig=signal.SIGINT),
+                                          dict(sig=signal.SIGTERM)
+                                      ],
+                                      wait_retry_secs=0.3):
+                    for i in range(100):
+                        time.sleep(.1)
+        assert t.duration - timeout < 1
+        assert 10 < i < 15
 

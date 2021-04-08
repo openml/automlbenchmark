@@ -72,9 +72,10 @@ class Resources:
                 return defval
 
         na = "NA"
-        version = git("--version")
-        is_git_repo = version and git("rev-parse --git-dir 2> /dev/null")
-        if is_git_repo:
+        git_version = git("--version")
+        is_repo = git("rev-parse") is not None
+
+        if git_version and is_repo:
             repo = git("remote get-url origin", na)
             branch = git("rev-parse --abbrev-ref HEAD", na)
             commit = git("rev-parse HEAD", na)
@@ -133,6 +134,8 @@ class Resources:
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
+        if framework['abstract']:
+            raise ValueError("Framework definition `{}` is abstract and cannot be run directly.".format(name))
         return framework, framework.name
 
     @lazy_property

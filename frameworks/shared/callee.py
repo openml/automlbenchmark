@@ -76,7 +76,7 @@ def call_run(run_fn):
             return name, np.load(path, allow_pickle=True)
         return name, path
 
-    print(params.dataset)
+    log.info("Params passed to subprocess:\n%s", params)
     ds = utils.Namespace.walk(params.dataset, load_data)
 
     config = params.config
