@@ -13,7 +13,7 @@ import arff
 import numpy as np
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
-from ..utils import lazy_property, obj_size, profile, to_mb
+from ..utils import as_list, lazy_property, obj_size, profile, to_mb
 
 
 log = logging.getLogger(__name__)
@@ -132,7 +132,7 @@ class OpenmlDataset(Dataset):
                         is_target=is_target(f)
                         )
                 for new_idx, f in enumerate(f for i, f in sorted(self._oml_dataset.features.items())
-                                            if f.name not in (self._oml_dataset.ignore_attribute or []))
+                                            if f.name not in self._excluded_attributes)
                 ]
 
     @lazy_property
@@ -146,8 +146,12 @@ class OpenmlDataset(Dataset):
             with open(self._oml_dataset.data_file) as f:
                 ds = arff.load(f)
                 self._attributes = [a for a in ds['attributes']
-                                    if a[0] not in (self._oml_dataset.ignore_attribute or [])]
+                                    if a[0] not in self._excluded_attributes]
         return self._attributes
+
+    @property
+    def _excluded_attributes(self):
+        return [] + (self._oml_dataset.ignore_attribute or []) + as_list(self._oml_dataset.row_id_attribute or [])
 
     @profile(logger=log)
     def _ensure_loaded(self):
@@ -178,9 +182,9 @@ class OpenmlDataset(Dataset):
         log.debug("Loading dataset %s.", ods.data_file)
         with open(ods.data_file) as f:
             ds = arff.load(f)
-        log.info("Removing ignored columns %s.", self._oml_dataset.ignore_attribute)
+        log.info("Removing excluded columns %s.", self._excluded_attributes)
         col_selector, attributes = zip(*[(i, a) for i, a in enumerate(ds['attributes'])
-                                         if a[0] not in (self._oml_dataset.ignore_attribute or [])])
+                                         if a[0] not in self._excluded_attributes])
 
         col_selector = list(col_selector)
         self._attributes = list(attributes)
