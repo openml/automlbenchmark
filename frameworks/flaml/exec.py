@@ -62,7 +62,8 @@ def run(dataset, config):
             log_file_name= flaml_log_file_name,
             time_budget=time_budget, **training_params)
     
-    predictions = aml.predict(X_test)
+    with utils.Timer() as predict:
+        predictions = aml.predict(X_test)
     probabilities = aml.predict_proba(X_test) if is_classification else None
     labels = aml.classes_ if is_classification else None
     return result(  
@@ -72,6 +73,7 @@ def run(dataset, config):
                     truth=y_test,
                     models_count=len(aml.config_history),
                     training_duration=training.duration,
+                    predict_duration=predict.duration,
                     probabilities_labels=labels,
                 )
 
