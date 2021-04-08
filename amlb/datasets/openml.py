@@ -151,7 +151,7 @@ class OpenmlDataset(Dataset):
 
     @property
     def _excluded_attributes(self):
-        return [] + (self._oml_dataset.ignore_attribute or []) + as_list(self._oml_dataset.row_id_attribute or [])
+        return (self._oml_dataset.ignore_attribute or []) + as_list(self._oml_dataset.row_id_attribute or [])
 
     @profile(logger=log)
     def _ensure_loaded(self):
