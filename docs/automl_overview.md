@@ -25,6 +25,7 @@ While we hope to cover them in the comparison in the future, for now we will
 Some other frameworks worth mentioning are, again in alphabetical order:
 
 - [autoxgboost](#autoxgboost)
+- [FLAML](#flaml)
 - [GAMA](#gama)
 - [hyperopt-sklearn](#hyperopt-sklearn)
 - [ML-Plan](#ml-plan)
@@ -171,6 +172,32 @@ The exception to this is a preprocessing step for categorical variables, where t
 Janek Thomas, Stefan Coors and Bernd Bischl (2018). 
 [Automatic Gradient Boosting](https://arxiv.org/pdf/1807.03873v2.pdf)
 *International Workshop on Automatic Machine Learning at ICML 2018*
+
+## FLAML
+[source](https://github.com/microsoft/FLAML) |
+[documentation](https://microsoft.github.io/FLAML/) |
+Python |
+Optimization: Configurable |
+License MIT
+
+> FLAML is a lightweight Python library that finds accurate machine learning models efficiently and economically. 
+
+FLAML is powered by a new, cost-effective hyperparameter optimization and learner selection method invented by Microsoft Research. FLAML leverages the structure of the search space to choose a search order optimized for both cost and error. 
+FLAML is fast and economical. The simple and lightweight design makes it easy to extend, such as adding customized learners or metrics.
+
+#### Papers
+
+Chi Wang, Qingyun Wu, Markus Weimer, and Erkang Zhu (2021).
+[FLAML: A Fast and Lightweight AutoML Library](https://www.microsoft.com/en-us/research/publication/flaml-a-fast-and-lightweight-automl-library/)
+*Proceedings of MLSys 2021*
+
+Qingyun Wu, Chi Wang, and Silu Huang (2021).
+[Frugal Optimization for Cost-related Hyperparameters](https://www.microsoft.com/en-us/research/publication/frugal-optimization-for-cost-related-hyperparameters/)
+*Proceedings of AAAI 2021*
+
+Chi Wang, Qingyun Wu, Silu Huang, and Amin Saied (2021).
+[Economical Hyperparameter Optimization With Blended Search Strategy](https://www.microsoft.com/en-us/research/publication/economical-hyperparameter-optimization-with-blended-search-strategy/)
+*The Ninth International Conference on Learning Representations (ICLR 2021)*
 
 ## GAMA 
 [source](https://github.com/PGijsbers/gama) |

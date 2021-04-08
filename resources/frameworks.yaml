@@ -66,6 +66,15 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
   refs: [https://arxiv.org/abs/1807.03873v2]
 
+flaml:
+  version: 'stable'
+  description: |
+    FLAML is a lightweight Python library that finds accurate machine learning models 
+    automatically, efficiently and economically. It frees users from selecting learners 
+    and hyperparameters for each learner. It is fast and cheap. 
+  project: https://github.com/microsoft/FLAML
+  refs: [https://arxiv.org/pdf/1911.04706.pdf]
+
 GAMA:
   version: 'stable'
   description: |
