@@ -42,7 +42,7 @@
 - name: nomao
   openml_task_id: 9977
 
-- name: numerai28_6
+- name: numerai28.6
   openml_task_id: 167120
 
 - name: riccardo

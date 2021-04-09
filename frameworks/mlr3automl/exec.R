@@ -8,7 +8,7 @@ library(mlr3oml)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, meta_results_file, seed, name) {
   future::plan(future::multicore)
-  start_time = Sys.time()
+  start_time <- Sys.time()
   set.seed(seed)
   
   train <- mlr3oml::read_arff(train_file)
@@ -19,16 +19,16 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   colnames(test) <- make.names(colnames(test))
   
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
-  remaining_budget = as.integer(start_time - Sys.time() + time.budget)
+  remaining_budget <- as.integer(start_time - Sys.time() + time.budget)
   print(paste("remaining budget: ", remaining_budget, " seconds"))
 
   if (type == "classification") {
     train <- TaskClassif$new("benchmark_train", backend = train, target = target)
     test <- TaskClassif$new("benchmark_test", backend = test, target = target)
     if ("twoclass" %in% train$properties) {
-      measure = msr("classif.auc")
+      measure <- msr("classif.auc")
     } else {
-      measure = msr("classif.logloss")
+      measure <- msr("classif.logloss")
     }
   } else if (type == "regression") {
     train <- TaskRegr$new("benchmark_train", backend = train, target = target)
@@ -53,12 +53,12 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   print(paste("Finished predictions after ", difftime(Sys.time(), start_time, units = "secs"), " seconds"))
 
   if (type == "classification") {
-    sorted_colnames = sort(colnames(preds$data$prob))
-    result = data.frame(preds$data$prob[, sorted_colnames], preds$data$response, preds$data$truth)
-    colnames(result) = c(sorted_colnames, 'predictions', 'truth')
+    sorted_colnames <- sort(colnames(preds$data$prob))
+    result <- data.frame(preds$data$prob[, sorted_colnames], preds$data$response, preds$data$truth)
+    colnames(result) <- c(sorted_colnames, 'predictions', 'truth')
   } else {
-    result = data.frame(preds$data$response, preds$data$truth)
-    colnames(result) = c('predictions', 'truth')
+    result <- data.frame(preds$data$response, preds$data$truth)
+    colnames(result) <- c('presdictions', 'truth')
   }
 
   write.csv(result, file = output_predictions_file, row.names = FALSE)
