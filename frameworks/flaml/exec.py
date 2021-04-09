@@ -59,7 +59,7 @@ def run(dataset, config):
     with utils.Timer() as training:
         aml.fit(X_train, y_train, train, label, perf_metric, config.type, 
             n_jobs=n_jobs, 
-            log_file_name= flaml_log_file_name,
+            log_file_name=flaml_log_file_name,
             time_budget=time_budget, **training_params)
     
     with utils.Timer() as predict:
