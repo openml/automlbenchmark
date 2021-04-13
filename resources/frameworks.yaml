@@ -146,6 +146,10 @@ MLPlanWEKA:
   params:
     _backend: weka
 
+mlr3automl:
+  version: 'stable'
+  project: https://github.com/a-hanf/mlr3automl
+
 oboe:
   version: 'latest'
   description: |
