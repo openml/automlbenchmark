@@ -167,12 +167,12 @@ apt-get -y install software-properties-common
 add-apt-repository -y ppa:deadsnakes/ppa
 apt-get update
 apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
-update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
+#update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 pip3 install -U pip wheel
 
 # aliases for the python system
-SPIP=python3 -m pip
-SPY=python3
+SPIP=python{pyv} -m pip
+SPY=python{pyv}
 
 # Enforce UTF-8 encoding
 PYTHONUTF8=1
@@ -185,6 +185,7 @@ cd /bench
 
 # We create a virtual environment so that AutoML systems may use their preferred versions of
 # packages that we need to data pre- and postprocessing without breaking it.
+$SPIP install -U pip wheel
 $SPY -m venv venv
 PIP=/bench/venv/bin/python3 -m pip
 PY=/bench/venv/bin/python3
