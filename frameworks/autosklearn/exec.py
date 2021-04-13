@@ -88,6 +88,7 @@ def run(dataset, config):
             "Using %sMB memory per job and on a total of %s jobs.",
             ml_memory_limit, n_jobs
         )
+        constr_params["memory_limit"] = ml_memory_limit
     else:
         ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
         # when memory is large enough, we should have:
