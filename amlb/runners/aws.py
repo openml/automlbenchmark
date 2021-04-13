@@ -1124,7 +1124,7 @@ runcmd:
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
-  - python{pyv} install -U pip wheel awscli
+  - python{pyv} -m pip install -U pip wheel awscli
   - python{pyv} -m venv venv
   - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
@@ -1199,7 +1199,7 @@ mkdir /repo
 cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
-python{pyv} install -U pip wheel awscli
+python{pyv} -m pip install -U pip wheel awscli
 python{pyv} -m venv venv
 alias PIP='/repo/venv/bin/python3 -m pip'
 alias PY='/repo/venv/bin/python3 -W ignore'
