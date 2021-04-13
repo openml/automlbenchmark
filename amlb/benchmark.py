@@ -15,17 +15,22 @@ import logging
 import math
 import os
 import signal
+import sys
 
 from .job import Job, SimpleJobRunner, MultiThreadingJobRunner
 from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, json_dump, lazy_property, profile, repr_def, \
     run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
+
+
+__installed_file__ = '.installed'
+__setup_env_file__ = '.setup_env'
 
 
 class SetupMode(Enum):
@@ -107,6 +112,9 @@ class Benchmark:
 
         log.info("Setting up framework {}.".format(self.framework_name))
 
+        self._write_setup_env(self.framework_module.__path__[0])
+        self._mark_setup_start()
+
         if hasattr(self.framework_module, 'setup'):
             self.framework_module.setup(*self.framework_def.setup_args,
                                         _live_output_=rconfig().setup.live_output,
@@ -139,20 +147,37 @@ class Benchmark:
 
         self._mark_setup_done()
 
-    def _is_setup_done(self):
-        installed = os.path.join(self._framework_dir, '.installed')
-        setup_done = False
+    def _write_setup_env(self, dest_dir):
+        with open(os.path.join(dest_dir, __setup_env_file__), 'w') as f:
+            f.write('\n'.join([
+                f"AMLB_ROOT={rconfig().root_dir}",
+                f"PY_EXEC_PATH={sys.executable}",
+                ""
+            ]))
+
+    def _installed_file(self):
+        return os.path.join(self._framework_dir, __installed_file__)
+
+    def _installed_version(self):
+        installed = self._installed_file()
+        versions = []
         if os.path.isfile(installed):
             with open(installed, 'r') as f:
-                version = f.read()
-                setup_done = (version == self.framework_def.version)
-        return setup_done
+                versions = list(filter(None, map(str.strip, f.readlines())))
+        return versions
+
+    def _is_setup_done(self):
+        return self.framework_def.version in self._installed_version()
+
+    def _mark_setup_start(self):
+        installed = self._installed_file()
+        if os.path.isfile(installed):
+            os.remove(installed)
 
     def _mark_setup_done(self):
-        if not self._is_setup_done():
-            installed = os.path.join(self._framework_dir, '.installed')
-            with open(installed, 'w') as f:
-                f.write(self.framework_def.version)
+        installed = self._installed_file()
+        with open(installed, 'a') as f:
+            f.write('\n'.join([self.framework_def.version, ""]))
 
     def cleanup(self):
         # anything to do?
@@ -448,7 +473,7 @@ class BenchmarkTask:
         task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
-        task_config.framework_version = framework_def.version
+        task_config.framework_version = self.benchmark._installed_version()[0]
 
         # allowing to pass framework parameters through command line, e.g.: -Xf.verbose=True -Xf.n_estimators=3000
         if rconfig()['f'] is not None:
@@ -464,6 +489,7 @@ class BenchmarkTask:
         result = meta_result = None
         try:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, repr_def(task_config))
+            json_dump(task_config, task_config.output_metadata_file, style='pretty')
             meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:
             if rconfig().exit_on_error:

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-. ${HERE}/../shared/setup.sh ""
+. ${HERE}/../shared/setup.sh "$HERE"
+
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
 #    SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev
@@ -16,3 +17,5 @@ fi
 #PIP install --no-cache-dir -r $HERE/requirements.txt
 
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("ranger", "mlr3", "mlr3learners", "mlr3pipelines", "farff"), repos="https://cloud.r-project.org/")'
+
+Rscript -e 'packageVersion("ranger")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"

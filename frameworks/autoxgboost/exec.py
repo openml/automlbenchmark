@@ -6,15 +6,12 @@ from amlb.data import Dataset
 from amlb.datautils import read_csv
 from amlb.utils import dir_of, run_cmd
 
-from frameworks.shared.callee import save_metadata
-
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
     #TODO: use rpy2 instead? not necessary here though as the call is very simple
     log.info(f"\n**** Autoxgboost (R) [{config.framework_version}] ****\n")
-    save_metadata(config)
 
     is_classification = config.type == 'classification'
 

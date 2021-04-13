@@ -24,7 +24,6 @@ def run(dataset, config):
     log.info("\n**** GAMA [v%s] ****", __version__)
     log.info("sklearn == %s", sklearn.__version__)
     log.info("category_encoders == %s", category_encoders.__version__)
-    save_metadata(config, version=__version__)
 
     is_classification = (config.type == 'classification')
     # Mapping of benchmark metrics to GAMA metrics

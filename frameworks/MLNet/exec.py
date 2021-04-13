@@ -1,9 +1,9 @@
 # import standard_lib
-import tempfile
-import os
 import logging
-import psutil
 import json
+import os
+import psutil
+import tempfile
 
 # import 3rd_parties
 import pandas as pd
@@ -13,13 +13,13 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.results import NoResultError, save_predictions
 from amlb.utils import run_cmd, Timer
-from frameworks.shared.callee import output_subdir, save_metadata
+from frameworks.shared.callee import output_subdir
 
 log = logging.getLogger(__name__)
 
+
 def run(dataset: Dataset, config: TaskConfig):
     log.info(f"\n**** MLNet [v{config.framework_version}] ****\n")
-    save_metadata(config)
 
     avaible_task_list = ['classification', 'regression']
     if config.type not in avaible_task_list:

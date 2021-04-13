@@ -6,15 +6,12 @@ from amlb.data import Dataset
 from amlb.datautils import read_csv
 from amlb.utils import dir_of, run_cmd
 
-from frameworks.shared.callee import save_metadata
-
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
     #TODO: use rpy2 instead? not necessary here though as the call is very simple
     log.info("\n**** Random Forest (R) ****\n")
-    save_metadata(config)
 
     here = dir_of(__file__)
     meta_results_file = os.path.join(config.output_dir, "meta_results.csv")

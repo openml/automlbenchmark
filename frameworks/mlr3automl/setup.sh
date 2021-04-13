@@ -4,7 +4,7 @@ VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/a-hanf"}
 MLR_REPO=${3:-"https://github.com/mlr-org"}
 
-. $HERE/../shared/setup.sh ""
+. $HERE/../shared/setup.sh "$HERE"
 if [[ -x "$(command -v apt-get)" ]]; then
 SUDO apt-get update
 #SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev
@@ -32,3 +32,4 @@ Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3@master")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3hyperband@master")'
 
+Rscript -e 'packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"

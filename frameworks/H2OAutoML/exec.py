@@ -32,7 +32,6 @@ class BackendMemoryMonitoring(utils.Monitoring):
 
 def run(dataset, config):
     log.info(f"\n**** H2O AutoML [v{h2o.__version__}] ****\n")
-    save_metadata(config, version=h2o.__version__)
     # Mapping of benchmark metrics to H2O metrics
     metrics_mapping = dict(
         acc='mean_per_class_error',

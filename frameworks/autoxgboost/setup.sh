@@ -6,7 +6,7 @@ REPO=${2:-"ja-thomas/autoxgboost"}
 if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
     VERSION="master"
 fi
-. ${HERE}/../shared/setup.sh ""
+. ${HERE}/../shared/setup.sh "${HERE}"
 if [[ -x "$(command -v apt-get)" ]]; then
 SUDO apt-get update
 #SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev
@@ -26,3 +26,4 @@ fi
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "mlr", "mlrMBO", "mlrCPO", "farff", "GenSA", "rgenoud", "xgboost"), repos="https://cloud.r-project.org/")'
 Rscript -e 'remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'")'
 
+Rscript -e 'packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"

@@ -12,14 +12,13 @@ from lightautoml.tasks import Task
 from lightautoml.automl.presets.tabular_presets import TabularAutoML, TabularUtilizedAutoML
 from lightautoml import __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
     log.info(f"\n**** lightautoml (R) [{__version__}] ****\n")
-    save_metadata(config, version=__version__)
 
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)

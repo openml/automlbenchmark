@@ -28,4 +28,5 @@ $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-pat
 fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
-$MLNET --version
+
+$MLNET --version >> "${HERE}/.installed"

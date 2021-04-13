@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-AMLB_DIR="$1"
-VERSION=${2:-"stable"}
-REPO=${3:-"https://github.com/automl/auto-sklearn.git"}
-PKG=${4:-"auto-sklearn"}
+VERSION=${1:-"stable"}
+REPO=${2:-"https://github.com/automl/auto-sklearn.git"}
+PKG=${3:-"auto-sklearn"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
 
 # creating local venv
-. ${HERE}/../shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y build-essential swig
@@ -29,3 +28,4 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
+PY -c "from autosklearn import __version__; print(__version__)" >> "${HERE}/.installed"
