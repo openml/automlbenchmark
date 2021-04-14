@@ -42,7 +42,7 @@ fi
 
 if [[ -n "$h2o_package" ]]; then
     echo "installing H2O-3 $VERSION"
-    PIP install --no-cache-dir -U ${h2o_package}
+    PIP install --no-cache-dir --force-reinstall -U ${h2o_package}
 else
     echo "not installing any H2O release version"
 fi
