@@ -112,7 +112,7 @@ class Benchmark:
 
         log.info("Setting up framework {}.".format(self.framework_name))
 
-        self._write_setup_env(self.framework_module.__path__[0])
+        self._write_setup_env(self.framework_module.__path__[0], **dict(self.framework_def.setup_env))
         self._mark_setup_start()
 
         if hasattr(self.framework_module, 'setup'):
@@ -147,13 +147,14 @@ class Benchmark:
 
         self._mark_setup_done()
 
-    def _write_setup_env(self, dest_dir):
+    def _write_setup_env(self, dest_dir, **kwargs):
+        setup_env = dict(
+            AMLB_ROOT=rconfig().root_dir,
+            PY_EXEC_PATH=sys.executable,
+            **kwargs
+        )
         with open(os.path.join(dest_dir, __setup_env_file__), 'w') as f:
-            f.write('\n'.join([
-                f"AMLB_ROOT={rconfig().root_dir}",
-                f"PY_EXEC_PATH={sys.executable}",
-                ""
-            ]))
+            f.write('\n'.join([f"{k}={v}" for k, v in setup_env.items()]+[""]))
 
     def _installed_file(self):
         return os.path.join(self._framework_dir, __installed_file__)
@@ -176,8 +177,12 @@ class Benchmark:
 
     def _mark_setup_done(self):
         installed = self._installed_file()
+        versions = []
+        if hasattr(self.framework_module, 'version'):
+            versions.append(self.framework_module.version())
+        versions.extend([self.framework_def.version, ""])
         with open(installed, 'a') as f:
-            f.write('\n'.join([self.framework_def.version, ""]))
+            f.write('\n'.join(versions))
 
     def cleanup(self):
         # anything to do?
