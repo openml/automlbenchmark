@@ -47,5 +47,5 @@ else
     echo "not installing any H2O release version"
 fi
 
-PY -c "from h2o import __version__; print(__version__)" | grep "^\d\." >> "${HERE}/.installed"
+PY -c "from h2o import __version__; print(__version__)" | grep "^[[:digit:]]\." >> "${HERE}/.installed"
 
