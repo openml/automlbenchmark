@@ -53,9 +53,9 @@ def run(dataset, config):
              backend, mode, config.max_runtime_seconds, config.cores, config.max_mem_size_mb, metric)
     log.info("Environment: %s", os.environ)
 
-    predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
-    statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
-    #tmp_dir = output_subdir('mlplan_tmp', config)
+    mlplan_output_dir = output_subdir('mlplan_out', config)
+    predictions_file = os.path.join(mlplan_output_dir, 'predictions.csv')
+    statistics_file = os.path.join(mlplan_output_dir, 'statistics.json')
 
     cmd_root = f"java -jar -Xmx{mem_limit}M {jar_file}"
 
