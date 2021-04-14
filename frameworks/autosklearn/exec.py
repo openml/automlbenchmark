@@ -15,7 +15,7 @@ from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,6 @@ def run(dataset, config):
     askl_string = "Auto-sklearn2.0" if askl_method_version == 2 else "Auto-sklearn"
 
     log.info(f"\n**** {askl_string} [v{autosklearn.__version__}]****\n")
-    save_metadata(config, version=autosklearn.__version__)
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 

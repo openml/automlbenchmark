@@ -1,24 +1,18 @@
 import logging
 import os
-import warnings
 import pandas as pd
 
 from flaml import AutoML, __version__
 
-from frameworks.shared.callee import call_run, result, save_metadata, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
     log.info(f"\n**** FLAML [v{__version__}] ****\n")
-    save_metadata(config, version=__version__)
-    time_budget = config.max_runtime_seconds
-    n_jobs = config.framework_params.get('_n_jobs', config.cores)
-    print("Running FLAML with {} number of cores".format(config.cores))
 
-    is_classification = config.type == 'classification'
-    log_dir = output_subdir("logs", config)
+    # preparing data
     column_names, _ = zip(*dataset.columns)
     column_types = dict(dataset.columns)
     train = pd.DataFrame(dataset.train.data, columns=column_names).astype(
@@ -30,6 +24,10 @@ def run(dataset, config):
     X_test = test.drop(columns=label)
     y_test = test[label]
 
+    is_classification = config.type == 'classification'
+    time_budget = config.max_runtime_seconds
+    n_jobs = config.framework_params.get('_n_jobs', config.cores)
+    log.info("Running FLAML with {} number of cores".format(config.cores))
     aml = AutoML()
 
     # Mapping of benchmark metrics to flaml metrics
@@ -43,24 +41,21 @@ def run(dataset, config):
         rmse='rmse',
         r2='r2',
     )
-
-    metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
-    if metric is None:
-        raise ValueError("Performance metric {} not supported.".format(config.metric))
-
     perf_metric = metrics_mapping[
         config.metric] if config.metric in metrics_mapping else 'auto'
     if perf_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
 
     training_params = {k: v for k, v in config.framework_params.items()
-     if not k.startswith('_')}
-    flaml_log_file_name=os.path.join(log_dir, "flaml.log")
+                       if not k.startswith('_')}
+
+    log_dir = output_subdir("logs", config)
+    flaml_log_file_name = os.path.join(log_dir, "flaml.log")
     with utils.Timer() as training:
-        aml.fit(X_train, y_train, train, label, perf_metric, config.type, 
-            n_jobs=n_jobs, 
-            log_file_name= flaml_log_file_name,
-            time_budget=time_budget, **training_params)
+        aml.fit(X_train, y_train, train, label, perf_metric, config.type,
+                n_jobs=n_jobs,
+                log_file_name= flaml_log_file_name,
+                time_budget=time_budget, **training_params)
     
     with utils.Timer() as predict:
         predictions = aml.predict(X_test)
@@ -76,6 +71,7 @@ def run(dataset, config):
                     predict_duration=predict.duration,
                     probabilities_labels=labels,
                 )
+
 
 if __name__ == '__main__':
     call_run(run)

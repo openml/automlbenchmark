@@ -13,7 +13,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 from tpot import TPOTClassifier, TPOTRegressor, __version__
 
-from frameworks.shared.callee import call_run, output_subdir, result, save_metadata, utils
+from frameworks.shared.callee import call_run, output_subdir, result, utils
 
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,6 @@ log = logging.getLogger(__name__)
 
 def run(dataset, config):
     log.info(f"\n**** TPOT [v{__version__}]****\n")
-    save_metadata(config, version=__version__)
 
     is_classification = config.type == 'classification'
     # Mapping of benchmark metrics to TPOT metrics

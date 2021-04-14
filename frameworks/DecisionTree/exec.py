@@ -9,14 +9,11 @@ from amlb.datautils import impute
 from amlb.results import save_predictions
 from amlb.utils import Timer
 
-from frameworks.shared.callee import save_metadata
-
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
     log.info(f"\n**** Decision Tree [sklearn v{sklearn.__version__}] ****\n")
-    save_metadata(config, version=sklearn.__version__)
 
     is_classification = config.type == 'classification'
 

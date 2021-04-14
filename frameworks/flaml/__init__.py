@@ -1,8 +1,8 @@
-from amlb.resources import config as rconfig
 from amlb.utils import call_script_in_same_dir
 
+
 def setup(*args, **kwargs):
-    call_script_in_same_dir(__file__, "setup.sh", rconfig().root_dir, *args, **kwargs)
+    call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
 
 
 def run(dataset, config):

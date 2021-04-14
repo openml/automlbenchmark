@@ -4,7 +4,7 @@ VERSION=${1:-"stable"}
 H2O_REPO=${2:-"https://h2o-release.s3.amazonaws.com/h2o"}
 echo "setting up H2O version $VERSION"
 
-. ${HERE}/../shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
     SUDO apt-get install -y openjdk-8-jdk
@@ -43,4 +43,6 @@ if [[ -n "$h2o_package" ]]; then
 else
     echo "not installing any H2O release version"
 fi
+
+PY -c "from h2o import __version__; print(__version__)" >> "${HERE}/.installed"
 

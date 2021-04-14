@@ -16,14 +16,13 @@ from autogluon.core.utils.savers import save_pd, save_pkl
 import autogluon.core.metrics as metrics
 from autogluon.tabular.version import __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils, save_metadata
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
     log.info(f"\n**** AutoGluon [v{__version__}] ****\n")
-    save_metadata(config, version=__version__)
 
     metrics_mapping = dict(
         acc=metrics.accuracy,

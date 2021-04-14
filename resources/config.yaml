@@ -72,7 +72,7 @@ openml:
 
 versions:
   pip:
-  python: 3.7  # should we also enforce the Python version in docker images/ec2 instances?
+  python: 3.7  # the minor version of Python installed on containers/instances, also used as a based version for virtual environments created for each framework.
 
 container: &container
   force_branch: true  # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.

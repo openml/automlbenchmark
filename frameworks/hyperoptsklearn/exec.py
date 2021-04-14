@@ -14,14 +14,13 @@ import hyperopt
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
 
 from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
-from frameworks.shared.callee import call_run, result, save_metadata
+from frameworks.shared.callee import call_run, result
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
     log.info(f"\n**** Hyperopt-sklearn [v{config.framework_version}] ****\n")
-    save_metadata(config)
 
     is_classification = config.type == 'classification'
 

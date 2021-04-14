@@ -7,7 +7,7 @@ if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
 
-. ${HERE}/../shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U ${PKG}

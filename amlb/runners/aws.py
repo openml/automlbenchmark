@@ -1116,16 +1116,16 @@ runcmd:
   - systemctl daemon-reload
   - add-apt-repository -y ppa:deadsnakes/ppa
   - apt-get update
-  - apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
-  - update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-  - pip3 install -U pip wheel awscli
+  - apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip python3-apt
+#  - update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
-  - python3 -m venv venv
+  - python{pyv} -m pip install -U pip wheel awscli
+  - python{pyv} -m venv venv
   - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
   - alias PIP_REQ='xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir'
@@ -1189,9 +1189,8 @@ apt-get -y install curl wget unzip git
 apt-get -y install software-properties-common
 add-apt-repository -y ppa:deadsnakes/ppa
 apt-get update
-apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
-update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-pip3 install -U pip wheel awscli
+apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip python3-apt
+#update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
@@ -1200,7 +1199,8 @@ mkdir /repo
 cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
-python3 -m venv venv
+python{pyv} -m pip install -U pip wheel awscli
+python{pyv} -m venv venv
 alias PIP='/repo/venv/bin/python3 -m pip'
 alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pipv}

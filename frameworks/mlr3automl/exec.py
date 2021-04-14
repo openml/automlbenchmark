@@ -5,7 +5,6 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import read_csv
 from amlb.utils import dir_of, run_cmd
-from frameworks.shared.callee import save_metadata
 
 log = logging.getLogger(__name__)
 
@@ -13,16 +12,15 @@ log = logging.getLogger(__name__)
 def run(dataset: Dataset, config: TaskConfig):
     #TODO: use rpy2 instead? not necessary here though as the call is very simple
     log.info(f"\n**** mlr3automl (R) [{config.framework_version}] ****\n")
-    save_metadata(config)
 
     here = dir_of(__file__)
 
     meta_results_file = os.path.join(config.output_dir, "meta_results.csv")
-    run_cmd(r"""Rscript --vanilla -e "
-                source('{script}'); 
-                run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores}, 
-                    time.budget = {time_budget}, meta_results_file='{meta_results}', seed='{seed}', name='{name}')
-                " """.format(
+    run_cmd(("Rscript --vanilla -e \""
+             "source('{script}'); "
+             "run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores},"
+             " time.budget = {time_budget}, meta_results_file='{meta_results}', seed='{seed}', name='{name}')"
+             "\"").format(
         script=os.path.join(here, 'exec.R'),
         train=dataset.train.path,
         test=dataset.test.path,

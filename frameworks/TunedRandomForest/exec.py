@@ -21,7 +21,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from frameworks.shared.callee import call_run, result, save_metadata, utils
+from frameworks.shared.callee import call_run, result, utils
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,6 @@ def pick_values_uniform(start: int, end: int, length: int):
 
 def run(dataset, config):
     log.info(f"\n**** Tuned Random Forest [sklearn v{sklearn.__version__}] ****\n")
-    save_metadata(config, version=sklearn.__version__)
 
     is_classification = config.type == 'classification'
 

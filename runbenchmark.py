@@ -154,7 +154,7 @@ finally:
         out_dirs = bench.output_dirs
         for d in archives:
             if d in out_dirs:
-                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
+                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arcpathformat='long')
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
 
     sys.exit(code)

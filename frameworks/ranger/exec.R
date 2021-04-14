@@ -1,41 +1,48 @@
-library(mlr)
-library(mlrCPO)
+library(mlr3)
+library(mlr3learners)
+library(mlr3pipelines)
 library(farff)
+library(ranger)
 
 
-run <- function(train_file, test_file, output_predictions_file, cores=1, meta_results_file=NULL) {
+run <- function(train_file, test_file, output_predictions_file, cores=1, meta_results_file=NULL, task_type='classification') {
   train <- readARFF(train_file)
   test <- readARFF(test_file)
   colnames(train) <- make.names(colnames(train))
   colnames(test) <- make.names(colnames(test))
   target <- colnames(train)[ncol(train)]
-  train <- makeClassifTask(data = train, target = target)
+  is_classifaction <- task_type == "classification"
+  task_class <- if (is_classifaction) TaskClassif else TaskRegr
+  train_task <- task_class$new(id="ranger.benchmark.train", backend = train, target = target)
+  test_task <- task_class$new(id="ranger.benchmark.test", backend = test, target = target)
 
-  lrn <- cpoDropConstants() %>>%
-        cpoImputeAll(classes = list(numeric = imputeMax(2),
-                                    integer = imputeMax(2),
-                                    factor = imputeConstant("__MISS__"))
-                    ) %>>%
-        makeLearner("classif.ranger", num.threads = cores, predict.type = "prob")
+  learner <- po("removeconstants") %>>%
+         po("imputeoor") %>>%
+         po("learner", learner = lrn(if (is_classifaction) "classif.ranger" else "regr.ranger",
+                                     num.threads = cores,
+                                     predict_type = if (is_classifaction) "prob" else "response"))
 
   mod <- NULL
   preds <- NULL
-  training <- function() mod <<- train(lrn, train)
-  prediction <- function() preds <<- predict(mod, newdata = test)$data
+  training <- function() mod <<- names(learner$train(train_task))
+  prediction <- function() preds <<- learner$predict(test_task)[[mod]]
   train_duration <- system.time(training())[['elapsed']]
   predict_duration <- system.time(prediction())[['elapsed']]
+  if (is_classifaction) {
+    labels <- colnames(preds$prob)
+    as_label <- function(x) labels[[x]]
+    predictions <- cbind(preds$prob,
+                         predictions=lapply(preds$response, as_label),
+                         truth=lapply(preds$truth, as_label)
+    )
+  } else {
+    predictions <- cbind(predictions=preds$response, truth=preds$truth)
+  }
 
-  preds <- preds[c(2:ncol(preds), 1)]
-  names(preds)[names(preds) == "response"] <- "predictions"
-  names(preds) <- sub("^prob.", "", names(preds))
-  # FIXME: label encoding for predictions and truth?
-
-  write.csv(preds, file = output_predictions_file, row.names = FALSE)
+  write.csv(predictions, file = output_predictions_file, row.names = FALSE)
 
   meta_results <- data.frame(key=c("training_duration", "predict_duration"),
                              value=c(train_duration, predict_duration))
   write.csv(meta_results, file = meta_results_file, row.names = FALSE)
 }
 
-# args = commandArgs(trailingOnly=TRUE)
-# run(args[1], args[2], args[3], as.integer(args[4]))

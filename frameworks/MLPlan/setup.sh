@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-AMLB_DIR="$1"
-VERSION=${2:-"stable"}
+VERSION=${1:-"stable"}
 if [[ "$VERSION" == "stable" ]]; then
     VERSION="latest"
 fi
@@ -9,7 +8,7 @@ fi
 echo "Setup ML-Plan for version $VERSION"
 
 # creating local venv
-. ${HERE}/../shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 
 if [[ -x "$(command -v apt-get)" ]]; then
     echo "setup system packages"
@@ -31,3 +30,5 @@ if [[ ! -e "$TARGET_DIR" ]]; then
     echo "Download finished. Now unzip the downloaded file."
     unzip $DOWNLOAD_DIR/$MLPLAN_ARC -d $TARGET_DIR
 fi
+
+find $HERE/lib/mlplan/*.jar | sed -e 's/.*\/mlplan-cli-\(.*\)\.jar/\1/' >> "${HERE}/.installed"
