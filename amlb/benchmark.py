@@ -150,9 +150,9 @@ class Benchmark:
     def _write_setup_env(self, dest_dir, **kwargs):
         setup_env = dict(
             AMLB_ROOT=rconfig().root_dir,
-            PY_EXEC_PATH=sys.executable,
-            **kwargs
+            PY_EXEC_PATH=sys.executable
         )
+        setup_env.update(**kwargs)
         with open(os.path.join(dest_dir, __setup_env_file__), 'w') as f:
             f.write('\n'.join([f"{k}={v}" for k, v in setup_env.items()]+[""]))
 
