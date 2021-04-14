@@ -81,7 +81,7 @@ class Benchmark:
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name, self.constraint_def)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
 
-        self.parallel_jobs = rconfig().parallel_jobs
+        self.parallel_jobs = rconfig().job_scheduler.parallel_jobs
         self.sid = (rconfig().sid if rconfig().sid is not None
                     else rconfig().token_separator.join([
                         str_sanitize(framework_name),
@@ -450,7 +450,7 @@ class BenchmarkTask:
             # specifying a job timeout to handle edge cases where framework never completes or hangs
             # (adding 5min safety to let the potential subprocess handle the interruption first).
             timeout_secs=self.task_config.job_timeout_seconds+5*60,
-            raise_exceptions=rconfig().exit_on_error,
+            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure,
         )
         job._run = _run
         return job

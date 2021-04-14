@@ -57,22 +57,22 @@ class Job:
     stopped -> []
     """
 
-    def __init__(self, name="", timeout_secs=None, priority=None, raise_exceptions=False):
+    def __init__(self, name="", timeout_secs=None, priority=None, raise_on_failure=False):
         """
 
         :param name:
         :param timeout_secs:
         :param priority:
-        :param raise_exceptions: bool (default=False)
+        :param raise_on_failure: bool (default=False)
             If True, log and raise any Exception that caused a job failure.
-            If False, only log the exception.
+            If False, only log the exception, and produce a None result.
         """
         self.name = name
         self.timeout = timeout_secs
         self.priority = priority
         self.state = None
         self.thread_id = None
-        self.raise_exceptions = raise_exceptions
+        self.raise_on_failure = raise_on_failure
         self.set_state(State.created)
 
     def start(self):
@@ -110,7 +110,7 @@ class Job:
             return Namespace(name=self.name, result=result, duration=t.duration)
         except Exception as e:
             log.exception("Job `%s` failed with error: %s", self.name, str(e))
-            if self.raise_exceptions:
+            if self.raise_on_failure:
                 raise
             return Namespace(name=self.name, result=None, duration=t.duration if t else -1)
 

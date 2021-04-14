@@ -43,8 +43,6 @@ class NoResultError(Exception):
 class ResultError(Exception):
     pass
 
-# TODO: reconsider organisation of output files:
-#   predictions: add framework version to name, timestamp? group into subdirs?
 
 
 class Scoreboard:

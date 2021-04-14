@@ -88,7 +88,7 @@ class AWSBenchmark(Benchmark):
 
         def to_job(iid, inst):
             inst.instance = bench.ec2.Instance(iid)
-            job = Job(inst.key, raise_exceptions=rconfig().exit_on_error)
+            job = Job(inst.key, raise_on_failure=rconfig().job_scheduler.exit_on_job_failure)
             job.instance_id = iid
 
             def _run(job_self):
@@ -143,9 +143,10 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.ec2.terminate_instances not in ['always', 'success', 'never', True, False]:
             raise ValueError("`terminate_instances` setting should be one among ['always', 'success', 'never']")
 
-        if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
-            log.warning("Forcing parallelization to its upper limit: %s.", rconfig().max_parallel_jobs)
-            self.parallel_jobs = rconfig().max_parallel_jobs
+        max_parallel_jobs = rconfig().job_scheduler.max_parallel_jobs
+        if self.parallel_jobs == 0 or self.parallel_jobs > max_parallel_jobs:
+            log.warning("Forcing parallelization to its upper limit: %s.", max_parallel_jobs)
+            self.parallel_jobs = max_parallel_jobs
 
     def _validate2(self):
         if self.ami is None:
@@ -246,24 +247,28 @@ class AWSBenchmark(Benchmark):
             except:
                 pass
 
-    def _job_reschedule(self, job, reason=None):
-        spot_config = rconfig().aws.ec2.spot
-        max_attempts = spot_config.max_attempts
+    def _job_reschedule(self, job, reason=None, fallback=None):
+        js = rconfig().aws.job_scheduler
         if not job.ext.retry:
-            start_delay, delay_fn = retry_policy(spot_config.retry_policy)
-            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=max_attempts - 1)
+            start_delay, delay_fn = retry_policy(js.retry_policy)
+            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=js.max_attempts - 1)
 
         wait = next(job.ext.retry, None)
         if wait is None:
-            if spot_config.fallback_to_on_demand:
-                job.ext.instance_type = InstanceType.On_Demand
+            if fallback and fallback(job, reason):
                 job.ext.wait_min_secs = 0
             else:
-                log.error("Aborting job %s after %s attempts: %s.", job.name, max_attempts, reason)
+                log.error("Aborting job %s after %s attempts: %s.", job.name, js.max_attempts, reason)
                 raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
         self.job_runner.reschedule(job)
+
+    def _spot_fallback(self, job, reason):
+        if 'Spot' in reason and rconfig().aws.ec2.spot.fallback_to_on_demand:
+            job.ext.instance_type = InstanceType.On_Demand
+            return True
+        return False
 
     def _reset_retry(self):
         for j in self.jobs:
@@ -295,13 +300,14 @@ class AWSBenchmark(Benchmark):
         seed = rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed
 
         job = Job(rconfig().token_separator.join([
-            'aws',
-            self.benchmark_name,
-            self.constraint_name,
-            ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
-            ','.join(folds) if len(folds) > 0 else 'all_folds',
-            self.framework_name
-        ]), raise_exceptions=rconfig().exit_on_error,
+                'aws',
+                self.benchmark_name,
+                self.constraint_name,
+                ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
+                ','.join(folds) if len(folds) > 0 else 'all_folds',
+                self.framework_name
+            ]),
+            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure,
         )
         job.ext = ns(
             tasks=task_names,
@@ -350,7 +356,7 @@ class AWSBenchmark(Benchmark):
                 try:
                     if isinstance(e, AWSError) and e.retry:
                         log.info("Job %s couldn't start (%s), rescheduling it.", _self.name, e)
-                        self._job_reschedule(_self, reason=str(e))
+                        self._job_reschedule(_self, reason=str(e), fallback=self._spot_fallback)
                         return
 
                 except JobError as je:
@@ -457,9 +463,9 @@ class AWSBenchmark(Benchmark):
                     log.info("EC2 instance %s is %s: %s", job.ext.instance_id, state, state_reason_msg)
                     # self._update_instance(job.ext.instance_id, stop_reason=state_reason_msg)
                     try:
-                        if state_reason_msg in ['Server.SpotInstanceShutdown', 'Server.SpotInstanceTermination']:
-                            log.warning("Job %s was aborted due to Spot instance unavailability, rescheduling it.", job.name)
-                            self._job_reschedule(job, reason=state_reason_msg)
+                        if state_reason_msg in rconfig().aws.job_scheduler.retry_on_states:
+                            log.warning("Job %s was aborted due to '%s', rescheduling it.", job.name, state_reason_msg)
+                            self._job_reschedule(job, reason=state_reason_msg, fallback=self._spot_fallback)
                     finally:
                         interrupt.set()
             except JobError as je:
@@ -612,7 +618,7 @@ class AWSBenchmark(Benchmark):
                                           meta_info=None)
             if isinstance(e, botocore.exceptions.ClientError):
                 error_code = e.response.get('Error', {}).get('Code', '')
-                retry = error_code in ['SpotMaxPriceTooLow', 'MaxSpotInstanceCountExceeded', 'InsufficientFreeAddressesInSubnet']
+                retry = error_code in rconfig().aws.job_scheduler.retry_on_errors
                 log.error(e)
                 raise AWSError(error_code, retry=retry) from e
             else:
