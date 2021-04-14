@@ -1,6 +1,8 @@
+import glob
 import logging
 import os
 import json
+import re
 import tempfile
 
 from frameworks.shared.callee import call_run, result, output_subdir, utils
@@ -9,7 +11,9 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info(f"\n**** ML-Plan [v{config.framework_version}] ****\n")
+    jar_file = glob.glob("{here}/lib/mlplan/mlplan-cli*.jar".format(here=os.path.dirname(__file__)))[0]
+    version = re.match(r".*/mlplan-cli-(.*).jar", jar_file)[1]
+    log.info(f"\n**** ML-Plan [v{version}] ****\n")
 
     is_classification = config.type == 'classification'
     
