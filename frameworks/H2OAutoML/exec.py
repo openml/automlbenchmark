@@ -11,7 +11,7 @@ import  pandas as pd
 import h2o
 from h2o.automl import H2OAutoML
 
-from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, save_metadata, utils
+from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, utils
 
 log = logging.getLogger(__name__)
 
@@ -178,11 +178,9 @@ def save_artifacts(automl, dataset, config):
                 models_archive = os.path.join(models_dir, f"models_{mformat}.zip")
                 utils.zip_path(models_dir, models_archive, filtr=lambda p: p not in models_artifacts)
                 models_artifacts.append(models_archive)
-
-                def delete(path, isdir):
-                    if not isdir and path not in models_artifacts and os.path.splitext(path)[1] in ['.json', '.zip', '']:
-                        os.remove(path)
-                utils.walk_apply(models_dir, delete, max_depth=0)
+                utils.clean_dir(models_dir,
+                                filtr=lambda p: p not in models_artifacts
+                                                and os.path.splitext(p)[1] in ['.json', '.zip', ''])
 
         if 'model_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
@@ -194,26 +192,16 @@ def save_artifacts(automl, dataset, config):
                 if preds.probabilities_labels is None:
                     preds.probabilities_labels = preds.h2o_labels
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
-            utils.zip_path(predictions_dir,
-                           os.path.join(predictions_dir, "model_predictions.zip"))
-
-            def delete(path, isdir):
-                if isdir:
-                    shutil.rmtree(path, ignore_errors=True)
-            utils.walk_apply(predictions_dir, delete, max_depth=0)
+            predictions_zip = os.path.join(predictions_dir, "model_predictions.zip")
+            utils.zip_path(predictions_dir, predictions_zip)
+            utils.clean_dir(predictions_dir, filtr=lambda p: os.path.isdir(p))
 
         if 'logs' in artifacts:
             logs_dir = output_subdir("logs", config)
             logs_zip = os.path.join(logs_dir, "h2o_logs.zip")
             utils.zip_path(logs_dir, logs_zip)
             # h2o.download_all_logs(dirname=logs_dir)
-
-            def delete(path, isdir):
-                if isdir:
-                    shutil.rmtree(path, ignore_errors=True)
-                elif path != logs_zip:
-                    os.remove(path)
-            utils.walk_apply(logs_dir, delete, max_depth=0)
+            utils.clean_dir(logs_dir, filtr=lambda p: p != logs_zip)
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 

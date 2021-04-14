@@ -125,7 +125,20 @@ def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filtr=None):
                 apply(path, isdir=(p in subdirs))
 
 
-def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, filtr=None):
+def clean_dir(dir_path, filtr=None):
+    def delete(path, isdir):
+        rm = filtr is None or filtr(path)
+        if not rm:
+            return
+        if isdir:
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            os.remove(path)
+
+    walk_apply(dir_path, delete, max_depth=0)
+
+
+def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, arcpathformat='short', filtr=None):
     path = normalize_path(path)
     if not os.path.exists(path): return
     with zipfile.ZipFile(dest_archive, 'w', compression) as zf:
@@ -135,7 +148,10 @@ def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, filtr=None):
         elif os.path.isdir(path):
             def add_to_archive(file, isdir):
                 if isdir: return
-                in_archive = os.path.relpath(file, path)
+                in_archive = (os.path.relpath(file, path) if arcpathformat == 'short'
+                              else os.path.relpath(file, os.path.dirname(path)) if arcpathformat == 'long'
+                              else os.path.basename(file) is arcpathformat == 'flat'
+                              )
                 zf.write(file, in_archive)
             walk_apply(path, add_to_archive,
                        filtr=lambda p: (filtr is None or filtr(p)) and not os.path.samefile(dest_archive, p))
