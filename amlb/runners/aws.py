@@ -215,7 +215,7 @@ class AWSBenchmark(Benchmark):
         else:
             queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
             return MultiThreadingJobRunner(jobs, self.parallel_jobs,
-                                           delay_secs=rconfig().delay_between_jobs,
+                                           delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True,
                                            queueing_strategy=queueing_strategy)
 
