@@ -17,6 +17,29 @@ log = logging.getLogger(__name__)
 vector_keys = re.compile("^y(_.+)?$")
 
 
+def run_cmd_in_venv(caller_file, cmd, *args, **kwargs):
+    params = ns(
+        python_exec='python'
+    )
+    for k, v in params:
+        kk = '_'+k+'_'
+        if kk in kwargs:
+            params[k] = kwargs[kk]
+            del kwargs[kk]
+
+    here = dir_of(caller_file)
+    venv_bin_path = os.path.join(here, 'venv', 'bin')
+    if os.path.isdir(venv_bin_path):
+        py = os.path.join(venv_bin_path, 'python -W ignore')
+        pip = os.path.join(venv_bin_path, 'python -m pip')
+    else:
+        py = f"{params.python_exec} -W ignore"
+        pip = f"{params.python_exec} -m pip"
+
+    cmd = cmd.format(py=py, pip=pip)
+    return run_cmd(cmd, *args, **kwargs)
+
+
 def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
                 process_results=None,

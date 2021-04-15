@@ -4,6 +4,7 @@ VERSION=${1:-"stable"}
 H2O_REPO=${2:-"https://h2o-release.s3.amazonaws.com/h2o"}
 echo "setting up H2O version $VERSION"
 
+. ${HERE}/.setup_env
 . ${HERE}/../shared/setup.sh ${HERE} true
 if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get update
@@ -11,7 +12,9 @@ if [[ -x "$(command -v apt-get)" ]]; then
 fi
 PIP install --no-cache-dir -r ${HERE}/requirements.txt
 
-if  [[ "$VERSION" = "stable" ]]; then
+if [[ -n "$H2O_WHL" ]]; then
+    h2o_package="${H2O_WHL}"
+elif  [[ "$VERSION" = "stable" ]]; then
     h2o_package="h2o"
 elif [[ "$VERSION" = "zermelo" ]]; then
     h2o_package="${H2O_REPO}/rel-zermelo/2/Python/h2o-3.32.0.2-py2.py3-none-any.whl"
@@ -39,10 +42,10 @@ fi
 
 if [[ -n "$h2o_package" ]]; then
     echo "installing H2O-3 $VERSION"
-    PIP install --no-cache-dir -U ${h2o_package}
+    PIP install --no-cache-dir --force-reinstall -U ${h2o_package}
 else
     echo "not installing any H2O release version"
 fi
 
-PY -c "from h2o import __version__; print(__version__)" >> "${HERE}/.installed"
+PY -c "from h2o import __version__; print(__version__)" | grep "^[[:digit:]]\." >> "${HERE}/.installed"
 
