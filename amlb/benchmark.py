@@ -497,7 +497,7 @@ class BenchmarkTask:
             json_dump(task_config, task_config.output_metadata_file, style='pretty')
             meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:
-            if rconfig().exit_on_error:
+            if rconfig().job_scheduler.exit_on_job_failure:
                 raise
             log.exception(e)
             result = ErrorResult(e)
