@@ -215,7 +215,7 @@ class Benchmark:
         else:
             # return ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
             return MultiThreadingJobRunner(jobs, self.parallel_jobs,
-                                           delay_secs=rconfig().delay_between_jobs,
+                                           delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True)
 
     def _run_jobs(self, jobs):
