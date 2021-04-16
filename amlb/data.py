@@ -94,12 +94,11 @@ class Datasplit(ABC):
         self.format = format
 
     @property
-    @abstractmethod
     def path(self) -> str:
-        """
+        return self.data_path(self.format)
 
-        :return:
-        """
+    @abstractmethod
+    def data_path(self, format):
         pass
 
     @property

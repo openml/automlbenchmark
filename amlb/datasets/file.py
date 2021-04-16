@@ -11,7 +11,7 @@ import numpy as np
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
-from ..utils import Namespace, as_list, cached, lazy_property, list_all_files, profile
+from ..utils import Namespace, as_list, cached, lazy_property, list_all_files, profile, split_path
 
 from .fileutils import *
 
@@ -164,8 +164,10 @@ class FileDatasplit(Datasplit):
         super().__init__(dataset, format)
         self._path = path
 
-    @property
-    def path(self):
+    def data_path(self, format):
+        if format != self.format:
+            name = split_path(self._path).basename
+            raise ValueError(f"Dataset {name} is only available in {self.format} format.")
         return self._path
 
     @lazy_property

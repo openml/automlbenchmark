@@ -14,39 +14,13 @@ import arff
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
+from sklearn.impute import SimpleImputer as Imputer
 from sklearn.metrics import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, \
     log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, \
     r2_score, roc_auc_score  # just aliasing
-from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder, OrdinalEncoder
 
 from .utils import profile, path_from_split, repr_def, split_path, touch
-
-try:
-    from sklearn.preprocessing import OrdinalEncoder    # from sklearn 0.20
-except ImportError:
-    class OrdinalEncoder(LabelEncoder):
-
-        def _reshape(self, y):
-            return np.asarray(y, dtype=object).reshape(len(y))
-
-        def fit(self, y):
-            super().fit(self._reshape(y))
-            return self
-
-        def fit_transform(self, y):
-            return super().fit_transform(self._reshape(y)).astype(float, copy=False)
-
-        def transform(self, y):
-            return super().transform(self._reshape(y)).astype(float, copy=False)
-
-try:
-    from sklearn.impute import SimpleImputer as Imputer     # from sklearn 0.20
-except ImportError:
-    from sklearn.preprocessing import Imputer as Imp
-
-    class Imputer(Imp):
-        def __init__(self, missing_values=np.NaN, **kwargs):
-            super(Imputer, self).__init__(missing_values='NaN' if missing_values is np.NaN else missing_values, **kwargs)
 
 
 log = logging.getLogger(__name__)
@@ -284,17 +258,17 @@ class Encoder(TransformerMixin):
         return self.delegate.inverse_transform(vec, **params)
 
 
-def impute(X_fit, *X_s, missing_values=np.NaN, strategy='mean'):
+def impute(X_fit, *X_s, missing_values=np.NaN, strategy='mean', fill_value=None):
     """
 
     :param X_fit:
     :param X_s:
     :param missing_values:
-    :param strategy: 'mean', 'median', 'most_frequent', 'constant' (from sklearn 0.20 only, requires fill_value arg)
+    :param strategy: 'mean', 'median', 'most_frequent', 'constant' (requires fill_value arg)
     :return:
     """
     # TODO: impute only if np.isnan(X_fit).any() ?
-    imputer = Imputer(missing_values=missing_values, strategy=strategy)
+    imputer = Imputer(missing_values=missing_values, strategy=strategy, fill_value=fill_value)
     imputed = imputer.fit_transform(X_fit)
     if len(X_s) > 0:
         result = [imputed]
