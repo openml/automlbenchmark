@@ -59,9 +59,10 @@ class ContainerBenchmark(Benchmark):
         return self.image_name(self.framework_def, label)
 
     def _validate(self):
-        if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
-            log.warning("Forcing parallelization to its upper limit: %s.", rconfig().max_parallel_jobs)
-            self.parallel_jobs = rconfig().max_parallel_jobs
+        max_parallel_jobs = rconfig().job_scheduler.max_parallel_jobs
+        if self.parallel_jobs == 0 or self.parallel_jobs > max_parallel_jobs:
+            log.warning("Forcing parallelization to its upper limit: %s.", max_parallel_jobs)
+            self.parallel_jobs = max_parallel_jobs
 
     def setup(self, mode, upload=False):
         if mode == SetupMode.skip:
@@ -112,13 +113,15 @@ class ContainerBenchmark(Benchmark):
             # TODO: would be nice to reload generated scores and return them
 
         job = Job(rconfig().token_separator.join([
-            self.container_name,
-            self.benchmark_name,
-            self.constraint_name,
-            ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
-            ','.join(folds) if len(folds) > 0 else 'all_folds',
-            self.framework_name
-        ]))
+                self.container_name,
+                self.benchmark_name,
+                self.constraint_name,
+                ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
+                ','.join(folds) if len(folds) > 0 else 'all_folds',
+                self.framework_name
+            ]),
+            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure
+        )
         job._run = _run
         return job
 

@@ -1,4 +1,6 @@
 import logging
+
+import sklearn
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from amlb.benchmark import TaskConfig
@@ -7,14 +9,11 @@ from amlb.datautils import impute
 from amlb.results import save_predictions
 from amlb.utils import Timer
 
-from frameworks.shared.callee import save_metadata
-
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** Decision Tree (sklearn) ****\n")
-    save_metadata(config)
+    log.info(f"\n**** Decision Tree [sklearn v{sklearn.__version__}] ****\n")
 
     is_classification = config.type == 'classification'
 

@@ -59,6 +59,7 @@ def _sanitize_and_add_defaults(frameworks, config):
     # based on the parent. For that reason we add it before
     # we update children with their parent fields.
     for _, framework in frameworks:
+        _add_default_abstract(framework, config)
         if "extends" not in framework:
             _add_default_module(framework, config)
             _add_default_image(framework, config, props=['image'])
@@ -85,9 +86,19 @@ def _add_default_module(framework, config):
         framework.module = f"{config.frameworks.root_module}.{framework.name}"
 
 
+def _add_default_abstract(framework, config):
+    if 'abstract' not in framework:
+        framework.abstract = False
+
+
 def _add_default_version(framework):
     if "version" not in framework:
         framework.version = "stable"
+
+
+def _add_default_setup_env(framework):
+    if "setup_env" not in framework:
+        framework.setup_env = {}
 
 
 def _add_default_setup_args(framework):
@@ -180,6 +191,7 @@ def _update_frameworks_with_parent_definitions(frameworks: Namespace):
 def _add_defaults_to_frameworks(frameworks: Namespace, config):
     for _, framework in frameworks:
         _add_default_version(framework)
+        _add_default_setup_env(framework)
         _add_default_setup_args(framework)
         _add_default_params(framework)
         _add_default_image(framework, config)

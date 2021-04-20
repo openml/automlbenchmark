@@ -11,7 +11,7 @@ import  pandas as pd
 import h2o
 from h2o.automl import H2OAutoML
 
-from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, save_metadata, utils
+from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, utils
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,6 @@ class BackendMemoryMonitoring(utils.Monitoring):
 
 def run(dataset, config):
     log.info(f"\n**** H2O AutoML [v{h2o.__version__}] ****\n")
-    save_metadata(config, version=h2o.__version__)
     # Mapping of benchmark metrics to H2O metrics
     metrics_mapping = dict(
         acc='mean_per_class_error',
@@ -77,7 +76,7 @@ def run(dataset, config):
         if version.parse(h2o.__version__) >= version.parse("3.32.0.3"):  # previous versions may fail to parse correctly some rare arff files using single quotes as enum/string delimiters (pandas also fails on same datasets)
             import_kwargs['quotechar'] = '"'
             train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config), **import_kwargs)
-            if not verify_loaded_frame(train, dataset):
+            if train.nlevels() != dataset.domains.cardinalities:
                 h2o.remove(train)
                 train = None
                 import_kwargs['quotechar'] = "'"
@@ -99,10 +98,11 @@ def run(dataset, config):
                         **training_params)
 
         monitor = (BackendMemoryMonitoring(frequency_seconds=config.ext.monitoring.frequency_seconds,
-                                          check_on_exit=True,
-                                          verbosity=config.ext.monitoring.verbosity) if config.framework_params.get('_monitor_backend', False)
+                                           check_on_exit=True,
+                                           verbosity=config.ext.monitoring.verbosity)
+                   if config.framework_params.get('_monitor_backend', False)
                    # else contextlib.nullcontext  # Py 3.7+ only
-                   else contextlib.contextmanager(iter)([0])
+                   else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
                    )
         with utils.Timer() as training:
             with monitor:
@@ -129,19 +129,14 @@ def run(dataset, config):
         )
 
     finally:
-        if h2o.connection():
+        con = h2o.connection()
+        if con:
             # h2o.remove_all()
-            h2o.connection().close()
-        if h2o.connection().local_server:
-            h2o.connection().local_server.shutdown()
+            con.close()
+            if con.local_server:
+                con.local_server.shutdown()
         # if h2o.cluster():
         #     h2o.cluster().shutdown()
-
-
-def verify_loaded_frame(fr, dataset):
-    nlevels = fr.nlevels()
-    expected_nlevels = [0 if f.values is None else len(f.values) for f in dataset.features]
-    return nlevels == expected_nlevels
 
 
 def frame_name(fr_type, config):
@@ -151,30 +146,43 @@ def frame_name(fr_type, config):
 def save_artifacts(automl, dataset, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
+        models_artifacts = []
         lb = automl.leaderboard.as_data_frame()
         log.debug("Leaderboard:\n%s", lb.to_string())
         if 'leaderboard' in artifacts:
             models_dir = output_subdir("models", config)
-            write_csv(lb, os.path.join(models_dir, "leaderboard.csv"))
-        if 'models' in artifacts:
+            lb_path = os.path.join(models_dir, "leaderboard.csv")
+            write_csv(lb, lb_path)
+            models_artifacts.append(lb_path)
+
+        models_pat = re.compile(r"models(\[(json|binary|mojo)(?:,(\d+))?\])?")
+        models = list(filter(models_pat.fullmatch, artifacts))
+        for m in models:
             models_dir = output_subdir("models", config)
             all_models_se = next((mid for mid in lb['model_id'] if mid.startswith("StackedEnsemble_AllModels")),
                                  None)
-            mformat = 'mojo' if 'mojos' in artifacts else 'json'
-            if all_models_se and mformat == 'mojo':
-                save_model(all_models_se, dest_dir=models_dir, mformat=mformat)
+            match = models_pat.fullmatch(m)
+            mformat = match.group(2) or 'json'
+            topN = int(match.group(3) or -1)
+            if topN < 0 and mformat != 'json' and all_models_se:
+                models_artifacts.append(save_model(all_models_se, dest_dir=models_dir, mformat=mformat))
             else:
+                count = 0
                 for mid in lb['model_id']:
-                    save_model(mid, dest_dir=models_dir, mformat=mformat)
-                models_archive = os.path.join(models_dir, "models.zip")
-                utils.zip_path(models_dir, models_archive)
+                    if topN < 0 or count < topN:
+                        save_model(mid, dest_dir=models_dir, mformat=mformat)
+                        count += 1
+                    else:
+                        break
 
-                def delete(path, isdir):
-                    if path != models_archive and os.path.splitext(path)[1] in ['.json', '.zip']:
-                        os.remove(path)
-                utils.walk_apply(models_dir, delete, max_depth=0)
+                models_archive = os.path.join(models_dir, f"models_{mformat}.zip")
+                utils.zip_path(models_dir, models_archive, filtr=lambda p: p not in models_artifacts)
+                models_artifacts.append(models_archive)
+                utils.clean_dir(models_dir,
+                                filtr=lambda p: p not in models_artifacts
+                                                and os.path.splitext(p)[1] in ['.json', '.zip', ''])
 
-        if 'models_predictions' in artifacts:
+        if 'model_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
             test = h2o.get_frame(frame_name('test', config))
             for mid in lb['model_id']:
@@ -184,37 +192,30 @@ def save_artifacts(automl, dataset, config):
                 if preds.probabilities_labels is None:
                     preds.probabilities_labels = preds.h2o_labels
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
-            utils.zip_path(predictions_dir,
-                           os.path.join(predictions_dir, "models_predictions.zip"))
-
-            def delete(path, isdir):
-                if isdir:
-                    shutil.rmtree(path, ignore_errors=True)
-            utils.walk_apply(predictions_dir, delete, max_depth=0)
+            predictions_zip = os.path.join(predictions_dir, "model_predictions.zip")
+            utils.zip_path(predictions_dir, predictions_zip)
+            utils.clean_dir(predictions_dir, filtr=lambda p: os.path.isdir(p))
 
         if 'logs' in artifacts:
             logs_dir = output_subdir("logs", config)
             logs_zip = os.path.join(logs_dir, "h2o_logs.zip")
             utils.zip_path(logs_dir, logs_zip)
             # h2o.download_all_logs(dirname=logs_dir)
-
-            def delete(path, isdir):
-                if isdir:
-                    shutil.rmtree(path, ignore_errors=True)
-                elif path != logs_zip:
-                    os.remove(path)
-            utils.walk_apply(logs_dir, delete, max_depth=0)
+            utils.clean_dir(logs_dir, filtr=lambda p: p != logs_zip)
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
 
-def save_model(model_id, dest_dir='.', mformat='mojo'):
+def save_model(model_id, dest_dir='.', mformat='json'):
     model = h2o.get_model(model_id)
     if mformat == 'mojo':
-        model.save_mojo(path=dest_dir)
+        return model.save_mojo(path=dest_dir)
         # model.download_mojo(path=dest_dir, get_genmodel_jar=True)
+    elif mformat == 'binary':
+        return h2o.save_model(model, path=dest_dir)
+        # return h2o.download_model(model, path=dest_dir)
     else:
-        model.save_model_details(path=dest_dir)
+        return model.save_model_details(path=dest_dir)
 
 
 def extract_preds(h2o_preds, test, dataset, ):
@@ -228,7 +229,7 @@ def extract_preds(h2o_preds, test, dataset, ):
     predictions = y_pred.values
     probabilities = preds.iloc[:, 1:].values
     prob_labels = h2o_labels = h2o_preds[0][1:]
-    if all([re.fullmatch(r"p\d+", p) for p in prob_labels]):
+    if all([re.fullmatch(r"p(-?\d)+", p) for p in prob_labels]):
         # for categories represented as numerical values, h2o prefixes the probabilities columns with p
         # in this case, we let the app setting the labels to avoid mismatch
         prob_labels = None

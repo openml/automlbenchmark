@@ -42,6 +42,7 @@ mljarsupervised_compete:
     mode: Compete   # set mode for Compete, default mode is Explain
 
 MLPlan:
+  abstract: true
   version: '0.2.3'
 
 MLPlanSKLearn:

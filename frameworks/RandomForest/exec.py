@@ -10,14 +10,13 @@ os.environ['MKL_NUM_THREADS'] = '1'
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from frameworks.shared.callee import call_run, result, save_metadata, utils
+from frameworks.shared.callee import call_run, result, utils
 
 log = logging.getLogger(os.path.basename(__file__))
 
 
 def run(dataset, config):
     log.info(f"\n**** Random Forest [sklearn v{sklearn.__version__}] ****\n")
-    save_metadata(config, version=sklearn.__version__)
 
     is_classification = config.type == 'classification'
 

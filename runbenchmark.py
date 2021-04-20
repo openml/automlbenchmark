@@ -53,6 +53,8 @@ parser.add_argument('--tag', type=str, default=None,
                     help="Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.")
 parser.add_argument('--test-server', type=str2bool, metavar='true|false', nargs='?', const=True, default=False,
                     help=argparse.SUPPRESS)  # "Set to true to connect to the OpenML test server instead."
+parser.add_argument('-e', '--exit-on-error', action='store_true', dest="exit_on_error",
+                    help="If set, the first task that does not complete with a model will cause the entire script to terminate.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
@@ -100,7 +102,7 @@ log.debug("Script args: %s.", args)
 
 config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},
@@ -115,6 +117,7 @@ config_args = ns.parse(
     test_server=args.test_server,
     tag=args.tag,
     command=' '.join(sys.argv),
+    exit_on_error=args.exit_on_error,
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})
@@ -165,7 +168,7 @@ finally:
         out_dirs = bench.output_dirs
         for d in archives:
             if d in out_dirs:
-                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
+                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arcpathformat='long')
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
 
     sys.exit(exit_code)

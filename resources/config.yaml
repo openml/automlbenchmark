@@ -8,141 +8,123 @@ user_dir: ~/.config/automlbenchmark   # where to override settings with a custom
 input_dir: ~/.openml/cache            # where the datasets are loaded by default.
 output_dir: results                   # where logs and results are saved by default.
 
-root_dir:   # app root dir: set by caller (runbenchamrk.py)
+root_dir:   # app root dir: set by caller (runbenchmark.py)
 script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
 
-test_mode: False
-parallel_jobs: 1
-max_parallel_jobs: 10  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
-delay_between_jobs: 5  # delay in seconds between each parallel job start
-monitoring:
-  frequency_seconds: 120  # set <= 0 to disable
-  statistics: ['cpu', 'memory', 'volume']
-  verbosity: 0
-seed: auto  # default global seed (used if not set in task definition), can be one of:
-            # `auto`: a global seed will be generated and passed to all jobs.
-            # `none`: no seed will be provided (seed left to framework's responsibility).
-            # any int32 to pass a fixed seed to the jobs.
-
+test_mode: false        # if set to true, some additional checks are executed at runtime.
+seed: auto              # default global seed (used if not set in task definition), can be one of:
+                        #  `auto`: a global seed will be generated and passed to all jobs.
+                        #  `none`: no seed will be provided (seed left to framework's responsibility).
+                        #   any int32 to pass a fixed seed to the jobs.
 token_separator: '.'    # set to '_' for backwards compatibility.
                         # This separator is used to generate directory structure and files,
-                        # the '_' separator makes the parsing of those names more difficult as it's also used in framework names, task names...
-archive: ['logs']
+                        # however the '_' separator makes the parsing of those names more difficult as it's also used in framework names, task names...
+archive: ['logs']       # list of output folders that should be archived by default.
 
-setup:
+setup:                   # configuration namespace for the framework setup phase.
   live_output: true      # set to true to stream the output of setup commands, if false they are only printed when setup is complete.
   activity_timeout: 600  # when using live output, subprocess will be considered as hanging if nothing was printed during this activity time.
 
-frameworks:
-  definition_file: '{root}/resources/frameworks.yaml'
-  root_module: frameworks
+frameworks:              # configuration namespace for the frameworks definitions.
+  definition_file:       # list of yaml files describing the frameworks base definitions.
+    - '{root}/resources/frameworks.yaml'
+  root_module: frameworks     # the default python module under which the frameworks modules are defined.
   allow_duplicates: false     # if true, the last definition is used.
   tags: ['stable', 'latest', '2020Q2']  # the list of supported tags when looking up frameworks:
                               # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
-benchmarks:
-  definition_dir:
+benchmarks:                     # configuration namespace for the benchmarks definitions.
+  definition_dir:               # list of directories containing the benchmarks yaml definitions.
     - '{root}/resources/benchmarks'
-  constraints_file: '{root}/resources/constraints.yaml'
-  os_mem_size_mb: 2048        # the default amount of memory left to the OS when task assigned memory is computed automatically.
-  os_vol_size_mb: 2048        # the default amount of volume left to the OS when task volume memory is verified.
+  constraints_file:             # list of yaml files describing the benchmarks runtime constraints.
+    - '{root}/resources/constraints.yaml'
+  os_mem_size_mb: 2048          # the default amount of memory left to the OS when task assigned memory is computed automatically.
+  os_vol_size_mb: 2048          # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
-  metrics:                    # default metrics by dataset type (as listed by amlb.data.DatasetType), only the first metric is optimized by the frameworks, the others are computed only for information purpose.
-    binary: ['auc', 'logloss', 'acc', 'balacc']
-    multiclass: ['logloss', 'acc', 'balacc']
-    regression: ['rmse', 'r2', 'mae']
-  defaults:
-    folds: 10
-    max_runtime_seconds: 3600
-    cores: -1                 # default amount of cores used for each automl task. If <= 0, will try to use all cores.
-    max_mem_size_mb: -1       # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
-    min_vol_size_mb: -1       # default minimum amount of free space required on the volume. If <= 0, skips verification.
+  metrics:                      # default metrics by dataset type (as listed by amlb.data.DatasetType),
+                                # only the first metric is optimized by the frameworks,
+                                # the others are computed only for information purpose.
+    binary: ['auc', 'logloss', 'acc', 'balacc']     # available metrics: auc (AUC), acc (Accuracy), balacc (Balanced Accuracy), pr_auc (Precision Recall AUC), logloss (Log Loss), f1, f2, f05 (F-beta scores with beta=1, 2, or 0.5), max_pce, mean_pce (Max/Mean Per-Class Error).
+    multiclass: ['logloss', 'acc', 'balacc']        # available metrics: same as for binary, except auc, replaced by auc_ovo (AUC One-vs-One), auc_ovr (AUC One-vs-Rest). AUC metrics and F-beta metrics are computed with weighted average.
+    regression: ['rmse', 'r2', 'mae']               # available metrics: mae (Mean Absolute Error), mse (Mean Squared Error), msle (Mean Squared Logarithmic Error), rmse (Root Mean Square Error), rmsle (Root Mean Square Logarithmic Error), r2 (R^2).
+  defaults:            # the default constraints, usually overridden by a constraint.
+    folds: 10          # the amount of fold-runs executed for each dataset.
+    max_runtime_seconds: 3600   # default time allocated to the framework to train a model.
+    cores: -1                   # default amount of cores used for each automl task. If <= 0, will try to use all cores.
+    max_mem_size_mb: -1         # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
+    min_vol_size_mb: -1         # default minimum amount of free space required on the volume. If <= 0, skips verification.
 
-results:
-  error_max_length: 200
-  save: true  # set by runbenchmark.py
+job_scheduler:           # configuration namespace
+  stop_on_job_failure:   # if true, the entire run will be aborted on the first job failure (mainly used for testing) : set by caller (runbenchmark.py)
+  parallel_jobs: 1       # the number of jobs being run in parallel in a benchmark session, set by caller (runbenchmark.py)
+  max_parallel_jobs: 10  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
+  delay_between_jobs: 5  # delay in seconds between each parallel job start
 
-openml:
+monitoring:               # configuration namespace describing the basic monitoring features: currently, the app only logs each statistic at a given frequency.
+  frequency_seconds: 120  # set to <= 0 to disable monitoring
+  statistics: ['cpu', 'memory', 'volume']  # the 3 monitoring values currently available
+  verbosity: 0            # from 0 to 2, higher verbosity provides more details for each statistic.
+
+results:                 # configuration namespace for the results.csv file.
+  error_max_length: 200  # the max length of the error message as rendered in the results file.
+  save: true             # set by runbenchmark.py
+
+openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
 
-versions:
+versions:              # configuration namespace for versions enforcement (libraries versions are usually enforced in requirements.txt for the app and for each framework).
   pip:
-  python: 3.7  # should we also enforce the Python version in docker images/ec2 instances?
+  python: 3.7          # the Python minor version that will be used by the application in containers and cloud instances, , also used as a based version for virtual environments created for each framework.
 
-container: &container
-  force_branch: true  # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
-  ignore_labels: ['stable']
-  minimize_instances: true
-  run_extra_options: ''
-  image:      # set this value through -Xcontainer.image=my-image to run benchmark with a specific image
+container: &container          # parent configuration namespace for container modes.
+  force_branch: true           # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
+  ignore_labels: ['stable']    # branches listed here won't appear in the container name.
+  minimize_instances: true     # set to true to avoid running multiple container instances on the same machine.
+  run_extra_options: ''        # additional options passed to the container exec.
+  image:                       # set this value through -Xcontainer.image=my-image to run benchmark with a specific image
   image_defaults:
     author: automlbenchmark
-    image:    # set by container impl based on framework name, lowercase
-    tag:      # set by container impl based on framework version
+    image:                     # set by container impl based on framework name, lowercase
+    tag:                       # set by container impl based on framework version
 
-docker:
+docker:                        # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
   run_extra_options: '--shm-size=1024M'
 
-singularity:
+singularity:                   # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
   library: 'automlbenchmark/default'
 
-aws:
-  region: ''      # read from ~/.aws/config by default
+aws:                    # configuration namespace for AWS mode.
+  region: ''            # the AWS region to use. By default, the app will use the region set in ~/.aws/config when configuring AWS CLI.
 
-  iam:
-    role_name: AutomlBenchmarkRole  # must be unique per AWS account, max 40 chars.
-                                    # if temporary is set to true, the generated role name will be `<role_name>-<now>`.
-                                    # cf. commplete restrictions: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
+  iam:                                               # sub-namespace for AWS IAM service.
+                                                     # Mainly used to allow secure communication between S3 storage and EC2 instances.
+    role_name: AutomlBenchmarkRole                   # must be unique per AWS account, max 40 chars.
+                                                     # if temporary is set to true, the generated role name will be `<role_name>-<now>`.
+                                                     # cf. commplete restrictions: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
     s3_policy_name: AutomlBenchmarkS3Policy
-    instance_profile_name: AutomlBenchmarkProfile # must be unique per AWS account.
-                                                  # if temporary is set to true, the generated instance profile name will be `<instance_profile_name>-<now>`.
-    temporary: false    # if true, the IAM entities will be automatically recreated during setup and deleted at the end of the benchmark run.
-    credentials_propagation_waiting_time_secs: 360  # time to wait before being able to start ec2 instances when using new or temporary credentials.
-    max_role_session_duration_secs: 7200  # the max duration (in seconds) during which the ec2 instance will have access to s3.
-                                          # This should be a number between 900 (15mn) to 43200 (12h).
+    instance_profile_name: AutomlBenchmarkProfile    # must be unique per AWS account.
+                                                     # if temporary is set to true, the generated instance profile name will be `<instance_profile_name>-<now>`.
+    temporary: false                                 # if true, the IAM entities will be automatically recreated during setup and deleted at the end of the benchmark run.
+    credentials_propagation_waiting_time_secs: 360   # time to wait before being able to start ec2 instances when using new or temporary credentials.
+    max_role_session_duration_secs: 7200             # the max duration (in seconds) during which the ec2 instance will have access to s3.
+                                                     # This should be a number between 900 (15mn) to 43200 (12h).
 
-  s3:
-    bucket: automl-benchmark  # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
-                              # if temporary is set to true, the generated bucket name will be `<bucket>-<now>`.
-                              # cf. complete restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
-    temporary: false    # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
-                        # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
-                        # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
-    root_key: ec2/
-    delete_resources: false
+  s3:                               # sub-namespace for AWS S3 service.
+    bucket: automl-benchmark        # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
+                                    # if temporary is set to true, the generated bucket name will be `<bucket>-<now>`.
+                                    # cf. complete restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
+    temporary: false                # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
+                                    # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
+                                    # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
+    root_key: ec2/                  #
+    delete_resources: false         #
 
   ec2:
-    key_name:    # the name of the key pair passed to EC2 instances (if not set, user can't ssh the running instances)
-    security_groups: []  # the optional additional security groups to set on the instances
-    terminate_instances: always     # if `always`, the EC2 instances are always terminated.
-                                    # if `success`, EC2 instances are terminated at the end of the main job iff it ended successfully (=the main results could be downloaded),
-                                    #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
-                                    #               (don't forget to delete the instance UserData before restarting it).
-                                    # if `never`, the instances are only stopped.
-    monitoring:
-      cpu:
-        period_minutes: 5
-        delta_minutes: 30
-        threshold: 5
-        abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
-        query_frequency_seconds: 300     # set to <= 0 to disable
-    instance_type:
-      series: m5
-      map:      # map between num cores required and ec2 instance type sizes
-        default: large
-        '1': small
-        '2': large
-        '4': xlarge
-        '8': 2xlarge
-        '16': 4xlarge
-    root_device_name: '/dev/sda1'
-    volume_type: standard         # one of gp2, io1, st1, sc1, or standard (default)
-    subnet_id: ''
-    regions:
+    regions:                             #
       us-east-1:
         ami: ami-0ac019f4fcb7cb7e6
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
@@ -155,32 +137,71 @@ aws:
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
-    spot:
-      enabled: false             # if enabled, aws mode will try to obtain a spot instance instead of on-demand.
-      block_enabled: false       # if enabled, and if spot is enabled, aws mode will try to use block instances (possible only if total instance runtime <= 6h, i.e. for benchmark runtime up to 4h).
-      max_hourly_price: ''       # the max hourly price (in dollar) per instance to bid (defaults to on-demand price).
-      retry_policy: 'exponential:300:2:10800'  # use "constant:interval", "linear:start:increment:max" or "exponential:start:factor:max"
-                                               # e.g. "linear:300:600" will first wait 5min and then add 10min to waiting time between each retry,
-                                               #      "exponential:300:2:10800" with first wait 5min and then double waiting time between each retry, until the maximum of 3h then used for all retries.
-      max_attempts: 10
-      fallback_to_on_demand: false             # if couldn't obtain a spot instance after max retry, starts an on-demand instance.
+    instance_type:                       #
+      series: m5                         #
+      map:                               # map between num cores required and ec2 instance type sizes
+        default: large
+        '1': small
+        '2': large
+        '4': xlarge
+        '8': 2xlarge
+        '16': 4xlarge
+    volume_type: standard                # one of gp2, io1, st1, sc1, or standard (default).
+    root_device_name: '/dev/sda1'        #
+    subnet_id: ''                        #
+    key_name:                            # the name of the key pair passed to EC2 instances (if not set, user can't ssh the running instances)
+    security_groups: []                  # the optional additional security groups to set on the instances
+    terminate_instances: always          # if `always`, the EC2 instances are always terminated.
+                                         # if `success`, EC2 instances are terminated at the end of the main job iff it ended successfully (=the main results could be downloaded),
+                                         #               otherwise the instance is just stopped and open to manual investigation after restart in case of issue
+                                         #               (don't forget to delete the instance UserData before restarting it).
+                                         # if `never`, the instances are only stopped.
+    terminate_waiter:                    # the config used to wait for instance complete stop or termination (to completely disable the waiter, set it to None, or set max_attempts to 0)
+      delay: 0                           # delay between each request during waiting period: 0 defaults to `aws.query_frequency_seconds` instead of aws defaults (15).
+      max_attempts: 40                   # max requests during waiting period: using aws defaults (40)
+    spot:                                #
+      enabled: false                     # if enabled, aws mode will try to obtain a spot instance instead of on-demand.
+      block_enabled: false               # if enabled, and if spot is enabled, aws mode will try to use block instances (possible only if total instance runtime <= 6h, i.e. for benchmark runtime up to 4h).
+      max_hourly_price: ''               # the max hourly price (in dollar) per instance to bid (defaults to on-demand price).
+      fallback_to_on_demand: false       # if we couldn't obtain any spot instance after all attempts in the job scheduling logic, then starts an on-demand instance.
+    monitoring:                          # EC2 instances monitoring
+      cpu:                               #
+        period_minutes: 5                #
+        delta_minutes: 30                #
+        threshold: 5                     #
+        abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
+        query_frequency_seconds: 300     # set to <= 0 to disable
 
-  max_timeout_seconds: 21600
+  job_scheduler:                             # AWS mode sub-namespace specifying
+    max_attempts: 10                         #
+    retry_policy: 'exponential:300:2:10800'  # use "constant:interval", "linear:start:increment:max" or "exponential:start:factor:max"
+                                             # e.g. "linear:300:600" will first wait 5min and then add 10min to waiting time between each retry,
+                                             #      "exponential:300:2:10800" with first wait 5min and then double waiting time between each retry, until the maximum of 3h then used for all retries.
+    retry_on_errors:                         # Boto3 errors that will trigger a job reschedule.
+      - 'SpotMaxPriceTooLow'
+      - 'MaxSpotInstanceCountExceeded'
+      - 'InsufficientFreeAddressesInSubnet'
+    retry_on_states:                         # EC2 instance states that will trigger a job reschedule.
+      - 'Server.SpotInstanceShutdown'
+      - 'Server.SpotInstanceTermination'
+
+  max_timeout_seconds: 21600    #
   overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
-  query_frequency_seconds: 30
-  resource_files: []    # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
-                        # Those files are actually uploaded to s3 bucket (precisely to s3://{s3.bucket}/{s3.root_key}/user),
-                        #  this folder being itself synchronized on each ec2 instance and used as user directory.
-                        # The possibility of adding resource_files is especially necessary to run custom frameworks.
-  resource_ignore:      # files ignored when listing `resource_files`, especially if those contain directories
+  query_frequency_seconds: 30   # check instance state every N seconds
+
+  resource_files: []            # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
+                                # Those files are actually uploaded to s3 bucket (precisely to s3://{s3.bucket}/{s3.root_key}/user),
+                                #  this folder being itself synchronized on each ec2 instance and used as user directory.
+                                # The possibility of adding resource_files is especially necessary to run custom frameworks.
+  resource_ignore:              # files ignored when listing `resource_files`, especially if those contain directories.
     - '*/lib/*'
     - '*/venv/*'
     - '*/__pycache__/*'
     - '*/.marker_*'
     - '*.swp'
-  minimize_instances: false
-  use_docker: false     # if true, EC2 instances will run benchmark tasks in a docker instance.
-                        # if false, it will run in local mode after cloning project_repository.
-                        # Note that using docker in AWS mode requires the docker image being
-                        # previously published in a public repository or using an AMI with the pre-downloaded image,
-                        # whereas the local mode is self-configured and framework agnostic (works with generic AMI).
+  minimize_instances: false    # if true,
+  use_docker: false            # if true, EC2 instances will run benchmark tasks in a docker instance.
+                               # if false, it will run in local mode after cloning project_repository.
+                               # Note that using docker in AWS mode requires the docker image being
+                               # previously published in a public repository or using an AMI with the pre-downloaded image,
+                               # whereas the local mode is self-configured and framework agnostic (works with generic AMI).

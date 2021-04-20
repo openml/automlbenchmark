@@ -8,14 +8,11 @@ from amlb.datautils import reorder_dataset
 from amlb.results import NoResultError, save_predictions
 from amlb.utils import dir_of, path_from_split, run_cmd, split_path, Timer
 
-from frameworks.shared.callee import save_metadata
-
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
     log.info(f"\n**** AutoWEKA [v{config.framework_version}]****\n")
-    save_metadata(config)
 
     is_classification = config.type == 'classification'
     if not is_classification:
