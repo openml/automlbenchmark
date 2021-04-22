@@ -1,0 +1,65 @@
+name: Run Specific Frameworks
+
+# run either if *only* frameworks are edited, or always if the workflow or action is edited.
+on:
+  pull_request:
+    paths:
+      - 'frameworks/**'
+      - '!frameworks/shared/**'
+      - '!amlb/**'
+      - '!frameworks/shared/**'
+      - '!runbenchmark.py'
+      - '!requirements.txt'
+      - '.github/workflows/run_frameworks.yml'
+      - '.github/actions/runbenchmark/action.yml'
+
+
+jobs:
+  framework_changes:
+    name: Detect Changed AutoML Frameworks
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.frameworks-diff.outputs.frameworks }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: pull base branch
+      run: |
+        git fetch --all
+        git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
+        git checkout $GITHUB_HEAD_REF
+    - name: store changed frameworks
+      id: frameworks-diff
+      run: |
+        echo "::set-output name=frameworks::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g' | perl -p -e 's/\n//'`"
+
+
+  run_frameworks:
+    name: ${{ matrix.framework }}/${{ matrix.task }}
+    runs-on: ubuntu-latest
+    needs: framework_changes
+    strategy:
+      matrix:
+        framework: [autogluon, autosklearn, gama, h2oautoml, mlplan, tpot, constantpredictor, randomforest, tunedrandomforest]
+        task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
+      fail-fast:  true
+
+    steps:
+      - uses: actions/checkout@v2
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
+      - uses: actions/cache@v2
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            pip-
+      - uses: actions/setup-python@v2
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
+        with:
+          python-version: '3.8'
+      - name: Run benchmark
+        if: contains(needs.framework_changes.outputs.output1, matrix.framework)
+        uses: ./.github/actions/runbenchmark
+        with:
+          framework: ${{ matrix.framework }}
+          task: ${{ matrix.task }}
