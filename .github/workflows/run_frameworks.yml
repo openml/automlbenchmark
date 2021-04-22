@@ -30,7 +30,12 @@ jobs:
     - name: store changed frameworks
       id: frameworks-diff
       run: |
-        echo "::set-output name=frameworks::`git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g' | perl -p -e 's/\n//'`"
+        changed=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
+        json_array=[
+        for framework in $changed; do json_array=$json_array\"$framework\",; done
+        json_array=${json_array::-1}]  #remove trailing comma and add closing bracket
+        echo Building matrix for changed frameworks: $json_array
+        echo "::set-output name=frameworks::$json_array"
 
 
   run_frameworks:
@@ -39,7 +44,7 @@ jobs:
     needs: framework_changes
     strategy:
       matrix:
-        framework: [autogluon, autosklearn, gama, h2oautoml, mlplanweka, tpot, constantpredictor, randomforest, tunedrandomforest]
+        framework: ${{ fromJson(needs.framework_changes.outputs.frameworks) }}
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
       fail-fast:  true
 
