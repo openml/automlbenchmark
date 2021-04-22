@@ -164,7 +164,7 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
         description = "Framework_Hyperparameters-"
         description += '-'.join(f"{hp}:{value}" for hp, value in Namespace.dict(metadata.framework_params).items())
     else:
-        description = ''
+        description = None
 
     return openml.runs.OpenMLRun(
         task_id=oml_task.id,
