@@ -81,6 +81,9 @@ jobs:
     needs: detect_changes
     if: needs.detect_changes.outputs.skip_baseline == 0
     steps:
+      - name: Debug statement
+        run: |
+        echo ${{ needs.detect_changes.outputs.frameworks }}
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
