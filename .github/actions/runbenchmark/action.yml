@@ -22,4 +22,5 @@ runs:
     - name: Run ${{ inputs.framework }} on ${{ inputs.task }}
       run: |
         python runbenchmark.py ${{ inputs.framework }} validation test -f 0 -t ${{ inputs.task }} -e
+        echo "Exit withs status $?"
       shell: bash
