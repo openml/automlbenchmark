@@ -95,6 +95,7 @@ jobs:
     name: ${{ matrix.framework }}/${{ matrix.task }}
     runs-on: ubuntu-latest
     needs: baseline
+    if: ! ${{ failure() }}  # `baseline` is cancelled when running only specific frameworks, but then should still run
     strategy:
       matrix:
         python-version: [3.8]
