@@ -83,7 +83,7 @@ jobs:
     steps:
       - name: Debug statement
         run: |
-        echo ${{ needs.detect_changes.outputs.frameworks }}
+          echo ${{ needs.detect_changes.outputs.frameworks }}
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
