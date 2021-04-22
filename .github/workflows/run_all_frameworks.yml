@@ -107,8 +107,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
      - baseline
-     - detect_changes
-    if: ! ${{ failure() }} && ${{ needs.detect_changes.outputs.skip_evaluation }} == 0
     strategy:
       matrix:
         python-version: [3.8]
