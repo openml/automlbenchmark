@@ -55,7 +55,7 @@ jobs:
           skip_evaluation=0
           if [[ $is_common ]];
           then
-            frameworks='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
+            frameworks=["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]
           else
             changed=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
             if [ ! -z $changed ];
