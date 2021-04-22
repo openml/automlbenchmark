@@ -45,7 +45,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-        framework: [autogluon, autosklearn, gama, h2oautoml, mlplan, tpot, constantpredictor, randomforest, tunedrandomforest]
+        framework: [autogluon, autosklearn, gama, h2oautoml, mlplanweka, tpot, constantpredictor, randomforest, tunedrandomforest]
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
 
