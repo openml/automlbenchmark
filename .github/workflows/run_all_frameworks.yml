@@ -83,7 +83,7 @@ jobs:
     steps:
       - name: Debug statement
         run: |
-          echo ${{ needs.detect_changes.outputs.frameworks }}
+          echo ${{ needs.detect_changes.outputs.output1 }}
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
@@ -114,7 +114,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-        framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
+        framework: ${{ fromJson(needs.detect_changes.outputs.output1) }}
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
 
