@@ -67,8 +67,9 @@ jobs:
               # No changes to common files or frameworks - must be e.g. docs. No need to run tests.
               skip_evaluation=1
               frameworks=[]
-
+            fi
           fi
+
           echo Building matrix for frameworks: $frameworks
           echo "::set-output name=frameworks::$frameworks"
           echo "::set-output name=skip_baseline::$is_common"
