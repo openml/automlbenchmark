@@ -37,7 +37,7 @@ jobs:
           "runbenchmark.py "\
           "requirements.txt"
           echo Common files: $common_files
-          echo Changed files: $common_files
+          echo Changed files: $changed_files
 
           is_common=1
           for f in $changed_files
@@ -52,7 +52,7 @@ jobs:
 
           if [[ $is_common ]];
           then
-            frameworks=["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]
+            frameworks='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
           else
             changed=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
             json_array=[
@@ -66,6 +66,8 @@ jobs:
   baseline:
     name: Run Baseline on OpenML Iris
     runs-on: ubuntu-latest
+    needs: detect_changes
+    if: needs.detect_changes.outputs.common_changed == 0
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
