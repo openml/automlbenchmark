@@ -1,14 +1,6 @@
 name: Run All Frameworks
 
-on:
-  pull_request:
-    paths:
-      - 'amlb/**'
-      - 'frameworks/shared/**'
-      - '.github/workflows/run_all_frameworks.yml'
-      - '.github/runbenchmark/action.yml'
-      - 'runbenchmark.py'
-      - 'requirements.txt'
+on: pull_request
 
 
 jobs:
@@ -20,7 +12,6 @@ jobs:
       frameworks: ${{ steps.find-required-tests.outputs.frameworks }}
       skip_baseline: ${{ steps.find-required-tests.outputs.skip_baseline }}
       skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
-      debug: ${{ steps.find-required-tests.outputs.debug }}
     steps:
       - uses: actions/checkout@v2
       - name: pull base branch
@@ -52,18 +43,17 @@ jobs:
             fi
           done
 
-          #TASKS = '["bioresponse"]'
           # Indicates which jobs should be executed (0) or not (1)
           skip_evaluation=0
           if [[ $is_common ]];
           then
             FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
           else
-            changed=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
-            if [ ! -z $changed ];
+            changed_frameworks=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
+            if [ ! -z $changed_frameworks ];
             then
               json_array=[
-              for framework in $changed; do json_array=$json_array\"$framework\",; done
+              for framework in $changed_frameworks; do json_array=$json_array\"$framework\",; done
               FRAMEWORKS=${json_array::-1}]  #remove trailing comma and add closing bracket
             else
               # No changes to common files or frameworks - must be e.g. docs. No need to run tests.
@@ -72,13 +62,11 @@ jobs:
             fi
           fi
 
-          MATRIX_JSON="{\"projects\": ${MATRIX_PROJECTS_JSON}, \"include\": ${MATRIX_INCLUDE_JSON}}"
-          echo Building matrix for frameworks: $frameworks
-          # echo "::set-output name=frameworks::$frameworks"
+          echo Building matrix for frameworks: $FRAMEWORKS
+
           echo "::set-output name=frameworks::$FRAMEWORKS"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
-          echo "::set-output name=debug::$(ls|jq -cnR '[inputs | select(length>0)]')"
 
   baseline:
     name: Run Baseline on OpenML Iris
@@ -86,10 +74,6 @@ jobs:
     needs: detect_changes
     if: needs.detect_changes.outputs.skip_baseline == 0
     steps:
-      - name: Debug statement
-        run: |
-          echo ${{ needs.detect_changes.outputs.frameworks }}
-          echo ${{ needs.detect_changes.outputs.debug }}
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
@@ -124,7 +108,6 @@ jobs:
         framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
-
     steps:
     - uses: actions/checkout@v2
     - uses: actions/cache@v2
