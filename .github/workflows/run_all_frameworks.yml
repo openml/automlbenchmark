@@ -17,9 +17,10 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      output1: ${{ steps.find-required-tests.outputs.frameworks }}
-      output2: ${{ steps.find-required-tests.outputs.skip_baseline }}
-      output3: ${{ steps.find-required-tests.outputs.skip_evaluation }}
+      frameworks: ${{ steps.find-required-tests.outputs.frameworks }}
+      skip_baseline: ${{ steps.find-required-tests.outputs.skip_baseline }}
+      skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
+      debug: ${{ steps.find-required-tests.outputs.debug }}
     steps:
       - uses: actions/checkout@v2
       - name: pull base branch
@@ -75,6 +76,7 @@ jobs:
           echo "::set-output name=frameworks::[\"autosklearn\",\"h2oautoml\"]"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
+          run: echo "::set-output name=debug::{\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}"
 
   baseline:
     name: Run Baseline on OpenML Iris
@@ -84,7 +86,8 @@ jobs:
     steps:
       - name: Debug statement
         run: |
-          echo ${{ needs.detect_changes.outputs.output1 }}
+          echo ${{ needs.detect_changes.outputs.frameworks }}
+          echo ${{ needs.detect_changes.outputs.debug }}
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
@@ -115,7 +118,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-        framework: ${{ fromJson(needs.detect_changes.outputs.output1) }}
+        framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
 
