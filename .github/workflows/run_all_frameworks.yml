@@ -52,28 +52,30 @@ jobs:
             fi
           done
 
+          TASKS = '["bioresponse"]'
           # Indicates which jobs should be executed (0) or not (1)
           skip_evaluation=0
           if [[ $is_common ]];
           then
-            frameworks='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
+            FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
           else
             changed=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
             if [ ! -z $changed ];
             then
               json_array=[
               for framework in $changed; do json_array=$json_array\"$framework\",; done
-              frameworks=${json_array::-1}]  #remove trailing comma and add closing bracket
+              FRAMEWORKS=${json_array::-1}]  #remove trailing comma and add closing bracket
             else
               # No changes to common files or frameworks - must be e.g. docs. No need to run tests.
               skip_evaluation=1
-              frameworks=[]
+              FRAMEWORKS=[]
             fi
           fi
 
+          MATRIX_JSON="{\"projects\": ${MATRIX_PROJECTS_JSON}, \"include\": ${MATRIX_INCLUDE_JSON}}"
           echo Building matrix for frameworks: $frameworks
           # echo "::set-output name=frameworks::$frameworks"
-          echo "::set-output name=frameworks::$(ls|jq -cnR '[inputs | select(length>0)]')"
+          echo "::set-output name=frameworks::$FRAMEWORKS"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
           echo "::set-output name=debug::$(ls|jq -cnR '[inputs | select(length>0)]')"
@@ -115,8 +117,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
      - baseline
+     - detect_changes
     strategy:
-      matrix:
         python-version: [3.8]
         framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
