@@ -71,7 +71,8 @@ jobs:
           fi
 
           echo Building matrix for frameworks: $frameworks
-          echo "::set-output name=frameworks::$frameworks"
+          # echo "::set-output name=frameworks::$frameworks"
+          echo "::set-output name=frameworks::[\"autosklearn\",\"h2oautoml\"]"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
 
