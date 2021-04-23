@@ -37,7 +37,7 @@ jobs:
           do
             if echo $common_files | grep -e $f >> /dev/null;
             then
-                echo File $f detected as common file
+                echo "File $f detected as common file"
                 is_common=0
                 break
             fi
@@ -45,7 +45,7 @@ jobs:
 
           # Indicates which jobs should be executed (0) or not (1)
           skip_evaluation=0
-          if [[ $is_common ]];
+          if [[ $is_common -eq 0 ]];
           then
             FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
           else
@@ -102,6 +102,7 @@ jobs:
     needs:
      - baseline
      - detect_changes
+    if: ${{ success() }} || ${{ cancelled() }}
     strategy:
       matrix:
         python-version: [3.8]
