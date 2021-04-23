@@ -40,12 +40,11 @@ jobs:
                 is_common=0
                 break
             fi
-            echo "Done with loop: $is_common"
           done
 
           # Indicates which jobs should be executed (0) or not (1)
           skip_evaluation=0
-          if [[ $is_common ]];
+          if [[ $is_common -eq 0 ]];
           then
             echo "Common files changed, adding all frameworks"
             FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
