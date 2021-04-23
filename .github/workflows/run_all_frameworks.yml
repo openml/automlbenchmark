@@ -119,6 +119,7 @@ jobs:
      - baseline
      - detect_changes
     strategy:
+      matrix:
         python-version: [3.8]
         framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
         task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
