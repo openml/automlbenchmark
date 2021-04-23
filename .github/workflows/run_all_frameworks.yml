@@ -40,6 +40,7 @@ jobs:
                 is_common=0
                 break
             fi
+            echo "Done with loop: $is_common"
           done
 
           # Indicates which jobs should be executed (0) or not (1)
