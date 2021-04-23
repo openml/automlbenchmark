@@ -92,9 +92,6 @@ jobs:
       - name: Run constantpredictor on openml iris
         run: |
           python runbenchmark.py constantpredictor openml/t/59 1h4c
-      - name: Echo Python Files
-        run: |
-          python -c "import numpy; print(numpy.__file__)"
 
   run_frameworks:
     name: ${{ matrix.framework }}/${{ matrix.task }}
