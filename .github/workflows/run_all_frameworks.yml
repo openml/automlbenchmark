@@ -73,10 +73,10 @@ jobs:
 
           echo Building matrix for frameworks: $frameworks
           # echo "::set-output name=frameworks::$frameworks"
-          echo "::set-output name=frameworks::[\"autosklearn\",\"h2oautoml\"]"
+          echo "::set-output name=frameworks::$(ls|jq -cnR '[inputs | select(length>0)]')"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
-          echo "::set-output name=debug::{\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}"
+          echo "::set-output name=debug::$(ls|jq -cnR '[inputs | select(length>0)]')"
 
   baseline:
     name: Run Baseline on OpenML Iris
