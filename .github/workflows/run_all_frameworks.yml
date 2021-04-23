@@ -46,9 +46,11 @@ jobs:
           skip_evaluation=0
           if [[ $is_common ]];
           then
+            echo "Common files changed, adding all frameworks"
             FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
           else
             changed_frameworks=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
+            echo "Detected changed frameworks: $changed_frameworks"
             if [ ! -z $changed_frameworks ];
             then
               json_array=[
