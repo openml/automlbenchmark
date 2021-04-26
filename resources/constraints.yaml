@@ -27,9 +27,3 @@ test:
   max_runtime_seconds: 28800
   cores: 8
   min_vol_size_mb: 131072
-
-# use 256 volume size GB for all 8c constraints
-# 1h8c256v
-
-# double check docker defaults on linux (aws)
-
