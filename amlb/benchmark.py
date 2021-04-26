@@ -373,7 +373,7 @@ class TaskConfig:
 
         sys_cores = system_cores()
         if self.cores > sys_cores:
-            handle_unfulfilled(f"System with {sys_cores} cores don't meet requirements ({self.cores} cores)!.",
+            handle_unfulfilled(f"System with {sys_cores} cores does not meet requirements ({self.cores} cores)!.",
                                on_auto='warn' if mode == 'local' else 'fail')
         self.cores = min(self.cores, sys_cores) if self.cores > 0 else sys_cores
         log.info("Assigning %s cores (total=%s) for new task %s.", self.cores, sys_cores, self.name)
@@ -387,7 +387,7 @@ class TaskConfig:
         log.info("Assigning %.f MB (total=%.f MB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
         if assigned_mem > sys_mem.total:
-            handle_unfulfilled(f"Total system memory {sys_mem.total} MB doesn't meet requirements ({assigned_mem} MB)!.",
+            handle_unfulfilled(f"Total system memory {sys_mem.total} MB does not meet requirements ({assigned_mem} MB)!.",
                                on_auto='fail')
         elif assigned_mem > sys_mem.available:
             handle_unfulfilled(f"Assigned memory ({assigned_mem} MB) exceeds system available memory ({sys_mem.available} MB / total={sys_mem.total} MB)!")
@@ -399,7 +399,7 @@ class TaskConfig:
             sys_vol = system_volume_mb()
             os_recommended_vol = rconfig().benchmarks.os_vol_size_mb
             if self.min_vol_size_mb > sys_vol.free:
-                handle_unfulfilled(f"Available volume memory ({sys_vol.free} MB / total={sys_vol.total} MB) doesn't meet requirements ({self.min_vol_size_mb+os_recommended_vol} MB)!")
+                handle_unfulfilled(f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements ({self.min_vol_size_mb+os_recommended_vol} MB)!")
 
 
 class BenchmarkTask:
