@@ -86,7 +86,7 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     with utils.Timer() as predict_timer:
         predictions = gama_automl.predict(x)
-    if is_classification is not None:
+    if is_classification:
         probabilities = gama_automl.predict_proba(x)
     else:
         probabilities = None
