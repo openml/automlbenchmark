@@ -164,7 +164,7 @@ class OpenmlDataset(Dataset):
         train.basename = f"{train.basename}_train_{self.fold}"
         test.basename = f"{test.basename}_test_{self.fold}"
         if ext:
-            train.ext = test.ext = ext
+            train.extension = test.extension = ext
         return path_from_split(train), path_from_split(test)
 
 

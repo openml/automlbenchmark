@@ -5,7 +5,8 @@ import json
 import re
 import tempfile
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.utils import Timer, run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -76,8 +77,8 @@ def run(dataset, config):
 
         cmd = cmd_root + ''.join([" -{} {}".format(k, v) for k, v in cmd_params.items()])
 
-        with utils.Timer() as training:
-            utils.run_cmd(cmd, _live_output_=True)
+        with Timer() as training:
+            run_cmd(cmd, _live_output_=True)
 
     with open(statistics_file, 'r') as f:
         stats = json.load(f)

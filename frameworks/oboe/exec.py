@@ -5,7 +5,8 @@ import sys
 sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
 from auto_learner import AutoLearner
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def run(dataset, config):
 
     aml_models = lambda: [aml.ensemble, *aml.ensemble.base_learners] if len(aml.ensemble.base_learners) > 0 else []
 
-    with utils.Timer() as training:
+    with Timer() as training:
         try:
             aml.fit(X_train, y_train)
         except IndexError as e:
@@ -45,7 +46,7 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X
     y_test = dataset.test.y
-    with utils.Timer() as predict:
+    with Timer() as predict:
         predictions = aml.predict(X_test)
     predictions = predictions.reshape(len(X_test))
 

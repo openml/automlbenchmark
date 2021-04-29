@@ -26,4 +26,4 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
-PY -c "from supervised import __version__; print(__version__)" >> "${HERE}/.installed"
+PY -c "import matplotlib; matplotlib.use('agg'); from supervised import __version__; print(__version__)" >> "${HERE}/.installed"

@@ -51,15 +51,21 @@ def as_col(data):
     return data.reshape(-1, 1) if isinstance(data, np.ndarray) else data
 
 
+def venv_bin(fmwk_dir):
+    return os.path.join(fmwk_dir, 'venv', 'bin')
+
+
+def venv_python_exec(fmwk_dir):
+    return os.path.join(venv_bin(fmwk_dir), 'python -W ignore')
+
+
 def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
                 process_results=None,
                 python_exec=None):
-
     here = dir_of(caller_file)
-    venv_bin_path = os.path.join(here, 'venv', 'bin')
     if python_exec is None:  # use local virtual env by default
-        python_exec = os.path.join(venv_bin_path, 'python -W ignore')
+        python_exec = venv_python_exec(here)
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
@@ -90,7 +96,7 @@ def run_in_venv(caller_file, script_file: str, *args,
                                   _error_level_=logging.DEBUG,
                                   _env_=dict(
                                       PATH=os.pathsep.join([
-                                          venv_bin_path,
+                                          venv_bin(here),
                                           os.environ['PATH']
                                       ]),
                                       PYTHONPATH=os.pathsep.join([
