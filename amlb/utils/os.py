@@ -79,6 +79,7 @@ def touch(path, as_dir=False):
         if basename:
             open(path, 'a').close()
     os.utime(path, times=None)
+    return path
 
 
 def backup_file(file_path):

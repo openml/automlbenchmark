@@ -194,6 +194,8 @@ class Benchmark:
         :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
         :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
+        assert self._is_setup_done(), f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
+
         task_defs = self._get_task_defs(task_name)
         jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
@@ -308,7 +310,8 @@ class Benchmark:
         if rconfig().results.save:
             self._save(board)
 
-        log.info("Summing up scores for current run:\n%s", board.as_printable_data_frame().dropna(how='all', axis='columns').to_string())
+        log.info("Summing up scores for current run:\n%s",
+                 board.as_printable_data_frame(verbosity=2).dropna(how='all', axis='columns').to_string(index=False))
         return board.as_data_frame()
 
     def _save(self, board):

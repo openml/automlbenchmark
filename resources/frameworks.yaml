@@ -185,13 +185,6 @@ constantpredictor:
     Fast dummy classifier mainly used to test the app and/or datasets: this doesn't encode data.
   project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
 
-constantpredictor_enc:
-  extends: constantpredictor
-  description: |
-    Fast dummy classifier mainly used to test the app and/or datasets: this version encodes data.
-  params:
-    encode: true
-
 DecisionTree:
   version: 'stable'
   description: |

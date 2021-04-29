@@ -1,5 +1,7 @@
 import logging
 
+from .core import flatten
+
 log = logging.getLogger(__name__)
 
 _CACHE_PROP_PREFIX_ = '__cached__'
@@ -49,12 +51,11 @@ def cached(fn):
 def memoize(fn):
     prop_name = _cached_property_name(fn)
 
-    def decorator(self, key=None):  # TODO: could support unlimited args by making a tuple out of *args + **kwargs: not needed for now
+    def decorator(self, *args, **kwargs):
         memo = cache(self, prop_name, lambda _: {})
-        if not isinstance(key, str) and hasattr(key, '__iter__'):
-            key = tuple(key)
+        key = tuple(flatten((args, kwargs), flatten_dict=True))
         if key not in memo:
-            memo[key] = fn(self) if key is None else fn(self, key)
+            memo[key] = fn(self, *args, **kwargs)
         return memo[key]
 
     return decorator

@@ -18,8 +18,8 @@ def run(dataset, config):
         # regression currently fails (as of 26.02.2019: still under development state by oboe team)
         raise ValueError('Regression is not yet supported (under development).')
 
-    X_train = dataset.train.X_enc
-    y_train = dataset.train.y_enc
+    X_train = dataset.train.X
+    y_train = dataset.train.y
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_cores = config.framework_params.get('_n_cores', config.cores)
@@ -43,8 +43,8 @@ def run(dataset, config):
             raise e
 
     log.info('Predicting on the test set.')
-    X_test = dataset.test.X_enc
-    y_test = dataset.test.y_enc
+    X_test = dataset.test.X
+    y_test = dataset.test.y
     with utils.Timer() as predict:
         predictions = aml.predict(X_test)
     predictions = predictions.reshape(len(X_test))

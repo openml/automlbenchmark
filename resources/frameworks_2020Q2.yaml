@@ -72,11 +72,6 @@ TPOT:
 
 constantpredictor: {}
 
-constantpredictor_enc:
-  extends: constantpredictor
-  params:
-    encode: true
-
 DecisionTree:
   version: '0.22.2'
 

@@ -11,7 +11,7 @@ import numpy as np
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
-from ..utils import Namespace, as_list, cached, lazy_property, list_all_files, profile, split_path
+from ..utils import Namespace as ns, as_list, cached, lazy_property, list_all_files, profile, split_path
 
 from .fileutils import *
 
@@ -29,7 +29,7 @@ class FileLoader:
 
     @profile(logger=log)
     def load(self, dataset, fold=0):
-        dataset = dataset if isinstance(dataset, Namespace) else Namespace(path=dataset)
+        dataset = dataset if isinstance(dataset, ns) else ns(path=dataset)
         log.debug("Loading dataset %s", dataset)
         paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold)
         assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
@@ -41,24 +41,25 @@ class FileLoader:
 
         target = dataset['target']
         type_ = dataset['type']
+        features = dataset['features']
         ext = os.path.splitext(paths['train'][fold])[1].lower()
         train_path = paths['train'][fold]
         test_path = paths['test'][fold] if len(paths['test']) > 0 else None
         log.info(f"Using training set {train_path} with test set {test_path}.")
         if ext == '.arff':
-            return ArffDataset(train_path, test_path, target=target, type=type_)
+            return ArffDataset(train_path, test_path, target=target, features=features, type=type_)
         elif ext == '.csv':
-            return CsvDataset(train_path, test_path, target=target, type=type_)
+            return CsvDataset(train_path, test_path, target=target, features=features, type=type_)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
     def _extract_train_test_paths(self, dataset, fold=None):
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
-            return self._extract_train_test_paths(Namespace(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
-                                                            test=[p for i, p in enumerate(dataset) if i % 2 == 1]),
+            return self._extract_train_test_paths(ns(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
+                                                     test=[p for i, p in enumerate(dataset) if i % 2 == 1]),
                                                   fold=fold)
-        elif isinstance(dataset, Namespace):
+        elif isinstance(dataset, ns):
             return dict(train=[self._extract_train_test_paths(p)['train'][0]
                                if i == fold else None
                                for i, p in enumerate(as_list(dataset.train))],
@@ -124,11 +125,13 @@ class FileLoader:
 
 class FileDataset(Dataset):
 
-    def __init__(self, train: Datasplit, test: Datasplit, target: str = None, type: str = None):
+    def __init__(self, train: Datasplit, test: Datasplit,
+                 target: str = None, features: List[Union[ns, str]] = None, type: str = None):
         super().__init__()
         self._train = train
         self._test = test
         self._target = target
+        self._features = features
         self._type = type
 
     @property
@@ -202,9 +205,11 @@ class FileDatasplit(Datasplit):
 
 class ArffDataset(FileDataset):
 
-    def __init__(self, train_path, test_path, target=None, type=None):
+    def __init__(self, train_path, test_path,
+                 target=None, features=None, type=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
-        super().__init__(ArffDatasplit(self, train_path), ArffDatasplit(self, test_path), target=target, type=type)
+        super().__init__(ArffDatasplit(self, train_path), ArffDatasplit(self, test_path),
+                         target=target, features=features, type=type)
 
 
 class ArffDatasplit(FileDatasplit):
@@ -219,7 +224,12 @@ class ArffDatasplit(FileDatasplit):
             ds = arff.load(f)
         attrs = ds['attributes']
         # arff loader types = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']
-        to_feature_type = lambda arff_type: 'categorical' if isinstance(arff_type, (list, set)) or arff_type.lower() == 'string' else arff_type.lower()
+        to_feature_type = lambda arff_type: ('category' if isinstance(arff_type, (list, set))
+                                             else 'string' if arff_type.lower() == 'string'
+                                             else 'int' if arff_type.lower() == 'integer'
+                                             else 'float' if arff_type.lower() == 'real'
+                                             else 'number' if arff_type.lower() == 'numeric'
+                                             else 'object')
         features = [
             Feature(
                 i,
@@ -259,9 +269,11 @@ class ArffDatasplit(FileDatasplit):
 
 class CsvDataset(FileDataset):
 
-    def __init__(self, train_path, test_path, target=None, type=None):
+    def __init__(self, train_path, test_path,
+                 target=None, features=None, type=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
-        super().__init__(CsvDatasplit(self, train_path), CsvDatasplit(self, test_path), target=target, type=type)
+        super().__init__(CsvDatasplit(self, train_path), CsvDatasplit(self, test_path),
+                         target=target, features=features, type=type)
         self._dtypes = None
 
 
@@ -278,12 +290,12 @@ class CsvDatasplit(FileDatasplit):
     @cached
     @profile(logger=log)
     def load_metadata(self):
-        df = read_csv(self.path)
+        df = read_csv(self.path).convert_dtypes()
         self.dataset._dtypes = dtypes = df.dtypes
-        to_feature_type = lambda dtype: ('categorical' if np.issubdtype(dtype, np.object_)
-                                         else 'integer' if np.issubdtype(dtype, np.integer)
-                                         else 'real' if np.issubdtype(dtype, np.floating)
-                                         else 'numeric')
+        to_feature_type = lambda dtype: ('object' if np.issubdtype(dtype, np.object_)
+                                         else 'int' if np.issubdtype(dtype, np.integer)
+                                         else 'float' if np.issubdtype(dtype, np.floating)
+                                         else 'number')
         features = [
             Feature(
                 i,

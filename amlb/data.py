@@ -16,6 +16,7 @@ import logging
 from typing import List
 
 import numpy as np
+import pandas as pd
 
 from .datautils import Encoder
 from .utils import clear_cache, lazy_property, profile, repr_def
@@ -27,15 +28,9 @@ class Feature:
 
     def __init__(self, index, name, data_type, values=None, has_missing_values=False, is_target=False):
         """
-        TODO: cleanup data_type, pick one name for each type and stick to it.
-        OpenML, when reading ARFF file, should use only ['nominal', 'numeric', 'string', 'date'].
-        FileLoader uses all ARFF types as well as ['categorical', 'integer', 'real', 'numeric'] for CSV files (no string or date types?).
-        Also see https://waikato.github.io/weka-wiki/formats_and_processing/arff_stable/
-        DataSplit class below should probably return pandas DataFrames instead of numpy arrays, and fully embrace pandas dtypes.
-
         :param index:
         :param name:
-        :param data_type: one of ['categorical', 'nominal', 'enum', 'string', 'numeric', 'integer', 'real', 'date']
+        :param data_type: one of pandas-compatible type ('int', 'float', 'number', 'category', 'string', 'object', 'datetime')
         :param values:
         :param has_missing_values:
         :param is_target:
@@ -50,12 +45,12 @@ class Feature:
 
     def is_categorical(self, strict=True):
         if strict:
-            return self.data_type in ['categorical', 'nominal', 'enum']
+            return self.data_type is 'category'
         else:
             return self.data_type is not None and not self.is_numerical()
 
     def is_numerical(self):
-        return self.data_type in ['numeric', 'integer', 'real']
+        return self.data_type in ['int', 'float', 'number']
 
     @lazy_property
     def label_encoder(self):
@@ -103,31 +98,28 @@ class Datasplit(ABC):
 
     @property
     @abstractmethod
-    def data(self) -> np.ndarray:
+    def data(self) -> pd.DataFrame:
         """
-
-        :return:
+        :return: all the columns (predictors + target) as a pandas DataFrame.
         """
         pass
 
     @lazy_property
     @profile(logger=log)
-    def X(self) -> np.ndarray:
+    def X(self) -> pd.DataFrame:
         """
-
-        :return:
+        :return:the predictor columns as a pandas DataFrame.
         """
         predictors_ind = [p.index for p in self.dataset.predictors]
-        return self.data[:, predictors_ind]
+        return self.data.iloc[:, predictors_ind]
 
     @lazy_property
     @profile(logger=log)
-    def y(self) -> np.ndarray:
+    def y(self) -> pd.DataFrame:
         """
-
-        :return:
+        :return:the target column as a pandas DataFrame: if you need a Series, just call `y.squeeze()`.
         """
-        return self.data[:, self.dataset.target.index]
+        return self.data.iloc[:, [self.dataset.target.index]]
 
     @lazy_property
     @profile(logger=log)

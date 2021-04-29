@@ -1,3 +1,5 @@
+from math import isnan
+
 import openml as oml
 import pandas as pd
 
@@ -13,17 +15,29 @@ def dataset_metadata(task_id):
         return file_metadata(task_id)
 
 
+def to_int(v, default=-1):
+    return default if isnan(v) else int(v)
+
+
 def openml_metadata(tid):
     task = oml.tasks.get_task(task_id=tid, download_data=False)
     dataset = oml.datasets.get_dataset(task.dataset_id, download_data=False)
     did = dataset.dataset_id
     name = dataset.name
     dq = dataset.qualities
-    nrows = int(dq['NumberOfInstances'])
-    nfeatures = int(dq['NumberOfFeatures'])
-    nclasses = int(dq['NumberOfClasses'])
+    nrows = to_int(dq['NumberOfInstances'])
+    nrows_nas = to_int(dq['NumberOfInstancesWithMissingValues'])
+    nnas = to_int(dq['NumberOfMissingValues'])
+    nfeatures = to_int(dq['NumberOfFeatures'])
+    nfeatures_numeric = to_int(dq['NumberOfNumericFeatures'])
+    nfeatures_symbolic = to_int(dq['NumberOfSymbolicFeatures'])
+    nfeatures_binary = to_int(dq['NumberOfBinaryFeatures'])
+    nclasses = to_int(dq['NumberOfClasses'])
     # class_entropy = float(dq['ClassEntropy'])
+    class_minsize = to_int(dq['MinorityClassSize'])
+    class_majsize = to_int(dq['MajorityClassSize'])
     class_imbalance = float(dq['MajorityClassPercentage'])/float(dq['MinorityClassPercentage'])
+
     task_type = ('regression' if nclasses == 0
                  else 'binary' if nclasses == 2
                  else 'multiclass' if nclasses > 2
@@ -35,9 +49,16 @@ def openml_metadata(tid):
         type=task_type,
         name=name,
         nrows=nrows,
+        nrows_nas=nrows_nas,
+        nnas=nnas,
         nfeatures=nfeatures,
+        nfeatures_numeric=nfeatures_numeric,
+        nfeatures_symbolic=nfeatures_symbolic,
+        nfeatures_binary=nfeatures_binary,
         nclasses=nclasses,
         # class_entropy=class_entropy,
+        class_minsize=class_minsize,
+        class_majsize=class_majsize,
         class_imbalance=class_imbalance,
     )
 

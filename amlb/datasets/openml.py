@@ -16,6 +16,7 @@ import openml as oml
 import scipy as sci
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
+from ..resources import config as rconfig
 from ..utils import as_list, lazy_property, path_from_split, profile, split_path
 
 
@@ -60,7 +61,6 @@ class AutoTask(oml.OpenMLTask):
         self._dataset = oml_dataset
         self._nrows = oml_dataset.qualities['NumberOfInstances']
         self.target_name = oml_dataset.default_target_attribute
-
 
     def get_train_test_split_indices(self, fold=0):
         # TODO: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
@@ -112,9 +112,14 @@ class OpenmlDataset(Dataset):
     def features(self):
         has_missing_values = lambda f: f.number_missing_values > 0
         is_target = lambda f: f.name == self._oml_task.target_name
+        to_feature_type = lambda dt: ('number' if dt == 'numeric'
+                                      else 'category' if dt == 'nominal'
+                                      else 'string' if dt == 'string'
+                                      else 'datetime' if dt == 'date'
+                                      else 'object')
         return [Feature(new_idx,
                         f.name,
-                        f.data_type,
+                        to_feature_type(f.data_type),
                         values=f.nominal_values,
                         has_missing_values=has_missing_values(f),
                         is_target=is_target(f)
@@ -139,8 +144,19 @@ class OpenmlDataset(Dataset):
     def _load_data(self, fmt):
         splitter = _get_data_splitter_cls(fmt)(self)
         train, test = splitter.split()
+        # print("**** loaded ****")
+        # print("**** train ****")
+        # print(train)
+        # print("**** test ****")
+        # print(test)
         self._train._data[fmt] = train
         self._test._data[fmt] = test
+
+    def _load_full_data(self, fmt):
+        X, *_ = self._oml_dataset.get_data(dataset_format=fmt)
+        if fmt == 'dataframe' and rconfig().openml.infer_dtypes:
+            return X.convert_dtypes()
+        return X
 
     def _get_split_paths(self, ext=None):
         sp = split_path(self._oml_dataset.data_file)
@@ -165,13 +181,17 @@ class OpenmlDatasplit(Datasplit):
 
     @lazy_property
     @profile(logger=log)
-    def data(self):
+    def data(self) -> pd.DataFrame:
+        return self._get_data('dataframe')
+
+    @lazy_property
+    @profile(logger=log)
+    def data_enc(self) -> np.ndarray:
         return self._get_data('array')
 
     def _get_data(self, fmt):
         if fmt not in self._data or (fmt in __supported_file_formats__ and not os.path.isfile(self._data[fmt])):
             self.dataset._load_data(fmt)
-        # print("*****\n", self._data[fmt])
         return self._data[fmt]
 
 
@@ -197,7 +217,7 @@ class ArraySplitter(DataSplitter[A]):
         super().__init__(ds)
 
     def split(self) -> Tuple[A, A]:
-        X, *_ = self.ds._oml_dataset.get_data(dataset_format='array')
+        X = self.ds._load_full_data('array')
         return X[self.train_ind, :], X[self.test_ind, :]
 
 
@@ -208,7 +228,7 @@ class DataFrameSplitter(DataSplitter[DF]):
         super().__init__(ds)
 
     def split(self) -> Tuple[DF, DF]:
-        X, *_ = self.ds._oml_dataset.get_data(dataset_format='dataframe')
+        X = self.ds._load_full_data('dataframe')
         return X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
 
 
@@ -221,7 +241,7 @@ class ArffSplitter(DataSplitter[str]):
     def split(self) -> Tuple[str, str]:
         train_path, test_path = self.ds._get_split_paths(".arff")
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):
-            X, *_ = self.ds._oml_dataset.get_data(dataset_format='dataframe')
+            X = self.ds._load_full_data('dataframe')
             train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
             name_template = "{name}_{{split}}_{fold}".format(name=self.ds._oml_dataset.name, fold=self.ds.fold)
             self._save_split(train, train_path, name_template.format(split="train"))
@@ -262,7 +282,7 @@ class CsvSplitter(DataSplitter[str]):
     def split(self) -> Tuple[str, str]:
         train_path, test_path = self.ds._get_split_paths(".csv")
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):
-            X, *_ = self.ds._oml_dataset.get_data(dataset_format='dataframe')
+            X = self.ds._load_full_data('dataframe')
             train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
             train.to_csv(train_path, header=True, index=False)
             test.to_csv(test_path, header=True, index=False)
@@ -274,7 +294,11 @@ __supported_file_formats__ = ['arff', 'csv']
 
 
 def _get_data_splitter_cls(split_format='array'):
-    return next(ds for ds in __data_splitters__ if ds.format == split_format)
+    ds_cls = next((ds for ds in __data_splitters__ if ds.format == split_format), None)
+    if ds_cls is None:
+        supported = [ds.format for ds in __data_splitters__]
+        raise ValueError(f"`{split_format}` is not among supported formats: {supported}.")
+    return ds_cls
 
 
 

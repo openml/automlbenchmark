@@ -1,10 +1,10 @@
 import logging
 import os
-import pandas as pd
 
 from flaml import AutoML, __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir, utils
+from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -12,17 +12,8 @@ log = logging.getLogger(__name__)
 def run(dataset, config):
     log.info(f"\n**** FLAML [v{__version__}] ****\n")
 
-    # preparing data
-    column_names, _ = zip(*dataset.columns)
-    column_types = dict(dataset.columns)
-    train = pd.DataFrame(dataset.train.data, columns=column_names).astype(
-        column_types, copy=False)
-    label = dataset.target.name
-    X_train = y_train = None
-    test = pd.DataFrame(dataset.test.data, columns=column_names).astype(
-        column_types, copy=False)
-    X_test = test.drop(columns=label)
-    y_test = test[label]
+    X_train, y_train = dataset.train.X, dataset.train.y.squeeze()
+    X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
 
     is_classification = config.type == 'classification'
     time_budget = config.max_runtime_seconds
@@ -51,13 +42,15 @@ def run(dataset, config):
 
     log_dir = output_subdir("logs", config)
     flaml_log_file_name = os.path.join(log_dir, "flaml.log")
-    with utils.Timer() as training:
-        aml.fit(X_train, y_train, train, label, perf_metric, config.type,
+    with Timer() as training:
+        aml.fit(X_train, y_train,
+                metric=perf_metric,
+                task=config.type,
                 n_jobs=n_jobs,
                 log_file_name= flaml_log_file_name,
                 time_budget=time_budget, **training_params)
     
-    with utils.Timer() as predict:
+    with Timer() as predict:
         predictions = aml.predict(X_test)
     probabilities = aml.predict_proba(X_test) if is_classification else None
     labels = aml.classes_ if is_classification else None

@@ -21,7 +21,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -41,8 +42,8 @@ def run(dataset, config):
     tuning_params = config.framework_params.get('_tuning', training_params)
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
-    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
-    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
+    X_train, X_test = dataset.train.X, dataset.test.X
+    y_train, y_test = dataset.train.y, dataset.test.y
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores."
              .format(config.max_runtime_seconds, n_jobs))
@@ -88,8 +89,7 @@ def run(dataset, config):
                 ('preprocessing', imputation),
                 ('learning', random_forest)
             ])
-
-            with utils.Timer() as cv_scoring:
+            with Timer() as cv_scoring:
                 try:
                     scores = cross_val_score(estimator=pipeline,
                                              X=dataset.train.X_enc,
@@ -116,10 +116,10 @@ def run(dataset, config):
                    random_state=config.seed,
                    max_features=best_max_features_value,
                    **training_params)
-    with utils.Timer() as training:
+    with Timer() as training:
         rf.fit(X_train, y_train)
 
-    with utils.Timer() as predict:
+    with Timer() as predict:
         predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 

@@ -258,23 +258,97 @@ class Encoder(TransformerMixin):
         return self.delegate.inverse_transform(vec, **params)
 
 
-def impute(X_fit, *X_s, missing_values=np.NaN, strategy='mean', fill_value=None):
+def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean"):
     """
-
     :param X_fit:
     :param X_s:
     :param missing_values:
-    :param strategy: 'mean', 'median', 'most_frequent', 'constant' (requires fill_value arg)
+    :param strategy: 'mean', 'median', 'mode', ('constant', value), None
     :return:
     """
-    # TODO: impute only if np.isnan(X_fit).any() ?
+    if strategy is None:
+        return [X_fit, *X_s]
+    strategy, fill_value = strategy if isinstance(strategy, tuple) and strategy[0] == 'constant' else (strategy, None)
+    strategy = dict(mode='most_frequent').get(strategy, strategy)
+
     imputer = Imputer(missing_values=missing_values, strategy=strategy, fill_value=fill_value)
-    imputed = imputer.fit_transform(X_fit)
+    imputed = _restore_dtypes(imputer.fit_transform(X_fit), X_fit)
     if len(X_s) > 0:
         result = [imputed]
         for X in X_s:
-            result.append(imputer.transform(X))
+            result.append(_restore_dtypes(imputer.transform(X), X))
         return result
     else:
         return imputed
 
+
+def impute_dataframe(X_fit, *X_s, missing_values=np.NaN, strategy='mean'):
+    """
+    :param X_fit:
+    :param X_s:
+    :param missing_values:
+    :param strategy: 'mean', 'median', 'mode', ('constant', value), None
+        or a dictionary specifying a strategy by dtype (int, float, number, category, string, object, datetime)
+    :return:
+    """
+    if strategy is None:
+        return [X_fit, *X_s]
+    print("*** ori ***")
+    print(_rows_with_nas(X_fit))
+    print(X_fit.dtypes)
+    if isinstance(strategy, dict):
+        for dt, s in strategy.items():
+            X_fit.select_dtypes(include=dt)
+    else:
+        imputed = _impute_pd(X_fit, *X_s, missing_values=missing_values, strategy=strategy)
+    print("*** imputed ***")
+    print(imputed[0])
+    print(_rows_with_nas(imputed[0]))
+    print(imputed[0].dtypes)
+    return imputed if X_s else imputed[0]
+
+
+def _impute_pd(X_fit, *X_s, missing_values=np.NaN, strategy=None, is_int=False):
+    missing_values
+    if strategy == 'mean':
+        fill = X_fit.mean()
+    elif strategy == 'median':
+        fill = X_fit.median()
+    elif strategy == 'mode':
+        fill = X_fit.mode().iloc[0, :]
+    elif isinstance(strategy, tuple) and strategy[0] == 'constant':
+        fill = strategy[1]
+    else:
+        return [X_fit, *X_s]
+
+    if is_int and isinstance(fill, pd.Series):
+        fill = fill.round()
+    return [df.replace(missing_values, fill) for df in [X_fit, *X_s]]
+
+
+def _rows_with_nas(X):
+    df = X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
+    return df[df.isna().any(axis=1)]
+
+
+def _restore_dtypes(X_np, X_ori):
+    if isinstance(X_ori, pd.DataFrame):
+        print("*** ori ***")
+        print(X_ori)
+        print(X_ori.dtypes)
+        print("*** imputed ***")
+        print(X_np)
+        df = pd.DataFrame(X_np, columns=X_ori.columns, index=X_ori.index).convert_dtypes()
+        print("*** as df ***")
+        print(df)
+        df.astype(X_ori.dtypes.to_dict(), copy=False, errors='raise')
+        print("*** with dtypes ***")
+        print(df)
+        print(df.dtypes)
+        return df
+    elif isinstance(X_ori, pd.Series):
+        return pd.Series(X_np, name=X_ori.name, index=X_ori.index, dtype=X_ori.dtype)
+    elif isinstance(X_ori, np.ndarray):
+        return X_np.astype(X_ori.dtype, copy=False)
+    else:
+        return X_np
