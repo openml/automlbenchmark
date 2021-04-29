@@ -120,7 +120,7 @@ class OpenmlDataset(Dataset):
         return [Feature(new_idx,
                         f.name,
                         to_feature_type(f.data_type),
-                        values=f.nominal_values,
+                        values=sorted(f.nominal_values) if f.nominal_values else None,
                         has_missing_values=has_missing_values(f),
                         is_target=is_target(f)
                         )

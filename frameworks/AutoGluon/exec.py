@@ -2,10 +2,12 @@ import logging
 import os
 import shutil
 import warnings
-import gc
+import sys
 import tempfile
-from io import StringIO
 warnings.simplefilter("ignore")
+
+if sys.platform == 'darwin':
+    os.environ['OMP_NUM_THREADS'] = '1'
 
 import matplotlib
 import pandas as pd
@@ -47,7 +49,6 @@ def run(dataset, config):
     train, test = dataset.train.data, dataset.test.data
     label = dataset.target.name
     problem_type = dataset.problem_type
-    log.info(f"Columns dtypes:\n{train.dtypes}")
 
     models_dir = tempfile.mkdtemp() + os.sep  # passed to AG
 
@@ -77,7 +78,7 @@ def run(dataset, config):
             predictions = predictor.predict(test, as_pandas=False)
         probabilities = None
 
-    prob_labels = probabilities.columns.values.tolist() if probabilities is not None else None
+    prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
 
     _leaderboard_extra_info = config.framework_params.get('_leaderboard_extra_info', False)  # whether to get extra model info (very verbose)
     _leaderboard_test = config.framework_params.get('_leaderboard_test', False)  # whether to compute test scores in leaderboard (expensive)

@@ -4,7 +4,7 @@
 - **Dataset** represents the entire dataset used by a job:
   providing simple access to subsets like training set, test set,
   and metadata like target feature, and predictors.
-- **Datasplit** represents and subset of the dataset,
+- **Datasplit** represents a subset of the dataset,
   providing access to data, either as a file (``path``),
   or as vectors/arrays (``y`` for target, ``X`` for predictors)
   which can also be encoded (``y_enc``, ``X_enc``)
@@ -28,12 +28,12 @@ class Feature:
 
     def __init__(self, index, name, data_type, values=None, has_missing_values=False, is_target=False):
         """
-        :param index:
-        :param name:
-        :param data_type: one of pandas-compatible type ('int', 'float', 'number', 'category', 'string', 'object', 'datetime')
-        :param values:
-        :param has_missing_values:
-        :param is_target:
+        :param index: index of the feature in the full data frame.
+        :param name: name of the feature.
+        :param data_type: one of pandas-compatible type ('int', 'float', 'number', 'category', 'string', 'object', 'datetime').
+        :param values: for categorical features, the sorted list of accepted values.
+        :param has_missing_values: True iff the feature has any missing values in the complete dataset.
+        :param is_target: True for the target column.
         """
         self.index = index
         self.name = name
@@ -81,8 +81,7 @@ class Datasplit(ABC):
 
     def __init__(self, dataset, format):
         """
-
-        :param format:
+        :param format: the default format of the data file, obtained through the 'path' property.
         """
         super().__init__()
         self.dataset = dataset
@@ -93,7 +92,11 @@ class Datasplit(ABC):
         return self.data_path(self.format)
 
     @abstractmethod
-    def data_path(self, format):
+    def data_path(self, format: str) -> str:
+        """
+        :param format: the format requested for the data file. Currently supported formats are 'arff', 'csv'.
+        :return: the path to the data-split file in the requested format.
+        """
         pass
 
     @property
@@ -124,7 +127,8 @@ class Datasplit(ABC):
     @lazy_property
     @profile(logger=log)
     def data_enc(self) -> np.ndarray:
-        encoded_cols = [f.label_encoder.transform(self.data[:, f.index]) for f in self.dataset.features]
+        data = self.data.values
+        encoded_cols = [f.label_encoder.transform(data[:, f.index]) for f in self.dataset.features]
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
         self.release(['data', 'X', 'y'])
@@ -165,8 +169,7 @@ class Dataset(ABC):
     @abstractmethod
     def type(self) -> DatasetType:
         """
-
-        :return:
+        :return: the problem type for the current dataset.
         """
         pass
 
@@ -174,8 +177,7 @@ class Dataset(ABC):
     @abstractmethod
     def train(self) -> Datasplit:
         """
-
-        :return:
+        :return: the data subset used to train the model.
         """
         pass
 
@@ -183,8 +185,7 @@ class Dataset(ABC):
     @abstractmethod
     def test(self) -> Datasplit:
         """
-
-        :return:
+        :return: the data subset used to score the model.
         """
         pass
 
@@ -192,16 +193,14 @@ class Dataset(ABC):
     @abstractmethod
     def features(self) -> List[Feature]:
         """
-
-        :return:
+        :return: the list of all features available in the current dataset, target included.
         """
         pass
 
     @property
     def predictors(self) -> List[Feature]:
         """
-
-        :return:
+        :return: the list of all predictor features available in the current dataset
         """
         return [f for f in self.features if f.name != self.target.name]
 
@@ -209,13 +208,16 @@ class Dataset(ABC):
     @abstractmethod
     def target(self) -> Feature:
         """
-
-        :return:
+        :return: the target feature for the current dataset.
         """
         pass
 
     @profile(logger=log)
     def release(self, properties=None):
+        """
+        Call this to release cached properties and optimize memory once in-memory data are not needed anymore.
+        :param properties:
+        """
         self.train.release()
         self.test.release()
         clear_cache(self, properties)
