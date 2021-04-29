@@ -13,8 +13,9 @@ def _cached_property_name(fn):
 
 def clear_cache(self, functions=None):
     cached_properties = [prop for prop in dir(self) if prop.startswith(_CACHE_PROP_PREFIX_)]
-    properties_to_clear = cached_properties if functions is None \
-        else [prop for prop in [_cached_property_name(fn) for fn in functions] if prop in cached_properties]
+    properties_to_clear = (cached_properties if functions is None
+                           else [prop for prop in [_cached_property_name(fn) for fn in functions]
+                                 if prop in cached_properties])
     for prop in properties_to_clear:
         delattr(self, prop)
     log.debug("Cleared cached properties: %s.", properties_to_clear)

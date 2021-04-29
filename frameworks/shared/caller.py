@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import re
@@ -13,7 +14,7 @@ from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
 
 from .serialization import deserialize_data, serialize_data, ser_config
-from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load
+from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load, profile
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +60,24 @@ def venv_python_exec(fmwk_dir):
     return os.path.join(venv_bin(fmwk_dir), 'python -W ignore')
 
 
+@profile(logger=log)
+def _make_input_dataset(input_data, dataset, tmpdir):
+    input_data = ns.from_dict(input_data)
+
+    def make_path(k, v, parents=None):
+        if isinstance(v, (np.ndarray,  pd.DataFrame, pd.Series)):
+            path = os.path.join(tmpdir, '.'.join(parents+[k, 'data']))
+            if vector_keys.match(k):
+                v = as_col(v)
+            path = serialize_data(v, path)
+            return k, path
+        return k, v
+
+    ds = ns.walk(input_data, make_path)
+    dataset.release()
+    return ds
+
+
 def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
                 process_results=None,
@@ -69,45 +88,42 @@ def run_in_venv(caller_file, script_file: str, *args,
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
-    input_data = ns.from_dict(input_data)
     with TemporaryDirectory() as tmpdir:
 
-        def make_path(k, v, parents=None):
-            if isinstance(v, (np.ndarray,  pd.DataFrame, pd.Series)):
-                path = os.path.join(tmpdir, '.'.join(parents+[k, 'data']))
-                if vector_keys.match(k):
-                    v = as_col(v)
-                path = serialize_data(v, path)
-                return k, path
-            return k, v
-
-        ds = ns.walk(input_data, make_path)
-        dataset.release()
+        ds = _make_input_dataset(input_data, dataset, tmpdir)
 
         config.result_dir = tmpdir
         config.result_file = mktemp(dir=tmpdir)
 
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
         log.debug("Params passed to subprocess:\n%s", params)
+        cmon = rconfig().monitoring
+        monitor = (dict(frequency_seconds=cmon.frequency_seconds,
+                        verbosity=cmon.verbosity)
+                   if 'proc_memory' in cmon.statistics
+                   else None)
+        env = dict(
+            PATH=os.pathsep.join([
+                venv_bin(here),
+                os.environ['PATH']
+            ]),
+            PYTHONPATH=os.pathsep.join([
+                rconfig().root_dir,
+            ]),
+            AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
+            AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
+            AMLB_SER_PD_MODE=str(ser_config.pandas_serializer or ''),
+            AMLB_SER_PD_COMPR=str(ser_config.pandas_compression or ''),
+            AMLB_SER_PD_PQT_COMPR=str(ser_config.pandas_parquet_compression or ''),
+        )
+
         with Timer() as proc_timer:
             output, err = run_cmd(cmd, *args,
                                   _input_str_=params,
                                   _live_output_=True,
                                   _error_level_=logging.DEBUG,
-                                  _env_=dict(
-                                      PATH=os.pathsep.join([
-                                          venv_bin(here),
-                                          os.environ['PATH']
-                                      ]),
-                                      PYTHONPATH=os.pathsep.join([
-                                          rconfig().root_dir,
-                                      ]),
-                                      AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
-                                      AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
-                                      AMLB_SER_PD_MODE=str(ser_config.pandas_serializer or ''),
-                                      AMLB_SER_PD_COMPR=str(ser_config.pandas_compression or ''),
-                                      AMLB_SER_PD_PQT_COMPR=str(ser_config.pandas_parquet_compression or ''),
-                                    ),
+                                  _env_=env,
+                                  _monitor_=monitor
                                   )
 
         res = ns(lambda: None)

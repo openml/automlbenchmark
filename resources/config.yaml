@@ -68,7 +68,7 @@ job_scheduler:           # configuration namespace
 
 monitoring:               # configuration namespace describing the basic monitoring features: currently, the app only logs each statistic at a given frequency.
   frequency_seconds: 120  # set to <= 0 to disable monitoring
-  statistics: ['cpu', 'memory', 'volume']  # the 3 monitoring values currently available
+  statistics: ['cpu', 'proc_memory', 'sys_memory', 'volume']  # the monitoring values currently available
   verbosity: 0            # from 0 to 2, higher verbosity provides more details for each statistic.
 
 results:                 # configuration namespace for the results.csv file.

@@ -2,6 +2,7 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
+from abc import abstractmethod
 import copy
 import logging
 import os
@@ -96,13 +97,13 @@ class OpenmlDataset(Dataset):
             return get_type(len(target.values))
 
     @property
-    @profile(logger=log)
+    # @profile(logger=log)
     def train(self):
         self._ensure_split_created()
         return self._train
 
     @property
-    @profile(logger=log)
+    # @profile(logger=log)
     def test(self):
         self._ensure_split_created()
         return self._test
@@ -206,6 +207,7 @@ class DataSplitter(Generic[T]):
         self.ds = ds
         self.train_ind, self.test_ind = ds._oml_task.get_train_test_split_indices(self.ds.fold)
 
+    @abstractmethod
     def split(self) -> Tuple[T, T]:
         pass
 
@@ -216,6 +218,7 @@ class ArraySplitter(DataSplitter[A]):
     def __init__(self, ds: OpenmlDataset):
         super().__init__(ds)
 
+    @profile(logger=log)
     def split(self) -> Tuple[A, A]:
         X = self.ds._load_full_data('array')
         return X[self.train_ind, :], X[self.test_ind, :]
@@ -227,6 +230,7 @@ class DataFrameSplitter(DataSplitter[DF]):
     def __init__(self, ds: OpenmlDataset):
         super().__init__(ds)
 
+    @profile(logger=log)
     def split(self) -> Tuple[DF, DF]:
         X = self.ds._load_full_data('dataframe')
         return X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
@@ -238,6 +242,7 @@ class ArffSplitter(DataSplitter[str]):
     def __init__(self, ds: OpenmlDataset):
         super().__init__(ds)
 
+    @profile(logger=log)
     def split(self) -> Tuple[str, str]:
         train_path, test_path = self.ds._get_split_paths(".arff")
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):
@@ -248,7 +253,6 @@ class ArffSplitter(DataSplitter[str]):
             self._save_split(test, test_path, name_template.format(split="test"))
         return train_path, test_path
 
-    @profile(logger=log)
     def _save_split(self, df, path, name):
         log.debug("Saving %s split dataset to %s.", name, path)
         with open(path, 'w') as file:
@@ -279,6 +283,7 @@ class CsvSplitter(DataSplitter[str]):
     def __init__(self, ds: OpenmlDataset):
         super().__init__(ds)
 
+    @profile(logger=log)
     def split(self) -> Tuple[str, str]:
         train_path, test_path = self.ds._get_split_paths(".csv")
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):

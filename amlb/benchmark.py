@@ -440,7 +440,6 @@ class BenchmarkTask:
                     setattr(self.task_config, c, rconfig().t[c])
         self._dataset = None
 
-    @profile(logger=log)
     def load_data(self):
         """
         Loads the training dataset for the current given task
