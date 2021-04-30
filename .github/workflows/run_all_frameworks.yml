@@ -97,6 +97,8 @@ jobs:
           source venv/bin/activate
           which python
           which pip
+          pip install wheel
+          pip show wheel
       - name: Debug
         run: |
           pip freeze
