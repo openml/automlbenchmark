@@ -87,16 +87,16 @@ jobs:
       fail-fast:  false
     steps:
       - uses: actions/checkout@v2
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
           key: pip-v2-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
       - name: Install Requirements
         run: |
           pipdir=$(pip cache dir)
@@ -104,6 +104,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           ls $pipdir
+          pip show openml
       - name: Run constantpredictor on openml iris
         run: |
           python runbenchmark.py constantpredictor -t ${{ matrix.task }} -f 0 -e
