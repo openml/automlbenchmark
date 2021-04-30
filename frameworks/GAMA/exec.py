@@ -63,7 +63,7 @@ def run(dataset, config):
 
     with utils.Timer() as training:
         gama_automl.fit_arff(dataset.train_path, dataset.target, encoding='utf-8')
-
+    # Test change
     log.info('Predicting on the test set.')
     with utils.Timer() as predict:
         predictions = gama_automl.predict_arff(dataset.test_path, dataset.target, encoding='utf-8')
