@@ -99,6 +99,10 @@ jobs:
           python-version: '3.8'
       - name: Install Requirements
         run: |
+          pip cache dir
+          ddd=$(pip cache dir)
+          ls $ddd
+          echo ~/.cache/pip
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run constantpredictor on openml iris
@@ -137,10 +141,6 @@ jobs:
     - name: Install Requirements
       # if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        pip cache dir
-        ddd=$(pip cache dir)
-        ls ddd
-
         echo "Cache not hit, installing."
         python -m pip install --upgrade pip
         pip install -r requirements.txt
