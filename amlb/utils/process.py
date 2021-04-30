@@ -1,3 +1,4 @@
+import gc
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import partial, reduce, wraps
@@ -699,8 +700,13 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
             with MemoryProfiler(enabled=memory) as m:
                 if memory:
                     mem = m.usage(before=True)
-                    logger.log(log_level, "[PROFILING] `%s` memory before; resident: %.2f MB, virtual: %.2f MB, unique: %.2f MB.",
-                               name, mem.resident, mem.virtual, mem.unique)
+                    logger.log(log_level,
+                               "[PROFILING] `%s`\n"
+                               "memory before; resident: %.2f MB, virtual: %.2f MB, unique: %.2f MB.\n"
+                               "gc before; threshold: %s, gen_count: %s, perm_count: %s",
+                               name,
+                               mem.resident, mem.virtual, mem.unique,
+                               gc.get_threshold(), gc.get_count(), gc.get_freeze_count())
                 with Timer(enabled=duration) as t:
                     ret = fn(*args, **kwargs)
             if duration:
@@ -710,8 +716,13 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
                 if ret_size > 0:
                     logger.log(log_level, "[PROFILING] `%s` returned object size: %.3f MB.", name, to_mb(ret_size))
                 mem = m.usage()
-                logger.log(log_level, "[PROFILING] `%s` memory change; resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB, unique: %+.2f MB/%.2f MB.",
-                           name, mem.resident_diff, mem.resident, mem.virtual_diff, mem.virtual, mem.unique_diff, mem.unique)
+                logger.log(log_level,
+                           "[PROFILING] `%s`\n"
+                           "memory after; resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB, unique: %+.2f MB/%.2f MB.\n"
+                           "gc after; threshold: %s, gen_count: %s, perm_count: %s",
+                           name,
+                           mem.resident_diff, mem.resident, mem.virtual_diff, mem.virtual, mem.unique_diff, mem.unique,
+                           gc.get_threshold(), gc.get_count(), gc.get_freeze_count())
             return ret
 
         return profiler
