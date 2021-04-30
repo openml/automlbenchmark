@@ -90,7 +90,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: pip-${{ hashFiles('**/requirements.txt') }}
+          key: pip-v2-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-
       - name: Setup Python 3.8
@@ -99,12 +99,11 @@ jobs:
           python-version: '3.8'
       - name: Install Requirements
         run: |
-          pip cache dir
-          ddd=$(pip cache dir)
-          ls $ddd
-          echo ~/.cache/pip
+          pipdir=$(pip cache dir)
+          ls $pipdir
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          ls $pipdir
       - name: Run constantpredictor on openml iris
         run: |
           python runbenchmark.py constantpredictor -t ${{ matrix.task }} -f 0 -e
@@ -135,11 +134,11 @@ jobs:
       id: cache
       with:
         path: ~/.cache/pip
-        key: pip-${{ hashFiles('**/requirements.txt') }}
+        key: pip-v2-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          pip-
+          pip-v2-
     - name: Install Requirements
-      # if: steps.cache.outputs.cache-hit != 'true'
+      if: steps.cache.outputs.cache-hit != 'true'
       run: |
         echo "Cache not hit, installing."
         python -m pip install --upgrade pip
