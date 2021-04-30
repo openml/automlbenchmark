@@ -139,5 +139,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
+        echo "runbenchmark.py ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e"
         python runbenchmark.py ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
-        echo "Exit with status: $?"
