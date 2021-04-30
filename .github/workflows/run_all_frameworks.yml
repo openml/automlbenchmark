@@ -131,7 +131,7 @@ jobs:
         restore-keys: |
           pip-
     - name: Install Requirements
-      if: steps.cache.outputs.cache-hit != 'true'
+      # if: steps.cache.outputs.cache-hit != 'true'
       run: |
         echo "Cache not hit, installing."
         python -m pip install --upgrade pip
