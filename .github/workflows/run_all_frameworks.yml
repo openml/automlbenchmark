@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       frameworks: ${{ steps.find-required-tests.outputs.frameworks }}
+      tasks: ${{ steps.find-required-tests.outputs.tasks }}
+      benchmark: ${{ steps.find-required-tests.outputs.benchmark }}
       skip_baseline: ${{ steps.find-required-tests.outputs.skip_baseline }}
       skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
     steps:
@@ -48,7 +50,11 @@ jobs:
           if [[ $is_common -eq 0 ]];
           then
             FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "constantpredictor", "randomforest", "tunedrandomforest"]'
+            TASKS='["iris", "kc2", "cholesterol"]'
+            BENCHMARK='["test"]'
           else
+            TASKS='["APSFailure", "bioresponse", "dresses-sales", "eucalyptus", "internet-advertisements", "kc1", "micro-mass"]'
+            BENCHMARK='["validation"]'
             changed_frameworks=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
             if [ ! -z $changed_frameworks ];
             then
@@ -65,6 +71,8 @@ jobs:
           echo Building matrix for frameworks: $FRAMEWORKS
 
           echo "::set-output name=frameworks::$FRAMEWORKS"
+          echo "::set-output name=tasks::TASKS"
+          echo "::set-output name=benchmark::$BENCHMARK"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
 
@@ -104,7 +112,8 @@ jobs:
       matrix:
         python-version: [3.8]
         framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
-        task: [APSFailure, bioresponse, dresses-sales, eucalyptus, internet-advertisements, kc1, micro-mass]
+        task: ${{ fromJson(needs.detect_changes.outputs.tasks) }}
+        benchmark: ${{ fromJson(needs.detect_changes.outputs.benchmark) }}
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
     steps:
     - uses: actions/checkout@v2
@@ -119,7 +128,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
-      uses: ./.github/actions/runbenchmark
-      with:
-        framework: ${{ matrix.framework }}
-        task: ${{ matrix.task }}
+      run: |
+        python runbenchmark.py ${{ matrix.framework }} validation test -f 0 -t ${{ matrix.task }} -e
+        echo "Exit with status: $?"
