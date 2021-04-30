@@ -71,7 +71,7 @@ jobs:
           echo Building matrix for frameworks: $FRAMEWORKS
 
           echo "::set-output name=frameworks::$FRAMEWORKS"
-          echo "::set-output name=tasks::TASKS"
+          echo "::set-output name=tasks::$TASKS"
           echo "::set-output name=benchmark::$BENCHMARK"
           echo "::set-output name=skip_baseline::$is_common"
           echo "::set-output name=skip_evaluations::$skip_evaluation"
