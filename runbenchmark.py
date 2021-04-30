@@ -140,11 +140,6 @@ try:
     bench.setup(amlb.SetupMode[args.setup])
     if args.setup != 'only':
         res = bench.run(args.task, args.fold)
-        if res is None and args.exit_on_error:
-            #  The desired behavior was to actually have a non-zero exit code.
-            #  I thought this worked before but there are currently so many layers
-            #  of exception handling, I'm not sure how to propagate it back up.
-            raise Exception("No results, likely due to error during evaluation.")
 except (ValueError, AutoMLError) as e:
     log.error('\nERROR:\n%s', e)
     if extras.get('verbose') is True:
