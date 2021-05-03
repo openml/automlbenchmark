@@ -53,9 +53,9 @@ def run(dataset, config):
              backend, mode, config.max_runtime_seconds, config.cores, config.max_mem_size_mb, metric)
     log.info("Environment: %s", os.environ)
 
-    predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
-    statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
-    #tmp_dir = output_subdir('mlplan_tmp', config)
+    mlplan_output_dir = output_subdir('mlplan_out', config)
+    predictions_file = os.path.join(mlplan_output_dir, 'predictions.csv')
+    statistics_file = os.path.join(mlplan_output_dir, 'statistics.json')
 
     cmd_root = f"java -jar -Xmx{mem_limit}M {jar_file}"
 
@@ -84,7 +84,11 @@ def run(dataset, config):
 
     predictions = stats["predictions"]
     truth = stats["truth"]
-    numEvals = stats["num_evaluations"]
+    num_evals = stats["num_evaluations"]
+    if "final_candidate_predict_time_ms" in stats:
+        predict_time = stats["final_candidate_predict_time_ms"]
+    else:
+        predict_time = float("NaN")
 
     # only for classification tasks we have probabilities available, thus check whether the json contains the respective fields
     if "probabilities" in stats and "probabilities_labels" in stats:
@@ -94,15 +98,21 @@ def run(dataset, config):
         probabilities = []
         probabilities_labels = []
 
+    if version == "0.2.3":
+        target_encoded = is_classification
+    else:
+        target_encoded = False
+
     return result(
         output_file=config.output_predictions_file,
         predictions=predictions,
         truth=truth,
         probabilities=probabilities,
         probabilities_labels=probabilities_labels,
-        target_is_encoded=is_classification,
-        models_count=numEvals,
-        training_duration=training.duration
+        target_is_encoded=target_encoded,
+        models_count=num_evals,
+        training_duration=training.duration,
+        predict_duration=predict_time
     )
 
 
