@@ -22,4 +22,5 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
+PIP install --no-cache-dir -r ${HERE}/requirements.txt
 PY -c "from sklearn import __version__; print(__version__)" >> "${HERE}/.installed"

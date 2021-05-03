@@ -208,7 +208,7 @@ class JobRunner:
             self.set_state(State.stopped)
             if t is not None:
                 log.info("All jobs executed in %.3f seconds.", t.duration)
-            return self.results
+        return self.results
 
     def stop(self):
         if self.state not in [State.stopping, State.stopped]:

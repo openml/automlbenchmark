@@ -14,10 +14,11 @@ from importlib import import_module, invalidate_caches
 import logging
 import math
 import os
+import re
 import signal
 import sys
 
-from .job import Job, SimpleJobRunner, MultiThreadingJobRunner
+from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
 from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
@@ -365,32 +366,45 @@ class TaskConfig:
         return self.__dict__
 
     def estimate_system_params(self):
+        on_unfulfilled = rconfig().benchmarks.on_unfulfilled_constraint
+        mode = re.split(r"\W+", rconfig().run_mode, maxsplit=1)[0]
+
+        def handle_unfulfilled(message, on_auto='warn'):
+            action = on_auto if on_unfulfilled == 'auto' else on_unfulfilled
+            if action == 'warn':
+                log.warning("WARNING: %s", message)
+            elif action == 'fail':
+                raise JobError(message)
+
         sys_cores = system_cores()
+        if self.cores > sys_cores:
+            handle_unfulfilled(f"System with {sys_cores} cores does not meet requirements ({self.cores} cores)!.",
+                               on_auto='warn' if mode == 'local' else 'fail')
         self.cores = min(self.cores, sys_cores) if self.cores > 0 else sys_cores
         log.info("Assigning %s cores (total=%s) for new task %s.", self.cores, sys_cores, self.name)
 
         sys_mem = system_memory_mb()
-        os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
+        os_recommended_mem = ns.get(rconfig(), f"{mode}.os_mem_size_mb", rconfig().benchmarks.os_mem_size_mb)
         left_for_app_mem = int(sys_mem.available - os_recommended_mem)
         assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0
                              else left_for_app_mem if left_for_app_mem > 0
                              else sys_mem.available)
         log.info("Assigning %.f MB (total=%.f MB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
-        if assigned_mem > sys_mem.available:
-            log.warning("WARNING: Assigned memory (%(assigned).f MB) exceeds system available memory (%(available).f MB / total=%(total).f MB)!",
-                        dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total))
+        if assigned_mem > sys_mem.total:
+            handle_unfulfilled(f"Total system memory {sys_mem.total} MB does not meet requirements ({assigned_mem} MB)!.",
+                               on_auto='fail')
+        elif assigned_mem > sys_mem.available:
+            handle_unfulfilled(f"Assigned memory ({assigned_mem} MB) exceeds system available memory ({sys_mem.available} MB / total={sys_mem.total} MB)!")
         elif assigned_mem > sys_mem.total - os_recommended_mem:
-            log.warning("WARNING: Assigned memory (%(assigned).f MB) is within %(buffer).f MB of system total memory (%(total).f MB): "
-                        "We recommend a %(buffer).f MB buffer, otherwise OS memory usage might interfere with the benchmark task.",
-                        dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total, buffer=os_recommended_mem))
+            handle_unfulfilled(f"Assigned memory ({assigned_mem} MB) is within {sys_mem.available} MB of system total memory {sys_mem.total} MB): "
+                               f"We recommend a {os_recommended_mem} MB buffer, otherwise OS memory usage might interfere with the benchmark task.")
 
         if self.min_vol_size_mb > 0:
             sys_vol = system_volume_mb()
             os_recommended_vol = rconfig().benchmarks.os_vol_size_mb
             if self.min_vol_size_mb > sys_vol.free:
-                log.warning("WARNING: Available volume memory (%(available).f MB / total=%(total).f MB) doesn't meet requirements (%(required).f MB)!",
-                            dict(required=self.min_vol_size_mb+os_recommended_vol, available=sys_vol.free, total=sys_vol.total))
+                handle_unfulfilled(f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements ({self.min_vol_size_mb+os_recommended_vol} MB)!")
 
 
 class BenchmarkTask:
@@ -418,7 +432,7 @@ class BenchmarkTask:
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:
-            for c in ['max_runtime_seconds', 'metric', 'metrics']:
+            for c in dir(self.task_config):
                 if rconfig().t[c] is not None:
                     setattr(self.task_config, c, rconfig().t[c])
         self._dataset = None
@@ -441,9 +455,6 @@ class BenchmarkTask:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
     def as_job(self):
-        def _run():
-            self.load_data()
-            return self.run()
         job = Job(name=rconfig().token_separator.join([
                 'local',
                 self.benchmark.benchmark_name,
@@ -457,23 +468,21 @@ class BenchmarkTask:
             timeout_secs=self.task_config.job_timeout_seconds+5*60,
             raise_on_failure=rconfig().job_scheduler.exit_on_job_failure,
         )
-        job._run = _run
+        job._setup = self.setup
+        job._run = self.run
         return job
-        # return Namespace(run=lambda: self.run(framework))
+
+    def setup(self):
+        self.task_config.estimate_system_params()
+        self.load_data()
 
     @profile(logger=log)
     def run(self):
-        """
-
-        :param framework:
-        :return:
-        """
         results = TaskResult(task_def=self._task_def, fold=self.fold,
                              constraint=self.benchmark.constraint_name,
                              predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def = self.benchmark.framework_def
         task_config = copy(self.task_config)
-        task_config.estimate_system_params()
         task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
         task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
