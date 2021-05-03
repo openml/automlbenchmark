@@ -88,12 +88,14 @@ def run(dataset, config):
                 ('preprocessing', imputation),
                 ('learning', random_forest)
             ])
+
             with utils.Timer() as cv_scoring:
                 try:
                     scores = cross_val_score(estimator=pipeline,
                                              X=dataset.train.X_enc,
                                              y=dataset.train.y_enc,
                                              scoring=metric,
+                                             error_score='raise',
                                              cv=5)
                     max_feature_scores.append((statistics.mean(scores), max_features_value))
                 except stopit.utils.TimeoutException as toe:
@@ -103,6 +105,7 @@ def run(dataset, config):
                 except Exception as e:
                     log.error("Failed CV scoring for max_features=%s :\n%s", max_features_value, e)
                     log.debug("Exception:", exc_info=True)
+                    max_feature_scores.append((math.nan, max_features_value))
             tuning_durations.append((max_features_value, cv_scoring.duration))
 
     log.info("Tuning scores:\n%s", sorted(max_feature_scores))
