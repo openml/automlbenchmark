@@ -13,6 +13,7 @@ import autosklearn
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
+import numpy as np
 from packaging import version
 
 from frameworks.shared.callee import call_run, result, output_subdir, utils
@@ -59,8 +60,10 @@ def run(dataset, config):
         perf_metric,
     )
     log.info("Environment: %s", os.environ)
-
-    X_train = dataset.train.X_enc
+    
+    # Cast x to float32 to save memory, keep y at the default (most likely float64) to have
+    # higher precision for regression tasks
+    X_train = dataset.train.X_enc.astype(np.float32)
     y_train = dataset.train.y_enc
     predictors_type = dataset.predictors_type
     log.debug("predictors_type=%s", predictors_type)
