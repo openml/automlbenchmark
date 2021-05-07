@@ -516,7 +516,7 @@ class ClassificationResult(Result):
         super().__init__(predictions_df, info)
         self.classes = self.df.columns[:-2].values.astype(str, copy=False)
         self.probabilities = self.df.iloc[:, :-2].values.astype(float, copy=False)
-        self.target = Feature(0, 'class', 'categorical', values=self.classes, is_target=True)
+        self.target = Feature(0, 'target', 'category', values=self.classes, is_target=True)
         self.type = DatasetType.binary if len(self.classes) == 2 else DatasetType.multiclass
         self.truth = self._autoencode(self.truth.astype(str, copy=False))
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))

@@ -195,6 +195,10 @@ class OpenmlDatasplit(Datasplit):
             self.dataset._load_data(fmt)
         return self._data[fmt]
 
+    def release(self, properties=None):
+        super().release(properties)
+        self._data = {}
+
 
 T = TypeVar('T')
 A = Union[np.ndarray, sci.sparse.csr_matrix]

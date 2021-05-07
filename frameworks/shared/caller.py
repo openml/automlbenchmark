@@ -75,6 +75,7 @@ def _make_input_dataset(input_data, dataset, tmpdir):
 
     ds = ns.walk(input_data, make_path)
     dataset.release()
+    gc.collect()
     return ds
 
 

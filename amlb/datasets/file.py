@@ -6,14 +6,15 @@ import tempfile
 from typing import List, Union
 
 import arff
-import numpy as np
+import pandas as pd
+import pandas.api.types as pat
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
-from ..utils import Namespace as ns, as_list, cached, lazy_property, list_all_files, profile, split_path
+from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, profile, split_path
 
-from .fileutils import *
+from .fileutils import download_file, is_archive, is_valid_url, unarchive_file, url_exists
 
 
 log = logging.getLogger(__name__)
@@ -126,7 +127,7 @@ class FileLoader:
 class FileDataset(Dataset):
 
     def __init__(self, train: Datasplit, test: Datasplit,
-                 target: str = None, features: List[Union[ns, str]] = None, type: str = None):
+                 target: Union[int, str] = None, features: List[Union[ns, str]] = None, type: str = None):
         super().__init__()
         self._train = train
         self._test = test
@@ -136,9 +137,11 @@ class FileDataset(Dataset):
 
     @property
     def type(self) -> DatasetType:
+        assert self.target is not None
         return (DatasetType[self._type] if self._type is not None
-                else (DatasetType.binary if len(self.target.values) == 2 else DatasetType.multiclass) if self.target.is_categorical()
-                else DatasetType.regression)
+                else DatasetType.regression if self.target.values is None
+                else DatasetType.binary if len(self.target.values) == 2
+                else DatasetType.multiclass)
 
     @property
     def train(self) -> Datasplit:
@@ -156,6 +159,7 @@ class FileDataset(Dataset):
     def target(self) -> Feature:
         return self._get_metadata('target')
 
+    @memoize
     def _get_metadata(self, prop):
         meta = self._train.load_metadata()
         return meta[prop]
@@ -198,8 +202,9 @@ class FileDatasplit(Datasplit):
         ds_type = self.dataset._type
         if ds_type and DatasetType[ds_type] in [DatasetType.binary, DatasetType.multiclass]:
             if not target.is_categorical():
-                log.warning("Forcing target column %s as 'categorical' for classification problems: was originally detected as '%s'.", target.name, target.data_type)
-                target.data_type = 'categorical'
+                log.warning("Forcing target column %s as 'category' for classification problems: was originally detected as '%s'.",
+                            target.name, target.data_type)
+                # target.data_type = 'category'
         target.is_target = True
 
 
@@ -216,13 +221,17 @@ class ArffDatasplit(FileDatasplit):
 
     def __init__(self, dataset, path):
         super().__init__(dataset, format='arff', path=path)
+        self._ds = None
 
-    @cached
+    def _ensure_loaded(self):
+        if self._ds is None:
+            with open(self.path) as f:
+                self._ds = arff.load(f)
+
     @profile(logger=log)
     def load_metadata(self):
-        with open(self.path) as f:
-            ds = arff.load(f)
-        attrs = ds['attributes']
+        self._ensure_loaded()
+        attrs = self._ds['attributes']
         # arff loader types = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']
         to_feature_type = lambda arff_type: ('category' if isinstance(arff_type, (list, set))
                                              else 'string' if arff_type.lower() == 'string'
@@ -241,16 +250,14 @@ class ArffDatasplit(FileDatasplit):
         target = self._find_target_feature(features)
         self._set_feature_as_target(target)
 
-        df = to_data_frame(ds['data'])
+        df = to_data_frame(self._ds['data'])
         for f in features:
             col = df.iloc[:, f.index]
             f.has_missing_values = col.hasnans
             if f.is_categorical():
                 arff_type = attrs[f.index][1]
-                unique_values = (arff_type if isinstance(arff_type, (list, set))
-                                 else col.dropna().unique() if f.has_missing_values
-                                 else col.unique())
-                f.values = sorted(unique_values)
+                if isinstance(arff_type, (list, set)):
+                    f.values = sorted(arff_type)
 
         meta = dict(
             features=features,
@@ -259,12 +266,14 @@ class ArffDatasplit(FileDatasplit):
         log.debug("Metadata for dataset %s: %s", self.path, meta)
         return meta
 
-    @cached
     @profile(logger=log)
     def load_data(self):
-        with open(self.path) as f:
-            ds = arff.load(f)
-        return np.asarray(ds['data'], dtype=object)
+        self._ensure_loaded()
+        return pd.DataFrame(self._ds['data'], columns=[])
+
+    def release(self, properties=None):
+        super().release(properties)
+        self._ds = None
 
 
 class CsvDataset(FileDataset):
@@ -281,38 +290,45 @@ class CsvDatasplit(FileDatasplit):
 
     def __init__(self, dataset, path):
         super().__init__(dataset, format='csv', path=path)
+        self._ds = None
 
-    def _set_feature_as_target(self, target: Feature):
-        super()._set_feature_as_target(target)
-        if target.is_categorical():
-            self.dataset._dtypes[target.index] = np.object_
+    def _ensure_loaded(self):
+        if self._ds is None:
+            if self.dataset._dtypes is None:
+                self._ds = read_csv(self.path).convert_dtypes()
+                self.dataset._dtypes = self._ds.dtypes
+            else:
+                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict())
 
-    @cached
     @profile(logger=log)
     def load_metadata(self):
-        df = read_csv(self.path).convert_dtypes()
-        self.dataset._dtypes = dtypes = df.dtypes
-        to_feature_type = lambda dtype: ('object' if np.issubdtype(dtype, np.object_)
-                                         else 'int' if np.issubdtype(dtype, np.integer)
-                                         else 'float' if np.issubdtype(dtype, np.floating)
-                                         else 'number')
+        self._ensure_loaded()
+        dtypes = self.dataset._dtypes
+        to_feature_type = lambda dt: ('int' if pat.is_integer_dtype(dt)
+                                      else 'float' if pat.is_float_dtype(dt)
+                                      else 'number' if pat.is_numeric_dtype(dt)
+                                      else 'category' if pat.is_categorical_dtype(dt)
+                                      else 'string' if pat.is_string_dtype(dt)
+                                      # else 'datetime' if pat.is_datetime64_dtype(dt)
+                                      else 'object')
         features = [
             Feature(
                 i,
                 col,
                 to_feature_type(dtypes[i])
             )
-            for i, col in enumerate(df.columns)
+            for i, col in enumerate(self._ds.columns)
         ]
-        target = self._find_target_feature(features)
-        self._set_feature_as_target(target)
 
         for f in features:
-            col = df.iloc[:, f.index]
+            col = self._ds.iloc[:, f.index]
             f.has_missing_values = col.hasnans
-            if f.is_categorical():
+            if not f.is_numerical():
                 unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
                 f.values = [str(v) for v in sorted(unique_values)]
+
+        target = self._find_target_feature(features)
+        self._set_feature_as_target(target)
 
         meta = dict(
             features=features,
@@ -321,11 +337,11 @@ class CsvDatasplit(FileDatasplit):
         log.debug("Metadata for dataset %s: %s", self.path, meta)
         return meta
 
-    @cached
     @profile(logger=log)
     def load_data(self):
-        # return np.genfromtxt(f, dtype=None)
-        dtypes = self.dataset._dtypes.to_dict()
-        data = read_csv(self.path, as_data_frame=False, dtype=dtypes)
-        return data
+        self._ensure_loaded()
+        return self._ds
 
+    def release(self, properties=None):
+        super().release(properties)
+        self._ds = None
