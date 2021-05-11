@@ -29,6 +29,9 @@ H2OAutoML:
   version: '3.30.0.4'
   setup_args: 'zahradnik'
 
+lightautoml:
+  version: '0.2.13'
+
 mljarsupervised:
   version: '0.10.3'
 
