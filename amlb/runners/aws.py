@@ -539,7 +539,7 @@ class AWSBenchmark(Benchmark):
             self.monitoring = None
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1, instance_type=None):
-        log.info("Starting new EC2 instance with params: %s.", script_params)
+        log.info("Starting new EC2 instance with params: %s", script_params)
         inst_key = (instance_key.lower() if instance_key
                     else "{}_p{}_i{}".format(self.sid,
                                              re.sub(r"[\s-]", '', script_params),

@@ -252,6 +252,7 @@ def from_config(config: Namespace):
     global __INSTANCE__
     transform_config(config, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(config)
+    return __INSTANCE__
 
 
 def from_configs(*configs: Namespace):
@@ -259,6 +260,7 @@ def from_configs(*configs: Namespace):
     for c in configs:
         transform_config(c, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(Namespace.merge(*configs, deep=True))
+    return __INSTANCE__
 
 
 def get() -> Resources:
