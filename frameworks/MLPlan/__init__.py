@@ -1,12 +1,11 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.resources import config as rconfig
 from amlb.datautils import reorder_dataset
 from amlb.utils import call_script_in_same_dir
 
 
 def setup(*args, **kwargs):
-    call_script_in_same_dir(__file__, "setup.sh", rconfig().root_dir, *args, **kwargs)
+    call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
 
 
 def run(dataset: Dataset, config: TaskConfig):
@@ -15,8 +14,8 @@ def run(dataset: Dataset, config: TaskConfig):
     train_path = dataset.train.path
     test_path = dataset.test.path
     backend = config.framework_params.get('_backend')
-    # Weka requires target as the last attribute
-    if backend == 'weka' and dataset.target.index != len(dataset.predictors):
+    # ML-Plan requires the target attribute to be the last column
+    if dataset.target.index != len(dataset.predictors):
         train_path = reorder_dataset(dataset.train.path, target_src=dataset.target.index)
         test_path = reorder_dataset(dataset.test.path, target_src=dataset.target.index)
 

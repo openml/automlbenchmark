@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-VERSION=${2:-"stable"}
+VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/udellgroup/oboe.git"}
 PKG=${3:-"oboe"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
 
-. ${HERE}/../shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U ${PKG}

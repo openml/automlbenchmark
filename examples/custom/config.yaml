@@ -22,10 +22,12 @@ aws:
   resource_files:  # this allows to automatically upload custom config + frameworks to the running instance (benchmark files are always uploaded).
     - '{user}/config.yaml'
     - '{user}/frameworks.yaml'
+    - '{user}/constraints.yaml'
+    - '{user}/benchmarks'
     - '{user}/extensions'
 
   ec2:
     instance_type:
       series: t3
-  use_docker: true  # you can decide to always use the prebuilt docker images on AWS.
+  use_docker: false  # you can decide to always use the prebuilt docker images on AWS.
 

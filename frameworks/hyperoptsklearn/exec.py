@@ -1,5 +1,6 @@
 import functools as ft
 import logging
+import math
 import os
 import signal
 import tempfile as tmp
@@ -13,14 +14,13 @@ import hyperopt
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
 
 from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
-from frameworks.shared.callee import call_run, result, save_metadata
+from frameworks.shared.callee import call_run, result
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
     log.info(f"\n**** Hyperopt-sklearn [v{config.framework_version}] ****\n")
-    save_metadata(config)
 
     is_classification = config.type == 'classification'
 
@@ -69,10 +69,15 @@ def run(dataset, config):
                                   seed=config.seed,
                                   **training_params)
 
-    with InterruptTimeout(config.max_runtime_seconds * 4/3, sig=signal.SIGQUIT):
-        with InterruptTimeout(config.max_runtime_seconds, before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):
-            with Timer() as training:
-                estimator.fit(X_train, y_train)
+    with InterruptTimeout(config.max_runtime_seconds,
+                          interruptions=[
+                              dict(),  # default interruption
+                              dict(sig=signal.SIGKILL)
+                          ],
+                          wait_retry_secs=math.ceil(config.max_runtime_seconds/60),
+                          before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):
+        with Timer() as training:
+            estimator.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
     X_test = dataset.test.X_enc

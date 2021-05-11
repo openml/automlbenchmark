@@ -47,6 +47,8 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
                     help="Set to true [default] to save/add scores in output directory.")
+parser.add_argument('-e', '--exit-on-error', action='store_true', dest="exit_on_error",
+                    help="If set, the first task that does not complete with a model will cause the entire script to terminate.")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
@@ -91,7 +93,7 @@ log.debug("Script args: %s.", args)
 
 config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(os.path.join(args.userdir if args.userdir is not None else config.user_dir, "config.yaml"))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},
@@ -103,6 +105,7 @@ config_args = ns.parse(
     run_mode=args.mode,
     parallel_jobs=args.parallel,
     sid=sid,
+    exit_on_error=args.exit_on_error,
 ) + ns.parse(extras)
 if args.mode != 'local':
     config_args + ns.parse({'monitoring.frequency_seconds': 0})
@@ -151,7 +154,7 @@ finally:
         out_dirs = bench.output_dirs
         for d in archives:
             if d in out_dirs:
-                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"))
+                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arcpathformat='long')
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
 
     sys.exit(code)

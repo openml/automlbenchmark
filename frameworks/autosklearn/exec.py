@@ -15,7 +15,7 @@ from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
+from frameworks.shared.callee import call_run, result, output_subdir, utils
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,6 @@ def run(dataset, config):
     askl_string = "Auto-sklearn2.0" if askl_method_version == 2 else "Auto-sklearn"
 
     log.info(f"\n**** {askl_string} [v{autosklearn.__version__}]****\n")
-    save_metadata(config, version=autosklearn.__version__)
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
@@ -88,6 +87,7 @@ def run(dataset, config):
             "Using %sMB memory per job and on a total of %s jobs.",
             ml_memory_limit, n_jobs
         )
+        constr_params["memory_limit"] = ml_memory_limit
     else:
         ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
         # when memory is large enough, we should have:

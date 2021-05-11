@@ -66,6 +66,15 @@ autoxgboost:
   project: https://github.com/ja-thomas/autoxgboost
   refs: [https://arxiv.org/abs/1807.03873v2]
 
+flaml:
+  version: 'stable'
+  description: |
+    FLAML is a lightweight Python library that finds accurate machine learning models 
+    automatically, efficiently and economically. It frees users from selecting learners 
+    and hyperparameters for each learner. It is fast and cheap. 
+  project: https://github.com/microsoft/FLAML
+  refs: [https://arxiv.org/pdf/1911.04706.pdf]
+
 GAMA:
   version: 'stable'
   description: |
@@ -113,9 +122,15 @@ mljarsupervised_compete:
   description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
-
+    
+MLNet:
+  version: 'latest'
+  description: |
+    MLNET.CLI is a automated machine learning tool implemented by ml.net.
+    
 MLPlan:
   version: 'stable'
+  abstract: true
   description: |
     ML-Plan is an approach to AutoML based on hierarchical task networks (HTNs).
   project: http://mlplan.org
@@ -130,6 +145,10 @@ MLPlanWEKA:
   extends: MLPlan
   params:
     _backend: weka
+
+mlr3automl:
+  version: 'stable'
+  project: https://github.com/a-hanf/mlr3automl
 
 oboe:
   version: 'latest'
@@ -154,9 +173,6 @@ TPOT:
 #    max_eval_time_mins: 2
 #    population_size: 25
 #    verbosity: 2
-
-
-
 
 
 

@@ -11,7 +11,8 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
+from .utils import Namespace, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
+from .utils.config import TransformRule, config_load, transform_config
 from .__version__ import __version__, _dev_version as dev
 
 
@@ -72,9 +73,10 @@ class Resources:
                 return defval
 
         na = "NA"
-        version = git("--version")
-        is_git_repo = version and git("rev-parse --git-dir 2> /dev/null")
-        if is_git_repo:
+        git_version = git("--version")
+        is_repo = git("rev-parse") is not None
+
+        if git_version and is_repo:
             repo = git("remote get-url origin", na)
             branch = git("rev-parse --abbrev-ref HEAD", na)
             commit = git("rev-parse HEAD", na)
@@ -133,6 +135,8 @@ class Resources:
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
+        if framework['abstract']:
+            raise ValueError("Framework definition `{}` is abstract and cannot be run directly.".format(name))
         return framework, framework.name
 
     @lazy_property
@@ -246,11 +250,14 @@ __INSTANCE__: Resources = None
 
 def from_config(config: Namespace):
     global __INSTANCE__
+    transform_config(config, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(config)
 
 
 def from_configs(*configs: Namespace):
     global __INSTANCE__
+    for c in configs:
+        transform_config(c, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(Namespace.merge(*configs, deep=True))
 
 
@@ -278,4 +285,12 @@ def output_dirs(root, session=None, subdirs=None, create=False):
         if create and not os.path.exists(dirs[d]):
             touch(dirs[d], as_dir=True)
     return dirs
+
+
+_backward_compatibility_config_rules_ = [
+    TransformRule(from_key='exit_on_error', to_key='job_scheduler.exit_on_job_failure'),
+    TransformRule(from_key='parallel_jobs', to_key='job_scheduler.parallel_jobs'),
+    TransformRule(from_key='max_parallel_jobs', to_key='job_scheduler.max_parallel_jobs'),
+    TransformRule(from_key='delay_between_jobs', to_key='job_scheduler.delay_between_jobs')
+]
 

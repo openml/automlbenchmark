@@ -3,6 +3,7 @@
   * [Run a benchmark](#run-a-benchmark)
      * [Custom configuration](#custom-configuration)
         * [Run a framework with different (hyper-)parameters](#run-a-framework-with-different-hyper-parameters)
+     * [Advanced AWS Support](#advanced-aws-support) 
   * [Add a benchmark](#add-a-benchmark)
      * [Datasets definition](#datasets-definition)
         * [OpenML datasets](#openml-datasets)
@@ -74,6 +75,9 @@ aws:
 - `{user}`: replaced by the value of config `user_dir`. Folder containing customizations (`config.yaml`, benchmark definitions, framework definitions...). Defaults to `~/.config/automlbenchmark`, but can be overridden at the command line using `-u` or `--userdir`.
 - `{root}`: replaced by the value of config `root_dir`. The root folder of the `automlbenchmark` application: this is detected at runtime.
 
+**Note:** It is possible to have multiple configuration files: just create a folder for each `config.yaml` file and use that folder as your `user_dir` using `-u /path/to/config/folder`
+
+
 #### Run a framework with different (hyper-)parameters
 
 Framework definitions accept a `params` dictionary for pass-through parameters, i.e. parameters that are directly accessible from the `exec.py` file in the framework integration executing the AutoML training.
@@ -100,6 +104,34 @@ RandomForest_custom:
   params:
     n_estimators: 2000
     _n_jobs: 1
+```
+
+### Advanced AWS Support
+
+When using AWS mode, the application with use `on-demand` EC2 instances from the `m5` series by default.
+
+However, it is also possible to use `Spot` instances, specify a `max_hourly_price`, or customize your experience when using this mode in general.
+
+All configuration points are grouped and documented under the `aws` yaml namespace in the main [config] file.
+
+When setting  your own configuration, it is strongly recommended to first create your own `config.yaml` file as described in [Custom configuration](#custom-configuration).
+
+_Example:_
+
+A sample of a config file using Spot instances on a non-default region:
+```yaml
+
+aws:
+  region: 'us-east-1'
+  resource_files:
+    - '{user}/config.yaml'
+    - '{user}/frameworks.yaml'
+
+  ec2:
+    subnet_id: subnet-123456789   # subnet for account on us-east-1 region
+    spot:
+      enabled: true
+      max_hourly_price: 0.40  # comment out to use default
 ```
 
 ## Add a benchmark
@@ -373,9 +405,9 @@ autosklearn_oldgen:
   description: "this will use the latest autosklearn version from the old generation"
 
 H2OAutoML_nightly:
-  extends: H2OAutoML
-  version: 'latest'
-  description: "this will use the nightly H2O build if there's no H2O version already installed (use --setup=force to refresh the version)"
+  module: frameworks.H2OAutoML
+  setup_cmd: 'LATEST_H2O=`curl http://h2o-release.s3.amazonaws.com/h2o/master/latest` && pip install --no-cache-dir -U "http://h2o-release.s3.amazonaws.com/h2o/master/${{LATEST_H2O}}/Python/h2o-3.29.0.${{LATEST_H2O}}-py2.py3-none-any.whl"'
+  version: 'nightly'
 
 H2OAutoML_custom:
   extends: H2OAutoML
@@ -500,7 +532,7 @@ frameworks/RandomForest/
 
 Noticeable differences with a basic integration:
 - the `venv` is created in `setup.sh` by passing the current dir when sourcing the `shared/setup.sh` script: `. $HERE/../shared/setup.sh $HERE`.
-- the `run` function in `__init__py` prepares the data (in the application environment) before executing the `exec.py` in the dedicated `venv`. The call to `run_in_venv` is in charge of serializing the input, calling `exec.py` and deserializing + saving the results from `exec`.
+- the `run` function in `__init__.py` prepares the data (in the application environment) before executing the `exec.py` in the dedicated `venv`. The call to `run_in_venv` is in charge of serializing the input, calling `exec.py` and deserializing + saving the results from `exec`.
 - `exec.py`, when calls in the subprocess (function `__main__`), calls `call_run(run)` which deserializes the input (dataset + config) and passes it to the `run` function that just need to return a `result` object.
 
 *Note*:
@@ -622,6 +654,7 @@ Using the instructions above:
     > python runbenchmark.py myframework -m docker
  1. if this works, try to run it in aws: 
     > python runbenchmark.py myframework -m aws
+ 1. add a brief description of the framework to the documentation in [docs/automl_overview](./automl_overview.md) following the same formatting as the other entries.
  1. create a pull request, and ask a review from authors of `automlbenchmark`: they'll also be happy to help you during this integration.
 
 #### Add a custom framework
@@ -954,3 +987,4 @@ If the setup fails on a supported environment, please try the following:
 [ARFF]: https://waikato.github.io/weka-wiki/formats_and_processing/arff_stable/
 [CSV]: https://tools.ietf.org/html/rfc4180
 [Docker]: https://docs.docker.com/
+[config]: ../resources/config.yaml

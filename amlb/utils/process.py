@@ -1,10 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
-from functools import reduce, wraps
+from contextlib import contextmanager
+from functools import partial, reduce, wraps
 import inspect
 import io
 import logging
 import multiprocessing as mp
 import os
+import platform
 import queue
 import re
 import select
@@ -15,6 +17,7 @@ import sys
 import threading
 import _thread
 import traceback
+from typing import Dict, List, Union, Tuple
 
 import psutil
 
@@ -82,6 +85,78 @@ def as_cmd_args(*args, **kwargs):
                        ))
 
 
+def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]:
+    """ Custom output forwarder, because select.select is not Windows compatible. """
+    outputs = dict(
+        out=dict(
+            stream=process.stdout,
+            queue=queue.Queue(),
+            lines=[],
+        ),
+        err=dict(
+            stream=process.stderr,
+            queue=queue.Queue(),
+            lines=[],
+        ),
+    )
+
+    def forward_output(stream, queue_):
+        for line in stream:
+            queue_.put(line)
+
+    for output in outputs.values():
+        t = threading.Thread(target=forward_output, args=(output["stream"], output["queue"]))
+        t.daemon = True
+        t.start()
+
+    while process.poll() is None:
+        for output in outputs.values():
+            while True:
+                try:
+                    line = output["queue"].get(timeout=0.5)
+                    output["lines"].append(line)
+                    print(line.rstrip())
+                except queue.Empty:
+                    break
+    return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
+
+
+def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **ignored):
+    if mode is True:
+        mode = 'line'
+
+    if input is not None:
+        try:
+            with process.stdin as stream:
+                stream.write(input)
+        except BrokenPipeError:
+            pass
+        except:
+            raise
+
+    def read_pipe(pipe, timeout):
+        pipes = as_list(pipe)
+        # wait until a pipe is ready for reading, non-Windows only.
+        ready, *_ = select.select(pipes, [], [], timeout)
+        reads = [''] * len(pipes)
+        # print update for each pipe that is ready for reading
+        for i, p in enumerate(pipes):
+            if p in ready:
+                line = p.readline()
+                if mode == 'line':
+                    print(re.sub(r'\n$', '', line, count=1))
+                elif mode == 'block':
+                    print(line, end='')
+                reads[i] = line
+        return reads if len(pipes) > 1 else reads[0]
+
+    output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
+                                                 process.stderr if process.stderr else 2], activity_timeout),
+                              ['', '']))
+    print()  # ensure that the log buffer is flushed at the end
+    return ''.join(output), ''.join(error)
+
+
 def run_cmd(cmd, *args, **kwargs):
     params = Namespace(
         input_str=None,
@@ -111,39 +186,10 @@ def run_cmd(cmd, *args, **kwargs):
     log.log(params.log_level, "Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
-    def live_output(process, input=None, **ignored):
-        mode = params.live_output
-        if mode is True:
-            mode = 'line'
-
-        if input is not None:
-            try:
-                with process.stdin as stream:
-                    stream.write(input)
-            except BrokenPipeError:
-                pass
-            except:
-                raise
-
-        def read_pipe(pipe, timeout):
-            pipes = as_list(pipe)
-            ready, *_ = select.select(pipes, [], [], timeout)
-            reads = [''] * len(pipes)
-            for i, p in enumerate(pipes):
-                if p in ready:
-                    line = p.readline()
-                    if mode == 'line':
-                        print(re.sub(r'\n$', '', line, count=1))
-                    elif mode == 'block':
-                        print(line, end='')
-                    reads[i] = line
-            return reads if len(pipes) > 1 else reads[0]
-
-        output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                     process.stderr if process.stderr else 2], params.activity_timeout),
-                                  ['', '']))
-        print()  # ensure that the log buffer is flushed at the end
-        return ''.join(output), ''.join(error)
+    if platform.system() == "Windows":
+        live_output = partial(live_output_windows, activity_timeout=params.activity_timeout)
+    else:
+        live_output = partial(live_output_unix, mode=params.live_output, activity_timeout=params.activity_timeout)
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
@@ -187,10 +233,14 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     return run_script(script_path, *args, **kwargs)
 
 
+def is_main_thread():
+    return threading.current_thread() == threading.main_thread()
+
+
 def get_thread(tid=None):
     return (threading.current_thread() if tid is None
             else threading.main_thread() if tid == 0
-            else next(filter(lambda t: t.ident == tid, threading.enumerate())))
+            else next(filter(lambda t: t.ident == tid, threading.enumerate()), None))
 
 
 def get_process(pid=None):
@@ -271,21 +321,19 @@ def system_volume_mb(root="/"):
     )
 
 
+@contextmanager
 def signal_handler(sig, handler):
     """
     :param sig: a signal as defined in https://docs.python.org/3.7/library/signal.html#module-contents
     :param handler: a handler function executed when the given signal is raised in the current thread.
     """
     prev_handler = None
-
-    def handle(signum, frame):
-        try:
-            handler()
-        finally:
-            # restore previous signal handler
-            signal.signal(sig, prev_handler or signal.SIG_DFL)
-
-    prev_handler = signal.signal(sig, handle)
+    try:
+        prev_handler = signal.signal(sig, handler)
+        yield
+    finally:
+        # restore previous signal handler
+        signal.signal(sig, prev_handler or signal.SIG_DFL)
 
 
 def raise_in_thread(thread_id, exc):
@@ -312,40 +360,88 @@ class InterruptTimeout(Timeout):
     A :class:`Timeout` implementation that can send a signal to the interrupted thread or process,
     or raise an exception in the thread (works only for thread interruption)
     if the passed signal is an exception class or instance.
+    If sig is None, then it raises a TimeoutError internally that is not propagated outside the context manager.
     """
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
-                 interrupt='thread', sig=signal.SIGINT, ident=None, before_interrupt=None):
+                 interrupt='thread', sig=signal.SIGINT, id=None,
+                 interruptions: Union[Dict, List[Dict]] = None, wait_retry_secs=1,
+                 before_interrupt=None):
         def interruption():
-            log.log(log_level, self.message)
-            if before_interrupt is not None:
-                before_interrupt()
-            if interrupt == 'thread':
-                if isinstance(self.sig, (type(None), BaseException)):
-                    raise_in_thread(self.ident, TimeoutError(self.message) if self.sig is None else self.sig)
-                else:
-                    # _thread.interrupt_main()
-                    signal.pthread_kill(self.ident, self.sig)
-            elif interrupt == 'process':
-                os.kill(self.ident, self.sig)
+            inter_iter = iter(self._interruptions)
+            while not self._interrupt_event.is_set():
+                inter = self._last_attempt = next(inter_iter, self._last_attempt)
+                log.log(self._log_level, inter.message)
+                if inter.before_interrupt is not None:
+                    try:
+                        inter.before_interrupt()
+                    except Exception:
+                        log.warning("Swallowing the error raised by `before_interrupt` hook: %s", inter.before_interrupt, exc_info=True)
+                try:
+                    if inter.interrupt == 'thread':
+                        if isinstance(inter.sig, (type(None), BaseException)):
+                            exc = TimeoutError(inter.message) if inter.sig is None else inter.sig
+                            raise_in_thread(inter.id, exc)
+                        else:
+                            # _thread.interrupt_main()
+                            signal.pthread_kill(inter.id, inter.sig)
+                    elif inter.interrupt == 'process':
+                        os.kill(inter.id, inter.sig)
+                except Exception:
+                    raise
+                finally:
+                    self._interrupt_event.wait(inter.wait)  # retry every second if interruption didn't work
 
         super().__init__(timeout_secs, on_timeout=interruption)
+        self._timeout_secs = timeout_secs
+        self._message = message
+        self._log_level = log_level
+        self._interrupt = interrupt
+        self._sig = sig
+        self._id = id
+        self._wait_retry_secs = wait_retry_secs
+        self._before_interrupt = before_interrupt
+        self._interruptions = [self._make_interruption(i) for i in (interruptions if isinstance(interruptions, list)
+                                                                    else [interruptions] if isinstance(interruptions, dict)
+                                                                    else [dict()])]
+        self._interrupt_event = threading.Event()
+        self._last_attempt = None
+
+    def _make_interruption(self, interruption: dict):
+        interrupt = interruption.get('interrupt', self._interrupt)
+        sig = interruption.get('sig', self._sig)
+        id = interruption.get('id', self._id)
+        message = interruption.get('message', self._message)
+        wait = interruption.get('wait', self._wait_retry_secs)
+
+        inter = Namespace()
         if interrupt not in ['thread', 'process']:
             raise ValueError("`interrupt` value should be one of ['thread', 'process'].")
+        inter.interrupt = interrupt
+        inter.before_interrupt = self._before_interrupt
+        tp = get_thread(id) if interrupt == 'thread' else get_process(id)
+        if tp is None:
+            raise ValueError(f"no {interrupt} with id {id}")
         if message is None:
-            desc = 'current' if ident is None else 'main' if ident == 0 else self.ident
-            self.message = f"Interrupting {interrupt} {desc} after {timeout_secs}s timeout."
+            sid = f"ident={tp.ident}" if isinstance(tp, threading.Thread) else f"pid={tp.pid}"
+            inter.message = f"Interrupting {interrupt} {tp.name} [{sid}] after {self._timeout_secs}s timeout."
         else:
-            self.message = message
-        self.ident = get_thread(ident).ident if interrupt == 'thread' else get_process(ident).pid
-        self.sig = sig(self.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
+            inter.message = message
+        inter.id = tp.ident if isinstance(tp, threading.Thread) else tp.pid
+        inter.sig = sig(inter.message) if inspect.isclass(sig) and BaseException in inspect.getmro(sig) else sig
+        inter.wait = wait
+        return inter
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
+        self._interrupt_event.set()
+        if not self._last_attempt:
+            return False
         if self.timed_out:
-            if isinstance(self.sig, BaseException):
-                raise self.sig
-            elif self.sig is None:
+            sig = self._last_attempt.sig
+            if isinstance(sig, BaseException):
+                raise sig
+            elif sig is None:
                 return True
 
 
@@ -537,6 +633,5 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
         return profiler
 
     return decorator
-
 
 

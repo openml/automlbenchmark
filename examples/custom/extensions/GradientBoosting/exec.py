@@ -1,18 +1,19 @@
 import logging
+
 import sklearn
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import impute
-from amlb.results import save_predictions_to_file
+from amlb.results import save_predictions
 from amlb.utils import Timer
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    log.info("\n**** Gradient Boosting (sklearn %s) ****\n", sklearn.__version__)
+    log.info(f"\n**** Gradient Boosting [sklearn v{sklearn.__version__}] ****\n")
 
     is_classification = config.type == 'classification'
 
@@ -27,11 +28,11 @@ def run(dataset: Dataset, config: TaskConfig):
     predictions = predictor.predict(X_test)
     probabilities = predictor.predict_proba(X_test) if is_classification else None
 
-    save_predictions_to_file(dataset=dataset,
-                             output_file=config.output_predictions_file,
-                             probabilities=probabilities,
-                             predictions=predictions,
-                             truth=y_test)
+    save_predictions(dataset=dataset,
+                     output_file=config.output_predictions_file,
+                     probabilities=probabilities,
+                     predictions=predictions,
+                     truth=y_test)
 
     return dict(
         models_count=1,

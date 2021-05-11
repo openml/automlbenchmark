@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-AMLB_DIR="$1"
-VERSION=${2:-"stable"}
-REPO=${3:-"https://github.com/PGijsbers/gama"}
-PKG=${4:-"gama"}
+VERSION=${1:-"stable"}
+REPO=${2:-"https://github.com/PGijsbers/gama"}
+PKG=${3:-"gama"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
 
 #create local venv
-. ${HERE}/../shared/setup.sh ${HERE}
-#. ${AMLB_DIR}/frameworks/shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 
 PIP install -r ${HERE}/requirements.txt
 if [[ "$VERSION" == "stable" ]]; then
@@ -24,3 +22,5 @@ else
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
     PIP install -U -e ${TARGET_DIR}
 fi
+
+PY -c "from gama import __version__; print(__version__)" >> "${HERE}/.installed"

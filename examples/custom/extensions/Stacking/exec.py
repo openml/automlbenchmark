@@ -14,13 +14,13 @@ from sklearn.ensemble import StackingClassifier, StackingRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression, SGDClassifier, SGDRegressor
 from sklearn.svm import LinearSVC, LinearSVR
 
-from frameworks.shared.callee import call_run, result, Timer
+from frameworks.shared.callee import call_run, result, utils
 
 log = logging.getLogger(os.path.basename(__file__))
 
 
 def run(dataset, config):
-    log.info("\n**** Stacking Ensemble (sklearn %s) ****\n", sklearn.__version__)
+    log.info(f"\n**** Stacking Ensemble [sklearn v{sklearn.__version__}] ****\n")
 
     is_classification = config.type == 'classification'
 
@@ -62,7 +62,7 @@ def run(dataset, config):
             **training_params
         )
 
-    with Timer() as training:
+    with utils.Timer() as training:
         estimator.fit(X_train, y_train)
 
     predictions = estimator.predict(X_test)
