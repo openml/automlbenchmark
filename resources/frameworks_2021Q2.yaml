@@ -5,7 +5,7 @@
 #########################
 
 AutoGluon:
-  version: "0.0.12"
+  version: "0.2.0"
 
 AutoGluon_bestquality:
   extends: AutoGluon
@@ -14,13 +14,13 @@ AutoGluon_bestquality:
     presets: best_quality
 
 autosklearn:
-  version: '0.12.1'
-
-AutoWEKA:
-  version: '2.6'
+  version: '0.12.6'
 
 autoxgboost:
   version: 'latest'
+
+flaml:
+  version: '0.3.6'
 
 GAMA:
   version: '21.0.0'
@@ -29,11 +29,8 @@ H2OAutoML:
   version: '3.30.0.4'
   setup_args: 'zahradnik'
 
-hyperoptsklearn:
-  version: 'latest'
-
 mljarsupervised:
-  version: '0.7.15'
+  version: '0.10.3'
 
 mljarsupervised_compete:
   extends: mljarsupervised
@@ -54,11 +51,8 @@ MLPlanWEKA:
   params:
     _backend: weka
 
-oboe:
-  version: 'latest'
-
 TPOT:
-  version: '0.11.5'
+  version: '0.11.7'
 
 
 #######################################
