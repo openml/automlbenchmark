@@ -63,8 +63,8 @@ def run(dataset: Dataset, config: TaskConfig):
             columns[label] = 'label'
 
             # might use a bit extra memory, but it's faster
-            pd.DataFrame(dataset.train.data, columns=columns).to_csv(train_dataset_path, index=None)
-            pd.DataFrame(dataset.test.data, columns=columns).to_csv(test_dataset_path, index=None)
+            pd.DataFrame(dataset.train.data_enc, columns=columns).to_csv(train_dataset_path, index=None)
+            pd.DataFrame(dataset.test.data_enc, columns=columns).to_csv(test_dataset_path, index=None)
 
         log.info(f'train dataset: {train_dataset_path}')
         log.info(f'test dataset: {test_dataset_path}')
@@ -84,7 +84,7 @@ def run(dataset: Dataset, config: TaskConfig):
         with open(train_result_json, 'r') as f:
             json_str = f.read()
             mb_config = json.loads(json_str)
-            model_path = mb_config['Artifact']['MLNetModelPath']
+            model_path = os.path.join(tmp_output_folder, mb_config['Artifact']['MLNetModelPath'])
             output_prediction_path = os.path.join(log_dir, "prediction.txt")  # keeping this in log dir as it contains useful error when prediction fails
             models_count = len(mb_config['RunHistory']['Trials'])
             # predict
@@ -99,7 +99,7 @@ def run(dataset: Dataset, config: TaskConfig):
                     dataset=dataset,
                     output_file=config.output_predictions_file,
                     predictions=prediction_df['PredictedLabel'].values,
-                    truth=dataset.test.y,
+                    truth=dataset.test.y_enc.astype('int'),
                     probabilities=prediction_df.values[:,:-1],
                     probabilities_labels=list(prediction_df.columns.values[:-1]),
                 )

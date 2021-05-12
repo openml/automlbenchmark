@@ -74,6 +74,8 @@ flaml:
     and hyperparameters for each learner. It is fast and cheap. 
   project: https://github.com/microsoft/FLAML
   refs: [https://arxiv.org/pdf/1911.04706.pdf]
+  params:
+    estimator_list: ['lgbm', "rf"]
 
 GAMA:
   version: 'stable'
@@ -124,9 +126,11 @@ mljarsupervised_compete:
     mode: Compete   # set mode for Compete, default mode is Explain
     
 MLNet:
-  version: 'latest'
+  version: '16.5.25'
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
+  params:
+    _save_artifacts: True
     
 MLPlan:
   version: 'stable'

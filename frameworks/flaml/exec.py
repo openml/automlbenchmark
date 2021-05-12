@@ -33,7 +33,7 @@ def run(dataset, config):
     # Mapping of benchmark metrics to flaml metrics
     metrics_mapping = dict(
         acc='accuracy',
-        auc='roc_auc',
+        auc='accuracy',
         f1='f1',
         logloss='log_loss',
         mae='mae',
