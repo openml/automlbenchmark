@@ -293,6 +293,9 @@ _backward_compatibility_config_rules_ = [
     TransformRule(from_key='exit_on_error', to_key='job_scheduler.exit_on_job_failure'),
     TransformRule(from_key='parallel_jobs', to_key='job_scheduler.parallel_jobs'),
     TransformRule(from_key='max_parallel_jobs', to_key='job_scheduler.max_parallel_jobs'),
-    TransformRule(from_key='delay_between_jobs', to_key='job_scheduler.delay_between_jobs')
+    TransformRule(from_key='delay_between_jobs', to_key='job_scheduler.delay_between_jobs'),
+    TransformRule(from_key='monitoring.frequency_seconds', to_key='monitoring.interval_seconds'),
+    TransformRule(from_key='aws.query_frequency_seconds', to_key='aws.query_interval_seconds'),
+    TransformRule(from_key='aws.ec2.monitoring.cpu.query_frequency_seconds', to_key='aws.ec2.monitoring.cpu.query_interval_seconds'),
 ]
 

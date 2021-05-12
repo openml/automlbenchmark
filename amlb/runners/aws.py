@@ -328,7 +328,7 @@ class AWSBenchmark(Benchmark):
             if _self.ext.wait_min_secs:
                 countdown(_self.ext.wait_min_secs,
                           message=f"starting job {_self.name}",
-                          frequency=rconfig().aws.query_frequency_seconds)
+                          interval=rconfig().aws.query_interval_seconds)
 
         def _run(_self):
             try:
@@ -474,7 +474,7 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.exception(e)
             finally:
-                interrupt.wait(rconfig().aws.query_frequency_seconds)
+                interrupt.wait(rconfig().aws.query_interval_seconds)
 
     def _get_cpu_activity(self, iid, delta_minutes=60, period_minutes=5):
         now = dt.datetime.utcnow()
@@ -507,7 +507,7 @@ class AWSBenchmark(Benchmark):
 
         def cpu_monitor():
             cpu_config = rconfig().aws.ec2.monitoring.cpu
-            if cpu_config.query_frequency_seconds <= 0:
+            if cpu_config.query_interval_seconds <= 0:
                 return
             while not interrupt.is_set():
                 try:
@@ -521,7 +521,7 @@ class AWSBenchmark(Benchmark):
                 except Exception as e:
                     log.exception(e)
                 finally:
-                    interrupt.wait(cpu_config.query_frequency_seconds)
+                    interrupt.wait(cpu_config.query_interval_seconds)
 
         self.monitoring = ns(executor=ThreadPoolExecutor(max_workers=1, thread_name_prefix="aws_monitoring_"),
                              interrupt=interrupt)
@@ -656,7 +656,7 @@ class AWSBenchmark(Benchmark):
                 waiter.wait(
                     InstanceIds=[instance.id],
                     WaiterConfig=dict(
-                        Delay=wait_config.delay or rconfig().aws.query_frequency_seconds,
+                        Delay=wait_config.delay or rconfig().aws.query_interval_seconds,
                         MaxAttempts=wait_config.max_attempts
                     )
                 )

@@ -38,7 +38,7 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     return datetime.strftime(strf)
 
 
-def countdown(timeout_secs, on_timeout=None, message=None, frequency=1, log_level=logging.INFO):
+def countdown(timeout_secs, on_timeout=None, message=None, interval=1, log_level=logging.INFO):
     timeout_epoch = time.time() + timeout_secs
     remaining = timeout_secs
     while remaining > 0:
@@ -48,7 +48,7 @@ def countdown(timeout_secs, on_timeout=None, message=None, frequency=1, log_leve
             log.log(log_level, "in %02d:%02d:%02d : %s", hours, mins, secs, message)
         else:
             log.log(log_level, "countdown: %02d:%02d:%02d", hours, mins, secs)
-        next_sleep = min(frequency, remaining)
+        next_sleep = min(interval, remaining)
         time.sleep(next_sleep)
         remaining = math.ceil(timeout_epoch - time.time())
     if on_timeout:

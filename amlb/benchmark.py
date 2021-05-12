@@ -234,7 +234,7 @@ class Benchmark:
         try:
             with signal_handler(signal.SIGINT, on_interrupt):
                 with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
-                                  frequency_seconds=rconfig().monitoring.frequency_seconds,
+                                  interval_seconds=rconfig().monitoring.interval_seconds,
                                   check_on_exit=True,
                                   statistics=rconfig().monitoring.statistics,
                                   verbosity=rconfig().monitoring.verbosity):

@@ -492,16 +492,16 @@ class InterruptTimeout(Timeout):
 
 class Monitoring:
 
-    def __init__(self, name=None, frequency_seconds=60, check_on_exit=False, thread_prefix="monitoring_"):
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False, thread_prefix="monitoring_"):
         self._exec = None
         self._name = name or f"{get_process().name()} [{os.getpid()}]"
-        self._frequency = frequency_seconds
+        self._interval = interval_seconds
         self._thread_prefix = thread_prefix
         self._interrupt = threading.Event()
         self._check_on_exit = check_on_exit
 
     def __enter__(self):
-        if self._frequency > 0:
+        if self._interval > 0:
             self._interrupt.clear()
             self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self._thread_prefix)
             self._exec.submit(self._monitor)
@@ -522,7 +522,7 @@ class Monitoring:
             except Exception as e:
                 log.exception(e)
             finally:
-                self._interrupt.wait(self._frequency)
+                self._interrupt.wait(self._interval)
 
     def _check_state(self):
         pass
@@ -530,13 +530,13 @@ class Monitoring:
 
 class CPUMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=60, check_on_exit=False,
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
                  use_interval=False, per_cpu=False, verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
-                         frequency_seconds=0 if use_interval else frequency_seconds,
+                         interval_seconds=0 if use_interval else interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="cpu_monitoring_")
-        self._interval = frequency_seconds if use_interval else None
+        self._interval = interval_seconds if use_interval else None
         self._per_cpu = per_cpu
         self._verbosity = verbosity
         self._log_level = log_level
@@ -552,10 +552,10 @@ class CPUMonitoring(Monitoring):
 
 class SysMemoryMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=60, check_on_exit=False,
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
                  verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
-                         frequency_seconds=frequency_seconds,
+                         interval_seconds=interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="sys_memory_monitoring_")
         self._verbosity = verbosity
@@ -575,11 +575,11 @@ class SysMemoryMonitoring(Monitoring):
 
 class ProcessMemoryMonitoring(Monitoring):
 
-    def __init__(self, name=None, pid=None, frequency_seconds=60, check_on_exit=False,
+    def __init__(self, name=None, pid=None, interval_seconds=60, check_on_exit=False,
                  verbosity=0, log_level=logging.INFO):
         proc = get_process(pid)
         super().__init__(name=name if name else f"{proc.name()} [{proc.pid}]",
-                         frequency_seconds=frequency_seconds,
+                         interval_seconds=interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="proc_memory_monitoring_")
         self._proc = proc
@@ -603,10 +603,10 @@ class ProcessMemoryMonitoring(Monitoring):
 
 class VolumeMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=60, check_on_exit=False, root="/",
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False, root="/",
                  verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
-                         frequency_seconds=frequency_seconds,
+                         interval_seconds=interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="volume_monitoring_")
         self._root = root
@@ -627,18 +627,18 @@ class VolumeMonitoring(Monitoring):
 
 class OSMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=60, check_on_exit=False,
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
                  statistics=('cpu', 'proc_memory', 'sys_memory', 'volume'), verbosity=0, log_level=logging.INFO):
-        super().__init__(name=name, frequency_seconds=frequency_seconds, check_on_exit=check_on_exit)
+        super().__init__(name=name, interval_seconds=interval_seconds, check_on_exit=check_on_exit)
         self.monitors = []
         if 'cpu' in statistics:
-            self.monitors.append(CPUMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(CPUMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
         if 'proc_memory' in statistics:
-            self.monitors.append(ProcessMemoryMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(ProcessMemoryMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
         if 'sys_memory' in statistics:
-            self.monitors.append(SysMemoryMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(SysMemoryMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
         if 'volume' in statistics:
-            self.monitors.append(VolumeMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(VolumeMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
 
     def _check_state(self):
         for monitor in self.monitors:
