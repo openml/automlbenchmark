@@ -145,11 +145,6 @@ class OpenmlDataset(Dataset):
     def _load_data(self, fmt):
         splitter = _get_data_splitter_cls(fmt)(self)
         train, test = splitter.split()
-        # print("**** loaded ****")
-        # print("**** train ****")
-        # print(train)
-        # print("**** test ****")
-        # print(test)
         self._train._data[fmt] = train
         self._test._data[fmt] = test
 
@@ -265,16 +260,18 @@ class ArffSplitter(DataSplitter[str]):
                            ('INTEGER' if pat.is_integer_dtype(dt)
                             else 'REAL' if pat.is_float_dtype(dt)
                             else 'NUMERIC' if pat.is_numeric_dtype(dt)
+                            # else ['0', '1'] if pat.is_bool_dtype(dt)
                             else self._get_categorical_values(c) if pat.is_categorical_dtype(dt)
                             else 'STRING'
                            ))
                           for c, dt in zip(df.columns, df.dtypes)]
-            arff.dump({
-                'description': description,
-                'relation': name,
-                'attributes': attributes,
-                'data': df.values
-            }, file)
+            arff.dump(dict(
+                description=description,
+                relation=name,
+                attributes=attributes,
+                data=df.values
+                # data=(df * 1).values  # converts bool to 0/1 and NAs to NaN
+            ), file)
 
     def _get_categorical_values(self, col):
         feat = next((f for f in self.ds._oml_dataset.features.values() if f.name == col), None)

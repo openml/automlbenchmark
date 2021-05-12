@@ -39,51 +39,11 @@ def test_load_binary_task_csv(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.binary
-    assert len(ds.features) == 22
-    assert len(ds.predictors) == 21
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_kc2_features(ds, ds_def)
 
-    assert ds.target.name == ds_def.target
-    assert len(ds.target.values) == 2
-    assert ds.target.values == ["no", "yes"]
-    assert ds.target.data_type == 'string'   # file loader doesn't support categories yet when loading CSV files
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
-
-    assert all([p.data_type in ['int', 'float'] for p in ds.predictors])
-    assert all([p.values is None for p in ds.predictors])
-    assert not any([p.is_target for p in ds.predictors])
-    assert not any([p.has_missing_values for p in ds.predictors])
-
-    assert ds.train.path == ds_def.train
-    assert ds.test.path == ds_def.test
-    assert ds.train.data_path('csv') == ds.train.path
-    try:
-        ds.train.data_path('arff')       # file loader doesn't support file auto-conversion yet
-        pytest.fail("should have raised")
-    except ValueError as e:
-        assert "Dataset kc2_train is only available in csv format" in str(e)
-
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
-
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    floats = [p.name for p in ds.predictors if p.data_type == 'float']
-    ints = [p.name for p in ds.predictors if p.data_type == 'int']
-    assert ds.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
-    assert pd.api.types.is_string_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
-
-    assert ds.train.X_enc.shape == ds.train.X.shape
-    assert np.issubdtype(ds.train.X_enc.dtype, np.floating)
-    assert np.issubdtype(ds.train.y_enc.dtype, np.floating)  # not ideal given that it's binary, but well…
 
 
 @pytest.mark.use_disk
@@ -95,47 +55,27 @@ def test_load_binary_task_arff(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.binary
-    assert len(ds.features) == 22
-    assert len(ds.predictors) == 21
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_kc2_features(ds, ds_def)
 
-    assert ds.target.name == ds_def.target
-    assert len(ds.target.values) == 2
-    assert ds.target.values == ["no", "yes"]
-    assert ds.target.data_type == 'category'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
 
-    assert all([p.data_type in ['int', 'float'] for p in ds.predictors])
-    assert all([p.values is None for p in ds.predictors])
-    assert not any([p.is_target for p in ds.predictors])
-    assert not any([p.has_missing_values for p in ds.predictors])
+def _assert_kc2_features(dataset, definition):
+    assert len(dataset.features) == 22
+    assert len(dataset.predictors) == 21
+    _assert_target(dataset.target, name=definition.target, values=["no", "yes"])
 
-    assert ds.train.path == ds_def.train
-    assert ds.test.path == ds_def.test
-    assert ds.train.data_path('arff') == ds.train.path
-    try:
-        ds.train.data_path('csv')       # file loader doesn't support file auto-conversion yet
-        pytest.fail("should have raised")
-    except ValueError as e:
-        assert "Dataset kc2_train is only available in arff format" in str(e)
+    assert all([p.data_type in ['int', 'float'] for p in dataset.predictors])
+    assert all([p.values is None for p in dataset.predictors])
+    assert not any([p.is_target for p in dataset.predictors])
+    assert not any([p.has_missing_values for p in dataset.predictors])
 
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
-
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    floats = [p.name for p in ds.predictors if p.data_type == 'float']
-    ints = [p.name for p in ds.predictors if p.data_type == 'int']
-    assert ds.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
-    assert pd.api.types.is_object_dtype(ds.train.y.dtypes.iloc[0])   # file loader doesn't represent categoricals as category dtype in pandas DF yet.
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
+    floats = [p.name for p in dataset.predictors if p.data_type == 'float']
+    ints = [p.name for p in dataset.predictors if p.data_type == 'int']
+    assert dataset.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
+    assert dataset.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
+    assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
 
 
 @pytest.mark.use_disk
@@ -147,47 +87,10 @@ def test_load_multiclass_task_csv(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.multiclass
-    assert len(ds.features) == 5
-    assert len(ds.predictors) == 4
-
-    assert ds.target.name == ds_def.target
-    assert len(ds.target.values) == 3
-    assert ds.target.values == ["Iris-setosa", "Iris-versicolor", "Iris-virginica"]  # values are case-sensitive when using file loader
-    assert ds.target.data_type == 'string'   # file loader doesn't support categories yet when loading CSV files
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
-
-    assert all([p.data_type in ['int', 'float'] for p in ds.predictors])
-    assert all([p.values is None for p in ds.predictors])
-    assert not any([p.is_target for p in ds.predictors])
-    assert not any([p.has_missing_values for p in ds.predictors])
-
-    assert ds.train.path == ds_def.train
-    assert ds.test.path == ds_def.test
-    assert ds.train.data_path('csv') == ds.train.path
-    try:
-        ds.train.data_path('arff')       # file loader doesn't support file auto-conversion yet
-        pytest.fail("should have raised")
-    except ValueError as e:
-        assert "Dataset iris_train is only available in csv format" in str(e)
-
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
-
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    floats = [p.name for p in ds.predictors if p.data_type == 'float']
-    ints = [p.name for p in ds.predictors if p.data_type == 'int']
-    assert ds.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
-    assert pd.api.types.is_string_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_iris_features(ds, ds_def)
 
 
 @pytest.mark.use_disk
@@ -199,47 +102,27 @@ def test_load_multiclass_task_arff(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.multiclass
-    assert len(ds.features) == 5
-    assert len(ds.predictors) == 4
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_iris_features(ds, ds_def)
 
-    assert ds.target.name == ds_def.target
-    assert len(ds.target.values) == 3
-    assert ds.target.values == ["Iris-setosa", "Iris-versicolor", "Iris-virginica"]  # values are case-sensitive when using file loader
-    assert ds.target.data_type == 'category'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
 
-    assert all([p.data_type in ['int', 'float'] for p in ds.predictors])
-    assert all([p.values is None for p in ds.predictors])
-    assert not any([p.is_target for p in ds.predictors])
-    assert not any([p.has_missing_values for p in ds.predictors])
+def _assert_iris_features(dataset, definition):
+    assert len(dataset.features) == 5
+    assert len(dataset.predictors) == 4
+    _assert_target(dataset.target, name=definition.target, values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"])  # values are case-sensitive when using file loader
 
-    assert ds.train.path == ds_def.train
-    assert ds.test.path == ds_def.test
-    assert ds.train.data_path('arff') == ds.train.path
-    try:
-        ds.train.data_path('csv')       # file loader doesn't support file auto-conversion yet
-        pytest.fail("should have raised")
-    except ValueError as e:
-        assert "Dataset iris_train is only available in arff format" in str(e)
+    assert all([p.data_type in ['int', 'float'] for p in dataset.predictors])
+    assert all([p.values is None for p in dataset.predictors])
+    assert not any([p.is_target for p in dataset.predictors])
+    assert not any([p.has_missing_values for p in dataset.predictors])
 
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
-
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    floats = [p.name for p in ds.predictors if p.data_type == 'float']
-    ints = [p.name for p in ds.predictors if p.data_type == 'int']
-    assert ds.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
-    assert pd.api.types.is_object_dtype(ds.train.y.dtypes.iloc[0])   # file loader doesn't represent categoricals as category dtype in pandas DF yet.
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
+    floats = [p.name for p in dataset.predictors if p.data_type == 'float']
+    ints = [p.name for p in dataset.predictors if p.data_type == 'int']
+    assert dataset.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
+    assert dataset.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
+    assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
 
 
 @pytest.mark.use_disk
@@ -251,46 +134,10 @@ def test_load_regression_task_csv(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.regression
-    assert len(ds.features) == 14
-    assert len(ds.predictors) == 13
-
-    assert ds.target.name == ds_def.target
-    assert ds.target.values is None
-    assert ds.target.data_type == 'float'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
-
-    assert len([p for p in ds.predictors if p.data_type == 'int']) == 6  # types are detected differently in CSV format
-    assert len([p for p in ds.predictors if p.data_type == 'float']) == 7
-    assert not any([p.is_target for p in ds.predictors])
-    assert len([p for p in ds.predictors if p.has_missing_values]) == 2
-
-    assert ds.train.path == ds_def.train
-    assert ds.test.path == ds_def.test
-    assert ds.train.data_path('csv') == ds.train.path
-    try:
-        ds.train.data_path('arff')       # file loader doesn't support file auto-conversion yet
-        pytest.fail("should have raised")
-    except ValueError as e:
-        assert "Dataset cholesterol_train is only available in csv format" in str(e)
-
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
-
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    ints = [p.name for p in ds.predictors if p.data_type == 'int']
-    floats = [p.name for p in ds.predictors if p.data_type == 'float']
-    assert ds.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert pd.api.types.is_float_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_cholesterol_features(ds, ds_def, 'csv')
 
 
 @pytest.mark.use_disk
@@ -302,44 +149,74 @@ def test_load_regression_task_arff(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.regression
-    assert len(ds.features) == 14
-    assert len(ds.predictors) == 13
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_cholesterol_features(ds, ds_def, 'arff')
 
-    assert ds.target.name == ds_def.target
-    assert ds.target.values is None
-    assert ds.target.data_type == 'float'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
 
-    assert len([p for p in ds.predictors if p.data_type == 'float']) == 6
-    assert len([p for p in ds.predictors if p.data_type == 'category']) == 7
-    assert not any([p.is_target for p in ds.predictors])
-    assert len([p for p in ds.predictors if p.has_missing_values]) == 2
+def _assert_cholesterol_features(dataset, definition, fmt):
+    assert len(dataset.features) == 14
+    assert len(dataset.predictors) == 13
+    _assert_target(dataset.target, name=definition.target)
 
-    assert ds.train.path == ds_def.train
-    assert ds.test.path == ds_def.test
-    assert ds.train.data_path('arff') == ds.train.path
-    try:
-        ds.train.data_path('csv')       # file loader doesn't support file auto-conversion yet
-        pytest.fail("should have raised")
-    except ValueError as e:
-        assert "Dataset cholesterol_train is only available in arff format" in str(e)
+    ints = [p.name for p in dataset.predictors if p.data_type == 'int']
+    floats = [p.name for p in dataset.predictors if p.data_type == 'float']
+    categoricals = [p.name for p in dataset.predictors if p.data_type == 'category']
 
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
+    assert len(ints) == (0 if fmt == 'arff' else 6)
+    assert len(floats) == (6 if fmt == 'arff' else 7)
+    assert len(categoricals) == (7 if fmt == 'arff' else 0)
+    assert not any([p.is_target for p in dataset.predictors])
+    assert len([p for p in dataset.predictors if p.has_missing_values]) == 2
 
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    categoricals = [p.name for p in ds.predictors if p.data_type == 'category']
-    floats = [p.name for p in ds.predictors if p.data_type == 'float']
-    assert ds.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_object_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert pd.api.types.is_float_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
+    assert dataset.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
+    assert dataset.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
+    assert dataset.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_categorical_dtype(dt)).all()
+    assert pd.api.types.is_float_dtype(dataset.train.y.dtypes.iloc[0])
+
+
+def _assert_target(target, name, values=None):
+    assert target.name == name
+    assert target.values == values
+    assert target.data_type == 'category' if values else 'float'
+    assert target.is_target
+    assert not target.has_missing_values
+
+
+def _assert_data_paths(dataset, definition):
+    assert dataset.train.path == definition.train
+    assert dataset.test.path == definition.test
+    basename = os.path.basename(definition.train)
+    base, ext = os.path.splitext(basename)
+    fmt = ext[1:]
+    assert dataset.train.data_path(fmt) == dataset.train.path
+    with pytest.raises(ValueError, match=fr"Dataset {base} is only available in {fmt} format"):
+        alt_fmt = 'arff' if fmt == 'csv' else 'csv'
+        dataset.train.data_path(alt_fmt)       # file loader doesn't support file auto-conversion yet
+
+
+def _assert_X_y_types(data_split):
+    assert isinstance(data_split.X, pd.DataFrame)
+    assert isinstance(data_split.y, pd.DataFrame)
+    assert isinstance(data_split.X_enc, np.ndarray)
+    assert isinstance(data_split.y_enc, np.ndarray)
+
+
+def _assert_data_consistency(dataset):
+    assert len(dataset.train.X) == len(dataset.train.y)
+    assert len(dataset.train.X.columns) == len(dataset.predictors)
+    assert len(dataset.train.y.columns) == 1
+    assert dataset.train.y.columns == [dataset.target.name]
+    assert len(dataset.train.X) > len(dataset.test.X)
+
+    assert not any([p.is_target for p in dataset.predictors])
+
+    assert dataset.train.X_enc.shape == dataset.train.X.shape
+
+    assert dataset.test.X.dtypes.equals(dataset.train.X.dtypes)
+    assert dataset.test.y.dtypes.equals(dataset.train.y.dtypes)
+
+    assert np.issubdtype(dataset.train.X_enc.dtype, np.floating)
+    assert np.issubdtype(dataset.train.y_enc.dtype, np.floating)  # not ideal given that it's also for classification targets, but well…
 

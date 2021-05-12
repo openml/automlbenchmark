@@ -39,45 +39,24 @@ def test_load_binary_task(oml_loader):
     fold = random.randint(0, 9)
     ds = oml_loader.load(task_id=3913, fold=fold)  # kc2
     assert ds.type is DatasetType.binary
-    assert len(ds.features) == 22
-    assert len(ds.predictors) == 21
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds._oml_dataset.dataset_id, fold)
+    _assert_kc2_features(ds)
 
-    assert ds.target.name == "problems"
-    assert len(ds.target.values) == 2
-    assert ds.target.values == ["no", "yes"]
-    assert ds.target.data_type == 'category'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
 
-    assert all([p.data_type == 'number' for p in ds.predictors])
-    assert all([p.values is None for p in ds.predictors])
-    assert not any([p.is_target for p in ds.predictors])
-    assert not any([p.has_missing_values for p in ds.predictors])
+def _assert_kc2_features(dataset):
+    assert len(dataset.features) == 22
+    assert len(dataset.predictors) == 21
 
-    ds_id = ds._oml_dataset.dataset_id
-    assert ds.train.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.arff"))
-    assert ds.test.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.arff"))
-    assert ds.train.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.csv"))
-    assert ds.test.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.csv"))
+    _assert_target(dataset.target, "problems", ["no", "yes"])
 
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
+    assert all([p.data_type == 'number' for p in dataset.predictors])
+    assert all([p.values is None for p in dataset.predictors])
+    assert not any([p.has_missing_values for p in dataset.predictors])
 
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    assert ds.train.X.dtypes.apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert pd.api.types.is_categorical_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
-
-    assert ds.train.X_enc.shape == ds.train.X.shape
-    assert np.issubdtype(ds.train.X_enc.dtype, np.floating)
-    assert np.issubdtype(ds.train.y_enc.dtype, np.floating)  # not ideal given that it's binary, but well…
+    assert dataset.train.X.dtypes.apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
+    assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
 
 
 @pytest.mark.use_disk
@@ -86,47 +65,24 @@ def test_load_multiclass_task(oml_loader):
     fold = random.randint(0, 9)
     ds = oml_loader.load(task_id=59, fold=fold)  # iris
     assert ds.type is DatasetType.multiclass
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds._oml_dataset.dataset_id, fold)
+    _assert_iris_features(ds)
 
-    assert len(ds.features) == 5
-    assert len(ds.predictors) == 4
 
-    assert ds.target.name == "class"
-    assert len(ds.target.values) == 3
-    assert ds.target.values == ["iris-setosa", "iris-versicolor", "iris-virginica"]
-    assert ds.target.data_type == 'category'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
+def _assert_iris_features(dataset):
+    assert len(dataset.features) == 5
+    assert len(dataset.predictors) == 4
 
-    assert all([p.data_type == 'number' for p in ds.predictors])
-    assert all([p.values is None for p in ds.predictors])
-    assert not any([p.is_target for p in ds.predictors])
-    assert not any([p.has_missing_values for p in ds.predictors])
+    _assert_target(dataset.target, "class", ["iris-setosa", "iris-versicolor", "iris-virginica"])
 
-    ds_id = ds._oml_dataset.dataset_id
-    assert ds.train.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.arff"))
-    assert ds.test.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.arff"))
-    assert ds.train.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.csv"))
-    assert ds.test.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.csv"))
+    assert all([p.data_type == 'number' for p in dataset.predictors])
+    assert all([p.values is None for p in dataset.predictors])
+    assert not any([p.has_missing_values for p in dataset.predictors])
 
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
-
-    assert len(ds.train.X) > len(ds.test.X)
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    assert ds.train.X.dtypes.apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert pd.api.types.is_categorical_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
-
-    assert ds.train.X_enc.shape == ds.train.X.shape
-    assert np.issubdtype(ds.train.X_enc.dtype, np.floating)
-    assert np.issubdtype(ds.train.y_enc.dtype, np.floating)
+    assert dataset.train.X.dtypes.apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
+    assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
 
 
 @pytest.mark.use_disk
@@ -135,47 +91,65 @@ def test_load_regression_task(oml_loader):
     fold = random.randint(0, 9)
     ds = oml_loader.load(task_id=2295, fold=fold)  # cholesterol
     assert ds.type is DatasetType.regression
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds._oml_dataset.dataset_id, fold)
+    _assert_cholesterol_features(ds)
 
-    assert len(ds.features) == 14
-    assert len(ds.predictors) == 13
 
-    assert ds.target.name == "chol"
-    assert ds.target.values is None
-    assert ds.target.data_type == 'number'
-    assert ds.target.is_target
-    assert not ds.target.has_missing_values
+def _assert_cholesterol_features(dataset):
+    assert len(dataset.features) == 14
+    assert len(dataset.predictors) == 13
 
-    assert len([p for p in ds.predictors if p.data_type == 'number']) == 6
-    assert len([p for p in ds.predictors if p.data_type == 'category']) == 7
-    assert not any([p.is_target for p in ds.predictors])
-    assert len([p for p in ds.predictors if p.has_missing_values]) == 2
+    _assert_target(dataset.target, "chol")
 
-    ds_id = ds._oml_dataset.dataset_id
-    assert ds.train.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.arff"))
-    assert ds.test.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.arff"))
-    assert ds.train.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.csv"))
-    assert ds.test.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.csv"))
+    numericals = [p.name for p in dataset.predictors if p.data_type == 'number']
+    categoricals = [p.name for p in dataset.predictors if p.data_type == 'category']
+    assert len(numericals) == 6
+    assert len(categoricals) == 7
+    assert len([p for p in dataset.predictors if p.has_missing_values]) == 2
 
-    assert isinstance(ds.train.X, pd.DataFrame)
-    assert isinstance(ds.train.y, pd.DataFrame)
-    assert isinstance(ds.train.X_enc, np.ndarray)
-    assert isinstance(ds.train.y_enc, np.ndarray)
+    assert dataset.train.X.dtypes.filter(items=numericals).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
+    assert dataset.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_categorical_dtype(dt)).all()
+    assert pd.api.types.is_float_dtype(dataset.train.y.dtypes.iloc[0])
 
-    assert len(ds.train.X) > len(ds.test.X)
-    assert len(ds.train.X) == len(ds.train.y)
-    assert len(ds.train.X.columns) == len(ds.predictors)
-    assert len(ds.train.y.columns) == 1
-    assert ds.train.y.columns == [ds.target.name]
-    assert len(ds.train.X) > len(ds.test.X)
-    categoricals = [p.name for p in ds.predictors if p.data_type == 'category']
-    numericals = [p.name for p in ds.predictors if p.name not in categoricals]
-    assert ds.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_categorical_dtype(dt)).all()
-    assert ds.train.X.dtypes.filter(items=numericals).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
-    assert pd.api.types.is_float_dtype(ds.train.y.dtypes.iloc[0])
-    assert ds.test.X.dtypes.equals(ds.train.X.dtypes)
-    assert ds.test.y.dtypes.equals(ds.train.y.dtypes)
 
-    assert ds.train.X_enc.shape == ds.train.X.shape
-    assert np.issubdtype(ds.train.X_enc.dtype, np.floating)   # all categorical features are directly encoded as float
-    assert np.issubdtype(ds.train.y_enc.dtype, np.floating)
+def _assert_target(target, name, values=None):
+    assert target.name == name
+    assert target.values == values
+    assert target.data_type == 'category' if values else 'number'
+    assert target.is_target
+    assert not target.has_missing_values
+
+
+def _assert_data_paths(dataset, ds_id, fold):
+    assert dataset.train.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.arff"))
+    assert dataset.test.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.arff"))
+    assert dataset.train.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.csv"))
+    assert dataset.test.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.csv"))
+
+
+def _assert_X_y_types(data_split):
+    assert isinstance(data_split.X, pd.DataFrame)
+    assert isinstance(data_split.y, pd.DataFrame)
+    assert isinstance(data_split.X_enc, np.ndarray)
+    assert isinstance(data_split.y_enc, np.ndarray)
+
+
+def _assert_data_consistency(dataset):
+    assert len(dataset.train.X) == len(dataset.train.y)
+    assert len(dataset.train.X.columns) == len(dataset.predictors)
+    assert len(dataset.train.y.columns) == 1
+    assert dataset.train.y.columns == [dataset.target.name]
+    assert len(dataset.train.X) > len(dataset.test.X)
+
+    assert not any([p.is_target for p in dataset.predictors])
+
+    assert dataset.train.X_enc.shape == dataset.train.X.shape
+
+    assert dataset.test.X.dtypes.equals(dataset.train.X.dtypes)
+    assert dataset.test.y.dtypes.equals(dataset.train.y.dtypes)
+
+    assert np.issubdtype(dataset.train.X_enc.dtype, np.floating)   # all categorical features are directly encoded as float
+    assert np.issubdtype(dataset.train.y_enc.dtype, np.floating)
 

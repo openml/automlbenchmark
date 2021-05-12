@@ -30,7 +30,7 @@ class Feature:
         """
         :param index: index of the feature in the full data frame.
         :param name: name of the feature.
-        :param data_type: one of pandas-compatible type ('int', 'float', 'number', 'category', 'string', 'object', 'datetime').
+        :param data_type: one of pandas-compatible type ('int', 'float', 'number', 'bool', 'category', 'string', 'object', 'datetime').
         :param values: for categorical features, the sorted list of accepted values.
         :param has_missing_values: True iff the feature has any missing values in the complete dataset.
         :param is_target: True for the target column.
@@ -57,6 +57,7 @@ class Feature:
         return Encoder('label' if self.values is not None else 'no-op',
                        target=self.is_target,
                        encoded_type=int if self.is_target and not self.is_numerical() else float,
+                       missing_values=[None, np.nan, pd.NA],
                        missing_policy='mask' if self.has_missing_values else 'ignore',
                        normalize_fn=self.normalize
                        ).fit(self.values)
@@ -66,6 +67,7 @@ class Feature:
         return Encoder('one-hot' if self.values is not None else 'no-op',
                        target=self.is_target,
                        encoded_type=int if self.is_target and not self.is_numerical() else float,
+                       missing_values=[None, np.nan, pd.NA],
                        missing_policy='mask' if self.has_missing_values else 'ignore',
                        normalize_fn=self.normalize
                        ).fit(self.values)

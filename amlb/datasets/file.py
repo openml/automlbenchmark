@@ -240,14 +240,8 @@ class ArffDatasplit(FileDatasplit):
                                              else 'float' if arff_type.lower() == 'real'
                                              else 'number' if arff_type.lower() == 'numeric'
                                              else 'object')
-        features = [
-            Feature(
-                i,
-                attr[0],
-                to_feature_type(attr[1]),
-            )
-            for i, attr in enumerate(attrs)
-        ]
+        features = [Feature(i, attr[0], to_feature_type(attr[1]))
+                    for i, attr in enumerate(attrs)]
         target = self._find_target_feature(features)
         self._set_feature_as_target(target)
 
@@ -271,7 +265,13 @@ class ArffDatasplit(FileDatasplit):
     def load_data(self):
         self._ensure_loaded()
         columns = [f.name for f in self.dataset.features]
-        return pd.DataFrame(self._ds['data'], columns=columns)
+        df = pd.DataFrame(self._ds['data'], columns=columns)
+        dt_conversions = {f.name: f.data_type
+                          for f in self.dataset.features
+                          if f.data_type == 'category'}
+        if dt_conversions:
+            df = df.astype(dt_conversions, copy=False)
+        return df
 
     def release(self, properties=None):
         super().release(properties)
@@ -297,7 +297,16 @@ class CsvDatasplit(FileDatasplit):
     def _ensure_loaded(self):
         if self._ds is None:
             if self.dataset._dtypes is None:
-                self._ds = read_csv(self.path)  #.convert_dtypes()
+                df = read_csv(self.path)
+                # df = df.convert_dtypes()
+                dt_conversions = {name: 'category'
+                                  for name, dtype in zip(df.dtypes.index, df.dtypes.values)
+                                  if pat.is_string_dtype(dtype) or pat.is_object_dtype(dtype)}
+                # we could be a bit more clever in the future and convert 'string' to category iff len(distinct values) << nrows
+                if dt_conversions:
+                    df = df.astype(dt_conversions, copy=False)
+
+                self._ds = df
                 self.dataset._dtypes = self._ds.dtypes
             else:
                 self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict())
@@ -314,21 +323,16 @@ class CsvDatasplit(FileDatasplit):
                                       else 'string' if pat.is_string_dtype(dt)
                                       # else 'datetime' if pat.is_datetime64_dtype(dt)
                                       else 'object')
-        features = [
-            Feature(
-                i,
-                col,
-                to_feature_type(dtypes[i])
-            )
-            for i, col in enumerate(self._ds.columns)
-        ]
+        features = [Feature(i, col, to_feature_type(dtypes[i]))
+                    for i, col in enumerate(self._ds.columns)]
 
         for f in features:
             col = self._ds.iloc[:, f.index]
             f.has_missing_values = col.hasnans
-            if f.is_categorical(False):
-                unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
-                f.values = [str(v) for v in sorted(unique_values)]
+            if f.is_categorical():
+                # unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
+                # f.values = [str(v) for v in sorted(unique_values)]
+                f.values = sorted(self._ds.dtypes[f.name].categories.values)
 
         target = self._find_target_feature(features)
         self._set_feature_as_target(target)

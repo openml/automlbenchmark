@@ -288,23 +288,16 @@ def impute_dataframe(X_fit, *X_s, missing_values=np.NaN, strategy='mean'):
     :param X_s:
     :param missing_values:
     :param strategy: 'mean', 'median', 'mode', ('constant', value), None
-        or a dictionary specifying a strategy by dtype (int, float, number, category, string, object, datetime)
+        or a dictionary specifying a strategy by dtype (int, float, number, bool, category, string, object, datetime)
     :return:
     """
     if strategy is None:
         return [X_fit, *X_s]
-    print("*** ori ***")
-    print(_rows_with_nas(X_fit))
-    print(X_fit.dtypes)
     if isinstance(strategy, dict):
         for dt, s in strategy.items():
             X_fit.select_dtypes(include=dt)
     else:
         imputed = _impute_pd(X_fit, *X_s, missing_values=missing_values, strategy=strategy)
-    print("*** imputed ***")
-    print(imputed[0])
-    print(_rows_with_nas(imputed[0]))
-    print(imputed[0].dtypes)
     return imputed if X_s else imputed[0]
 
 
@@ -333,18 +326,8 @@ def _rows_with_nas(X):
 
 def _restore_dtypes(X_np, X_ori):
     if isinstance(X_ori, pd.DataFrame):
-        print("*** ori ***")
-        print(X_ori)
-        print(X_ori.dtypes)
-        print("*** imputed ***")
-        print(X_np)
         df = pd.DataFrame(X_np, columns=X_ori.columns, index=X_ori.index).convert_dtypes()
-        print("*** as df ***")
-        print(df)
         df.astype(X_ori.dtypes.to_dict(), copy=False, errors='raise')
-        print("*** with dtypes ***")
-        print(df)
-        print(df.dtypes)
         return df
     elif isinstance(X_ori, pd.Series):
         return pd.Series(X_np, name=X_ori.name, index=X_ori.index, dtype=X_ori.dtype)
