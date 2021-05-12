@@ -147,7 +147,9 @@ class Encoder(TransformerMixin):
             mask: replace missing values only internally, and then restore them as np.nan.
             encode: encode all missing values as the encoded value of missing_replaced_by.
         :param missing_values: a value or a list of values considered as missing values.
-        :param missing_replaced_by: the value used to temporarily replace missing values when using the 'mask' strategy.
+        :param missing_replaced_by: the value used to replace missing values before encoding.
+                                    If using the 'mask' strategy, this is a transient value.
+                                    If using the 'encode' strategy, all missing values will be replaced with encode(missing_replaced_by).
         :param normalize_fn: if provided, function applied to all elements during fit and transform (for example, trimming spaces, lowercase...).
         """
         super().__init__()
