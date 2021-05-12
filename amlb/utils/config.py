@@ -21,7 +21,6 @@ class YAMLNamespaceConstructor(SafeConstructor):
         cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
 
     def construct_yaml_map(self, node):
-        print("******")
         data = Namespace()
         yield data
         value = self.construct_mapping(node)

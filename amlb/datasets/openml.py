@@ -97,13 +97,11 @@ class OpenmlDataset(Dataset):
             return get_type(len(target.values))
 
     @property
-    # @profile(logger=log)
     def train(self):
         self._ensure_split_created()
         return self._train
 
     @property
-    # @profile(logger=log)
     def test(self):
         self._ensure_split_created()
         return self._test

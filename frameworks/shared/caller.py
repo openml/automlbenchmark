@@ -99,7 +99,7 @@ def run_in_venv(caller_file, script_file: str, *args,
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
         log.debug("Params passed to subprocess:\n%s", params)
         cmon = rconfig().monitoring
-        monitor = (dict(frequency_seconds=cmon.frequency_seconds,
+        monitor = (dict(interval_seconds=cmon.interval_seconds,
                         verbosity=cmon.verbosity)
                    if 'proc_memory' in cmon.statistics
                    else None)
