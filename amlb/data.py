@@ -45,7 +45,7 @@ class Feature:
 
     def is_categorical(self, strict=True):
         if strict:
-            return self.data_type is 'category'
+            return self.data_type == 'category'
         else:
             return self.data_type is not None and not self.is_numerical()
 

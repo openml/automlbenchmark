@@ -6,6 +6,7 @@ import tempfile
 from typing import List, Union
 
 import arff
+import numpy as np
 import pandas as pd
 import pandas.api.types as pat
 
@@ -256,8 +257,8 @@ class ArffDatasplit(FileDatasplit):
             f.has_missing_values = col.hasnans
             if f.is_categorical():
                 arff_type = attrs[f.index][1]
-                if isinstance(arff_type, (list, set)):
-                    f.values = sorted(arff_type)
+                assert isinstance(arff_type, (list, set))
+                f.values = sorted(arff_type)
 
         meta = dict(
             features=features,
@@ -269,7 +270,8 @@ class ArffDatasplit(FileDatasplit):
     @profile(logger=log)
     def load_data(self):
         self._ensure_loaded()
-        return pd.DataFrame(self._ds['data'], columns=[])
+        columns = [f.name for f in self.dataset.features]
+        return pd.DataFrame(self._ds['data'], columns=columns)
 
     def release(self, properties=None):
         super().release(properties)
@@ -295,10 +297,11 @@ class CsvDatasplit(FileDatasplit):
     def _ensure_loaded(self):
         if self._ds is None:
             if self.dataset._dtypes is None:
-                self._ds = read_csv(self.path).convert_dtypes()
+                self._ds = read_csv(self.path)  #.convert_dtypes()
                 self.dataset._dtypes = self._ds.dtypes
             else:
                 self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict())
+            # self._ds.where(pd.notna(self._ds), np.nan, inplace=True)
 
     @profile(logger=log)
     def load_metadata(self):
@@ -323,7 +326,7 @@ class CsvDatasplit(FileDatasplit):
         for f in features:
             col = self._ds.iloc[:, f.index]
             f.has_missing_values = col.hasnans
-            if not f.is_numerical():
+            if f.is_categorical(False):
                 unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
                 f.values = [str(v) for v in sorted(unique_values)]
 

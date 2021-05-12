@@ -33,6 +33,8 @@ def oml_loader(oml_config):
     return OpenmlLoader(api_key=oml_config.openml.apikey)
 
 
+@pytest.mark.use_disk
+@pytest.mark.use_web
 def test_load_binary_task(oml_loader):
     fold = random.randint(0, 9)
     ds = oml_loader.load(task_id=3913, fold=fold)  # kc2
@@ -78,6 +80,8 @@ def test_load_binary_task(oml_loader):
     assert np.issubdtype(ds.train.y_enc.dtype, np.floating)  # not ideal given that it's binary, but well…
 
 
+@pytest.mark.use_disk
+@pytest.mark.use_web
 def test_load_multiclass_task(oml_loader):
     fold = random.randint(0, 9)
     ds = oml_loader.load(task_id=59, fold=fold)  # iris
@@ -125,6 +129,8 @@ def test_load_multiclass_task(oml_loader):
     assert np.issubdtype(ds.train.y_enc.dtype, np.floating)
 
 
+@pytest.mark.use_disk
+@pytest.mark.use_web
 def test_load_regression_task(oml_loader):
     fold = random.randint(0, 9)
     ds = oml_loader.load(task_id=2295, fold=fold)  # cholesterol
