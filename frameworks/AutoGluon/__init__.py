@@ -11,8 +11,8 @@ def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
     data = dict(
-        train=dict(data=dataset.train.data),
-        test=dict(data=dataset.test.data),
+        train=dict(path=dataset.train.data_path('parquet')),
+        test=dict(path=dataset.test.data_path('parquet')),
         target=dict(
             name=dataset.target.name,
             classes=dataset.target.values

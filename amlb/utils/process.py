@@ -531,22 +531,27 @@ class Monitoring:
 class CPUMonitoring(Monitoring):
 
     def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
-                 use_interval=False, per_cpu=False, verbosity=0, log_level=logging.INFO):
+                 use_interval=False, verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
                          interval_seconds=0 if use_interval else interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="cpu_monitoring_")
         self._interval = interval_seconds if use_interval else None
-        self._per_cpu = per_cpu
         self._verbosity = verbosity
         self._log_level = log_level
 
     def _check_state(self):
         if self._verbosity == 0:
-            percent = psutil.cpu_percent(interval=self._interval, percpu=self._per_cpu)
+            percent = psutil.cpu_percent(interval=self._interval, percpu=False)
             log.log(self._log_level, "[MONITORING] [%s] CPU Utilization: %s%%", self._name, percent)
-        elif self._verbosity > 0:
-            percent = psutil.cpu_times_percent(interval=self._interval, percpu=self._per_cpu)
+        elif self._verbosity == 1:
+            percent = psutil.cpu_percent(interval=self._interval, percpu=True)
+            log.log(self._log_level, "[MONITORING] [%s] CPU Utilization: %s%%", self._name, percent)
+        elif self._verbosity == 2:
+            percent = psutil.cpu_times_percent(interval=self._interval, percpu=False)
+            log.log(self._log_level, "[MONITORING] [%s] CPU Utilization (in percent):\n%s", self._name, percent)
+        elif self._verbosity > 2:
+            percent = psutil.cpu_times_percent(interval=self._interval, percpu=True)
             log.log(self._log_level, "[MONITORING] [%s] CPU Utilization (in percent):\n%s", self._name, percent)
 
 

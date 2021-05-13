@@ -101,7 +101,7 @@ def run_in_venv(caller_file, script_file: str, *args,
         cmon = rconfig().monitoring
         monitor = (dict(interval_seconds=cmon.interval_seconds,
                         verbosity=cmon.verbosity)
-                   if 'proc_memory' in cmon.statistics
+                   if 'sub_proc_memory' in cmon.statistics
                    else None)
         env = dict(
             PATH=os.pathsep.join([
@@ -149,7 +149,9 @@ def run_in_venv(caller_file, script_file: str, *args,
             save_predictions(dataset=dataset,
                              output_file=res.output_file,
                              predictions=as_vec(res.predictions),
-                             truth=as_vec(res.truth),
+                             truth=(as_vec(res.truth) if res.truth
+                                    else dataset.test.y_enc if res.target_is_encoded
+                                    else dataset.test.y),
                              probabilities=res.probabilities,
                              probabilities_labels=res.probabilities_labels,
                              target_is_encoded=res.target_is_encoded)

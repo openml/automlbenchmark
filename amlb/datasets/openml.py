@@ -293,8 +293,25 @@ class CsvSplitter(DataSplitter[str]):
         return train_path, test_path
 
 
-__data_splitters__ = [ArraySplitter, DataFrameSplitter, ArffSplitter, CsvSplitter]
-__supported_file_formats__ = ['arff', 'csv']
+class ParquetSplitter(DataSplitter[str]):
+    format = 'parquet'
+
+    def __init__(self, ds: OpenmlDataset):
+        super().__init__(ds)
+
+    @profile(logger=log)
+    def split(self) -> Tuple[str, str]:
+        train_path, test_path = self.ds._get_split_paths(".parquet")
+        if not os.path.isfile(train_path) or not os.path.isfile(test_path):
+            X = self.ds._load_full_data('dataframe')
+            train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+            train.to_parquet(train_path)
+            test.to_parquet(test_path)
+        return train_path, test_path
+
+
+__data_splitters__ = [ArraySplitter, DataFrameSplitter, ArffSplitter, CsvSplitter, ParquetSplitter]
+__supported_file_formats__ = ['arff', 'csv', 'parquet']
 
 
 def _get_data_splitter_cls(split_format='array'):
@@ -303,6 +320,5 @@ def _get_data_splitter_cls(split_format='array'):
         supported = [ds.format for ds in __data_splitters__]
         raise ValueError(f"`{split_format}` is not among supported formats: {supported}.")
     return ds_cls
-
 
 

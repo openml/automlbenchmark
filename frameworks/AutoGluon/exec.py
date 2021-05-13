@@ -46,7 +46,7 @@ def run(dataset, config):
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
-    train, test = dataset.train.data, dataset.test.data
+    train, test = dataset.train.path, dataset.test.path
     label = dataset.target.name
     problem_type = dataset.problem_type
 
@@ -66,9 +66,6 @@ def run(dataset, config):
 
     del train
 
-    y_test = test[label]
-    test = test.drop(columns=label)
-
     if is_classification:
         with Timer() as predict:
             probabilities = predictor.predict_proba(test, as_multiclass=True)
@@ -85,7 +82,6 @@ def run(dataset, config):
     leaderboard_kwargs = dict(silent=True, extra_info=_leaderboard_extra_info)
     # Disabled leaderboard test data input by default to avoid long running computation, remove 7200s timeout limitation to re-enable
     if _leaderboard_test:
-        test[label] = y_test
         leaderboard_kwargs['data'] = test
 
     leaderboard = predictor.leaderboard(**leaderboard_kwargs)
@@ -103,7 +99,6 @@ def run(dataset, config):
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,
-                  truth=y_test,
                   probabilities=probabilities,
                   probabilities_labels=prob_labels,
                   target_is_encoded=False,
