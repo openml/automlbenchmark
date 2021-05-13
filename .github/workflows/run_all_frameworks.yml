@@ -83,6 +83,7 @@ jobs:
     if: needs.detect_changes.outputs.skip_baseline == 0
     strategy:
       matrix:
+        framework: [constantpredictor, randomforest]
         task: [iris, kc2, cholesterol]
       fail-fast:  false
     steps:
@@ -110,7 +111,7 @@ jobs:
       - name: Run constantpredictor on openml iris
         run: |
           source venv/bin/activate
-          python runbenchmark.py constantpredictor -t ${{ matrix.task }} -f 0 -e
+          python runbenchmark.py ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
 
   run_frameworks:
     name: ${{ matrix.framework }}/${{ matrix.task }}
