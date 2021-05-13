@@ -30,6 +30,7 @@ _site/
 *.log
 *.csv
 *.arff
+*.parquet
 
 # binary files
 *.zip

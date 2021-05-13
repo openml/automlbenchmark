@@ -127,6 +127,8 @@ def _assert_data_paths(dataset, ds_id, fold):
     assert dataset.test.path.endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.arff"))
     assert dataset.train.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.csv"))
     assert dataset.test.data_path('csv').endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.csv"))
+    assert dataset.train.data_path('parquet').endswith(os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.parquet"))
+    assert dataset.test.data_path('parquet').endswith(os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.parquet"))
 
 
 def _assert_X_y_types(data_split):

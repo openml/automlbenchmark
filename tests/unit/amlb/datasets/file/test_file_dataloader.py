@@ -1,3 +1,4 @@
+import copy
 import os
 
 import numpy as np
@@ -7,7 +8,7 @@ import pytest
 from amlb.resources import from_config
 from amlb.data import DatasetType
 from amlb.datasets.file import FileLoader
-from amlb.utils import Namespace as ns
+from amlb.utils import Namespace as ns, path_from_split, split_path
 
 here = os.path.realpath(os.path.dirname(__file__))
 res = os.path.join(here, 'resources')
@@ -134,6 +135,7 @@ def test_load_regression_task_csv(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.regression
+    print(ds.train.X.dtypes)
     _assert_X_y_types(ds.train)
     _assert_data_consistency(ds)
     _assert_data_paths(ds, ds_def)
@@ -149,6 +151,7 @@ def test_load_regression_task_arff(file_loader):
     )
     ds = file_loader.load(ds_def)
     assert ds.type is DatasetType.regression
+    print(ds.train.X.dtypes)
     _assert_X_y_types(ds.train)
     _assert_data_consistency(ds)
     _assert_data_paths(ds, ds_def)
@@ -187,13 +190,15 @@ def _assert_target(target, name, values=None):
 def _assert_data_paths(dataset, definition):
     assert dataset.train.path == definition.train
     assert dataset.test.path == definition.test
-    basename = os.path.basename(definition.train)
-    base, ext = os.path.splitext(basename)
-    fmt = ext[1:]
-    assert dataset.train.data_path(fmt) == dataset.train.path
-    with pytest.raises(ValueError, match=fr"Dataset {base} is only available in {fmt} format"):
-        alt_fmt = 'arff' if fmt == 'csv' else 'csv'
-        dataset.train.data_path(alt_fmt)       # file loader doesn't support file auto-conversion yet
+    sp = split_path(definition.train)
+    fmt = sp.extension[1:]
+    for f in ['arff', 'csv', 'parquet']:
+        if f == fmt:
+            assert dataset.train.data_path(f) == dataset.train.path
+        else:
+            s = copy.copy(sp)
+            s.extension = f
+            assert dataset.train.data_path(f) == path_from_split(s)
 
 
 def _assert_X_y_types(data_split):
