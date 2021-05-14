@@ -23,7 +23,7 @@ parser.add_argument('benchmark', type=str, nargs='?', default='test',
                          "a path to a benchmark description file, or an openml suite or task. OpenML references should "
                          "be formatted as 'openml/s/X' and 'openml/t/Y', for studies and tasks respectively. Defaults to `%(default)s`.")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
-                    help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
+                    help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `%(default)s`.")
 parser.add_argument('-m', '--mode', choices=['local', 'aws', 'docker', 'singularity'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
@@ -33,12 +33,12 @@ parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
 parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*', default=None,
                     help="If task is provided, the specific fold(s) to run. "
                          "If fold is not provided, then all folds from the task definition will be run.")
-parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
-                    help="Folder where datasets are loaded by default. Defaults to `input_dir` as defined in resources/config.yaml")
-parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
-                    help="Folder where all the outputs should be written. Defaults to `output_dir` as defined in resources/config.yaml")
-parser.add_argument('-u', '--userdir', metavar='user_dir', default=None,
-                    help="Folder where all the customizations are stored. Defaults to `user_dir` as defined in resources/config.yaml")
+parser.add_argument('-i', '--indir', metavar='input_dir', default='~/.openml/cache',
+                    help="Folder where datasets are loaded by default. Defaults to `%(default)s`.")
+parser.add_argument('-o', '--outdir', metavar='output_dir', default='./results',
+                    help="Folder where all the outputs should be written. Defaults to `%(default)s`.")
+parser.add_argument('-u', '--userdir', metavar='user_dir', default='~/.config/automlbenchmark',
+                    help="Folder where all the customizations are stored. Defaults to `%(default)s`.")
 parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, default=1,
                     help="The number of jobs (i.e. tasks or folds) that can run in parallel. Defaults to %(default)s. "
                          "Currently supported only in docker and aws mode.")
@@ -88,12 +88,12 @@ amlb.logger.setup(log_file=os.path.join(log_dir, '{script}.{now}.log'.format(scr
                   root_file=os.path.join(log_dir, '{script}.{now}.full.log'.format(script=script_name, now=now_str)),
                   root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
 
-log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
+log.info("Running benchmark `%s` on `%s` framework in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
 
-config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
+config_default = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or config_default.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},
@@ -112,7 +112,7 @@ if args.mode != 'local':
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
-amlb.resources.from_configs(config, config_user, config_args)
+amlb.resources.from_configs(config_default, config_user, config_args)
 
 code = 0
 bench = None

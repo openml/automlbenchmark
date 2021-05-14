@@ -4,11 +4,11 @@ project_repository: https://github.com/openml/automlbenchmark#stable      # this
                                                                           # to clone a specific branch/tag, add a url fragment, e.g.:
                                                                           # https://github.com/openml/automlbenchmark#stable
 
-user_dir: ~/.config/automlbenchmark   # where to override settings with a custom config.yaml file and, for example, add custom frameworks, benchmark definitions or framework modules.
-input_dir: ~/.openml/cache            # where the datasets are loaded by default.
-output_dir: results                   # where logs and results are saved by default.
+user_dir:    # where to override settings with a custom config.yaml file and, for example, add custom frameworks, benchmark definitions or framework modules: set by caller (runbenchmark.py).
+input_dir:   # where the datasets are loaded by default: : set by caller (runbenchmark.py).
+output_dir:  # where logs and results are saved by default: set by caller (runbenchmark.py).
+root_dir:    # app root dir: set by caller (runbenchmark.py)
 
-root_dir:   # app root dir: set by caller (runbenchmark.py)
 script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
