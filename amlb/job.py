@@ -14,7 +14,6 @@ import pprint
 import queue
 import signal
 import threading
-import time
 
 from .utils import Namespace, Timer, ThreadSafeCounter, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
 
