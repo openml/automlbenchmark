@@ -7,7 +7,6 @@
 - run the jobs.
 - collect and save results.
 """
-import threading
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches

@@ -54,7 +54,7 @@ def countdown(timeout_secs, on_timeout: Callable = None, message: str = None, in
         next_sleep = min(interval, remaining)
         interrupt.wait(next_sleep)
         remaining = math.ceil(timeout_epoch - time.time())
-        if interrupt_cond and interrupt_cond():
+        if not interrupt.is_set() and interrupt_cond and interrupt_cond():
             interrupt.set()
     if on_timeout:
         on_timeout()

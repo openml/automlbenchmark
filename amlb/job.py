@@ -47,15 +47,15 @@ class CancelledError(JobError):
 class Job:
 
     state_machine = [
-        (None, [State.created]),
-        (State.created, [State.starting, State.cancelling]),
-        (State.starting, [State.running, State.rescheduling, State.cancelling]),
-        (State.running, [State.completing, State.rescheduling, State.cancelling]),
-        (State.completing, [State.stopping]),
-        (State.rescheduling, [State.starting, State.stopping]),
-        (State.cancelling, [State.stopping, State.stopped]),
-        (State.stopping, [State.stopped]),
-        (State.stopped, None)
+        (None,                  [State.created]),
+        (State.created,         [State.starting, State.cancelling]),
+        (State.starting,        [State.running, State.rescheduling, State.cancelling]),
+        (State.running,         [State.completing, State.rescheduling, State.cancelling]),
+        (State.completing,      [State.stopping]),
+        (State.rescheduling,    [State.starting, State.stopping]),
+        (State.cancelling,      [State.stopping, State.stopped]),
+        (State.stopping,        [State.stopped]),
+        (State.stopped,         None)
     ]
 
     @classmethod
@@ -189,12 +189,12 @@ class Job:
 class JobRunner:
 
     state_machine = [
-        (None, [State.created]),
-        (State.created, [State.starting, State.stopping]),
-        (State.starting, [State.running, State.stopping]),
-        (State.running, [State.stopping]),
-        (State.stopping, [State.stopped]),
-        (State.stopped, None)
+        (None,              [State.created]),
+        (State.created,     [State.starting, State.stopping]),
+        (State.starting,    [State.running, State.stopping]),
+        (State.running,     [State.stopping]),
+        (State.stopping,    [State.stopped]),
+        (State.stopped,     None)
     ]
 
     @classmethod
