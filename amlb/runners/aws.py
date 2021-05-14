@@ -333,14 +333,23 @@ class AWSBenchmark(Benchmark):
         def _run(_self):
             try:
                 resources_root = "/custom" if rconfig().aws.use_docker else "/s3bucket/user"
+                benchmark = (self._forward_params['benchmark_name']if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
+                                   else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path)))
+
+                if benchmark.startswith('openml/s/') and len(task_names) == 1:
+                    task_id = next(task['openml_task_id'] for task in self.benchmark_def if task['name'] == task_names[0])
+                    benchmark = f'openml/t/{task_id}'
+                    _task_names = []
+                else:
+                    _task_names = task_names
+
                 _self.ext.instance_id = self._start_instance(
                     instance_def,
                     script_params="{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
                         framework=self._forward_params['framework_name'],
-                        benchmark=(self._forward_params['benchmark_name']if self.benchmark_path is None or self.benchmark_path.startswith(rconfig().root_dir)
-                                   else "{}/{}".format(resources_root, self._rel_path(self.benchmark_path))),
+                        benchmark=benchmark,
                         constraint=self._forward_params['constraint_name'],
-                        task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
+                        task_param='' if len(_task_names) == 0 else ' '.join(['-t']+_task_names),
                         folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
                         seed=seed,
                     ),
