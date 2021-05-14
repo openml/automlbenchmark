@@ -149,7 +149,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             save_predictions(dataset=dataset,
                              output_file=res.output_file,
                              predictions=as_vec(res.predictions),
-                             truth=(as_vec(res.truth) if res.truth
+                             truth=(as_vec(res.truth) if res.truth is not None
                                     else dataset.test.y_enc if res.target_is_encoded
                                     else dataset.test.y),
                              probabilities=res.probabilities,
