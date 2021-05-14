@@ -26,6 +26,7 @@ jobs:
         run: |
           changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
           common_files="amlb/** "\
+          "resources/** "\
           "frameworks/shared/** "\
           ".github/workflows/run_all_frameworks.yml "\
           ".github/runbenchmark/action.yml "\
