@@ -3,6 +3,7 @@ import logging
 import math
 import threading
 import time
+from typing import Callable
 
 from .core import identity, threadsafe_generator
 
@@ -38,10 +39,12 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     return datetime.strftime(strf)
 
 
-def countdown(timeout_secs, on_timeout=None, message=None, interval=1, log_level=logging.INFO):
+def countdown(timeout_secs, on_timeout: Callable = None, message: str = None, interval=1, log_level=logging.INFO,
+              interrupt_event: threading.Event = None, interrupt_cond: Callable = None):
     timeout_epoch = time.time() + timeout_secs
     remaining = timeout_secs
-    while remaining > 0:
+    interrupt = interrupt_event or threading.Event()
+    while remaining > 0 and not interrupt.is_set():
         mins, secs = divmod(remaining, 60)
         hours, mins = divmod(mins, 60)
         if message:
@@ -49,8 +52,10 @@ def countdown(timeout_secs, on_timeout=None, message=None, interval=1, log_level
         else:
             log.log(log_level, "countdown: %02d:%02d:%02d", hours, mins, secs)
         next_sleep = min(interval, remaining)
-        time.sleep(next_sleep)
+        interrupt.wait(next_sleep)
         remaining = math.ceil(timeout_epoch - time.time())
+        if interrupt_cond and interrupt_cond():
+            interrupt.set()
     if on_timeout:
         on_timeout()
 

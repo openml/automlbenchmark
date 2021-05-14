@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
 import platform
+import pprint
 import queue
 import signal
 import threading
@@ -44,18 +45,25 @@ class CancelledError(JobError):
 
 
 class Job:
-    """
-    Job state machine:
-    [] -> created
-    created -> starting, cancelling
-    starting -> running, rescheduled, cancelling
-    running -> completing, rescheduled, cancelling
-    completing -> stopping
-    rescheduling -> starting, stopping
-    cancelling -> stopping
-    stopping -> stopped
-    stopped -> []
-    """
+
+    state_machine = [
+        (None, [State.created]),
+        (State.created, [State.starting, State.cancelling]),
+        (State.starting, [State.running, State.rescheduling, State.cancelling]),
+        (State.running, [State.completing, State.rescheduling, State.cancelling]),
+        (State.completing, [State.stopping]),
+        (State.rescheduling, [State.starting, State.stopping]),
+        (State.cancelling, [State.stopping, State.stopped]),
+        (State.stopping, [State.stopped]),
+        (State.stopped, None)
+    ]
+
+    @classmethod
+    def is_state_transition_ok(cls, old_state: State, new_state: State):
+        allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
+        return allowed and new_state in allowed
+
+    printer = pprint.PrettyPrinter(indent=2, compact=True)
 
     def __init__(self, name="", timeout_secs=None, priority=None, raise_on_failure=False):
         """
@@ -79,12 +87,13 @@ class Job:
         t = None
         try:
             self.thread_id = threading.current_thread().ident
-            if self.state not in [State.created, State.rescheduling]:
-                raise InvalidStateError(f"Job `{self.name}` can't be started from state `{self.state}`.")
             if self.set_state(State.starting):
                 start_msg = f"Starting job {self.name}."
                 log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
                 self._setup()
+
+            if not self.is_state_transition_ok(self.state, State.running):
+                raise CancelledError(f"Job `{self.name}` was interrupted during setup")
 
             interruption_sequence = [
                 # first trying sig=None to avoid propagation of the interruption error:
@@ -116,19 +125,19 @@ class Job:
 
     def reschedule(self):
         """Called  when the runner plans to restart the job at a later time."""
-        if self.state in [State.starting, State.running]:
+        if self.is_state_transition_ok(self.state, State.rescheduling):
             self.reset(State.rescheduling)
 
     def done(self):
         """Happy ending scenario."""
-        if self.state in [State.running]:
+        if self.is_state_transition_ok(self.state, State.completing):
             self.set_state(State.completing)
             self.set_state(State.stopping)
             self.reset(State.stopped)
 
     def stop(self):
         """Sad ending scenario."""
-        if self.state not in [State.cancelling, State.completing, State.stopping, State.stopped]:
+        if self.is_state_transition_ok(self.state, State.cancelling):
             try:
                 if self.set_state(State.cancelling):
                     self._cancel()
@@ -141,6 +150,7 @@ class Job:
                 self.reset(State.stopped)
 
     def set_state(self, state: State):
+        assert self.is_state_transition_ok(self.state, state), f"Illegal job transition from state {self.state} to {state}"
         old_state = self.state
         self.state = state
         log.debug("Changing job `%s` from state %s to %s.", self.name, old_state, state)
@@ -167,23 +177,30 @@ class Job:
         """hook executed on the job once it's being cancelled by the runner:
         this is called only once on the job, and only if it didn't complete"""
         if self.thread_id is not None:
-            raise_in_thread(self.thread_id, CancelledError)
+            raise_in_thread(self.thread_id, CancelledError(f"Job `{self.name}` was interrupted."))
 
     def _on_state(self, state: State):
         pass
 
+    def __str__(self):
+        return Job.printer.pformat(self.__dict__)
+
 
 class JobRunner:
-    """
-    Job runner state machine:
-    [] -> created
-    created -> starting, stopping
-    starting -> running, stopping
-    running -> stopping
-    cancelling -> stopping
-    stopping -> stopped
-    stopped -> []
-    """
+
+    state_machine = [
+        (None, [State.created]),
+        (State.created, [State.starting, State.stopping]),
+        (State.starting, [State.running, State.stopping]),
+        (State.running, [State.stopping]),
+        (State.stopping, [State.stopped]),
+        (State.stopped, None)
+    ]
+
+    @classmethod
+    def is_state_transition_ok(cls, old_state: State, new_state: State):
+        allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
+        return allowed and new_state in allowed
 
     def __init__(self, jobs):
         self.jobs = jobs
@@ -196,22 +213,19 @@ class JobRunner:
     def start(self):
         t = None
         try:
-            if self.state not in [State.created]:
-                raise InvalidStateError(self.state)
             if self.set_state(State.starting):
                 self._setup()
             with Timer() as t:
                 if self.set_state(State.running):
                     self._run()
         finally:
-            self.set_state(State.stopping)
-            self.set_state(State.stopped)
+            self.stop()
             if t is not None:
                 log.info("All jobs executed in %.3f seconds.", t.duration)
         return self.results
 
     def stop(self):
-        if self.state not in [State.stopping, State.stopped]:
+        if self.is_state_transition_ok(self.state, State.stopping):
             try:
                 if self.set_state(State.stopping):
                     return self._stop()
@@ -223,6 +237,8 @@ class JobRunner:
             self.stop()
 
     def put(self, job, priority=None):
+        if self.state in [State.stopping, State.stopped]:
+            return
         if priority is None:
             if job.priority is None:
                 job.priority = self._last_priority = self._last_priority+1
@@ -234,10 +250,13 @@ class JobRunner:
             log.warning("Ignoring job `%s`. Runner state: `%s`", job.name, self.state)
 
     def reschedule(self, job, priority=None):
+        if self.state not in [State.running]:
+            return
         job.reschedule()
         self.put(job, priority)
 
     def set_state(self, state: State):
+        assert self.is_state_transition_ok(self.state, state), f"Illegal job runner transition from state {self.state} to {state}"
         old_state = self.state
         self.state = state
         log.debug("Changing job runner from state %s to %s.", old_state, state)

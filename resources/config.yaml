@@ -198,7 +198,7 @@ aws:                    # configuration namespace for AWS mode.
   max_timeout_seconds: 21600    #
   os_mem_size_mb: 0             # overrides the default amount of memory left to the os in AWS mode, and set to 0 for fairness as we can't always prevent frameworks from using all available memory.
   overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
-  query_interval_seconds: 30   # check instance state every N seconds
+  query_interval_seconds: 30    # check instance state every N seconds
 
   resource_files: []            # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
                                 # Those files are actually uploaded to s3 bucket (precisely to s3://{s3.bucket}/{s3.root_key}/user),
