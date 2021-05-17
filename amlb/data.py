@@ -130,7 +130,6 @@ class Datasplit(ABC):
     @profile(logger=log)
     def data_enc(self) -> np.ndarray:
         data = np.where(self.data.notna(), self.data.values, None)
-        print("*****")
         encoded_cols = [f.label_encoder.transform(data[:, f.index]) for f in self.dataset.features]
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
@@ -224,4 +223,3 @@ class Dataset(ABC):
         self.train.release()
         self.test.release()
         clear_cache(self, properties)
-
