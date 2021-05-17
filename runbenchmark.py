@@ -13,6 +13,13 @@ from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str
 from amlb import log, AutoMLError
 
 
+default_dirs = ns(
+    input_dir="~/.openml/cache",
+    output_dir="./results",
+    user_dir="~/.config/automlbenchmark",
+    root_dir=os.path.dirname(__file__)
+)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('framework', type=str,
                     help="The framework to evaluate as defined by default in resources/frameworks.yaml. "
@@ -23,7 +30,7 @@ parser.add_argument('benchmark', type=str, nargs='?', default='test',
                          "a path to a benchmark description file, or an openml suite or task. OpenML references should "
                          "be formatted as 'openml/s/X' and 'openml/t/Y', for studies and tasks respectively. Defaults to `%(default)s`.")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
-                    help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
+                    help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `%(default)s`.")
 parser.add_argument('-m', '--mode', choices=['local', 'aws', 'docker', 'singularity'], default='local',
                     help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
@@ -34,11 +41,11 @@ parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*', def
                     help="If task is provided, the specific fold(s) to run. "
                          "If fold is not provided, then all folds from the task definition will be run.")
 parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
-                    help="Folder where datasets are loaded by default. Defaults to `input_dir` as defined in resources/config.yaml")
+                    help=f"Folder from where the datasets are loaded by default. Defaults to `{default_dirs.input_dir}`.")
 parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
-                    help="Folder where all the outputs should be written. Defaults to `output_dir` as defined in resources/config.yaml")
+                    help=f"Folder where all the outputs should be written. Defaults to `{default_dirs.output_dir}`.")
 parser.add_argument('-u', '--userdir', metavar='user_dir', default=None,
-                    help="Folder where all the customizations are stored. Defaults to `user_dir` as defined in resources/config.yaml")
+                    help=f"Folder where all the customizations are stored. Defaults to `{default_dirs.user_dir}`.")
 parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, default=1,
                     help="The number of jobs (i.e. tasks or folds) that can run in parallel. Defaults to %(default)s. "
                          "Currently supported only in docker and aws mode.")
@@ -63,7 +70,6 @@ parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.
 # parser.add_argument('-r', '--region', metavar='aws_region', default=None,
 #                     help="The region on which to run the benchmark when using AWS.")
 
-root_dir = os.path.dirname(__file__)
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
 extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
@@ -77,10 +83,10 @@ sid = (args.session if args.session is not None
                                      extras.get('run_mode', args.mode)])
                               .lower(),
                            now_str))
-log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
+log_dir = amlb.resources.output_dirs(args.outdir or default_dirs.output_dir,
                                      session=sid,
-                                     subdirs='logs' if args.outdir else '',
-                                     create=True)['logs' if args.outdir else 'session']
+                                     subdirs='logs',
+                                     create=True)['logs']
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
     logging.TRACE = logging.INFO
@@ -88,19 +94,19 @@ amlb.logger.setup(log_file=os.path.join(log_dir, '{script}.{now}.log'.format(scr
                   root_file=os.path.join(log_dir, '{script}.{now}.full.log'.format(script=script_name, now=now_str)),
                   root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
 
-log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
+log.info("Running benchmark `%s` on `%s` framework in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
 
-config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
+config_default = config_load(os.path.join(default_dirs.root_dir, "resources", "config.yaml"))
+config_default_dirs = default_dirs
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or default_dirs.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,
-    root_dir=root_dir,
     script=os.path.basename(__file__),
     run_mode=args.mode,
     parallel_jobs=args.parallel,
@@ -112,7 +118,7 @@ if args.mode != 'local':
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
-amlb.resources.from_configs(config, config_user, config_args)
+amlb.resources.from_configs(config_default, config_default_dirs, config_user, config_args)
 
 code = 0
 bench = None
