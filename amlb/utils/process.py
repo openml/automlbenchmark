@@ -257,8 +257,8 @@ def call_script_in_same_dir(caller_file, script_file, *args, **kwargs):
     return run_script(script_path, *args, **kwargs)
 
 
-def is_main_thread():
-    return threading.current_thread() == threading.main_thread()
+def is_main_thread(tid=None):
+    return get_thread(tid) == threading.main_thread()
 
 
 def get_thread(tid=None):

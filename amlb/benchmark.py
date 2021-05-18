@@ -7,7 +7,6 @@
 - run the jobs.
 - collect and save results.
 """
-
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
@@ -225,7 +224,8 @@ class Benchmark:
         self.job_runner = self._create_job_runner(jobs)
 
         def on_interrupt(*_):
-            log.warning("**** SESSION CANCELLED BY USER ****")
+            log.warning("*** SESSION CANCELLED BY USER ***")
+            log.warning("*** Please wait for the application to terminate gracefully ***")
             self.job_runner.stop()
             self.cleanup()
             # threading.Thread(target=self.job_runner.stop)

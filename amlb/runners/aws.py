@@ -326,9 +326,12 @@ class AWSBenchmark(Benchmark):
             if _self.ext.instance_type is None and spot_config.enabled:
                 _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
             if _self.ext.wait_min_secs:
+                _self.ext.interrupt = interrupt = threading.Event()
                 countdown(_self.ext.wait_min_secs,
                           message=f"starting job {_self.name}",
-                          interval=rconfig().aws.query_interval_seconds)
+                          interval=rconfig().aws.query_interval_seconds,
+                          interrupt_event=interrupt,
+                          interrupt_cond=lambda: _self.state != JobState.starting)
 
         def _run(_self):
             try:
@@ -398,6 +401,7 @@ class AWSBenchmark(Benchmark):
                 self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate, wait=False)
                 if _self.ext.interrupt is not None:
                     _self.ext.interrupt.set()
+                log.warning("Job `%s` was cancelled.", _self.name)
                 return True  # job is running remotely: no need to try to cancel what is running here, we just need to stop the instance
 
             elif state == JobState.stopping:
