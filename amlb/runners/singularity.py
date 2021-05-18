@@ -197,7 +197,7 @@ mkdir /output
 mkdir /custom
 
 
-(grep -v '^#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
+(grep -v '^\\s#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
 
 RUN $PY {script} {framework} -s only
 {custom_commands}
