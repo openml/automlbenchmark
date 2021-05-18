@@ -12,20 +12,15 @@ def run(dataset: Dataset, config: TaskConfig):
 
     data = dict(
         train=dict(
-            data=dataset.train.data,
-            y_enc=dataset.train.y_enc
+            data=dataset.train.data
         ),
         test=dict(
-            data=dataset.test.data,
-            y_enc=dataset.test.y_enc
+            X=dataset.test.X,
+            y=dataset.test.y
         ),
         target=dict(
             name=dataset.target.name,
-            classes=dataset.target.values
         ),
-        columns=[
-            (f.name, ('object' if f.is_categorical(strict=False)
-                      else 'int' if f.data_type == 'integer' else 'float')) for f in dataset.features],
         problem_type=dataset.type.name
     )
 

@@ -1,3 +1,4 @@
+import gc
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import partial, reduce, wraps
@@ -85,7 +86,7 @@ def as_cmd_args(*args, **kwargs):
                        ))
 
 
-def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]:
+def live_output_windows(process: subprocess.Popen, **_) -> Tuple[str, str]:
     """ Custom output forwarder, because select.select is not Windows compatible. """
     outputs = dict(
         out=dict(
@@ -121,7 +122,7 @@ def live_output_windows(process: subprocess.Popen, **ignored) -> Tuple[str, str]
     return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
 
 
-def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **ignored):
+def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **_):
     if mode is True:
         mode = 'line'
 
@@ -157,6 +158,11 @@ def live_output_unix(process, input=None, timeout=None, activity_timeout=None, m
     return ''.join(output), ''.join(error)
 
 
+def monitor_proc(process, monitor_params={}, **_):
+    pid = process.pid
+    ProcessMemoryMonitoring(pid=pid, **monitor_params).__enter__()
+
+
 def run_cmd(cmd, *args, **kwargs):
     params = Namespace(
         input_str=None,
@@ -174,6 +180,7 @@ def run_cmd(cmd, *args, **kwargs):
         timeout=None,
         activity_timeout=None,
         log_level=logging.INFO,
+        monitor=None,
     )
     for k, v in params:
         kk = '_'+k+'_'
@@ -186,17 +193,34 @@ def run_cmd(cmd, *args, **kwargs):
     log.log(params.log_level, "Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
 
-    if platform.system() == "Windows":
-        live_output = partial(live_output_windows, activity_timeout=params.activity_timeout)
+    hooks = []
+    if params.monitor is True:
+        hooks.append(monitor_proc)
+    elif isinstance(params.monitor, dict):
+        hooks.append(partial(monitor_proc, monitor_params=params.monitor))
+
+    if params.live_output and params.capture_output:
+        if platform.system() == "Windows":
+            live_output = partial(live_output_windows, activity_timeout=params.activity_timeout)
+        else:
+            live_output = partial(live_output_unix, mode=params.live_output, activity_timeout=params.activity_timeout)
+        hooks.append(live_output)
+
+    if hooks:
+        def communicate(*args, **kwargs):
+            res = None
+            for h in hooks:  # last hook should behave like a proper communicate function
+                res = h(*args, **kwargs)
+            return res
     else:
-        live_output = partial(live_output_unix, mode=params.live_output, activity_timeout=params.activity_timeout)
+        communicate = None
 
     try:
         completed = run_subprocess(str_cmd if params.shell else full_cmd,
                                    input=params.input_str,
                                    timeout=params.timeout,
                                    check=True,
-                                   communicate_fn=live_output if params.live_output and params.capture_output else None,
+                                   communicate_fn=communicate,
                                    # stdin=subprocess.PIPE if params.input_str is not None else None,
                                    stdout=subprocess.PIPE if params.capture_output else None,
                                    stderr=subprocess.PIPE if params.capture_error else None,
@@ -296,6 +320,27 @@ def call_in_subprocess(target, *args, **kwargs):
         except:
             pass
         raise
+
+
+def process_memory_mb(pid=None, extended=False):
+    proc = pid if isinstance(pid, psutil.Process) else get_process(pid)
+    try:
+        mem = proc.memory_full_info() if extended else proc.memory_info()
+        res = Namespace(
+            resident=to_mb(mem.rss),
+            virtual=to_mb(mem.vms),
+        )
+        if hasattr(mem, 'uss'):
+            res.unique = to_mb(mem.uss)
+        if hasattr(mem, 'shared'):
+            res.shared = to_mb(mem.shared)
+        if hasattr(mem, 'swap'):
+            res.swap = to_mb(mem.swap)
+        if hasattr(mem, 'data'):
+            res.data = to_mb(mem.data)
+        return res
+    except Exception as e:
+        return Namespace(error=str(e))
 
 
 def system_cores():
@@ -447,16 +492,16 @@ class InterruptTimeout(Timeout):
 
 class Monitoring:
 
-    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False, thread_prefix="monitoring_"):
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False, thread_prefix="monitoring_"):
         self._exec = None
-        self._name = name or os.getpid()
-        self._frequency = frequency_seconds
+        self._name = name or f"{get_process().name()} [{os.getpid()}]"
+        self._interval = interval_seconds
         self._thread_prefix = thread_prefix
         self._interrupt = threading.Event()
         self._check_on_exit = check_on_exit
 
     def __enter__(self):
-        if self._frequency > 0:
+        if self._interval > 0:
             self._interrupt.clear()
             self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix=self._thread_prefix)
             self._exec.submit(self._monitor)
@@ -477,7 +522,7 @@ class Monitoring:
             except Exception as e:
                 log.exception(e)
             finally:
-                self._interrupt.wait(self._frequency)
+                self._interrupt.wait(self._interval)
 
     def _check_state(self):
         pass
@@ -485,55 +530,88 @@ class Monitoring:
 
 class CPUMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
-                 use_interval=False, per_cpu=False, verbosity=0, log_level=logging.INFO):
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
+                 use_interval=False, verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
-                         frequency_seconds=0 if use_interval else frequency_seconds,
+                         interval_seconds=0 if use_interval else interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="cpu_monitoring_")
-        self._interval = frequency_seconds if use_interval else None
-        self._per_cpu = per_cpu
+        self._interval = interval_seconds if use_interval else None
         self._verbosity = verbosity
         self._log_level = log_level
 
     def _check_state(self):
         if self._verbosity == 0:
-            percent = psutil.cpu_percent(interval=self._interval, percpu=self._per_cpu)
-            log.log(self._log_level, "[%s] CPU Utilization: %s%%", self._name, percent)
-        elif self._verbosity > 0:
-            percent = psutil.cpu_times_percent(interval=self._interval, percpu=self._per_cpu)
-            log.log(self._log_level, "[%s] CPU Utilization (in percent):\n%s", self._name, percent)
+            percent = psutil.cpu_percent(interval=self._interval, percpu=False)
+            log.log(self._log_level, "[MONITORING] [%s] CPU Utilization: %s%%", self._name, percent)
+        elif self._verbosity == 1:
+            percent = psutil.cpu_percent(interval=self._interval, percpu=True)
+            log.log(self._log_level, "[MONITORING] [%s] CPU Utilization: %s%%", self._name, percent)
+        elif self._verbosity == 2:
+            percent = psutil.cpu_times_percent(interval=self._interval, percpu=False)
+            log.log(self._log_level, "[MONITORING] [%s] CPU Utilization (in percent):\n%s", self._name, percent)
+        elif self._verbosity > 2:
+            percent = psutil.cpu_times_percent(interval=self._interval, percpu=True)
+            log.log(self._log_level, "[MONITORING] [%s] CPU Utilization (in percent):\n%s", self._name, percent)
 
 
-class MemoryMonitoring(Monitoring):
+class SysMemoryMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
                  verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
-                         frequency_seconds=frequency_seconds,
+                         interval_seconds=interval_seconds,
                          check_on_exit=check_on_exit,
-                         thread_prefix="memory_monitoring_")
+                         thread_prefix="sys_memory_monitoring_")
         self._verbosity = verbosity
         self._log_level = log_level
 
     def _check_state(self):
         if self._verbosity == 0:
             percent = system_memory_mb().used_percentage
-            log.log(self._log_level, "[%s] Memory Usage: %s%%", self._name, percent)
+            log.log(self._log_level, "[MONITORING] [%s] Memory Usage: %s%%", self._name, percent)
         elif self._verbosity == 1:
             mem = system_memory_mb()
-            log.log(self._log_level, "[%s] Memory Usage (in MB): %s", self._name, mem)
+            log.log(self._log_level, "[MONITORING] [%s] Memory Usage (in MB): %s", self._name, mem)
         elif self._verbosity > 1:
             mem = psutil.virtual_memory()
-            log.log(self._log_level, "[%s] Memory Usage (in Bytes): %s",self._name,  mem)
+            log.log(self._log_level, "[MONITORING] [%s] Memory Usage (in Bytes): %s",self._name,  mem)
+
+
+class ProcessMemoryMonitoring(Monitoring):
+
+    def __init__(self, name=None, pid=None, interval_seconds=60, check_on_exit=False,
+                 verbosity=0, log_level=logging.INFO):
+        proc = get_process(pid)
+        super().__init__(name=name if name else f"{proc.name()} [{proc.pid}]",
+                         interval_seconds=interval_seconds,
+                         check_on_exit=check_on_exit,
+                         thread_prefix="proc_memory_monitoring_")
+        self._proc = proc
+        self._verbosity = verbosity
+        self._log_level = log_level
+
+    def _check_state(self):
+        with self._proc.oneshot():
+            if not psutil.pid_exists(self._proc.pid):
+                self.__exit__()
+                return
+            if self._verbosity == 0:
+                mem = process_memory_mb(self._proc)
+                log.log(self._log_level, "[MONITORING] [%s] Process Memory Usage (in MB): %s", self._name, mem)
+            else:
+                mem = process_memory_mb(self._proc, extended=True)
+                log.log(self._log_level, "[MONITORING] [%s] Process Memory Usage (in MB): %s", self._name, mem)
+            if 'error' in mem:
+                self.__exit__()
 
 
 class VolumeMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False, root="/",
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False, root="/",
                  verbosity=0, log_level=logging.INFO):
         super().__init__(name=name,
-                         frequency_seconds=frequency_seconds,
+                         interval_seconds=interval_seconds,
                          check_on_exit=check_on_exit,
                          thread_prefix="volume_monitoring_")
         self._root = root
@@ -543,27 +621,29 @@ class VolumeMonitoring(Monitoring):
     def _check_state(self):
         if self._verbosity == 0:
             percent = system_volume_mb(self._root).used_percentage
-            log.log(self._log_level, "[%s] Disk Usage: %s%%", self._name, percent)
+            log.log(self._log_level, "[MONITORING] [%s] Disk Usage: %s%%", self._name, percent)
         elif self._verbosity == 1:
             du = system_volume_mb(self._root)
-            log.log(self._log_level, "[%s] Disk Usage (in MB): %s", self._name, du)
+            log.log(self._log_level, "[MONITORING] [%s] Disk Usage (in MB): %s", self._name, du)
         elif self._verbosity > 1:
             du = psutil.disk_usage(self._root)
-            log.log(self._log_level, "[%s] Disk Usage (in Bytes): %s", self._name, du)
+            log.log(self._log_level, "[MONITORING] [%s] Disk Usage (in Bytes): %s", self._name, du)
 
 
 class OSMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
-                 statistics=('cpu', 'memory', 'volume'), verbosity=0, log_level=logging.INFO):
-        super().__init__(name=name, frequency_seconds=frequency_seconds, check_on_exit=check_on_exit)
+    def __init__(self, name=None, interval_seconds=60, check_on_exit=False,
+                 statistics=('cpu', 'proc_memory', 'sys_memory', 'volume'), verbosity=0, log_level=logging.INFO):
+        super().__init__(name=name, interval_seconds=interval_seconds, check_on_exit=check_on_exit)
         self.monitors = []
         if 'cpu' in statistics:
-            self.monitors.append(CPUMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
-        if 'memory' in statistics:
-            self.monitors.append(MemoryMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(CPUMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
+        if 'proc_memory' in statistics:
+            self.monitors.append(ProcessMemoryMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
+        if 'sys_memory' in statistics:
+            self.monitors.append(SysMemoryMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
         if 'volume' in statistics:
-            self.monitors.append(VolumeMonitoring(name=name, frequency_seconds=frequency_seconds, verbosity=verbosity, log_level=log_level))
+            self.monitors.append(VolumeMonitoring(name=name, interval_seconds=interval_seconds, verbosity=verbosity, log_level=log_level))
 
     def _check_state(self):
         for monitor in self.monitors:
@@ -586,24 +666,29 @@ class MemoryProfiler:
         if self.ps is not None:
             self.after_mem = self.ps.memory_full_info()
 
-    def usage(self):
+    def usage(self, before=False):
         if self.ps is not None:
-            mem = self.after_mem if self.after_mem is not None else self.ps.memory_full_info()
-            return Namespace(
-                process_diff=to_mb(mem.uss-self.before_mem.uss),
-                process=to_mb(mem.uss),
-                resident_diff=to_mb(mem.rss-self.before_mem.rss),
+            mem = (self.before_mem if before
+                   else self.after_mem if self.after_mem is not None
+                   else self.ps.memory_full_info())
+            res = Namespace(
                 resident=to_mb(mem.rss),
-                virtual_diff=to_mb(mem.vms-self.before_mem.vms),
-                virtual=to_mb(mem.vms)
+                virtual=to_mb(mem.vms),
+                unique=to_mb(mem.uss)
             )
+            if not before:
+                res.resident_diff=to_mb(mem.rss-self.before_mem.rss)
+                res.virtual_diff=to_mb(mem.vms-self.before_mem.vms)
+                res.unique_diff=to_mb(mem.uss-self.before_mem.uss)
+            return res
 
 
 def obj_size(o):
     if o is None:
         return 0
-    # handling numpy obj size (nbytes property)
-    return o.nbytes if hasattr(o, 'nbytes') else sys.getsizeof(o, -1)
+    return (o.nbytes if hasattr(o, 'nbytes')     # handling numpy obj size (nbytes property)
+            else o.memory_usage(deep=True).sum() if hasattr(o, 'memory_usage')  # handling pandas obj size
+            else sys.getsizeof(o, -1))
 
 
 def profile(logger=log, log_level=None, duration=True, memory=True):
@@ -616,9 +701,19 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
             if not logger.isEnabledFor(log_level):
                 return fn(*args, **kwargs)
 
-            with Timer(enabled=duration) as t, MemoryProfiler(enabled=memory) as m:
-                ret = fn(*args, **kwargs)
             name = fn_name(fn)
+            with MemoryProfiler(enabled=memory) as m:
+                if memory:
+                    mem = m.usage(before=True)
+                    logger.log(log_level,
+                               "[PROFILING] `%s`\n"
+                               "memory before; resident: %.2f MB, virtual: %.2f MB, unique: %.2f MB.\n"
+                               "gc before; threshold: %s, gen_count: %s, perm_count: %s",
+                               name,
+                               mem.resident, mem.virtual, mem.unique,
+                               gc.get_threshold(), gc.get_count(), gc.get_freeze_count())
+                with Timer(enabled=duration) as t:
+                    ret = fn(*args, **kwargs)
             if duration:
                 logger.log(log_level, "[PROFILING] `%s` executed in %.3fs.", name, t.duration)
             if memory:
@@ -626,8 +721,13 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
                 if ret_size > 0:
                     logger.log(log_level, "[PROFILING] `%s` returned object size: %.3f MB.", name, to_mb(ret_size))
                 mem = m.usage()
-                logger.log(log_level, "[PROFILING] `%s` memory change; process: %+.2f MB/%.2f MB, resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB.",
-                           name, mem.process_diff, mem.process, mem.resident_diff, mem.resident, mem.virtual_diff, mem.virtual)
+                logger.log(log_level,
+                           "[PROFILING] `%s`\n"
+                           "memory after; resident: %+.2f MB/%.2f MB, virtual: %+.2f MB/%.2f MB, unique: %+.2f MB/%.2f MB.\n"
+                           "gc after; threshold: %s, gen_count: %s, perm_count: %s",
+                           name,
+                           mem.resident_diff, mem.resident, mem.virtual_diff, mem.virtual, mem.unique_diff, mem.unique,
+                           gc.get_threshold(), gc.get_count(), gc.get_freeze_count())
             return ret
 
         return profiler

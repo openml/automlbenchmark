@@ -12,12 +12,12 @@ def run(dataset: Dataset, config: TaskConfig):
 
     data = dict(
         train=dict(
-            X_enc=dataset.train.X_enc,
-            y_enc=dataset.train.y_enc
+            X=dataset.train.X_enc,
+            y=dataset.train.y_enc
         ),
         test=dict(
-            X_enc=dataset.test.X_enc,
-            y_enc=dataset.test.y_enc
+            X=dataset.test.X_enc,
+            y=dataset.test.y_enc
         ),
         predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors]
     )

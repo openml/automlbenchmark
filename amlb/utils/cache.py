@@ -1,5 +1,7 @@
 import logging
 
+from .core import flatten
+
 log = logging.getLogger(__name__)
 
 _CACHE_PROP_PREFIX_ = '__cached__'
@@ -11,8 +13,9 @@ def _cached_property_name(fn):
 
 def clear_cache(self, functions=None):
     cached_properties = [prop for prop in dir(self) if prop.startswith(_CACHE_PROP_PREFIX_)]
-    properties_to_clear = cached_properties if functions is None \
-        else [prop for prop in [_cached_property_name(fn) for fn in functions] if prop in cached_properties]
+    properties_to_clear = (cached_properties if functions is None
+                           else [prop for prop in [_cached_property_name(fn) for fn in functions]
+                                 if prop in cached_properties])
     for prop in properties_to_clear:
         delattr(self, prop)
     log.debug("Cleared cached properties: %s.", properties_to_clear)
@@ -49,12 +52,11 @@ def cached(fn):
 def memoize(fn):
     prop_name = _cached_property_name(fn)
 
-    def decorator(self, key=None):  # TODO: could support unlimited args by making a tuple out of *args + **kwargs: not needed for now
+    def decorator(self, *args, **kwargs):
         memo = cache(self, prop_name, lambda _: {})
-        if not isinstance(key, str) and hasattr(key, '__iter__'):
-            key = tuple(key)
+        key = tuple(flatten((args, kwargs), flatten_dict=True))
         if key not in memo:
-            memo[key] = fn(self) if key is None else fn(self, key)
+            memo[key] = fn(self, *args, **kwargs)
         return memo[key]
 
     return decorator

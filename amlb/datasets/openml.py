@@ -2,18 +2,23 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
-from collections.abc import Iterable
+from abc import abstractmethod
+import copy
 import logging
 import os
 import re
-from typing import Union
+from typing import Generic, Tuple, TypeVar, Union
 
-import openml as oml
 import arff
 import numpy as np
+import pandas as pd
+import pandas.api.types as pat
+import openml as oml
+import scipy as sci
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
-from ..utils import as_list, lazy_property, obj_size, profile, to_mb
+from ..resources import config as rconfig
+from ..utils import as_list, lazy_property, path_from_split, profile, split_path
 
 
 log = logging.getLogger(__name__)
@@ -58,7 +63,6 @@ class AutoTask(oml.OpenMLTask):
         self._nrows = oml_dataset.qualities['NumberOfInstances']
         self.target_name = oml_dataset.default_target_attribute
 
-
     def get_train_test_split_indices(self, fold=0):
         # TODO: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
         pass
@@ -73,8 +77,6 @@ class OpenmlDataset(Dataset):
         self.fold = fold
         self._train = None
         self._test = None
-        self._attributes = None
-        self._unique_values = {}
 
     @lazy_property
     def type(self):
@@ -95,39 +97,29 @@ class OpenmlDataset(Dataset):
             return get_type(len(target.values))
 
     @property
-    @profile(logger=log)
     def train(self):
-        self._ensure_loaded()
+        self._ensure_split_created()
         return self._train
 
     @property
-    @profile(logger=log)
     def test(self):
-        self._ensure_loaded()
+        self._ensure_split_created()
         return self._test
 
     @lazy_property
     @profile(logger=log)
     def features(self):
-        def get_values(f):
-            """
-            workaround to retrieve nominal values from arff file as openml (version 0.7.0) doesn't support yet
-            retrieval of nominal values from the features.xml file
-            :param f: openml feature
-            :return: an array with nominal values
-            """
-            if f.data_type == 'nominal' and not f.nominal_values:
-                f.nominal_values = next(values for name, values in self.attributes if name.lower() == f.name.lower())
-            if not f.nominal_values:
-                f.nominal_values = self._unique_values.get(f.name)
-            return f.nominal_values
-
         has_missing_values = lambda f: f.number_missing_values > 0
         is_target = lambda f: f.name == self._oml_task.target_name
+        to_feature_type = lambda dt: ('number' if dt == 'numeric'
+                                      else 'category' if dt == 'nominal'
+                                      else 'string' if dt == 'string'
+                                      else 'datetime' if dt == 'date'
+                                      else 'object')
         return [Feature(new_idx,
                         f.name,
-                        f.data_type,
-                        values=get_values(f),
+                        to_feature_type(f.data_type),
+                        values=sorted(f.nominal_values) if f.nominal_values else None,
                         has_missing_values=has_missing_values(f),
                         is_target=is_target(f)
                         )
@@ -140,132 +132,191 @@ class OpenmlDataset(Dataset):
         return next(f for f in self.features if f.is_target)
 
     @property
-    def attributes(self):
-        if not self._attributes:
-            log.debug("Loading attributes from dataset %s.", self._oml_dataset.data_file)
-            with open(self._oml_dataset.data_file) as f:
-                ds = arff.load(f)
-                self._attributes = [a for a in ds['attributes']
-                                    if a[0] not in self._excluded_attributes]
-        return self._attributes
-
-    @property
     def _excluded_attributes(self):
         return (self._oml_dataset.ignore_attribute or []) + as_list(self._oml_dataset.row_id_attribute or [])
 
-    @profile(logger=log)
-    def _ensure_loaded(self):
-        if self._train is None and self._test is None:
-            self._load_split()
+    def _ensure_split_created(self):
+        if self._train is None or self._test is None:
+            self._train = OpenmlDatasplit(self)
+            self._test = OpenmlDatasplit(self)
 
-    def _load_split(self):
-        ds_path = self._oml_dataset.data_file
-        train_path = _get_split_path_for_dataset(ds_path, 'train', self.fold)
-        test_path = _get_split_path_for_dataset(ds_path, 'test', self.fold)
+    def _load_data(self, fmt):
+        splitter = _get_data_splitter_cls(fmt)(self)
+        train, test = splitter.split()
+        self._train._data[fmt] = train
+        self._test._data[fmt] = test
 
-        if not os.path.exists(train_path) or not os.path.exists(test_path):
-            self._prepare_split_data(train_path, test_path)
+    def _load_full_data(self, fmt):
+        X, *_ = self._oml_dataset.get_data(dataset_format=fmt)
+        if fmt == 'dataframe' and rconfig().openml.infer_dtypes:
+            return X.convert_dtypes()
+        return X
 
-        self._train = OpenmlDatasplit(self, train_path)
-        self._test = OpenmlDatasplit(self, test_path)
-
-    def _prepare_split_data(self, train_path, test_path):
-        train_ind, test_ind = (list(ind) for ind in self._oml_task.get_train_test_split_indices(self.fold))
-        #X, y = self._oml_task.get_X_and_y() #numpy arrays
-        ods = self._oml_dataset
-
-        # X, y, attr_is_categorical, attr_names = ods.get_data(self.target,
-        #                                                    return_categorical_indicator=True,
-        #                                                    return_attribute_names=True)
-        # ods.retrieve_class_labels(self.target)
-
-        log.debug("Loading dataset %s.", ods.data_file)
-        with open(ods.data_file) as f:
-            ds = arff.load(f)
-        log.info("Removing excluded columns %s.", self._excluded_attributes)
-        col_selector, attributes = zip(*[(i, a) for i, a in enumerate(ds['attributes'])
-                                         if a[0] not in self._excluded_attributes])
-
-        col_selector = list(col_selector)
-        self._attributes = list(attributes)
-        self._extract_unique_values(ds)
-
-        name_template = "{name}_{{split}}_{fold}".format(name=ods.name, fold=self.fold)
-        _save_split_set(path=train_path,
-                        name=name_template.format(split='train'),
-                        full_dataset=ds,
-                        rows=train_ind,
-                        cols=col_selector)
-        _save_split_set(path=test_path,
-                        name=name_template.format(split='test'),
-                        full_dataset=ds,
-                        rows=test_ind,
-                        cols=col_selector)
-
-    def _extract_unique_values(self, arff_dataset):
-        # TODO: support encoded string columns?
-        pass
+    def _get_split_paths(self, ext=None):
+        sp = split_path(self._oml_dataset.data_file)
+        train, test = copy.copy(sp), copy.copy(sp)
+        train.basename = f"{train.basename}_train_{self.fold}"
+        test.basename = f"{test.basename}_test_{self.fold}"
+        if ext:
+            train.extension = test.extension = ext
+        return path_from_split(train), path_from_split(test)
 
 
 class OpenmlDatasplit(Datasplit):
 
-    def __init__(self, dataset: Dataset, path: str):
-        super().__init__(dataset, 'arff')
-        self._path = path
+    def __init__(self, dataset: OpenmlDataset):
+        super().__init__(dataset, 'arff')  # TODO: fix format
+        self._data = {}
 
-    @property
-    def path(self):
-        return self._path
+    def data_path(self, format):
+        if format not in __supported_file_formats__:
+            raise ValueError(f"Dataset {self.dataset._oml_dataset.name} is only available as a file in one of {__supported_file_formats__} formats.")
+        return self._get_data(format)
 
     @lazy_property
     @profile(logger=log)
-    def data(self):
-        # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
-        log.debug("Loading datasplit %s.", self.path)
-        with open(self.path) as file:
-            ds = arff.load(file)
-        return np.asarray(ds['data'], dtype=object)
+    def data(self) -> pd.DataFrame:
+        return self._get_data('dataframe')
+
+    @lazy_property
+    @profile(logger=log)
+    def data_enc(self) -> np.ndarray:
+        return self._get_data('array')
+
+    def _get_data(self, fmt):
+        if fmt not in self._data or (fmt in __supported_file_formats__ and not os.path.isfile(self._data[fmt])):
+            self.dataset._load_data(fmt)
+        return self._data[fmt]
+
+    def release(self, properties=None):
+        super().release(properties)
+        self._data = {}
 
 
-def _get_split_path_for_dataset(ds_path, split='train', fold=0):
-    ds_dir, ds_base = os.path.split(ds_path)
-    split_base = re.sub(r'\.(\w+)$', r'_{split}_{fold}.\1'.format(split=split, fold=fold), ds_base)
-    split_path = os.path.join(ds_dir, split_base)
-    return split_path
+T = TypeVar('T')
+A = Union[np.ndarray, sci.sparse.csr_matrix]
+DF = pd.DataFrame
 
 
-@profile(logger=log)
-def _save_split_set(path, name, full_dataset=None, rows=None, cols=None):
-    # X_split = X[indexes, :]
-    # y_split = y.reshape(-1, 1)[indexes, :]
-    log.debug("Saving %s split dataset to %s.", name, path)
-    if rows is None:
-        rows = slice(None)
-    else:
-        assert isinstance(rows, list)
-        rows = np.array(rows)
-    full_attributes = full_dataset['attributes']
-    if cols is None:
-        cols = slice(None)
-        attributes = full_attributes
-    else:
-        assert isinstance(cols, list)
-        cols = np.array(cols)
-        attributes = [full_attributes[i] for i in cols]
-    if len(attributes) != len(full_attributes) :
-        log.debug("Keeping only attributes %s", [a for a, _ in attributes])
-    with open(path, 'w') as file:
-        description = '\n'.join([
-            "Split dataset file generated by automlbenchmark.",
-            "",
-            full_dataset['description']
-        ])
-        split_data = np.asarray(full_dataset['data'], dtype=object)[rows[:, None], cols]
-        arff.dump({
-            'description': description,
-            'relation': name,
-            'attributes': attributes,
-            'data': split_data
-        }, file)
+class DataSplitter(Generic[T]):
 
+    def __init__(self, ds: OpenmlDataset):
+        self.ds = ds
+        self.train_ind, self.test_ind = ds._oml_task.get_train_test_split_indices(self.ds.fold)
+
+    @abstractmethod
+    def split(self) -> Tuple[T, T]:
+        pass
+
+
+class ArraySplitter(DataSplitter[A]):
+    format = 'array'
+
+    def __init__(self, ds: OpenmlDataset):
+        super().__init__(ds)
+
+    @profile(logger=log)
+    def split(self) -> Tuple[A, A]:
+        X = self.ds._load_full_data('array')
+        return X[self.train_ind, :], X[self.test_ind, :]
+
+
+class DataFrameSplitter(DataSplitter[DF]):
+    format = 'dataframe'
+
+    def __init__(self, ds: OpenmlDataset):
+        super().__init__(ds)
+
+    @profile(logger=log)
+    def split(self) -> Tuple[DF, DF]:
+        X = self.ds._load_full_data('dataframe')
+        return X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+
+
+class ArffSplitter(DataSplitter[str]):
+    format = 'arff'
+
+    def __init__(self, ds: OpenmlDataset):
+        super().__init__(ds)
+
+    @profile(logger=log)
+    def split(self) -> Tuple[str, str]:
+        train_path, test_path = self.ds._get_split_paths(".arff")
+        if not os.path.isfile(train_path) or not os.path.isfile(test_path):
+            X = self.ds._load_full_data('dataframe')
+            train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+            name_template = "{name}_{{split}}_{fold}".format(name=self.ds._oml_dataset.name, fold=self.ds.fold)
+            self._save_split(train, train_path, name_template.format(split="train"))
+            self._save_split(test, test_path, name_template.format(split="test"))
+        return train_path, test_path
+
+    def _save_split(self, df, path, name):
+        log.debug("Saving %s split dataset to %s.", name, path)
+        with open(path, 'w') as file:
+            description = f"Split dataset file generated by automlbenchmark from OpenML dataset openml.org/d/{self.ds._oml_dataset.dataset_id}"
+            attributes = [(c,
+                           ('INTEGER' if pat.is_integer_dtype(dt)
+                            else 'REAL' if pat.is_float_dtype(dt)
+                            else 'NUMERIC' if pat.is_numeric_dtype(dt)
+                            # else ['0', '1'] if pat.is_bool_dtype(dt)
+                            else self._get_categorical_values(c) if pat.is_categorical_dtype(dt)
+                            else 'STRING'
+                           ))
+                          for c, dt in zip(df.columns, df.dtypes)]
+            arff.dump(dict(
+                description=description,
+                relation=name,
+                attributes=attributes,
+                data=df.values
+            ), file)
+
+    def _get_categorical_values(self, col):
+        feat = next((f for f in self.ds._oml_dataset.features.values() if f.name == col), None)
+        return feat.nominal_values if feat is not None else None
+
+
+class CsvSplitter(DataSplitter[str]):
+    format = 'csv'
+
+    def __init__(self, ds: OpenmlDataset):
+        super().__init__(ds)
+
+    @profile(logger=log)
+    def split(self) -> Tuple[str, str]:
+        train_path, test_path = self.ds._get_split_paths(".csv")
+        if not os.path.isfile(train_path) or not os.path.isfile(test_path):
+            X = self.ds._load_full_data('dataframe')
+            train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+            train.to_csv(train_path, header=True, index=False)
+            test.to_csv(test_path, header=True, index=False)
+        return train_path, test_path
+
+
+class ParquetSplitter(DataSplitter[str]):
+    format = 'parquet'
+
+    def __init__(self, ds: OpenmlDataset):
+        super().__init__(ds)
+
+    @profile(logger=log)
+    def split(self) -> Tuple[str, str]:
+        train_path, test_path = self.ds._get_split_paths(".parquet")
+        if not os.path.isfile(train_path) or not os.path.isfile(test_path):
+            X = self.ds._load_full_data('dataframe')
+            train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+            train.to_parquet(train_path)
+            test.to_parquet(test_path)
+        return train_path, test_path
+
+
+__data_splitters__ = [ArraySplitter, DataFrameSplitter, ArffSplitter, CsvSplitter, ParquetSplitter]
+__supported_file_formats__ = ['arff', 'csv', 'parquet']
+
+
+def _get_data_splitter_cls(split_format='array'):
+    ds_cls = next((ds for ds in __data_splitters__ if ds.format == split_format), None)
+    if ds_cls is None:
+        supported = [ds.format for ds in __data_splitters__]
+        raise ValueError(f"`{split_format}` is not among supported formats: {supported}.")
+    return ds_cls
 

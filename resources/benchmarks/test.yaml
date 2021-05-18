@@ -40,4 +40,4 @@
 
 - name: cholesterol
   openml_task_id: 2295
-  description: "regression test dataset"
+  description: "regression test dataset with both numerical and categorical features with missing values"

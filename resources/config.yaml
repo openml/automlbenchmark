@@ -66,10 +66,15 @@ job_scheduler:           # configuration namespace
   max_parallel_jobs: 10  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
   delay_between_jobs: 5  # delay in seconds between each parallel job start
 
-monitoring:               # configuration namespace describing the basic monitoring features: currently, the app only logs each statistic at a given frequency.
-  frequency_seconds: 120  # set to <= 0 to disable monitoring
-  statistics: ['cpu', 'memory', 'volume']  # the 3 monitoring values currently available
-  verbosity: 0            # from 0 to 2, higher verbosity provides more details for each statistic.
+monitoring:               # configuration namespace describing the basic monitoring features: currently, the app only logs each statistic at a given interval.
+  interval_seconds: 120   # set to <= 0 to disable monitoring
+  statistics: ['cpu', 'sys_memory', 'volume'] # the monitoring values currently available are:
+                          # cpu : monitors global cpu usage; higher verbosity provides cpu usage per core.
+                          # sys_memory : monitors the global memory usage; higher verbosity increases the precision: from percent (v=0) to bytes (v>=2).
+                          # volume : monitors the volume usage; higher verbosity increases the precision, from percent (v=0) to bytes (v>=2).
+                          # proc_memory : monitors the memory usage on the main process; higher verbosity adds some details.
+                          # sub_proc_memory : monitors the memory usage on the framework subprocess running in its virtual environment; available only if the main process is run as root.
+  verbosity: 0            # from 0 to 3, higher verbosity provides more details for each statistic.
 
 results:                 # configuration namespace for the results.csv file.
   error_max_length: 200  # the max length of the error message as rendered in the results file.
@@ -77,6 +82,7 @@ results:                 # configuration namespace for the results.csv file.
 
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
+  infer_dtypes: False
 
 versions:              # configuration namespace for versions enforcement (libraries versions are usually enforced in requirements.txt for the app and for each framework).
   pip:
@@ -95,7 +101,7 @@ container: &container          # parent configuration namespace for container mo
 
 docker:                        # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
-  run_extra_options: '--shm-size=1024M'
+  run_extra_options: '--shm-size=2048M'
 
 singularity:                   # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
@@ -174,7 +180,7 @@ aws:                    # configuration namespace for AWS mode.
         delta_minutes: 30                #
         threshold: 5                     #
         abort_inactive_instances: true   # stop/terminate instance if its cpu activity was lower than `threshold` %, for all periods or `period_minutes` in the last `delta_minutes`.
-        query_frequency_seconds: 300     # set to <= 0 to disable
+        query_interval_seconds: 300      # set to <= 0 to disable
 
   job_scheduler:                             # AWS mode sub-namespace specifying
     max_attempts: 10                         #
@@ -192,7 +198,7 @@ aws:                    # configuration namespace for AWS mode.
   max_timeout_seconds: 21600    #
   os_mem_size_mb: 0             # overrides the default amount of memory left to the os in AWS mode, and set to 0 for fairness as we can't always prevent frameworks from using all available memory.
   overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
-  query_frequency_seconds: 30   # check instance state every N seconds
+  query_interval_seconds: 30   # check instance state every N seconds
 
   resource_files: []            # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
                                 # Those files are actually uploaded to s3 bucket (precisely to s3://{s3.bucket}/{s3.root_key}/user),
