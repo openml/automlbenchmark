@@ -268,7 +268,6 @@ class ArffSplitter(DataSplitter[str]):
                 relation=name,
                 attributes=attributes,
                 data=df.values
-                # data=(df * 1).values  # converts bool to 0/1 and NAs to NaN
             ), file)
 
     def _get_categorical_values(self, col):
@@ -320,5 +319,4 @@ def _get_data_splitter_cls(split_format='array'):
         supported = [ds.format for ds in __data_splitters__]
         raise ValueError(f"`{split_format}` is not among supported formats: {supported}.")
     return ds_cls
-
 

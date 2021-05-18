@@ -337,8 +337,6 @@ class CsvDatasplit(FileDatasplit):
             col = self._ds.iloc[:, f.index]
             f.has_missing_values = col.hasnans
             if f.is_categorical():
-                # unique_values = col.dropna().unique() if f.has_missing_values else col.unique()
-                # f.values = [str(v) for v in sorted(unique_values)]
                 f.values = sorted(self._ds.dtypes[f.name].categories.values)
 
         target = self._find_target_feature(features)
