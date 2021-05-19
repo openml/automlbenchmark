@@ -3,7 +3,7 @@ HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/automl/auto-sklearn.git"}
 PKG=${3:-"auto-sklearn"}
-if [[ "$VERSION" == "latest" ]]; then
+if [[ "$VERSION" == "stable" ]]; then
     VERSION="master"
 fi
 
