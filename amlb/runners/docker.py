@@ -49,7 +49,7 @@ class DockerBenchmark(ContainerBenchmark):
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
-        script_extra_params = ""
+        script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} "
@@ -59,7 +59,7 @@ class DockerBenchmark(ContainerBenchmark):
             name=inst_name,
             options=rconfig().docker.run_extra_options,
             input=in_dir,
-            output=out_dir,
+            output=self.output_dirs.session,
             custom=custom_dir,
             image=self.image,
             params=script_params,
