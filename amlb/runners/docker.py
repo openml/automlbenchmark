@@ -149,7 +149,7 @@ VOLUME /custom
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 ADD . /bench/
 
-RUN (grep -v '^#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
+RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
 
 RUN $PY {script} {framework} -s only
 {custom_commands}
