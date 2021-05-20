@@ -21,7 +21,9 @@ class DockerBenchmark(ContainerBenchmark):
     an extension of ContainerBenchmark to run benchmarks inside docker.
     """
 
-    def __init__(self, framework_name, benchmark_name, constraint_name):
+    run_mode = 'docker'
+
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
 
         :param framework_name:

@@ -24,7 +24,6 @@ args = parser.parse_args()
 amlb.logger.setup(root_level='DEBUG', console_level='INFO')
 
 config = config_load("resources/config.yaml")
-config.run_mode = 'script'
 config.root_dir = root_dir
 config.script = os.path.basename(__file__)
 amlb.resources.from_config(config)
