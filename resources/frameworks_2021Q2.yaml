@@ -7,7 +7,7 @@
 AutoGluon:
   version: "0.2.0"
 
-AutoGluon_bestquality:
+AutoGluon_benchmark:
   extends: AutoGluon
   description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
   params:
@@ -16,8 +16,16 @@ AutoGluon_bestquality:
 autosklearn:
   version: '0.12.6'
 
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
+
 autoxgboost:
   version: 'latest'
+
+AutoWEKA:
+  version: '2.6'
 
 flaml:
   version: '0.3.6'
@@ -26,28 +34,22 @@ GAMA:
   version: '21.0.0'
 
 H2OAutoML:
-  version: '3.30.0.4'
-  setup_args: 'zahradnik'
+  version: '3.32.1.3'
 
 lightautoml:
-  version: '0.2.13'
+  version: '0.2.14'
 
 mljarsupervised:
-  version: '0.10.3'
+  version: '0.10.4'
 
-mljarsupervised_compete:
+mljarsupervised_benchmark:
   extends: mljarsupervised
   description: "MLJar using 'Compete' mode to provide most accurate predictor"
   params:
-    mode: Compete   # set mode for Compete, default mode is Explain
+    mode: Compete
 
 MLPlan:
   version: '0.2.4'
-
-MLPlanSKLearn:
-  extends: MLPlan
-  params:
-    _backend: sklearn
 
 MLPlanWEKA:
   extends: MLPlan
@@ -70,10 +72,10 @@ constantpredictor_enc:
     encode: true
 
 DecisionTree:
-  version: '0.22.2'
+  version: '0.24.2'
 
 RandomForest:
-  version: '0.22.2'
+  version: '0.24.2'
   params:
     n_estimators: 2000
 
@@ -81,7 +83,7 @@ ranger:
   version: 'stable'
 
 TunedRandomForest:
-  version: '0.22.2'
+  version: '0.24.2'
   params:
     n_estimators: 2000
 
