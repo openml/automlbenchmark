@@ -56,6 +56,8 @@ def _assert_kc2_features(dataset):
     assert not any([p.has_missing_values for p in dataset.predictors])
 
     assert dataset.train.X.dtypes.apply(lambda dt: pd.api.types.is_numeric_dtype(dt)).all()
+    assert len(dataset.train.X.select_dtypes(include=['float']).columns) == 18
+    assert len(dataset.train.X.select_dtypes(include=['uint8']).columns) == 3
     assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
 
 
@@ -111,6 +113,8 @@ def _assert_cholesterol_features(dataset):
 
     assert dataset.train.X.dtypes.filter(items=numericals).apply(lambda dt: pd.api.types.is_numeric_dtype(dt)).all()
     assert dataset.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_categorical_dtype(dt)).all()
+    assert len(dataset.train.X.select_dtypes(include=['float']).columns) == 2
+    assert len(dataset.train.X.select_dtypes(include=['uint8']).columns) == 4
     assert pd.api.types.is_float_dtype(dataset.train.y.dtypes.iloc[0])
 
 
