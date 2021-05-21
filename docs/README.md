@@ -39,7 +39,7 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ### Pre-requisites
 To run the benchmarks, you will need:
 * Python 3.7+.
-* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `pip3 install -U pip`.
+* PIP3: ensure you have a recent version. If necessary, upgrade your pip using `python -m pip install -U pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
 
@@ -77,13 +77,12 @@ pyenv local ve-automl
 Then pip install the dependencies:
 
 ```bash
-pip3 install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 - _**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
-    - _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 pip install < requirements.txt`.
-    - _enforce the `pip3` version above in your virtualenv:_ `pip3 install --upgrade pip==19.3.1`.
-
+    - _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 python -m pip install < requirements.txt`.
+    - _enforce the `python -m pip` version above in your virtualenv:_ `python -m pip install --upgrade pip==19.3.1`.
 
 ## Quickstart
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:

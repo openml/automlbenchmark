@@ -34,38 +34,25 @@ class OpenmlLoader:
         if cache_dir:
             oml.config.set_cache_directory(cache_dir)
 
+        if oml.config.retry_policy != "robot":
+            log.debug("Setting openml retry_policy from '%s' to 'robot'." % oml.config.retry_policy)
+            oml.config.set_retry_policy("robot")
+
     @profile(logger=log)
     def load(self, task_id=None, dataset_id=None, fold=0):
         if task_id is not None:
             if dataset_id is not None:
                 log.warning("Ignoring dataset id {} as a task id {} was already provided.".format(dataset_id, task_id))
-            task = oml.tasks.get_task(task_id)
-            dataset = task.get_dataset()
+            task = oml.tasks.get_task(task_id, download_qualities=False)
+            dataset = oml.datasets.get_dataset(task.dataset_id, download_qualities=False)
             _, nfolds, _ = task.get_split_dimensions()
             if fold >= nfolds:
                 raise ValueError("OpenML task {} only accepts `fold` < {}.".format(task_id, nfolds))
         elif dataset_id is not None:
             raise NotImplementedError("OpenML raw datasets are not supported yet, please use an OpenML task instead.")
-            dataset = oml.datasets.get_dataset(dataset_id)
-            task = AutoTask(dataset)
-            if fold > 0:
-                raise ValueError("OpenML raw datasets {} only accepts `fold` = 0.".format(task_id))
         else:
             raise ValueError("A task id or a dataset id are required when using OpenML.")
         return OpenmlDataset(task, dataset, fold)
-
-
-class AutoTask(oml.OpenMLTask):
-    """A minimal task implementation providing only the information necessary to get the logic of this current module working."""
-
-    def __init__(self, oml_dataset: oml.OpenMLDataset):
-        self._dataset = oml_dataset
-        self._nrows = oml_dataset.qualities['NumberOfInstances']
-        self.target_name = oml_dataset.default_target_attribute
-
-    def get_train_test_split_indices(self, fold=0):
-        # TODO: make auto split 80% train, 20% test (make this configurable, also random vs sequential) and save it to disk
-        pass
 
 
 class OpenmlDataset(Dataset):
@@ -89,12 +76,9 @@ class OpenmlDataset(Dataset):
                 return DatasetType.regression
             return None
 
-        nclasses = self._oml_dataset.qualities.get('NumberOfClasses', -1)
-        if nclasses >= 0:
-            return get_type(nclasses)
-        else:
-            target = next(f for f in self.features if f.is_target)
-            return get_type(len(target.values))
+        if hasattr(self._oml_task, "class_labels"):
+            return get_type(len(self._oml_task.class_labels))
+        return DatasetType.regression
 
     @property
     def train(self):

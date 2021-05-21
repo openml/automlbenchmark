@@ -11,7 +11,9 @@ botocore==1.20.74
     #   boto3
     #   s3transfer
 certifi==2020.12.5
-    # via requests
+    # via
+    #   minio
+    #   requests
 chardet==4.0.0
     # via requests
 idna==2.10
@@ -26,6 +28,8 @@ liac-arff==2.5.0
     # via
     #   -r requirements.in
     #   openml
+minio==7.0.3
+    # via openml
 numexpr==2.7.3
     # via tables
 numpy==1.20.3
@@ -38,7 +42,7 @@ numpy==1.20.3
     #   scikit-learn
     #   scipy
     #   tables
-openml==0.11.0
+openml==0.12.2
     # via -r requirements.in
 pandas==1.2.4
     # via
@@ -47,7 +51,9 @@ pandas==1.2.4
 psutil==5.8.0
     # via -r requirements.in
 pyarrow==4.0.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   openml
 python-dateutil==2.8.1
     # via
     #   botocore
@@ -80,6 +86,7 @@ threadpoolctl==2.1.0
 urllib3==1.26.4
     # via
     #   botocore
+    #   minio
     #   requests
 xmltodict==0.12.0
     # via openml
