@@ -83,7 +83,7 @@ pip3 install -r requirements.txt
 - _**NOTE**: in case of issues when installing Python requirements, you may want to try the following:_
     - _on some platforms, we need to ensure that requirements are installed sequentially:_ `xargs -L 1 pip install < requirements.txt`.
     - _enforce the `pip3` version above in your virtualenv:_ `pip3 install --upgrade pip==19.3.1`.
-
+    - _when installing on Windows using `python -m pip` is recommended, and may be required to successfully install `requirements-dev.txt`.
 
 ## Quickstart
 To run a benchmark call the `runbenchmark.py` script with at least the following arguments:
