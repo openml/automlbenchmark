@@ -25,6 +25,12 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
     domain, oml_type, oml_id = benchmark.split('/')
     path = None  # benchmark file does not exist on disk
     name = benchmark  # name is later passed as cli input again for containers, it needs to remain parsable
+
+    if openml.config.retry_policy != "robot":
+        log.debug(
+            "Setting openml retry_policy from '%s' to 'robot'." % openml.config.retry_policy)
+        openml.config.set_retry_policy("robot")
+
     if oml_type == 't':
         log.info("Loading openml task %s.", oml_id)
         # We first have the retrieve the task because we don't know the dataset id
