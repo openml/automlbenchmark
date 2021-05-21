@@ -5,8 +5,6 @@ import re
 import shutil
 import sys
 
-import openml
-
 # prevent asap other modules from defining the root logger using basicConfig
 import amlb.logger
 
@@ -151,10 +149,6 @@ config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
 amlb.resources.from_configs(config_default, config_default_dirs, config_user, config_args)
-
-if openml.config.retry_policy != "robot":
-    log.debug("Setting openml retry_policy from '%s' to 'robot'." % openml.config.retry_policy)
-    openml.config.set_retry_policy("robot")
 
 code = 0
 bench = None

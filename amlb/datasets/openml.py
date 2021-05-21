@@ -34,6 +34,10 @@ class OpenmlLoader:
         if cache_dir:
             oml.config.set_cache_directory(cache_dir)
 
+        if oml.config.retry_policy != "robot":
+            log.debug("Setting openml retry_policy from '%s' to 'robot'." % oml.config.retry_policy)
+            oml.config.set_retry_policy("robot")
+
     @profile(logger=log)
     def load(self, task_id=None, dataset_id=None, fold=0):
         if task_id is not None:
