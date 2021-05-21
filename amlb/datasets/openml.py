@@ -72,12 +72,9 @@ class OpenmlDataset(Dataset):
                 return DatasetType.regression
             return None
 
-        nclasses = self._oml_dataset.qualities.get('NumberOfClasses', -1)
-        if nclasses >= 0:
-            return get_type(nclasses)
-        else:
-            target = next(f for f in self.features if f.is_target)
-            return get_type(len(target.values))
+        if hasattr(self._oml_task, "class_labels"):
+            return get_type(len(self._oml_task.class_labels))
+        return DatasetType.regression
 
     @property
     def train(self):
