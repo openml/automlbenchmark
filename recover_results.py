@@ -28,7 +28,6 @@ config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
 config_args = ns.parse(
     root_dir=root_dir,
     script=os.path.basename(__file__),
-    run_mode='script',
 ) + ns.parse(extras)
 config_args = ns({k: v for k, v in config_args if v is not None})
 amlb.resources.from_configs(config, config_args)

@@ -6,14 +6,12 @@ providing the same parameters and features allowing to import config and export 
 """
 from abc import abstractmethod
 import logging
-import os
 import re
 
 from ..benchmark import Benchmark, SetupMode
 from ..errors import InvalidStateError
 from ..job import Job
 from ..resources import config as rconfig, get as rget
-from ..utils import dir_of, run_cmd
 from ..__version__ import __version__, _dev_version as dev
 
 
@@ -40,7 +38,7 @@ class ContainerBenchmark(Benchmark):
         return f"{author}/{image}:{tag}"
 
     @abstractmethod
-    def __init__(self, framework_name, benchmark_name, constraint_name):
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
 
         :param framework_name:
@@ -82,17 +80,13 @@ class ContainerBenchmark(Benchmark):
         # TODO: remove generated script? anything else?
         pass
 
-    def run(self, task_name=None, fold=None):
-        self._get_task_defs(task_name)  # validates tasks
+    def run(self, tasks=None, folds=None):
+        self._get_task_defs(tasks)  # validates tasks
         if self.parallel_jobs > 1 or not self.minimize_instances:
-            return super().run(task_name, fold)
+            return super().run(tasks, folds)
         else:
-            job = self._make_container_job(task_name, fold)
-            try:
-                results = self._run_jobs([job])
-                return self._process_results(results, task_name=task_name)
-            finally:
-                self.cleanup()
+            job = self._make_container_job(tasks, folds)
+            return self.run_jobs([job])
 
     def _make_job(self, task_def, fold=int):
         return self._make_container_job([task_def.name], [fold])

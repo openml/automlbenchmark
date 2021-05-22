@@ -50,7 +50,6 @@ class ResultError(Exception):
     pass
 
 
-
 class Scoreboard:
 
     results_file = 'results.csv'
@@ -404,7 +403,7 @@ class TaskResult:
             version=metadata.framework_version,
             params=repr(metadata.framework_params) if metadata.framework_params else '',
             fold=self.fold,
-            mode=rconfig().run_mode,
+            mode=metadata.run_mode,
             seed=metadata.seed,
             app_version=rget().app_version,
             utc=datetime_iso(),

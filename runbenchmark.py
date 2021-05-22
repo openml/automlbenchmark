@@ -9,7 +9,7 @@ import sys
 import amlb.logger
 
 import amlb
-from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize, zip_path
+from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_iter, str_sanitize, zip_path
 from amlb import log, AutoMLError
 
 
@@ -67,10 +67,22 @@ parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], 
                          "\n• force: setup is always executed before the benchmark."
                          "\n• only: only setup is executed (no benchmark)."
                          "\n(default: '%(default)s')")
-parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
-                    help="Set to true (default) to save/add scores in output directory.")
 parser.add_argument('-e', '--exit-on-error', action='store_true', dest="exit_on_error",
                     help="If set, terminates on the first task that does not complete with a model.")
+parser.add_argument('-X', '--extra', default=[], action='append',
+                    help="Any property defined in resources/config.yaml can be overridden using"
+                         "\n -Xpath.to.property=value"
+                         "\nIn addition framework params can be overridden using"
+                         "\n -Xf.param=value"
+                         "\nFinally task config properties (the config arg of the framework integration `run` function)"
+                         "\ncan be overridden using"
+                         "\n -Xt.param=value"
+                         "\nNote that the value is converted using ast.literal_eval to allow passing non-string values."
+                         "\nExamples:"
+                         "\n  -Xseed=42         (to apply a fixed seed)"
+                         "\n  -Xarchive=None    (to avoid archiving logs by default)"
+                         "\n  -Xf._encode=True  (for `constantpredictor`, will use encoded data)"
+                         "\n  -Xt.max_runtime_seconds=300   (force each task to timeout after 5min)")
 parser.add_argument('--logging', type=str, default="console:info,app:debug,root:info",
                     help="Set the log levels for the 3 available loggers:"
                          "\n• console"
@@ -79,22 +91,11 @@ parser.add_argument('--logging', type=str, default="console:info,app:debug,root:
                          "\nAccepted values for each logger are: notset, debug, info, warning, error, fatal, critical."
                          "\nExamples:"
                          "\n  --logging=info (applies the same level to all loggers)"
-                         "\n  --logging=root:debug (keeps defaults for non-specified loggers)" 
+                         "\n  --logging=root:debug (keeps defaults for non-specified loggers)"
                          "\n  --logging=console:warning,app:info"
                          "\n(default: '%(default)s')")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
-parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
-# group = parser.add_mutually_exclusive_group()
-# group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
-#                    help="Set to true [default] to save/add scores in output directory")
-# group.add_argument('--no-keep-scores', dest='keep_scores', action='store_false')
-# parser.set_defaults(keep_scores=True)
-
-# removing this command line argument for now: by default, we're using the user default region as defined in ~/aws/config
-#  on top of this, user can now override the aws.region setting in his custom ~/.config/automlbenchmark/config.yaml settings.
-# parser.add_argument('-r', '--region', metavar='aws_region', default=None,
-#                     help="The region on which to run the benchmark when using AWS.")
 
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
@@ -133,7 +134,6 @@ config_default_dirs = default_dirs
 config_user = config_load(extras.get('config', os.path.join(args.userdir or default_dirs.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
-    {'results.save': args.keep_scores},
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,
@@ -144,7 +144,7 @@ config_args = ns.parse(
     exit_on_error=args.exit_on_error,
 ) + ns.parse(extras)
 if args.mode != 'local':
-    config_args + ns.parse({'monitoring.frequency_seconds': 0})
+    config_args + ns.parse({'monitoring.frequency_seconds': 0})  # disable system monitoring if benchmark doesn't run locally.
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
@@ -153,25 +153,15 @@ amlb.resources.from_configs(config_default, config_default_dirs, config_user, co
 code = 0
 bench = None
 try:
-    if args.mode == 'local':
-        bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
-    elif args.mode == 'docker':
-        bench = amlb.DockerBenchmark(args.framework, args.benchmark, args.constraint)
-    elif args.mode == 'singularity':
-        bench = amlb.SingularityBenchmark(args.framework, args.benchmark, args.constraint)
-    elif args.mode == 'aws':
-        bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint)
-        # bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
-    # elif args.mode == "aws-remote":
-    #     bench = amlb.AWSRemoteBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
+    benchmark_classes = [amlb.LocalBenchmark, amlb.DockerBenchmark, amlb.SingularityBenchmark, amlb.AWSBenchmark]
+    cls = next((c for c in benchmark_classes if c.run_mode == args.mode), None)
+    if cls:
+        bench = cls(args.framework, args.benchmark, args.constraint)
     else:
-        raise ValueError("`mode` must be one of 'aws', 'docker', 'singularity' or 'local'.")
+        raise ValueError("`mode` must be one of %s.".format(str_iter([c.run_mode for c in benchmark_classes])))
 
     if args.setup == 'only':
         log.warning("Setting up %s environment only for %s, no benchmark will be run.", args.mode, args.framework)
-
-    if not args.keep_scores and args.mode != 'local':
-        log.warning("`keep_scores` parameter is currently ignored in %s mode, scores are always saved in this mode.", args.mode)
 
     bench.setup(amlb.SetupMode[args.setup])
     if args.setup != 'only':

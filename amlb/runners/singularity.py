@@ -22,6 +22,8 @@ class SingularityBenchmark(ContainerBenchmark):
     an extension of ContainerBenchmark to run benchmarks inside Singularity.
     """
 
+    run_mode = 'singularity'
+
     @classmethod
     def image_name(cls, framework_def, label=None, as_docker_image=False, **kwargs):
         """
@@ -43,7 +45,7 @@ class SingularityBenchmark(ContainerBenchmark):
         tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
         return f"{author}{image}{separator}{tag}"
 
-    def __init__(self, framework_name, benchmark_name, constraint_name):
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         """
 
         :param framework_name:

@@ -62,6 +62,7 @@ class AWSBenchmark(Benchmark):
     """AWSBenchmark
     an extension of Benchmark class, to run benchmarks on AWS
     """
+    run_mode = 'aws'
 
     @classmethod
     def fetch_results(cls, instances_file, instance_selector=None):
@@ -112,7 +113,7 @@ class AWSBenchmark(Benchmark):
         finally:
             bench.cleanup()
 
-    def __init__(self, framework_name, benchmark_name, constraint_name, region=None):
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str, region: str = None):
         """
 
         :param framework_name:
@@ -183,41 +184,40 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
-    def run(self, task_name=None, fold=None):
-        task_defs = self._get_task_defs(task_name)  # validates tasks
-        self._exec_start()
-        self._monitoring_start()
+    def run(self, tasks=None, folds=None):
+        task_defs = self._get_task_defs(tasks)  # validates tasks
+        jobs = None
         if self.parallel_jobs > 1:
             if rconfig().aws.minimize_instances:
                 # use one instance per task: all folds executed on same instance
-                try:
-                    jobs = flatten([self._make_aws_job([task_def.name], fold) for task_def in task_defs])
-                    results = self._run_jobs(jobs)
-                    return self._process_results(results, task_name=task_name)
-                finally:
-                    self.cleanup()
-            else:
-                # use one instance per fold per task
-                return super().run(task_name, fold)
+                jobs = flatten([self._make_aws_job([task_def.name], folds) for task_def in task_defs])
         else:
             # use one instance for all
-            try:
-                task_names = None if task_name is None else [task_def.name for task_def in task_defs]
-                job = self._make_aws_job(task_names, fold)
-                results = self._run_jobs([job])
-                return self._process_results(results, task_name=task_name)
-            finally:
-                self.cleanup()
+            task_names = None if tasks is None else [task_def.name for task_def in task_defs]
+            jobs = [self._make_aws_job(task_names, folds)]
+
+        if jobs is not None:
+            self.run_jobs(jobs)
+        else:
+            # use one instance per fold per task
+            return super().run(tasks, folds)
 
     def _create_job_runner(self, jobs):
-        if self.parallel_jobs == 1:
-            return SimpleJobRunner(jobs)
-        else:
-            queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
-            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+        jr = (SimpleJobRunner(jobs) if self.parallel_jobs == 1
+              else MultiThreadingJobRunner(jobs, self.parallel_jobs,
                                            delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True,
-                                           queueing_strategy=queueing_strategy)
+                                           queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority))
+
+        super_on_state = jr._on_state
+
+        def _on_state(_self, state):
+            if state is JobState.starting:
+                self._exec_start()
+                self._monitoring_start()
+            super_on_state(state)
+
+        jr._on_state = _on_state.__get__(jr)
 
     def _make_job(self, task_def, fold=int):
         return self._make_aws_job([task_def.name], [fold])
@@ -274,8 +274,8 @@ class AWSBenchmark(Benchmark):
         for j in self.jobs:
             j.ext.retry = None
 
-    def _make_aws_job(self, task_names=None, folds=None):
-        task_names = [] if task_names is None else task_names
+    def _make_aws_job(self, tasks=None, folds=None):
+        task_names = [] if tasks is None else tasks
         folds = [] if folds is None else [str(f) for f in folds]
         task_def = (self._get_task_def(task_names[0]) if len(task_names) >= 1
                     else self._get_task_def('__defaults__', include_disabled=True, fail_on_missing=False) or ns(name='all'))
@@ -888,8 +888,7 @@ class AWSBenchmark(Benchmark):
                     download_file(obj, dest_path)
                     # if obj.key == result_key:
                     if is_result and not success:
-                        if rconfig().results.save:
-                            self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
+                        self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
                         success = True
                 except Exception as e:
                     if is_result:
