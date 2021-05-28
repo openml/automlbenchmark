@@ -22,7 +22,7 @@ autosklearn2:
     _askl2: true
 
 autoxgboost:
-  version: 'latest'
+  version: 'master@908631665f4c763d548ed203d48f05fe68613844'
 
 AutoWEKA:
   version: '2.6'
@@ -55,6 +55,10 @@ MLPlanWEKA:
   extends: MLPlan
   params:
     _backend: weka
+
+mlr3automl:
+  version: 'master@57d35d2107bf1c8e46b784fa2877cd453bfa6c5d'
+  project: https://github.com/a-hanf/mlr3automl
 
 TPOT:
   version: '0.11.7'
