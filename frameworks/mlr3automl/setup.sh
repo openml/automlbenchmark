@@ -19,7 +19,11 @@ SUDO apt-get install -y libgdal-dev libproj-dev
 SUDO apt-get install -y libssl-dev libcurl4-openssl-dev
 SUDO apt-get install -y libcairo2-dev libudunits2-dev
 fi
-# Add comment to trigger CI
+
+# Installing packages by default tries to write to a writeable folder for which you don't have write permissions.
+# Add yourself to 'staff' usergroup
+su usermod -a -G staff $USER
+
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/")'
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/")'
 Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners")'
