@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
-REPO=${2:-"https://github.com/a-hanf"}
+REPO=${2:-"https://github.com/a-hanf/mlr3automl"}
 MLR_REPO=${3:-"https://github.com/mlr-org"}
 
 . $HERE/../shared/setup.sh "$HERE"
@@ -23,7 +23,7 @@ fi
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/")'
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/")'
 Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners")'
-Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl")'
+Rscript -e 'remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3pipelines")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3oml")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/paradox")'
