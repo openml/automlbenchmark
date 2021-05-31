@@ -5,6 +5,11 @@ REPO=${2:-"a-hanf/mlr3automl"}
 MLR_REPO=${3:-"mlr-org"}
 
 . $HERE/../shared/setup.sh "$HERE"
+
+if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
+    VERSION="master"
+fi
+
 if [[ -x "$(command -v apt-get)" ]]; then
 SUDO apt-get update
 #SUDO apt-get install -y software-properties-common apt-transport-https libxml2-dev
