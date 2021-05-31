@@ -22,8 +22,11 @@ fi
 
 # Installing packages by default tries to write to a writeable folder for which you don't have write permissions (sometimes).
 # We create a folder for project packages and point to it from an Renviron file.
+echo mkdir r-packages
 mkdir r-packages
-echo "R_LIBS=/r-packages/" >> .Renviron
+ls -la
+
+echo "R_LIBS=r-packages/" >> .Renviron
 
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/")'
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/")'
