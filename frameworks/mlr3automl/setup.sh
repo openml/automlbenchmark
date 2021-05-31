@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
-REPO=${2:-"https://github.com/a-hanf/mlr3automl"}
-MLR_REPO=${3:-"https://github.com/mlr-org"}
+REPO=${2:-"a-hanf/mlr3automl"}
+MLR_REPO=${3:-"mlr-org"}
 
 . $HERE/../shared/setup.sh "$HERE"
 if [[ -x "$(command -v apt-get)" ]]; then
