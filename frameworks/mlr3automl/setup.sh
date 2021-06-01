@@ -24,10 +24,14 @@ fi
 # We create a folder for project packages and point to it from an Renviron file.
 echo mkdir "${HERE}/r-packages"
 mkdir "${HERE}/r-packages"
-ls -la ${HERE}
 
-echo "R_LIBS=${HERE}/r-packages/" >> "${HERE}/.Renviron"
-echo "R_LIBS=${HERE}/r-packages/" >> .Renviron
+echo "R_LIBS=${HERE}/r-packages/" > "${HERE}/.Renviron"
+echo "R_LIBS=${HERE}/r-packages/" > .Renviron
+echo "Created environ files"
+
+ls -la "${HERE}"
+
+echo "Starting installation:"
 
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/")'
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/")'
@@ -41,4 +45,7 @@ Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3@master")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3hyperband@master")'
 
+echo "After installation:"
+ls -la "${HERE}"
+Rscript -e 'packageVersion("mlr3automl")' | cat
 Rscript -e 'packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
