@@ -16,7 +16,6 @@ def run(dataset: Dataset, config: TaskConfig):
     here = dir_of(__file__)
 
     meta_results_file = os.path.join(config.output_dir, "meta_results.csv")
-    run_cmd("pwd", _live_output_=True)
     run_cmd(("Rscript --vanilla -e \""
              "source('{script}'); "
              "run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores},"

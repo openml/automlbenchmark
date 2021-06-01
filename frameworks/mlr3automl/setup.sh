@@ -25,11 +25,12 @@ fi
 echo mkdir "${HERE}/r-packages"
 mkdir "${HERE}/r-packages"
 
+pwd
 echo "R_LIBS=${HERE}/r-packages/" > "${HERE}/.Renviron"
 echo "R_LIBS=${HERE}/r-packages/" > .Renviron
 echo "Created environ files"
 
-ls -la "${HERE}"
+ls -la
 
 echo "Starting installation:"
 
@@ -46,6 +47,7 @@ Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3hyperband@master")'
 
 echo "After installation:"
-ls -la "${HERE}"
+ls -la
+
 Rscript -e 'packageVersion("mlr3automl")' | cat
 Rscript -e 'packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
