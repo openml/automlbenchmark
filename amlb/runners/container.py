@@ -24,6 +24,7 @@ class ContainerBenchmark(Benchmark):
     """ContainerBenchmark
     an extension of Benchmark to run benchmarks inside a container.
     """
+    framework_install_required = False
 
     @classmethod
     def image_name(cls, framework_def, label=None, **kwargs):
