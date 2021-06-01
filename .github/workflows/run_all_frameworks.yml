@@ -28,10 +28,11 @@ jobs:
           common_files="amlb/** "\
           "resources/** "\
           "frameworks/shared/** "\
-          ".github/workflows/run_all_frameworks.yml "\
           ".github/runbenchmark/action.yml "\
           "runbenchmark.py "\
           "requirements.txt"
+          #  ".github/workflows/run_all_frameworks.yml "\
+
           echo Common files: $common_files
           echo Changed files: $changed_files
 
@@ -128,7 +129,7 @@ jobs:
         framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
         task: ${{ fromJson(needs.detect_changes.outputs.tasks) }}
         benchmark: ${{ fromJson(needs.detect_changes.outputs.benchmark) }}
-      fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
+      fail-fast:  false  # not sure about this one, but considering the big workload it might be nicer
 
     steps:
     - uses: actions/checkout@v2
@@ -139,14 +140,14 @@ jobs:
     - name: Create venv
       run: python -m venv venv
     - uses: actions/cache@v2
-      id: cache
+      id: cache-py
       with:
         path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.8/site-packages
         key: pip-v3-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           pip-v3-
     - name: Install Requirements
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: steps.cache-py.outputs.cache-hit != 'true'
       run: |
         source venv/bin/activate
         python -m pip install --upgrade pip
