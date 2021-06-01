@@ -39,4 +39,5 @@ Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl", lib="'"${HERE}/r-p
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3@master")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3hyperband@master")'
 
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
+echo "HERE := ${HERE}"
+Rscript -e '.libPaths("'"frameworks/mlr3automl/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
