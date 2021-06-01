@@ -63,6 +63,8 @@ class AWSBenchmark(Benchmark):
     an extension of Benchmark class, to run benchmarks on AWS
     """
 
+    framework_install_required = False
+
     @classmethod
     def fetch_results(cls, instances_file, instance_selector=None):
         bench = cls(None, None, None)

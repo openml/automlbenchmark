@@ -56,6 +56,7 @@ class Benchmark:
     """
 
     data_loader = None
+    framework_install_required = True
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         self.job_runner = None
@@ -193,11 +194,12 @@ class Benchmark:
         :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
         :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
-        assert self._is_setup_done(), f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
-
-        task_defs = self._get_task_defs(task_name)
-        jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
+            assert not self.framework_install_required or self._is_setup_done(), \
+                f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
+
+            task_defs = self._get_task_defs(task_name)
+            jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
             results = self._run_jobs(jobs)
             log.info(f"Processing results for {self.sid}")
             log.debug(results)
