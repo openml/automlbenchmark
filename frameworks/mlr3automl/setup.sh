@@ -20,17 +20,17 @@ SUDO apt-get install -y libssl-dev libcurl4-openssl-dev
 SUDO apt-get install -y libcairo2-dev libudunits2-dev
 fi
 
-# Installing packages by default tries to write to a writeable folder for which you don't have write permissions (sometimes).
-# We create a folder for project packages and point to it from an Renviron file.
-
+# We install dependencies a subdirectory of the framework folder, because:
+#   1. It allows different packages for different frameworks
+#   2. The default package directory is not always writeable (e.g. on Github CI).
+# This directory needs to be added to the path when executing the Rscript.
+# We do this in `exec.py` by prepending a `.libPaths()` call.
 mkdir "${HERE}/r-packages"
-echo "R_LIBS=${HERE}/r-packages/" > "${HERE}/.Renviron"
-echo "R_LIBS=${HERE}/r-packages/" > .Renviron
 
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/")'
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/")'
-Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners")'
-Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"')'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"')'
+Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${HERE}/r-packages/"')'
+Rscript -e 'remotes::install_github("'"${REPO}"'/mlr3automl", lib="'"${HERE}/r-packages/"')'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3pipelines")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/mlr3oml")'
 #Rscript -e 'remotes::install_github("'"${MLR_REPO}"'/paradox")'
