@@ -53,7 +53,7 @@ jobs:
           then
             FRAMEWORKS='["mlr3automl", "autoxgboost"]'  #  '["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "tpot", "tunedrandomforest"]'
             TASKS='["APSFailure", "bioresponse", "dresses-sales", "eucalyptus", "internet-advertisements", "kc1", "micro-mass"]'  # '["iris", "kc2", "cholesterol"]'
-            BENCHMARK='["test"]'
+            BENCHMARK='["validation"]' # '["test"]'
           else
             TASKS='["APSFailure", "bioresponse", "dresses-sales", "eucalyptus", "internet-advertisements", "kc1", "micro-mass"]'
             BENCHMARK='["validation"]'
