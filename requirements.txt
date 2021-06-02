@@ -83,7 +83,7 @@ tables==3.6.1
     # via -r requirements.in
 threadpoolctl==2.1.0
     # via scikit-learn
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   botocore
     #   minio
