@@ -1,16 +1,18 @@
+# AMI that adds additional packages to run R and Java based frameworks, extends the base AMI.
 variable "source_ami" {
   type    = string
   description = "Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType"
-  default = "ami-0bdf93799014acdc4"
+  default = "ami-0aa7ef746644a86b6"
+
   # Optional: define a filter to automatically pick the latest version of an ami as source ami.
-  // source_ami_filter {
+  // source_ami_filter = {
   //   filters = {
-  //     name                = "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*"
+  //     name                = "automl-base-*"
   //     root-device-type    = "ebs"
   //     virtualization-type = "hvm"
   //   }
   //   most_recent = true
-  //   owners      = ["099720109477"]
+  //   // owners      = ["099720109477"]
   // }
 }
 
@@ -23,7 +25,7 @@ source "amazon-ebs" "automl-ami" {
   # the profile to use in the shared credentials file for AWS.
   // profile       = "default"
 
-  ami_name      = "ami-automl-${local.timestamp}"
+  ami_name      = "automl-dev-${local.timestamp}"
   ami_description = "AMI for the AutoML benchmark project"
 
   # uncomment following line to create a public ami, default a private ami is created
@@ -46,6 +48,6 @@ build {
         "GITREPO=https://github.com/openml/automlbenchmark",
         "PYV=3"
     ]
-    script = "./scripts/configure-ami.sh"
+    script = "./scripts/configure-dev.sh"
   }
 }
