@@ -256,7 +256,15 @@ class ArffSplitter(DataSplitter[str]):
 
     def _get_categorical_values(self, col):
         feat = next((f for f in self.ds._oml_dataset.features.values() if f.name == col), None)
-        return feat.nominal_values if feat is not None else None
+        if feat is not None:
+            # openml-python converts categorical features which look boolean to
+            # boolean values, which always write values as 'True' and 'False',
+            # so we need to adapt the header accordingly.
+            # Not doing so causes an issue in the R packages.
+            if set(v.lower() for v in feat.nominal_values) == {"true", "false"}:
+                return ["True", "False"]
+            return feat.nominal_values
+        return None
 
 
 class CsvSplitter(DataSplitter[str]):
