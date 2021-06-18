@@ -127,6 +127,12 @@ MLNet:
   version: 'latest'
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
+  params:
+    _save_artifacts: [] # supported option: logs, models
+    classifiers: 'LGBM;RF;FASTTREE;LBFGS;SDCA' # supported trainers: LGBM, RF, FASTTREE, LBFGS, SDCA
+    regressors: 'LGBM;RF;FASTTREE;LBFGS;SDCA' # supported trainers: LGBM, RF, FASTTREE, LBFGS, SDCA
+    automl_type: 'NNI' # supported type: NNI, AutoML
+    
     
 MLPlan:
   version: 'stable'
