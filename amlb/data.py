@@ -4,7 +4,7 @@
 - **Dataset** represents the entire dataset used by a job:
   providing simple access to subsets like training set, test set,
   and metadata like target feature, and predictors.
-- **Datasplit** represents and subset of the dataset,
+- **Datasplit** represents a subset of the dataset,
   providing access to data, either as a file (``path``),
   or as vectors/arrays (``y`` for target, ``X`` for predictors)
   which can also be encoded (``y_enc``, ``X_enc``)
@@ -16,6 +16,7 @@ import logging
 from typing import List
 
 import numpy as np
+import pandas as pd
 
 from .datautils import Encoder
 from .utils import clear_cache, lazy_property, profile, repr_def
@@ -27,18 +28,12 @@ class Feature:
 
     def __init__(self, index, name, data_type, values=None, has_missing_values=False, is_target=False):
         """
-        TODO: cleanup data_type, pick one name for each type and stick to it.
-        OpenML, when reading ARFF file, should use only ['nominal', 'numeric', 'string', 'date'].
-        FileLoader uses all ARFF types as well as ['categorical', 'integer', 'real', 'numeric'] for CSV files (no string or date types?).
-        Also see https://waikato.github.io/weka-wiki/formats_and_processing/arff_stable/
-        DataSplit class below should probably return pandas DataFrames instead of numpy arrays, and fully embrace pandas dtypes.
-
-        :param index:
-        :param name:
-        :param data_type: one of ['categorical', 'nominal', 'enum', 'string', 'numeric', 'integer', 'real', 'date']
-        :param values:
-        :param has_missing_values:
-        :param is_target:
+        :param index: index of the feature in the full data frame.
+        :param name: name of the feature.
+        :param data_type: one of pandas-compatible type ('int', 'float', 'number', 'bool', 'category', 'string', 'object', 'datetime').
+        :param values: for categorical features, the sorted list of accepted values.
+        :param has_missing_values: True iff the feature has any missing values in the complete dataset.
+        :param is_target: True for the target column.
         """
         self.index = index
         self.name = name
@@ -50,18 +45,19 @@ class Feature:
 
     def is_categorical(self, strict=True):
         if strict:
-            return self.data_type in ['categorical', 'nominal', 'enum']
+            return self.data_type == 'category'
         else:
             return self.data_type is not None and not self.is_numerical()
 
     def is_numerical(self):
-        return self.data_type in ['numeric', 'integer', 'real']
+        return self.data_type in ['int', 'float', 'number']
 
     @lazy_property
     def label_encoder(self):
         return Encoder('label' if self.values is not None else 'no-op',
                        target=self.is_target,
                        encoded_type=int if self.is_target and not self.is_numerical() else float,
+                       missing_values=[None, np.nan, pd.NA],
                        missing_policy='mask' if self.has_missing_values else 'ignore',
                        normalize_fn=self.normalize
                        ).fit(self.values)
@@ -71,6 +67,7 @@ class Feature:
         return Encoder('one-hot' if self.values is not None else 'no-op',
                        target=self.is_target,
                        encoded_type=int if self.is_target and not self.is_numerical() else float,
+                       missing_values=[None, np.nan, pd.NA],
                        missing_policy='mask' if self.has_missing_values else 'ignore',
                        normalize_fn=self.normalize
                        ).fit(self.values)
@@ -86,54 +83,54 @@ class Datasplit(ABC):
 
     def __init__(self, dataset, format):
         """
-
-        :param format:
+        :param format: the default format of the data file, obtained through the 'path' property.
         """
         super().__init__()
         self.dataset = dataset
         self.format = format
 
     @property
-    @abstractmethod
     def path(self) -> str:
-        """
+        return self.data_path(self.format)
 
-        :return:
+    @abstractmethod
+    def data_path(self, format: str) -> str:
+        """
+        :param format: the format requested for the data file. Currently supported formats are 'arff', 'csv'.
+        :return: the path to the data-split file in the requested format.
         """
         pass
 
     @property
     @abstractmethod
-    def data(self) -> np.ndarray:
+    def data(self) -> pd.DataFrame:
         """
-
-        :return:
+        :return: all the columns (predictors + target) as a pandas DataFrame.
         """
         pass
 
     @lazy_property
     @profile(logger=log)
-    def X(self) -> np.ndarray:
+    def X(self) -> pd.DataFrame:
         """
-
-        :return:
+        :return:the predictor columns as a pandas DataFrame.
         """
         predictors_ind = [p.index for p in self.dataset.predictors]
-        return self.data[:, predictors_ind]
+        return self.data.iloc[:, predictors_ind]
 
     @lazy_property
     @profile(logger=log)
-    def y(self) -> np.ndarray:
+    def y(self) -> pd.DataFrame:
         """
-
-        :return:
+        :return:the target column as a pandas DataFrame: if you need a Series, just call `y.squeeze()`.
         """
-        return self.data[:, self.dataset.target.index]
+        return self.data.iloc[:, [self.dataset.target.index]]
 
     @lazy_property
     @profile(logger=log)
     def data_enc(self) -> np.ndarray:
-        encoded_cols = [f.label_encoder.transform(self.data[:, f.index]) for f in self.dataset.features]
+        data = np.where(self.data.notna(), self.data.values, None)
+        encoded_cols = [f.label_encoder.transform(data[:, f.index]) for f in self.dataset.features]
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
         self.release(['data', 'X', 'y'])
@@ -174,8 +171,7 @@ class Dataset(ABC):
     @abstractmethod
     def type(self) -> DatasetType:
         """
-
-        :return:
+        :return: the problem type for the current dataset.
         """
         pass
 
@@ -183,8 +179,7 @@ class Dataset(ABC):
     @abstractmethod
     def train(self) -> Datasplit:
         """
-
-        :return:
+        :return: the data subset used to train the model.
         """
         pass
 
@@ -192,8 +187,7 @@ class Dataset(ABC):
     @abstractmethod
     def test(self) -> Datasplit:
         """
-
-        :return:
+        :return: the data subset used to score the model.
         """
         pass
 
@@ -201,16 +195,14 @@ class Dataset(ABC):
     @abstractmethod
     def features(self) -> List[Feature]:
         """
-
-        :return:
+        :return: the list of all features available in the current dataset, target included.
         """
         pass
 
     @property
     def predictors(self) -> List[Feature]:
         """
-
-        :return:
+        :return: the list of all predictor features available in the current dataset
         """
         return [f for f in self.features if f.name != self.target.name]
 
@@ -218,14 +210,16 @@ class Dataset(ABC):
     @abstractmethod
     def target(self) -> Feature:
         """
-
-        :return:
+        :return: the target feature for the current dataset.
         """
         pass
 
     @profile(logger=log)
     def release(self, properties=None):
+        """
+        Call this to release cached properties and optimize memory once in-memory data are not needed anymore.
+        :param properties:
+        """
         self.train.release()
         self.test.release()
         clear_cache(self, properties)
-

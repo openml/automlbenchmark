@@ -10,19 +10,20 @@ os.environ['MKL_NUM_THREADS'] = '1'
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from frameworks.shared.callee import call_run, result, save_metadata, utils
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(os.path.basename(__file__))
 
 
 def run(dataset, config):
     log.info(f"\n**** Random Forest [sklearn v{sklearn.__version__}] ****\n")
-    save_metadata(config, version=sklearn.__version__)
 
     is_classification = config.type == 'classification'
 
-    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
-    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
+    encode = config.framework_params.get('_encode', True)
+    X_train, X_test = dataset.train.X, dataset.test.X
+    y_train, y_test = dataset.train.y, dataset.test.y
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
@@ -36,10 +37,10 @@ def run(dataset, config):
                    random_state=config.seed,
                    **training_params)
 
-    with utils.Timer() as training:
+    with Timer() as training:
         rf.fit(X_train, y_train)
 
-    with utils.Timer() as predict:
+    with Timer() as predict:
         predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 
@@ -47,7 +48,7 @@ def run(dataset, config):
                   predictions=predictions,
                   truth=y_test,
                   probabilities=probabilities,
-                  target_is_encoded=is_classification,
+                  target_is_encoded=encode,
                   models_count=len(rf),
                   training_duration=training.duration,
                   predict_duration=predict.duration)

@@ -11,16 +11,17 @@ import  pandas as pd
 import h2o
 from h2o.automl import H2OAutoML
 
-from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, save_metadata, utils
+from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result
+from frameworks.shared.utils import Monitoring, Namespace as ns, Timer, clean_dir, touch, zip_path
 
 log = logging.getLogger(__name__)
 
 
-class BackendMemoryMonitoring(utils.Monitoring):
+class BackendMemoryMonitoring(Monitoring):
 
-    def __init__(self, name=None, frequency_seconds=300, check_on_exit=False,
+    def __init__(self, name=None, interval_seconds=300, check_on_exit=False,
                  verbosity=0, log_level=logging.INFO):
-        super().__init__(name, frequency_seconds, check_on_exit, "backend_monitoring_")
+        super().__init__(name, interval_seconds, check_on_exit, "backend_monitoring_")
         self._verbosity = verbosity
         self._log_level = log_level
 
@@ -32,7 +33,6 @@ class BackendMemoryMonitoring(utils.Monitoring):
 
 def run(dataset, config):
     log.info(f"\n**** H2O AutoML [v{h2o.__version__}] ****\n")
-    save_metadata(config, version=h2o.__version__)
     # Mapping of benchmark metrics to H2O metrics
     metrics_mapping = dict(
         acc='mean_per_class_error',
@@ -70,11 +70,11 @@ def run(dataset, config):
                  max_mem_size=jvm_memory,
                  **init_params)
 
-        import_kwargs = {}
+        import_kwargs = dict(escapechar='\\')
         # Load train as an H2O Frame, but test as a Pandas DataFrame
         log.debug("Loading train data from %s.", dataset.train.path)
         train = None
-        if version.parse(h2o.__version__) >= version.parse("3.32.0.3"):  # previous versions may fail to parse correctly some rare arff files using single quotes as enum/string delimiters (pandas also fails on same datasets)
+        if version.parse(h2o.__version__) >= version.parse("3.32.1"):  # previous versions may fail to parse correctly some rare arff files using single quotes as enum/string delimiters (pandas also fails on same datasets)
             import_kwargs['quotechar'] = '"'
             train = h2o.import_file(dataset.train.path, destination_frame=frame_name('train', config), **import_kwargs)
             if train.nlevels() != dataset.domains.cardinalities:
@@ -98,21 +98,21 @@ def run(dataset, config):
                         seed=config.seed,
                         **training_params)
 
-        monitor = (BackendMemoryMonitoring(frequency_seconds=config.ext.monitoring.frequency_seconds,
+        monitor = (BackendMemoryMonitoring(interval_seconds=config.ext.monitoring.interval_seconds,
                                            check_on_exit=True,
                                            verbosity=config.ext.monitoring.verbosity)
                    if config.framework_params.get('_monitor_backend', False)
                    # else contextlib.nullcontext  # Py 3.7+ only
                    else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
                    )
-        with utils.Timer() as training:
+        with Timer() as training:
             with monitor:
                 aml.train(y=dataset.target.index, training_frame=train)
 
         if not aml.leader:
             raise FrameworkError("H2O could not produce any model in the requested time.")
 
-        with utils.Timer() as predict:
+        with Timer() as predict:
             preds = aml.predict(test)
 
         preds = extract_preds(preds, test, dataset=dataset)
@@ -177,13 +177,11 @@ def save_artifacts(automl, dataset, config):
                         break
 
                 models_archive = os.path.join(models_dir, f"models_{mformat}.zip")
-                utils.zip_path(models_dir, models_archive, filtr=lambda p: p not in models_artifacts)
+                zip_path(models_dir, models_archive, filtr=lambda p: p not in models_artifacts)
                 models_artifacts.append(models_archive)
-
-                def delete(path, isdir):
-                    if not isdir and path not in models_artifacts and os.path.splitext(path)[1] in ['.json', '.zip', '']:
-                        os.remove(path)
-                utils.walk_apply(models_dir, delete, max_depth=0)
+                clean_dir(models_dir,
+                                filtr=lambda p: p not in models_artifacts
+                                                and os.path.splitext(p)[1] in ['.json', '.zip', ''])
 
         if 'model_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
@@ -195,26 +193,16 @@ def save_artifacts(automl, dataset, config):
                 if preds.probabilities_labels is None:
                     preds.probabilities_labels = preds.h2o_labels
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
-            utils.zip_path(predictions_dir,
-                           os.path.join(predictions_dir, "model_predictions.zip"))
-
-            def delete(path, isdir):
-                if isdir:
-                    shutil.rmtree(path, ignore_errors=True)
-            utils.walk_apply(predictions_dir, delete, max_depth=0)
+            predictions_zip = os.path.join(predictions_dir, "model_predictions.zip")
+            zip_path(predictions_dir, predictions_zip)
+            clean_dir(predictions_dir, filtr=lambda p: os.path.isdir(p))
 
         if 'logs' in artifacts:
             logs_dir = output_subdir("logs", config)
             logs_zip = os.path.join(logs_dir, "h2o_logs.zip")
-            utils.zip_path(logs_dir, logs_zip)
+            zip_path(logs_dir, logs_zip)
             # h2o.download_all_logs(dirname=logs_dir)
-
-            def delete(path, isdir):
-                if isdir:
-                    shutil.rmtree(path, ignore_errors=True)
-                elif path != logs_zip:
-                    os.remove(path)
-            utils.walk_apply(logs_dir, delete, max_depth=0)
+            clean_dir(logs_dir, filtr=lambda p: p != logs_zip)
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
@@ -248,11 +236,11 @@ def extract_preds(h2o_preds, test, dataset, ):
         prob_labels = None
     truth = y_truth.values
 
-    return utils.Namespace(predictions=predictions,
-                           truth=truth,
-                           probabilities=probabilities,
-                           probabilities_labels=prob_labels,
-                           h2o_labels=h2o_labels)
+    return ns(predictions=predictions,
+              truth=truth,
+              probabilities=probabilities,
+              probabilities_labels=prob_labels,
+              h2o_labels=h2o_labels)
 
 
 def write_preds(preds, path):
@@ -267,7 +255,7 @@ def to_data_frame(arr, columns=None):
 
 
 def write_csv(df, path):
-    utils.touch(path)
+    touch(path)
     df.to_csv(path, header=True, index=False)
 
 

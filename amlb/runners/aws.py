@@ -63,6 +63,8 @@ class AWSBenchmark(Benchmark):
     an extension of Benchmark class, to run benchmarks on AWS
     """
 
+    framework_install_required = False
+
     @classmethod
     def fetch_results(cls, instances_file, instance_selector=None):
         bench = cls(None, None, None)
@@ -88,7 +90,7 @@ class AWSBenchmark(Benchmark):
 
         def to_job(iid, inst):
             inst.instance = bench.ec2.Instance(iid)
-            job = Job(inst.key, raise_exceptions=rconfig().exit_on_error)
+            job = Job(inst.key, raise_on_failure=rconfig().job_scheduler.exit_on_job_failure)
             job.instance_id = iid
 
             def _run(job_self):
@@ -143,9 +145,10 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.ec2.terminate_instances not in ['always', 'success', 'never', True, False]:
             raise ValueError("`terminate_instances` setting should be one among ['always', 'success', 'never']")
 
-        if self.parallel_jobs == 0 or self.parallel_jobs > rconfig().max_parallel_jobs:
-            log.warning("Forcing parallelization to its upper limit: %s.", rconfig().max_parallel_jobs)
-            self.parallel_jobs = rconfig().max_parallel_jobs
+        max_parallel_jobs = rconfig().job_scheduler.max_parallel_jobs
+        if self.parallel_jobs == 0 or self.parallel_jobs > max_parallel_jobs:
+            log.warning("Forcing parallelization to its upper limit: %s.", max_parallel_jobs)
+            self.parallel_jobs = max_parallel_jobs
 
     def _validate2(self):
         if self.ami is None:
@@ -214,7 +217,7 @@ class AWSBenchmark(Benchmark):
         else:
             queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
             return MultiThreadingJobRunner(jobs, self.parallel_jobs,
-                                           delay_secs=rconfig().delay_between_jobs,
+                                           delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True,
                                            queueing_strategy=queueing_strategy)
 
@@ -246,24 +249,28 @@ class AWSBenchmark(Benchmark):
             except:
                 pass
 
-    def _job_reschedule(self, job, reason=None):
-        spot_config = rconfig().aws.ec2.spot
-        max_attempts = spot_config.max_attempts
+    def _job_reschedule(self, job, reason=None, fallback=None):
+        js = rconfig().aws.job_scheduler
         if not job.ext.retry:
-            start_delay, delay_fn = retry_policy(spot_config.retry_policy)
-            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=max_attempts - 1)
+            start_delay, delay_fn = retry_policy(js.retry_policy)
+            job.ext.retry = retry_after(start_delay, delay_fn, max_retries=js.max_attempts - 1)
 
         wait = next(job.ext.retry, None)
         if wait is None:
-            if spot_config.fallback_to_on_demand:
-                job.ext.instance_type = InstanceType.On_Demand
+            if fallback and fallback(job, reason):
                 job.ext.wait_min_secs = 0
             else:
-                log.error("Aborting job %s after %s attempts: %s.", job.name, max_attempts, reason)
+                log.error("Aborting job %s after %s attempts: %s.", job.name, js.max_attempts, reason)
                 raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
         self.job_runner.reschedule(job)
+
+    def _spot_fallback(self, job, reason):
+        if 'Spot' in reason and rconfig().aws.ec2.spot.fallback_to_on_demand:
+            job.ext.instance_type = InstanceType.On_Demand
+            return True
+        return False
 
     def _reset_retry(self):
         for j in self.jobs:
@@ -295,13 +302,14 @@ class AWSBenchmark(Benchmark):
         seed = rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed
 
         job = Job(rconfig().token_separator.join([
-            'aws',
-            self.benchmark_name,
-            self.constraint_name,
-            ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
-            ','.join(folds) if len(folds) > 0 else 'all_folds',
-            self.framework_name
-        ]), raise_exceptions=rconfig().exit_on_error,
+                'aws',
+                self.benchmark_name,
+                self.constraint_name,
+                ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
+                ','.join(folds) if len(folds) > 0 else 'all_folds',
+                self.framework_name
+            ]),
+            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure,
         )
         job.ext = ns(
             tasks=task_names,
@@ -320,9 +328,12 @@ class AWSBenchmark(Benchmark):
             if _self.ext.instance_type is None and spot_config.enabled:
                 _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
             if _self.ext.wait_min_secs:
+                _self.ext.interrupt = interrupt = threading.Event()
                 countdown(_self.ext.wait_min_secs,
                           message=f"starting job {_self.name}",
-                          frequency=rconfig().aws.query_frequency_seconds)
+                          interval=rconfig().aws.query_interval_seconds,
+                          interrupt_event=interrupt,
+                          interrupt_cond=lambda: _self.state != JobState.starting)
 
         def _run(_self):
             try:
@@ -350,7 +361,7 @@ class AWSBenchmark(Benchmark):
                 try:
                     if isinstance(e, AWSError) and e.retry:
                         log.info("Job %s couldn't start (%s), rescheduling it.", _self.name, e)
-                        self._job_reschedule(_self, reason=str(e))
+                        self._job_reschedule(_self, reason=str(e), fallback=self._spot_fallback)
                         return
 
                 except JobError as je:
@@ -368,7 +379,7 @@ class AWSBenchmark(Benchmark):
                 else:
                     fold = int(folds[0]) if len(folds) > 0 else -1
                     results = TaskResult(task_def=task_def, fold=fold, constraint=self.constraint_name)
-                    return results.compute_scores(self.framework_name, [], result=ErrorResult(e))
+                    return results.compute_score(self.framework_name, [], result=ErrorResult(e))
 
         def _on_state(_self, state):
             if state == JobState.completing:
@@ -392,6 +403,7 @@ class AWSBenchmark(Benchmark):
                 self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate, wait=False)
                 if _self.ext.interrupt is not None:
                     _self.ext.interrupt.set()
+                log.warning("Job `%s` was cancelled.", _self.name)
                 return True  # job is running remotely: no need to try to cancel what is running here, we just need to stop the instance
 
             elif state == JobState.stopping:
@@ -457,9 +469,9 @@ class AWSBenchmark(Benchmark):
                     log.info("EC2 instance %s is %s: %s", job.ext.instance_id, state, state_reason_msg)
                     # self._update_instance(job.ext.instance_id, stop_reason=state_reason_msg)
                     try:
-                        if state_reason_msg in ['Server.SpotInstanceShutdown', 'Server.SpotInstanceTermination']:
-                            log.warning("Job %s was aborted due to Spot instance unavailability, rescheduling it.", job.name)
-                            self._job_reschedule(job, reason=state_reason_msg)
+                        if state_reason_msg in rconfig().aws.job_scheduler.retry_on_states:
+                            log.warning("Job %s was aborted due to '%s', rescheduling it.", job.name, state_reason_msg)
+                            self._job_reschedule(job, reason=state_reason_msg, fallback=self._spot_fallback)
                     finally:
                         interrupt.set()
             except JobError as je:
@@ -468,7 +480,7 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.exception(e)
             finally:
-                interrupt.wait(rconfig().aws.query_frequency_seconds)
+                interrupt.wait(rconfig().aws.query_interval_seconds)
 
     def _get_cpu_activity(self, iid, delta_minutes=60, period_minutes=5):
         now = dt.datetime.utcnow()
@@ -501,7 +513,7 @@ class AWSBenchmark(Benchmark):
 
         def cpu_monitor():
             cpu_config = rconfig().aws.ec2.monitoring.cpu
-            if cpu_config.query_frequency_seconds <= 0:
+            if cpu_config.query_interval_seconds <= 0:
                 return
             while not interrupt.is_set():
                 try:
@@ -515,7 +527,7 @@ class AWSBenchmark(Benchmark):
                 except Exception as e:
                     log.exception(e)
                 finally:
-                    interrupt.wait(cpu_config.query_frequency_seconds)
+                    interrupt.wait(cpu_config.query_interval_seconds)
 
         self.monitoring = ns(executor=ThreadPoolExecutor(max_workers=1, thread_name_prefix="aws_monitoring_"),
                              interrupt=interrupt)
@@ -533,7 +545,7 @@ class AWSBenchmark(Benchmark):
             self.monitoring = None
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1, instance_type=None):
-        log.info("Starting new EC2 instance with params: %s.", script_params)
+        log.info("Starting new EC2 instance with params: %s", script_params)
         inst_key = (instance_key.lower() if instance_key
                     else "{}_p{}_i{}".format(self.sid,
                                              re.sub(r"[\s-]", '', script_params),
@@ -612,7 +624,7 @@ class AWSBenchmark(Benchmark):
                                           meta_info=None)
             if isinstance(e, botocore.exceptions.ClientError):
                 error_code = e.response.get('Error', {}).get('Code', '')
-                retry = error_code in ['SpotMaxPriceTooLow', 'MaxSpotInstanceCountExceeded', 'InsufficientFreeAddressesInSubnet']
+                retry = error_code in rconfig().aws.job_scheduler.retry_on_errors
                 log.error(e)
                 raise AWSError(error_code, retry=retry) from e
             else:
@@ -650,7 +662,7 @@ class AWSBenchmark(Benchmark):
                 waiter.wait(
                     InstanceIds=[instance.id],
                     WaiterConfig=dict(
-                        Delay=wait_config.delay or rconfig().aws.query_frequency_seconds,
+                        Delay=wait_config.delay or rconfig().aws.query_interval_seconds,
                         MaxAttempts=wait_config.max_attempts
                     )
                 )
@@ -1116,19 +1128,19 @@ runcmd:
   - systemctl daemon-reload
   - add-apt-repository -y ppa:deadsnakes/ppa
   - apt-get update
-  - apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
-  - update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-  - pip3 install -U pip wheel awscli
+  - apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip python3-apt
+#  - update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
   - mkdir -p /s3bucket/input
   - mkdir -p /s3bucket/output
   - mkdir -p /s3bucket/user
   - mkdir /repo
   - cd /repo
   - git clone --depth 1 --single-branch --branch {branch} {repo} .
-  - python3 -m venv venv
+  - python{pyv} -m pip install -U pip wheel awscli
+  - python{pyv} -m venv venv
   - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
-  - alias PIP_REQ='xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir'
+  - alias PIP_REQ="(grep -v '^\\s*#' | xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir)"
 #  - PIP install -U pip=={pipv}
   - PIP install -U pip
   - PIP_REQ < requirements.txt
@@ -1189,9 +1201,8 @@ apt-get -y install curl wget unzip git
 apt-get -y install software-properties-common
 add-apt-repository -y ppa:deadsnakes/ppa
 apt-get update
-apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
-update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-pip3 install -U pip wheel awscli
+apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip python3-apt
+#update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
 mkdir -p /s3bucket/input
 mkdir -p /s3bucket/output
@@ -1200,12 +1211,13 @@ mkdir /repo
 cd /repo
 git clone --depth 1 --single-branch --branch {branch} {repo} .
 
-python3 -m venv venv
+python{pyv} -m pip install -U pip wheel awscli
+python{pyv} -m venv venv
 alias PIP='/repo/venv/bin/python3 -m pip'
 alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pipv}
 PIP install -U pip wheel
-xargs -L 1 PIP install --no-cache-dir < requirements.txt
+(grep -v '^\\s*#' | xargs -L 1 PIP install --no-cache-dir) < requirements.txt
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive

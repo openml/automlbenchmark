@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-AMLB_DIR="$1"
-VERSION=${2:-"latest"}
-REPO=${3:-"https://github.com/sberbank-ai-lab/LightAutoML.git"}
-PKG=${4:-"lightautoml"}
+VERSION=${1:-"latest"}
+REPO=${2:-"https://github.com/sberbank-ai-lab/LightAutoML.git"}
+PKG=${3:-"lightautoml"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
 
 # creating local venv
-. ${HERE}/../shared/setup.sh ${HERE}
+. ${HERE}/../shared/setup.sh ${HERE} true
 
 
 if [[ "$VERSION" == "stable" ]]; then
@@ -23,3 +22,5 @@ else
     cd "${TARGET_DIR}"
     bash build_package.sh
 fi
+
+PY -c "import matplotlib; matplotlib.use('agg'); from lightautoml import __version__; print(__version__)" >> "${HERE}/.installed"

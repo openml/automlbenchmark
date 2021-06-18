@@ -49,7 +49,7 @@ class DockerBenchmark(ContainerBenchmark):
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
-        script_extra_params = ""
+        script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} "
@@ -59,7 +59,7 @@ class DockerBenchmark(ContainerBenchmark):
             name=inst_name,
             options=rconfig().docker.run_extra_options,
             input=in_dir,
-            output=out_dir,
+            output=self.output_dirs.session,
             custom=custom_dir,
             image=self.image,
             params=script_params,
@@ -118,12 +118,11 @@ RUN apt-get -y install software-properties-common
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 RUN apt-get update
 RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
-RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-RUN pip3 install -U pip wheel
+#RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
 # aliases for the python system
-ENV SPIP python3 -m pip
-ENV SPY python3
+ENV SPIP python{pyv} -m pip
+ENV SPY python{pyv}
 
 # Enforce UTF-8 encoding
 ENV PYTHONUTF8 1
@@ -136,6 +135,7 @@ WORKDIR /bench
 
 # We create a virtual environment so that AutoML systems may use their preferred versions of
 # packages that we need to data pre- and postprocessing without breaking it.
+RUN $SPIP install -U pip wheel
 RUN $SPY -m venv venv
 ENV PIP /bench/venv/bin/python3 -m pip
 ENV PY /bench/venv/bin/python3 -W ignore
@@ -149,7 +149,7 @@ VOLUME /custom
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 ADD . /bench/
 
-RUN xargs -L 1 $PIP install --no-cache-dir < requirements.txt
+RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
 
 RUN $PY {script} {framework} -s only
 {custom_commands}
@@ -165,7 +165,7 @@ CMD ["{framework}", "test"]
                 pip="$PIP",
                 py="$PY"
             ),
-            framework=self.framework_name,
+            framework=self._forward_params['framework_name'],
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,

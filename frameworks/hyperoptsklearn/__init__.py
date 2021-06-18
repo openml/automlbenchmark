@@ -11,15 +11,16 @@ def setup(*args, **kwargs):
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
-    X_train_enc, X_test_enc = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
     data = dict(
         train=dict(
-            X_enc=X_train_enc,
-            y_enc=dataset.train.y_enc
+            X=X_train,
+            y=y_train
         ),
         test=dict(
-            X_enc=X_test_enc,
-            y_enc=dataset.test.y_enc
+            X=X_test,
+            y=y_test
         )
     )
 

@@ -75,11 +75,6 @@ TPOT:
 
 constantpredictor: {}
 
-constantpredictor_enc:
-  extends: constantpredictor
-  params:
-    encode: true
-
 DecisionTree:
   version: 'stable'
 

@@ -2,6 +2,7 @@
 Dockerfile
 .marker*
 .installed
+.setup_env
 my_*
 
 # python env
@@ -29,6 +30,7 @@ _site/
 *.log
 *.csv
 *.arff
+*.parquet
 
 # binary files
 *.zip

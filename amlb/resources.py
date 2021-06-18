@@ -11,7 +11,8 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
-from .utils import Namespace, config_load, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
+from .utils import Namespace, lazy_property, memoize, normalize_path, run_cmd, str_sanitize, touch
+from .utils.config import TransformRule, config_load, transform_config
 from .__version__ import __version__, _dev_version as dev
 
 
@@ -249,12 +250,17 @@ __INSTANCE__: Resources = None
 
 def from_config(config: Namespace):
     global __INSTANCE__
+    transform_config(config, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(config)
+    return __INSTANCE__
 
 
 def from_configs(*configs: Namespace):
     global __INSTANCE__
+    for c in configs:
+        transform_config(c, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(Namespace.merge(*configs, deep=True))
+    return __INSTANCE__
 
 
 def get() -> Resources:
@@ -281,4 +287,15 @@ def output_dirs(root, session=None, subdirs=None, create=False):
         if create and not os.path.exists(dirs[d]):
             touch(dirs[d], as_dir=True)
     return dirs
+
+
+_backward_compatibility_config_rules_ = [
+    TransformRule(from_key='exit_on_error', to_key='job_scheduler.exit_on_job_failure'),
+    TransformRule(from_key='parallel_jobs', to_key='job_scheduler.parallel_jobs'),
+    TransformRule(from_key='max_parallel_jobs', to_key='job_scheduler.max_parallel_jobs'),
+    TransformRule(from_key='delay_between_jobs', to_key='job_scheduler.delay_between_jobs'),
+    TransformRule(from_key='monitoring.frequency_seconds', to_key='monitoring.interval_seconds'),
+    TransformRule(from_key='aws.query_frequency_seconds', to_key='aws.query_interval_seconds'),
+    TransformRule(from_key='aws.ec2.monitoring.cpu.query_frequency_seconds', to_key='aws.ec2.monitoring.cpu.query_interval_seconds'),
+]
 

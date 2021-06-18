@@ -3,28 +3,52 @@
 
 - name: bioresponse
   openml_task_id: 9910
+  description: |
+    Binary, many features, all numericals.
 
 - name: dresses-sales
   openml_task_id: 125920
+  description: |
+    Binary, mainly categorical features, with missing values in most categorical features.
+    Also the Arff file contains a categorical feature with 2 labels for the same value (case sensitive).
 
 - name: eucalyptus
   openml_task_id: 2079
+  description: |
+    Multiclass, mix of numerical and categorical features, with missing values in several numerical features.
 
 - name: internet-advertisements
   openml_task_id: 167125
+  description: |
+    Binary, many features, almost all categorical but (0, 1), so can be interpreted as int.
 
 - name: micro-mass
   openml_task_id: 9950
+  description: |
+    Multiclass, many features, all numericals.
 
-# kc1 target classes are (true, false).
-# This causes issues if the framework is using Pandas when obtaining predictions:
-#   pandas will automatically convert ("true", "false") strings to (True, False) booleans which will then be reconverted to ("True", "False") when saved to csv.
-# for those cases, Pandas should be avoided at that particular time or string type/conversion should be enforced for target predictions column.
-# cf. H2OAutoML where pandas could be avoided when reading predictions.
 - name: kc1
   openml_task_id: 3917
+  description: |
+    Binary with (true, false) as target classes.
+    This causes issues if the framework is using Pandas when obtaining predictions:
+      pandas will automatically convert ("true", "false") strings to (True, False) booleans which will then be reconverted to ("True", "False") when saved to csv.
+      for those cases, Pandas should be avoided at that particular time or string type/conversion should be enforced for target predictions column.
+      cf. H2OAutoML where pandas could be avoided when reading predictions.
 
-# APSFailure doesn't have its target as last column by default.
-# cf. AutoWEKA for an example to handle this case if the framework requires the target in a specific position.
 - name: APSFailure
   openml_task_id: 168868
+  description: |
+    Dataset doesn't have its target as last column by default, and some framework may rely on this.
+    cf. AutoWEKA for an example showing how to handle this when the framework requires the target in a specific position.
+
+- name: diabetes130US
+  openml_task_id: 168877
+  description: |
+    Missing values not formatted correctly.
+
+- name: census-income
+  openml_task_id: 211985
+  description: |
+    Many categoricals with labels starting/ending with spaces.
+

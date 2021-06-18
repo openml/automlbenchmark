@@ -2,6 +2,7 @@ from ast import literal_eval
 import base64
 from collections import defaultdict
 from collections.abc import Iterable, Sized
+from copy import deepcopy
 from functools import reduce, wraps
 import hashlib
 import json
@@ -93,6 +94,48 @@ class Namespace:
 
         return _walk(namespace, fn, inplace=inplace)
 
+    @staticmethod
+    def get(namespace, key, default=None):
+        """
+        Allows access to a nested key using dot syntax.
+        Doesn't raise if key doesn't exist.
+        """
+        ks = key.split('.', 1)
+        if len(ks) > 1:
+            n1 = getattr(namespace, ks[0], None)
+            return default if n1 is None else Namespace.get(n1, ks[1], default)
+        else:
+            return getattr(namespace, key, default)
+
+    @staticmethod
+    def set(namespace, key, value):
+        """
+        Allows setting a nested key using dot syntax.
+        """
+        ks = key.split('.', 1)
+        if len(ks) > 1:
+            n1 = getattr(namespace, ks[0], None)
+            if n1 is None:
+                n1 = Namespace()
+                setattr(namespace, ks[0], n1)
+            Namespace.set(n1, ks[1], value)
+        else:
+            setattr(namespace, key, value)
+
+    @staticmethod
+    def delete(namespace, key):
+        """
+        Allows deleting a nested key using dot syntax.
+        Doesn't raise if key doesn't exist.
+        """
+        ks = key.split('.', 1)
+        if len(ks) > 1:
+            n1 = getattr(namespace, ks[0], None)
+            if n1 is not None:
+                Namespace.delete(n1, ks[1])
+        elif hasattr(namespace, key):
+            delattr(namespace, key)
+
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and callable(args[0]):
             self.__dict__ = defaultdict(args[0])
@@ -138,6 +181,13 @@ class Namespace:
     def __copy__(self):
         return Namespace(self.__dict__.copy())
 
+    def __deepcopy__(self, memo={}):
+        new_dict = self.__dict__.copy()
+        for k, v in new_dict.items():
+            if isinstance(v, Namespace):
+                new_dict[k] = deepcopy(v, memo)
+        return Namespace(new_dict)
+
     def __dir__(self):
         return list(self.__dict__.keys())
 
@@ -167,6 +217,37 @@ def noop(*args, **kwargs):
 
 def identity(x, *args):
     return (x,) + args if args else x
+
+
+_metadata_attr_ = '_metadata_'
+
+
+def get_metadata(fn, key, default=None):
+    return getattr(fn, _metadata_attr_, {}).get(key, default)
+
+
+def set_metadata(fn, **kwargs):
+    if not hasattr(fn, _metadata_attr_):
+        setattr(fn, _metadata_attr_, {})
+    getattr(fn, _metadata_attr_).update(kwargs)
+
+
+def del_metadata(fn, *keys):
+    if not hasattr(fn, _metadata_attr_):
+        return
+    if keys:
+        md = getattr(fn, _metadata_attr_)
+        for k in keys:
+            md.pop(k, None)
+    else:
+        delattr(fn, _metadata_attr_)
+
+
+def metadata(**kwargs):
+    def decorator(fn):
+        set_metadata(fn, **kwargs)
+        return fn
+    return decorator
 
 
 def as_list(*args):

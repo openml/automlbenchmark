@@ -122,7 +122,12 @@ mljarsupervised_compete:
   description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
-
+    
+MLNet:
+  version: 'latest'
+  description: |
+    MLNET.CLI is a automated machine learning tool implemented by ml.net.
+    
 MLPlan:
   version: 'stable'
   abstract: true
@@ -140,6 +145,10 @@ MLPlanWEKA:
   extends: MLPlan
   params:
     _backend: weka
+
+mlr3automl:
+  version: 'stable'
+  project: https://github.com/a-hanf/mlr3automl
 
 oboe:
   version: 'latest'
@@ -167,9 +176,6 @@ TPOT:
 
 
 
-
-
-
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
@@ -178,13 +184,6 @@ constantpredictor:
   description: |
     Fast dummy classifier mainly used to test the app and/or datasets: this doesn't encode data.
   project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
-
-constantpredictor_enc:
-  extends: constantpredictor
-  description: |
-    Fast dummy classifier mainly used to test the app and/or datasets: this version encodes data.
-  params:
-    encode: true
 
 DecisionTree:
   version: 'stable'

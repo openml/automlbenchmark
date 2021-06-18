@@ -15,18 +15,19 @@ from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
+from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.utils import Timer, system_memory_mb, walk_apply, zip_path
 
 log = logging.getLogger(__name__)
 
 askl_version = version.parse(autosklearn.__version__)
+
 
 def run(dataset, config):
     askl_method_version = 2 if config.framework_params.get('_askl2', False) else 1
     askl_string = "Auto-sklearn2.0" if askl_method_version == 2 else "Auto-sklearn"
 
     log.info(f"\n**** {askl_string} [v{autosklearn.__version__}]****\n")
-    save_metadata(config, version=autosklearn.__version__)
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
@@ -61,8 +62,8 @@ def run(dataset, config):
     )
     log.info("Environment: %s", os.environ)
 
-    X_train = dataset.train.X_enc
-    y_train = dataset.train.y_enc
+    X_train = dataset.train.X
+    y_train = dataset.train.y
     predictors_type = dataset.predictors_type
     log.debug("predictors_type=%s", predictors_type)
 
@@ -74,7 +75,7 @@ def run(dataset, config):
     constr_params = {}
     fit_extra_params = {'dataset_name': dataset_name}
 
-    total_memory_mb = utils.system_memory_mb().total
+    total_memory_mb = system_memory_mb().total
     if ml_memory_limit == 'auto':
         ml_memory_limit = max(
             min(
@@ -88,6 +89,7 @@ def run(dataset, config):
             "Using %sMB memory per job and on a total of %s jobs.",
             ml_memory_limit, n_jobs
         )
+        constr_params["memory_limit"] = ml_memory_limit
     else:
         ensemble_memory_limit = config.framework_params.get('_ensemble_memory_limit', 'auto')
         # when memory is large enough, we should have:
@@ -125,14 +127,14 @@ def run(dataset, config):
     log.info("%s fit() arguments: %s", askl_string, fit_extra_params)
 
     auto_sklearn = estimator(**constr_params, **training_params)
-    with utils.Timer() as training:
+    with Timer() as training:
         auto_sklearn.fit(X_train, y_train, feat_type=predictors_type, **fit_extra_params)
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_test = dataset.test.X_enc
-    y_test = dataset.test.y_enc
-    with utils.Timer() as predict:
+    X_test = dataset.test.X
+    y_test = dataset.test.y
+    with Timer() as predict:
         predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
 
@@ -168,7 +170,7 @@ def save_artifacts(estimator, config):
                     os.makedirs(os.path.dirname(dst), exist_ok=True)
                     shutil.copyfile(filename, dst)
 
-                utils.walk_apply(
+                walk_apply(
                     tmp_directory,
                     _copy,
                     filtr=lambda path: (
@@ -177,7 +179,7 @@ def save_artifacts(estimator, config):
                     ),
                 )
             else:
-                utils.zip_path(
+                zip_path(
                     tmp_directory,
                     os.path.join(debug_dir, "artifacts.zip"),
                     filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions

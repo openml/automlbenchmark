@@ -7,25 +7,30 @@
 - run the jobs.
 - collect and save results.
 """
-
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
 import logging
 import math
 import os
+import re
 import signal
+import sys
 
-from .job import Job, SimpleJobRunner, MultiThreadingJobRunner
+from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
 from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, lazy_property, profile, repr_def, \
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, json_dump, lazy_property, profile, repr_def, \
     run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
+
+
+__installed_file__ = '.installed'
+__setup_env_file__ = '.setup_env'
 
 
 class SetupMode(Enum):
@@ -51,6 +56,7 @@ class Benchmark:
     """
 
     data_loader = None
+    framework_install_required = True
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         self.job_runner = None
@@ -76,7 +82,7 @@ class Benchmark:
         self.benchmark_def, self.benchmark_name, self.benchmark_path = rget().benchmark_definition(benchmark_name, self.constraint_def)
         log.debug("Using benchmark definition: %s.", self.benchmark_def)
 
-        self.parallel_jobs = rconfig().parallel_jobs
+        self.parallel_jobs = rconfig().job_scheduler.parallel_jobs
         self.sid = (rconfig().sid if rconfig().sid is not None
                     else rconfig().token_separator.join([
                         str_sanitize(framework_name),
@@ -106,6 +112,9 @@ class Benchmark:
             return
 
         log.info("Setting up framework {}.".format(self.framework_name))
+
+        self._write_setup_env(self.framework_module.__path__[0], **dict(self.framework_def.setup_env))
+        self._mark_setup_start()
 
         if hasattr(self.framework_module, 'setup'):
             self.framework_module.setup(*self.framework_def.setup_args,
@@ -139,20 +148,42 @@ class Benchmark:
 
         self._mark_setup_done()
 
-    def _is_setup_done(self):
-        installed = os.path.join(self._framework_dir, '.installed')
-        setup_done = False
+    def _write_setup_env(self, dest_dir, **kwargs):
+        setup_env = dict(
+            AMLB_ROOT=rconfig().root_dir,
+            PY_EXEC_PATH=sys.executable
+        )
+        setup_env.update(**kwargs)
+        with open(os.path.join(dest_dir, __setup_env_file__), 'w') as f:
+            f.write('\n'.join([f"{k}={v}" for k, v in setup_env.items()]+[""]))
+
+    def _installed_file(self):
+        return os.path.join(self._framework_dir, __installed_file__)
+
+    def _installed_version(self):
+        installed = self._installed_file()
+        versions = []
         if os.path.isfile(installed):
             with open(installed, 'r') as f:
-                version = f.read()
-                setup_done = (version == self.framework_def.version)
-        return setup_done
+                versions = list(filter(None, map(str.strip, f.readlines())))
+        return versions
+
+    def _is_setup_done(self):
+        return self.framework_def.version in self._installed_version()
+
+    def _mark_setup_start(self):
+        installed = self._installed_file()
+        if os.path.isfile(installed):
+            os.remove(installed)
 
     def _mark_setup_done(self):
-        if not self._is_setup_done():
-            installed = os.path.join(self._framework_dir, '.installed')
-            with open(installed, 'w') as f:
-                f.write(self.framework_def.version)
+        installed = self._installed_file()
+        versions = []
+        if hasattr(self.framework_module, 'version'):
+            versions.append(self.framework_module.version())
+        versions.extend([self.framework_def.version, ""])
+        with open(installed, 'a') as f:
+            f.write('\n'.join(versions))
 
     def cleanup(self):
         # anything to do?
@@ -163,9 +194,12 @@ class Benchmark:
         :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
         :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
-        task_defs = self._get_task_defs(task_name)
-        jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
+            assert not self.framework_install_required or self._is_setup_done(), \
+                f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
+
+            task_defs = self._get_task_defs(task_name)
+            jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
             results = self._run_jobs(jobs)
             log.info(f"Processing results for {self.sid}")
             log.debug(results)
@@ -185,14 +219,15 @@ class Benchmark:
         else:
             # return ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
             return MultiThreadingJobRunner(jobs, self.parallel_jobs,
-                                           delay_secs=rconfig().delay_between_jobs,
+                                           delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True)
 
     def _run_jobs(self, jobs):
         self.job_runner = self._create_job_runner(jobs)
 
         def on_interrupt(*_):
-            log.warning("**** SESSION CANCELLED BY USER ****")
+            log.warning("*** SESSION CANCELLED BY USER ***")
+            log.warning("*** Please wait for the application to terminate gracefully ***")
             self.job_runner.stop()
             self.cleanup()
             # threading.Thread(target=self.job_runner.stop)
@@ -201,7 +236,7 @@ class Benchmark:
         try:
             with signal_handler(signal.SIGINT, on_interrupt):
                 with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
-                                  frequency_seconds=rconfig().monitoring.frequency_seconds,
+                                  interval_seconds=rconfig().monitoring.interval_seconds,
                                   check_on_exit=True,
                                   statistics=rconfig().monitoring.statistics,
                                   verbosity=rconfig().monitoring.verbosity):
@@ -277,7 +312,8 @@ class Benchmark:
         if rconfig().results.save:
             self._save(board)
 
-        log.info("Summing up scores for current run:\n%s", board.as_printable_data_frame().dropna(how='all', axis='columns').to_string())
+        log.info("Summing up scores for current run:\n%s",
+                 board.as_printable_data_frame(verbosity=2).dropna(how='all', axis='columns').to_string(index=False))
         return board.as_data_frame()
 
     def _save(self, board):
@@ -335,32 +371,45 @@ class TaskConfig:
         return self.__dict__
 
     def estimate_system_params(self):
+        on_unfulfilled = rconfig().benchmarks.on_unfulfilled_constraint
+        mode = re.split(r"\W+", rconfig().run_mode, maxsplit=1)[0]
+
+        def handle_unfulfilled(message, on_auto='warn'):
+            action = on_auto if on_unfulfilled == 'auto' else on_unfulfilled
+            if action == 'warn':
+                log.warning("WARNING: %s", message)
+            elif action == 'fail':
+                raise JobError(message)
+
         sys_cores = system_cores()
+        if self.cores > sys_cores:
+            handle_unfulfilled(f"System with {sys_cores} cores does not meet requirements ({self.cores} cores)!.",
+                               on_auto='warn' if mode == 'local' else 'fail')
         self.cores = min(self.cores, sys_cores) if self.cores > 0 else sys_cores
         log.info("Assigning %s cores (total=%s) for new task %s.", self.cores, sys_cores, self.name)
 
         sys_mem = system_memory_mb()
-        os_recommended_mem = rconfig().benchmarks.os_mem_size_mb
+        os_recommended_mem = ns.get(rconfig(), f"{mode}.os_mem_size_mb", rconfig().benchmarks.os_mem_size_mb)
         left_for_app_mem = int(sys_mem.available - os_recommended_mem)
         assigned_mem = round(self.max_mem_size_mb if self.max_mem_size_mb > 0
                              else left_for_app_mem if left_for_app_mem > 0
                              else sys_mem.available)
         log.info("Assigning %.f MB (total=%.f MB) for new %s task.", assigned_mem, sys_mem.total, self.name)
         self.max_mem_size_mb = assigned_mem
-        if assigned_mem > sys_mem.available:
-            log.warning("WARNING: Assigned memory (%(assigned).f MB) exceeds system available memory (%(available).f MB / total=%(total).f MB)!",
-                        dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total))
+        if assigned_mem > sys_mem.total:
+            handle_unfulfilled(f"Total system memory {sys_mem.total} MB does not meet requirements ({assigned_mem} MB)!.",
+                               on_auto='fail')
+        elif assigned_mem > sys_mem.available:
+            handle_unfulfilled(f"Assigned memory ({assigned_mem} MB) exceeds system available memory ({sys_mem.available} MB / total={sys_mem.total} MB)!")
         elif assigned_mem > sys_mem.total - os_recommended_mem:
-            log.warning("WARNING: Assigned memory (%(assigned).f MB) is within %(buffer).f MB of system total memory (%(total).f MB): "
-                        "We recommend a %(buffer).f MB buffer, otherwise OS memory usage might interfere with the benchmark task.",
-                        dict(assigned=assigned_mem, available=sys_mem.available, total=sys_mem.total, buffer=os_recommended_mem))
+            handle_unfulfilled(f"Assigned memory ({assigned_mem} MB) is within {sys_mem.available} MB of system total memory {sys_mem.total} MB): "
+                               f"We recommend a {os_recommended_mem} MB buffer, otherwise OS memory usage might interfere with the benchmark task.")
 
         if self.min_vol_size_mb > 0:
             sys_vol = system_volume_mb()
             os_recommended_vol = rconfig().benchmarks.os_vol_size_mb
             if self.min_vol_size_mb > sys_vol.free:
-                log.warning("WARNING: Available volume memory (%(available).f MB / total=%(total).f MB) doesn't meet requirements (%(required).f MB)!",
-                            dict(required=self.min_vol_size_mb+os_recommended_vol, available=sys_vol.free, total=sys_vol.total))
+                handle_unfulfilled(f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements ({self.min_vol_size_mb+os_recommended_vol} MB)!")
 
 
 class BenchmarkTask:
@@ -388,12 +437,11 @@ class BenchmarkTask:
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:
-            for c in ['max_runtime_seconds', 'metric', 'metrics']:
+            for c in dir(self.task_config):
                 if rconfig().t[c] is not None:
                     setattr(self.task_config, c, rconfig().t[c])
         self._dataset = None
 
-    @profile(logger=log)
     def load_data(self):
         """
         Loads the training dataset for the current given task
@@ -411,9 +459,6 @@ class BenchmarkTask:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
     def as_job(self):
-        def _run():
-            self.load_data()
-            return self.run()
         job = Job(name=rconfig().token_separator.join([
                 'local',
                 self.benchmark.benchmark_name,
@@ -425,30 +470,28 @@ class BenchmarkTask:
             # specifying a job timeout to handle edge cases where framework never completes or hangs
             # (adding 5min safety to let the potential subprocess handle the interruption first).
             timeout_secs=self.task_config.job_timeout_seconds+5*60,
-            raise_exceptions=rconfig().exit_on_error,
+            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure,
         )
-        job._run = _run
+        job._setup = self.setup
+        job._run = self.run
         return job
-        # return Namespace(run=lambda: self.run(framework))
+
+    def setup(self):
+        self.task_config.estimate_system_params()
+        self.load_data()
 
     @profile(logger=log)
     def run(self):
-        """
-
-        :param framework:
-        :return:
-        """
         results = TaskResult(task_def=self._task_def, fold=self.fold,
                              constraint=self.benchmark.constraint_name,
                              predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def = self.benchmark.framework_def
         task_config = copy(self.task_config)
-        task_config.estimate_system_params()
         task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
         task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
-        task_config.framework_version = framework_def.version
+        task_config.framework_version = self.benchmark._installed_version()[0]
 
         # allowing to pass framework parameters through command line, e.g.: -Xf.verbose=True -Xf.n_estimators=3000
         if rconfig()['f'] is not None:
@@ -464,13 +507,14 @@ class BenchmarkTask:
         result = meta_result = None
         try:
             log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, repr_def(task_config))
+            json_dump(task_config, task_config.output_metadata_file, style='pretty')
             meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:
-            if rconfig().exit_on_error:
+            if rconfig().job_scheduler.exit_on_job_failure:
                 raise
             log.exception(e)
             result = ErrorResult(e)
         finally:
             self._dataset.release()
-        return results.compute_scores(result=result, meta_result=meta_result)
+        return results.compute_score(result=result, meta_result=meta_result)
 

@@ -96,6 +96,11 @@ def _add_default_version(framework):
         framework.version = "stable"
 
 
+def _add_default_setup_env(framework):
+    if "setup_env" not in framework:
+        framework.setup_env = {}
+
+
 def _add_default_setup_args(framework):
     if "setup_args" in framework and isinstance(framework.setup_args, str):
         framework.setup_args = [framework.setup_args]
@@ -186,6 +191,7 @@ def _update_frameworks_with_parent_definitions(frameworks: Namespace):
 def _add_defaults_to_frameworks(frameworks: Namespace, config):
     for _, framework in frameworks:
         _add_default_version(framework)
+        _add_default_setup_env(framework)
         _add_default_setup_args(framework)
         _add_default_params(framework)
         _add_default_image(framework, config)

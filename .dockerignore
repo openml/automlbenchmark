@@ -8,9 +8,11 @@ results
 **/models
 **/predictions
 **/scores
-**/lib
-**/.marker*
+**/.installed
+**/.setup_env
 **/__pycache__
+**/lib
+**/setup
 **/venv
 
 # editors/IDEs
@@ -37,3 +39,4 @@ my_*
 **/*.gz
 **/*.bz2
 **/*.png
+**/*.sif

@@ -3,21 +3,20 @@ import shutil
 import logging
 
 import numpy as np
-import pandas as pd
 import matplotlib
 matplotlib.use("agg")  # no need for tk
 
 import supervised
 from supervised.automl import AutoML
 
-from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
+from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(os.path.basename(__file__))
 
 
 def run(dataset, config):
     log.info(f"\n**** mljar-supervised [v{supervised.__version__}] ****\n")
-    save_metadata(config, version=supervised.__version__)
 
     # Mapping of benchmark metrics to MLJAR metrics
     metrics_mapping = dict(
@@ -42,17 +41,8 @@ def run(dataset, config):
         k: v for k, v in config.framework_params.items() if not k.startswith("_")
     }
 
-    column_names, _ = zip(*dataset.columns)
-    column_types = dict(dataset.columns)
-    label = dataset.target.name
-
-    train = pd.DataFrame(dataset.train.data, columns=column_names).astype(column_types, copy=False)
-    X_train = train.drop(columns=label)
-    y_train = train[label]
-
-    test = pd.DataFrame(dataset.test.data, columns=column_names).astype(column_types, copy=False)
-    X_test = test.drop(columns=label)
-    y_test = test[label]
+    X_train, y_train = dataset.train.X, dataset.train.y.squeeze()
+    X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
 
     automl = AutoML(
         results_path=results_path,
@@ -63,10 +53,10 @@ def run(dataset, config):
         **training_params
     )
 
-    with utils.Timer() as training:
+    with Timer() as training:
         automl.fit(X_train, y_train)
 
-    with utils.Timer() as predict:
+    with Timer() as predict:
         preds = automl.predict_all(X_test)
 
     predictions, probabilities = None, None

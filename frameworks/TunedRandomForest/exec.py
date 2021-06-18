@@ -21,7 +21,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 import stopit
 
-from frameworks.shared.callee import call_run, result, save_metadata, utils
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,6 @@ def pick_values_uniform(start: int, end: int, length: int):
 
 def run(dataset, config):
     log.info(f"\n**** Tuned Random Forest [sklearn v{sklearn.__version__}] ****\n")
-    save_metadata(config, version=sklearn.__version__)
 
     is_classification = config.type == 'classification'
 
@@ -42,8 +42,8 @@ def run(dataset, config):
     tuning_params = config.framework_params.get('_tuning', training_params)
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
-    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
-    y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
+    X_train, X_test = dataset.train.X, dataset.test.X
+    y_train, y_test = dataset.train.y, dataset.test.y
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores."
              .format(config.max_runtime_seconds, n_jobs))
@@ -89,12 +89,13 @@ def run(dataset, config):
                 ('preprocessing', imputation),
                 ('learning', random_forest)
             ])
-            with utils.Timer() as cv_scoring:
+            with Timer() as cv_scoring:
                 try:
                     scores = cross_val_score(estimator=pipeline,
                                              X=dataset.train.X_enc,
                                              y=dataset.train.y_enc,
                                              scoring=metric,
+                                             error_score='raise',
                                              cv=5)
                     max_feature_scores.append((statistics.mean(scores), max_features_value))
                 except stopit.utils.TimeoutException as toe:
@@ -104,6 +105,7 @@ def run(dataset, config):
                 except Exception as e:
                     log.error("Failed CV scoring for max_features=%s :\n%s", max_features_value, e)
                     log.debug("Exception:", exc_info=True)
+                    max_feature_scores.append((math.nan, max_features_value))
             tuning_durations.append((max_features_value, cv_scoring.duration))
 
     log.info("Tuning scores:\n%s", sorted(max_feature_scores))
@@ -114,10 +116,10 @@ def run(dataset, config):
                    random_state=config.seed,
                    max_features=best_max_features_value,
                    **training_params)
-    with utils.Timer() as training:
+    with Timer() as training:
         rf.fit(X_train, y_train)
 
-    with utils.Timer() as predict:
+    with Timer() as predict:
         predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 

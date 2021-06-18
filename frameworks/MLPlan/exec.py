@@ -5,7 +5,8 @@ import json
 import re
 import tempfile
 
-from frameworks.shared.callee import call_run, result, output_subdir, save_metadata, utils
+from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.utils import Timer, run_cmd
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +15,6 @@ def run(dataset, config):
     jar_file = glob.glob("{here}/lib/mlplan/mlplan-cli*.jar".format(here=os.path.dirname(__file__)))[0]
     version = re.match(r".*/mlplan-cli-(.*).jar", jar_file)[1]
     log.info(f"\n**** ML-Plan [v{version}] ****\n")
-    save_metadata(config, version=version)
 
     is_classification = config.type == 'classification'
     
@@ -54,9 +54,9 @@ def run(dataset, config):
              backend, mode, config.max_runtime_seconds, config.cores, config.max_mem_size_mb, metric)
     log.info("Environment: %s", os.environ)
 
-    predictions_file = os.path.join(output_subdir('mlplan_out', config), 'predictions.csv')
-    statistics_file = os.path.join(output_subdir('mlplan_out', config), 'statistics.json')
-    #tmp_dir = output_subdir('mlplan_tmp', config)
+    mlplan_output_dir = output_subdir('mlplan_out', config)
+    predictions_file = os.path.join(mlplan_output_dir, 'predictions.csv')
+    statistics_file = os.path.join(mlplan_output_dir, 'statistics.json')
 
     cmd_root = f"java -jar -Xmx{mem_limit}M {jar_file}"
 
@@ -77,15 +77,19 @@ def run(dataset, config):
 
         cmd = cmd_root + ''.join([" -{} {}".format(k, v) for k, v in cmd_params.items()])
 
-        with utils.Timer() as training:
-            utils.run_cmd(cmd, _live_output_=True)
+        with Timer() as training:
+            run_cmd(cmd, _live_output_=True)
 
     with open(statistics_file, 'r') as f:
         stats = json.load(f)
 
     predictions = stats["predictions"]
     truth = stats["truth"]
-    numEvals = stats["num_evaluations"]
+    num_evals = stats["num_evaluations"]
+    if "final_candidate_predict_time_ms" in stats:
+        predict_time = stats["final_candidate_predict_time_ms"]
+    else:
+        predict_time = float("NaN")
 
     # only for classification tasks we have probabilities available, thus check whether the json contains the respective fields
     if "probabilities" in stats and "probabilities_labels" in stats:
@@ -95,15 +99,21 @@ def run(dataset, config):
         probabilities = []
         probabilities_labels = []
 
+    if version == "0.2.3":
+        target_encoded = is_classification
+    else:
+        target_encoded = False
+
     return result(
         output_file=config.output_predictions_file,
         predictions=predictions,
         truth=truth,
         probabilities=probabilities,
         probabilities_labels=probabilities_labels,
-        target_is_encoded=is_classification,
-        models_count=numEvals,
-        training_duration=training.duration
+        target_is_encoded=target_encoded,
+        models_count=num_evals,
+        training_duration=training.duration,
+        predict_duration=predict_time
     )
 
 
