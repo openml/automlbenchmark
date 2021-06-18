@@ -43,7 +43,7 @@ class DockerBenchmark(ContainerBenchmark):
         return os.path.join(self._framework_dir, 'Dockerfile')
 
     def _start_container(self, script_params=""):
-        """Implementes the container run method"""
+        """Implements the container run method"""
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
@@ -52,7 +52,7 @@ class DockerBenchmark(ContainerBenchmark):
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
-            "docker run --name {name} {options} "
+            "docker run --name {name} {options}  --cpus {cores} "
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
@@ -64,6 +64,7 @@ class DockerBenchmark(ContainerBenchmark):
             image=self.image,
             params=script_params,
             extra_params=script_extra_params,
+            cores=self.constraint_def['cores']
         )
         log.info("Starting docker: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)
