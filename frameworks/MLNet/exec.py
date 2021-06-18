@@ -41,6 +41,11 @@ def run(dataset: Dataset, config: TaskConfig):
     os.environ['MODELBUILDER_AUTOML'] = MODELBUILDER_AUTOML
 
     artifacts = config.framework_params.get('_save_artifacts', [])
+    allowedMultiClassifiers = config.framework_params.get('classifiers','LGBM;RF;FASTTREE;LBFGS;SDCA')
+    allowedRegressors = config.framework_params.get('regressors','LGBM;RF;FASTTREE;LBFGS;SDCA')
+    os.environ['AutoMLServiceMultiClassifiers'] = allowedMultiClassifiers
+    os.environ['AutoMLServiceRegressors'] = allowedRegressors
+    
     tmpdir = tempfile.mkdtemp()
     tmp_output_folder = os.path.join(tmpdir, str(config.fold))
     output_dir = output_subdir('models', config=config) if 'models' in artifacts else tmp_output_folder
