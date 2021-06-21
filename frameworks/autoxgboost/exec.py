@@ -19,7 +19,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     meta_results_file = os.path.join(config.output_dir, "meta_results.csv")
     run_cmd(("Rscript --vanilla -e \""
-             ".libPaths('frameworks/autoxgboost/r-packages/'); source('{script}'); "
+             ".libPaths('${{HERE}}/r-packages/'); source('{script}'); "
              "run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores},"
              " time.budget = {time_budget}, meta_results_file='{meta_results}')"
              "\"").format(
