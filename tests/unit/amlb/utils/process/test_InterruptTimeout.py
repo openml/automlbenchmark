@@ -8,6 +8,7 @@ from amlb.utils.process import InterruptTimeout, signal_handler
 from amlb.utils.time import Timer
 
 
+@pytest.mark.requires_unixlike
 def test_interruption_behaves_like_a_keyboard_interruption_by_default():
     timeout = 1
     with Timer() as t:
@@ -51,6 +52,7 @@ def test_interruption_with_sig_as_error_instance():
     assert i < 11
 
 
+@pytest.mark.requires_unixlike
 def test_interruption_with_sig_as_signal():
     def _handler(*_):
         raise TimeoutError("from handler")
@@ -74,6 +76,7 @@ def test_before_interrupt_hook():
     assert before.called
 
 
+@pytest.mark.requires_unixlike
 def test_interruptions_escalation():
     def _handler(*_):
         raise TimeoutError("from handler")
@@ -96,6 +99,7 @@ def test_interruptions_escalation():
         assert before.call_count == 2
 
 
+@pytest.mark.requires_unixlike
 def test_wait_retry_in_interruptions_escalation():
     def _handler(*_):
         raise TimeoutError("from handler")
