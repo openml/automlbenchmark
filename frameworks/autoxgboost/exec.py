@@ -18,10 +18,11 @@ def run(dataset: Dataset, config: TaskConfig):
     here = dir_of(__file__)
 
     meta_results_file = os.path.join(config.output_dir, "meta_results.csv")
-    run_cmd(("Rscript --vanilla -e \".libPaths(${{HERE}}/r-packages/); source('{script}'); "
+    run_cmd((    run_cmd(("Rscript --vanilla -e \".libPaths('{package_directory}'); source('{script}'); "
              "run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores},"
              " time.budget = {time_budget}, meta_results_file='{meta_results}')"
              "\"").format(
+        package_directory=os.path.join(here, 'r-packages'),
         script=os.path.join(here, 'exec.R'),
         train=dataset.train.path,
         test=dataset.test.path,
