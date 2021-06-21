@@ -262,7 +262,7 @@ class ArffSplitter(DataSplitter[str]):
             # so we need to adapt the header accordingly.
             # Not doing so causes an issue in the R packages.
             if set(v.lower() for v in feat.nominal_values) == {"true", "false"}:
-                return ["True", "False"]
+                return [v.lower().capitalize() for v in feat.nominal_values]
             return feat.nominal_values
         return None
 

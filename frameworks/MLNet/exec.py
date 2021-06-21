@@ -70,7 +70,7 @@ def run(dataset: Dataset, config: TaskConfig):
         with open(train_result_json, 'r') as f:
             json_str = f.read()
             mb_config = json.loads(json_str)
-            model_path = mb_config['Artifact']['MLNetModelPath']
+            model_path = os.path.join(output_dir, f"{config.fold}.zip")
             output_prediction_path = os.path.join(log_dir, "prediction.txt")  # keeping this in log dir as it contains useful error when prediction fails
             models_count = len(mb_config['RunHistory']['Trials'])
             # predict

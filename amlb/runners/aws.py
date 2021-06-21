@@ -63,6 +63,8 @@ class AWSBenchmark(Benchmark):
     an extension of Benchmark class, to run benchmarks on AWS
     """
 
+    framework_install_required = False
+
     @classmethod
     def fetch_results(cls, instances_file, instance_selector=None):
         bench = cls(None, None, None)
@@ -1138,7 +1140,7 @@ runcmd:
   - python{pyv} -m venv venv
   - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
-  - alias PIP_REQ="(grep -v '^\\s#' | xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir)"
+  - alias PIP_REQ="(grep -v '^\\s*#' | xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir)"
 #  - PIP install -U pip=={pipv}
   - PIP install -U pip
   - PIP_REQ < requirements.txt
@@ -1215,7 +1217,7 @@ alias PIP='/repo/venv/bin/python3 -m pip'
 alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pipv}
 PIP install -U pip wheel
-(grep -v '^\\s#' | xargs -L 1 PIP install --no-cache-dir) < requirements.txt
+(grep -v '^\\s*#' | xargs -L 1 PIP install --no-cache-dir) < requirements.txt
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive
