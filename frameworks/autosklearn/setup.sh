@@ -3,8 +3,8 @@ HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/automl/auto-sklearn.git"}
 PKG=${3:-"auto-sklearn"}
-if [[ "$VERSION" == "stable" ]]; then
-    VERSION="master"
+if [[ "$VERSION" == "latest" ]]; then
+    VERSION="development"
 fi
 
 # creating local venv
@@ -24,10 +24,15 @@ elif [[ "$VERSION" =~ ^[0-9] ]]; then
 else
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
-    git clone  --recurse-submodules ${REPO} ${TARGET_DIR}
-    cd ${TARGET_DIR}
-    git checkout $VERSION
-    cd ${HERE}
+    if [[ "$VERSION" =~ ^# ]]; then
+        # Provided a git hash
+        git clone  --recurse-submodules ${REPO} ${TARGET_DIR}
+        cd ${TARGET_DIR}
+        git checkout "${VERSION:1}"
+        cd ${HERE}
+    else
+        git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
+    fi
     PIP install -U -e ${TARGET_DIR}
 fi
 
