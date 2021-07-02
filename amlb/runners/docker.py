@@ -137,8 +137,8 @@ WORKDIR /bench
 # packages that we need to data pre- and postprocessing without breaking it.
 RUN $SPIP install -U pip wheel
 RUN $SPY -m venv venv
-ENV PIP /bench/venv/bin/python3 -m pip
-ENV PY /bench/venv/bin/python3 -W ignore
+ENV PIP /bench/venv/bin/python{pyv} -m pip
+ENV PY /bench/venv/bin/python{pyv} -W ignore
 #RUN $PIP install -U pip=={pipv} wheel
 RUN $PIP install -U pip wheel
 
