@@ -189,7 +189,6 @@ $SPY -m venv venv
 PIP="/bench/venv/bin/python{pyv} -m pip"
 PY="/bench/venv/bin/python{pyv} -W ignore"
 #$PIP install -U pip=={pipv} wheel
-ls -al /bench/venv/bin/
 $PIP install -U pip wheel
 
 mkdir /input
