@@ -33,6 +33,6 @@ if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
   (cd "$DOWNLOAD_DIR" && find . -maxdepth 1 -type d -name "weka*" -exec mv {} weka \;)
 fi
 
-chmod 755 "$DOWNLOAD_DIR/autoweka/smac-v2.10.03-master-778/smac"
+chmod 755 "$DOWNLOAD_DIR/autoweka/smac-*/smac"
 
 find $HERE/lib/autoweka*.zip | sed -e 's/.*\/autoweka-\(.*\)\.zip/\1/' >> "${HERE}/.installed"
