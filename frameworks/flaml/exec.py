@@ -65,5 +65,6 @@ def run(dataset, config):
                     probabilities_labels=labels,
                 )
 
+
 if __name__ == '__main__':
     call_run(run)
