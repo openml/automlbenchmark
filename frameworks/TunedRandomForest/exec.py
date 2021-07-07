@@ -92,8 +92,8 @@ def run(dataset, config):
             with Timer() as cv_scoring:
                 try:
                     scores = cross_val_score(estimator=pipeline,
-                                             X=dataset.train.X_enc,
-                                             y=dataset.train.y_enc,
+                                             X=X_train,
+                                             y=y_train,
                                              scoring=metric,
                                              error_score='raise',
                                              cv=5)
