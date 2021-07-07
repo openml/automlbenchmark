@@ -47,8 +47,16 @@ def run(dataset: Dataset, config: TaskConfig):
 
     f = split_path(config.output_predictions_file)
     f.extension = '.weka_pred.csv'
+
+    # WEKA is not included in later versions of Auto-WEKA, in that case it is downloaded
+    # and extracted to the following location:
+    weka_jar = f"{dir_of(__file__)}/lib/weka/weka.jar"
+
     weka_file = path_from_split(f)
-    cmd_root = "java -cp {here}/lib/autoweka/autoweka.jar weka.classifiers.meta.AutoWEKAClassifier ".format(here=dir_of(__file__))
+    cmd_root = "java -cp {here}/lib/autoweka/autoweka.jar{weka_path} weka.classifiers.meta.AutoWEKAClassifier ".format(
+        here=dir_of(__file__),
+        weka_path=f":{weka_jar}" if os.path.isfile(weka_jar) else ""
+    )
     cmd_params = dict(
         t='"{}"'.format(train_file),
         T='"{}"'.format(test_file),
