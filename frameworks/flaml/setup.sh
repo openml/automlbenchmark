@@ -20,5 +20,5 @@ else
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
     PIP install -U -e ${TARGET_DIR}
 fi
-
+PIP install pandas==1.2.4   # required by automlbenchmark
 PY -c "from flaml import __version__; print(__version__)" >> "${HERE}/.installed"
