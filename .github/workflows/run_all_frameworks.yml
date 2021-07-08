@@ -25,6 +25,10 @@ jobs:
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
           changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
+
+          # globs should be interpreted recursively to find all files
+          shopt -s globstar
+
           common_files="amlb/** "\
           "resources/** "\
           "frameworks/shared/** "\
@@ -34,6 +38,8 @@ jobs:
           "requirements.txt"
           echo Common files: $common_files
           echo Changed files: $changed_files
+
+          shopt -u globstar
 
           is_common=1
           for f in $changed_files
