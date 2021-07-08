@@ -39,8 +39,6 @@ jobs:
           echo Common files: $common_files
           echo Changed files: $changed_files
 
-          shopt -u globstar
-
           is_common=1
           for f in $changed_files
           do
