@@ -78,6 +78,15 @@ def run(dataset: Dataset, config: TaskConfig):
     probabilities_labels = dataset.target.values
     if not os.path.exists(weka_file):
         raise NoResultError("AutoWEKA failed producing any prediction.")
+
+    collected_labels = [None] * len(probabilities_labels)
+
+    def extract_pred(pred):
+        idx, val = pred.split(':')
+        idx = int(idx)
+        collected_labels[idx-1] = val
+        return val
+
     with open(weka_file, 'r') as weka_file:
         probabilities = []
         predictions = []
@@ -85,11 +94,20 @@ def run(dataset: Dataset, config: TaskConfig):
         for line in weka_file.readlines()[1:-1]:
             inst, actual, predicted, error, *distribution = line.split(',')
             pred_probabilities = [pred_probability.replace('*', '').replace('\n', '') for pred_probability in distribution]
-            _, pred = predicted.split(':')
-            _, tru = actual.split(':')
+            pred = extract_pred(predicted)
+            tru = extract_pred(actual)
             probabilities.append(pred_probabilities)
             predictions.append(pred)
             truth.append(tru)
+
+    collab = set(collected_labels)
+    unused_labels = [l for l in probabilities_labels if l not in collab]
+    if len(unused_labels) > 1:
+        log.warning(f"Labels {unused_labels} are not present in predictions nor truth values, "
+                    "so we can't assign their probabilities with certainty "
+                    "as AutoWEKA doesn't provide labels in its predictions file.")
+    unused_iter = iter(unused_labels)
+    probabilities_labels = [next(unused_iter) if l is None else l for l in collected_labels]
 
     save_predictions(dataset=dataset,
                      output_file=config.output_predictions_file,
@@ -101,4 +119,3 @@ def run(dataset: Dataset, config: TaskConfig):
     return dict(
         training_duration=training.duration
     )
-
