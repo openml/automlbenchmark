@@ -20,7 +20,7 @@ def _import_data_libraries():
 
 ser_config = ns(
     # 'pickle', 'parquet', 'hdf', 'json'
-    pandas_serializer=os.environ.get('AMLB_SER_PD_MODE') or 'pickle',
+    pandas_serializer=os.environ.get('AMLB_SER_PD_MODE') or 'parquet',
     # 'infer', 'bz2', 'gzip', None ?
     # 'infer' (here=None) is the fastest but no compression,
     # 'gzip' fast write and read with good compression.
