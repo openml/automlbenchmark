@@ -9,8 +9,6 @@ def setup(*args, **kwargs):
 
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
-    from frameworks.shared.serialization import ser_config
-    ser_config.pandas_serializer = 'parquet'  # can't use pickle due to pandas version mismatch
 
     data = dict(
         target=dataset.target.name,
