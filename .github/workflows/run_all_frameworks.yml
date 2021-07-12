@@ -25,6 +25,8 @@ jobs:
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
           changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
+
+          shopt -s globstar
           common_files="amlb/** "\
           "resources/** "\
           "frameworks/shared/** "\
@@ -32,6 +34,7 @@ jobs:
           ".github/runbenchmark/action.yml "\
           "runbenchmark.py "\
           "requirements.txt"
+          
           echo Common files: $common_files
           echo Changed files: $changed_files
 
