@@ -26,9 +26,7 @@ jobs:
         run: |
           changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
 
-          # globs should be interpreted recursively to find all files
           shopt -s globstar
-
           common_files="amlb/** "\
           "resources/** "\
           "frameworks/shared/** "\
@@ -36,6 +34,7 @@ jobs:
           ".github/runbenchmark/action.yml "\
           "runbenchmark.py "\
           "requirements.txt"
+          
           echo Common files: $common_files
           echo Changed files: $changed_files
 
