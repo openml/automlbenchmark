@@ -491,7 +491,7 @@ class BenchmarkTask:
         task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
-        task_config.framework_version = self.benchmark._installed_version()[0]
+        task_config.framework_version = ':'.join(self.benchmark._installed_version())
 
         # allowing to pass framework parameters through command line, e.g.: -Xf.verbose=True -Xf.n_estimators=3000
         if rconfig()['f'] is not None:
