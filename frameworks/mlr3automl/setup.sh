@@ -43,5 +43,3 @@ Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${R
 
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
 echo "${VERSION}" >> "${HERE}/.installed"
-
-cat "${HERE}/.installed"
