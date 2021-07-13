@@ -38,5 +38,5 @@ mkdir "${HERE}/r-packages/"
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "mlr", "mlrMBO", "mlrCPO", "farff", "GenSA", "rgenoud", "xgboost"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"'")'
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${HERE}/r-packages/"'")'
 
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
-echo "${VERSION}" >> "${HERE}/.installed"
+OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g")
+echo "${OFFICIAL_VERSION}#${VERSION}" >> "${HERE}/.installed"

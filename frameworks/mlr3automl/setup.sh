@@ -41,5 +41,5 @@ Rscript -e 'options(install.packages.check.source="no"); install.packages(c("rem
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${HERE}/r-packages/"'")'
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${HERE}/r-packages/"'")'
 
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
-echo "${VERSION}" >> "${HERE}/.installed"
+OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g")
+echo "${OFFICIAL_VERSION}#${VERSION}" >> "${HERE}/.installed"
