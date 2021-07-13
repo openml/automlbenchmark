@@ -2,10 +2,21 @@
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
 REPO=${2:-"ja-thomas/autoxgboost"}
-# currently both stable and latest maps to master branch
+
+# Version can be specified as 'stable', 'latest', a full 40-character commit hash or a branch
 if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
-    VERSION="master"
+  VERSION="master"
 fi
+
+if ! [[ "$VERSION" =~ ^[a-fA-F0-9]{40}$ ]]; then
+  # if VERSION is not a hash, it should be a branch (or a format which is not (officially) supported)
+  VERSION=$(git ls-remote "https://github.com/${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
+  if [[ -z $VERSION ]]; then
+    echo "Could not resolve version ${VERSION}. It is not a branch on https://github.com/${REPO}."
+    echo "Continuing setup, install_github will try to resolve 'ref=${VERSION}'."
+  fi
+fi
+
 . ${HERE}/../shared/setup.sh "${HERE}"
 if [[ -x "$(command -v apt-get)" ]]; then
   SUDO apt-get update
@@ -29,3 +40,5 @@ Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${R
 
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
 echo "${VERSION}" >> "${HERE}/.installed"
+
+cat "${HERE}/.installed"
