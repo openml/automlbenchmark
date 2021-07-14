@@ -32,7 +32,7 @@ if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
   # By renaming it we can make the exec.py agnostic of the specific name.
   (cd "$DOWNLOAD_DIR" && find . -maxdepth 1 -type d -name "weka*" -exec mv {} weka \;)
 fi
-
-chmod 755 "$DOWNLOAD_DIR/autoweka/smac-*/smac"
+smac_dir=`find "$DOWNLOAD_DIR/autoweka" -maxdepth 1 -name "smac-*"`
+chmod 755 "$smac_dir/smac"
 
 find $HERE/lib/autoweka*.zip | sed -e 's/.*\/autoweka-\(.*\)\.zip/\1/' >> "${HERE}/.installed"
