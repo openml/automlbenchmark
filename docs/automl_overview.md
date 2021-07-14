@@ -307,6 +307,20 @@ Chengrun Yang, Yuji Akimoto, Dae Won Kim, Madeleine Udell (2018).
 [OBOE: Collaborative Filtering for AutoML Initialization](https://arxiv.org/pdf/1808.03233.pdf).
 *arXiv preprint*.
 
+## Auto_ViML
+[source](https://github.com/AutoViML/Auto_ViML) |
+[documentation](https://github.com/AutoViML/Auto_ViML) |
+Python |
+Optimization: RandomizedSearchCV |
+Apache License 2.0
+
+> autoviml (pronounced "auto vimal") is an automated machine learning library that helps build variant interpretable ML models in a single line of code. 
+
+Auto_ViML has helped the 2nd place winner of the MachineHack Workstation Price Prediction challenge [Kaggle Notebook](https://www.kaggle.com/a45632/rank-2-solution/execution)
+
+It allows you to try from the simplest linear models to the most complex models such as XGBoost, CatBoost in the same line of code.
+It also allows you to combine NLP text columns and structured data in same dataset since it uses Auto_NLP to transform text to fetaure vectors.
+It features SHAP values, ensemble construction, automatic data cleaning, and limited feature engineering.
 
 ## Baselines
 
