@@ -3,17 +3,21 @@ HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
 REPO=${2:-"ja-thomas/autoxgboost"}
 
-# Version can be specified as 'stable', 'latest', a full 40-character commit hash or a branch
+# Version can be specified as 'stable', 'latest', a branch or a commit hash (indicated by starting with '#')
 if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
   VERSION="master"
 fi
 
-if ! [[ "$VERSION" =~ ^[a-fA-F0-9]{40}$ ]]; then
+if [[ "$VERSION" =~ ^# ]]; then
+  VERSION="${VERSION:1:8}"
+else
   # if VERSION is not a hash, it should be a branch (or a format which is not (officially) supported)
-  VERSION=$(git ls-remote "https://github.com/${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
-  if [[ -z $VERSION ]]; then
+  COMMIT=$(git ls-remote "https://github.com/${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
+  if [[ -z $COMMIT ]]; then
     echo "Could not resolve version ${VERSION}. It is not a branch on https://github.com/${REPO}."
     echo "Continuing setup, install_github will try to resolve 'ref=${VERSION}'."
+  else
+    VERSION="${COMMIT:0:7}"
   fi
 fi
 
