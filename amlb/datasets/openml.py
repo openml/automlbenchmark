@@ -241,8 +241,9 @@ class ArffSplitter(DataSplitter[str]):
             attributes = [(c,
                            ('INTEGER' if pat.is_integer_dtype(dt)
                             else 'REAL' if pat.is_float_dtype(dt)
-                            else 'NUMERIC' if pat.is_numeric_dtype(dt)
-                            # else ['0', '1'] if pat.is_bool_dtype(dt)
+                           # columns with all values missing will be interpreted as string by default,
+                           # but we can use openml meta-data to find out if it should be considered numeric instead.
+                            else 'NUMERIC' if pat.is_numeric_dtype(dt) or self._is_numeric(c)
                             else self._get_categorical_values(c) if pat.is_categorical_dtype(dt)
                             else 'STRING'
                            ))
@@ -253,6 +254,10 @@ class ArffSplitter(DataSplitter[str]):
                 attributes=attributes,
                 data=df.values
             ), file)
+
+    def _is_numeric(self, col):
+        feat = next((f for f in self.ds._oml_dataset.features.values() if f.name == col), None)
+        return feat.data_type.lower() == "numeric"
 
     def _get_categorical_values(self, col):
         feat = next((f for f in self.ds._oml_dataset.features.values() if f.name == col), None)
