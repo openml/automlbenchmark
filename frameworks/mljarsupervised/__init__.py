@@ -11,16 +11,15 @@ def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
     data = dict(
-        train=dict(data=dataset.train.data),
-        test=dict(data=dataset.test.data),
-        target=dict(
-            name=dataset.target.name,
-            classes=dataset.target.values
+        train=dict(
+            X=dataset.train.X,
+            y=dataset.train.y
         ),
-        columns=[(f.name, ('object' if f.is_categorical(strict=False)  # keep as object everything that is not numerical
-                           else 'int' if f.data_type == 'integer'
-                           else 'float')) for f in dataset.features],
-        problem_type=dataset.type.name  
+        test=dict(
+            X=dataset.test.X,
+            y=dataset.test.y
+        ),
+        problem_type=dataset.type.name
     )
 
     return run_in_venv(__file__, "exec.py",

@@ -5,7 +5,8 @@ import sys
 sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
 from auto_learner import AutoLearner
 
-from frameworks.shared.callee import call_run, result, utils
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -18,8 +19,8 @@ def run(dataset, config):
         # regression currently fails (as of 26.02.2019: still under development state by oboe team)
         raise ValueError('Regression is not yet supported (under development).')
 
-    X_train = dataset.train.X_enc
-    y_train = dataset.train.y_enc
+    X_train = dataset.train.X
+    y_train = dataset.train.y
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_cores = config.framework_params.get('_n_cores', config.cores)
@@ -34,7 +35,7 @@ def run(dataset, config):
 
     aml_models = lambda: [aml.ensemble, *aml.ensemble.base_learners] if len(aml.ensemble.base_learners) > 0 else []
 
-    with utils.Timer() as training:
+    with Timer() as training:
         try:
             aml.fit(X_train, y_train)
         except IndexError as e:
@@ -43,9 +44,9 @@ def run(dataset, config):
             raise e
 
     log.info('Predicting on the test set.')
-    X_test = dataset.test.X_enc
-    y_test = dataset.test.y_enc
-    with utils.Timer() as predict:
+    X_test = dataset.test.X
+    y_test = dataset.test.y
+    with Timer() as predict:
         predictions = aml.predict(X_test)
     predictions = predictions.reshape(len(X_test))
 

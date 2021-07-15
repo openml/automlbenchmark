@@ -16,7 +16,7 @@ def run(dataset: Dataset, config: TaskConfig):
     is_classification = config.type == 'classification'
     predictor = DummyClassifier(strategy='prior') if is_classification else DummyRegressor(strategy='median')
 
-    encode = config.framework_params['encode'] if 'encode' in config.framework_params else False
+    encode = config.framework_params.get('_encode', False)
     X_train = dataset.train.X_enc if encode else dataset.train.X
     y_train = dataset.train.y_enc if encode else dataset.train.y
     X_test = dataset.test.X_enc if encode else dataset.test.X

@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import re
@@ -5,12 +6,15 @@ from tempfile import TemporaryDirectory, mktemp
 from typing import Union
 
 import numpy as np
+import pandas as pd
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
-from amlb.utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load
+
+from .serialization import deserialize_data, serialize_data, ser_config
+from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load, profile
 
 log = logging.getLogger(__name__)
 
@@ -40,52 +44,87 @@ def run_cmd_in_venv(caller_file, cmd, *args, **kwargs):
     return run_cmd(cmd, *args, **kwargs)
 
 
+def as_vec(data):
+    return data.reshape(-1) if isinstance(data, np.ndarray) else data
+
+
+def as_col(data):
+    return data.reshape(-1, 1) if isinstance(data, np.ndarray) else data
+
+
+def venv_bin(fmwk_dir):
+    return os.path.join(fmwk_dir, 'venv', 'bin')
+
+
+def venv_python_exec(fmwk_dir):
+    return os.path.join(venv_bin(fmwk_dir), 'python -W ignore')
+
+
+@profile(logger=log)
+def _make_input_dataset(input_data, dataset, tmpdir):
+    input_data = ns.from_dict(input_data)
+
+    def make_path(k, v, parents=None):
+        if isinstance(v, (np.ndarray,  pd.DataFrame, pd.Series)):
+            path = os.path.join(tmpdir, '.'.join(parents+[k, 'data']))
+            if vector_keys.match(k):
+                v = as_col(v)
+            path = serialize_data(v, path)
+            return k, path
+        return k, v
+
+    ds = ns.walk(input_data, make_path)
+    dataset.release()
+    gc.collect()
+    return ds
+
+
 def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
                 process_results=None,
                 python_exec=None):
-
     here = dir_of(caller_file)
-    venv_bin_path = os.path.join(here, 'venv', 'bin')
     if python_exec is None:  # use local virtual env by default
-        python_exec = os.path.join(venv_bin_path, 'python -W ignore')
+        python_exec = venv_python_exec(here)
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
-    input_data = ns.from_dict(input_data)
     with TemporaryDirectory() as tmpdir:
 
-        def make_path(k, v, parents=None):
-            if isinstance(v, np.ndarray):
-                path = os.path.join(tmpdir, '.'.join(parents+[k, 'npy']))
-                if vector_keys.match(k):
-                    v = v.reshape(-1, 1)
-                np.save(path, v, allow_pickle=True)
-                return k, path
-            return k, v
-
-        ds = ns.walk(input_data, make_path)
-        dataset.release()
+        ds = _make_input_dataset(input_data, dataset, tmpdir)
 
         config.result_dir = tmpdir
         config.result_file = mktemp(dir=tmpdir)
 
         params = json_dumps(dict(dataset=ds, config=config), style='compact')
+        log.debug("Params passed to subprocess:\n%s", params)
+        cmon = rconfig().monitoring
+        monitor = (dict(interval_seconds=cmon.interval_seconds,
+                        verbosity=cmon.verbosity)
+                   if 'sub_proc_memory' in cmon.statistics
+                   else None)
+        env = dict(
+            PATH=os.pathsep.join([
+                venv_bin(here),
+                os.environ['PATH']
+            ]),
+            PYTHONPATH=os.pathsep.join([
+                rconfig().root_dir,
+            ]),
+            AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
+            AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
+            AMLB_SER_PD_MODE=str(ser_config.pandas_serializer or ''),
+            AMLB_SER_PD_COMPR=str(ser_config.pandas_compression or ''),
+            AMLB_SER_PD_PQT_COMPR=str(ser_config.pandas_parquet_compression or ''),
+        )
+
         with Timer() as proc_timer:
             output, err = run_cmd(cmd, *args,
                                   _input_str_=params,
                                   _live_output_=True,
                                   _error_level_=logging.DEBUG,
-                                  _env_=dict(
-                                      PATH=os.pathsep.join([
-                                          venv_bin_path,
-                                          os.environ['PATH']
-                                      ]),
-                                      PYTHONPATH=os.pathsep.join([
-                                          rconfig().root_dir,
-                                      ]),
-                                      AMLB_PATH=os.path.join(rconfig().root_dir, "amlb")
-                                    ),
+                                  _env_=env,
+                                  _monitor_=monitor
                                   )
 
         res = ns(lambda: None)
@@ -101,7 +140,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             raise NoResultError(res.error_message)
 
         for name in ['predictions', 'truth', 'probabilities']:
-            res[name] = np.load(res[name], allow_pickle=True) if res[name] is not None else None
+            res[name] = deserialize_data(res[name]) if res[name] is not None else None
 
         if callable(process_results):
             res = process_results(res)
@@ -109,8 +148,10 @@ def run_in_venv(caller_file, script_file: str, *args,
         if res.output_file:
             save_predictions(dataset=dataset,
                              output_file=res.output_file,
-                             predictions=res.predictions.reshape(-1) if res.predictions is not None else None,
-                             truth=res.truth.reshape(-1) if res.truth is not None else None,
+                             predictions=as_vec(res.predictions),
+                             truth=(as_vec(res.truth) if res.truth is not None
+                                    else dataset.test.y_enc if res.target_is_encoded
+                                    else dataset.test.y),
                              probabilities=res.probabilities,
                              probabilities_labels=res.probabilities_labels,
                              target_is_encoded=res.target_is_encoded)

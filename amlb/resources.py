@@ -252,6 +252,7 @@ def from_config(config: Namespace):
     global __INSTANCE__
     transform_config(config, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(config)
+    return __INSTANCE__
 
 
 def from_configs(*configs: Namespace):
@@ -259,6 +260,7 @@ def from_configs(*configs: Namespace):
     for c in configs:
         transform_config(c, _backward_compatibility_config_rules_)
     __INSTANCE__ = Resources(Namespace.merge(*configs, deep=True))
+    return __INSTANCE__
 
 
 def get() -> Resources:
@@ -291,6 +293,9 @@ _backward_compatibility_config_rules_ = [
     TransformRule(from_key='exit_on_error', to_key='job_scheduler.exit_on_job_failure'),
     TransformRule(from_key='parallel_jobs', to_key='job_scheduler.parallel_jobs'),
     TransformRule(from_key='max_parallel_jobs', to_key='job_scheduler.max_parallel_jobs'),
-    TransformRule(from_key='delay_between_jobs', to_key='job_scheduler.delay_between_jobs')
+    TransformRule(from_key='delay_between_jobs', to_key='job_scheduler.delay_between_jobs'),
+    TransformRule(from_key='monitoring.frequency_seconds', to_key='monitoring.interval_seconds'),
+    TransformRule(from_key='aws.query_frequency_seconds', to_key='aws.query_interval_seconds'),
+    TransformRule(from_key='aws.ec2.monitoring.cpu.query_frequency_seconds', to_key='aws.ec2.monitoring.cpu.query_interval_seconds'),
 ]
 

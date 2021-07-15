@@ -18,7 +18,8 @@ import sklearn
 from gama.data_loading import file_to_pandas
 from gama import GamaClassifier, GamaRegressor, __version__
 
-from frameworks.shared.callee import call_run, result, save_metadata, utils
+from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.utils import Timer, touch
 
 
 log = logging.getLogger(__name__)
@@ -49,9 +50,6 @@ def run(dataset, config):
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
 
-    *_, did, fold = dataset.train_path.split('/')
-    fold = fold.split('.')[0].split('_')[-1]
-
     log.info('Running GAMA with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
 
@@ -65,28 +63,30 @@ def run(dataset, config):
     )
     version_leq_20_2_0 = version.parse(__version__) <= version.parse('20.2.0')
     if version_leq_20_2_0:
-        log_file = os.path.join(config.output_dir, "logs", '{}_{}.log'.format(did, fold))
-        utils.touch(log_file)
+        log_file = touch(os.path.join(output_subdir('logs', config), 'gama.log'))
         kwargs['keep_analysis_log'] = log_file
     else:
         kwargs['max_memory_mb'] = config.max_mem_size_mb
-        kwargs['output_directory'] = os.path.join(config.output_dir, "gama")
+        kwargs['output_directory'] = output_subdir('logs', config)
     
     gama_automl = estimator(**kwargs)
 
-    data = file_to_pandas(dataset.train_path, encoding='utf-8')
-    x, y = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
+    X_train, y_train = dataset.train.X, dataset.train.y
+    # data = file_to_pandas(dataset.train.path, encoding='utf-8')
+    # X_train, y_train = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
 
-    with utils.Timer() as training_timer:
-        gama_automl.fit(x, y)
+    with Timer() as training_timer:
+        gama_automl.fit(X_train, y_train)
 
-    data = file_to_pandas(dataset.test_path, encoding='utf-8')
-    x, _ = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
     log.info('Predicting on the test set.')
-    with utils.Timer() as predict_timer:
-        predictions = gama_automl.predict(x)
+    X_test, y_test = dataset.test.X, dataset.test.y
+    # data = file_to_pandas(dataset.test.path, encoding='utf-8')
+    # X_test, y_test = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
+
+    with Timer() as predict_timer:
+        predictions = gama_automl.predict(X_test)
     if is_classification:
-        probabilities = gama_automl.predict_proba(x)
+        probabilities = gama_automl.predict_proba(X_test)
     else:
         probabilities = None
 
@@ -94,6 +94,7 @@ def run(dataset, config):
         output_file=config.output_predictions_file,
         predictions=predictions,
         probabilities=probabilities,
+        truth=y_test,
         target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
         training_duration=training_timer.duration,

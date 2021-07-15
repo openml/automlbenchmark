@@ -83,7 +83,7 @@ class SingularityBenchmark(ContainerBenchmark):
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
-        script_extra_params = ""
+        script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = self.sid
         cmd = (
             "singularity run --pwd /bench {options} "
@@ -93,7 +93,7 @@ class SingularityBenchmark(ContainerBenchmark):
             name=inst_name,
             options=rconfig().singularity.run_extra_options,
             input=in_dir,
-            output=out_dir,
+            output=self.output_dirs.session,
             custom=custom_dir,
             image=self.image,
             params=script_params,
@@ -168,10 +168,9 @@ add-apt-repository -y ppa:deadsnakes/ppa
 apt-get update
 apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
 #update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-pip3 install -U pip wheel
 
 # aliases for the python system
-SPIP=python{pyv} -m pip
+SPIP="python{pyv} -m pip"
 SPY=python{pyv}
 
 # Enforce UTF-8 encoding
@@ -187,8 +186,8 @@ cd /bench
 # packages that we need to data pre- and postprocessing without breaking it.
 $SPIP install -U pip wheel
 $SPY -m venv venv
-PIP=/bench/venv/bin/python3 -m pip
-PY=/bench/venv/bin/python3
+PIP="/bench/venv/bin/python{pyv} -m pip"
+PY="/bench/venv/bin/python{pyv} -W ignore"
 #$PIP install -U pip=={pipv} wheel
 $PIP install -U pip wheel
 
@@ -197,21 +196,21 @@ mkdir /output
 mkdir /custom
 
 
-xargs -L 1 $PIP install --no-cache-dir < requirements.txt
+(grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
 
-RUN $PY {script} {framework} -s only
+$PY {script} {framework} -s only
 {custom_commands}
 
 %environment
 export DEBIAN_FRONTEND=noninteractive
-export SPIP=python3 -m pip
-export SPY=python3
+export SPIP=python{pyv} -m pip
+export SPY=python{pyv}
 export PYTHONUTF8=1
 export PYTHONIOENCODING=utf-8
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
-export PIP=/bench/venv/bin/python3 -m pip
-export PY=/bench/venv/bin/python3
+export PIP=/bench/venv/bin/python{pyv} -m pip
+export PY=/bench/venv/bin/python{pyv}
 %runscript
 cd /bench
 exec /bin/bash -c "$PY {script} ""$@"

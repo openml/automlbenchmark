@@ -11,15 +11,12 @@ def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
     data = dict(
-        train=dict(data=dataset.train.data),
-        test=dict(data=dataset.test.data),
+        train=dict(path=dataset.train.data_path('parquet')),
+        test=dict(path=dataset.test.data_path('parquet')),
         target=dict(
             name=dataset.target.name,
             classes=dataset.target.values
         ),
-        columns=[(f.name, ('object' if f.is_categorical(strict=False)  # keep as object everything that is not numerical
-                           else 'int' if f.data_type == 'integer'
-                           else 'float')) for f in dataset.features],
         problem_type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
     )
 

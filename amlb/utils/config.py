@@ -5,7 +5,8 @@ import logging
 import os
 from typing import Callable, List, Union
 
-from ruamel import yaml
+from ruamel.yaml.constructor import SafeConstructor
+from ruamel.yaml.main import YAML
 
 from .core import Namespace, identity, json_load
 from .os import normalize_path
@@ -13,7 +14,7 @@ from .os import normalize_path
 log = logging.getLogger(__name__)
 
 
-class YAMLNamespaceLoader(yaml.loader.SafeLoader):
+class YAMLNamespaceConstructor(SafeConstructor):
 
     @classmethod
     def init(cls):
@@ -26,14 +27,16 @@ class YAMLNamespaceLoader(yaml.loader.SafeLoader):
         data + value
 
 
-YAMLNamespaceLoader.init()
+YAMLNamespaceConstructor.init()
 
 
 def yaml_load(file, as_namespace=False):
     if as_namespace:
-        return yaml.load(file, Loader=YAMLNamespaceLoader)
+        yaml = YAML(typ='safe', pure=True)
+        yaml.Constructor = YAMLNamespaceConstructor
     else:
-        return yaml.safe_load(file)
+        yaml = YAML(typ='safe')
+    return yaml.load(file)
 
 
 def config_load(path, verbose=False):

@@ -13,42 +13,75 @@ from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str
 from amlb import log, AutoMLError
 
 
-parser = argparse.ArgumentParser()
+default_dirs = ns(
+    input_dir="~/.openml/cache",
+    output_dir="./results",
+    user_dir="~/.config/automlbenchmark",
+    root_dir=os.path.dirname(__file__)
+)
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('framework', type=str,
-                    help="The framework to evaluate as defined by default in resources/frameworks.yaml. "
-                         "To use a labelled framework (i.e. a framework defined in resources/frameworks-{label}.yaml), "
-                         "use the syntax {framework}:{label}.")
+                    help="The framework to evaluate as defined by default in resources/frameworks.yaml."
+                         "\nTo use a labelled framework (i.e. a framework defined in resources/frameworks-{label}.yaml),"
+                         "\nuse the syntax {framework}:{label}.")
 parser.add_argument('benchmark', type=str, nargs='?', default='test',
-                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml, "
-                         "a path to a benchmark description file, or an openml suite or task. OpenML references should "
-                         "be formatted as 'openml/s/X' and 'openml/t/Y', for studies and tasks respectively. Defaults to `%(default)s`.")
+                    help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml,"
+                         "\na path to a benchmark description file, or an openml suite or task."
+                         "\nOpenML references should be formatted as 'openml/s/X' and 'openml/t/Y',"
+                         "\nfor studies and tasks respectively."
+                         "\n(default: '%(default)s')")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
-                    help="The constraint definition to use as defined by default in resources/constraints.yaml. Defaults to `test`.")
+                    help="The constraint definition to use as defined by default in resources/constraints.yaml."
+                         "\n(default: '%(default)s')")
 parser.add_argument('-m', '--mode', choices=['local', 'aws', 'docker', 'singularity'], default='local',
-                    help="The mode that specifies how/where the benchmark tasks will be running. Defaults to %(default)s.")
+                    help="The mode that specifies how/where the benchmark tasks will be running."
+                         "\n(default: '%(default)s')")
 parser.add_argument('-t', '--task', metavar='task_id', nargs='*', default=None,
-                    help="The specific task name (as defined in the benchmark file) to run. "
-                         "When an OpenML reference is used as benchmark, the dataset name should be used instead. "
-                         "If not provided, then all tasks from the benchmark will be run.")
+                    help="The specific task name (as defined in the benchmark file) to run."
+                         "\nWhen an OpenML reference is used as benchmark, the dataset name should be used instead."
+                         "\nIf not provided, then all tasks from the benchmark will be run.")
 parser.add_argument('-f', '--fold', metavar='fold_num', type=int, nargs='*', default=None,
-                    help="If task is provided, the specific fold(s) to run. "
-                         "If fold is not provided, then all folds from the task definition will be run.")
+                    help="If task is provided, the specific fold(s) to run."
+                         "\nIf fold is not provided, then all folds from the task definition will be run.")
 parser.add_argument('-i', '--indir', metavar='input_dir', default=None,
-                    help="Folder where datasets are loaded by default. Defaults to `input_dir` as defined in resources/config.yaml")
+                    help="Folder from where the datasets are loaded by default."
+                         f"\n(default: '{default_dirs.input_dir}')")
 parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
-                    help="Folder where all the outputs should be written. Defaults to `output_dir` as defined in resources/config.yaml")
+                    help="Folder where all the outputs should be written."
+                         f"(default: '{default_dirs.output_dir}')")
 parser.add_argument('-u', '--userdir', metavar='user_dir', default=None,
-                    help="Folder where all the customizations are stored. Defaults to `user_dir` as defined in resources/config.yaml")
+                    help="Folder where all the customizations are stored."
+                         f"(default: '{default_dirs.user_dir}')")
 parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, default=1,
-                    help="The number of jobs (i.e. tasks or folds) that can run in parallel. Defaults to %(default)s. "
-                         "Currently supported only in docker and aws mode.")
+                    help="The number of jobs (i.e. tasks or folds) that can run in parallel."
+                         "\nA hard limit is defined by property `job_scheduler.max_parallel_jobs`"
+                         "\n in `resources/config.yaml`."
+                         "\nOverride this limit in your custom `config.yaml` file if needed."
+                         "\nSupported only in aws mode or container mode (docker, singularity)."
+                         "\n(default: %(default)s)")
 parser.add_argument('-s', '--setup', choices=['auto', 'skip', 'force', 'only'], default='auto',
-                    help="Framework/platform setup mode. Defaults to %(default)s. "
-                         "•auto: setup is executed only if strictly necessary. •skip: setup is skipped. •force: setup is always executed before the benchmark. •only: only setup is executed (no benchmark).")
+                    help="Framework/platform setup mode. Available values are:"
+                         "\n• auto: setup is executed only if strictly necessary."
+                         "\n• skip: setup is skipped."
+                         "\n• force: setup is always executed before the benchmark."
+                         "\n• only: only setup is executed (no benchmark)."
+                         "\n(default: '%(default)s')")
 parser.add_argument('-k', '--keep-scores', type=str2bool, metavar='true|false', nargs='?', const=True, default=True,
-                    help="Set to true [default] to save/add scores in output directory.")
+                    help="Set to true (default) to save/add scores in output directory.")
 parser.add_argument('-e', '--exit-on-error', action='store_true', dest="exit_on_error",
-                    help="If set, the first task that does not complete with a model will cause the entire script to terminate.")
+                    help="If set, terminates on the first task that does not complete with a model.")
+parser.add_argument('--logging', type=str, default="console:info,app:debug,root:info",
+                    help="Set the log levels for the 3 available loggers:"
+                         "\n• console"
+                         "\n• app: for the log file including only logs from amlb (.log extension)."
+                         "\n• root: for the log file including logs from libraries (.full.log extension)."
+                         "\nAccepted values for each logger are: notset, debug, info, warning, error, fatal, critical."
+                         "\nExamples:"
+                         "\n  --logging=info (applies the same level to all loggers)"
+                         "\n  --logging=root:debug (keeps defaults for non-specified loggers)" 
+                         "\n  --logging=console:warning,app:info"
+                         "\n(default: '%(default)s')")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
@@ -63,7 +96,6 @@ parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.
 # parser.add_argument('-r', '--region', metavar='aws_region', default=None,
 #                     help="The region on which to run the benchmark when using AWS.")
 
-root_dir = os.path.dirname(__file__)
 args = parser.parse_args()
 script_name = os.path.splitext(os.path.basename(__file__))[0]
 extras = {t[0]: t[1] if len(t) > 1 else True for t in [x.split('=', 1) for x in args.extra]}
@@ -77,30 +109,34 @@ sid = (args.session if args.session is not None
                                      extras.get('run_mode', args.mode)])
                               .lower(),
                            now_str))
-log_dir = amlb.resources.output_dirs(args.outdir or os.path.join(os.getcwd(), 'logs'),
+log_dir = amlb.resources.output_dirs(args.outdir or default_dirs.output_dir,
                                      session=sid,
-                                     subdirs='logs' if args.outdir else '',
-                                     create=True)['logs' if args.outdir else 'session']
+                                     subdirs='logs',
+                                     create=True)['logs']
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
     logging.TRACE = logging.INFO
+log_levels = ns({logger: level.upper()
+                 for logger, level in [d.split(':') for d in args.logging.split(',')]} if ':' in args.logging
+                else dict(console=args.logging.upper(), app=args.logging.upper(), root=args.logging.upper()) if args.logging
+                else {}) % ns(console='INFO', app='DEBUG', root='INFO')  # adding defaults if needed
 amlb.logger.setup(log_file=os.path.join(log_dir, '{script}.{now}.log'.format(script=script_name, now=now_str)),
                   root_file=os.path.join(log_dir, '{script}.{now}.full.log'.format(script=script_name, now=now_str)),
-                  root_level='INFO', app_level='DEBUG', console_level='INFO', print_to_log=True)
+                  root_level=log_levels.root, app_level=log_levels.app, console_level=log_levels.console, print_to_log=True)
 
-log.info("Running `%s` on `%s` benchmarks in `%s` mode.", args.framework, args.benchmark, args.mode)
+log.info("Running benchmark `%s` on `%s` framework in `%s` mode.", args.framework, args.benchmark, args.mode)
 log.debug("Script args: %s.", args)
 
-config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
+config_default = config_load(os.path.join(default_dirs.root_dir, "resources", "config.yaml"))
+config_default_dirs = default_dirs
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-config_user = config_load(extras.get('config', os.path.join(args.userdir or config.user_dir, "config.yaml")))
+config_user = config_load(extras.get('config', os.path.join(args.userdir or default_dirs.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
     {'results.save': args.keep_scores},
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,
-    root_dir=root_dir,
     script=os.path.basename(__file__),
     run_mode=args.mode,
     parallel_jobs=args.parallel,
@@ -112,7 +148,7 @@ if args.mode != 'local':
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
-amlb.resources.from_configs(config, config_user, config_args)
+amlb.resources.from_configs(config_default, config_default_dirs, config_user, config_args)
 
 code = 0
 bench = None

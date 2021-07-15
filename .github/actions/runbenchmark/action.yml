@@ -1,0 +1,26 @@
+name: "Run Benchmark"
+description: "Runs a framework on a task"
+
+inputs:
+  framework:
+    description: 'Framework to run'
+    default: 'constantpredictor'
+    required: true
+  task:
+    description: 'Task to run the framework on'
+    default: 'openml/t/59'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      shell: bash
+    - name: Run ${{ inputs.framework }} on ${{ inputs.task }}
+      run: |
+        python runbenchmark.py ${{ inputs.framework }} validation test -f 0 -t ${{ inputs.task }} -e
+        echo "Exit with status $?"
+      shell: bash
