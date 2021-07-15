@@ -22,25 +22,25 @@ autosklearn2:
     _askl2: true
 
 autoxgboost:
-  version: 'master@908631665f4c763d548ed203d48f05fe68613844'
+  version: '#908631665f4c763d548ed203d48f05fe68613844'
 
 AutoWEKA:
   version: '2.6'
 
 flaml:
-  version: '0.3.6'
+  version: '0.5.7'
 
 GAMA:
   version: '21.0.0'
 
 H2OAutoML:
-  version: '3.32.1.3'
+  version: '3.32.1.4'
 
 lightautoml:
-  version: '0.2.14'
+  version: '0.2.16'
 
 mljarsupervised:
-  version: '0.10.4'
+  version: '0.10.6'
 
 mljarsupervised_benchmark:
   extends: mljarsupervised
@@ -57,7 +57,7 @@ MLPlanWEKA:
     _backend: weka
 
 mlr3automl:
-  version: 'master@57d35d2107bf1c8e46b784fa2877cd453bfa6c5d'
+  version: '#dc4031fac57e1d1caea0b48c8526528852572e7c'
   project: https://github.com/a-hanf/mlr3automl
 
 TPOT:
@@ -69,11 +69,6 @@ TPOT:
 #######################################
 
 constantpredictor: {}
-
-constantpredictor_enc:
-  extends: constantpredictor
-  params:
-    encode: true
 
 DecisionTree:
   version: '0.24.2'
