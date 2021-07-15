@@ -9,7 +9,7 @@ if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
 fi
 
 if [[ "$VERSION" =~ ^# ]]; then
-  VERSION="${VERSION:1:8}"
+  VERSION="${VERSION:1}"
 else
   # if VERSION is not a hash, it should be a branch (or a format which is not (officially) supported)
   COMMIT=$(git ls-remote "https://github.com/${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
@@ -17,7 +17,7 @@ else
     echo "Could not resolve version ${VERSION}. It is not a branch on https://github.com/${REPO}."
     echo "Continuing setup, install_github will try to resolve 'ref=${VERSION}'."
   else
-    VERSION="${COMMIT:0:7}"
+    VERSION=$COMMIT
   fi
 fi
 
@@ -43,4 +43,4 @@ Rscript -e 'options(install.packages.check.source="no"); install.packages(c("rem
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${HERE}/r-packages/"'")'
 
 OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g")
-echo "${OFFICIAL_VERSION}#${VERSION}" >> "${HERE}/.installed"
+echo "${OFFICIAL_VERSION}#${VERSION:0:7}" >> "${HERE}/.installed"
