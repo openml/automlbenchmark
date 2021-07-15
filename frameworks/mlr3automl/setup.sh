@@ -1,8 +1,26 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
-REPO=${2:-"https://github.com/a-hanf"}
+REPO=${2:-"a-hanf/mlr3automl"}
 MLR_REPO=${3:-"https://github.com/mlr-org"}
+
+# Version can be specified as 'stable', 'latest', a branch or a commit hash (indicated by starting with '#')
+if [[ "$VERSION" == "latest" || "$VERSION" == "stable" ]]; then
+  VERSION="master"
+fi
+
+if [[ "$VERSION" =~ ^# ]]; then
+  VERSION="${VERSION:1}"
+else
+  # if VERSION is not a hash, it should be a branch (or a format which is not (officially) supported)
+  COMMIT=$(git ls-remote "https://github.com/${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
+  if [[ -z $COMMIT ]]; then
+    echo "Could not resolve version ${VERSION}. It is not a branch on https://github.com/${REPO}."
+    echo "Continuing setup, install_github will try to resolve 'ref=${VERSION}'."
+  else
+    VERSION=$COMMIT
+  fi
+fi
 
 . $HERE/../shared/setup.sh "$HERE"
 if [[ -x "$(command -v apt-get)" ]]; then
@@ -25,6 +43,7 @@ mkdir "${HERE}/r-packages/"
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"'")'
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"'")'
 Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${HERE}/r-packages/"'")'
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'/mlr3automl", lib="'"${HERE}/r-packages/"'")'
+Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${HERE}/r-packages/"'")'
 
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
+OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g")
+echo "${OFFICIAL_VERSION}#${VERSION:0:7}" >> "${HERE}/.installed"
