@@ -13,6 +13,10 @@ if [[ "$VERSION" == "latest" ]]; then
 fi
 
 rm -rf DOTNET_INSTALL_DIR
+
+export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+
 # install mlnet if necessary
 if [[ ! -x "$MLNET" ]]; then
     if [[ ! -x "$DOTNET" ]]; then
@@ -27,7 +31,6 @@ else
 $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
-export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
-export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
-$MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.installed"
+$MLNET --version >> "${HERE}/.installed"
+
