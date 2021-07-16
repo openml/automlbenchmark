@@ -29,9 +29,8 @@ if [[ ! -x "$MLNET" ]]; then
     $DOTNET --version
     $DOTNET tool install mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 else
-$DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
+  $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
 
-$MLNET --version >> "${HERE}/.installed"
-
+# $MLNET --version >> "${HERE}/.installed"
