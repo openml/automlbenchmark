@@ -24,16 +24,23 @@ elif [[ "$VERSION" =~ ^[0-9] ]]; then
 else
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
+
     if [[ "$VERSION" =~ ^# ]]; then
-        # Provided a git hash
-        git clone  --recurse-submodules ${REPO} ${TARGET_DIR}
-        cd ${TARGET_DIR}
-        git checkout "${VERSION:1}"
-        cd ${HERE}
+      COMMIT="${VERSION:1}"
     else
-        git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
+      # find the latest commit to the VERSION branch
+      COMMIT=$(git ls-remote "${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
     fi
+
+    git clone  --recurse-submodules ${REPO} ${TARGET_DIR}
+    cd ${TARGET_DIR}
+    git checkout "${COMMIT}"
+    cd ${HERE}
     PIP install -U -e ${TARGET_DIR}
 fi
 
 PY -c "from autosklearn import __version__; print(__version__)" >> "${HERE}/.installed"
+if [[ -n $COMMIT ]]; then
+  truncate -s-1 "${HERE}/.installed"
+  echo "#${COMMIT}" >> "${HERE}/.installed"
+fi
