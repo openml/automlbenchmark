@@ -1,0 +1,160 @@
+name: Run All Frameworks
+
+on: pull_request
+
+
+jobs:
+
+  detect_changes:  # Figure out which frameworks need to be evaluated based on which files are changed.
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frameworks: ${{ steps.find-required-tests.outputs.frameworks }}
+      tasks: ${{ steps.find-required-tests.outputs.tasks }}
+      benchmark: ${{ steps.find-required-tests.outputs.benchmark }}
+      skip_baseline: ${{ steps.find-required-tests.outputs.skip_baseline }}
+      skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: pull base branch
+        run: |
+          git fetch --all
+          git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
+          git checkout $GITHUB_HEAD_REF
+      - id: find-required-tests
+        name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
+        run: |
+          changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
+
+          shopt -s globstar
+          common_files="amlb/** "\
+          "resources/** "\
+          "frameworks/shared/** "\
+          ".github/workflows/run_all_frameworks.yml "\
+          ".github/runbenchmark/action.yml "\
+          "runbenchmark.py "\
+          "requirements.txt"
+          
+          echo Common files: $common_files
+          echo Changed files: $changed_files
+
+          is_common=1
+          for f in $changed_files
+          do
+            if echo $common_files | grep -e $f >> /dev/null;
+            then
+                echo "File $f detected as common file"
+                is_common=0
+                break
+            fi
+          done
+
+          # Indicates which jobs should be executed (0) or not (1)
+          skip_evaluation=0
+          if [[ $is_common -eq 0 ]];
+          then
+            FRAMEWORKS='["autogluon", "autosklearn", "autoxgboost", "gama", "h2oautoml", "mlplanweka", "mlr3automl", "tpot", "tunedrandomforest"]'
+            TASKS='["iris", "kc2", "cholesterol"]'
+            BENCHMARK='["test"]'
+          else
+            TASKS='["APSFailure", "bioresponse", "dresses-sales", "eucalyptus", "internet-advertisements", "kc1", "micro-mass"]'
+            BENCHMARK='["validation"]'
+            changed_frameworks=$(git diff --name-only HEAD..$GITHUB_BASE_REF | grep -o -i -P 'frameworks/(?!shared).*/' | uniq | sed -e 's/frameworks//' -e 's/\///g')
+            if [ ! -z "$changed_frameworks" ];
+            then
+              json_array=[
+              for framework in $changed_frameworks; do json_array=$json_array\"$framework\",; done
+              FRAMEWORKS=${json_array::-1}]  #remove trailing comma and add closing bracket
+            else
+              # No changes to common files or frameworks - must be e.g. docs. No need to run tests.
+              skip_evaluation=1
+              FRAMEWORKS=[]
+            fi
+          fi
+
+          echo Building matrix for frameworks: $FRAMEWORKS
+
+          echo "::set-output name=frameworks::$FRAMEWORKS"
+          echo "::set-output name=tasks::$TASKS"
+          echo "::set-output name=benchmark::$BENCHMARK"
+          echo "::set-output name=skip_baseline::$is_common"
+          echo "::set-output name=skip_evaluations::$skip_evaluation"
+
+  baseline:
+    name: ${{ matrix.framework }}/${{ matrix.task }}
+    runs-on: ubuntu-latest
+    needs: detect_changes
+    if: needs.detect_changes.outputs.skip_baseline == 0
+    strategy:
+      matrix:
+        framework: [constantpredictor, randomforest]
+        task: [iris, kc2, cholesterol]
+      fail-fast:  false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Create venv
+        run: python -m venv venv
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.8/site-packages
+          key: pip-v3-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            pip-v3-
+      - name: Install Requirements
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip show openml
+      - name: Run constantpredictor on openml iris
+        run: |
+          source venv/bin/activate
+          python runbenchmark.py ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
+
+  run_frameworks:
+    name: ${{ matrix.framework }}/${{ matrix.task }}
+    runs-on: ubuntu-latest
+    needs:
+     - baseline
+     - detect_changes
+    if: ${{ success() }} || ${{ cancelled() }}
+
+    strategy:
+      matrix:
+        python-version: [3.8]
+        framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
+        task: ${{ fromJson(needs.detect_changes.outputs.tasks) }}
+        benchmark: ${{ fromJson(needs.detect_changes.outputs.benchmark) }}
+      fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Create venv
+      run: python -m venv venv
+    - uses: actions/cache@v2
+      id: cache
+      with:
+        path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.8/site-packages
+        key: pip-v3-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          pip-v3-
+    - name: Install Requirements
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        source venv/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
+      run: |
+        source venv/bin/activate
+        python runbenchmark.py ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e

@@ -13,7 +13,8 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 from tpot import TPOTClassifier, TPOTRegressor, __version__
 
-from frameworks.shared.callee import call_run, output_subdir, result, utils
+from frameworks.shared.callee import call_run, output_subdir, result
+from frameworks.shared.utils import Timer
 
 
 log = logging.getLogger(__name__)
@@ -39,8 +40,8 @@ def run(dataset, config):
     if scoring_metric is None:
         raise ValueError("Performance metric {} not supported.".format(config.metric))
 
-    X_train = dataset.train.X_enc
-    y_train = dataset.train.y_enc
+    X_train = dataset.train.X
+    y_train = dataset.train.y
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
@@ -56,13 +57,13 @@ def run(dataset, config):
                      random_state=config.seed,
                      **training_params)
 
-    with utils.Timer() as training:
+    with Timer() as training:
         tpot.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
-    X_test = dataset.test.X_enc
-    y_test = dataset.test.y_enc
-    with utils.Timer() as predict:
+    X_test = dataset.test.X
+    y_test = dataset.test.y
+    with Timer() as predict:
         predictions = tpot.predict(X_test)
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None

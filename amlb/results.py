@@ -10,10 +10,12 @@ import math
 import os
 import re
 import statistics
+from typing import Union
 
 import numpy as np
 from numpy import nan, sort
 import pandas as pd
+import scipy as sci
 
 from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, log_loss, \
@@ -24,6 +26,10 @@ from .utils import Namespace, backup_file, cached, datetime_iso, get_metadata, j
 
 log = logging.getLogger(__name__)
 
+
+A = Union[np.ndarray, sci.sparse.csr_matrix]
+DF = pd.DataFrame
+S = pd.Series
 
 _supported_metrics_ = {}
 
@@ -141,8 +147,8 @@ class Scoreboard:
         log.debug("Scores columns: %s.", df.columns)
         return df
 
-    @cached
-    def as_printable_data_frame(self):
+    @memoize
+    def as_printable_data_frame(self, verbosity=3):
         str_print = lambda val: '' if val in [None, '', 'None'] or (isinstance(val, float) and np.isnan(val)) else val
         int_print = lambda val: int(val) if isinstance(val, float) and not np.isnan(val) else str_print(val)
         num_print = lambda fn, val: None if isinstance(val, str) else fn(val)
@@ -160,7 +166,13 @@ class Scoreboard:
             df[col] = df[col].astype(np.float).map(partial(num_print, "{:.1f}".format)).astype(np.float)
         for col in high_precision_float_cols:
             df[col] = df[col].map(partial(num_print, "{:.6g}".format)).astype(np.float)
-        return df
+
+        cols = ([] if verbosity == 0
+                else ['task', 'fold', 'framework', 'constraint', 'result', 'metric', 'info'] if verbosity == 1
+                else ['id', 'task', 'fold', 'framework', 'constraint', 'result', 'metric',
+                      'duration', 'seed', 'info'] if verbosity == 2
+                else slice(None))
+        return df.loc[:, cols]
 
     def _load(self):
         return self.load_df(self._score_file())
@@ -233,10 +245,10 @@ class TaskResult:
     @staticmethod
     # @profile(logger=log)
     def save_predictions(dataset: Dataset, output_file: str,
-                         predictions=None, truth=None,
-                         probabilities=None, probabilities_labels=None,
-                         target_is_encoded=False,
-                         preview=True):
+                         predictions: Union[A, DF, S] = None, truth: Union[A, DF, S] = None,
+                         probabilities: Union[A, DF] = None, probabilities_labels: Union[list, A] = None,
+                         target_is_encoded: bool = False,
+                         preview: bool = True):
         """ Save class probabilities and predicted labels to file in csv format.
 
         :param dataset:
@@ -251,6 +263,17 @@ class TaskResult:
         """
         log.debug("Saving predictions to `%s`.", output_file)
         remap = None
+        if isinstance(predictions, DF):
+            predictions = predictions.squeeze()
+        if isinstance(predictions, S):
+            predictions = predictions.values
+        if isinstance(truth, DF):
+            truth = truth.squeeze()
+        if isinstance(truth, S):
+            truth = truth.values
+        if isinstance(probabilities, DF):
+            probabilities = probabilities.values
+
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
             df = to_data_frame(probabilities, columns=prob_cols)
@@ -360,11 +383,11 @@ class TaskResult:
         self.predictions_dir = (predictions_dir if predictions_dir
                                 else output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions)
 
-    @memoize
+    @cached
     def get_result(self):
         return self.load_predictions(self._predictions_file)
 
-    @memoize
+    @cached
     def get_result_metadata(self):
         return self.load_metadata(self._metadata_file)
 
@@ -493,7 +516,7 @@ class ClassificationResult(Result):
         super().__init__(predictions_df, info)
         self.classes = self.df.columns[:-2].values.astype(str, copy=False)
         self.probabilities = self.df.iloc[:, :-2].values.astype(float, copy=False)
-        self.target = Feature(0, 'class', 'categorical', values=self.classes, is_target=True)
+        self.target = Feature(0, 'target', 'category', values=self.classes, is_target=True)
         self.type = DatasetType.binary if len(self.classes) == 2 else DatasetType.multiclass
         self.truth = self._autoencode(self.truth.astype(str, copy=False))
         self.predictions = self._autoencode(self.predictions.astype(str, copy=False))

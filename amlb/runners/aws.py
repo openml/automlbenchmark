@@ -63,6 +63,8 @@ class AWSBenchmark(Benchmark):
     an extension of Benchmark class, to run benchmarks on AWS
     """
 
+    framework_install_required = False
+
     @classmethod
     def fetch_results(cls, instances_file, instance_selector=None):
         bench = cls(None, None, None)
@@ -326,9 +328,12 @@ class AWSBenchmark(Benchmark):
             if _self.ext.instance_type is None and spot_config.enabled:
                 _self.ext.instance_type = InstanceType.Spot_Block if spot_config.block_enabled else InstanceType.Spot
             if _self.ext.wait_min_secs:
+                _self.ext.interrupt = interrupt = threading.Event()
                 countdown(_self.ext.wait_min_secs,
                           message=f"starting job {_self.name}",
-                          frequency=rconfig().aws.query_frequency_seconds)
+                          interval=rconfig().aws.query_interval_seconds,
+                          interrupt_event=interrupt,
+                          interrupt_cond=lambda: _self.state != JobState.starting)
 
         def _run(_self):
             try:
@@ -398,6 +403,7 @@ class AWSBenchmark(Benchmark):
                 self._stop_instance(_self.ext.instance_id, terminate=_self.ext.terminate, wait=False)
                 if _self.ext.interrupt is not None:
                     _self.ext.interrupt.set()
+                log.warning("Job `%s` was cancelled.", _self.name)
                 return True  # job is running remotely: no need to try to cancel what is running here, we just need to stop the instance
 
             elif state == JobState.stopping:
@@ -474,7 +480,7 @@ class AWSBenchmark(Benchmark):
             except Exception as e:
                 log.exception(e)
             finally:
-                interrupt.wait(rconfig().aws.query_frequency_seconds)
+                interrupt.wait(rconfig().aws.query_interval_seconds)
 
     def _get_cpu_activity(self, iid, delta_minutes=60, period_minutes=5):
         now = dt.datetime.utcnow()
@@ -507,7 +513,7 @@ class AWSBenchmark(Benchmark):
 
         def cpu_monitor():
             cpu_config = rconfig().aws.ec2.monitoring.cpu
-            if cpu_config.query_frequency_seconds <= 0:
+            if cpu_config.query_interval_seconds <= 0:
                 return
             while not interrupt.is_set():
                 try:
@@ -521,7 +527,7 @@ class AWSBenchmark(Benchmark):
                 except Exception as e:
                     log.exception(e)
                 finally:
-                    interrupt.wait(cpu_config.query_frequency_seconds)
+                    interrupt.wait(cpu_config.query_interval_seconds)
 
         self.monitoring = ns(executor=ThreadPoolExecutor(max_workers=1, thread_name_prefix="aws_monitoring_"),
                              interrupt=interrupt)
@@ -539,7 +545,7 @@ class AWSBenchmark(Benchmark):
             self.monitoring = None
 
     def _start_instance(self, instance_def, script_params="", instance_key=None, timeout_secs=-1, instance_type=None):
-        log.info("Starting new EC2 instance with params: %s.", script_params)
+        log.info("Starting new EC2 instance with params: %s", script_params)
         inst_key = (instance_key.lower() if instance_key
                     else "{}_p{}_i{}".format(self.sid,
                                              re.sub(r"[\s-]", '', script_params),
@@ -656,7 +662,7 @@ class AWSBenchmark(Benchmark):
                 waiter.wait(
                     InstanceIds=[instance.id],
                     WaiterConfig=dict(
-                        Delay=wait_config.delay or rconfig().aws.query_frequency_seconds,
+                        Delay=wait_config.delay or rconfig().aws.query_interval_seconds,
                         MaxAttempts=wait_config.max_attempts
                     )
                 )
@@ -1134,7 +1140,7 @@ runcmd:
   - python{pyv} -m venv venv
   - alias PIP='/repo/venv/bin/python3 -m pip'
   - alias PY='/repo/venv/bin/python3 -W ignore'
-  - alias PIP_REQ='xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir'
+  - alias PIP_REQ="(grep -v '^\\s*#' | xargs -L 1 /repo/venv/bin/python3 -m pip install --no-cache-dir)"
 #  - PIP install -U pip=={pipv}
   - PIP install -U pip
   - PIP_REQ < requirements.txt
@@ -1211,7 +1217,7 @@ alias PIP='/repo/venv/bin/python3 -m pip'
 alias PY='/repo/venv/bin/python3 -W ignore'
 #PIP install -U pip=={pipv}
 PIP install -U pip wheel
-xargs -L 1 PIP install --no-cache-dir < requirements.txt
+(grep -v '^\\s*#' | xargs -L 1 PIP install --no-cache-dir) < requirements.txt
 
 aws s3 cp '{s3_input}' /s3bucket/input --recursive
 aws s3 cp '{s3_user}' /s3bucket/user --recursive

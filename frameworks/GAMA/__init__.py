@@ -11,9 +11,17 @@ def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
     data = dict(
-        train_path=dataset.train.path,
-        test_path=dataset.test.path,
-        target=dataset.target.name
+        target=dataset.target.name,
+        train=dict(
+            path=dataset.train.path,
+            X=dataset.train.X,
+            y=dataset.train.y
+        ),
+        test=dict(
+            path=dataset.test.path,
+            X=dataset.test.X,
+            y=dataset.test.y
+        ),
     )
 
     return run_in_venv(__file__, "exec.py",

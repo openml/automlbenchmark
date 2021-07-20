@@ -49,22 +49,8 @@ def run(dataset: Dataset, config: TaskConfig):
 
     try:
         label = dataset.target.index
-        train_dataset_path: str
-        test_dataset_path: str
-
-        if dataset.train.format == 'csv':
-            train_dataset_path = dataset.train.path
-            test_dataset_path = dataset.test.path
-        else:
-            # .arff
-            train_dataset_path = os.path.join(tmpdir, f'train.csv')
-            test_dataset_path = os.path.join(tmpdir, f'test.csv')
-            columns = [f'col_{i}' for i in range(dataset.train.data.shape[-1])]
-            columns[label] = 'label'
-
-            # might use a bit extra memory, but it's faster
-            pd.DataFrame(dataset.train.data, columns=columns).to_csv(train_dataset_path, index=None)
-            pd.DataFrame(dataset.test.data, columns=columns).to_csv(test_dataset_path, index=None)
+        train_dataset_path = dataset.train.data_path('csv')
+        test_dataset_path = dataset.test.data_path('csv')
 
         log.info(f'train dataset: {train_dataset_path}')
         log.info(f'test dataset: {test_dataset_path}')
@@ -84,7 +70,7 @@ def run(dataset: Dataset, config: TaskConfig):
         with open(train_result_json, 'r') as f:
             json_str = f.read()
             mb_config = json.loads(json_str)
-            model_path = mb_config['Artifact']['MLNetModelPath']
+            model_path = os.path.join(output_dir, f"{config.fold}.zip")
             output_prediction_path = os.path.join(log_dir, "prediction.txt")  # keeping this in log dir as it contains useful error when prediction fails
             models_count = len(mb_config['RunHistory']['Trials'])
             # predict

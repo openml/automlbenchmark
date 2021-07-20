@@ -33,7 +33,9 @@ def split_path(path):
 
 def path_from_split(split, real_path=True):
     return os.path.join(os.path.realpath(split.dirname) if real_path else split.dirname,
-                        split.basename)+split.extension
+                        split.basename)+('' if split.extension in [None, '']
+                                         else split.extension if split.extension[0] == '.'
+                                         else f".{split.extension}")
 
 
 def dir_of(caller_file, rel_to_project_root=False):
@@ -79,6 +81,7 @@ def touch(path, as_dir=False):
         if basename:
             open(path, 'a').close()
     os.utime(path, times=None)
+    return path
 
 
 def backup_file(file_path):

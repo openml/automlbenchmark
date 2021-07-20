@@ -7,7 +7,6 @@
 - run the jobs.
 - collect and save results.
 """
-
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
@@ -57,6 +56,7 @@ class Benchmark:
     """
 
     data_loader = None
+    framework_install_required = True
 
     def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str):
         self.job_runner = None
@@ -194,9 +194,12 @@ class Benchmark:
         :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
         :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
-        task_defs = self._get_task_defs(task_name)
-        jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
         try:
+            assert not self.framework_install_required or self._is_setup_done(), \
+                f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
+
+            task_defs = self._get_task_defs(task_name)
+            jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
             results = self._run_jobs(jobs)
             log.info(f"Processing results for {self.sid}")
             log.debug(results)
@@ -223,7 +226,8 @@ class Benchmark:
         self.job_runner = self._create_job_runner(jobs)
 
         def on_interrupt(*_):
-            log.warning("**** SESSION CANCELLED BY USER ****")
+            log.warning("*** SESSION CANCELLED BY USER ***")
+            log.warning("*** Please wait for the application to terminate gracefully ***")
             self.job_runner.stop()
             self.cleanup()
             # threading.Thread(target=self.job_runner.stop)
@@ -232,7 +236,7 @@ class Benchmark:
         try:
             with signal_handler(signal.SIGINT, on_interrupt):
                 with OSMonitoring(name=jobs[0].name if len(jobs) == 1 else None,
-                                  frequency_seconds=rconfig().monitoring.frequency_seconds,
+                                  interval_seconds=rconfig().monitoring.interval_seconds,
                                   check_on_exit=True,
                                   statistics=rconfig().monitoring.statistics,
                                   verbosity=rconfig().monitoring.verbosity):
@@ -308,7 +312,8 @@ class Benchmark:
         if rconfig().results.save:
             self._save(board)
 
-        log.info("Summing up scores for current run:\n%s", board.as_printable_data_frame().dropna(how='all', axis='columns').to_string())
+        log.info("Summing up scores for current run:\n%s",
+                 board.as_printable_data_frame(verbosity=2).dropna(how='all', axis='columns').to_string(index=False))
         return board.as_data_frame()
 
     def _save(self, board):
@@ -437,7 +442,6 @@ class BenchmarkTask:
                     setattr(self.task_config, c, rconfig().t[c])
         self._dataset = None
 
-    @profile(logger=log)
     def load_data(self):
         """
         Loads the training dataset for the current given task

@@ -49,7 +49,7 @@ class DockerBenchmark(ContainerBenchmark):
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
-        script_extra_params = ""
+        script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} "
@@ -59,7 +59,7 @@ class DockerBenchmark(ContainerBenchmark):
             name=inst_name,
             options=rconfig().docker.run_extra_options,
             input=in_dir,
-            output=out_dir,
+            output=self.output_dirs.session,
             custom=custom_dir,
             image=self.image,
             params=script_params,
@@ -137,8 +137,8 @@ WORKDIR /bench
 # packages that we need to data pre- and postprocessing without breaking it.
 RUN $SPIP install -U pip wheel
 RUN $SPY -m venv venv
-ENV PIP /bench/venv/bin/python3 -m pip
-ENV PY /bench/venv/bin/python3 -W ignore
+ENV PIP /bench/venv/bin/python{pyv} -m pip
+ENV PY /bench/venv/bin/python{pyv} -W ignore
 #RUN $PIP install -U pip=={pipv} wheel
 RUN $PIP install -U pip wheel
 
@@ -149,7 +149,7 @@ VOLUME /custom
 # Add the AutoML system except files listed in .dockerignore (could also use git clone directly?)
 ADD . /bench/
 
-RUN xargs -L 1 $PIP install --no-cache-dir < requirements.txt
+RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
 
 RUN $PY {script} {framework} -s only
 {custom_commands}

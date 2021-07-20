@@ -13,8 +13,8 @@ from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 import hyperopt
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
 
-from utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
 from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
 
 log = logging.getLogger(__name__)
 
@@ -51,8 +51,8 @@ def run(dataset, config):
     log.info("Running hyperopt-sklearn with a maximum time of %ss on %s cores, optimizing %s.",
              config.max_runtime_seconds, 'all', config.metric)
 
-    X_train = dataset.train.X_enc
-    y_train = dataset.train.y_enc
+    X_train = dataset.train.X
+    y_train = dataset.train.y
 
     if is_classification:
         classifier = any_classifier('clf')
@@ -80,8 +80,8 @@ def run(dataset, config):
             estimator.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
-    X_test = dataset.test.X_enc
-    y_test = dataset.test.y_enc
+    X_test = dataset.test.X
+    y_test = dataset.test.y
     with Timer() as predict:
         predictions = estimator.predict(X_test)
 

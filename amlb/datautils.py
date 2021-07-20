@@ -14,39 +14,13 @@ import arff
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
+from sklearn.impute import SimpleImputer as Imputer
 from sklearn.metrics import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, \
     log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, \
     r2_score, roc_auc_score  # just aliasing
-from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder, OrdinalEncoder
 
 from .utils import profile, path_from_split, repr_def, split_path, touch
-
-try:
-    from sklearn.preprocessing import OrdinalEncoder    # from sklearn 0.20
-except ImportError:
-    class OrdinalEncoder(LabelEncoder):
-
-        def _reshape(self, y):
-            return np.asarray(y, dtype=object).reshape(len(y))
-
-        def fit(self, y):
-            super().fit(self._reshape(y))
-            return self
-
-        def fit_transform(self, y):
-            return super().fit_transform(self._reshape(y)).astype(float, copy=False)
-
-        def transform(self, y):
-            return super().transform(self._reshape(y)).astype(float, copy=False)
-
-try:
-    from sklearn.impute import SimpleImputer as Imputer     # from sklearn 0.20
-except ImportError:
-    from sklearn.preprocessing import Imputer as Imp
-
-    class Imputer(Imp):
-        def __init__(self, missing_values=np.NaN, **kwargs):
-            super(Imputer, self).__init__(missing_values='NaN' if missing_values is np.NaN else missing_values, **kwargs)
 
 
 log = logging.getLogger(__name__)
@@ -165,15 +139,18 @@ class Encoder(TransformerMixin):
                  missing_policy='ignore', missing_values=None, missing_replaced_by='',
                  normalize_fn=None):
         """
-        :param type:
-        :param target:
+        :param type: one of ['label', 'one-hot', 'no-op'].
+        :param target: True iff the Encoder is applied to the target feature.
+        :param encoded_type: the type of the encoded vec.
         :param missing_policy: one of ['ignore', 'mask', 'encode'].
-            ignore: use only if there's no missing value for sure data to be transformed, otherwise it may raise an error during transform()
-            mask: replace missing values only internally
-            encode: encode all missing values as the encoded value of missing_replaced_by
-        :param missing_values:
-        :param missing_replaced_by:
-        :param normalize_fn: if provided, function applied to all elements during fit and transform (for example, trimming spaces, lowercase...)
+            ignore: can be safely used only if there's no missing value in the data to be transformed, otherwise it may raise an error during transform().
+            mask: replace missing values only internally, and then restore them as np.nan.
+            encode: encode all missing values as the encoded value of missing_replaced_by.
+        :param missing_values: a value or a list of values considered as missing values.
+        :param missing_replaced_by: the value used to replace missing values before encoding.
+                                    If using the 'mask' strategy, this is a transient value.
+                                    If using the 'encode' strategy, all missing values will be replaced with encode(missing_replaced_by).
+        :param normalize_fn: if provided, function applied to all elements during fit and transform (for example, trimming spaces, lowercase...).
         """
         super().__init__()
         assert missing_policy in ['ignore', 'mask', 'encode']
@@ -184,7 +161,6 @@ class Encoder(TransformerMixin):
         self.missing_encoded_value = None
         self.normalize_fn = normalize_fn
         self.classes = None
-        # self.encoded_type = int if target else encoded_type
         self.encoded_type = encoded_type
         if type == 'label':
             self.delegate = LabelEncoder() if target else OrdinalEncoder()
@@ -192,7 +168,6 @@ class Encoder(TransformerMixin):
             self.delegate = LabelBinarizer() if target else OneHotEncoder(sparse=False, handle_unknown='ignore')
         elif type == 'no-op':
             self.delegate = None
-            # self.encoded_type = encoded_type
         else:
             raise ValueError("Encoder `type` should be one of {}.".format(['label', 'one-hot']))
 
@@ -213,7 +188,6 @@ class Encoder(TransformerMixin):
 
     def fit(self, vec):
         """
-
         :param vec: must be a line vector (array)
         :return:
         """
@@ -233,7 +207,6 @@ class Encoder(TransformerMixin):
 
     def transform(self, vec, **params):
         """
-
         :param vec: must be single value (str) or a line vector (array)
         :param params:
         :return:
@@ -271,7 +244,6 @@ class Encoder(TransformerMixin):
 
     def inverse_transform(self, vec, **params):
         """
-
         :param vec: must a single value or line vector (array)
         :param params:
         :return:
@@ -284,23 +256,88 @@ class Encoder(TransformerMixin):
         return self.delegate.inverse_transform(vec, **params)
 
 
-def impute(X_fit, *X_s, missing_values=np.NaN, strategy='mean'):
+def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean"):
     """
+    :param X_fit: {array-like, sparse matrix} used to fit the imputer. This array is also imputed.
+    :param X_s: the additional (optional) arrays that are imputed using the same imputer.
+    :param missing_values: the value that will be substituted during the imputation.
+    :param strategy: 'mean' (default) -> missing values are imputed with the mean value of the corresponding vector.
+                     'median' -> missing values are imputed with the median value of the corresponding vector.
+                     'mode' -> missing values are imputed with the mode of the corresponding vector.
+                     ('constant', value) -> missing values are imputed with the constant value provided as the second term of the tuple.
+                     None -> no-op (for internal use).
+    :return: a list of imputed arrays, returned in the same order as they were provided.
+    """
+    if strategy is None:
+        return [X_fit, *X_s]
+    strategy, fill_value = strategy if isinstance(strategy, tuple) and strategy[0] == 'constant' else (strategy, None)
+    strategy = dict(mode='most_frequent').get(strategy, strategy)
 
-    :param X_fit:
-    :param X_s:
-    :param missing_values:
-    :param strategy: 'mean', 'median', 'most_frequent', 'constant' (from sklearn 0.20 only, requires fill_value arg)
-    :return:
-    """
-    # TODO: impute only if np.isnan(X_fit).any() ?
-    imputer = Imputer(missing_values=missing_values, strategy=strategy)
-    imputed = imputer.fit_transform(X_fit)
+    imputer = Imputer(missing_values=missing_values, strategy=strategy, fill_value=fill_value)
+    imputed = _restore_dtypes(imputer.fit_transform(X_fit), X_fit)
     if len(X_s) > 0:
         result = [imputed]
         for X in X_s:
-            result.append(imputer.transform(X))
+            result.append(_restore_dtypes(imputer.transform(X), X))
         return result
     else:
         return imputed
 
+
+def impute_dataframe(X_fit: pd.DataFrame, *X_s: pd.DataFrame, missing_values=np.NaN, strategy='mean'):
+    """
+    :param X_fit: used to fit the imputer. This dataframe is also imputed.
+    :param X_s: the additional (optional) dataframe that are imputed using the same imputer.
+    :param missing_values: the value that will be substituted during the imputation.
+    :param strategy: 'mean' (default) -> missing values are imputed with the mean value of the corresponding vector.
+                     'median' -> missing values are imputed with the median value of the corresponding vector.
+                     'mode' -> missing values are imputed with the mode of the corresponding vector.
+                     ('constant', value) -> missing values are imputed with the constant value provided as the second term of the tuple.
+                     None -> no-op (for internal use).
+                     { type: strategy } -> (not ready yet!) each column/feature type will be applied a different strategy as soon as it is listed in the dictionary.
+                                           type must be one of (int, float, number, bool, category, string, object, datetime)
+    :return: a list of imputed dataframes, returned in the same order as they were provided.
+    """
+    if strategy is None:
+        return [X_fit, *X_s]
+    if isinstance(strategy, dict):
+        for dt, s in strategy.items():
+            X_fit.select_dtypes(include=dt)
+    else:
+        imputed = _impute_pd(X_fit, *X_s, missing_values=missing_values, strategy=strategy)
+    return imputed if X_s else imputed[0]
+
+
+def _impute_pd(X_fit, *X_s, missing_values=np.NaN, strategy=None, is_int=False):
+    if strategy == 'mean':
+        fill = X_fit.mean()
+    elif strategy == 'median':
+        fill = X_fit.median()
+    elif strategy == 'mode':
+        fill = X_fit.mode().iloc[0, :]
+    elif isinstance(strategy, tuple) and strategy[0] == 'constant':
+        fill = strategy[1]
+    else:
+        return [X_fit, *X_s]
+
+    if is_int and isinstance(fill, pd.Series):
+        fill = fill.round()
+    return [df.replace(missing_values, fill) for df in [X_fit, *X_s]]
+
+
+def _rows_with_nas(X):
+    df = X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
+    return df[df.isna().any(axis=1)]
+
+
+def _restore_dtypes(X_np, X_ori):
+    if isinstance(X_ori, pd.DataFrame):
+        df = pd.DataFrame(X_np, columns=X_ori.columns, index=X_ori.index).convert_dtypes()
+        df.astype(X_ori.dtypes.to_dict(), copy=False, errors='raise')
+        return df
+    elif isinstance(X_ori, pd.Series):
+        return pd.Series(X_np, name=X_ori.name, index=X_ori.index, dtype=X_ori.dtype)
+    elif isinstance(X_ori, np.ndarray):
+        return X_np.astype(X_ori.dtype, copy=False)
+    else:
+        return X_np
