@@ -30,9 +30,10 @@ else
     else
       # find the latest commit to the VERSION branch
       COMMIT=$(git ls-remote "${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
+      DEPTH="--depth 1 --branch ${VERSION}"
     fi
 
-    git clone  --recurse-submodules ${REPO} ${TARGET_DIR}
+    git clone  --recurse-submodules --shallow-submodules ${DEPTH} ${REPO} ${TARGET_DIR}
     cd ${TARGET_DIR}
     git checkout "${COMMIT}"
     cd ${HERE}
