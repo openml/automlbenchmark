@@ -40,7 +40,7 @@ class ContainerBenchmark(Benchmark):
         tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
         # Some frameworks allow specifying a version by #HASH which would lead to
         # the tag starting with a '.' which is invalid.
-        tag = re.sub(r"^\.+", "", tag)
+        tag = tag.lstrip('.')
         return f"{author}/{image}:{tag}"
 
     @abstractmethod
