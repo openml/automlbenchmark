@@ -14,7 +14,7 @@ AutoGluon_benchmark:
     presets: best_quality
 
 autosklearn:
-  version: '0.12.6'
+  version: '0.12.7'
 
 autosklearn2:
   extends: autosklearn
@@ -28,7 +28,7 @@ AutoWEKA:
   version: '2.6'
 
 flaml:
-  version: '0.5.7'
+  version: '0.5.8'
 
 GAMA:
   version: '21.0.0'
