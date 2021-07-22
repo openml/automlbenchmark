@@ -38,6 +38,9 @@ class ContainerBenchmark(Benchmark):
         if label not in rconfig().container.ignore_labels:
             tags.append(label)
         tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
+        # Some frameworks allow specifying a version by #HASH which would lead to
+        # the tag starting with a '.' which is invalid.
+        tag = tag.lstrip('.')
         return f"{author}/{image}:{tag}"
 
     @abstractmethod
