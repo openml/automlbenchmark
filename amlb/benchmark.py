@@ -118,6 +118,7 @@ class Benchmark:
 
         if hasattr(self.framework_module, 'setup'):
             self.framework_module.setup(*self.framework_def.setup_args,
+                                        _shell_=False,  # prevents #arg from being interpreted as comment
                                         _live_output_=rconfig().setup.live_output,
                                         _activity_timeout_=rconfig().setup.activity_timeout)
 
