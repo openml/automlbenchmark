@@ -10,6 +10,7 @@ fi
 # creating local venv
 . ${HERE}/../shared/setup.sh ${HERE} true
 
+apt-get install -y python3-opencv
 
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U ${PKG}
