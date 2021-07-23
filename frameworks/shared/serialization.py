@@ -38,9 +38,9 @@ __series__ = '_series_'
 def serialize_data(data, path):
     np, pd = _import_data_libraries()
     if pd and isinstance(data, (pd.DataFrame, pd.Series)):
-        # pandas has this nasty habit of inferring values when data are loaded from file,
-        # for example, 'True', 'False' are converted automatically to booleans, even for column names…
         if isinstance(data, pd.DataFrame):
+            # pandas has this habit of inferring value types when data are loaded from file,
+            # for example, 'true' and 'false' are converted automatically to booleans, even for column names…
             data.rename(str, axis='columns', inplace=True)
         ser = ser_config.pandas_serializer
         if ser == 'pickle':
