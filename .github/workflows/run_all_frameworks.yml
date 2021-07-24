@@ -24,7 +24,7 @@ jobs:
       - id: find-required-tests
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
-          changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
+          changed_files=$(git diff --name-only HEAD...$GITHUB_BASE_REF)
 
           shopt -s globstar
           common_files="amlb/** "\
