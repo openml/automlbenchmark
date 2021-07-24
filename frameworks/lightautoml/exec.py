@@ -65,7 +65,6 @@ def run(dataset, config):
         output_file=config.output_predictions_file,
         probabilities=probabilities,
         predictions=predictions,
-        truth=y_test,
         target_is_encoded=is_classification,
         training_duration=training.duration,
         predict_duration=predict.duration,
