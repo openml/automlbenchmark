@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: pull base branch
         run: |
+          git fetch origin $GITHUB_BASE_REF
           git branch --track $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
       - id: find-required-tests
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
