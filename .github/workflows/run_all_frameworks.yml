@@ -16,14 +16,6 @@ jobs:
       skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
     steps:
       - uses: actions/checkout@v2
-      - name: pull base branch
-        run: |
-          git fetch --all
-          echo "Base: $GITHUB_BASE_REF origin/$GITHUB_BASE_REF"
-          echo "Head: $GITHUB_HEAD_REF"
-          echo $(git status)
-          git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
-          git checkout $GITHUB_HEAD_REF
       - id: find-required-tests
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
