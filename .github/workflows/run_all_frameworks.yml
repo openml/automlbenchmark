@@ -16,6 +16,9 @@ jobs:
       skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
     steps:
       - uses: actions/checkout@v2
+      - name: pull base branch
+        run: |
+          git fetch --all
       - id: find-required-tests
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
