@@ -21,6 +21,7 @@ jobs:
           git fetch --all
           echo "Base: $GITHUB_BASE_REF origin/$GITHUB_BASE_REF"
           echo "Head: $GITHUB_HEAD_REF"
+          echo $(git status)
           git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
           git checkout $GITHUB_HEAD_REF
       - id: find-required-tests
