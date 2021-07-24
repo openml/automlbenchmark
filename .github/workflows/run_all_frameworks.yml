@@ -19,6 +19,7 @@ jobs:
       - name: pull base branch
         run: |
           git fetch --all
+          git branch --track $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
       - id: find-required-tests
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
