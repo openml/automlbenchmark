@@ -68,8 +68,8 @@ def run(dataset, config):
             preds = preds.rename({"prediction_0": "False", "prediction_1": "True"}, axis=1)
             preds["label"] = preds["label"].astype(bool)
         else:
-            preds.columns = [c.lstrip("prediction_") for c in preds.columns]
-        
+            preds.columns = [c.replace("prediction_", "", 1) for c in preds.columns]
+
         predictions = preds["label"].values
         probabilities_labels = list(preds.columns)[:-1]
         probabilities = preds[probabilities_labels].values
