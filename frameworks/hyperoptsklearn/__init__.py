@@ -1,6 +1,6 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.datautils import Encoder, impute
+from amlb.datautils import Encoder, impute_array
 from amlb.utils import call_script_in_same_dir
 
 
@@ -11,7 +11,7 @@ def setup(*args, **kwargs):
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train, X_test = impute_array(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y_enc, dataset.test.y_enc
     data = dict(
         train=dict(
