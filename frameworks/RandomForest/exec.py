@@ -1,11 +1,13 @@
 import logging
 import os
+import sys
 import tempfile as tmp
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
+if sys.platform == 'darwin':
+    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+    os.environ['MKL_NUM_THREADS'] = '1'
 
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor

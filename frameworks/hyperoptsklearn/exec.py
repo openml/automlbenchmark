@@ -3,12 +3,15 @@ import logging
 import math
 import os
 import signal
+import sys
 import tempfile as tmp
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
+if sys.platform == 'darwin':
+    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+    os.environ['MKL_NUM_THREADS'] = '1'
+
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 import hyperopt
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
