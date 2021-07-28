@@ -16,10 +16,10 @@ def _import_data_libraries():
     except ImportError:
         pd = None
     try:
-        import scipy as sci
+        import scipy.sparse as sp
     except ImportError:
-        sci = None
-    return np, pd, sci
+        sp = None
+    return np, pd, sp
 
 
 ser_config = ns(
@@ -49,8 +49,8 @@ __series__ = '_series_'
 
 
 def is_serializable_data(data):
-    np, pd, sci = _import_data_libraries()
-    return isinstance(data, (np.ndarray, sci.sparse.spmatrix, pd.DataFrame, pd.Series))
+    np, pd, sp = _import_data_libraries()
+    return isinstance(data, (np.ndarray, sp.spmatrix, pd.DataFrame, pd.Series))
 
 
 def unsparsify(*data, fmt=None):
@@ -70,8 +70,8 @@ def _unsparsify(data, fmt=None):
     """
     if fmt is None:
         return data
-    np, pd, sci = _import_data_libraries()
-    if sci and isinstance(data, sci.sparse.spmatrix):
+    np, pd, sp = _import_data_libraries()
+    if sp and isinstance(data, sp.spmatrix):
         return (data.toarray() if fmt == 'array'
                 else data.todense() if fmt == 'dense'
                 else data)
@@ -85,17 +85,17 @@ def _unsparsify(data, fmt=None):
 
 @profile(log)
 def serialize_data(data, path):
-    np, pd, sci = _import_data_libraries()
+    np, pd, sp = _import_data_libraries()
     if np and isinstance(data, np.ndarray):
         root, ext = os.path.splitext(path)
         path = f"{root}.npy"
         np.save(path, data, allow_pickle=ser_config.numpy_pickle)
-    elif sci and isinstance(data, sci.sparse.spmatrix):
+    elif sp and isinstance(data, sp.spmatrix):
         root, ext = os.path.splitext(path)
         # use custom extension to recognize sparsed matrices from file name.
         # .npz is automatically appended if missing, and can also potentially be used for numpy arrays.
         path = f"{root}.spy.npz"
-        sci.sparse.save_npz(path, data, compressed=ser_config.sparse_matrix_compression)
+        sp.save_npz(path, data, compressed=ser_config.sparse_matrix_compression)
     elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
         if isinstance(data, pd.DataFrame):
             # pandas has this habit of inferring value types when data are loaded from file,
@@ -119,7 +119,7 @@ def serialize_data(data, path):
 
 @profile(log)
 def deserialize_data(path):
-    np, pd, sci = _import_data_libraries()
+    np, pd, sp = _import_data_libraries()
     base, ext = os.path.splitext(path)
     if ext == '.npy':
         if np is None:
@@ -128,9 +128,9 @@ def deserialize_data(path):
     elif ext == '.npz':
         _, ext2 = os.path.splitext(base)
         if ext2 == '.spy':
-            if sci is None:
+            if sp is None:
                 raise ImportError(f"Scipy is required to deserialize {path}.")
-            sp_matrix = sci.sparse.load_npz(path)
+            sp_matrix = sp.load_npz(path)
             return unsparsify(sp_matrix, fmt=ser_config.sparse_matrix_deserialized_format)
         else:
             if np is None:
