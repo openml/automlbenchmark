@@ -15,7 +15,11 @@ def _import_data_libraries():
         import pandas as pd
     except ImportError:
         pd = None
-    return np, pd
+    try:
+        import scipy as sp
+    except ImportError:
+        sp = None
+    return np, pd, sp
 
 
 ser_config = ns(
@@ -28,16 +32,37 @@ ser_config = ns(
     pandas_compression=os.environ.get('AMLB_SER_PD_COMPR') or 'infer',
     # 'snappy', 'gzip', 'brotli', None ?
     pandas_parquet_compression=os.environ.get('AMLB_SER_PD_PQT_COMPR') or None,
+    # if numpy can use pickle to serialize ndarrays,
+    numpy_pickle=True,
+    # if sparse matrices should be compressed during serialization.
+    sparse_matrix_compression=True,
+    # if sparse matrices should be deserialized as dense matrices.
+    sparse_matrix_to_dense=True,
 )
 
 
 __series__ = '_series_'
 
 
+def is_serializable_data(data):
+    np, pd, sp = _import_data_libraries()
+    return isinstance(data, (np.ndarray, sp.sparse.spmatrix, pd.DataFrame, pd.Series))
+
+
 @profile(log)
 def serialize_data(data, path):
-    np, pd = _import_data_libraries()
-    if pd and isinstance(data, (pd.DataFrame, pd.Series)):
+    np, pd, sp = _import_data_libraries()
+    if np and isinstance(data, np.ndarray):
+        root, ext = os.path.splitext(path)
+        path = f"{root}.npy"
+        np.save(path, data, allow_pickle=ser_config.numpy_pickle)
+    elif sp and isinstance(data, sp.sparse.spmatrix):
+        root, ext = os.path.splitext(path)
+        # use custom extension to recognize sparsed matrices from file name.
+        # .npz is automatically appended if missing, and can also potentially be used for numpy arrays.
+        path = f"{root}.spy.npz"
+        sp.sparse.save_npz(path, data, compressed=ser_config.sparse_matrix_compression)
+    elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
         if isinstance(data, pd.DataFrame):
             # pandas has this habit of inferring value types when data are loaded from file,
             # for example, 'true' and 'false' are converted automatically to booleans, even for column names…
@@ -53,26 +78,34 @@ def serialize_data(data, path):
             data.to_hdf(path, os.path.basename(path), mode='w', format='table')
         elif ser == 'json':
             data.to_json(path, compression=ser_config.pandas_compression)
-    elif np:
-        root, ext = os.path.splitext(path)
-        path = f"{root}.npy"
-        np.save(path, data, allow_pickle=True)
     else:
-        raise ImportError("Numpy or Pandas are required to serialize data between processes.")
+        raise ImportError(f"Numpy or Pandas are required to serialize data between processes to {path}.")
     return path
 
 
 @profile(log)
 def deserialize_data(path):
-    np, pd = _import_data_libraries()
-    _, ext = os.path.splitext(path)
-    if ext == ".npy":
+    np, pd, sp = _import_data_libraries()
+    base, ext = os.path.splitext(path)
+    if ext == '.npy':
         if np is None:
-            raise ImportError("Numpy is required to deserialize data.")
-        return np.load(path, allow_pickle=True)
+            raise ImportError(f"Numpy is required to deserialize {path}.")
+        return np.load(path, allow_pickle=ser_config.numpy_pickle)
+    elif ext == '.npz':
+        _, ext2 = os.path.splitext(base)
+        if ext2 == '.spy':
+            if sp is None:
+                raise ImportError(f"Scipy is required to deserialize {path}.")
+            sp_matrix = sp.sparse.load_npz(path)
+            return sp_matrix.todense() if ser_config.sparse_matrix_to_dense else sp_matrix
+        else:
+            if np is None:
+                raise ImportError(f"Numpy is required to deserialize {path}.")
+            with np.load(path, allow_pickle=ser_config.numpy_pickle) as loaded:
+                return loaded
     else:
         if pd is None:
-            raise ImportError("Pandas is required to deserialize data.")
+            raise ImportError(f"Pandas is required to deserialize {path}.")
         ser = ser_config.pandas_serializer
         if ser == 'pickle':
             return pd.read_pickle(path, compression=ser_config.pandas_compression)

@@ -6,14 +6,13 @@ from tempfile import TemporaryDirectory, mktemp
 from typing import Union
 
 import numpy as np
-import pandas as pd
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
 
-from .serialization import deserialize_data, serialize_data, ser_config
+from .serialization import is_serializable_data, deserialize_data, serialize_data, ser_config
 from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load, profile
 
 log = logging.getLogger(__name__)
@@ -65,7 +64,7 @@ def _make_input_dataset(input_data, dataset, tmpdir):
     input_data = ns.from_dict(input_data)
 
     def make_path(k, v, parents=None):
-        if isinstance(v, (np.ndarray,  pd.DataFrame, pd.Series)):
+        if is_serializable_data(v):
             path = os.path.join(tmpdir, '.'.join(parents+[k, 'data']))
             if vector_keys.match(k):
                 v = as_col(v)
