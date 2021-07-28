@@ -16,10 +16,10 @@ def _import_data_libraries():
     except ImportError:
         pd = None
     try:
-        import scipy as sp
+        import scipy as sci
     except ImportError:
-        sp = None
-    return np, pd, sp
+        sci = None
+    return np, pd, sci
 
 
 ser_config = ns(
@@ -36,8 +36,12 @@ ser_config = ns(
     numpy_pickle=True,
     # if sparse matrices should be compressed during serialization.
     sparse_matrix_compression=True,
-    # if sparse matrices should be deserialized as dense matrices.
-    sparse_matrix_to_dense=True,
+    # if sparse matrices should be deserialized to some specific format:
+    #  None (no change), 'array' (numpy), 'dense' (dense matrix).
+    sparse_matrix_deserialized_format='array',
+    # if sparse dataframes should be deserialized to some specific format:
+    #  None (no change), 'array' (numpy), 'dense' (dense dataframe/series).
+    sparse_dataframe_deserialized_format=None
 )
 
 
@@ -45,23 +49,53 @@ __series__ = '_series_'
 
 
 def is_serializable_data(data):
-    np, pd, sp = _import_data_libraries()
-    return isinstance(data, (np.ndarray, sp.sparse.spmatrix, pd.DataFrame, pd.Series))
+    np, pd, sci = _import_data_libraries()
+    return isinstance(data, (np.ndarray, sci.sparse.spmatrix, pd.DataFrame, pd.Series))
+
+
+def unsparsify(*data, fmt=None):
+    if len(data) == 1:
+        return _unsparsify(data[0], fmt=fmt)
+    else:
+        return tuple(_unsparsify(d, fmt=fmt) for d in data)
+
+
+def _unsparsify(data, fmt=None):
+    """
+    :param data: the matrix to process.
+    :param fmt: one of None, 'array', 'dense'
+    :return: the original matrix is fmt is None,
+            a numpy array if fmt is 'array',
+            a dense version of the data type if fmt is 'dense'.
+    """
+    if fmt is None:
+        return data
+    np, pd, sci = _import_data_libraries()
+    if sci and isinstance(data, sci.sparse.spmatrix):
+        return (data.toarray() if fmt == 'array'
+                else data.todense() if fmt == 'dense'
+                else data)
+    elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
+        return (data.to_numpy() if fmt == 'array'
+                else data.sparse.to_dense() if fmt == 'dense' and hasattr(data, 'sparse')
+                else data)
+    else:
+        return data
 
 
 @profile(log)
 def serialize_data(data, path):
-    np, pd, sp = _import_data_libraries()
+    np, pd, sci = _import_data_libraries()
     if np and isinstance(data, np.ndarray):
         root, ext = os.path.splitext(path)
         path = f"{root}.npy"
         np.save(path, data, allow_pickle=ser_config.numpy_pickle)
-    elif sp and isinstance(data, sp.sparse.spmatrix):
+    elif sci and isinstance(data, sci.sparse.spmatrix):
         root, ext = os.path.splitext(path)
         # use custom extension to recognize sparsed matrices from file name.
         # .npz is automatically appended if missing, and can also potentially be used for numpy arrays.
         path = f"{root}.spy.npz"
-        sp.sparse.save_npz(path, data, compressed=ser_config.sparse_matrix_compression)
+        sci.sparse.save_npz(path, data, compressed=ser_config.sparse_matrix_compression)
     elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
         if isinstance(data, pd.DataFrame):
             # pandas has this habit of inferring value types when data are loaded from file,
@@ -85,7 +119,7 @@ def serialize_data(data, path):
 
 @profile(log)
 def deserialize_data(path):
-    np, pd, sp = _import_data_libraries()
+    np, pd, sci = _import_data_libraries()
     base, ext = os.path.splitext(path)
     if ext == '.npy':
         if np is None:
@@ -94,10 +128,10 @@ def deserialize_data(path):
     elif ext == '.npz':
         _, ext2 = os.path.splitext(base)
         if ext2 == '.spy':
-            if sp is None:
+            if sci is None:
                 raise ImportError(f"Scipy is required to deserialize {path}.")
-            sp_matrix = sp.sparse.load_npz(path)
-            return sp_matrix.todense() if ser_config.sparse_matrix_to_dense else sp_matrix
+            sp_matrix = sci.sparse.load_npz(path)
+            return unsparsify(sp_matrix, fmt=ser_config.sparse_matrix_deserialized_format)
         else:
             if np is None:
                 raise ImportError(f"Numpy is required to deserialize {path}.")
@@ -107,15 +141,16 @@ def deserialize_data(path):
         if pd is None:
             raise ImportError(f"Pandas is required to deserialize {path}.")
         ser = ser_config.pandas_serializer
+        df = None
         if ser == 'pickle':
-            return pd.read_pickle(path, compression=ser_config.pandas_compression)
+            df = pd.read_pickle(path, compression=ser_config.pandas_compression)
         elif ser == 'parquet':
             df = pd.read_parquet(path)
             if len(df.columns) == 1 and df.columns[0] == __series__:
-                return df.squeeze()
-            return df
+                df = df.squeeze()
         elif ser == 'hdf':
-            return pd.read_hdf(path, os.path.basename(path))
+            df = pd.read_hdf(path, os.path.basename(path))
         elif ser == 'json':
-            return pd.read_json(path, compression=ser_config.pandas_compression)
+            df = pd.read_json(path, compression=ser_config.pandas_compression)
+        return unsparsify(df, fmt=ser_config.sparse_dataframe_deserialized_format)
 
