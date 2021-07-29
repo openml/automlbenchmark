@@ -89,15 +89,16 @@ def run_in_venv(caller_file, script_file: str, *args,
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
+    options = ns.from_dict(options) if options else ns()
+    ser_config = options['serialization']
+    env = options['env'] or ns()
+
     with TemporaryDirectory() as tmpdir:
 
-        ds = _make_input_dataset(input_data, dataset, tmpdir)
+        ds = _make_input_dataset(input_data, dataset, tmpdir, serialization=ser_config)
 
         config.result_dir = tmpdir
         config.result_file = mktemp(dir=tmpdir)
-        options = ns.from_dict(options) if options else ns()
-        ser_config = options['serialization']
-        env = options['env'] or ns()
 
         params = json_dumps(dict(dataset=ds, config=config, options=options), style='compact')
         log.debug("Params passed to subprocess:\n%s", params)
