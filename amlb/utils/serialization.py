@@ -91,7 +91,7 @@ def _unsparsify(data, fmt=None):
                 else data.todense() if fmt == 'dense'
                 else data)
     elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
-        return (data.to_numpy() if fmt == 'array'
+        return (data.to_numpy(copy=False) if fmt == 'array'
                 else data.sparse.to_dense() if fmt == 'dense' and hasattr(data, 'sparse')
                 else data)
     else:
@@ -124,7 +124,9 @@ def serialize_data(data, path, config: Optional[ns] = None):
             if isinstance(data, pd.Series):
                 data = pd.DataFrame({__series__: data})
             # parquet serialization doesn't support sparse dataframes
-            data = unsparsify(data, fmt='dense')
+            if hasattr(data, 'sparse'):
+                path = f"{root}.sparse.pd"
+                data = unsparsify(data, fmt='dense')
             data.to_parquet(path, compression=config.pandas_parquet_compression)
         elif ser == 'hdf':
             data.to_hdf(path, os.path.basename(path), mode='w', format='table')
@@ -173,6 +175,11 @@ def deserialize_data(path, config: Optional[ns] = None):
             df = pd.read_parquet(path)
             if len(df.columns) == 1 and df.columns[0] == __series__:
                 df = df.squeeze()
+            _, ext2 = os.path.splitext(base)
+            if config.sparse_dataframe_deserialized_format is None and ext2 == '.sparse':
+                # trying to restore dataframe as sparse if it was as such before serialization
+                # and if the dataframe format should remain unchanged
+                df = df.astype('Sparse', copy=False)
         elif ser == 'hdf':
             df = pd.read_hdf(path, os.path.basename(path))
         elif ser == 'json':

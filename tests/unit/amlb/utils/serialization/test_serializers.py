@@ -76,59 +76,165 @@ def test_serialize_numpy_array(tmpdir):
 @pytest.mark.use_disk
 def test_serialize_pandas_series(tmpdir):
     import pandas as pd
-    arr = pd.Series([1, 2.2, pd.NA, 3, 4.4])
+    ser = pd.Series([1, 2.2, pd.NA, 3, 4.4])
     dest = os.path.join(tmpdir, "my_pd_ser")
-    path = serialize_data(arr, dest)
+    path = serialize_data(ser, dest)
     assert path == f"{dest}.pd"
 
     reloaded = deserialize_data(path)
     assert isinstance(reloaded, pd.Series)
-    assert arr.compare(reloaded).empty
+    assert ser.compare(reloaded).empty
 
 
 @pytest.mark.use_disk
 def test_serialize_pandas_dataframes(tmpdir):
     import pandas as pd
-    arr = pd.DataFrame(dict(
+    df = pd.DataFrame(dict(
         first=[1, 2.2, pd.NA, 3, 4.4],
         second=['a', 'b', 'c', 'a', 'b']
     ))
     dest = os.path.join(tmpdir, "my_pd_df")
-    path = serialize_data(arr, dest)
+    path = serialize_data(df, dest)
     assert path == f"{dest}.pd"
 
     reloaded = deserialize_data(path)
     assert isinstance(reloaded, pd.DataFrame)
-    assert arr.compare(reloaded).empty
+    assert df.compare(reloaded).empty
 
 
 @pytest.mark.use_disk
 def test_serialize_sparse_matrix(tmpdir):
-    pass
+    import scipy.sparse as sp
+    import numpy as np
+    arr = np.array([[0, 0, 0, 3.3], [4.4, 0, 0, 0], [0, np.nan, 0, 0]])
+    nans = np.count_nonzero(np.isnan(arr))
+    mat = sp.csc_matrix(arr)
+    assert sp.issparse(mat)
+    dest = os.path.join(tmpdir, "my_sparse_mat")
+    path = serialize_data(mat, dest)
+    assert path == f"{dest}.spy.npz"
+
+    reloaded = deserialize_data(path, config=ns(sparse_matrix_deserialized_format=None))
+    assert isinstance(reloaded, sp.spmatrix)
+    assert (mat != reloaded).nnz == nans
+    assert np.array_equal(mat.toarray(), reloaded.toarray(), equal_nan=True)
 
 
 @pytest.mark.use_disk
 def test_serialize_sparse_matrix_reload_as_dense(tmpdir):
-    pass
+    import scipy.sparse as sp
+    import numpy as np
+    arr = np.array([[0, 0, 0, 3.3], [4.4, 0, 0, 0], [0, np.nan, 0, 0]])
+    mat = sp.csc_matrix(arr)
+    assert sp.issparse(mat)
+    dest = os.path.join(tmpdir, "my_sparse_mat")
+    path = serialize_data(mat, dest)
+    assert path == f"{dest}.spy.npz"
+
+    reloaded = deserialize_data(path, config=ns(sparse_matrix_deserialized_format='dense'))
+    assert not sp.issparse(reloaded)
+    assert isinstance(reloaded, np.matrix)
+    assert np.array_equal(mat.toarray(), np.asarray(reloaded), equal_nan=True)
 
 
 @pytest.mark.use_disk
 def test_serialize_sparse_matrix_reload_as_array(tmpdir):
-    pass
+    import scipy.sparse as sp
+    import numpy as np
+    arr = np.array([[0, 0, 0, 3.3], [4.4, 0, 0, 0], [0, np.nan, 0, 0]])
+    mat = sp.csc_matrix(arr)
+    assert sp.issparse(mat)
+    dest = os.path.join(tmpdir, "my_sparse_mat")
+    path = serialize_data(mat, dest)
+    assert path == f"{dest}.spy.npz"
+
+    reloaded = deserialize_data(path, config=ns(sparse_matrix_deserialized_format='array'))
+    assert isinstance(reloaded, np.ndarray)
+    assert np.array_equal(mat.toarray(), reloaded, equal_nan=True)
 
 
 @pytest.mark.use_disk
 def test_serialize_sparse_dataframe(tmpdir):
-    pass
+    import pandas as pd
+    ser_config = ns(pandas_serializer='pickle', sparse_dataframe_deserialized_format=None)
+    dfs = pd.DataFrame(dict(
+        first=[0, 0, 0, 3.3],
+        second=[4.4, 0, 0, 0],
+        third=[0, pd.NA, 0, 0],
+        # fourth=[None, None, 'a', None]
+    )).astype('Sparse')
+    assert dfs.sparse
+    dest = os.path.join(tmpdir, "my_sparse_df")
+    path = serialize_data(dfs, dest, config=ser_config)
+    assert path == f"{dest}.pd"
+
+    reloaded = deserialize_data(path, config=ser_config)
+    assert isinstance(reloaded, pd.DataFrame)
+    assert hasattr(reloaded, 'sparse')
+    assert dfs.compare(reloaded).empty
 
 
 @pytest.mark.use_disk
 def test_serialize_pandas_dataframe_reload_as_dense(tmpdir):
-    pass
+    import pandas as pd
+    ser_config = ns(pandas_serializer='pickle', sparse_dataframe_deserialized_format='dense')
+    dfs = pd.DataFrame(dict(
+        first=[0, 0, 0, 3.3],
+        second=[4.4, 0, 0, 0],
+        third=[0, pd.NA, 0, 0],
+        # fourth=[None, None, 'a', None]
+    )).astype('Sparse')
+    assert dfs.sparse
+    dest = os.path.join(tmpdir, "my_sparse_df")
+    path = serialize_data(dfs, dest, config=ser_config)
+    assert path == f"{dest}.pd"
+
+    reloaded = deserialize_data(path, config=ser_config)
+    assert isinstance(reloaded, pd.DataFrame)
+    assert not hasattr(reloaded, 'sparse')
+    assert dfs.compare(reloaded).empty
 
 
 @pytest.mark.use_disk
 def test_serialize_pandas_dataframe_reload_as_array(tmpdir):
-    pass
+    import numpy as np
+    import pandas as pd
+    ser_config = ns(pandas_serializer='pickle', sparse_dataframe_deserialized_format='array')
+    dfs = pd.DataFrame(dict(
+        first=[0, 0, 0, 3.3],
+        second=[4.4, 0, 0, 0],
+        third=[0, pd.NA, 0, 0],
+        # fourth=[None, None, 'a', None]
+    )).astype('Sparse')
+    assert dfs.sparse
+    dest = os.path.join(tmpdir, "my_sparse_df")
+    path = serialize_data(dfs, dest, config=ser_config)
+    assert path == f"{dest}.pd"
+
+    reloaded = deserialize_data(path, config=ser_config)
+    assert isinstance(reloaded, np.ndarray)
+    assert np.array_equal(dfs.to_numpy(), np.asarray(reloaded), equal_nan=True)
+
+
+@pytest.mark.use_disk
+def test_serialize_sparse_dataframe_to_parquet(tmpdir):
+    import pandas as pd
+    ser_config = ns(pandas_serializer='parquet', sparse_dataframe_deserialized_format=None)
+    dfs = pd.DataFrame(dict(
+        first=[0, 0, 0, 3.3],
+        second=[4.4, 0, 0, 0],
+        third=[0, pd.NA, 0, 0],
+        # fourth=[None, None, 'a', None]
+    )).astype('Sparse')
+    assert dfs.sparse
+    dest = os.path.join(tmpdir, "my_sparse_df")
+    path = serialize_data(dfs, dest, config=ser_config)
+    assert path == f"{dest}.sparse.pd"
+
+    reloaded = deserialize_data(path, config=ser_config)
+    assert isinstance(reloaded, pd.DataFrame)
+    assert reloaded.sparse
+    assert dfs.compare(reloaded).empty
+
 
 
