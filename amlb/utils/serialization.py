@@ -1,7 +1,10 @@
 import logging
 import os
+import pickle
+from typing import Optional
 
-from .utils import Namespace as ns, profile
+from .core import Namespace as ns, json_dump, json_load
+from .process import profile
 
 log = logging.getLogger(__name__)
 
@@ -23,29 +26,41 @@ def _import_data_libraries():
 
 
 ser_config = ns(
-    # 'pickle', 'parquet', 'hdf', 'json'
-    pandas_serializer=os.environ.get('AMLB_SER_PD_MODE') or 'parquet',
-    # 'infer', 'bz2', 'gzip', None ?
-    # 'infer' (here=None) is the fastest but no compression,
+    # the serializer to use when there's no specific serializer available.
+    # mainly intended to serialize simple data structures like lists.
+    # allowed=['pickle', 'json']
+    fallback_serializer='json',
+    # if numpy can use pickle to serialize ndarrays,
+    numpy_allow_pickle=True,
+    # format used to serialize pandas dataframes/series between processes.
+    # allowed=['pickle', 'parquet', 'hdf', 'json']
+    pandas_serializer='parquet',
+    # the compression format used when serializing pandas dataframes/series.
+    # allowed=[None, 'infer', 'bz2', 'gzip']
+    # 'infer' (= None) is the fastest but no compression,
     # 'gzip' fast write and read with good compression.
     # 'bz2' looks like the best compression/time ratio (faster write, sometimes slightly slower read)
-    pandas_compression=os.environ.get('AMLB_SER_PD_COMPR') or 'infer',
-    # 'snappy', 'gzip', 'brotli', None ?
-    pandas_parquet_compression=os.environ.get('AMLB_SER_PD_PQT_COMPR') or None,
-    # if numpy can use pickle to serialize ndarrays,
-    numpy_pickle=True,
+    pandas_compression='infer',
+    # the compression format used when serializing pandas dataframes/series to parquet.
+    # allowed=[None, 'snappy', 'gzip', 'brotli']
+    pandas_parquet_compression=None,
     # if sparse matrices should be compressed during serialization.
     sparse_matrix_compression=True,
     # if sparse matrices should be deserialized to some specific format:
+    # allowed=[None, 'array', 'dense']
     #  None (no change), 'array' (numpy), 'dense' (dense matrix).
-    sparse_matrix_deserialized_format='array',
+    sparse_matrix_deserialized_format='dense',
     # if sparse dataframes should be deserialized to some specific format:
+    # allowed=[None, 'array', 'dense']
     #  None (no change), 'array' (numpy), 'dense' (dense dataframe/series).
-    sparse_dataframe_deserialized_format=None
+    sparse_dataframe_deserialized_format='dense',
 )
 
-
 __series__ = '_series_'
+
+
+class SerializationError(Exception):
+    pass
 
 
 def is_serializable_data(data):
@@ -84,66 +99,75 @@ def _unsparsify(data, fmt=None):
 
 
 @profile(log)
-def serialize_data(data, path):
+def serialize_data(data, path, config: Optional[ns] = None):
+    config = (config | ser_config) if config else ser_config
+    root, ext = os.path.splitext(path)
     np, pd, sp = _import_data_libraries()
     if np and isinstance(data, np.ndarray):
-        root, ext = os.path.splitext(path)
         path = f"{root}.npy"
-        np.save(path, data, allow_pickle=ser_config.numpy_pickle)
+        np.save(path, data, allow_pickle=config.numpy_allow_pickle)
     elif sp and isinstance(data, sp.spmatrix):
-        root, ext = os.path.splitext(path)
         # use custom extension to recognize sparsed matrices from file name.
         # .npz is automatically appended if missing, and can also potentially be used for numpy arrays.
         path = f"{root}.spy.npz"
-        sp.save_npz(path, data, compressed=ser_config.sparse_matrix_compression)
+        sp.save_npz(path, data, compressed=config.sparse_matrix_compression)
     elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
+        path = f"{root}.pd"
         if isinstance(data, pd.DataFrame):
             # pandas has this habit of inferring value types when data are loaded from file,
             # for example, 'true' and 'false' are converted automatically to booleans, even for column names…
             data.rename(str, axis='columns', inplace=True)
-        ser = ser_config.pandas_serializer
+        ser = config.pandas_serializer
         if ser == 'pickle':
-            data.to_pickle(path, compression=ser_config.pandas_compression)
+            data.to_pickle(path, compression=config.pandas_compression)
         elif ser == 'parquet':
             if isinstance(data, pd.Series):
                 data = pd.DataFrame({__series__: data})
-            data.to_parquet(path, compression=ser_config.pandas_parquet_compression)
+            # parquet serialization doesn't support sparse dataframes
+            data = unsparsify(data, fmt='dense')
+            data.to_parquet(path, compression=config.pandas_parquet_compression)
         elif ser == 'hdf':
             data.to_hdf(path, os.path.basename(path), mode='w', format='table')
         elif ser == 'json':
-            data.to_json(path, compression=ser_config.pandas_compression)
-    else:
-        raise ImportError(f"Numpy or Pandas are required to serialize data between processes to {path}.")
+            data.to_json(path, compression=config.pandas_compression)
+    else:  # fallback serializer
+        if config.fallback_serializer == 'json':
+            path = f"{root}.json"
+            json_dump(data, path, style='compact')
+        else:
+            path = f"{root}.pkl"
+            pickle.dump(data, path)
     return path
 
 
 @profile(log)
-def deserialize_data(path):
+def deserialize_data(path, config: Optional[ns] = None):
+    config = (config | ser_config) if config else ser_config
     np, pd, sp = _import_data_libraries()
     base, ext = os.path.splitext(path)
     if ext == '.npy':
         if np is None:
-            raise ImportError(f"Numpy is required to deserialize {path}.")
-        return np.load(path, allow_pickle=ser_config.numpy_pickle)
+            raise SerializationError(f"Numpy is required to deserialize {path}.")
+        return np.load(path, allow_pickle=config.numpy_allow_pickle)
     elif ext == '.npz':
         _, ext2 = os.path.splitext(base)
         if ext2 == '.spy':
             if sp is None:
-                raise ImportError(f"Scipy is required to deserialize {path}.")
+                raise SerializationError(f"Scipy is required to deserialize {path}.")
             sp_matrix = sp.load_npz(path)
-            return unsparsify(sp_matrix, fmt=ser_config.sparse_matrix_deserialized_format)
+            return unsparsify(sp_matrix, fmt=config.sparse_matrix_deserialized_format)
         else:
             if np is None:
-                raise ImportError(f"Numpy is required to deserialize {path}.")
-            with np.load(path, allow_pickle=ser_config.numpy_pickle) as loaded:
+                raise SerializationError(f"Numpy is required to deserialize {path}.")
+            with np.load(path, allow_pickle=config.numpy_pickle) as loaded:
                 return loaded
-    else:
+    elif ext == '.pd':
         if pd is None:
-            raise ImportError(f"Pandas is required to deserialize {path}.")
-        ser = ser_config.pandas_serializer
+            raise SerializationError(f"Pandas is required to deserialize {path}.")
+        ser = config.pandas_serializer
         df = None
         if ser == 'pickle':
-            df = pd.read_pickle(path, compression=ser_config.pandas_compression)
+            df = pd.read_pickle(path, compression=config.pandas_compression)
         elif ser == 'parquet':
             df = pd.read_parquet(path)
             if len(df.columns) == 1 and df.columns[0] == __series__:
@@ -151,6 +175,13 @@ def deserialize_data(path):
         elif ser == 'hdf':
             df = pd.read_hdf(path, os.path.basename(path))
         elif ser == 'json':
-            df = pd.read_json(path, compression=ser_config.pandas_compression)
-        return unsparsify(df, fmt=ser_config.sparse_dataframe_deserialized_format)
+            df = pd.read_json(path, compression=config.pandas_compression)
+        return unsparsify(df, fmt=config.sparse_dataframe_deserialized_format)
+    elif ext == '.json':
+        return json_load(path)
+    elif ext == '.pkl':
+        return pickle.load(path)
+    else:
+        raise SerializationError(f"Can not deserialize file `{path}` in unknown format.")
+
 

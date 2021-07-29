@@ -18,7 +18,7 @@ import scipy as sci
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..resources import config as rconfig
-from ..utils import as_list, lazy_property, path_from_split, profile, split_path
+from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
 
 
 log = logging.getLogger(__name__)
@@ -300,7 +300,8 @@ class ParquetSplitter(DataSplitter[str]):
         train_path, test_path = self.ds._get_split_paths(".parquet")
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):
             X = self.ds._load_full_data('dataframe')
-            train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+            # parquet doesn't support sparse dataframes
+            train, test = unsparsify(X.iloc[self.train_ind, :], X.iloc[self.test_ind, :], fmt='dense')
             train.to_parquet(train_path)
             test.to_parquet(test_path)
         return train_path, test_path

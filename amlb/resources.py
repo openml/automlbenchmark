@@ -186,7 +186,7 @@ class Resources:
 
         defaults = Namespace.merge(defaults, hard_defaults, Namespace(name='__defaults__'))
         for task in tasks:
-            task % defaults   # add missing keys from hard defaults + defaults
+            task | defaults   # add missing keys from hard defaults + defaults
             self._validate_task(task)
 
         self._validate_task(defaults, lenient=True)

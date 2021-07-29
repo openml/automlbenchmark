@@ -445,7 +445,7 @@ class TaskResult:
         entry.info = result.info
         if scoring_errors:
             entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
-        entry % Namespace({k: v for k, v in meta_result if k not in required_meta_res})
+        entry | Namespace({k: v for k, v in meta_result if k not in required_meta_res})
         log.info("Metric scores: %s", entry)
         return entry
 
