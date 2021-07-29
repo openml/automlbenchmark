@@ -2,7 +2,62 @@ import os
 
 import pytest
 
+from amlb.utils.core import Namespace as ns
 from amlb.utils.serialization import serialize_data, deserialize_data
+
+
+@pytest.mark.use_disk
+def test_serialize_list_json(tmpdir):
+    li = [[1, 2.2, None, 3, 4.4, 'foo', True], ['bar', False, 2/3]]
+    dest = os.path.join(tmpdir, "my_list")
+    path = serialize_data(li, dest, config=ns(fallback_serializer='json'))
+    assert path == f"{dest}.json"
+
+    reloaded = deserialize_data(path)
+    assert isinstance(reloaded, list)
+    assert li == reloaded
+
+
+@pytest.mark.use_disk
+def test_serialize_list_pickle(tmpdir):
+    li = [[1, 2.2, None, 3, 4.4, 'foo', True], ['bar', False, 2/3]]
+    dest = os.path.join(tmpdir, "my_list")
+    path = serialize_data(li, dest, config=ns(fallback_serializer='pickle'))
+    assert path == f"{dest}.pkl"
+
+    reloaded = deserialize_data(path)
+    assert isinstance(reloaded, list)
+    assert li == reloaded
+
+
+@pytest.mark.use_disk
+def test_serialize_dict_json(tmpdir):
+    di = dict(
+        first=[1, 2.2, None, 3, 4.4, 'foo', True],
+        second=['bar', False, 2/3]
+    )
+    dest = os.path.join(tmpdir, "my_dict")
+    path = serialize_data(di, dest, config=ns(fallback_serializer='json'))
+    assert path == f"{dest}.json"
+
+    reloaded = deserialize_data(path)
+    assert isinstance(reloaded, dict)
+    assert di == reloaded
+
+
+@pytest.mark.use_disk
+def test_serialize_dict_pickle(tmpdir):
+    di = dict(
+        first=[1, 2.2, None, 3, 4.4, 'foo', True],
+        second=['bar', False, 2/3]
+    )
+    dest = os.path.join(tmpdir, "my_dict")
+    path = serialize_data(di, dest, config=ns(fallback_serializer='pickle'))
+    assert path == f"{dest}.pkl"
+
+    reloaded = deserialize_data(path)
+    assert isinstance(reloaded, dict)
+    assert di == reloaded
 
 
 @pytest.mark.use_disk
@@ -47,4 +102,33 @@ def test_serialize_pandas_dataframes(tmpdir):
     assert arr.compare(reloaded).empty
 
 
-# more to come
+@pytest.mark.use_disk
+def test_serialize_sparse_matrix(tmpdir):
+    pass
+
+
+@pytest.mark.use_disk
+def test_serialize_sparse_matrix_reload_as_dense(tmpdir):
+    pass
+
+
+@pytest.mark.use_disk
+def test_serialize_sparse_matrix_reload_as_array(tmpdir):
+    pass
+
+
+@pytest.mark.use_disk
+def test_serialize_sparse_dataframe(tmpdir):
+    pass
+
+
+@pytest.mark.use_disk
+def test_serialize_pandas_dataframe_reload_as_dense(tmpdir):
+    pass
+
+
+@pytest.mark.use_disk
+def test_serialize_pandas_dataframe_reload_as_array(tmpdir):
+    pass
+
+

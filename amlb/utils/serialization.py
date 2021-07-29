@@ -136,7 +136,8 @@ def serialize_data(data, path, config: Optional[ns] = None):
             json_dump(data, path, style='compact')
         else:
             path = f"{root}.pkl"
-            pickle.dump(data, path)
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
     return path
 
 
@@ -180,7 +181,8 @@ def deserialize_data(path, config: Optional[ns] = None):
     elif ext == '.json':
         return json_load(path)
     elif ext == '.pkl':
-        return pickle.load(path)
+        with open(path, 'rb') as f:
+            return pickle.load(f)
     else:
         raise SerializationError(f"Can not deserialize file `{path}` in unknown format.")
 
