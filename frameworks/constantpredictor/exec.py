@@ -5,9 +5,7 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.results import save_predictions
-from amlb.utils import Timer
-
-from frameworks.shared.serialization import unsparsify
+from amlb.utils import Timer, unsparsify
 
 log = logging.getLogger(__name__)
 

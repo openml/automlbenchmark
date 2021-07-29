@@ -7,9 +7,7 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.datautils import impute_array
 from amlb.results import save_predictions
-from amlb.utils import Timer
-
-from frameworks.shared.serialization import unsparsify
+from amlb.utils import Timer, unsparsify
 
 log = logging.getLogger(__name__)
 
