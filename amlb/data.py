@@ -13,15 +13,20 @@
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 import logging
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 
 from .datautils import Encoder
 from .utils import clear_cache, lazy_property, profile, repr_def
 
 log = logging.getLogger(__name__)
+
+
+AM = Union[np.ndarray, sp.spmatrix]
+DF = pd.DataFrame
 
 
 class Feature:
@@ -103,7 +108,7 @@ class Datasplit(ABC):
 
     @property
     @abstractmethod
-    def data(self) -> pd.DataFrame:
+    def data(self) -> DF:
         """
         :return: all the columns (predictors + target) as a pandas DataFrame.
         """
@@ -111,7 +116,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def X(self) -> pd.DataFrame:
+    def X(self) -> DF:
         """
         :return:the predictor columns as a pandas DataFrame.
         """
@@ -120,7 +125,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def y(self) -> pd.DataFrame:
+    def y(self) -> DF:
         """
         :return:the target column as a pandas DataFrame: if you need a Series, just call `y.squeeze()`.
         """
@@ -128,7 +133,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def data_enc(self) -> np.ndarray:
+    def data_enc(self) -> AM:
         data = np.where(self.data.notna(), self.data.values, None)
         encoded_cols = [f.label_encoder.transform(data[:, f.index]) for f in self.dataset.features]
         # optimize mem usage : frameworks use either raw data or encoded ones,
@@ -138,7 +143,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def X_enc(self) -> np.ndarray:
+    def X_enc(self) -> AM:
         # TODO: should we use one_hot_encoder here instead?
         # encoded_cols = [p.label_encoder.transform(self.data[:, p.index]) for p in self.dataset.predictors]
         # return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
@@ -147,7 +152,7 @@ class Datasplit(ABC):
 
     @lazy_property
     @profile(logger=log)
-    def y_enc(self) -> np.ndarray:
+    def y_enc(self) -> AM:
         # return self.dataset.target.label_encoder.transform(self.y)
         return self.data_enc[:, self.dataset.target.index]
 

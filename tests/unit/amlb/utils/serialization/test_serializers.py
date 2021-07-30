@@ -3,7 +3,7 @@ import os
 import pytest
 
 from amlb.utils.core import Namespace as ns
-from amlb.utils.serialization import serialize_data, deserialize_data
+from amlb.utils.serialization import is_sparse, serialize_data, deserialize_data
 
 
 @pytest.mark.use_disk
@@ -161,16 +161,15 @@ def test_serialize_sparse_dataframe(tmpdir):
         first=[0, 0, 0, 3.3],
         second=[4.4, 0, 0, 0],
         third=[0, pd.NA, 0, 0],
-        # fourth=[None, None, 'a', None]
     )).astype('Sparse')
-    assert dfs.sparse
+    assert is_sparse(dfs)
     dest = os.path.join(tmpdir, "my_sparse_df")
     path = serialize_data(dfs, dest, config=ser_config)
     assert path == f"{dest}.pd"
 
     reloaded = deserialize_data(path, config=ser_config)
     assert isinstance(reloaded, pd.DataFrame)
-    assert hasattr(reloaded, 'sparse')
+    assert is_sparse(reloaded)
     assert dfs.compare(reloaded).empty
 
 
@@ -184,14 +183,14 @@ def test_serialize_pandas_dataframe_reload_as_dense(tmpdir):
         third=[0, pd.NA, 0, 0],
         # fourth=[None, None, 'a', None]
     )).astype('Sparse')
-    assert dfs.sparse
+    assert is_sparse(dfs)
     dest = os.path.join(tmpdir, "my_sparse_df")
     path = serialize_data(dfs, dest, config=ser_config)
     assert path == f"{dest}.pd"
 
     reloaded = deserialize_data(path, config=ser_config)
     assert isinstance(reloaded, pd.DataFrame)
-    assert not hasattr(reloaded, 'sparse')
+    assert not is_sparse(reloaded)
     assert dfs.compare(reloaded).empty
 
 
@@ -206,7 +205,7 @@ def test_serialize_pandas_dataframe_reload_as_array(tmpdir):
         third=[0, pd.NA, 0, 0],
         # fourth=[None, None, 'a', None]
     )).astype('Sparse')
-    assert dfs.sparse
+    assert is_sparse(dfs)
     dest = os.path.join(tmpdir, "my_sparse_df")
     path = serialize_data(dfs, dest, config=ser_config)
     assert path == f"{dest}.pd"
@@ -217,24 +216,43 @@ def test_serialize_pandas_dataframe_reload_as_array(tmpdir):
 
 
 @pytest.mark.use_disk
-def test_serialize_sparse_dataframe_to_parquet(tmpdir):
+def test_serialize_sparse_numerical_dataframe_to_parquet(tmpdir):
     import pandas as pd
     ser_config = ns(pandas_serializer='parquet', sparse_dataframe_deserialized_format=None)
     dfs = pd.DataFrame(dict(
         first=[0, 0, 0, 3.3],
         second=[4.4, 0, 0, 0],
         third=[0, pd.NA, 0, 0],
-        # fourth=[None, None, 'a', None]
     )).astype('Sparse')
-    assert dfs.sparse
+    assert is_sparse(dfs)
     dest = os.path.join(tmpdir, "my_sparse_df")
     path = serialize_data(dfs, dest, config=ser_config)
     assert path == f"{dest}.sparse.pd"
 
     reloaded = deserialize_data(path, config=ser_config)
     assert isinstance(reloaded, pd.DataFrame)
-    assert reloaded.sparse
+    assert is_sparse(reloaded)
     assert dfs.compare(reloaded).empty
 
+
+@pytest.mark.use_disk
+def test_serialize_mixed_dataframe_to_parquet(tmpdir):
+    import pandas as pd
+    ser_config = ns(pandas_serializer='parquet', sparse_dataframe_deserialized_format=None)
+    dfm = pd.DataFrame(dict(
+        first=pd.arrays.SparseArray([0, 0, 0, 3.3]),
+        second=pd.arrays.SparseArray([4.4, 0, 0, 0], dtype=pd.SparseDtype(float, 0)),
+        third=pd.arrays.SparseArray([0, pd.NA, 0, 0]),
+        fourth=[None, None, 'a', None]
+    ))
+    assert is_sparse(dfm)
+    dest = os.path.join(tmpdir, "my_mixed_df")
+    path = serialize_data(dfm, dest, config=ser_config)
+    assert path == f"{dest}.sparse.pd"
+
+    reloaded = deserialize_data(path, config=ser_config)
+    assert isinstance(reloaded, pd.DataFrame)
+    assert is_sparse(reloaded)
+    assert dfm.compare(reloaded).empty
 
 

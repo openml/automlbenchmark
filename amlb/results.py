@@ -273,13 +273,13 @@ class TaskResult:
             truth = truth.values
         if isinstance(probabilities, DF):
             probabilities = probabilities.values
-        if probabilities_labels:
+        if probabilities_labels is not None:
             probabilities_labels = [str(label) for label in probabilities_labels]
 
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
             df = to_data_frame(probabilities, columns=prob_cols)
-            if probabilities_labels:
+            if probabilities_labels is not None:
                 df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
                 if any(prob_cols != df.columns.values):
                     encoding_map = {prob_cols.index(col): i for i, col in enumerate(df.columns.values)}

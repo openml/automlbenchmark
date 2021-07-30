@@ -1,6 +1,8 @@
 import logging
+import math
 import os
 import pickle
+import re
 from typing import Optional
 
 from .core import Namespace as ns, json_dump, json_load
@@ -49,11 +51,11 @@ ser_config = ns(
     # if sparse matrices should be deserialized to some specific format:
     # allowed=[None, 'array', 'dense']
     #  None (no change), 'array' (numpy), 'dense' (dense matrix).
-    sparse_matrix_deserialized_format='dense',
+    sparse_matrix_deserialized_format=None,
     # if sparse dataframes should be deserialized to some specific format:
     # allowed=[None, 'array', 'dense']
     #  None (no change), 'array' (numpy), 'dense' (dense dataframe/series).
-    sparse_dataframe_deserialized_format='dense',
+    sparse_dataframe_deserialized_format=None,
 )
 
 __series__ = '_series_'
@@ -68,7 +70,15 @@ def is_serializable_data(data):
     return isinstance(data, (np.ndarray, sp.spmatrix, pd.DataFrame, pd.Series))
 
 
-def unsparsify(*data, fmt=None):
+def is_sparse(data):
+    np, pd, sp = _import_data_libraries()
+    return ((sp and isinstance(data, sp.spmatrix))   # sparse matrix
+            or (pd and isinstance(data, pd.Series) and pd.api.types.is_sparse(data.dtype))  # sparse Series
+            or (pd and isinstance(data, pd.DataFrame)  # if one column is sparse, the dataframe is considered as sparse
+                and any(pd.api.types.is_sparse(dt) for dt in data.dtypes)))
+
+
+def unsparsify(*data, fmt='dense'):
     if len(data) == 1:
         return _unsparsify(data[0], fmt=fmt)
     else:
@@ -92,10 +102,38 @@ def _unsparsify(data, fmt=None):
                 else data)
     elif pd and isinstance(data, (pd.DataFrame, pd.Series)):
         return (data.to_numpy(copy=False) if fmt == 'array'
-                else data.sparse.to_dense() if fmt == 'dense' and hasattr(data, 'sparse')
+                else _pd_to_dense(pd, data) if fmt == 'dense' and is_sparse(data)
                 else data)
     else:
         return data
+
+
+def _pd_to_dense(pd, df):
+    if hasattr(df, 'sparse'):
+        return df.sparse.to_dense()
+    data = {k: (v.sparse.to_dense() if hasattr(v, 'sparse') else v) for k, v in df.items()}
+    return pd.DataFrame(data, index=df.index, columns=df.columns)
+
+
+def _pd_dtypes_to_str(pd, df):
+    return {k: str(v) for k, v in df.dtypes.items()}
+
+
+def _pd_dtypes_from_str(pd, dt):
+    def dt_from_str(s):
+        m_sparse = re.match(r"Sparse\[(.*)]", s)
+        if m_sparse:
+            sub_type, fill_value = [t.strip() for t in m_sparse.group(1).split(",", 1)]
+            try:
+                fill_value = eval(fill_value, {'nan': math.nan, '<NA>': pd.NA})
+            except ValueError:
+                pass
+            dt = pd.api.types.pandas_dtype(f"Sparse[{sub_type}]")
+            return pd.SparseDtype(dt, fill_value=fill_value)
+        else:
+            return pd.api.types.pandas_dtype(s)
+
+    return {k: dt_from_str(v) for k, v in dt.items()}
 
 
 @profile(log)
@@ -124,9 +162,11 @@ def serialize_data(data, path, config: Optional[ns] = None):
             if isinstance(data, pd.Series):
                 data = pd.DataFrame({__series__: data})
             # parquet serialization doesn't support sparse dataframes
-            if hasattr(data, 'sparse'):
+            if is_sparse(data):
                 path = f"{root}.sparse.pd"
-                data = unsparsify(data, fmt='dense')
+                dtypes = _pd_dtypes_to_str(pd, data)
+                json_dump(dtypes, f"{path}.dtypes", style='compact')
+                data = unsparsify(data)
             data.to_parquet(path, compression=config.pandas_parquet_compression)
         elif ser == 'hdf':
             data.to_hdf(path, os.path.basename(path), mode='w', format='table')
@@ -179,7 +219,9 @@ def deserialize_data(path, config: Optional[ns] = None):
             if config.sparse_dataframe_deserialized_format is None and ext2 == '.sparse':
                 # trying to restore dataframe as sparse if it was as such before serialization
                 # and if the dataframe format should remain unchanged
-                df = df.astype('Sparse', copy=False)
+                j_dtypes = json_load(f"{path}.dtypes")
+                dtypes = _pd_dtypes_from_str(pd, j_dtypes)
+                df = df.astype(dtypes, copy=False)
         elif ser == 'hdf':
             df = pd.read_hdf(path, os.path.basename(path))
         elif ser == 'json':

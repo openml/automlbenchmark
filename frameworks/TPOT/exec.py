@@ -14,7 +14,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 from tpot import TPOTClassifier, TPOTRegressor, __version__
 
 from frameworks.shared.callee import call_run, output_subdir, result
-from frameworks.shared.utils import Timer
+from frameworks.shared.utils import Timer, is_sparse
 
 
 log = logging.getLogger(__name__)
@@ -45,6 +45,7 @@ def run(dataset, config):
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
+    config_dict = config.framework_params.get('_config_dict', "TPOT sparse" if is_sparse(X_train) else None)
 
     log.info('Running TPOT with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
@@ -55,6 +56,7 @@ def run(dataset, config):
                      max_time_mins=runtime_min,
                      scoring=scoring_metric,
                      random_state=config.seed,
+                     config_dict=config_dict,
                      **training_params)
 
     with Timer() as training:
