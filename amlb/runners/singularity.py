@@ -235,5 +235,6 @@ exec /bin/bash -c "$PY {script} ""$@"
             user=rconfig().user_dir,
         )
 
+        touch(self._script)
         with open(self._script, 'w') as file:
             file.write(singularity_content)

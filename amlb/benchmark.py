@@ -29,8 +29,8 @@ from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten
 log = logging.getLogger(__name__)
 
 _setup_dir_ = '.setup'
-_installed_file_ = '.installed'
-_setup_env_file_ = '.setup_env'
+_installed_file_ = 'installed'
+_setup_env_file_ = 'setup_env'
 
 
 class SetupMode(Enum):
@@ -155,7 +155,9 @@ class Benchmark:
             PY_EXEC_PATH=sys.executable
         )
         setup_env.update(**kwargs)
-        with open(os.path.join(dest_dir, _setup_dir_, _setup_env_file_), 'w') as f:
+        path = os.path.join(dest_dir, _setup_dir_, _setup_env_file_)
+        touch(path)
+        with open(path, 'w') as f:
             f.write('\n'.join([f"{k}={v}" for k, v in setup_env.items()]+[""]))
 
     def _installed_file(self):

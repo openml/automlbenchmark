@@ -161,7 +161,7 @@ CMD ["{framework}", "test"]
 
 """.format(
             custom_commands=custom_commands.format(
-                setup=dir_of(os.path.join(self._framework_dir, "setup/"),
+                setup=dir_of(os.path.join(self._framework_dir, "setup", ""),
                              rel_to_project_root=True),
                 pip="$PIP",
                 py="$PY"
@@ -172,5 +172,7 @@ CMD ["{framework}", "test"]
             script=rconfig().script,
             user=rconfig().user_dir,
         )
+
+        touch(self._script)
         with open(self._script, 'w') as file:
             file.write(docker_content)

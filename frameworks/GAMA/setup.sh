@@ -23,4 +23,4 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
-PY -c "from gama import __version__; print(__version__)" >> "${HERE}/.setup/.installed"
+PY -c "from gama import __version__; print(__version__)" >> "${HERE}/.setup/installed"

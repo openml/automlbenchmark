@@ -30,4 +30,4 @@ wget -q https://download.mlplan.org/version/$VERSION -O $DOWNLOAD_DIR/$MLPLAN_AR
 echo "Download finished. Now unzip the downloaded file."
 unzip $DOWNLOAD_DIR/$MLPLAN_ARC -d $TARGET_DIR
 
-find $HERE/lib/mlplan/*.jar | sed -e 's/.*\/mlplan-cli-\(.*\)\.jar/\1/' >> "${HERE}/.setup/.installed"
+find $HERE/lib/mlplan/*.jar | sed -e 's/.*\/mlplan-cli-\(.*\)\.jar/\1/' >> "${HERE}/.setup/installed"
