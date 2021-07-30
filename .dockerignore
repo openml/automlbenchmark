@@ -8,6 +8,7 @@ results
 **/models
 **/predictions
 **/scores
+**/.setup
 **/.installed
 **/.setup_env
 **/__pycache__
