@@ -21,12 +21,7 @@ def run(dataset: Dataset, config: TaskConfig):
         ),
         predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors]
     )
-    # options = dict(serialization=dict(
-    #     sparse_matrix_deserialized_format='array'
-    # ))
 
     return run_in_venv(__file__, "exec.py",
-                       input_data=data, dataset=dataset, config=config,
-                       # options=options
-                       )
+                       input_data=data, dataset=dataset, config=config)
 

@@ -65,7 +65,7 @@ class Namespace:
             if ns is None:
                 continue
             if not deep:
-                merged + ns
+                merged += ns
             else:
                 for k, v in ns:
                     if isinstance(v, Namespace):
@@ -158,12 +158,24 @@ class Namespace:
         self.__dict__.update(dict(*args, **kwargs))
 
     def __add__(self, other):
+        res = Namespace()
+        res += self
+        res += other
+        return res
+
+    def __iadd__(self, other):
         """extends self with other (always overrides)"""
         if other is not None:
             self.__dict__.update(other)
         return self
 
     def __or__(self, other):
+        res = Namespace()
+        res |= self
+        res |= other
+        return res
+
+    def __ior__(self, other):
         """extends self with other (adds only missing keys)"""
         if other is not None:
             for k, v in other:

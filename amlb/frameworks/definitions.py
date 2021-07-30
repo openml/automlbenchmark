@@ -185,7 +185,7 @@ def _update_frameworks_with_parent_definitions(frameworks: Namespace):
     for name, framework in frameworks:
         parents = _find_all_parents(framework, frameworks)
         for parent in parents:
-            framework | copy.deepcopy(parent)
+            framework |= copy.deepcopy(parent)
 
 
 def _add_defaults_to_frameworks(frameworks: Namespace, config):
