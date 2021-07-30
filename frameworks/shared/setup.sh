@@ -15,7 +15,7 @@ SUDO() {
 }
 
 # retrieve PY_EXEC_PATH from .setup_env
-source "$MODULE_ROOT/.setup_env"
+source "$MODULE_ROOT/.setup/.setup_env"
 
 if [[ -n "$MODULE_ROOT" && "$CREATE_VENV" == "true" ]]; then
     PY_VENV="$MODULE_ROOT/venv"

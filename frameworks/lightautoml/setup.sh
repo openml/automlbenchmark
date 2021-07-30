@@ -24,4 +24,4 @@ else
     bash build_package.sh
 fi
 
-PY -c "import matplotlib; matplotlib.use('agg'); from lightautoml import __version__; print(__version__)" >> "${HERE}/.installed"
+PY -c "import matplotlib; matplotlib.use('agg'); from lightautoml import __version__; print(__version__)" >> "${HERE}/.setup/.installed"

@@ -9,6 +9,7 @@ import logging
 import os
 import re
 
+from ..benchmark import _setup_dir_
 from ..resources import config as rconfig, get as rget
 from ..utils import dir_of, run_cmd, touch
 from .container import ContainerBenchmark
@@ -70,11 +71,11 @@ class SingularityBenchmark(ContainerBenchmark):
         if as_docker_image:
             return image_name
         else:
-            return os.path.join(self._framework_dir, image_name + '.sif')
+            return os.path.join(self._framework_dir, _setup_dir_, image_name + '.sif')
 
     @property
     def _script(self):
-        return os.path.join(self._framework_dir, 'Singularityfile')
+        return os.path.join(self._framework_dir, _setup_dir_, 'Singularityfile')
 
     def _start_container(self, script_params=""):
         """Implementes the container run method"""
