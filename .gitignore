@@ -1,6 +1,7 @@
 #build/run/local
 Dockerfile
 .marker*
+.setup/
 .installed
 .setup_env
 my_*

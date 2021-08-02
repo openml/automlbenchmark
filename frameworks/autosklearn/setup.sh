@@ -40,8 +40,9 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
-PY -c "from autosklearn import __version__; print(__version__)" >> "${HERE}/.installed"
+installed="${HERE}/.setup/installed"
+PY -c "from autosklearn import __version__; print(__version__)" >> "$installed"
 if [[ -n $COMMIT ]]; then
-  truncate -s-1 "${HERE}/.installed"
-  echo "#${COMMIT}" >> "${HERE}/.installed"
+  truncate -s-1 "$installed"
+  echo "#${COMMIT}" >> "$installed"
 fi
