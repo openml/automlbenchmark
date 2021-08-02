@@ -58,7 +58,7 @@ def run(dataset, config):
         if class_map:
             column_to_class = {col: class_ for class_, col in class_map.items()}
             predictions = list(map(column_to_class.get, predictions))
-            probabilities_labels = list(class_map)
+            probabilities_labels = [column_to_class[col] for col in sorted(column_to_class)]
     else:
         probabilities = None
         predictions = preds
