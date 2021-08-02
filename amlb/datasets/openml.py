@@ -18,7 +18,7 @@ import scipy.sparse as sp
 
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
 from ..resources import config as rconfig
-from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
+from ..utils import as_list, is_sparse, lazy_property, path_from_split, profile, split_path, unsparsify
 
 
 log = logging.getLogger(__name__)
@@ -248,11 +248,12 @@ class ArffSplitter(DataSplitter[str]):
                             else 'STRING'
                            ))
                           for c, dt in zip(df.columns, df.dtypes)]
+            data = sp.coo_matrix(df.values) if is_sparse(df) else df.values
             arff.dump(dict(
                 description=description,
                 relation=name,
                 attributes=attributes,
-                data=df.values
+                data=data
             ), file)
 
     def _is_numeric(self, col):
