@@ -273,6 +273,8 @@ class TaskResult:
             truth = truth.values
         if isinstance(probabilities, DF):
             probabilities = probabilities.values
+        if probabilities_labels:
+            probabilities_labels = [str(label) for label in probabilities_labels]
 
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes

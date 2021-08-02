@@ -59,11 +59,20 @@ def run(dataset, config):
     with Timer() as predict:
         preds = automl.predict_all(X_test)
 
-    predictions, probabilities = None, None
+    predictions, probabilities, probabilities_labels = None, None, None
     if is_classification:
+        # preds is a dataframe with columns ["prediction_LABEL", .., "label"]
+        if y_train.dtype == bool and preds["label"].dtype == int:
+            # boolean target produces integer predictions for mljar-supervised <= 0.10.6
+            # https://github.com/mljar/mljar-supervised/issues/442
+            preds = preds.rename({"prediction_0": "False", "prediction_1": "True"}, axis=1)
+            preds["label"] = preds["label"].astype(bool)
+        else:
+            preds.columns = [c.replace("prediction_", "", 1) for c in preds.columns]
+
         predictions = preds["label"].values
-        cols = [f"prediction_{c}" for c in np.unique(y_train)]
-        probabilities = preds[cols].values
+        probabilities_labels = list(preds.columns)[:-1]
+        probabilities = preds[probabilities_labels].values
     else:
         predictions = preds["prediction"].values
 
@@ -76,6 +85,7 @@ def run(dataset, config):
         predictions=predictions,
         truth=y_test,
         probabilities=probabilities,
+        probabilities_labels=probabilities_labels,
         models_count=len(automl._models),
         training_duration=training.duration,
         predict_duration=predict.duration
