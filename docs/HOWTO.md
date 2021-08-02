@@ -536,21 +536,20 @@ Noticeable differences with a basic integration:
 - the `run` function in `__init__.py` prepares the data (in the application environment) before executing the `exec.py` in the dedicated `venv`. The call to `run_in_venv` is in charge of serializing the input, calling `exec.py` and deserializing + saving the results from `exec`.
 - `exec.py`, when calls in the subprocess (function `__main__`), calls `call_run(run)` which deserializes the input (dataset + config) and passes it to the `run` function that just need to return a `result` object.
 
-*Note*:
+*Note A*:
 
 As the serialization/deserialization of `numpy` arrays can be costly for very large datasets, it is recommended to use dataset serialization only if the framework itself doesn't support loading datasets from files. 
 
 This means that, in the `__init__.py` instead of implementing `run` as:
 ```python
-X_train_enc, X_test_enc = impute(dataset.train.X_enc, dataset.test.X_enc)
 data = dict(
     train=dict(
-        X_enc=X_train_enc,
-        y_enc=dataset.train.y_enc
+        X=dataset.train.X,
+        y=dataset.train.y
     ),
     test=dict(
-        X_enc=X_test_enc,
-        y_enc=dataset.test.y_enc
+        X=dataset.test.X,
+        y=dataset.test.y
     )
 )
 
@@ -567,6 +566,32 @@ data = dict(
 return run_in_venv(__file__, "exec.py",
                    input_data=data, dataset=dataset, config=config)
 ```
+
+*Note B*:
+
+The serialization/deserialization of data between the main process and the framework process can be customized using the `options` parameter:
+The allowed options for (de)serialization are defined by the object `amlb.utils.serialization.ser_config`.
+
+For example:
+```python
+data = dict(
+    train=dict(
+        X=dataset.train.X,
+        y=dataset.train.y
+    ),
+    test=dict(
+        X=dataset.test.X,
+        y=dataset.test.y
+    )
+)
+
+options = dict(
+    serialization=dict(sparse_dataframe_deserialized_format='dense')
+)
+return run_in_venv(__file__, "exec.py",
+                   input_data=data, dataset=dataset, config=config, options=options)
+```
+
 
 
 #### Other Frameworks

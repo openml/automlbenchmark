@@ -14,17 +14,19 @@ import numpy as np
 import pandas as pd
 import pandas.api.types as pat
 import openml as oml
-import scipy as sci
+import scipy.sparse as sp
 
-from ..data import Dataset, DatasetType, Datasplit, Feature
+from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
 from ..resources import config as rconfig
-from ..utils import as_list, lazy_property, path_from_split, profile, split_path
+from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
 
 
 log = logging.getLogger(__name__)
 
 # hack (only adding a ? to the regexp pattern) to ensure that '?' values remain quoted when we save dataplits in arff format.
 arff._RE_QUOTE_CHARS = re.compile(r'[?"\'\\\s%,\000-\031]', re.UNICODE)
+
+
 
 
 class OpenmlLoader:
@@ -159,12 +161,12 @@ class OpenmlDatasplit(Datasplit):
 
     @lazy_property
     @profile(logger=log)
-    def data(self) -> pd.DataFrame:
+    def data(self) -> DF:
         return self._get_data('dataframe')
 
     @lazy_property
     @profile(logger=log)
-    def data_enc(self) -> np.ndarray:
+    def data_enc(self) -> AM:
         return self._get_data('array')
 
     def _get_data(self, fmt):
@@ -178,8 +180,6 @@ class OpenmlDatasplit(Datasplit):
 
 
 T = TypeVar('T')
-A = Union[np.ndarray, sci.sparse.csr_matrix]
-DF = pd.DataFrame
 
 
 class DataSplitter(Generic[T]):
@@ -193,14 +193,14 @@ class DataSplitter(Generic[T]):
         pass
 
 
-class ArraySplitter(DataSplitter[A]):
+class ArraySplitter(DataSplitter[AM]):
     format = 'array'
 
     def __init__(self, ds: OpenmlDataset):
         super().__init__(ds)
 
     @profile(logger=log)
-    def split(self) -> Tuple[A, A]:
+    def split(self) -> Tuple[AM, AM]:
         X = self.ds._load_full_data('array')
         return X[self.train_ind, :], X[self.test_ind, :]
 
@@ -300,7 +300,8 @@ class ParquetSplitter(DataSplitter[str]):
         train_path, test_path = self.ds._get_split_paths(".parquet")
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):
             X = self.ds._load_full_data('dataframe')
-            train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
+            # arrow (used to write parquet files) doesn't support sparse dataframes: https://github.com/apache/arrow/issues/1894
+            train, test = unsparsify(X.iloc[self.train_ind, :], X.iloc[self.test_ind, :])
             train.to_parquet(train_path)
             test.to_parquet(test_path)
         return train_path, test_path

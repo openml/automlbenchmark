@@ -5,7 +5,7 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.results import save_predictions
-from amlb.utils import Timer
+from amlb.utils import Timer, unsparsify
 
 log = logging.getLogger(__name__)
 
@@ -17,10 +17,11 @@ def run(dataset: Dataset, config: TaskConfig):
     predictor = DummyClassifier(strategy='prior') if is_classification else DummyRegressor(strategy='median')
 
     encode = config.framework_params.get('_encode', False)
-    X_train = dataset.train.X_enc if encode else dataset.train.X
-    y_train = dataset.train.y_enc if encode else dataset.train.y
-    X_test = dataset.test.X_enc if encode else dataset.test.X
-    y_test = dataset.test.y_enc if encode else dataset.test.y
+
+    X_train = unsparsify(dataset.train.X_enc if encode else dataset.train.X, fmt='array')
+    y_train = unsparsify(dataset.train.y_enc if encode else dataset.train.y, fmt='array')
+    X_test = unsparsify(dataset.test.X_enc if encode else dataset.test.X, fmt='array')
+    y_test = unsparsify(dataset.test.y_enc if encode else dataset.test.y, fmt='array')
 
     with Timer() as training:
         predictor.fit(X_train, y_train)

@@ -5,7 +5,7 @@ from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegress
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.datautils import impute
+from amlb.datautils import impute_array
 from amlb.results import save_predictions
 from amlb.utils import Timer
 
@@ -17,7 +17,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     is_classification = config.type == 'classification'
 
-    X_train, X_test = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train, X_test = impute_array(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = dataset.train.y, dataset.test.y
 
     estimator = GradientBoostingClassifier if is_classification else GradientBoostingRegressor
