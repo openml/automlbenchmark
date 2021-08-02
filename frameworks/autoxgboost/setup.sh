@@ -37,10 +37,11 @@ fi
 # We install the packages to a subdirectory in the framework folder, similar to venvs for Python, because:
 # - we want to be able to install different package versions for different frameworks in one local installation
 # - the default package directory is not always writeable (e.g. on Github CI)
-mkdir "${HERE}/r-packages/"
+LIB="${HERE}/lib/"
+mkdir ${LIB}
 
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "mlr", "mlrMBO", "mlrCPO", "farff", "GenSA", "rgenoud", "xgboost"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"'")'
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${HERE}/r-packages/"'")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "mlr", "mlrMBO", "mlrCPO", "farff", "GenSA", "rgenoud", "xgboost"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${LIB}/"'")'
 
-OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g")
+OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${LIB}"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g")
 echo "${OFFICIAL_VERSION}#${VERSION:0:7}" >> "${HERE}/.setup/installed"
