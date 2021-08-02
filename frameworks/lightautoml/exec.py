@@ -53,6 +53,8 @@ def run(dataset, config):
 
         predictions = np.argmax(probabilities, axis=1)
         class_map = automl.outer_pipes[0].ml_algos[0].models[0][0].reader.class_mapping
+        if class_map is None and df_train[label].dtype == bool:
+            class_map = {False: 0, True: 1}
         if class_map:
             column_to_class = {col: class_ for class_, col in class_map.items()}
             predictions = list(map(column_to_class.get, predictions))
