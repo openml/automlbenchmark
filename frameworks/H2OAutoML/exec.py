@@ -6,7 +6,7 @@ import re
 import shutil
 
 from packaging import version
-import  pandas as pd
+import pandas as pd
 
 import h2o
 from h2o.automl import H2OAutoML
@@ -203,6 +203,7 @@ def save_artifacts(automl, dataset, config):
             zip_path(logs_dir, logs_zip)
             # h2o.download_all_logs(dirname=logs_dir)
             clean_dir(logs_dir, filtr=lambda p: p != logs_zip)
+            write_csv(automl.event_log.as_data_frame(), os.path.join(logs_dir, 'aml_event_log.csv'))
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
 
