@@ -108,10 +108,10 @@ def run(dataset: Dataset, config: TaskConfig):
         if 'logs' in artifacts:
             logs_zip = os.path.join(log_dir, "logs.zip")
             zip_path(log_dir, logs_zip)
-            clean_dir(log_dir, filtr=lambda p: p != logs_zip)
+            clean_dir(log_dir, filter_=lambda p: p != logs_zip)
         if 'models' in artifacts:
             models_zip = os.path.join(output_dir, "models.zip")
             zip_path(output_dir, models_zip)
-            clean_dir(output_dir, filtr=lambda p: p != models_zip)
+            clean_dir(output_dir, filter_=lambda p: p != models_zip)
 
         shutil.rmtree(tmpdir, ignore_errors=True)

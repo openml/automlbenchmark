@@ -173,7 +173,7 @@ def save_artifacts(estimator, config):
                 walk_apply(
                     tmp_directory,
                     _copy,
-                    filtr=lambda path: (
+                    filter_=lambda path: (
                         os.path.splitext(path)[1] not in ignore_extensions
                         and not os.path.isdir(path)
                     ),
@@ -182,7 +182,7 @@ def save_artifacts(estimator, config):
                 zip_path(
                     tmp_directory,
                     os.path.join(debug_dir, "artifacts.zip"),
-                    filtr=lambda p: os.path.splitext(p)[1] not in ignore_extensions
+                    filter_=lambda p: os.path.splitext(p)[1] not in ignore_extensions
                 )
     except Exception as e:
         log.debug("Error when saving artifacts= {e}.".format(e), exc_info=True)
