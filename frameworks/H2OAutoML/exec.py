@@ -3,7 +3,6 @@ import logging
 import os
 import psutil
 import re
-import shutil
 
 from packaging import version
 import pandas as pd
@@ -177,11 +176,11 @@ def save_artifacts(automl, dataset, config):
                         break
 
                 models_archive = os.path.join(models_dir, f"models_{mformat}.zip")
-                zip_path(models_dir, models_archive, filtr=lambda p: p not in models_artifacts)
+                zip_path(models_dir, models_archive, filter_=lambda p: p not in models_artifacts)
                 models_artifacts.append(models_archive)
                 clean_dir(models_dir,
-                                filtr=lambda p: p not in models_artifacts
-                                                and os.path.splitext(p)[1] in ['.json', '.zip', ''])
+                          filter_=lambda p: p not in models_artifacts
+                                          and os.path.splitext(p)[1] in ['.json', '.zip', ''])
 
         if 'model_predictions' in artifacts:
             predictions_dir = output_subdir("predictions", config)
@@ -195,14 +194,14 @@ def save_artifacts(automl, dataset, config):
                 write_preds(preds, os.path.join(predictions_dir, mid, 'predictions.csv'))
             predictions_zip = os.path.join(predictions_dir, "model_predictions.zip")
             zip_path(predictions_dir, predictions_zip)
-            clean_dir(predictions_dir, filtr=lambda p: os.path.isdir(p))
+            clean_dir(predictions_dir, filter_=lambda p: os.path.isdir(p))
 
         if 'logs' in artifacts:
             logs_dir = output_subdir("logs", config)
             logs_zip = os.path.join(logs_dir, "h2o_logs.zip")
             zip_path(logs_dir, logs_zip)
             # h2o.download_all_logs(dirname=logs_dir)
-            clean_dir(logs_dir, filtr=lambda p: p != logs_zip)
+            clean_dir(logs_dir, filter_=lambda p: p != logs_zip)
             write_csv(automl.event_log.as_data_frame(), os.path.join(logs_dir, 'aml_event_log.csv'))
     except Exception:
         log.debug("Error when saving artifacts.", exc_info=True)
