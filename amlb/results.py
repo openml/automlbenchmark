@@ -141,9 +141,16 @@ class Scoreboard:
         fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'type', 'result', 'metric', 'mode', 'version',
                       'params', 'app_version', 'utc', 'duration', 'training_duration', 'predict_duration', 'models_count', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
-        dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
+        metrics_cols = [col for col in df.columns
+                        if (col in dir(ClassificationResult) or col in dir(RegressionResult))
+                        and not col.startswith('_')]
+        metrics_cols.sort()
+        dynamic_cols = [col for col in df.columns
+                        if col not in index
+                        and col not in fixed_cols
+                        and col not in metrics_cols]
         dynamic_cols.sort()
-        df = df.reindex(columns=[]+fixed_cols+dynamic_cols)
+        df = df.reindex(columns=[]+fixed_cols+metrics_cols+dynamic_cols)
         log.debug("Scores columns: %s.", df.columns)
         return df
 
