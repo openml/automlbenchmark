@@ -235,7 +235,7 @@ class Namespace:
 
 
 def repr_def(obj):
-    return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
+    return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={!r}".format(k, v) for k, v in obj.__dict__.items())))
 
 
 def noop(*args, **kwargs):
