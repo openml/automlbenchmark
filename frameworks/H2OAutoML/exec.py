@@ -147,13 +147,18 @@ def save_artifacts(automl, dataset, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
         models_artifacts = []
-        lb = automl.leaderboard.as_data_frame()
-        log.debug("Leaderboard:\n%s", lb.to_string())
-        if 'leaderboard' in artifacts:
+        lb_pat = re.compile(r"leaderboard(?:\[(.*)\])?")
+        lb_match = next((lb_pat.fullmatch(a) for a in artifacts), None)
+        if lb_match:
+            lb_ext = list(filter(None, re.split("[,; ]", (lb_match.group(1) or ""))))
+            lb = h2o.automl.get_leaderboard(automl, lb_ext).as_data_frame()
             models_dir = output_subdir("models", config)
             lb_path = os.path.join(models_dir, "leaderboard.csv")
             write_csv(lb, lb_path)
             models_artifacts.append(lb_path)
+        else:
+            lb = automl.leaderboard.as_data_frame()
+        log.debug("Leaderboard:\n%s", lb.to_string())
 
         models_pat = re.compile(r"models(\[(json|binary|mojo)(?:,(\d+))?\])?")
         models = list(filter(models_pat.fullmatch, artifacts))
