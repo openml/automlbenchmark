@@ -434,7 +434,8 @@ class AWSBenchmark(Benchmark):
                     if last_line is not None:
                         last_console_line = last_line['line']
                     if new_log:
-                        log.info(new_log)
+                        around = f"[{job.ext.instance_id}:{job.name}]"
+                        log.info(f"{around}>>\n{new_log}\n<<{around}")
             except Exception as e:
                 log.exception(e)
 
