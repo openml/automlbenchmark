@@ -367,7 +367,6 @@ class TaskResult:
             return None
 
         file_g = file_m.groupdict()
-        framework_name = file_g['framework']
         task_name = file_g['task']
         fold = int(file_g['fold'])
         constraint = folder_g['constraint']
@@ -380,17 +379,16 @@ class TaskResult:
             except:
                 pass
 
-        result = cls.load_predictions(path)
-        task_result = cls(task, fold, constraint, '')
-        metrics = rconfig().benchmarks.metrics.get(result.type.name if result.type is not None else None, [])
-        return task_result.compute_score(framework_name, metrics, result=result)
+        task_result = cls(task, fold, constraint, predictions_dir=path)
+        return task_result.compute_score()
 
-    def __init__(self, task_def, fold: int, constraint: str, predictions_dir=None):
+    def __init__(self, task_def, fold: int, constraint: str, predictions_dir: str = None, metadata: Namespace = None):
         self.task = task_def
         self.fold = fold
         self.constraint = constraint
         self.predictions_dir = (predictions_dir if predictions_dir
                                 else output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions)
+        self._metadata = metadata
 
     @cached
     def get_result(self):
@@ -398,7 +396,7 @@ class TaskResult:
 
     @cached
     def get_result_metadata(self):
-        return self.load_metadata(self._metadata_file)
+        return self._metadata or self.load_metadata(self._metadata_file)
 
     @profile(logger=log)
     def compute_score(self, result=None, meta_result=None):
