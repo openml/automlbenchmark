@@ -141,9 +141,16 @@ class Scoreboard:
         fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'type', 'result', 'metric', 'mode', 'version',
                       'params', 'app_version', 'utc', 'duration', 'training_duration', 'predict_duration', 'models_count', 'seed', 'info']
         fixed_cols = [col for col in fixed_cols if col not in index]
-        dynamic_cols = [col for col in df.columns if col not in index and col not in fixed_cols]
+        metrics_cols = [col for col in df.columns
+                        if (col in dir(ClassificationResult) or col in dir(RegressionResult))
+                        and not col.startswith('_')]
+        metrics_cols.sort()
+        dynamic_cols = [col for col in df.columns
+                        if col not in index
+                        and col not in fixed_cols
+                        and col not in metrics_cols]
         dynamic_cols.sort()
-        df = df.reindex(columns=[]+fixed_cols+dynamic_cols)
+        df = df.reindex(columns=[]+fixed_cols+metrics_cols+dynamic_cols)
         log.debug("Scores columns: %s.", df.columns)
         return df
 
@@ -273,11 +280,13 @@ class TaskResult:
             truth = truth.values
         if isinstance(probabilities, DF):
             probabilities = probabilities.values
+        if probabilities_labels is not None:
+            probabilities_labels = [str(label) for label in probabilities_labels]
 
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
             df = to_data_frame(probabilities, columns=prob_cols)
-            if probabilities_labels:
+            if probabilities_labels is not None:
                 df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
                 if any(prob_cols != df.columns.values):
                     encoding_map = {prob_cols.index(col): i for i, col in enumerate(df.columns.values)}
@@ -358,7 +367,6 @@ class TaskResult:
             return None
 
         file_g = file_m.groupdict()
-        framework_name = file_g['framework']
         task_name = file_g['task']
         fold = int(file_g['fold'])
         constraint = folder_g['constraint']
@@ -371,17 +379,16 @@ class TaskResult:
             except:
                 pass
 
-        result = cls.load_predictions(path)
-        task_result = cls(task, fold, constraint, '')
-        metrics = rconfig().benchmarks.metrics.get(result.type.name if result.type is not None else None, [])
-        return task_result.compute_score(framework_name, metrics, result=result)
+        task_result = cls(task, fold, constraint, predictions_dir=path)
+        return task_result.compute_score()
 
-    def __init__(self, task_def, fold: int, constraint: str, predictions_dir=None):
+    def __init__(self, task_def, fold: int, constraint: str, predictions_dir: str = None, metadata: Namespace = None):
         self.task = task_def
         self.fold = fold
         self.constraint = constraint
         self.predictions_dir = (predictions_dir if predictions_dir
                                 else output_dirs(rconfig().output_dir, rconfig().sid, ['predictions']).predictions)
+        self._metadata = metadata
 
     @cached
     def get_result(self):
@@ -389,7 +396,7 @@ class TaskResult:
 
     @cached
     def get_result_metadata(self):
-        return self.load_metadata(self._metadata_file)
+        return self._metadata or self.load_metadata(self._metadata_file)
 
     @profile(logger=log)
     def compute_score(self, result=None, meta_result=None):
@@ -443,7 +450,7 @@ class TaskResult:
         entry.info = result.info
         if scoring_errors:
             entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
-        entry % Namespace({k: v for k, v in meta_result if k not in required_meta_res})
+        entry |= Namespace({k: v for k, v in meta_result if k not in required_meta_res})
         log.info("Metric scores: %s", entry)
         return entry
 

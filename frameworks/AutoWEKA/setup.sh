@@ -35,4 +35,4 @@ fi
 smac_dir=`find "$DOWNLOAD_DIR/autoweka" -maxdepth 1 -name "smac-*"`
 chmod 755 "$smac_dir/smac"
 
-find $HERE/lib/autoweka*.zip | sed -e 's/.*\/autoweka-\(.*\)\.zip/\1/' >> "${HERE}/.installed"
+find $HERE/lib/autoweka*.zip | sed -e 's/.*\/autoweka-\(.*\)\.zip/\1/' >> "${HERE}/.setup/installed"

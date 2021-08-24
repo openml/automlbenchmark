@@ -119,7 +119,7 @@ if args.profiling:
 log_levels = ns({logger: level.upper()
                  for logger, level in [d.split(':') for d in args.logging.split(',')]} if ':' in args.logging
                 else dict(console=args.logging.upper(), app=args.logging.upper(), root=args.logging.upper()) if args.logging
-                else {}) % ns(console='INFO', app='DEBUG', root='INFO')  # adding defaults if needed
+                else {}) | ns(console='INFO', app='DEBUG', root='INFO')  # adding defaults if needed
 amlb.logger.setup(log_file=os.path.join(log_dir, '{script}.{now}.log'.format(script=script_name, now=now_str)),
                   root_file=os.path.join(log_dir, '{script}.{now}.full.log'.format(script=script_name, now=now_str)),
                   root_level=log_levels.root, app_level=log_levels.app, console_level=log_levels.console, print_to_log=True)
@@ -190,7 +190,7 @@ finally:
         out_dirs = bench.output_dirs
         for d in archives:
             if d in out_dirs:
-                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arcpathformat='long')
+                zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arc_path_format='long')
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
 
     sys.exit(code)

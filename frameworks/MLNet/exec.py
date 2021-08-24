@@ -30,8 +30,7 @@ def run(dataset: Dataset, config: TaskConfig):
     DOTNET_INSTALL_DIR = os.path.join(dir_path, 'lib')
     os.environ['DOTNET_ROOT'] = DOTNET_INSTALL_DIR
     os.environ['MLNetCLIEnablePredict'] = 'True'
-    threads_count_per_core = psutil.cpu_count() / psutil.cpu_count(logical=False)
-    os.environ['MLNET_MAX_THREAD'] = str(config.cores * threads_count_per_core)
+    os.environ['MLNET_MAX_THREAD'] = str(config.cores)
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
     train_time_in_seconds = config.max_runtime_seconds
     sub_command = config.type
@@ -75,7 +74,7 @@ def run(dataset: Dataset, config: TaskConfig):
             models_count = len(mb_config['RunHistory']['Trials'])
             # predict
             predict_cmd = (f"{mlnet} predict --task-type {config.type}"
-                           f" --model {model_path} --dataset {test_dataset_path} > {output_prediction_path}")
+                           f" --model {model_path} --dataset {test_dataset_path} --label-col {dataset.target.name} > {output_prediction_path}")
             with Timer() as prediction:
                 run_cmd(predict_cmd)
             if config.type == 'classification':
@@ -108,10 +107,10 @@ def run(dataset: Dataset, config: TaskConfig):
         if 'logs' in artifacts:
             logs_zip = os.path.join(log_dir, "logs.zip")
             zip_path(log_dir, logs_zip)
-            clean_dir(log_dir, filtr=lambda p: p != logs_zip)
+            clean_dir(log_dir, filter_=lambda p: p != logs_zip)
         if 'models' in artifacts:
             models_zip = os.path.join(output_dir, "models.zip")
             zip_path(output_dir, models_zip)
-            clean_dir(output_dir, filtr=lambda p: p != models_zip)
+            clean_dir(output_dir, filter_=lambda p: p != models_zip)
 
         shutil.rmtree(tmpdir, ignore_errors=True)

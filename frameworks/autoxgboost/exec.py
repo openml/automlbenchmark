@@ -23,7 +23,7 @@ def run(dataset: Dataset, config: TaskConfig):
              "run('{train}', '{test}', target.index = {target_index}, '{type}', '{output}', {cores},"
              " time.budget = {time_budget}, meta_results_file='{meta_results}')"
              "\"").format(
-        package_directory=os.path.join(here, "r-packages"),
+        package_directory=os.path.join(here, "lib"),
         script=os.path.join(here, 'exec.R'),
         train=dataset.train.path,
         test=dataset.test.path,

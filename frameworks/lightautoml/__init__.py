@@ -23,6 +23,9 @@ def run(dataset: Dataset, config: TaskConfig):
         ),
         problem_type=dataset.type.name
     )
+    options = dict(
+        serialization=dict(sparse_dataframe_deserialized_format='dense')
+    )
 
     return run_in_venv(__file__, "exec.py",
-                       input_data=data, dataset=dataset, config=config)
+                       input_data=data, dataset=dataset, config=config, options=options)

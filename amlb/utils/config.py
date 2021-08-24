@@ -24,7 +24,7 @@ class YAMLNamespaceConstructor(SafeConstructor):
         data = Namespace()
         yield data
         value = self.construct_mapping(node)
-        data + value
+        data += value
 
 
 YAMLNamespaceConstructor.init()

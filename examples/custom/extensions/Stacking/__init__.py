@@ -8,10 +8,10 @@ def setup(*args, **kwargs):
 
 
 def run(dataset: Dataset, config: TaskConfig):
-    from amlb.datautils import impute
+    from amlb.datautils import impute_array
     from frameworks.shared.caller import run_in_venv
 
-    X_train_enc, X_test_enc = impute(dataset.train.X_enc, dataset.test.X_enc)
+    X_train_enc, X_test_enc = impute_array(dataset.train.X_enc, dataset.test.X_enc)
     data = dict(
         train=dict(
             X_enc=X_train_enc,

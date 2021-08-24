@@ -18,12 +18,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: pull base branch
         run: |
-          git fetch origin $GITHUB_BASE_REF
+          git fetch --unshallow origin $GITHUB_BASE_REF
           git branch --track $GITHUB_BASE_REF origin/$GITHUB_BASE_REF
       - id: find-required-tests
         name: Detect Common Changes  # detect if any changes occurred that should trigger all frameworks.
         run: |
-          changed_files=$(git diff --name-only HEAD..$GITHUB_BASE_REF)
+          changed_files=$(git diff --name-only $GITHUB_BASE_REF...HEAD)
 
           shopt -s globstar
           common_files="amlb/** "\
