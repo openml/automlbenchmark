@@ -2,7 +2,10 @@
 HERE=$(dirname "$0")
 MLNET='mlnet'
 VERSION=${1:-"latest"}
-DOTNET_INSTALL_DIR="$HERE/lib"
+
+echo "Home: $HOME"
+# Needs to be exported since it is used in dotnet-install.sh, though --install-dir option *should* overwrite
+export DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
 SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
@@ -12,7 +15,7 @@ if [[ "$VERSION" == "latest" ]]; then
     VERSION=""
 fi
 
-rm -rf DOTNET_INSTALL_DIR
+rm -rf "$DOTNET_INSTALL_DIR"
 # install mlnet if necessary
 if [[ ! -x "$MLNET" ]]; then
     if [[ ! -x "$DOTNET" ]]; then
@@ -28,6 +31,7 @@ $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-pat
 fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+# export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 $MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.setup/installed"
