@@ -343,12 +343,13 @@ def str_digest(s):
     return base64.b64encode(hashlib.md5(s.encode()).digest()).decode()
 
 
-def head(s, lines=10):
+def head(s, lines=10, splitlines=False):
     s_lines = s.splitlines() if s else []
-    return '\n'.join(s_lines[:lines])
+    s_lines = s_lines[:lines]
+    return s_lines if splitlines else '\n'.join(s_lines)
 
 
-def tail(s, lines=10, from_line=None, include_line=True):
+def tail(s, lines=10, from_line=None, include_line=True, splitlines=False):
     if s is None:
         return None if from_line is None else None, None
 
@@ -367,7 +368,8 @@ def tail(s, lines=10, from_line=None, include_line=True):
             start = 0
     last_line = dict(index=len(s_lines) - 1,
                      line=s_lines[-1] if len(s_lines) > 0 else None)
-    t = '\n'.join(s_lines[start:])
+    s_lines = s_lines[start:]
+    t = s_lines if splitlines else '\n'.join(s_lines)
     return t if from_line is None else (t, last_line)
 
 

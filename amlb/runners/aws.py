@@ -430,10 +430,11 @@ class AWSBenchmark(Benchmark):
                 output = instance.console_output(Latest=True)
                 if 'Output' in output:
                     output = output['Output']   # note that console_output only returns the last 64kB of console
-                    new_log, last_line = tail(output, from_line=last_console_line, include_line=False)
+                    new_lines, last_line = tail(output, from_line=last_console_line, include_line=False, splitlines=True)
                     if last_line is not None:
                         last_console_line = last_line['line']
-                    if new_log:
+                    if new_lines:
+                        new_log = '\n'.join([f"[{job.ext.instance_id}]>{line}" for line in new_lines])
                         around = f"[{job.ext.instance_id}:{job.name}]"
                         log.info(f"{around}>>\n{new_log}\n<<{around}")
             except Exception as e:
