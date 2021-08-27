@@ -42,6 +42,6 @@ echo HOME="$HOME" >> ~/.profile
 #echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.profile
 #echo DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
 #echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
-echo "PATH=$PATH:$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
+echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
 
 $MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.setup/installed"
