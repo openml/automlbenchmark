@@ -28,6 +28,7 @@ def run(dataset: Dataset, config: TaskConfig):
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     DOTNET_INSTALL_DIR = os.path.join(dir_path, 'lib')
+    os.environ['HOME'] = "/myhome"
     os.environ['DOTNET_ROOT'] = DOTNET_INSTALL_DIR
     os.environ['MLNetCLIEnablePredict'] = 'True'
     os.environ['MLNET_MAX_THREAD'] = str(config.cores)
