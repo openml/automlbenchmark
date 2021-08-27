@@ -38,4 +38,8 @@ fi
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
+echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.bashrc
+echo DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.bashrc
+echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.bashrc
+
 $MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.setup/installed"
