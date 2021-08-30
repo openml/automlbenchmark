@@ -39,9 +39,9 @@ else
 $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
-export HOME="$DOTNET_INSTALL_DIR"
-# export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
-# export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+# export HOME="$DOTNET_INSTALL_DIR"
+export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 echo "MLNet version" >&2
 sleep 1
@@ -53,4 +53,5 @@ sleep 1
 #echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
 # echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
 
-$MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.setup/installed"
+$MLNET --version | sed -e "s/\(.?*\)+.*/\1/" >> "${HERE}/.setup/installed"
+#        --version | sed -e "s/\(.?*\)+.*/\1/"
