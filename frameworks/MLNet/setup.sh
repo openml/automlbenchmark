@@ -10,7 +10,7 @@ MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
 SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
 
-export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+# export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 # if version eq latest, set Version to empty string so it will install the latest version.
 if [[ "$VERSION" == "latest" ]]; then
@@ -32,7 +32,7 @@ if [[ ! -x "$MLNET" ]]; then
     $DOTNET --version
     $DOTNET tool install mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 else
-$DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
+  $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
