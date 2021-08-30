@@ -16,9 +16,9 @@ export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 if [[ "$VERSION" == "latest" ]]; then
     VERSION=""
 fi
-
-mkdir /myhome
-export HOME="/myhome"
+#
+#mkdir /myhome
+#export HOME="/myhome"
 
 rm -rf "$DOTNET_INSTALL_DIR"
 # install mlnet if necessary
@@ -38,10 +38,10 @@ fi
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
-echo HOME="$HOME" >> ~/.profile
-#echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.profile
-#echo DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
-#echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
-echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
+#echo HOME="$HOME" >> ~/.profile
+##echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.profile
+##echo DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
+##echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
+#echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
 
 $MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.setup/installed"
