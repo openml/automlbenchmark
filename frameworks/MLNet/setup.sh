@@ -3,8 +3,8 @@ HERE=$(dirname "$0")
 MLNET='mlnet'
 VERSION=${1:-"latest"}
 
-# echo "Home: $HOME"
 
+# echo "Home: $HOME"
 DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
@@ -16,9 +16,6 @@ export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 if [[ "$VERSION" == "latest" ]]; then
     VERSION=""
 fi
-
-# mkdir /myhome
-# export HOME="/myhome"
 
 rm -rf "$DOTNET_INSTALL_DIR"
 # install mlnet if necessary
@@ -39,7 +36,7 @@ else
 $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
-# export HOME="$DOTNET_INSTALL_DIR"
+export HOME="$DOTNET_INSTALL_DIR"
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
