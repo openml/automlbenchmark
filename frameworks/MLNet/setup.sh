@@ -23,7 +23,7 @@ if [[ ! -x "$MLNET" ]]; then
     if [[ ! -x "$DOTNET" ]]; then
         wget -P "$DOTNET_INSTALL_DIR" https://dot.net/v1/dotnet-install.sh
         chmod +x "$DOTNET_INSTALL_DIR/dotnet-install.sh"
-        "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 3.1 --verbose
+        "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 3.1 --verbose --runtime dotnet
     fi
 
     echo "Dotnet version" >&2
@@ -51,4 +51,3 @@ sleep 1
 # echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
 
 $MLNET --version | sed -e "s/\(.?*\)+.*/\1/" >> "${HERE}/.setup/installed"
-#        --version | sed -e "s/\(.?*\)+.*/\1/"
