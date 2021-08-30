@@ -3,14 +3,14 @@ HERE=$(dirname "$0")
 MLNET='mlnet'
 VERSION=${1:-"latest"}
 
-echo "Home: $HOME"
+# echo "Home: $HOME"
 
 DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
 SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
 
-export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+# export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 # if version eq latest, set Version to empty string so it will install the latest version.
 if [[ "$VERSION" == "latest" ]]; then
@@ -40,9 +40,8 @@ $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-pat
 fi
 
 export HOME="$DOTNET_INSTALL_DIR"
-export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
-export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
-
+# export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+# export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 echo "MLNet version" >&2
 sleep 1
