@@ -28,8 +28,9 @@ if [[ ! -x "$MLNET" ]]; then
         chmod +x "$DOTNET_INSTALL_DIR/dotnet-install.sh"
         "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 3.1 --verbose
     fi
-
+    echo "Dotnet version:"
     $DOTNET --version
+    sleep 2
     $DOTNET tool install mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 else
   $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
@@ -37,6 +38,13 @@ fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+
+echo "MLNet version:"
+$MLNET --version
+sleep 2
+
+echo "Finish:"
+
 
 #echo HOME="$HOME" >> ~/.profile
 ##echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.profile
