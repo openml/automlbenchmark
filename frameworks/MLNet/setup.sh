@@ -10,15 +10,15 @@ MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
 SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
 
-# export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 # if version eq latest, set Version to empty string so it will install the latest version.
 if [[ "$VERSION" == "latest" ]]; then
     VERSION=""
 fi
-#
-#mkdir /myhome
-#export HOME="/myhome"
+
+mkdir /myhome
+export HOME="/myhome"
 
 rm -rf "$DOTNET_INSTALL_DIR"
 # install mlnet if necessary
@@ -28,28 +28,20 @@ if [[ ! -x "$MLNET" ]]; then
         chmod +x "$DOTNET_INSTALL_DIR/dotnet-install.sh"
         "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 3.1 --verbose
     fi
-    echo "Dotnet version:"
+
     $DOTNET --version
-    sleep 2
     $DOTNET tool install mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 else
-  $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
+$DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
-echo "MLNet version:"
-$MLNET --version
-sleep 2
-
-echo "Finish:"
-
-
-#echo HOME="$HOME" >> ~/.profile
-##echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.profile
-##echo DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
-##echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
-#echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
+echo HOME="$HOME" >> ~/.profile
+#echo DOTNET_ROOT="$DOTNET_INSTALL_DIR" >> ~/.profile
+#echo DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
+#echo MLNET_CLI_HOME="$DOTNET_INSTALL_DIR" >> ~/.profile
+echo 'PATH=$PATH'":$DOTNET_INSTALL_DIR:$HOME" >> ~/.profile
 
 $MLNET --version | sed -e "s/\(.?*\)\+.*/\1/" >> "${HERE}/.setup/installed"
