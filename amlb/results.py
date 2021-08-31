@@ -499,7 +499,9 @@ class NoResult(Result):
 
     def evaluate(self, metric):
         eval_res = Namespace(metric=metric, value=self.missing_result)
-        if metric not in _supported_metrics_:
+        if metric is None:
+            pass
+        elif metric not in _supported_metrics_:
             eval_res += Namespace(higher_is_better=None, message=f"Unsupported metric `{metric}`")
         else:
             eval_res.higher_is_better = get_metadata(_supported_metrics_.get(metric), 'higher_is_better')
