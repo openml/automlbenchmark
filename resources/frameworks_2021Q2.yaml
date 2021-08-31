@@ -5,7 +5,7 @@
 #########################
 
 AutoGluon:
-  version: "0.2.0"
+  version: "0.3.0"
 
 AutoGluon_benchmark:
   extends: AutoGluon
@@ -14,7 +14,7 @@ AutoGluon_benchmark:
     presets: best_quality
 
 autosklearn:
-  version: '0.12.7'
+  version: '0.13.0'
 
 autosklearn2:
   extends: autosklearn
@@ -28,13 +28,13 @@ AutoWEKA:
   version: '2.6'
 
 flaml:
-  version: '0.5.8'
+  version: '0.6.0'
 
 GAMA:
   version: '21.0.0'
 
 H2OAutoML:
-  version: '3.32.1.4'
+  version: '3.32.1.6'
 
 lightautoml:
   version: '0.2.16'
