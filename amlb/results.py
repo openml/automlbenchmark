@@ -500,7 +500,7 @@ class NoResult(Result):
     def evaluate(self, metric):
         eval_res = Namespace(metric=metric, value=self.missing_result)
         if metric is None:
-            pass
+            eval_res += Namespace(higher_is_better=None)
         elif metric not in _supported_metrics_:
             eval_res += Namespace(higher_is_better=None, message=f"Unsupported metric `{metric}`")
         else:
