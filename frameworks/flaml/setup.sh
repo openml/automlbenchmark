@@ -21,4 +21,4 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
-PY -c "from flaml import __version__; print(__version__)" >> "${HERE}/.installed"
+PY -c "from flaml import __version__; print(__version__)" >> "${HERE}/.setup/installed"

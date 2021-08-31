@@ -9,9 +9,24 @@ import json
 import logging
 import pprint
 import re
+import sys
 import threading
+import types
 
 log = logging.getLogger(__name__)
+
+
+def register_module(module_name):
+    if module_name not in sys.modules:
+        mod = types.ModuleType(module_name)
+        sys.modules[module_name] = mod
+    return sys.modules[module_name]
+
+
+def register_submodule(mod, name):
+    fullname = '.'.join([mod.__name__, name])
+    module = register_module(fullname)
+    setattr(mod, name, module)
 
 
 class Namespace:
@@ -50,7 +65,7 @@ class Namespace:
             if ns is None:
                 continue
             if not deep:
-                merged + ns
+                merged += ns
             else:
                 for k, v in ns:
                     if isinstance(v, Namespace):
@@ -143,12 +158,24 @@ class Namespace:
         self.__dict__.update(dict(*args, **kwargs))
 
     def __add__(self, other):
+        res = Namespace()
+        res += self
+        res += other
+        return res
+
+    def __iadd__(self, other):
         """extends self with other (always overrides)"""
         if other is not None:
             self.__dict__.update(other)
         return self
 
-    def __mod__(self, other):
+    def __or__(self, other):
+        res = Namespace()
+        res |= self
+        res |= other
+        return res
+
+    def __ior__(self, other):
         """extends self with other (adds only missing keys)"""
         if other is not None:
             for k, v in other:
@@ -195,7 +222,7 @@ class Namespace:
         return isinstance(other, Namespace) and self.__dict__ == other.__dict__
 
     def __hash__(self):
-        return hash(self.__dict__)
+        return hash(repr(self))
 
     def __str__(self):
         return Namespace.printer.pformat(Namespace.dict(self))
@@ -208,7 +235,7 @@ class Namespace:
 
 
 def repr_def(obj):
-    return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={}".format(k, repr(v)) for k, v in obj.__dict__.items())))
+    return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={!r}".format(k, v) for k, v in obj.__dict__.items())))
 
 
 def noop(*args, **kwargs):
@@ -316,12 +343,13 @@ def str_digest(s):
     return base64.b64encode(hashlib.md5(s.encode()).digest()).decode()
 
 
-def head(s, lines=10):
+def head(s, lines=10, splitlines=False):
     s_lines = s.splitlines() if s else []
-    return '\n'.join(s_lines[:lines])
+    s_lines = s_lines[:lines]
+    return s_lines if splitlines else '\n'.join(s_lines)
 
 
-def tail(s, lines=10, from_line=None, include_line=True):
+def tail(s, lines=10, from_line=None, include_line=True, splitlines=False):
     if s is None:
         return None if from_line is None else None, None
 
@@ -340,7 +368,8 @@ def tail(s, lines=10, from_line=None, include_line=True):
             start = 0
     last_line = dict(index=len(s_lines) - 1,
                      line=s_lines[-1] if len(s_lines) > 0 else None)
-    t = '\n'.join(s_lines[start:])
+    s_lines = s_lines[start:]
+    t = s_lines if splitlines else '\n'.join(s_lines)
     return t if from_line is None else (t, last_line)
 
 

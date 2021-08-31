@@ -47,12 +47,12 @@ def dir_of(caller_file, rel_to_project_root=False):
         return abs_path
 
 
-def list_all_files(paths, filtr=None):
+def list_all_files(paths, filter_=None):
     """
     :param paths: the directories to look into.
-    :param filtr: None, or a predicate function returning True iff the file should be listed.
+    :param filter_: None, or a predicate function returning True iff the file should be listed.
     """
-    filtr = filtr or (lambda _: True)
+    filter_ = filter_ or (lambda _: True)
     all_files = []
     paths = paths if isinstance(paths, list) else [paths]
     for path in paths:
@@ -61,10 +61,10 @@ def list_all_files(paths, filtr=None):
             for root_dir, sub_dirs, files in os.walk(path):
                 for name in files:
                     full_path = os.path.join(root_dir, name)
-                    if filtr(full_path):
+                    if filter_(full_path):
                         all_files.append(full_path)
         elif os.path.isfile(path):
-            if filtr(path):
+            if filter_(path):
                 all_files.append(path)
         else:
             log.warning("Skipping file `%s` as it doesn't exist.", path)
@@ -98,11 +98,11 @@ def backup_file(file_path):
     log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)
 
 
-def _create_file_filter(filtr, default_value=True):
-    matches = ((lambda _: default_value) if filtr is None
-               else filtr if callable(filtr)
-               else (lambda p: fnmatch.fnmatch(p, filtr)) if isinstance(filtr, str)
-               else (lambda p: any(fnmatch.fnmatch(p, pat) for pat in filtr)) if isinstance(filtr, (list, tuple))
+def _create_file_filter(filter_, default_value=True):
+    matches = ((lambda _: default_value) if filter_ is None
+               else filter_ if callable(filter_)
+               else (lambda p: fnmatch.fnmatch(p, filter_)) if isinstance(filter_, str)
+               else (lambda p: any(fnmatch.fnmatch(p, pat) for pat in filter_)) if isinstance(filter_, (list, tuple))
                else None)
     if matches is None:
         raise ValueError("filter should be None, a predicate function, a wildcard pattern or a list of those.")
@@ -115,7 +115,7 @@ def file_filter(include=None, exclude=None):
     return lambda p: includes(p) and not excludes(p)
 
 
-def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filtr=None):
+def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filter_=None):
     dir_path = normalize_path(dir_path)
     for dir, subdirs, files in os.walk(dir_path, topdown=topdown):
         if max_depth >= 0:
@@ -124,13 +124,13 @@ def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filtr=None):
                 continue
         for p in itertools.chain(files, subdirs):
             path = os.path.join(dir, p)
-            if filtr is None or filtr(path):
+            if filter_ is None or filter_(path):
                 apply(path, isdir=(p in subdirs))
 
 
-def clean_dir(dir_path, filtr=None):
+def clean_dir(dir_path, filter_=None):
     def delete(path, isdir):
-        rm = filtr is None or filtr(path)
+        rm = filter_ is None or filter_(path)
         if not rm:
             return
         if isdir:
@@ -141,7 +141,7 @@ def clean_dir(dir_path, filtr=None):
     walk_apply(dir_path, delete, max_depth=0)
 
 
-def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, arcpathformat='short', filtr=None):
+def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, arc_path_format='short', filter_=None):
     path = normalize_path(path)
     if not os.path.exists(path): return
     with zipfile.ZipFile(dest_archive, 'w', compression) as zf:
@@ -151,13 +151,13 @@ def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, arcpathformat
         elif os.path.isdir(path):
             def add_to_archive(file, isdir):
                 if isdir: return
-                in_archive = (os.path.relpath(file, path) if arcpathformat == 'short'
-                              else os.path.relpath(file, os.path.dirname(path)) if arcpathformat == 'long'
-                              else os.path.basename(file) is arcpathformat == 'flat'
+                in_archive = (os.path.relpath(file, path) if arc_path_format == 'short'
+                              else os.path.relpath(file, os.path.dirname(path)) if arc_path_format == 'long'
+                              else os.path.basename(file) is arc_path_format == 'flat'
                               )
                 zf.write(file, in_archive)
             walk_apply(path, add_to_archive,
-                       filtr=lambda p: (filtr is None or filtr(p)) and not os.path.samefile(dest_archive, p))
+                       filter_=lambda p: (filter_ is None or filter_(p)) and not os.path.samefile(dest_archive, p))
 
 
 class TmpDir:

@@ -8,6 +8,7 @@ import logging
 import os
 import re
 
+from ..benchmark import _setup_dir_
 from ..resources import config as rconfig, get as rget
 from ..utils import dir_of, run_cmd, str_digest, str_sanitize, touch
 from .container import ContainerBenchmark
@@ -40,7 +41,7 @@ class DockerBenchmark(ContainerBenchmark):
 
     @property
     def _script(self):
-        return os.path.join(self._framework_dir, 'Dockerfile')
+        return os.path.join(self._framework_dir, _setup_dir_, 'Dockerfile')
 
     def _start_container(self, script_params=""):
         """Implementes the container run method"""
@@ -160,7 +161,7 @@ CMD ["{framework}", "test"]
 
 """.format(
             custom_commands=custom_commands.format(
-                setup=dir_of(os.path.join(self._framework_dir, "setup/"),
+                setup=dir_of(os.path.join(self._framework_dir, "setup", ""),
                              rel_to_project_root=True),
                 pip="$PIP",
                 py="$PY"
@@ -171,5 +172,7 @@ CMD ["{framework}", "test"]
             script=rconfig().script,
             user=rconfig().user_dir,
         )
+
+        touch(self._script)
         with open(self._script, 'w') as file:
             file.write(docker_content)

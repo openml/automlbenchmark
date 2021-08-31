@@ -96,8 +96,8 @@ def run(dataset, config):
         probabilities = stats["probabilities"]
         probabilities_labels = stats["probabilities_labels"]
     else:
-        probabilities = []
-        probabilities_labels = []
+        probabilities = None
+        probabilities_labels = None
 
     if version == "0.2.3":
         target_encoded = is_classification

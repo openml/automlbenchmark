@@ -28,4 +28,4 @@ else
     PIP install -U -e ${HERE}/lib/${PKG}
 fi
 
-PY -c "from tpot import __version__; print(__version__)" >> "${HERE}/.installed"
+PY -c "from tpot import __version__; print(__version__)" >> "${HERE}/.setup/installed"

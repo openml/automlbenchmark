@@ -1,7 +1,24 @@
 from importlib import import_module
 import importlib.util
+import logging
 import os
 import sys
+from types import ModuleType
+
+
+def setup_logger():
+    console = logging.StreamHandler(sys.stdout)
+    console.setLevel(logging.INFO)
+    handlers = [console]
+    logging.basicConfig(handlers=handlers)
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    trace_level = os.environ.get('AMLB_LOG_TRACE')
+    if trace_level:
+        logging.TRACE = int(trace_level)
+
+
+setup_logger()
 
 
 def load_module(name, path):

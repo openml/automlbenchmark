@@ -3,18 +3,17 @@ import logging
 import os
 import re
 from tempfile import TemporaryDirectory, mktemp
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
-import pandas as pd
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
 
-from .serialization import deserialize_data, serialize_data, ser_config
 from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load, profile
+from .utils import is_serializable_data, deserialize_data, serialize_data
 
 log = logging.getLogger(__name__)
 
@@ -61,15 +60,15 @@ def venv_python_exec(fmwk_dir):
 
 
 @profile(logger=log)
-def _make_input_dataset(input_data, dataset, tmpdir):
+def _make_input_dataset(input_data, dataset, tmpdir, serialization: Optional[ns] = None):
     input_data = ns.from_dict(input_data)
 
     def make_path(k, v, parents=None):
-        if isinstance(v, (np.ndarray,  pd.DataFrame, pd.Series)):
+        if is_serializable_data(v):
             path = os.path.join(tmpdir, '.'.join(parents+[k, 'data']))
             if vector_keys.match(k):
                 v = as_col(v)
-            path = serialize_data(v, path)
+            path = serialize_data(v, path, config=serialization)
             return k, path
         return k, v
 
@@ -81,6 +80,7 @@ def _make_input_dataset(input_data, dataset, tmpdir):
 
 def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
+                options: Union[None, dict, ns] = None,
                 process_results=None,
                 python_exec=None):
     here = dir_of(caller_file)
@@ -89,14 +89,18 @@ def run_in_venv(caller_file, script_file: str, *args,
     script_path = os.path.join(here, script_file)
     cmd = f"{python_exec} {script_path}"
 
+    options = ns.from_dict(options) if options else ns()
+    ser_config = options['serialization']
+    env = options['env'] or ns()
+
     with TemporaryDirectory() as tmpdir:
 
-        ds = _make_input_dataset(input_data, dataset, tmpdir)
+        ds = _make_input_dataset(input_data, dataset, tmpdir, serialization=ser_config)
 
         config.result_dir = tmpdir
         config.result_file = mktemp(dir=tmpdir)
 
-        params = json_dumps(dict(dataset=ds, config=config), style='compact')
+        params = json_dumps(dict(dataset=ds, config=config, options=options), style='compact')
         log.debug("Params passed to subprocess:\n%s", params)
         cmon = rconfig().monitoring
         monitor = (dict(interval_seconds=cmon.interval_seconds,
@@ -113,9 +117,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             ]),
             AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
             AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
-            AMLB_SER_PD_MODE=str(ser_config.pandas_serializer or ''),
-            AMLB_SER_PD_COMPR=str(ser_config.pandas_compression or ''),
-            AMLB_SER_PD_PQT_COMPR=str(ser_config.pandas_parquet_compression or ''),
+            **{k: str(v) for k, v in env}
         )
 
         with Timer() as proc_timer:
@@ -140,7 +142,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             raise NoResultError(res.error_message)
 
         for name in ['predictions', 'truth', 'probabilities']:
-            res[name] = deserialize_data(res[name]) if res[name] is not None else None
+            res[name] = deserialize_data(res[name], config=ser_config) if res[name] is not None else None
 
         if callable(process_results):
             res = process_results(res)

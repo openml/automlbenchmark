@@ -18,4 +18,4 @@ fi
 
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("ranger", "mlr3", "mlr3learners", "mlr3pipelines", "farff"), repos="https://cloud.r-project.org/")'
 
-Rscript -e 'packageVersion("ranger")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.installed"
+Rscript -e 'packageVersion("ranger")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.setup/installed"

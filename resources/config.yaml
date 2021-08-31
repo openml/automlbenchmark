@@ -191,6 +191,7 @@ aws:                    # configuration namespace for AWS mode.
       - 'SpotMaxPriceTooLow'
       - 'MaxSpotInstanceCountExceeded'
       - 'InsufficientFreeAddressesInSubnet'
+      - 'InsufficientInstanceCapacity'
     retry_on_states:                         # EC2 instance states that will trigger a job reschedule.
       - 'Server.SpotInstanceShutdown'
       - 'Server.SpotInstanceTermination'

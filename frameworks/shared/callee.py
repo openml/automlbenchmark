@@ -4,29 +4,14 @@ import re
 import signal
 import sys
 
-from .serialization import deserialize_data, serialize_data
 from .utils import InterruptTimeout, Namespace as ns, json_dump, json_loads, kill_proc_tree, touch
+from .utils import deserialize_data, serialize_data
+
+log = logging.getLogger(__name__)
 
 
 class FrameworkError(Exception):
     pass
-
-
-def setup_logger():
-    console = logging.StreamHandler(sys.stdout)
-    console.setLevel(logging.INFO)
-    handlers = [console]
-    logging.basicConfig(handlers=handlers)
-    root = logging.getLogger()
-    root.setLevel(logging.INFO)
-    trace_level = os.environ.get('AMLB_LOG_TRACE')
-    if trace_level:
-        logging.TRACE = int(trace_level)
-
-
-setup_logger()
-
-log = logging.getLogger(__name__)
 
 
 def result(output_file=None,
@@ -59,10 +44,11 @@ data_keys = re.compile("^(X|y|data)(_.+)?$")
 def call_run(run_fn):
     # log.info(os.environ)
     params = ns.from_dict(json_loads(sys.stdin.read()))
+    ser_config = params.options['serialization']
 
     def load_data(name, path, **_):
         if isinstance(path, str) and data_keys.match(name):
-            return name, deserialize_data(path)
+            return name, deserialize_data(path, config=ser_config)
         return name, path
 
     log.debug("Params read from main process:\n%s", params)
@@ -87,7 +73,7 @@ def call_run(run_fn):
                 arr = result[name]
                 if arr is not None:
                     path = os.path.join(config.result_dir, '.'.join([name, 'data']))
-                    res[name] = serialize_data(arr, path)
+                    res[name] = serialize_data(arr, path, config=ser_config)
     except BaseException as e:
         log.exception(e)
         res = dict(

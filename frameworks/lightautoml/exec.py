@@ -42,6 +42,7 @@ def run(dataset, config):
     with Timer() as predict:
         preds = automl.predict(X_test).data
 
+    probabilities_labels = None
     if is_classification:
         probabilities = preds
 
@@ -51,7 +52,13 @@ def run(dataset, config):
             ]).T
 
         predictions = np.argmax(probabilities, axis=1)
-
+        class_map = automl.outer_pipes[0].ml_algos[0].models[0][0].reader.class_mapping
+        if class_map is None and df_train[label].dtype == bool:
+            class_map = {False: 0, True: 1}
+        if class_map:
+            column_to_class = {col: class_ for class_, col in class_map.items()}
+            predictions = list(map(column_to_class.get, predictions))
+            probabilities_labels = [column_to_class[col] for col in sorted(column_to_class)]
     else:
         probabilities = None
         predictions = preds
@@ -63,10 +70,9 @@ def run(dataset, config):
 
     return result(
         output_file=config.output_predictions_file,
+        probabilities_labels=probabilities_labels,
         probabilities=probabilities,
         predictions=predictions,
-        truth=y_test,
-        target_is_encoded=is_classification,
         training_duration=training.duration,
         predict_duration=predict.duration,
     )
