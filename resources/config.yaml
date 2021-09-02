@@ -147,7 +147,6 @@ aws:                    # configuration namespace for AWS mode.
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
-    availability_zone:                   # the availability zone where the instances will be created (if not set, aws will pick a default one).
     instance_type:                       #
       series: m5                         #
       map:                               # map between num cores required and ec2 instance type sizes
@@ -159,6 +158,7 @@ aws:                    # configuration namespace for AWS mode.
         '16': 4xlarge
     volume_type: standard                # one of gp2, io1, st1, sc1, or standard (default).
     root_device_name: '/dev/sda1'        #
+    availability_zone:                   # the availability zone where the instances will be created (if not set, aws will pick a default one).
     subnet_id: ''                        #
     key_name:                            # the name of the key pair passed to EC2 instances (if not set, user can't ssh the running instances)
     security_groups: []                  # the optional additional security groups to set on the instances
