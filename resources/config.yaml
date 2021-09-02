@@ -147,6 +147,7 @@ aws:                    # configuration namespace for AWS mode.
       eu-central-1:
         ami: ami-0bdf93799014acdc4
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+    availability_zone:                   # the availability zone where the instances will be created (if not set, aws will pick a default one).
     instance_type:                       #
       series: m5                         #
       map:                               # map between num cores required and ec2 instance type sizes

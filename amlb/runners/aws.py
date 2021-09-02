@@ -594,6 +594,10 @@ class AWSBenchmark(Benchmark):
                 ],
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
             )
+            if ec2_config.availability_zone:
+                instance_params.update(Placement=dict(
+                    AvailabilityZone=ec2_config.availability_zone
+                ))
             if ec2_config.key_name is not None:
                 instance_params.update(KeyName=ec2_config.key_name)
             if ec2_config.security_groups:
