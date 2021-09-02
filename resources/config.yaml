@@ -196,6 +196,7 @@ aws:                    # configuration namespace for AWS mode.
     retry_on_states:                         # EC2 instance states that will trigger a job reschedule.
       - 'Server.SpotInstanceShutdown'
       - 'Server.SpotInstanceTermination'
+      - 'Server.InsufficientInstanceCapacity'
 
   max_timeout_seconds: 21600    #
   os_mem_size_mb: 0             # overrides the default amount of memory left to the os in AWS mode, and set to 0 for fairness as we can't always prevent frameworks from using all available memory.

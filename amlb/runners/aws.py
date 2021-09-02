@@ -472,7 +472,7 @@ class AWSBenchmark(Benchmark):
                     log.info("EC2 instance %s is %s: %s", job.ext.instance_id, state, state_reason_msg)
                     # self._update_instance(job.ext.instance_id, stop_reason=state_reason_msg)
                     try:
-                        if state_reason_msg in rconfig().aws.job_scheduler.retry_on_states:
+                        if any(state in state_reason_msg for state in rconfig().aws.job_scheduler.retry_on_states):
                             log.warning("Job %s was aborted due to '%s', rescheduling it.", job.name, state_reason_msg)
                             self._job_reschedule(job, reason=state_reason_msg, fallback=self._spot_fallback)
                     finally:
