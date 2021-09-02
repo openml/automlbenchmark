@@ -28,7 +28,6 @@ else
   $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
-# export HOME="$DOTNET_INSTALL_DIR"
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
