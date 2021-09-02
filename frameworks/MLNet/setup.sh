@@ -29,6 +29,6 @@ else
 fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
-export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
+# export MLNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
 $MLNET --version | grep + | sed -e "s/\(.?*\)+.*/\1/" >> "${HERE}/.setup/installed"
