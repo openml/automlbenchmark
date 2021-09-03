@@ -234,8 +234,9 @@ class Namespace:
         return Namespace.dict(self)
 
 
-def repr_def(obj):
-    return "{clazz}({attributes})".format(clazz=type(obj).__name__, attributes=', '.join(("{}={!r}".format(k, v) for k, v in obj.__dict__.items())))
+def repr_def(obj, show_private=False):
+    return "{cls}({attrs!r})".format(cls=type(obj).__name__,
+                                     attrs={k: v for k, v in vars(obj).items() if show_private or not k.startswith('_')})
 
 
 def noop(*args, **kwargs):
