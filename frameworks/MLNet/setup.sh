@@ -28,6 +28,6 @@ else
   $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
-# export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 
 $MLNET --version | grep + | sed -e "s/\(.?*\)+.*/\1/" >> "${HERE}/.setup/installed"
