@@ -38,12 +38,13 @@ fi
 # We install the packages to a subdirectory in the framework folder, similar to venvs for Python, because:
 # - we want to be able to install different package versions for different frameworks in one local installation
 # - the default package directory is not always writeable (e.g. on Github CI)
-mkdir "${HERE}/r-packages/"
+LIB="${HERE}/lib/"
+mkdir "${LIB}"
 
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"'")'
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${HERE}/r-packages/"'")'
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${HERE}/r-packages/"'")'
-Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${HERE}/r-packages/"'")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${LIB}"'")'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${LIB}"'")'
 
-OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${HERE}/r-packages/"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g")
+OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${LIB}"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g")
 echo "${OFFICIAL_VERSION}#${VERSION:0:7}" >> "${HERE}/.setup/installed"
