@@ -16,10 +16,12 @@ import os
 import re
 import signal
 import sys
+from typing import List, Union
 
 from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
 from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
+from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
 from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, json_dump, lazy_property, profile, repr_def, \
@@ -192,21 +194,21 @@ class Benchmark:
         # anything to do?
         pass
 
-    def run(self, task_name=None, fold=None):
+    def run(self, tasks: Union[str, List[str]] = None, folds: Union[int, List[int]] = None):
         """
-        :param task_name: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
-        :param fold: a fold [str] or a list of folds to run. If None, then the all folds from each task definition will be used.
+        :param tasks: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
+        :param folds: a fold [int] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
         try:
             assert not self.framework_install_required or self._is_setup_done(), \
                 f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
 
-            task_defs = self._get_task_defs(task_name)
-            jobs = flatten([self._task_jobs(task_def, fold) for task_def in task_defs])
+            task_defs = self._get_task_defs(tasks)
+            jobs = flatten([self._task_jobs(task_def, folds) for task_def in task_defs])
             results = self._run_jobs(jobs)
             log.info(f"Processing results for {self.sid}")
             log.debug(results)
-            if task_name is None:
+            if tasks is None:
                 scoreboard = self._process_results(results)
             else:
                 for task_def in task_defs:
@@ -226,6 +228,9 @@ class Benchmark:
                                            done_async=True)
 
     def _run_jobs(self, jobs):
+        if not jobs:
+            return []
+
         self.job_runner = self._create_job_runner(jobs)
 
         def on_interrupt(*_):
@@ -291,12 +296,35 @@ class Benchmark:
         :param task_def: the task to run
         :param fold: the specific fold to use on this task
         """
-        if fold < 0 or fold >= task_def.folds:
-            # raise ValueError(f"Fold value {fold} is out of range for task {task_def.name}.")
-            log.warning(f"Fold value {fold} is out of range for task {task_def.name}, skipping it.")
-            return
+        return BenchmarkTask(self, task_def, fold).as_job() if not self._skip_job(task_def, fold) else None
 
-        return BenchmarkTask(self, task_def, fold).as_job()
+    @lazy_property
+    def _job_history(self):
+        jh = rconfig().job_history
+        if jh and not os.path.exists(jh):
+            log.warning(f"Job history file {jh} does not exist, ignoring it.")
+            return None
+        return read_csv(jh) if jh else None
+
+    def _in_job_history(self, task_def, fold):
+        jh = self._job_history
+        if jh is None:
+            return False
+        return len(jh[(jh.framework == self.framework_name)
+                      & (jh.constraint == self.constraint_name)
+                      & (jh.id == task_def.id)
+                      & (jh.fold == fold)]) > 0
+
+    def _skip_job(self, task_def, fold):
+        if fold < 0 or fold >= task_def.folds:
+            log.warning(f"Fold value {fold} is out of range for task {task_def.name}, skipping it.")
+            return True
+
+        if self._in_job_history(task_def, fold):
+            log.info(f"Task {task_def.name} with fold {fold} is already present in job history {rconfig().job_history}, skipping it.")
+            return True
+
+        return False
 
     def _process_results(self, results, task_name=None):
         scores = list(filter(None, flatten([res.result for res in results])))

@@ -111,13 +111,23 @@ class Timer:
         self.start = 0
         self.stop = 0
         self._time = clock if enabled else Timer._zero
+        self._tick = 0
 
     def __enter__(self):
-        self.start = self._time()
+        self.start = self._tick = self._time()
         return self
 
     def __exit__(self, *args):
-        self.stop = self._time()
+        self.stop = self._tick = self._time()
+
+    @property
+    def tick(self):
+        if self.stop > 0:
+            return -1
+        now = self._time()
+        tick = now - self._tick
+        self._tick = now
+        return tick
 
     @property
     def duration(self):

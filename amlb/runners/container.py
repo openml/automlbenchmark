@@ -6,14 +6,13 @@ providing the same parameters and features allowing to import config and export 
 """
 from abc import abstractmethod
 import logging
-import os
 import re
+from typing import List, Union
 
 from ..benchmark import Benchmark, SetupMode
 from ..errors import InvalidStateError
 from ..job import Job
 from ..resources import config as rconfig, get as rget
-from ..utils import dir_of, run_cmd
 from ..__version__ import __version__, _dev_version as dev
 
 
@@ -86,20 +85,20 @@ class ContainerBenchmark(Benchmark):
         # TODO: remove generated script? anything else?
         pass
 
-    def run(self, task_name=None, fold=None):
-        self._get_task_defs(task_name)  # validates tasks
+    def run(self, tasks: Union[str, List[str]] = None, folds: Union[int, List[int]] = None):
+        self._get_task_defs(tasks)  # validates tasks
         if self.parallel_jobs > 1 or not self.minimize_instances:
-            return super().run(task_name, fold)
+            return super().run(tasks, folds)
         else:
-            job = self._make_container_job(task_name, fold)
+            job = self._make_container_job(tasks, folds)
             try:
                 results = self._run_jobs([job])
-                return self._process_results(results, task_name=task_name)
+                return self._process_results(results, task_name=tasks)
             finally:
                 self.cleanup()
 
     def _make_job(self, task_def, fold=int):
-        return self._make_container_job([task_def.name], [fold])
+        return self._make_container_job([task_def.name], [fold]) if not self._skip_job(task_def, fold) else None
 
     def _make_container_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
