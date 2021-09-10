@@ -34,7 +34,7 @@ GAMA:
   version: '21.0.0'
 
 H2OAutoML:
-  version: '3.32.1.6'
+  version: '3.34.0.1'
 
 lightautoml:
   version: '0.2.16'
