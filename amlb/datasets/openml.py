@@ -10,11 +10,8 @@ import re
 from typing import Generic, Tuple, TypeVar, Union
 
 import arff
-import numpy as np
-import pandas as pd
 import pandas.api.types as pat
 import openml as oml
-import scipy.sparse as sp
 
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
 from ..resources import config as rconfig
@@ -25,8 +22,6 @@ log = logging.getLogger(__name__)
 
 # hack (only adding a ? to the regexp pattern) to ensure that '?' values remain quoted when we save dataplits in arff format.
 arff._RE_QUOTE_CHARS = re.compile(r'[?"\'\\\s%,\000-\031]', re.UNICODE)
-
-
 
 
 class OpenmlLoader:

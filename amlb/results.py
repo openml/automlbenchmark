@@ -50,7 +50,6 @@ class ResultError(Exception):
     pass
 
 
-
 class Scoreboard:
 
     results_file = 'results.csv'

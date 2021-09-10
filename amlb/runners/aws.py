@@ -27,6 +27,7 @@ from posixpath import join as url_join, relpath as url_relpath
 import re
 import time
 import threading
+from typing import List, Union
 from urllib.parse import quote_plus as uenc
 
 import boto3
@@ -185,29 +186,29 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
-    def run(self, task_name=None, fold=None):
-        task_defs = self._get_task_defs(task_name)  # validates tasks
+    def run(self, tasks: Union[str, List[str]] = None, folds: Union[int, List[int]] = None):
+        task_defs = self._get_task_defs(tasks)  # validates tasks
         self._exec_start()
         self._monitoring_start()
         if self.parallel_jobs > 1:
             if rconfig().aws.minimize_instances:
                 # use one instance per task: all folds executed on same instance
                 try:
-                    jobs = flatten([self._make_aws_job([task_def.name], fold) for task_def in task_defs])
+                    jobs = flatten([self._make_aws_job([task_def.name], folds) for task_def in task_defs])
                     results = self._run_jobs(jobs)
-                    return self._process_results(results, task_name=task_name)
+                    return self._process_results(results, task_name=tasks)
                 finally:
                     self.cleanup()
             else:
                 # use one instance per fold per task
-                return super().run(task_name, fold)
+                return super().run(tasks, folds)
         else:
             # use one instance for all
             try:
-                task_names = None if task_name is None else [task_def.name for task_def in task_defs]
-                job = self._make_aws_job(task_names, fold)
+                task_names = None if tasks is None else [task_def.name for task_def in task_defs]
+                job = self._make_aws_job(task_names, folds)
                 results = self._run_jobs([job])
-                return self._process_results(results, task_name=task_name)
+                return self._process_results(results, task_name=tasks)
             finally:
                 self.cleanup()
 
@@ -222,7 +223,7 @@ class AWSBenchmark(Benchmark):
                                            queueing_strategy=queueing_strategy)
 
     def _make_job(self, task_def, fold=int):
-        return self._make_aws_job([task_def.name], [fold])
+        return self._make_aws_job([task_def.name], [fold]) if not self._skip_job(task_def, fold) else None
 
     def _exec_start(self):
         if self.exec is not None:

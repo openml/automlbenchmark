@@ -8,13 +8,15 @@ import sys
 # prevent asap other modules from defining the root logger using basicConfig
 import amlb.logger
 
+from openml.config import get_cache_directory
+
 import amlb
 from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize, zip_path
 from amlb import log, AutoMLError
 
 
 default_dirs = ns(
-    input_dir="~/.openml/cache",
+    input_dir=get_cache_directory(),
     output_dir="./results",
     user_dir="~/.config/automlbenchmark",
     root_dir=os.path.dirname(__file__)
@@ -83,6 +85,7 @@ parser.add_argument('--logging', type=str, default="console:info,app:debug,root:
                          "\n  --logging=console:warning,app:info"
                          "\n(default: '%(default)s')")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
+parser.add_argument('--resume', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
 # group = parser.add_mutually_exclusive_group()
@@ -148,7 +151,9 @@ if args.mode != 'local':
 config_args = ns({k: v for k, v in config_args if v is not None})
 log.debug("Config args: %s.", config_args)
 # merging all configuration files
-amlb.resources.from_configs(config_default, config_default_dirs, config_user, config_args)
+amlb_res = amlb.resources.from_configs(config_default, config_default_dirs, config_user, config_args)
+if args.resume:
+    amlb_res.config.job_history = os.path.join(amlb_res.config.output_dir, amlb.results.Scoreboard.results_file)
 
 code = 0
 bench = None

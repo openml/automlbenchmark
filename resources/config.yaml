@@ -12,6 +12,7 @@ root_dir:    # app root dir: set by caller (runbenchmark.py)
 script:     # calling script: set by caller (runbenchmark.py)
 run_mode:   # target run mode (local, docker, aws): set by caller (runbenchmark.py)
 sid:        # session id: set by caller (runbenchmark.py)
+job_history:    # file containing the list of jobs already executed: set by caller (runbenchmark.py)
 
 test_mode: false        # if set to true, some additional checks are executed at runtime.
 seed: auto              # default global seed (used if not set in task definition), can be one of:
@@ -61,7 +62,7 @@ benchmarks:                     # configuration namespace for the benchmarks def
     min_vol_size_mb: -1         # default minimum amount of free space required on the volume. If <= 0, skips verification.
 
 job_scheduler:           # configuration namespace
-  stop_on_job_failure:   # if true, the entire run will be aborted on the first job failure (mainly used for testing) : set by caller (runbenchmark.py)
+  exit_on_job_failure:   # if true, the entire run will be aborted on the first job failure (mainly used for testing) : set by caller (runbenchmark.py)
   parallel_jobs: 1       # the number of jobs being run in parallel in a benchmark session, set by caller (runbenchmark.py)
   max_parallel_jobs: 10  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
   delay_between_jobs: 5  # delay in seconds between each parallel job start
