@@ -5,6 +5,7 @@
 #########################
 
 AutoGluon:
+  abstract: true
   version: "0.3.1"
 
 AutoGluon_benchmark:
@@ -40,6 +41,7 @@ lightautoml:
   version: '0.2.16'
 
 mljarsupervised:
+  abstract: true
   version: '0.10.6'
 
 mljarsupervised_benchmark:
@@ -52,6 +54,7 @@ MLNET:
   version: '16.5.26'
 
 MLPlan:
+  abstract: true
   version: '0.2.4'
 
 MLPlanWEKA:
