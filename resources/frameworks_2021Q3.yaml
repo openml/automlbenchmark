@@ -1,0 +1,94 @@
+---
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  abstract: true
+  version: "0.3.1"
+
+AutoGluon_benchmark:
+  extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
+  params:
+    presets: best_quality
+
+autosklearn:
+  version: '0.12.7'
+
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
+
+autoxgboost:
+  version: '#908631665f4c763d548ed203d48f05fe68613844'
+
+AutoWEKA:
+  version: '2.6'
+
+flaml:
+  version: '0.6.2'
+
+GAMA:
+  version: '21.0.0'
+
+H2OAutoML:
+  version: '3.34.0.1'
+
+lightautoml:
+  version: '0.2.16'
+
+mljarsupervised:
+  abstract: true
+  version: '0.11.0'
+
+mljarsupervised_benchmark:
+  extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  params:
+    mode: Compete
+
+MLNET:
+  version: '16.5.26'
+
+MLPlan:
+  abstract: true
+  version: '0.2.4'
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+mlr3automl:
+  version: '#dc4031fac57e1d1caea0b48c8526528852572e7c'
+  project: https://github.com/a-hanf/mlr3automl
+
+TPOT:
+  version: '0.11.7'
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor: {}
+
+DecisionTree:
+  version: '0.24.2'
+
+RandomForest:
+  version: '0.24.2'
+  params:
+    n_estimators: 2000
+
+ranger:
+  version: 'stable'
+
+TunedRandomForest:
+  version: '0.24.2'
+  params:
+    n_estimators: 2000
+
