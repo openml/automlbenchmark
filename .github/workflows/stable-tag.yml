@@ -1,0 +1,29 @@
+name:  Tag with Stable
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  TAG: ${{ github.event.release.tag_name }}
+
+jobs:
+  tag-if-latest-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BRANCH }}
+      - name: Register git credentials
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+      - name: Update stable if latest
+        run: |
+          MOST_RECENT_STABLE=$(git ls-remote --tags origin | tail -n 1 | sed -E 's/.?*refs\/tags\///')
+          if [ "$TAG" == "$MOST_RECENT_STABLE" ]; then
+            git tag stable
+            git push --tags -f
+          fi
+        shell: bash
