@@ -15,7 +15,7 @@ AutoGluon_benchmark:
     presets: best_quality
 
 autosklearn:
-  version: '0.12.7'
+  version: '0.14.0'
 
 autosklearn2:
   extends: autosklearn
