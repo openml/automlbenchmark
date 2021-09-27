@@ -50,7 +50,7 @@ mljarsupervised_benchmark:
   params:
     mode: Compete
 
-MLNET:
+MLNet:
   version: '16.5.26'
 
 MLPlan:
