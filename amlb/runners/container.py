@@ -182,7 +182,8 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                 image = self._container_image_name(dev)
 
         if not image:
-            image = self._container_image_name()
+            version_tag = next((t for t in tags if t.startswith("v")), None)
+            image = self._container_image_name(version_tag)
         self._run_container_build_command(image, cache)
         return image
 
