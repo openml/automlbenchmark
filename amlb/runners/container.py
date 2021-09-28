@@ -182,7 +182,15 @@ Do you still want to build the container image? (y/[n]) """).lower() or 'n'
                 image = self._container_image_name(dev)
 
         if not image:
-            image = self._container_image_name()
+            tags = rget().git_info.tags
+            version_tags = [t for t in tags if re.match(r"v\d+(\d+.)*", t)]
+            if len(version_tags) > 1:
+                raise InvalidStateError(
+                    "The image can't be built as more than one version tag was found."
+                    f"Found tags: {version_tags}"
+                )
+            version_tag = next(iter(version_tags), None)
+            image = self._container_image_name(version_tag)
         self._run_container_build_command(image, cache)
         return image
 
