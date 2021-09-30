@@ -4,7 +4,7 @@ VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/scikit-learn/scikit-learn.git"}
 PKG=${3:-"scikit-learn"}
 if [[ "$VERSION" == "latest" ]]; then
-    VERSION="master"
+    VERSION="main"
 fi
 
 . "${HERE}/../shared/setup.sh" "${HERE}" true
