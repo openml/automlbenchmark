@@ -35,6 +35,9 @@ GAMA:
 H2OAutoML:
   version: 'stable'
 
+lightautoml:
+  version: 'stable'
+
 hyperoptsklearn:
   version: 'stable'
 
