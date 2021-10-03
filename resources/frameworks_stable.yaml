@@ -63,6 +63,9 @@ MLPlanWEKA:
   params:
     _backend: weka
 
+mlr3automl:
+  version: 'stable'
+
 oboe:
   version: 'stable'
 
