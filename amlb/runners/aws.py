@@ -456,6 +456,7 @@ class AWSBenchmark(Benchmark):
 
                 if state_code == 16:
                     if inst_desc['meta_info'] is None:
+                        instance_volume = list(instance.volumes.all())[0]
                         meta_info = dict(
                             instance_type=instance.instance_type,
                             launch_time=str(instance.launch_time),
@@ -465,6 +466,8 @@ class AWSBenchmark(Benchmark):
                             private_ip=instance.private_ip_address,
                             availability_zone=instance.placement['AvailabilityZone'],
                             subnet_id=instance.subnet_id,
+                            volume_size_gb=instance_volume.size,
+                            volume_type=instance_volume.volume_type,
                         )
                         self._update_instance(job.ext.instance_id, meta_info=meta_info)
                         log.info("Running EC2 instance %s: %s", instance.id, meta_info)
