@@ -28,16 +28,16 @@ test:
   cores: 8
   min_vol_size_mb: 131072
 
-ssd1h8c:
+1h8c_gp3:
   folds: 10
   max_runtime_seconds: 3600
   cores: 8
   min_vol_size_mb: 100000
-  ec2_volume_type: gp2
+  ec2_volume_type: gp3
 
-ssd4h8c:
+4h8c_gp3:
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
   min_vol_size_mb: 100000
-  ec2_volume_type: gp2
+  ec2_volume_type: gp3
