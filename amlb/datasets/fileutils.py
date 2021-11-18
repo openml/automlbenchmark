@@ -4,35 +4,21 @@ import shutil
 import tarfile
 from urllib.error import URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen, urlretrieve
+from urllib.request import Request, urlopen
 import zipfile
 
 from ..utils import touch
 
 log = logging.getLogger(__name__)
 
-SUPPORTED_SCHEMES = ("http", "https", "s3")
+
+class FileHandler:
+    def exists(self, url): pass
+    def download(self, url, dest_path): pass
 
 
-def s3_path_to_bucket_prefix(s3_path):
-    s3_path_cleaned = s3_path.split('://', 1)[1]
-    bucket, prefix = s3_path_cleaned.split('/', 1)
-
-    return bucket, prefix
-
-
-def is_s3_url(path):
-    return isinstance(path, str) and path.lower().startswith("s3://")
-
-
-def is_valid_url(url):
-    return urlparse(url).scheme in SUPPORTED_SCHEMES
-
-
-def url_exists(url):
-    if not is_valid_url(url):
-        return False
-    if not is_s3_url(url):
+class HttpHandler(FileHandler):
+    def exists(self, url):
         head_req = Request(url, method='HEAD')
         try:
             with urlopen(head_req) as test:
@@ -40,30 +26,32 @@ def url_exists(url):
         except URLError as e:
             log.error(f"Cannot access url %s: %s", url, e)
             return False
-    else:
+    
+    def download(self, url, dest_path):
+        touch(dest_path)
+        with urlopen(url) as resp, open(dest_path, 'wb') as dest:
+            shutil.copyfileobj(resp, dest)
+
+
+class S3Handler(FileHandler):
+    def exists(self, url):
         import boto3
         from botocore.errorfactory import ClientError
         s3 = boto3.client('s3')
-        bucket, key = s3_path_to_bucket_prefix(url)
+        bucket, key = self._s3_path_to_bucket_prefix(url)
         try:
             s3.head_object(Bucket=bucket, Key=key)
             return True
         except ClientError as e:
             log.error(f"Cannot access url %s: %s", url, e)
             return False
-
-
-def download_file(url, dest_path):
-    touch(dest_path)
-    # urlretrieve(url, filename=dest_path)
-    if not is_s3_url(url):
-        with urlopen(url) as resp, open(dest_path, 'wb') as dest:
-            shutil.copyfileobj(resp, dest)
-    else:
+        
+    def download(self, url, dest_path):
         import boto3
         from botocore.errorfactory import ClientError
+        touch(dest_path)
         s3 = boto3.resource('s3')
-        bucket, key = s3_path_to_bucket_prefix(url)
+        bucket, key = self._s3_path_to_bucket_prefix(url)
         try:
             s3.Bucket(bucket).download_file(key, dest_path)
         except ClientError as e:
@@ -71,6 +59,30 @@ def download_file(url, dest_path):
                 log.error("The object does not exist.")
             else:
                 raise
+        
+    def _s3_path_to_bucket_prefix(self, s3_path):
+        s3_path_cleaned = s3_path.split('://', 1)[1]
+        bucket, prefix = s3_path_cleaned.split('/', 1)
+        return bucket, prefix
+
+
+scheme_handlers = dict(
+    http=HttpHandler(),
+    https=HttpHandler(),
+    s3=S3Handler(),
+    s3a=S3Handler
+)
+
+SUPPORTED_SCHEMES = list(scheme_handlers.keys())
+
+
+def get_file_handler(url):
+    return scheme_handlers[urlparse(url).scheme]
+
+
+def is_valid_url(url):
+    return urlparse(url).scheme in SUPPORTED_SCHEMES
+
 
 def is_archive(path):
     return zipfile.is_zipfile(path) or tarfile.is_tarfile(path)
