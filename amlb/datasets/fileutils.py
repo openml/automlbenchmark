@@ -22,11 +22,7 @@ def s3_path_to_bucket_prefix(s3_path):
 
 
 def is_s3_url(path):
-    if type(path) != str:
-        return False
-    if (path[:2] == 's3') and ('://' in path[:6]):
-        return True
-    return False
+    return isinstance(path, str) and path.lower().startswith("s3://")
 
 
 def is_valid_url(url):
