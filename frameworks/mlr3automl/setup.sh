@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
-REPO=${2:-"a-hanf/mlr3automl"}
+REPO=${2:-"ja-thomas/mlr3automl"}
 MLR_REPO=${3:-"https://github.com/mlr-org"}
 
 # Version can be specified as 'stable', 'latest', a branch or a commit hash (indicated by starting with '#')
