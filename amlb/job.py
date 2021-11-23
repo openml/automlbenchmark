@@ -252,7 +252,8 @@ class JobRunner:
         if self.state not in [State.running]:
             return
         job.reschedule()
-        self.put(job, priority)
+        if job.state is State.rescheduling:
+            self.put(job, priority)
 
     def set_state(self, state: State):
         assert self.is_state_transition_ok(self.state, state), f"Illegal job runner transition from state {self.state} to {state}"
@@ -309,9 +310,11 @@ class SimpleJobRunner(JobRunner):
             if job is None or self._interrupt.is_set():
                 break
             result = job.start()
-            if job.state is not State.rescheduling:
+            if job.state is State.rescheduling:
+                self.reschedule(job)
+            else:
                 self.results.append(result)
-            job.done()
+                job.done()
             self.stop_if_complete()
 
     def _on_state(self, state: State):
@@ -349,10 +352,13 @@ class MultiThreadingJobRunner(JobRunner):
                     if job is None or self._interrupt.is_set():
                         break
                     result = job.start()
-                    if job.state is not State.rescheduling:
+                    if job.state is State.rescheduling:
+                        self.reschedule(job)
+                    else:
+                    # if job.state is not State.rescheduling:
                         self.results.append(result)
-                    if self._done_async:
-                        job.done()
+                        if self._done_async:
+                            job.done()
                     self.stop_if_complete()
                 finally:
                     q.task_done()
