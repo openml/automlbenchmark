@@ -355,7 +355,6 @@ class MultiThreadingJobRunner(JobRunner):
                     if job.state is State.rescheduling:
                         self.reschedule(job)
                     else:
-                    # if job.state is not State.rescheduling:
                         self.results.append(result)
                         if self._done_async:
                             job.done()

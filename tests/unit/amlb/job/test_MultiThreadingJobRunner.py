@@ -215,7 +215,6 @@ def test_reschedule_does_not_lead_to_runner_cancellation_on_high_parallelism():
         attempt = self.ext['attempt'] = self.ext.get('attempt', 0) + 1
         if attempt < attempts:
             self.reschedule()
-            # runner.reschedule(self)
             time.sleep(self._duration_secs/10)
             return
         return ori()
