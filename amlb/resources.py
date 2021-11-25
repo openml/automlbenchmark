@@ -216,7 +216,8 @@ class Resources:
                           else None)
             if not lenient and task[conf] is None:
                 raise ValueError("task definition must contain an ID or one property among "
-                                 "['openml_task_id', 'dataset'] to create and ID")
+                                 "['openml_task_id', 'dataset'] to create an ID, but task "
+                                 "definition is {task}".format(task=str(task)))
 
         conf = 'metric'
         if task[conf] is None:

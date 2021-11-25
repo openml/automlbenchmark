@@ -16,7 +16,7 @@ def is_openml_benchmark(benchmark: str) -> bool:
         supported_types = ['s', 't']
 
         if oml_id.isdecimal():
-            return domain in ("openml", "openmltestserver") and oml_type in supported_types
+            return domain in ("openml", "test.openml") and oml_type in supported_types
     return False
 
 
@@ -26,7 +26,7 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
     path = None  # benchmark file does not exist on disk
     name = benchmark  # name is later passed as cli input again for containers, it needs to remain parsable
 
-    if domain == "openmltestserver":
+    if domain == "test.openml":
         log.debug("Setting openml server to the test server.")
         openml.config.server = "https://test.openml.org/api/v1/xml"
 
