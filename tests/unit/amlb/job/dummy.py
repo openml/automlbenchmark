@@ -11,6 +11,7 @@ class DummyJob(Job):
         self._verbose = verbose
         self._duration_secs = duration_secs
         self._result = result
+        self.ext = {}
         super().__init__(name, timeout_secs, priority, raise_exceptions)
 
     def _add_step(self, step):

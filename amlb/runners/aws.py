@@ -265,7 +265,7 @@ class AWSBenchmark(Benchmark):
                 raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
-        self.job_runner.reschedule(job)
+        job.reschedule()
 
     def _spot_fallback(self, job, reason):
         if 'Spot' in reason and rconfig().aws.ec2.spot.fallback_to_on_demand:
