@@ -43,7 +43,7 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
         tasks = [Namespace(name=str_sanitize(data.name),
                            description=data.description,
                            openml_task_id=t.id,
-                           id="{}/t/{}".format(domain, t.id))]
+                           id="{}.org/t/{}".format(domain, t.id))]
     elif oml_type == 's':
         log.info("Loading openml suite %s.", oml_id)
         suite = openml.study.get_suite(oml_id)
@@ -56,7 +56,7 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
             tasks.append(Namespace(name=str_sanitize(datasets.loc[did]['name']),
                                    description=f"{openml.config.server.replace('/api/v1/xml', '')}/d/{did}",
                                    openml_task_id=tid,
-                                   id="{}/t/{}".format(domain, tid)))
+                                   id="{}.org/t/{}".format(domain, tid)))
     else:
         raise ValueError(f"The oml_type is {oml_type} but must be 's' or 't'")
     return name, path, tasks
