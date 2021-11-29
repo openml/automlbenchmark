@@ -41,7 +41,7 @@ fi
 LIB="${HERE}/lib/"
 mkdir "${LIB}"
 
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3tuning", "mlr3learners", "paradox"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
 Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${LIB}"'")'
 Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3hyperband", lib="'"${LIB}"'")'
