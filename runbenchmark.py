@@ -31,7 +31,8 @@ parser.add_argument('benchmark', type=str, nargs='?', default='test',
                     help="The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml,"
                          "\na path to a benchmark description file, or an openml suite or task."
                          "\nOpenML references should be formatted as 'openml/s/X' and 'openml/t/Y',"
-                         "\nfor studies and tasks respectively."
+                         "\nfor studies and tasks respectively. Use 'test.openml/s/X' for the "
+                         "\nOpenML test server."
                          "\n(default: '%(default)s')")
 parser.add_argument('constraint', type=str, nargs='?', default='test',
                     help="The constraint definition to use as defined by default in resources/constraints.yaml."
