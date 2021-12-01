@@ -93,7 +93,7 @@ def run_in_venv(caller_file, script_file: str, *args,
     ser_config = options['serialization']
     env = options['env'] or ns()
 
-    with TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory(prefix='amlb_', suffix='_xproc') as tmpdir:
 
         ds = _make_input_dataset(input_data, dataset, tmpdir, serialization=ser_config)
 
