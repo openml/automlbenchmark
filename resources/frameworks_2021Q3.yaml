@@ -32,7 +32,13 @@ flaml:
   version: '0.6.2'
 
 GAMA:
-  version: '21.0.0'
+  abstract: true
+  version: '21.0.1'
+
+GAMA_benchmark:
+  extends: GAMA
+  params:
+    goal: performance
 
 H2OAutoML:
   version: '3.34.0.1'
