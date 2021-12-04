@@ -3,7 +3,7 @@ name: Version Bump
 on:
   release:
     types:
-      - created
+      - published
 
   workflow_dispatch:
 
