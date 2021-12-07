@@ -2,6 +2,8 @@ import logging
 import os
 import shutil
 import tarfile
+import boto3
+from botocore.errorfactory import ClientError
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -35,8 +37,6 @@ class HttpHandler(FileHandler):
 
 class S3Handler(FileHandler):
     def exists(self, url):
-        import boto3
-        from botocore.errorfactory import ClientError
         s3 = boto3.client('s3')
         bucket, key = self._s3_path_to_bucket_prefix(url)
         try:
@@ -47,8 +47,6 @@ class S3Handler(FileHandler):
             return False
         
     def download(self, url, dest_path):
-        import boto3
-        from botocore.errorfactory import ClientError
         touch(dest_path)
         s3 = boto3.resource('s3')
         bucket, key = self._s3_path_to_bucket_prefix(url)
