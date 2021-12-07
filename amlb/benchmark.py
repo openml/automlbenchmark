@@ -19,7 +19,7 @@ import sys
 from typing import List, Union
 
 from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
-from .datasets import DataLoader, DataSourceType, DatasetWithAuxilaryData
+from .datasets import DataLoader, DataSourceType, DatasetWithauxiliaryData
 from .data import DatasetType
 from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
@@ -489,9 +489,9 @@ class BenchmarkTask:
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
-        if hasattr(self._task_def, 'auxilary_data'):
-            auxilary_data = Benchmark.data_loader.load_auxilary_data(DataSourceType.file, auxilary_data=self._task_def.auxilary_data, fold=self.fold)
-            self._dataset = DatasetWithAuxilaryData(self._dataset, auxilary_data)
+        if hasattr(self._task_def, 'auxiliary_data'):
+            auxiliary_data = Benchmark.data_loader.load_auxiliary_data(DataSourceType.file, auxiliary_data=self._task_def.auxiliary_data, fold=self.fold)
+            self._dataset = DatasetWithauxiliaryData(self._dataset, auxiliary_data)
 
     def as_job(self):
         job = Job(name=rconfig().token_separator.join([
