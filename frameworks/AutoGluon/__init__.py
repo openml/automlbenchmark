@@ -13,14 +13,16 @@ def run(dataset: Dataset, config: TaskConfig):
     data = dict(
         train=dict(path=dataset.train.data_path('parquet')),
         test=dict(path=dataset.test.data_path('parquet')),
-        train_aux=dict(path=dataset.train_auxiliary_data) if 'train_auxiliary_data' in dataset else None,
-        test_aux=dict(path=dataset.test_auxiliary_data) if 'test_auxiliary_data' in dataset else None,
         target=dict(
             name=dataset.target.name,
             classes=dataset.target.values
         ),
         problem_type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
     )
+    if hasattr(dataset, 'train_auxiliary_data'):
+        data['train_auxiliary_data'] = dict(path=dataset.train_auxiliary_data)
+    if hasattr(dataset, 'test_auxiliary_data'):
+        data['test_auxiliary_data'] = dict(path=dataset.test_auxiliary_data) 
 
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config)
