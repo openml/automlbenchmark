@@ -19,7 +19,7 @@ import sys
 from typing import List, Union
 
 from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
-from .datasets import DataLoader, DataSourceType, DatasetWithauxiliaryData
+from .datasets import DataLoader, DataSourceType, DatasetWithAuxiliaryData
 from .data import DatasetType
 from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
@@ -491,7 +491,7 @@ class BenchmarkTask:
 
         if hasattr(self._task_def, 'auxiliary_data'):
             auxiliary_data = Benchmark.data_loader.load_auxiliary_data(DataSourceType.file, auxiliary_data=self._task_def.auxiliary_data, fold=self.fold)
-            self._dataset = DatasetWithauxiliaryData(self._dataset, auxiliary_data)
+            self._dataset = DatasetWithAuxiliaryData(self._dataset, auxiliary_data)
 
     def as_job(self):
         job = Job(name=rconfig().token_separator.join([

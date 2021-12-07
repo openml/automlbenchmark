@@ -1,6 +1,6 @@
 from enum import Enum, auto
 
-from .file import FileLoader, DatasetWithauxiliaryData
+from .file import FileLoader, DatasetWithAuxiliaryData
 from .openml import OpenmlLoader
 
 

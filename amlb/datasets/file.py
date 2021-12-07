@@ -245,7 +245,7 @@ class FileDataset(Dataset):
         return meta[prop]
 
 
-class DatasetWithauxiliaryData:
+class DatasetWithAuxiliaryData:
     
     def __init__(self, dataset: FileDataset, auxiliary_data_path):
         self._dataset = dataset
