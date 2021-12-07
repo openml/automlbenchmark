@@ -13,6 +13,8 @@ def run(dataset: Dataset, config: TaskConfig):
     data = dict(
         train=dict(path=dataset.train.data_path('parquet')),
         test=dict(path=dataset.test.data_path('parquet')),
+        train_aux=dict(path=dataset.train_auxilary_data),
+        test_aux=dict(path=dataset.test_auxilary_data),
         target=dict(
             name=dataset.target.name,
             classes=dataset.target.values

@@ -55,6 +55,84 @@ class FileLoader:
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
+    @profile(logger=log)
+    def load_auxilary_data(self, auxilary_data, fold=0):
+        auxilary_data = auxilary_data if isinstance(auxilary_data, ns) else ns(path=auxilary_data)
+        log.debug("Loading auxilary data %s", auxilary_data)
+        paths = self._extract_auxilary_paths(auxilary_data.path if 'path' in auxilary_data else auxilary_data, fold=fold)
+        train_path = paths['train'][fold]
+        test_path = paths['test'][fold]
+        paths = dict(train=train_path, test=test_path)
+        return paths
+
+    def _extract_auxilary_paths(self, auxilary_data, fold=None):
+        train_search_pat = re.compile(r"(?:(.*)[_-])train_auxilary(?:[_-](\d+))?\.\w+")
+        test_search_pat = re.compile(r"(?:(.*)[_-])test_auxilary(?:[_-](\d+))?\.\w+")
+        if isinstance(auxilary_data, (tuple, list)):
+            assert len(auxilary_data) % 2 == 0, "auxilary data list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
+            return self._extract_auxilary_paths(ns(train=[p for i, p in enumerate(auxilary_data) if i % 2 == 0],
+                                                   test=[p for i, p in enumerate(auxilary_data) if i % 2 == 1]),
+                                                fold=fold)
+        elif isinstance(auxilary_data, ns):
+            return dict(
+                train=[self._extract_auxilary_paths(p)['train'][0]
+                       if i == fold else None
+                       for i, p in enumerate(as_list(auxilary_data.train))],
+                test=[self._extract_auxilary_paths(p)['train'][0]
+                      if i == fold else None
+                      for i, p in enumerate(as_list(auxilary_data.test))] if 'test' in auxilary_data else []
+            )
+        else:
+            assert isinstance(auxilary_data, str)
+            auxilary_data = os.path.expanduser(auxilary_data)
+            auxilary_data = auxilary_data.format(**rconfig().common_dirs)
+
+        if os.path.exists(auxilary_data):
+            if os.path.isfile(auxilary_data):
+                # we leave the auxilary data handling to the user
+                return dict(train=[auxilary_data], test=[])
+            elif os.path.isdir(auxilary_data):
+                files = list_all_files(auxilary_data)
+                log.debug("Files found in auxilary data folder %s: %s", auxilary_data, files)
+                assert len(files) > 0, f"Empty folder: {auxilary_data}"
+                if len(files) == 1:
+                    return dict(train=files, test=[])
+
+                train_matches = [m for m in [train_search_pat.search(f) for f in files] if m]
+                test_matches = [m for m in [test_search_pat.search(f) for f in files] if m]
+                # verify they're for the same dataset (just based on name)
+                assert train_matches, f"Folder {auxilary_data} must contain at least one training auxilary data."
+                root_names = {m[1] for m in (train_matches+test_matches)}
+                assert len(root_names) == 1, f"All dataset files in {auxilary_data} should follow the same naming: xxxxx_train_N.ext or xxxxx_test_N.ext with N starting from 0."
+
+                train_no_fold = next((m[0] for m in train_matches if m[2] is None), None)
+                test_no_fold = next((m[0] for m in test_matches if m[2] is None), None)
+                if train_no_fold and test_no_fold:
+                    return dict(train=[train_no_fold], test=[test_no_fold])
+
+                paths = dict(train=[], test=[])
+                fold = 0
+                while fold >= 0:
+                    train = next((m[0] for m in train_matches if m[2] == str(fold)), None)
+                    test = next((m[0] for m in test_matches if m[2] == str(fold)), None)
+                    if train and test:
+                        paths['train'].append(train)
+                        paths['test'].append(test)
+                        fold += 1
+                    else:
+                        fold = -1
+                assert len(paths) > 0, f"No dataset file found in {auxilary_data}: they should follow the naming xxxx_train.ext, xxxx_test.ext or xxxx_train_0.ext, xxxx_test_0.ext, xxxx_train_1.ext, ..."
+                return paths
+        elif is_valid_url(auxilary_data):
+            cached_file = os.path.join(self._cache_dir, os.path.basename(auxilary_data))
+            if not os.path.exists(cached_file):  # don't download if previously done
+                handler = get_file_handler(auxilary_data)
+                assert handler.exists(auxilary_data), f"Invalid path/url: {auxilary_data}"
+                handler.download(auxilary_data, dest_path=cached_file)
+            return self._extract_auxilary_paths(cached_file)
+        else:
+            raise ValueError(f"Invalid dataset description: {auxilary_data}")
+
     def _extract_train_test_paths(self, dataset, fold=None):
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
@@ -165,6 +243,59 @@ class FileDataset(Dataset):
     def _get_metadata(self, prop):
         meta = self._train.load_metadata()
         return meta[prop]
+
+
+class DatasetWithAuxilaryData:
+    
+    def __init__(self, dataset: FileDataset, auxilary_data_path):
+        self._dataset = dataset
+        self._train_auxilary_data = auxilary_data_path.get('train', None)
+        self._test_auxilary_data = auxilary_data_path.get('test', None)
+
+    @property
+    def train_auxilary_data(self) -> str:
+        return self._train_auxilary_data
+
+    @property
+    def test_auxilary_data(self) -> str:
+        return self._test_auxilary_data
+
+    @property
+    def type(self) -> DatasetType:
+        assert self._dataset.target is not None
+        return (DatasetType[self._dataset._type] if self._dataset._type is not None
+                else DatasetType.regression if self._dataset.target.values is None
+                else DatasetType.binary if len(self._dataset.target.values) == 2
+                else DatasetType.multiclass)
+
+    @property
+    def train(self) -> Datasplit:
+        return self._dataset._train
+
+    @property
+    def test(self) -> Datasplit:
+        return self._dataset._test
+
+    @property
+    def features(self) -> List[Feature]:
+        return self._get_metadata('features')
+
+    @property
+    def target(self) -> Feature:
+        return self._get_metadata('target')
+
+    @memoize
+    def _get_metadata(self, prop):
+        meta = self._dataset._train.load_metadata()
+        return meta[prop]
+
+    @profile(logger=log)
+    def release(self, properties=None):
+        """
+        Call this to release cached properties and optimize memory once in-memory data are not needed anymore.
+        :param properties:
+        """
+        self._dataset.release(properties)
 
 
 class FileDatasplit(Datasplit):

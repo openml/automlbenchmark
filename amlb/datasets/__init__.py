@@ -1,6 +1,6 @@
 from enum import Enum, auto
 
-from .file import FileLoader
+from .file import FileLoader, DatasetWithAuxilaryData
 from .openml import OpenmlLoader
 
 
@@ -21,6 +21,12 @@ class DataLoader:
             return self.openml_loader.load(*args, **kwargs)
         elif source == DataSourceType.file:
             return self.file_loader.load(*args, **kwargs)
+        else:
+            raise NotImplementedError(f"data source {source} is not supported yet")
+
+    def load_auxilary_data(self, source: DataSourceType, *args, **kwargs):
+        if source == DataSourceType.file:
+            return self.file_loader.load_auxilary_data(*args, **kwargs)
         else:
             raise NotImplementedError(f"data source {source} is not supported yet")
 
