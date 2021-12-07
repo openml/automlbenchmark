@@ -70,7 +70,8 @@ scheme_handlers = dict(
     http=HttpHandler(),
     https=HttpHandler(),
     s3=S3Handler(),
-    s3a=S3Handler
+    s3a=S3Handler(),
+    s3n=S3Handler(),
 )
 
 SUPPORTED_SCHEMES = list(scheme_handlers.keys())
