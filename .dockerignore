@@ -8,13 +8,10 @@ results
 **/models
 **/predictions
 **/scores
-**/.setup
-**/.installed
-**/.setup_env
 **/__pycache__
-**/lib
-**/setup
 **/venv
+frameworks/*/.setup
+frameworks/*/lib
 
 # editors/IDEs
 .idea
