@@ -526,7 +526,8 @@ class AWSBenchmark(Benchmark):
                 return
             while not interrupt.is_set():
                 try:
-                    hanging_instances = list(filter(self._is_hanging, self.instances.keys()))
+                    active_instances = [iid for iid, info in self.instances.items() if info.instance is not None]
+                    hanging_instances = list(filter(self._is_hanging, active_instances))
                     for inst in hanging_instances:
                         if inst in self.instances:
                             inst_desc = self.instances[inst]
