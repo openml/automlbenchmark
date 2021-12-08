@@ -69,7 +69,7 @@ class FileLoader:
         train_search_pat = re.compile(r"(?:(.*)[_-])train_auxiliary(?:[_-](\d+))?\.\w+")
         test_search_pat = re.compile(r"(?:(.*)[_-])test_auxiliary(?:[_-](\d+))?\.\w+")
         if isinstance(auxiliary_data, (tuple, list)):
-            assert len(auxiliary_data) % 2 == 0, "auxiliary data list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
+            assert len(auxiliary_data) % 2 == 0, "auxiliary data list must contain an even number of paths: [train_auxiliary_0, test_auxiliary_0, train_auxiliary_1, test_auxiliary_1, ...]."
             return self._extract_auxiliary_paths(ns(train=[p for i, p in enumerate(auxiliary_data) if i % 2 == 0],
                                                    test=[p for i, p in enumerate(auxiliary_data) if i % 2 == 1]),
                                                 fold=fold)
@@ -103,7 +103,7 @@ class FileLoader:
                 # verify they're for the same dataset (just based on name)
                 assert train_matches, f"Folder {auxiliary_data} must contain at least one training auxiliary data."
                 root_names = {m[1] for m in (train_matches+test_matches)}
-                assert len(root_names) == 1, f"All dataset files in {auxiliary_data} should follow the same naming: xxxxx_train_N.ext or xxxxx_test_N.ext with N starting from 0."
+                assert len(root_names) == 1, f"All dataset files in {auxiliary_data} should follow the same naming: xxxxx_train_auxiliary_N.ext or xxxxx_test_auxiliary_N.ext with N starting from 0."
 
                 train_no_fold = next((m[0] for m in train_matches if m[2] is None), None)
                 test_no_fold = next((m[0] for m in test_matches if m[2] is None), None)
@@ -121,7 +121,7 @@ class FileLoader:
                         fold += 1
                     else:
                         fold = -1
-                assert len(paths) > 0, f"No dataset file found in {auxiliary_data}: they should follow the naming xxxx_train.ext, xxxx_test.ext or xxxx_train_0.ext, xxxx_test_0.ext, xxxx_train_1.ext, ..."
+                assert len(paths) > 0, f"No dataset file found in {auxiliary_data}: they should follow the naming xxxx_train_auxiliary.ext, xxxx_test_auxiliary.ext or xxxx_train_auxiliary_0.ext, xxxx_test_auxiliary_0.ext, xxxx_train_auxiliary_1.ext, ..."
                 return paths
         elif is_valid_url(auxiliary_data):
             cached_file = os.path.join(self._cache_dir, os.path.basename(auxiliary_data))
