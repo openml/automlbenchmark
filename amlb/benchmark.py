@@ -19,7 +19,7 @@ import sys
 from typing import List, Union
 
 from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
-from .datasets import DataLoader, DataSourceType, DatasetWithAuxiliaryData
+from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
 from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
