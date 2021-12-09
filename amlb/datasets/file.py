@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pandas.api.types as pat
 
-from ..data import Dataset, DatasetType, Datasplit, Feature
+from ..data import AuxData, Dataset, DatasetType, Datasplit, Feature, DF
 from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
 from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, path_from_split, profile, split_path
@@ -56,124 +56,94 @@ class FileLoader:
             raise ValueError(f"Unsupported file type: {ext}")
 
     @profile(logger=log)
-    def load_auxiliary_data(self, auxiliary_data, fold=0):
+    def load_auxiliary_data(self, dataset, auxiliary_data, fold=0):
         auxiliary_data = auxiliary_data if isinstance(auxiliary_data, ns) else ns(path=auxiliary_data)
         log.debug("Loading auxiliary data %s", auxiliary_data)
         paths = self._extract_auxiliary_paths(auxiliary_data.path if 'path' in auxiliary_data else auxiliary_data, fold=fold)
-        train_path = paths['train'][fold]
-        test_path = paths['test'][fold]
-        paths = dict(train=train_path, test=test_path)
-        return paths
+        train_data = None
+        test_data = None
+        if 'train' in paths:
+            train_path = paths['train'][fold]
+            train_data = FileAuxData(train_path)
+        if 'test' in paths:
+            test_path = paths['test'][fold]
+            test_data = FileAuxData(test_path)
+        return DatasetWithAuxiliaryData(dataset, train_data, test_data)
 
     def _extract_auxiliary_paths(self, auxiliary_data, fold=None):
-        train_search_pat = re.compile(r"(?:(.*)[_-])train_auxiliary(?:[_-](\d+))?\.\w+")
-        test_search_pat = re.compile(r"(?:(.*)[_-])test_auxiliary(?:[_-](\d+))?\.\w+")
         if isinstance(auxiliary_data, (tuple, list)):
             assert len(auxiliary_data) % 2 == 0, "auxiliary data list must contain an even number of paths: [train_auxiliary_0, test_auxiliary_0, train_auxiliary_1, test_auxiliary_1, ...]."
-            return self._extract_auxiliary_paths(ns(train=[p for i, p in enumerate(auxiliary_data) if i % 2 == 0],
+            return self._extract_paths(ns(train=[p for i, p in enumerate(auxiliary_data) if i % 2 == 0],
                                                    test=[p for i, p in enumerate(auxiliary_data) if i % 2 == 1]),
-                                                fold=fold)
+                                                fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')
         elif isinstance(auxiliary_data, ns):
             return dict(
-                train=[self._extract_auxiliary_paths(p)['train'][0]
+                train=[self._extract_paths(p, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')['train'][0]
                        if i == fold else None
                        for i, p in enumerate(as_list(auxiliary_data.train))],
-                test=[self._extract_auxiliary_paths(p)['train'][0]
+                test=[self._extract_paths(p, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')['train'][0]
                       if i == fold else None
                       for i, p in enumerate(as_list(auxiliary_data.test))] if 'test' in auxiliary_data else []
             )
         else:
-            assert isinstance(auxiliary_data, str)
-            auxiliary_data = os.path.expanduser(auxiliary_data)
-            auxiliary_data = auxiliary_data.format(**rconfig().common_dirs)
+            self._extract_paths(auxiliary_data, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')
 
-        if os.path.exists(auxiliary_data):
-            if os.path.isfile(auxiliary_data):
-                # we leave the auxiliary data handling to the user
-                return dict(train=[auxiliary_data], test=[])
-            elif os.path.isdir(auxiliary_data):
-                files = list_all_files(auxiliary_data)
-                log.debug("Files found in auxiliary data folder %s: %s", auxiliary_data, files)
-                assert len(files) > 0, f"Empty folder: {auxiliary_data}"
-                if len(files) == 1:
-                    return dict(train=files, test=[])
-
-                train_matches = [m for m in [train_search_pat.search(f) for f in files] if m]
-                test_matches = [m for m in [test_search_pat.search(f) for f in files] if m]
-                # verify they're for the same dataset (just based on name)
-                assert train_matches, f"Folder {auxiliary_data} must contain at least one training auxiliary data."
-                root_names = {m[1] for m in (train_matches+test_matches)}
-                assert len(root_names) == 1, f"All dataset files in {auxiliary_data} should follow the same naming: xxxxx_train_auxiliary_N.ext or xxxxx_test_auxiliary_N.ext with N starting from 0."
-
-                train_no_fold = next((m[0] for m in train_matches if m[2] is None), None)
-                test_no_fold = next((m[0] for m in test_matches if m[2] is None), None)
-                if train_no_fold and test_no_fold:
-                    return dict(train=[train_no_fold], test=[test_no_fold])
-
-                paths = dict(train=[], test=[])
-                fold = 0
-                while fold >= 0:
-                    train = next((m[0] for m in train_matches if m[2] == str(fold)), None)
-                    test = next((m[0] for m in test_matches if m[2] == str(fold)), None)
-                    if train and test:
-                        paths['train'].append(train)
-                        paths['test'].append(test)
-                        fold += 1
-                    else:
-                        fold = -1
-                assert len(paths) > 0, f"No dataset file found in {auxiliary_data}: they should follow the naming xxxx_train_auxiliary.ext, xxxx_test_auxiliary.ext or xxxx_train_auxiliary_0.ext, xxxx_test_auxiliary_0.ext, xxxx_train_auxiliary_1.ext, ..."
-                return paths
-        elif is_valid_url(auxiliary_data):
-            cached_file = os.path.join(self._cache_dir, os.path.basename(auxiliary_data))
-            if not os.path.exists(cached_file):  # don't download if previously done
-                handler = get_file_handler(auxiliary_data)
-                assert handler.exists(auxiliary_data), f"Invalid path/url: {auxiliary_data}"
-                handler.download(auxiliary_data, dest_path=cached_file)
-            return self._extract_auxiliary_paths(cached_file)
-        else:
-            raise ValueError(f"Invalid dataset description: {auxiliary_data}")
 
     def _extract_train_test_paths(self, dataset, fold=None):
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
-            return self._extract_train_test_paths(ns(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
+            return self._extract_paths(ns(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
                                                      test=[p for i, p in enumerate(dataset) if i % 2 == 1]),
-                                                  fold=fold)
+                                                  fold=fold, train_suffix='train', test_suffix='test')
         elif isinstance(dataset, ns):
-            return dict(train=[self._extract_train_test_paths(p)['train'][0]
+            return dict(train=[self._extract_paths(p, fold=fold, train_suffix='train', test_suffix='test')['train'][0]
                                if i == fold else None
                                for i, p in enumerate(as_list(dataset.train))],
-                        test=[self._extract_train_test_paths(p)['train'][0]
+                        test=[self._extract_paths(p, fold=fold, train_suffix='train', test_suffix='test')['train'][0]
                               if i == fold else None
                               for i, p in enumerate(as_list(dataset.test))])
         else:
-            assert isinstance(dataset, str)
-            dataset = os.path.expanduser(dataset)
-            dataset = dataset.format(**rconfig().common_dirs)
+            self._extract_paths(dataset, fold=fold, train_suffix='train', test_suffix='test')
 
-        if os.path.exists(dataset):
-            if os.path.isfile(dataset):
-                if is_archive(dataset):
-                    arch_name, _ = os.path.splitext(os.path.basename(dataset))
+
+    def _extract_paths(self, data, fold=None, train_suffix='train', test_suffix='test'):
+        train_search_pat = re.compile(rf"(?:(.*)[_-]){train_suffix}(?:[_-](\d+))?\.\w+")
+        test_search_pat = re.compile(rf"(?:(.*)[_-]){train_suffix}(?:[_-](\d+))?\.\w+")
+        is_aux_data = False
+        if train_suffix == 'train_auxiliary' and test_suffix == 'test_auxiliary':
+            is_aux_data = True
+
+        assert isinstance(data, str)
+        data = os.path.expanduser(data)
+        data = data.format(**rconfig().common_dirs)
+
+        if os.path.exists(data):
+            if os.path.isfile(data):
+                # we leave the auxiliary data handling to the user
+                if is_archive(data) and not is_aux_data:
+                    arch_name, _ = os.path.splitext(os.path.basename(data))
                     dest_folder = os.path.join(self._cache_dir, arch_name)
                     if not os.path.exists(dest_folder):  # don't uncompress if previously done
-                        dest_folder = unarchive_file(dataset, dest_folder)
-                    return self._extract_train_test_paths(dest_folder)
+                        dest_folder = unarchive_file(data, dest_folder)
+                    return self._extract_paths(dest_folder, train_suffix=train_suffix, test_suffix=test_suffix)
                 else:
-                    return dict(train=[dataset], test=[])
-            elif os.path.isdir(dataset):
-                files = list_all_files(dataset)
-                log.debug("Files found in dataset folder %s: %s", dataset, files)
-                assert len(files) > 0, f"Empty folder: {dataset}"
+                    return dict(train=[data], test=[])
+            elif os.path.isdir(data):
+                files = list_all_files(data)
+                log.debug("Files found in data folder %s: %s", data, files)
+                assert len(files) > 0, f"Empty folder: {data}"
                 if len(files) == 1:
                     return dict(train=files, test=[])
 
                 train_matches = [m for m in [train_search_pat.search(f) for f in files] if m]
                 test_matches = [m for m in [test_search_pat.search(f) for f in files] if m]
                 # verify they're for the same dataset (just based on name)
-                assert train_matches and test_matches, f"Folder {dataset} must contain at least one training and one test dataset."
+                if not is_aux_data:
+                    assert train_matches and test_matches, f"Folder {data} must contain at least one training and one test dataset."
+                else:
+                    assert train_matches or test_matches, f"Folder {data} must contain at least one training auxiliary data or one test auxiliary data."
                 root_names = {m[1] for m in (train_matches+test_matches)}
-                assert len(root_names) == 1, f"All dataset files in {dataset} should follow the same naming: xxxxx_train_N.ext or xxxxx_test_N.ext with N starting from 0."
+                assert len(root_names) == 1, f"All data files in {data} should follow the same naming: xxxxx_{train_suffix}_N.ext or xxxxx_{test_suffix}_N.ext with N starting from 0."
 
                 train_no_fold = next((m[0] for m in train_matches if m[2] is None), None)
                 test_no_fold = next((m[0] for m in test_matches if m[2] is None), None)
@@ -185,23 +155,47 @@ class FileLoader:
                 while fold >= 0:
                     train = next((m[0] for m in train_matches if m[2] == str(fold)), None)
                     test = next((m[0] for m in test_matches if m[2] == str(fold)), None)
-                    if train and test:
-                        paths['train'].append(train)
-                        paths['test'].append(test)
-                        fold += 1
+                    if not is_aux_data:
+                        if train and test:
+                            paths['train'].append(train)
+                            paths['test'].append(test)
+                            fold += 1
+                        else:
+                            fold = -1
                     else:
-                        fold = -1
-                assert len(paths) > 0, f"No dataset file found in {dataset}: they should follow the naming xxxx_train.ext, xxxx_test.ext or xxxx_train_0.ext, xxxx_test_0.ext, xxxx_train_1.ext, ..."
+                        if train:
+                            paths['train'].append(train)
+                        if test:
+                            paths['test'].append(test)
+                        if not train and not test:
+                            fold = -1
+                        fold += 1
+                assert len(paths) > 0, f"No data file found in {data}: they should follow the naming xxxx_{train_suffix}.ext, xxxx_{test_suffix}.ext or xxxx_{train_suffix}_0.ext, xxxx_{test_suffix}_0.ext, xxxx_{train_suffix}_1.ext, ..."
                 return paths
-        elif is_valid_url(dataset):
-            cached_file = os.path.join(self._cache_dir, os.path.basename(dataset))
+        elif is_valid_url(data):
+            cached_file = os.path.join(self._cache_dir, os.path.basename(data))
             if not os.path.exists(cached_file):  # don't download if previously done
-                handler = get_file_handler(dataset)
-                assert handler.exists(dataset), f"Invalid path/url: {dataset}"
-                handler.download(dataset, dest_path=cached_file)
-            return self._extract_train_test_paths(cached_file)
+                handler = get_file_handler(data)
+                assert handler.exists(data), f"Invalid path/url: {data}"
+                handler.download(data, dest_path=cached_file)
+            return self._extract_paths(cached_file, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)
         else:
-            raise ValueError(f"Invalid dataset description: {dataset}")
+            raise ValueError(f"Invalid dataset description: {data}")
+
+
+class FileAuxData(AuxData):
+
+    def __init__(self, path):
+        super().__init__()
+        self._path = path
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @property
+    def data(self) -> DF:
+        return NotImplementedError
 
 
 class FileDataset(Dataset):
@@ -245,12 +239,12 @@ class FileDataset(Dataset):
         return meta[prop]
 
 
-class DatasetWithAuxiliaryData:
+class DatasetWithAuxiliaryData(Dataset):
     
-    def __init__(self, dataset: FileDataset, auxiliary_data_path):
+    def __init__(self, dataset: FileDataset, train_auxiliary_data, test_auxiliary_data):
         self._dataset = dataset
-        self._train_auxiliary_data = auxiliary_data_path.get('train', None)
-        self._test_auxiliary_data = auxiliary_data_path.get('test', None)
+        self._train_auxiliary_data = train_auxiliary_data
+        self._test_auxiliary_data = test_auxiliary_data
 
     @property
     def train_auxiliary_data(self) -> str:

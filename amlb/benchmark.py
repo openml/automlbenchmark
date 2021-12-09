@@ -490,8 +490,7 @@ class BenchmarkTask:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
         if hasattr(self._task_def, 'auxiliary_data'):
-            auxiliary_data = Benchmark.data_loader.load_auxiliary_data(DataSourceType.file, auxiliary_data=self._task_def.auxiliary_data, fold=self.fold)
-            self._dataset = DatasetWithAuxiliaryData(self._dataset, auxiliary_data)
+            self._dataset = Benchmark.data_loader.load_auxiliary_data(DataSourceType.file, dataset=self._dataset, auxiliary_data=self._task_def.auxiliary_data, fold=self.fold)
 
     def as_job(self):
         job = Job(name=rconfig().token_separator.join([

@@ -20,9 +20,9 @@ def run(dataset: Dataset, config: TaskConfig):
         problem_type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
     )
     if hasattr(dataset, 'train_auxiliary_data'):
-        data['train_auxiliary_data'] = dict(path=dataset.train_auxiliary_data)
+        data['train_auxiliary_data'] = dict(path=dataset.train_auxiliary_data.path)
     if hasattr(dataset, 'test_auxiliary_data'):
-        data['test_auxiliary_data'] = dict(path=dataset.test_auxiliary_data) 
+        data['test_auxiliary_data'] = dict(path=dataset.test_auxiliary_data.path) 
 
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config)

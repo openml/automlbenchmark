@@ -84,6 +84,28 @@ class Feature:
         return repr_def(self)
 
 
+class AuxData(ABC):
+    
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def path(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def data(self) -> DF:
+        """
+        :return: the auxiliary data as a pandas DataFrame.
+        """
+        pass
+
+    @profile(logger=log)
+    def release(self, properties=None):
+        clear_cache(self, properties)
+
+
 class Datasplit(ABC):
 
     def __init__(self, dataset, format):
