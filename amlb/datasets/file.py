@@ -72,39 +72,42 @@ class FileLoader:
         return dataset
 
     def _extract_auxiliary_paths(self, auxiliary_data, fold=None):
+        train_suffix = 'train_auxiliary'
+        test_suffix = 'test_auxiliary'
         if isinstance(auxiliary_data, (tuple, list)):
-            assert len(auxiliary_data) % 2 == 0, "auxiliary data list must contain an even number of paths: [train_auxiliary_0, test_auxiliary_0, train_auxiliary_1, test_auxiliary_1, ...]."
-            return self._extract_paths(ns(train=[p for i, p in enumerate(auxiliary_data) if i % 2 == 0],
-                                                   test=[p for i, p in enumerate(auxiliary_data) if i % 2 == 1]),
-                                                fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')
+            return self._extract_paths(ns(train=[p for p in auxiliary_data if train_suffix in p],
+                                                   test=[p for p in auxiliary_data if test_suffix in p]),
+                                                fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)
         elif isinstance(auxiliary_data, ns):
             return dict(
-                train=[self._extract_paths(p, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')['train'][0]
+                train=[self._extract_paths(p, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)['train'][0]
                        if i == fold else None
                        for i, p in enumerate(as_list(auxiliary_data.train))] if 'train' in auxiliary_data else [],
-                test=[self._extract_paths(p, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')['train'][0]
+                test=[self._extract_paths(p, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)['train'][0]
                       if i == fold else None
                       for i, p in enumerate(as_list(auxiliary_data.test))] if 'test' in auxiliary_data else []
             )
         else:
-            self._extract_paths(auxiliary_data, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')
+            self._extract_paths(auxiliary_data, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)
 
 
     def _extract_train_test_paths(self, dataset, fold=None):
+        train_suffix = 'train'
+        test_suffix = 'test'
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
             return self._extract_paths(ns(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
                                                      test=[p for i, p in enumerate(dataset) if i % 2 == 1]),
-                                                  fold=fold, train_suffix='train', test_suffix='test')
+                                                  fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)
         elif isinstance(dataset, ns):
-            return dict(train=[self._extract_paths(p, fold=fold, train_suffix='train', test_suffix='test')['train'][0]
+            return dict(train=[self._extract_paths(p, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)['train'][0]
                                if i == fold else None
                                for i, p in enumerate(as_list(dataset.train))],
-                        test=[self._extract_paths(p, fold=fold, train_suffix='train', test_suffix='test')['train'][0]
+                        test=[self._extract_paths(p, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)['train'][0]
                               if i == fold else None
                               for i, p in enumerate(as_list(dataset.test))])
         else:
-            self._extract_paths(dataset, fold=fold, train_suffix='train', test_suffix='test')
+            self._extract_paths(dataset, fold=fold, train_suffix=train_suffix, test_suffix=test_suffix)
 
 
     def _extract_paths(self, data, fold=None, train_suffix='train', test_suffix='test'):
