@@ -120,6 +120,14 @@ class Datasplit(ABC):
     def path(self) -> str:
         return self.data_path(self.format)
 
+    @property
+    def has_auxiliary_data(self) -> bool:
+        pass
+       
+    @property
+    def auxiliary_data(self) -> AuxData:
+        pass
+
     @abstractmethod
     def data_path(self, format: str) -> str:
         """

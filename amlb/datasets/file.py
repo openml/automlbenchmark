@@ -68,7 +68,8 @@ class FileLoader:
         if 'test' in paths:
             test_path = paths['test'][fold]
             test_data = FileAuxData(test_path)
-        return DatasetWithAuxiliaryData(dataset, train_data, test_data)
+        dataset._attach_auxiliary_data(train_data, test_data)
+        return dataset
 
     def _extract_auxiliary_paths(self, auxiliary_data, fold=None):
         if isinstance(auxiliary_data, (tuple, list)):
@@ -80,7 +81,7 @@ class FileLoader:
             return dict(
                 train=[self._extract_paths(p, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')['train'][0]
                        if i == fold else None
-                       for i, p in enumerate(as_list(auxiliary_data.train))],
+                       for i, p in enumerate(as_list(auxiliary_data.train))] if 'train' in auxiliary_data else [],
                 test=[self._extract_paths(p, fold=fold, train_suffix='train_auxiliary', test_suffix='test_auxiliary')['train'][0]
                       if i == fold else None
                       for i, p in enumerate(as_list(auxiliary_data.test))] if 'test' in auxiliary_data else []
@@ -233,63 +234,14 @@ class FileDataset(Dataset):
     def target(self) -> Feature:
         return self._get_metadata('target')
 
+    def _attach_auxiliary_data(self, train_auxiliary_data, test_auxiliary_data):
+        self._train._attach_auxiliary_data(train_auxiliary_data)
+        self._test._attach_auxiliary_data(test_auxiliary_data)
+
     @memoize
     def _get_metadata(self, prop):
         meta = self._train.load_metadata()
         return meta[prop]
-
-
-class DatasetWithAuxiliaryData(Dataset):
-    
-    def __init__(self, dataset: FileDataset, train_auxiliary_data, test_auxiliary_data):
-        self._dataset = dataset
-        self._train_auxiliary_data = train_auxiliary_data
-        self._test_auxiliary_data = test_auxiliary_data
-
-    @property
-    def train_auxiliary_data(self) -> str:
-        return self._train_auxiliary_data
-
-    @property
-    def test_auxiliary_data(self) -> str:
-        return self._test_auxiliary_data
-
-    @property
-    def type(self) -> DatasetType:
-        assert self._dataset.target is not None
-        return (DatasetType[self._dataset._type] if self._dataset._type is not None
-                else DatasetType.regression if self._dataset.target.values is None
-                else DatasetType.binary if len(self._dataset.target.values) == 2
-                else DatasetType.multiclass)
-
-    @property
-    def train(self) -> Datasplit:
-        return self._dataset._train
-
-    @property
-    def test(self) -> Datasplit:
-        return self._dataset._test
-
-    @property
-    def features(self) -> List[Feature]:
-        return self._get_metadata('features')
-
-    @property
-    def target(self) -> Feature:
-        return self._get_metadata('target')
-
-    @memoize
-    def _get_metadata(self, prop):
-        meta = self._dataset._train.load_metadata()
-        return meta[prop]
-
-    @profile(logger=log)
-    def release(self, properties=None):
-        """
-        Call this to release cached properties and optimize memory once in-memory data are not needed anymore.
-        :param properties:
-        """
-        self._dataset.release(properties)
 
 
 class FileDatasplit(Datasplit):
@@ -298,6 +250,8 @@ class FileDatasplit(Datasplit):
         super().__init__(dataset, format)
         self._path = path
         self._data = {format: path}
+        self._auxiliary_data = None
+
 
     def data_path(self, format):
         supported_formats = [cls.format for cls in __file_converters__]
@@ -305,6 +259,14 @@ class FileDatasplit(Datasplit):
             name = split_path(self._path).basename
             raise ValueError(f"Dataset {name} is only available in one of {supported_formats} formats.")
         return self._get_data(format)
+
+    @property
+    def has_auxiliary_data(self) -> bool:
+        return self._auxiliary_data != None
+       
+    @property
+    def auxiliary_data(self) -> AuxData:
+        return self._auxiliary_data
 
     @lazy_property
     def data(self):
@@ -341,6 +303,9 @@ class FileDatasplit(Datasplit):
                             target.name, target.data_type)
                 # target.data_type = 'category'
         target.is_target = True
+
+    def _attach_auxiliary_data(self, auxiliary_data):
+        self._auxiliary_data = auxiliary_data
 
 
 class ArffDataset(FileDataset):
