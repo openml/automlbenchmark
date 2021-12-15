@@ -88,8 +88,7 @@ DecisionTree:
 RandomForest:
   version: '0.24.2'
   params:
-    n_estimators: 10
-    warm_start: true
+    n_estimators: 2000
 
 ranger:
   version: 'stable'

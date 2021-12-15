@@ -197,8 +197,7 @@ RandomForest:
     A simple Random Forest implementation (scikit-learn) used for testing or as a reference base.
   project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
   params:
-    n_estimators: 10
-    warm_start: true
+    n_estimators: 2000
 #    _n_jobs: 1   # faster, fitter, happier (running OoM on some datasets when using multiprocessing)
 #    verbose: true
 
