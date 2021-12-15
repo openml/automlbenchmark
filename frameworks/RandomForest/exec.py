@@ -28,7 +28,7 @@ def run(dataset, config):
     log.info(f"\n**** Random Forest [sklearn v{sklearn.__version__}] ****\n")
 
     is_classification = config.type == 'classification'
-    this_process = psutil.Process(os.getpid())  # Does it cover memory usage of `n_jobs`?
+    this_process = psutil.Process(os.getpid())
 
     encode = config.framework_params.get('_encode', True)
     X_train, X_test = dataset.train.X, dataset.test.X
@@ -39,7 +39,7 @@ def run(dataset, config):
         if not (k.startswith('_') or k == "n_estimators")
     }
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
-    step_size = config.framework_params.get('step_size', 10)
+    step_size = config.framework_params.get('_step_size', 10)
     final_forest_size = config.framework_params.get('n_estimators', 2000)
 
     # Default margins are conservative, because robustness is paramount for a baseline.
@@ -69,7 +69,7 @@ def run(dataset, config):
 
             will_run_out_of_memory = extrapolate_with_worst_case(memory_usage) >= config.max_mem_size_mb * memory_margin
             will_run_out_of_time = extrapolate_with_worst_case(training_times) >= config.max_runtime_seconds * time_margin
-            if rf.n_estimators == final_forest_size:
+            if rf.n_estimators >= final_forest_size:
                 log.info("Stop training because desired forest size has been reached.")
                 break
             elif will_run_out_of_time:
