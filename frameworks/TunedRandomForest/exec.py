@@ -8,18 +8,20 @@ import math
 import os
 import statistics
 import tempfile as tmp
+from collections import defaultdict
+from typing import List
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+import psutil
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
-import stopit
 
 from frameworks.shared.callee import call_run, result
 from frameworks.shared.utils import Timer
@@ -33,14 +35,28 @@ def pick_values_uniform(start: int, end: int, length: int):
     return sorted(set([int(f) for f in uniform_floats]))
 
 
+def extrapolate_with_worst_case(values: List[float], n: int = 5) -> float:
+    """ Extrapolate the next value for `values`, based on the last `n` samples. """
+    n = min(len(values), n)
+    return values[-1] + max(v_next - v_prev for v_prev, v_next in zip(values[-n:], values[-n+1:]))
+
+
 def run(dataset, config):
     log.info(f"\n**** Tuned Random Forest [sklearn v{sklearn.__version__}] ****\n")
 
     is_classification = config.type == 'classification'
 
-    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
-    tuning_params = config.framework_params.get('_tuning', training_params)
+    training_params = {
+        k: v for k, v in config.framework_params.items()
+        if not (k.startswith('_') or k == "n_estimators")
+    }
+    if "max_features" in training_params:
+        raise ValueError("`max_features` may not be specified for Tuned Random Forest.")
+
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
+    step_size = config.framework_params.get('_step_size', 10)
+    final_forest_size = config.framework_params.get('n_estimators', 2000)
+    memory_margin = config.framework_params.get('_memory_margin', 0.9)
 
     X_train, X_test = dataset.train.X, dataset.test.X
     y_train, y_test = dataset.train.y, dataset.test.y
@@ -64,60 +80,103 @@ def run(dataset, config):
     default_value = max(1, int(math.sqrt(n_features)))
     below_default = pick_values_uniform(start=1, end=default_value, length=5+1)[:-1]   # 5 below
     above_default = pick_values_uniform(start=default_value, end=n_features, length=10+1 - len(below_default))[1:]  # 5 above
-    # Mix up the order of `max_features` to try, so that a fair range is tried even if we have too little time
-    # to try all possible values. Order: [sqrt(p), 1, p, random order for remaining values]
-    # max_features_to_try = below_default[1:] + above_default[:-1]
-    # max_features_values = ([default_value, 1, n_features]
-    #                        + random.sample(max_features_to_try, k=len(max_features_to_try)))
+
     max_features_values = [default_value] + below_default + above_default
     # Define up to how much of total time we spend 'optimizing' `max_features`.
     # (the remainder if used for fitting the final model).
-    safety_factor = 0.85
-    with stopit.ThreadingTimeout(seconds=int(config.max_runtime_seconds * safety_factor)):
-        log.info("Evaluating multiple values for `max_features`: %s.", max_features_values)
-        max_feature_scores = []
-        tuning_durations = []
-        for i, max_features_value in enumerate(max_features_values):
-            log.info("[{:2d}/{:2d}] Evaluating max_features={}"
-                     .format(i + 1, len(max_features_values), max_features_value))
-            imputation = SimpleImputer()
-            random_forest = estimator(n_jobs=n_jobs,
-                                      random_state=config.seed,
-                                      max_features=max_features_value,
-                                      **tuning_params)
-            pipeline = Pipeline(steps=[
-                ('preprocessing', imputation),
-                ('learning', random_forest)
-            ])
-            with Timer() as cv_scoring:
-                try:
-                    scores = cross_val_score(estimator=pipeline,
-                                             X=X_train,
-                                             y=y_train,
-                                             scoring=metric,
-                                             error_score='raise',
-                                             cv=5)
-                    max_feature_scores.append((statistics.mean(scores), max_features_value))
-                except stopit.utils.TimeoutException as toe:
-                    log.error("Failed CV scoring for max_features=%s : Timeout", max_features_value)
-                    tuning_durations.append((max_features_value, cv_scoring.duration))
-                    raise toe
-                except Exception as e:
-                    log.error("Failed CV scoring for max_features=%s :\n%s", max_features_value, e)
-                    log.debug("Exception:", exc_info=True)
-                    max_feature_scores.append((math.nan, max_features_value))
-            tuning_durations.append((max_features_value, cv_scoring.duration))
 
-    log.info("Tuning scores:\n%s", sorted(max_feature_scores))
-    log.info("Tuning durations:\n%s", sorted(tuning_durations))
-    _, best_max_features_value = max(max_feature_scores) if len(max_feature_scores) > 0 else (math.nan, 'auto')
-    log.info("Training final model with `max_features={}`.".format(best_max_features_value))
-    rf = estimator(n_jobs=n_jobs,
-                   random_state=config.seed,
-                   max_features=best_max_features_value,
-                   **training_params)
+    log.info("Evaluating multiple values for `max_features`: %s.", max_features_values)
+    max_feature_scores = defaultdict(list)
+    tuning_durations = defaultdict(list)
+    memory_usage_by = defaultdict(list)
+    this_process = psutil.Process(os.getpid())
+
     with Timer() as training:
-        rf.fit(X_train, y_train)
+        while max_features_values:
+            time_left = (config.max_runtime_seconds - training.duration)
+            time_per_value = time_left / (len(max_features_values) + 1)
+
+            value = max_features_values.pop(0)
+            log.info(f"Evaluating max_features={value} in {time_per_value} seconds.")
+
+            random_forest = estimator(
+                n_jobs=n_jobs,
+                random_state=config.seed,
+                max_features=value,
+                n_estimators=step_size,
+                warm_start=True,
+                **training_params
+            )
+
+            training_times = [training.duration]
+            memory_usage = [this_process.memory_info()[0] / (2 ** 20)]
+
+            while True:
+                try:
+                    scores = cross_val_score(
+                        estimator=random_forest,
+                        X=X_train,
+                        y=y_train,
+                        scoring=metric,
+                        error_score='raise',
+                        cv=5
+                    )
+                    max_feature_scores[value].append(statistics.mean(scores))
+                except Exception as e:
+                    log.error("Failed CV scoring for max_features=%s :\n%s", value, e)
+                    log.debug("Exception:", exc_info=True)
+                    max_feature_scores[value].append(math.nan)
+                    break
+
+                training_times.append(training.duration)
+                memory_usage.append(this_process.memory_info()[0] / (2 ** 20))
+                if random_forest.n_estimators >= final_forest_size:
+                    log.info("Stop training because desired forest size has been reached.")
+                    break
+                if extrapolate_with_worst_case(training_times) - training_times[0] >= time_per_value:
+                    log.info("Stop training because it expects to exceed its time budget.")
+                    break
+                elif extrapolate_with_worst_case(memory_usage) >= config.max_mem_size_mb * memory_margin:
+                    log.info("Stop training because it expects to exceed its memory budget.")
+                    break
+
+                random_forest.n_estimators += step_size
+
+            tuning_durations[value] = training_times
+            memory_usage_by[value] = memory_usage
+
+        # TODO: Transform the dictionaries into a pandas dataframe (value, trees, score, duration, total_duration, memory, d_memory)
+        log.info("Tuning scores:\n%s", max_feature_scores)
+        log.info("Tuning durations:\n%s", tuning_durations)
+        log.info("Tuning memory:\n%s", memory_usage_by)
+
+        _, best_value = max((scores[-1], value) for value, scores in max_feature_scores.items())
+        log.info("Training final model with `max_features=%s`.", best_value)
+        rf = estimator(n_jobs=n_jobs,
+                       random_state=config.seed,
+                       max_features=best_value,
+                       warm_start=True,
+                       n_estimators=step_size,
+                       **training_params)
+
+        training_times = [training.duration]
+        memory_usage = [this_process.memory_info()[0] / (2 ** 20)]
+        while True:
+            rf.fit(X_train, y_train)
+            training_times.append(training.duration)
+            memory_usage.append(this_process.memory_info()[0] / (2 ** 20))
+            if rf.n_estimators == final_forest_size:
+                log.info("Stop training because desired forest size has been reached.")
+                break
+            if extrapolate_with_worst_case(training_times) >= time_per_value:
+                log.info("Stop training because it expects to exceed its time budget.")
+                break
+            elif extrapolate_with_worst_case(
+                    memory_usage) >= config.max_mem_size_mb * memory_margin:
+                log.info(
+                    "Stop training because it expects to exceed its memory budget.")
+                break
+            random_forest.n_estimators += step_size
 
     with Timer() as predict:
         predictions = rf.predict(X_test)
@@ -130,7 +189,7 @@ def run(dataset, config):
         probabilities=probabilities,
         target_is_encoded=is_classification,
         models_count=len(rf),
-        training_duration=training.duration+sum(map(lambda t: t[1], tuning_durations)),
+        training_duration=training.duration,
         predict_duration=predict.duration
     )
 
