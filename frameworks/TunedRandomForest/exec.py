@@ -90,11 +90,18 @@ def run(dataset, config):
     tuning_durations = defaultdict(list)
     memory_usage_by = defaultdict(list)
     this_process = psutil.Process(os.getpid())
+    last_initial_fit_time = 0
 
     with Timer() as training:
         while max_features_values:
             time_left = (config.max_runtime_seconds - training.duration)
             time_per_value = time_left / (len(max_features_values) + 1)
+            if time_per_value < last_initial_fit_time:
+                log.info("Expect to exceed time constraints on next first fit, "
+                         f"budget is {time_per_value}s and last first fit took "
+                         f"{last_initial_fit_time}s.")
+                log.info(f"Did not try max_features={max_features_values}.")
+                break
 
             value = max_features_values.pop(0)
             log.info(f"Evaluating max_features={value} in {time_per_value} seconds.")
@@ -127,9 +134,10 @@ def run(dataset, config):
                     log.debug("Exception:", exc_info=True)
                     max_feature_scores[value].append(math.nan)
                     break
+                finally:
+                    training_times.append(training.duration)
+                    memory_usage.append(this_process.memory_info()[0] / (2 ** 20))
 
-                training_times.append(training.duration)
-                memory_usage.append(this_process.memory_info()[0] / (2 ** 20))
                 if random_forest.n_estimators >= final_forest_size:
                     log.info("Stop training because desired forest size has been reached.")
                     break
@@ -144,6 +152,7 @@ def run(dataset, config):
 
             tuning_durations[value] = training_times
             memory_usage_by[value] = memory_usage
+            last_initial_fit_time = training_times[1] - training_times[0]
 
         # TODO: Transform the dictionaries into a pandas dataframe (value, trees, score, duration, total_duration, memory, d_memory)
         log.info("Tuning scores:\n%s", max_feature_scores)
