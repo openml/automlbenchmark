@@ -19,8 +19,6 @@ os.environ['MKL_NUM_THREADS'] = '1'
 import psutil
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 
 from frameworks.shared.callee import call_run, result
@@ -54,9 +52,10 @@ def run(dataset, config):
         raise ValueError("`max_features` may not be specified for Tuned Random Forest.")
 
     n_jobs = config.framework_params.get('_n_jobs', config.cores)  # useful to disable multicore, regardless of the dataset config
+    k_folds = config.framework_params.get('_k_folds', 5)
     step_size = config.framework_params.get('_step_size', 10)
-    final_forest_size = config.framework_params.get('n_estimators', 2000)
     memory_margin = config.framework_params.get('_memory_margin', 0.9)
+    final_forest_size = config.framework_params.get('n_estimators', 2000)
 
     X_train, X_test = dataset.train.X, dataset.test.X
     y_train, y_test = dataset.train.y, dataset.test.y
@@ -126,7 +125,7 @@ def run(dataset, config):
                         y=y_train,
                         scoring=metric,
                         error_score='raise',
-                        cv=5
+                        cv=k_folds,
                     )
                     max_feature_scores[value].append(statistics.mean(scores))
                 except Exception as e:
@@ -159,6 +158,7 @@ def run(dataset, config):
         log.info("Tuning durations:\n%s", tuning_durations)
         log.info("Tuning memory:\n%s", memory_usage_by)
 
+        # Iteratively fit a random forest with our "optimal" `max_features`
         _, best_value = max((scores[-1], value) for value, scores in max_feature_scores.items())
         log.info("Training final model with `max_features=%s`.", best_value)
         rf = estimator(n_jobs=n_jobs,
