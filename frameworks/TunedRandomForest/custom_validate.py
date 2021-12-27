@@ -85,7 +85,7 @@ __all__ = [
 
 
 def cross_validate(
-    estimator,
+    estimators,
     X,
     y=None,
     *,
@@ -289,9 +289,18 @@ def cross_validate(
         loss function.
 
     """
+    # Because we don't have to support a general use-case in this adaptation,
+    # we simply use the first estimator of the list for general checks.
+    if isinstance(estimators, list):
+        estimator = estimators[0]
+    else:
+        estimator = estimators
+
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    if not isinstance(estimators, list):
+        estimators = [clone(estimator)] * cv.n_splits
 
     if callable(scoring):
         scorers = scoring
@@ -305,7 +314,7 @@ def cross_validate(
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
     results = parallel(
         delayed(_fit_and_score)(
-            clone(estimator),
+            estimator,
             X,
             y,
             scorers,
@@ -319,7 +328,7 @@ def cross_validate(
             return_estimator=return_estimator,
             error_score=error_score,
         )
-        for train, test in cv.split(X, y, groups)
+        for estimator, (train, test) in zip(estimators, cv.split(X, y, groups))
     )
 
     _warn_about_fit_failures(results, error_score)
