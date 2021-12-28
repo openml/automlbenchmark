@@ -57,6 +57,8 @@ def run(dataset, config):
     step_size = config.framework_params.get('_step_size', 10)
     memory_margin = config.framework_params.get('_memory_margin', 0.9)
     final_forest_size = config.framework_params.get('n_estimators', 2000)
+    tune_fraction = config.framework_params.get('_tune_fraction', 0.9)
+    tune_time = config.max_runtime_seconds * tune_fraction
 
     X_train, X_test = dataset.train.X, dataset.test.X
     y_train, y_test = dataset.train.y, dataset.test.y
@@ -94,8 +96,8 @@ def run(dataset, config):
 
     with Timer() as training:
         while max_features_values:
-            time_left = (config.max_runtime_seconds - training.duration)
-            time_per_value = time_left / (len(max_features_values) + 1)
+            time_left = tune_time - training.duration
+            time_per_value = time_left / len(max_features_values)
             if time_per_value < last_initial_fit_time:
                 log.info("Expect to exceed time constraints on next first fit, "
                          f"budget is {time_per_value}s and last first fit took "
@@ -195,7 +197,7 @@ def run(dataset, config):
             if rf.n_estimators == final_forest_size:
                 log.info("Stop training because desired forest size has been reached.")
                 break
-            if extrapolate_with_worst_case(training_times) >= time_per_value:
+            if extrapolate_with_worst_case(training_times) >= config.max_runtime_seconds:
                 log.info("Stop training because it expects to exceed its time budget.")
                 break
             elif extrapolate_with_worst_case(
