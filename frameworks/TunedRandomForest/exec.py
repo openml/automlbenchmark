@@ -17,12 +17,13 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
 import psutil
+import pandas as pd
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.model_selection import cross_val_score
 
 from frameworks.shared.callee import call_run, result
 from frameworks.shared.utils import Timer
+from custom_validate import cross_validate
 
 log = logging.getLogger(__name__)
 
@@ -105,29 +106,32 @@ def run(dataset, config):
             value = max_features_values.pop(0)
             log.info(f"Evaluating max_features={value} in {time_per_value} seconds.")
 
-            random_forest = estimator(
-                n_jobs=n_jobs,
-                random_state=config.seed,
-                max_features=value,
-                n_estimators=step_size,
-                warm_start=True,
-                **training_params
-            )
+            random_forests = [
+                estimator(
+                    n_jobs=n_jobs,
+                    random_state=config.seed,
+                    max_features=value,
+                    n_estimators=step_size,
+                    warm_start=True,
+                    **training_params
+                ) for _ in range(k_folds)
+            ]
 
             training_times = [training.duration]
             memory_usage = [this_process.memory_info()[0] / (2 ** 20)]
 
             while True:
                 try:
-                    scores = cross_val_score(
-                        estimator=random_forest,
+                    cv_result = cross_validate(
+                        estimators=random_forests,
                         X=X_train,
                         y=y_train,
                         scoring=metric,
                         error_score='raise',
                         cv=k_folds,
+                        return_estimator=True,
                     )
-                    max_feature_scores[value].append(statistics.mean(scores))
+                    max_feature_scores[value].append(statistics.mean(cv_result["test_score"]))
                 except Exception as e:
                     log.error("Failed CV scoring for max_features=%s :\n%s", value, e)
                     log.debug("Exception:", exc_info=True)
@@ -137,26 +141,40 @@ def run(dataset, config):
                     training_times.append(training.duration)
                     memory_usage.append(this_process.memory_info()[0] / (2 ** 20))
 
-                if random_forest.n_estimators >= final_forest_size:
+                if random_forests[0].n_estimators >= final_forest_size:
                     log.info("Stop training because desired forest size has been reached.")
                     break
                 if extrapolate_with_worst_case(training_times) - training_times[0] >= time_per_value:
-                    log.info("Stop training because it expects to exceed its time budget.")
+                    log.info(f"Stop training after fitting {random_forests[0].n_estimators} trees because it expects to exceed its time budget.")
                     break
                 elif extrapolate_with_worst_case(memory_usage) >= config.max_mem_size_mb * memory_margin:
-                    log.info("Stop training because it expects to exceed its memory budget.")
+                    log.info(f"Stop training after fitting {random_forests[0].n_estimators} trees because it expects to exceed its memory budget.")
                     break
 
-                random_forest.n_estimators += step_size
+                for rf in random_forests:
+                    rf.n_estimators += step_size
 
             tuning_durations[value] = training_times
             memory_usage_by[value] = memory_usage
             last_initial_fit_time = training_times[1] - training_times[0]
 
-        # TODO: Transform the dictionaries into a pandas dataframe (value, trees, score, duration, total_duration, memory, d_memory)
-        log.info("Tuning scores:\n%s", max_feature_scores)
-        log.info("Tuning durations:\n%s", tuning_durations)
-        log.info("Tuning memory:\n%s", memory_usage_by)
+        summary = []
+        for max_feature, scores in max_feature_scores.items():
+            # remember: duration and memory have a record before the first fit too
+            stats_for_max_feature = zip(scores, tuning_durations[max_feature][1:], memory_usage_by[max_feature][1:])
+            for i, (score, duration, memory) in enumerate(stats_for_max_feature, start=1):
+                summary.append({
+                    "max_features": max_feature,
+                    "trees": (step_size) * i,
+                    metric: score,
+                    "duration total (s)": duration,
+                    "memory total (mb)": memory,
+                    "duration delta (s)": duration - tuning_durations[max_feature][i - 1],
+                    "memory delta (mb)": memory - memory_usage_by[max_feature][i - 1],
+                })
+        summary = pd.DataFrame.from_records(summary)
+        log.debug("Report of tuning iterations:\n %s \n" % summary.to_string())
+        log.info("Report final tunings:\n %s \n" % summary.groupby("max_features").last().sort_values(by="duration total (s)").to_string())
 
         # Iteratively fit a random forest with our "optimal" `max_features`
         _, best_value = max((scores[-1], value) for value, scores in max_feature_scores.items())
@@ -185,7 +203,7 @@ def run(dataset, config):
                 log.info(
                     "Stop training because it expects to exceed its memory budget.")
                 break
-            random_forest.n_estimators += step_size
+            rf.n_estimators += step_size
 
     with Timer() as predict:
         predictions = rf.predict(X_test)

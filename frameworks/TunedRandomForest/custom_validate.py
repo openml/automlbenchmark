@@ -300,7 +300,7 @@ def cross_validate(
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     if not isinstance(estimators, list):
-        estimators = [clone(estimator)] * cv.n_splits
+        estimators = [clone(estimator) for _ in range(cv.n_splits)]
 
     if callable(scoring):
         scorers = scoring
@@ -311,25 +311,28 @@ def cross_validate(
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
-    results = parallel(
-        delayed(_fit_and_score)(
-            estimator,
-            X,
-            y,
-            scorers,
-            train,
-            test,
-            verbose,
-            None,
-            fit_params,
-            return_train_score=return_train_score,
-            return_times=True,
-            return_estimator=return_estimator,
-            error_score=error_score,
+
+    from sklearn.utils import parallel_backend
+    with parallel_backend("threading"):
+        parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+        results = parallel(
+            delayed(_fit_and_score)(
+                estimator,
+                X,
+                y,
+                scorers,
+                train,
+                test,
+                verbose,
+                None,
+                fit_params,
+                return_train_score=return_train_score,
+                return_times=True,
+                return_estimator=return_estimator,
+                error_score=error_score,
+            )
+            for estimator, (train, test) in zip(estimators, cv.split(X, y, groups))
         )
-        for estimator, (train, test) in zip(estimators, cv.split(X, y, groups))
-    )
 
     _warn_about_fit_failures(results, error_score)
 
