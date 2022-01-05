@@ -1,9 +1,9 @@
 library(mlr)
 library(autoxgboost)
-library(farff)
+library(mlr3oml)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, meta_results_file) {
-  train <- farff::readARFF(train_file)
+  train <- mlr3oml::read_arff(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
 
@@ -24,7 +24,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
 
   train_duration <- system.time(training())[['elapsed']]
 
-  test <- farff::readARFF(test_file)
+  test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
   predict_duration <- system.time(prediction())[['elapsed']]
 
