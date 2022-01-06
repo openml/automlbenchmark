@@ -41,10 +41,11 @@ fi
 LIB="${HERE}/lib/"
 mkdir "${LIB}"
 
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("mlr3", "mlr3pipelines", "mlr3misc", "mlr3oml", "mlr3hyperband", "mlr3tuning", "paradox"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "checkmate", "R6", "xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
-Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${MLR_REPO}"'/mlr3extralearners", lib="'"${LIB}"'")'
-Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${REPO}"'", ref="'"${VERSION}"'", lib="'"${LIB}"'")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages("remotes", repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("xgboost", "ranger", "LiblineaR", "emoa", "e1071", "glmnet"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("mlr-org/mlr3learners", dependencies=TRUE)'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("mlr-org/mlr3extralearners")'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${REPO}"'", lib="'"${LIB}"'", dependencies=TRUE)'
 
 OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${LIB}"'"); packageVersion("mlr3automl")' | awk '{print $2}' | sed "s/[‘’]//g")
 echo "${OFFICIAL_VERSION}#${VERSION:0:7}" >> "${HERE}/.setup/installed"
