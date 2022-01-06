@@ -4,6 +4,7 @@ to expose `OpenML<https://www.openml.org>`_ datasets.
 """
 from abc import abstractmethod
 import copy
+import functools
 import logging
 import os
 import re
@@ -12,6 +13,7 @@ from typing import Generic, Tuple, TypeVar, Union
 import arff
 import pandas.api.types as pat
 import openml as oml
+import xmltodict
 
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
 from ..resources import config as rconfig
@@ -22,6 +24,9 @@ log = logging.getLogger(__name__)
 
 # hack (only adding a ? to the regexp pattern) to ensure that '?' values remain quoted when we save dataplits in arff format.
 arff._RE_QUOTE_CHARS = re.compile(r'[?"\'\\\s%,\000-\031]', re.UNICODE)
+
+# Fix a bug in openml-python<=0.12.2, see https://github.com/openml/automlbenchmark/issues/350
+xmltodict.parse = functools.partial(xmltodict.parse, strip_whitespace=False)
 
 
 class OpenmlLoader:
