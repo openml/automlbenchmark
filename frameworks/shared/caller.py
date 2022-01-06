@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from tempfile import TemporaryDirectory, mktemp
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -83,7 +83,7 @@ def run_in_venv(caller_file, script_file: str, *args,
                 options: Union[None, dict, ns] = None,
                 process_results=None,
                 python_exec=None,
-                retain_tmp_env: bool = True):
+                retained_env_vars: Optional[List[str]] = ['TMP', 'TEMP', 'TMPDIR']):
     here = dir_of(caller_file)
     if python_exec is None:  # use local virtual env by default
         python_exec = venv_python_exec(here)
@@ -94,11 +94,12 @@ def run_in_venv(caller_file, script_file: str, *args,
     ser_config = options['serialization']
     env = options['env'] or ns()
 
-    # To honour any arguments about tmpdir, we copy over
-    # the TMP, TEMP and TMPDIR environment variables
-    if retain_tmp_env:
-        for env_var in ["TMP", "TEMP", "TMPDIR"]:
-            env[env_var] = os.environ.get(env_var)
+    # Add any env variables specified if they are defined in the environment
+    if retained_env_vars:
+        for env_var in retained_env_vars:
+            env_val = os.environ.get(env_var)
+            if env_val is not None:
+                env[env_var] = env_val
 
     with TemporaryDirectory() as tmpdir:
 
