@@ -25,14 +25,13 @@ def run(dataset: Dataset, config: TaskConfig):
     )
 
     def process_results(results):
-        if results.probabilities is not None and not results.probabilities.shape:  # numpy load always return an array
-            prob_format = results.probabilities.item()
-            if prob_format == "predictions":
-                target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
-                results.probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(results.predictions)
-            else:
-                raise ValueError(f"Unknown probabilities format: {prob_format}")
-        return results
+        if isinstance(results.probabilities, str) and results.probabilities == "predictions":
+            target_values_enc = dataset.target.label_encoder.transform(dataset.target.values)
+            results.probabilities = Encoder('one-hot', target=False, encoded_type=float).fit(target_values_enc).transform(results.predictions)
+        is_numpy_like = hasattr(results.probabilities, "shape") and results.probabilities.shape
+        if results.probabilities is None or is_numpy_like:
+            return results
+        raise ValueError(f"Unknown probabilities format: {results.probabilities}")
 
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config,
