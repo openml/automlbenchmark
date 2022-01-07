@@ -4,6 +4,7 @@ library(mlr3oml)
 
 run <- function(train_file, test_file, target.index, type, output_predictions_file, cores, time.budget, meta_results_file) {
   train <- mlr3oml::read_arff(train_file)
+  data.table::setDF(train)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
 
@@ -25,6 +26,7 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   train_duration <- system.time(training())[['elapsed']]
 
   test <- mlr3oml::read_arff(test_file)
+  data.table::setDF(test)
   colnames(test) <- make.names(colnames(test))
   predict_duration <- system.time(prediction())[['elapsed']]
 
