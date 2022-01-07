@@ -41,7 +41,7 @@ LIB="${HERE}/lib/"
 mkdir ${LIB}
 
 Rscript -e 'options(install.packages.check.source="no"); install.packages(c("remotes", "mlr", "mlrMBO", "mlrCPO", "mlr3oml", "GenSA", "rgenoud", "xgboost"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
-Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${REPO}"'", lib="'"${LIB}/"'", dependencies=TRUE)'
+Rscript -e '.libPaths("'"${LIB}"'"); remotes::install_github("'"${REPO}"'", lib="'"${LIB}/"'", auth_token=NULL, dependencies=TRUE)'
 
 OFFICIAL_VERSION=$(Rscript -e '.libPaths("'"${LIB}"'"); packageVersion("autoxgboost")' | awk '{print $2}' | sed "s/[‘’]//g")
 echo "${OFFICIAL_VERSION}#${VERSION:0:7}" >> "${HERE}/.setup/installed"
