@@ -36,6 +36,7 @@ else
     git clone  --recurse-submodules --shallow-submodules ${DEPTH} ${REPO} ${TARGET_DIR}
     cd ${TARGET_DIR}
     git checkout "${COMMIT}"
+    git submodule update --init --recursive
     cd ${HERE}
     PIP install -U -e ${TARGET_DIR}
 fi
