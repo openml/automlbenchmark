@@ -44,7 +44,7 @@ H2OAutoML:
   version: '3.34.0.1'
 
 lightautoml:
-  version: '0.2.16'
+  version: '0.3.2'
 
 mljarsupervised:
   abstract: true
