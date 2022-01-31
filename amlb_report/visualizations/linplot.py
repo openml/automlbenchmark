@@ -14,7 +14,7 @@ def draw_parallel_coord(df, class_column,
                         colormap=None, size=None):
     colormap = config.colormap if colormap is None else colormap
     with sb.axes_style('ticks', rc={'grid.linestyle': 'dotted'}), sb.plotting_context('paper'):
-        #         print(sb.axes_style())
+        # print(sb.axes_style())
         parallel_fig = mp.pyplot.figure(dpi=120, figsize=size or (10, df.shape[0]))
         # select the first colors from the colormap to ensure we use the same colors as in the stripplot later
         colors = mp.cm.get_cmap(colormap).colors[:len(df[class_column].unique())]
@@ -34,8 +34,8 @@ def draw_parallel_coord(df, class_column,
 def draw_score_parallel_coord(col, results, type_filter='all', metadata=None,
                               x_sort_by='name', ylabel=None, filename=None,
                               **kwargs):
-    res_group = results.groupby(['type', 'task', 'framework'])
-    df = res_group[col].mean().unstack(['type', 'task'])
+    res_group = results.groupby(['type', 'task', 'constraint', 'framework'])
+    df = res_group[col].mean().unstack(['type', 'task', 'constraint'])
     df = (df if type_filter == 'all'
           else df.iloc[:, df.columns.get_loc(type_filter)])
     sort_by = (x_sort_by if callable(x_sort_by)

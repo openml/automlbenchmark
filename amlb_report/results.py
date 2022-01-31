@@ -100,7 +100,7 @@ def remove_duplicates(df, handling='fail'):
 
 def prepare_results(results,
                     renamings=None,
-                    exclusions=None,
+                    filter_=None,
                     imputation=None,
                     normalization=None,
                     ref_results=None,
@@ -113,11 +113,17 @@ def prepare_results(results,
         results = load_results(results) if all(isinstance(r, str) for r in results) else pd.concat(results, ignore_index=True)
     if renamings:
         results.replace(renamings, inplace=True)
-    if exclusions:
-        results = results.loc[~results.framework.isin(exclusions)]
+
+    results.constraint = results.constraint.str.lower()
     results.task = results.task.str.lower()
     results.framework = results.framework.str.lower()
     results.fold = results.fold.apply(int)
+
+    if filter_:
+        results = results.loc[filter_]
+
+    constraints = results.constraint.unique()
+    constraints.sort()
 
     frameworks = results.framework.unique()
     frameworks.sort()
@@ -129,14 +135,15 @@ def prepare_results(results,
 
     metadata = load_dataset_metadata(results) if include_metadata else {}
 
-    done = results.set_index(['task', 'fold', 'framework'])
+    done = results.set_index(['task', 'constraint', 'fold', 'framework'])
     done = remove_duplicates(done, handling=duplicates_handling)
 
-    missing = (pd.DataFrame([(task, fold, framework, 'missing')
+    missing = (pd.DataFrame([(task, constraint, fold, framework, 'missing')
                              for task in tasks
+                             for constraint in constraints
                              for fold in range(config.nfolds)
                              for framework in frameworks
-                             if (task, fold, framework) not in done.index],
+                             if (task, constraint, fold, framework) not in done.index],
                             columns=[*done.index.names, 'info'])
                .set_index(done.index.names))
     missing = remove_duplicates(missing, handling=duplicates_handling)
@@ -175,6 +182,7 @@ def prepare_results(results,
 
     return Namespace(
         results=results,
+        constraints=constraints,
         frameworks=frameworks,
         tasks=tasks,
         folds=folds,

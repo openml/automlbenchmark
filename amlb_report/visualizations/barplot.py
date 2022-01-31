@@ -47,7 +47,7 @@ def draw_score_barplot(col, results, type_filter='all', metadata=None,
     sort_by = (x_sort_by if callable(x_sort_by)
                else None if not metadata or not isinstance(x_sort_by, str)
                else lambda row: row.task.apply(lambda t: getattr(metadata[t], x_sort_by)))
-    plot_df = sort_dataframe(results.set_index(['type', 'task']), by=sort_by)
+    plot_df = sort_dataframe(results.set_index(['type', 'task', 'constraint']), by=sort_by)
     df = (plot_df if type_filter == 'all'
           else plot_df[plot_df.index.get_loc(type_filter)])
     x_labels = task_labels(df.index.unique())

@@ -12,8 +12,8 @@ def draw_heatmap(df,
     x_labels = list(map(x_labels, df.columns)) if callable(x_labels) else x_labels
     y_labels = list(map(y_labels, df.index)) if callable(y_labels) else y_labels
     with sb.axes_style('white'), sb.plotting_context('paper'):
-        #         print(sb.axes_style())
-        #         print(sb.plotting_context())
+        # print(sb.axes_style())
+        # print(sb.plotting_context())
         axes = sb.heatmap(df, xticklabels=x_labels, yticklabels=y_labels,
                           annot=True, cmap='RdYlGn', robust=True,
                           **kwargs)
@@ -30,7 +30,7 @@ def draw_score_heatmap(col, results, type_filter='all', metadata=None,
                        x_sort_by=None, y_sort_by='name',
                        filename=None,
                        **kwargs):
-    df = (results.groupby(['type', 'task', 'framework'])[col]
+    df = (results.groupby(['type', 'task', 'constraint', 'framework'])[col]
           .mean()
           .unstack())
     df = (df if type_filter == 'all'
@@ -42,7 +42,7 @@ def draw_score_heatmap(col, results, type_filter='all', metadata=None,
     df = sort_dataframe(df, by=x_sort_by, axis=1)
     fig = draw_heatmap(df,
                        y_labels=task_labels(df.index),
-                       #                        xlabel="Framework", ylabel="Task",
+                       # xlabel="Framework", ylabel="Task",
                        **kwargs)
     if filename:
         savefig(fig, create_file("graphics", config.results_group, filename))

@@ -62,12 +62,14 @@ def draw_score_stripplot(col, results, type_filter='all', metadata=None,
     sort_by = (y_sort_by if callable(y_sort_by)
                else None if not metadata or not isinstance(y_sort_by, str)
                else lambda row: row.task.apply(lambda t: getattr(metadata[t], y_sort_by)))
-    plot_df = sort_dataframe(results.set_index(['type', 'task']), by=sort_by)
+    plot_df = sort_dataframe(results.set_index(['type', 'task', 'constraint']), by=sort_by)
     df = (plot_df if type_filter == 'all'
           else plot_df[plot_df.index.get_loc(type_filter)])
 
     hue = 'framework'
     hues = sorted(df[hue].unique(), key=hue_sort_by)
+
+    df.reset_index(list(set(df.index.names) - {'task'}), inplace=True)
 
     fig = draw_stripplot(
         df,
@@ -75,7 +77,7 @@ def draw_score_stripplot(col, results, type_filter='all', metadata=None,
         y=df.index,
         hue=hue,
         # ylabel='Task',
-        y_labels=task_labels(df.index.unique()),
+        y_labels=task_labels(df.index),
         hue_order=hues,
         legend_title="Framework",
         **kwargs

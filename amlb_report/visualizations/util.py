@@ -2,6 +2,7 @@ import warnings
 
 import matplotlib as mp
 import numpy as np
+import pandas as pd
 import seaborn as sb
 
 _gradient = np.linspace(0, 1, 256)
@@ -29,9 +30,11 @@ def render_colormap(name):
     sb.palplot(sb.color_palette(name))
 
 
-def task_labels(index):
+def task_labels(df):
     max_length = 16
-    return (index.droplevel('type')
+    index = df if isinstance(df, pd.Index) else df.index
+    tasks = index.droplevel(list(set(index.names) - {'task'})) if 'task' in index.names else df.task
+    return (tasks
             .map(lambda x: x if len(x) <= max_length else u'{}…'.format(x[:max_length-1]))
             .values)
 

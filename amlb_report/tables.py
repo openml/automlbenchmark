@@ -26,7 +26,7 @@ def add_imputed_mark(values, imp, val_type=float, val_format=None):
 
 def render_summary(col, results, show_imputations=True, filename=None, float_format=None):
     float_format = config.ff if float_format is None else float_format
-    res_group = results.groupby(['type', 'task', 'framework'])
+    res_group = results.groupby(['type', 'task', 'constraint', 'framework'])
     df = res_group[col].mean().unstack()
     if show_imputations and 'imp_result' in results.columns:
         imputed_df = (res_group['result', 'imp_result']
@@ -52,9 +52,9 @@ def rank(scores):
 
 
 def render_leaderboard(col, results, aggregate=False, show_imputations=True, filename=None):
-    res_group = results.groupby(['type', 'task', 'framework'])
+    res_group = results.groupby(['type', 'task', 'constraint', 'framework'])
     df = (res_group[col].mean().unstack() if aggregate
-          else results.pivot_table(index=['type','task', 'fold'], columns='framework', values=col))
+          else results.pivot_table(index=['type', 'task', 'constraint', 'fold'], columns='framework', values=col))
     df = (df.apply(rank, axis=1, result_type='broadcast')
           .astype(object))
     if show_imputations and 'imp_result' in results.columns:

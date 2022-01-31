@@ -67,7 +67,7 @@ def file_metadata(url):
     return Namespace(
         task=url,
         dataset=url,
-        type='unknwown',
+        type='unknown',
         name=url,
         nrows=-1,
         nfeatures=-1,
