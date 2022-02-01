@@ -80,7 +80,7 @@ monitoring:               # configuration namespace describing the basic monitor
 results:                 # configuration namespace for the results.csv file.
   error_max_length: 200  # the max length of the error message as rendered in the results file.
   global_save: true      # set by runbenchmark.py, if true adds the results to the main `results.csv` in the {output.dir}
-  : true
+  incremental_save: true # if true save results after each job., otherwise save results only when all jobs are completed.
 
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f

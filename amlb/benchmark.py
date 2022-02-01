@@ -210,14 +210,14 @@ class Benchmark:
             log.info(f"Processing results for {self.sid}")
             log.debug(results)
 
-            if not rconfig().results.live:
+            if not rconfig().results.incremental_save:
                 self._process_results(results)
             return self._results_summary()
         finally:
             self.cleanup()
 
     def _create_job_runner(self, jobs):
-        on_new_result = self._process_results if rconfig().results.live else None
+        on_new_result = self._process_results if rconfig().results.incremental_save else None
         if self.parallel_jobs == 1:
             return SimpleJobRunner(jobs, on_new_result=on_new_result)
         else:
