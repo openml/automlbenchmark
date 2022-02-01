@@ -7,6 +7,7 @@
 - run the jobs.
 - collect and save results.
 """
+import time
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
@@ -24,8 +25,9 @@ from .data import DatasetType
 from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, json_dump, lazy_property, profile, repr_def, \
-    run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, file_lock, flatten, json_dump, \
+    lazy_property, profile, repr_def, run_cmd, run_script, signal_handler, str2bool, str_sanitize, \
+    system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -339,12 +341,22 @@ class Benchmark:
 
     def _save(self, board):
         board.save(append=True)
-        self._append(board)
+        self._save_global(board)
 
-    def _append(self, board):
+    def _save_global(self, board):
         # Scoreboard.all().append(board).save()
         if rconfig().results.global_save:
-            Scoreboard.all(rconfig().output_dir).append(board).save()
+            global_board = Scoreboard.all(rconfig().output_dir, autoload=False)
+            dest_path = global_board.path
+            timeout = rconfig().results.global_lock_timeout
+            try:
+                with file_lock(dest_path, timeout=timeout):
+                    global_board.load().append(board).save()
+            except TimeoutError:
+                log.exception("Failed to acquire the lock on `%s` after %ss: "
+                              "the partial board `%s` could not be appended to `%s`",
+                              dest_path, timeout, board.path, dest_path)
+
 
     def _results_summary(self, scoreboard=None):
         board = scoreboard or Scoreboard.all(self.output_dirs.scores)

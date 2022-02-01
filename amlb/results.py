@@ -55,8 +55,8 @@ class Scoreboard:
     results_file = 'results.csv'
 
     @classmethod
-    def all(cls, scores_dir=None):
-        return cls(scores_dir=scores_dir)
+    def all(cls, scores_dir=None, autoload=True):
+        return cls(scores_dir=scores_dir, autoload=autoload)
 
     @classmethod
     def from_file(cls, path):
@@ -123,13 +123,16 @@ class Scoreboard:
                   append=not new_file)
         log.info("Scores saved to `%s`.", path)
 
-    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
+    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None,
+                 scores_dir=None, autoload=True):
         self.framework_name = framework_name
         self.benchmark_name = benchmark_name
         self.task_name = task_name
         self.scores_dir = (scores_dir if scores_dir
                            else output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores)
-        self.scores = scores if scores is not None else self._load()
+        self.scores = (scores if scores is not None
+                       else self.load_df(self.path) if autoload
+                       else None)
 
     @cached
     def as_data_frame(self):
@@ -184,11 +187,13 @@ class Scoreboard:
                 else slice(None))
         return df.loc[:, cols]
 
-    def _load(self):
-        return self.load_df(self._score_file())
+    def load(self):
+        self.scores = self.load_df(self.path)
+        return self
 
     def save(self, append=False):
-        self.save_df(self.as_printable_data_frame(), path=self._score_file(), append=append)
+        self.save_df(self.as_printable_data_frame(), path=self.path, append=append)
+        return self
 
     def append(self, board_or_df, no_duplicates=True):
         to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
@@ -201,7 +206,8 @@ class Scoreboard:
                           task_name=self.task_name,
                           scores_dir=self.scores_dir)
 
-    def _score_file(self):
+    @property
+    def path(self):
         sep = rconfig().token_separator
         if self.framework_name:
             if self.task_name:

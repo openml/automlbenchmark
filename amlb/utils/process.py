@@ -20,13 +20,30 @@ import _thread
 import traceback
 from typing import Dict, List, Union, Tuple
 
+import filelock
 import psutil
 
 from .core import Namespace, as_list, flatten, fn_name
-from .os import dir_of, to_mb
+from .os import dir_of, to_mb, path_from_split, split_path
 from .time import Timeout, Timer
 
 log = logging.getLogger(__name__)
+
+
+@contextmanager
+def file_lock(path, timeout=-1):
+    """
+    :param path: the path of the file to lock.
+        A matching lock file is automatically generated and associated to the file that we want to manipulate.
+    :param timeout: timeout in seconds to wait for the lock to be acquired. Disabled by default.
+    :raise: Timeout if the lock could not be acquired after timeout.
+    """
+    splits = split_path(path)
+    splits.basename = f".{splits.basename}"  # keep the lock file as a hidden file as it's not deleted by filelock on release
+    splits.extension = f"{splits.extension}.lock"
+    lock_path = path_from_split(splits, real_path=False)
+    with filelock.FileLock(lock_path, timeout=timeout):
+        yield
 
 
 def run_subprocess(*popenargs,
