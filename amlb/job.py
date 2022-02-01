@@ -353,7 +353,7 @@ class MultiThreadingJobRunner(JobRunner):
         self._daemons = use_daemons
         self._queueing_strategy = queueing_strategy
         self._interrupt = threading.Event()
-        self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="job_runner_exec_")
+        self._exec = None
 
     def _add_result(self, result):
         sup_call = super()._add_result
@@ -417,8 +417,17 @@ class MultiThreadingJobRunner(JobRunner):
                     job.done()
 
     def _on_state(self, state: State):
+        if state is State.starting:
+            self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="job_runner_exec_")
         if state is State.stopping:
             self._interrupt.set()
+            if self._exec is not None:
+                try:
+                    self._exec.shutdown(wait=True)
+                except:
+                    pass
+                finally:
+                    self._exec = None
 
 
 class MultiProcessingJobRunner(JobRunner):
