@@ -14,6 +14,7 @@ import pprint
 import queue
 import signal
 import threading
+from typing import Callable, List
 
 from .utils import Namespace, Timer, ThreadSafeCounter, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
 
@@ -64,7 +65,10 @@ class Job:
 
     printer = pprint.PrettyPrinter(indent=2, compact=True)
 
-    def __init__(self, name="", timeout_secs=None, priority=None, raise_on_failure=False):
+    def __init__(self, name: str = "",
+                 timeout_secs: int = -1,
+                 priority: int = None,
+                 raise_on_failure: bool = False):
         """
 
         :param name:
@@ -195,18 +199,20 @@ class JobRunner:
         (State.stopping,    [State.stopped]),
         (State.stopped,     None)
     ]
+    END_Q = object()
 
     @classmethod
     def is_state_transition_ok(cls, old_state: State, new_state: State):
         allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
         return allowed and new_state in allowed
 
-    def __init__(self, jobs):
+    def __init__(self, jobs: List, on_new_result: Callable = None):
         self.jobs = jobs
         self.results = []
         self.state = None
         self._queue = None
         self._last_priority = 0
+        self._on_new_result = on_new_result
         self.set_state(State.created)
 
     def start(self):
@@ -235,7 +241,7 @@ class JobRunner:
         if 0 < len(self.jobs) == len(self.results):
             self.stop()
 
-    def put(self, job, priority=None):
+    def put(self, job: Job, priority: int = None):
         if self.state in [State.stopping, State.stopped]:
             return
         if priority is None:
@@ -248,7 +254,7 @@ class JobRunner:
         else:
             log.warning("Ignoring job `%s`. Runner state: `%s`", job.name, self.state)
 
-    def reschedule(self, job, priority=None):
+    def reschedule(self, job: Job, priority: int = None):
         if self.state not in [State.running]:
             return
         job.reschedule()
@@ -266,6 +272,11 @@ class JobRunner:
         except Exception as e:
             log.exception("Error when handling state change to %s for job runner: %s", state, str(e))
         return not skip_default
+
+    def _add_result(self, result):
+        self.results.append(result)
+        if self._on_new_result is not None:
+            self._on_new_result(result)
 
     def __iter__(self):
         return self
@@ -289,7 +300,7 @@ class JobRunner:
 
     def _stop(self):
         if self._queue:
-            self._queue.put((-1, None))
+            self._queue.put((-1, JobRunner.END_Q))
         jobs = self.jobs.copy()
         self.jobs.clear()
         for job in jobs:
@@ -301,19 +312,19 @@ class JobRunner:
 
 class SimpleJobRunner(JobRunner):
 
-    def __init__(self, jobs):
-        super().__init__(jobs)
+    def __init__(self, jobs: List, on_new_result: Callable = None):
+        super().__init__(jobs, on_new_result=on_new_result)
         self._interrupt = threading.Event()
 
     def _run(self):
         for job in self:
-            if job is None or self._interrupt.is_set():
+            if job is JobRunner.END_Q or self._interrupt.is_set():
                 break
             result = job.start()
             if job.state is State.rescheduling:
                 self.reschedule(job)
             else:
-                self.results.append(result)
+                self._add_result(result)
                 job.done()
             self.stop_if_complete()
 
@@ -328,16 +339,25 @@ class MultiThreadingJobRunner(JobRunner):
         keep_queue_full = 0
         enforce_job_priority = 1
 
-    def __init__(self, jobs, parallel_jobs=1, done_async=True, delay_secs=0,
+    def __init__(self, jobs: List,
+                 on_new_result: Callable = None,
+                 parallel_jobs: int = 1,
+                 done_async: bool = True,
+                 delay_secs: int = 0,
                  queueing_strategy: QueueingStrategy = QueueingStrategy.keep_queue_full,
-                 use_daemons=False):
-        super().__init__(jobs)
+                 use_daemons: bool = False):
+        super().__init__(jobs, on_new_result=on_new_result)
         self.parallel_jobs = parallel_jobs
         self._done_async = done_async
         self._delay = delay_secs  # short sleep between enqueued jobs to make console more readable
         self._daemons = use_daemons
         self._queueing_strategy = queueing_strategy
         self._interrupt = threading.Event()
+        self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="job_runner_exec_")
+
+    def _add_result(self, result):
+        sup_call = super()._add_result
+        self._exec.submit(sup_call, result)
 
     def _run(self):
         q = queue.Queue()
@@ -349,13 +369,13 @@ class MultiThreadingJobRunner(JobRunner):
                 job = q.get()
                 available_workers.dec()
                 try:
-                    if job is None or self._interrupt.is_set():
+                    if job is JobRunner.END_Q or self._interrupt.is_set():
                         break
                     result = job.start()
                     if job.state is State.rescheduling:
                         self.reschedule(job)
                     else:
-                        self.results.append(result)
+                        self._add_result(result)
                         if self._done_async:
                             job.done()
                     self.stop_if_complete()
@@ -387,7 +407,7 @@ class MultiThreadingJobRunner(JobRunner):
             q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
             for _ in range(self.parallel_jobs):
                 try:
-                    q.put_nowait(None)     # stopping workers
+                    q.put_nowait(JobRunner.END_Q)     # stopping workers
                 except:
                     pass
             for thread in threads:

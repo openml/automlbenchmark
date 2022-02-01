@@ -14,7 +14,7 @@ def run(dataset: Dataset, config: TaskConfig):
     log.info("\n**** Random Forest (R) ****\n")
 
     here = dir_of(__file__)
-    meta_results_file = os.path.join(config.output_dir, "meta_results.csv")
+    meta_results_file = os.path.join(os.path.dirname(config.output_metadata_file), "meta_results.csv")
     run_cmd(("Rscript --vanilla -e \""
              "source('{script}'); "
              "run('{train}', '{test}', '{output}', cores={cores}, meta_results_file='{meta_results}', task_type='{task_type}')"

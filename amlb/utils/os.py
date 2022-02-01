@@ -90,7 +90,7 @@ def backup_file(file_path):
         return
     p = split_path(src_path)
     mod_time = dt.datetime.utcfromtimestamp(os.path.getmtime(src_path))
-    dest_name = ''.join([p.basename, '.', datetime_iso(mod_time, date_sep='', time_sep=''), p.extension])
+    dest_name = ''.join([p.basename, '.', datetime_iso(mod_time, date_sep='', time_sep='', micros=True), p.extension])
     dest_dir = os.path.join(p.dirname, 'backup')
     touch(dest_dir, as_dir=True)
     dest_path = os.path.join(dest_dir, dest_name)

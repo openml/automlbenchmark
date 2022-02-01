@@ -105,15 +105,18 @@ class Scoreboard:
     def save_df(data_frame, path, append=False):
         exists = os.path.isfile(path)
         new_format = False
+        df = data_frame
         if exists:
-            df = read_csv(path, nrows=1)
-            new_format = list(df.columns) != list(data_frame.columns)
+            head = read_csv(path, nrows=1)
+            new_format = list(head.columns) != list(data_frame.columns)
         if new_format or (exists and not append):
             backup_file(path)
+        if new_format and append:
+            df = read_csv(path).append(data_frame)
         new_file = not exists or not append or new_format
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
         log.debug("Saving scores to `%s`.", path)
-        write_csv(data_frame,
+        write_csv(df,
                   path=path,
                   header=new_file,
                   index=not is_default_index,
@@ -189,7 +192,7 @@ class Scoreboard:
 
     def append(self, board_or_df, no_duplicates=True):
         to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
-        scores = self.as_data_frame().append(to_append, sort=False)
+        scores = self.as_data_frame().append(to_append)
         if no_duplicates:
             scores = scores.drop_duplicates()
         return Scoreboard(scores=scores,

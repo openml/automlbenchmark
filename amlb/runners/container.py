@@ -93,7 +93,7 @@ class ContainerBenchmark(Benchmark):
             job = self._make_container_job(tasks, folds)
             try:
                 results = self._run_jobs([job])
-                return self._process_results(results, task_name=tasks)
+                return self._results_summary(self._process_results(results))
             finally:
                 self.cleanup()
 
