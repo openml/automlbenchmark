@@ -11,24 +11,10 @@ import pprint
 import re
 import sys
 import threading
-import types
 
 log = logging.getLogger(__name__)
 
-__no_export = dir()  # all variables defined above this are not exported
-
-
-def register_module(module_name):
-    if module_name not in sys.modules:
-        mod = types.ModuleType(module_name)
-        sys.modules[module_name] = mod
-    return sys.modules[module_name]
-
-
-def register_submodule(mod, name):
-    fullname = '.'.join([mod.__name__, name])
-    module = register_module(fullname)
-    setattr(mod, name, module)
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 class Namespace:

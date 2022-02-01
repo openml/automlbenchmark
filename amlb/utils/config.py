@@ -1,44 +1,49 @@
 from collections import namedtuple
 from copy import deepcopy
 from dataclasses import dataclass
+from importlib.util import find_spec
 import logging
 import os
 from typing import Callable, List, Union
-
-from ruamel.yaml.constructor import SafeConstructor
-from ruamel.yaml.main import YAML
 
 from .core import Namespace, identity, json_load
 from .os import normalize_path
 
 log = logging.getLogger(__name__)
 
-__no_export = dir()  # all variables defined above this are not exported
+__no_export = set(dir())  # all variables defined above this are not exported
+
+if find_spec('ruamel') is not None:
+    from ruamel.yaml.constructor import SafeConstructor
+    from ruamel.yaml.main import YAML
+    __no_export |= set(dir())
+
+    class _YAMLNamespaceConstructor(SafeConstructor):
+
+        @classmethod
+        def init(cls):
+            cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
+
+        def construct_yaml_map(self, node):
+            data = Namespace()
+            yield data
+            value = self.construct_mapping(node)
+            data += value
 
 
-class YAMLNamespaceConstructor(SafeConstructor):
-
-    @classmethod
-    def init(cls):
-        cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
-
-    def construct_yaml_map(self, node):
-        data = Namespace()
-        yield data
-        value = self.construct_mapping(node)
-        data += value
+    _YAMLNamespaceConstructor.init()
 
 
-YAMLNamespaceConstructor.init()
-
-
-def yaml_load(file, as_namespace=False):
-    if as_namespace:
-        yaml = YAML(typ='safe', pure=True)
-        yaml.Constructor = YAMLNamespaceConstructor
-    else:
-        yaml = YAML(typ='safe')
-    return yaml.load(file)
+    def yaml_load(file, as_namespace=False):
+        if as_namespace:
+            yaml = YAML(typ='safe', pure=True)
+            yaml.Constructor = _YAMLNamespaceConstructor
+        else:
+            yaml = YAML(typ='safe')
+        return yaml.load(file)
+else:
+    def yaml_load(*_, **__):
+        raise ImportError("ruamel.yaml package is required to load `yaml` config files.")
 
 
 def config_load(path, verbose=False):

@@ -28,7 +28,7 @@ from .time import Timeout, Timer
 
 log = logging.getLogger(__name__)
 
-__no_export = dir()  # all variables defined above this are not exported
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 @contextmanager

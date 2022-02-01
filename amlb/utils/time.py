@@ -9,7 +9,7 @@ from .core import identity, threadsafe_generator
 
 log = logging.getLogger(__name__)
 
-__no_export = dir()  # all variables defined above this are not exported
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):

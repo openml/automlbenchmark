@@ -10,7 +10,7 @@ from .process import profile
 
 log = logging.getLogger(__name__)
 
-__no_export = dir()  # all variables defined above this are not exported
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 def _import_data_libraries():
