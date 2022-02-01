@@ -13,6 +13,8 @@ from .os import normalize_path
 
 log = logging.getLogger(__name__)
 
+__no_export = dir()  # all variables defined above this are not exported
+
 
 class YAMLNamespaceConstructor(SafeConstructor):
 
@@ -87,3 +89,5 @@ def transform_config(config: Namespace, transform_rules: [TransformRule], inplac
                 Namespace.delete(config, k)
     return config
 
+
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

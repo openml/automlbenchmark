@@ -8,6 +8,8 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+__no_export = dir()  # all variables defined above this are not exported
+
 
 def pip_install(module_or_requirements, is_requirements=False):
     try:
@@ -19,3 +21,5 @@ def pip_install(module_or_requirements, is_requirements=False):
         log.error("Error when trying to install python modules %s.", module_or_requirements)
         log.exception(se)
 
+
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

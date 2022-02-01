@@ -9,6 +9,8 @@ from .core import identity, threadsafe_generator
 
 log = logging.getLogger(__name__)
 
+__no_export = dir()  # all variables defined above this are not exported
+
 
 def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
     """
@@ -160,3 +162,4 @@ class Timeout:
         if self.timer:
             self.timer.cancel()
 
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

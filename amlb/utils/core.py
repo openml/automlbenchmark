@@ -15,6 +15,8 @@ import types
 
 log = logging.getLogger(__name__)
 
+__no_export = dir()  # all variables defined above this are not exported
+
 
 def register_module(module_name):
     if module_name not in sys.modules:
@@ -478,3 +480,5 @@ def threadsafe_generator(fn):
         return threadsafe_iterator(fn(*args, **kwargs))
     return gen
 
+
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

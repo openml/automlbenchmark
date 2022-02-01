@@ -12,6 +12,8 @@ from .time import datetime_iso
 
 log = logging.getLogger(__name__)
 
+__no_export = dir()  # all variables defined above this are not exported
+
 
 def to_mb(size_in_bytes):
     return size_in_bytes / (1 << 20)
@@ -174,3 +176,4 @@ class TmpDir:
         # pass
 
 
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

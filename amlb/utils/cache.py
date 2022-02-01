@@ -4,6 +4,8 @@ from .core import flatten
 
 log = logging.getLogger(__name__)
 
+__no_export = dir()  # all variables defined above this are not exported
+
 _CACHE_PROP_PREFIX_ = '__cached__'
 
 
@@ -77,3 +79,4 @@ def lazy_property(prop_fn):
     return decorator
 
 
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
