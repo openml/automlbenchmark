@@ -20,7 +20,6 @@ import _thread
 import traceback
 from typing import Dict, List, Union, Tuple
 
-import filelock
 import psutil
 
 from .core import Namespace, as_list, flatten, fn_name
@@ -38,6 +37,7 @@ def file_lock(path, timeout=-1):
     :param timeout: timeout in seconds to wait for the lock to be acquired. Disabled by default.
     :raise: Timeout if the lock could not be acquired after timeout.
     """
+    import filelock
     splits = split_path(path)
     splits.basename = f".{splits.basename}"  # keep the lock file as a hidden file as it's not deleted by filelock on release
     splits.extension = f"{splits.extension}.lock"
