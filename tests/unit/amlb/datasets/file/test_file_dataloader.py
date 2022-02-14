@@ -158,6 +158,27 @@ def test_load_regression_task_arff(file_loader):
     _assert_cholesterol_features(ds, ds_def, 'arff')
 
 
+@pytest.mark.use_disk
+def test_load_auxiliary_data(file_loader):
+    ds_def = ns(
+        train=os.path.join(res, "kc2_train.csv"),
+        test=os.path.join(res, "kc2_test.csv"),
+        target="problems"
+    )
+    ds = file_loader.load(ds_def)
+    aux_def = ns(
+        train=os.path.join(res, "image_train.zip"),
+        test=os.path.join(res, "image_test.zip")
+    )
+    ds = file_loader.load_auxiliary_data(ds, aux_def)
+    _assert_aux_data_path(ds)
+
+
+def _assert_aux_data_path(dataset):
+    assert dataset.train.auxiliary_data.path == os.path.join(res, "image_train.zip")
+    assert dataset.test.auxiliary_data.path == os.path.join(res, "image_test.zip")
+
+
 def _assert_cholesterol_features(dataset, definition, fmt):
     assert len(dataset.features) == 14
     assert len(dataset.predictors) == 13
