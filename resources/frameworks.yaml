@@ -32,8 +32,25 @@ AutoGluon_bestquality:
   extends: AutoGluon
   description: |
     AutoGluon with 'best_quality' preset provides the most accurate overall predictor.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
   params:
     presets: best_quality
+
+AutoGluon_hq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'high_quality' preset provides a very strong predictor with 8x+ faster inference speed than 'best_quality'.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: high_quality
+
+AutoGluon_gq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'good_quality' preset provides a strong predictor with 16x+ faster inference speed than 'best_quality'.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: good_quality
 
 autosklearn:
   version: 'stable'
