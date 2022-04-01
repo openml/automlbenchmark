@@ -102,6 +102,8 @@ def live_output_windows(process: subprocess.Popen, **_) -> Tuple[str, str]:
     )
 
     def forward_output(stream, queue_):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(errors="ignore")
         for line in stream:
             queue_.put(line)
 
