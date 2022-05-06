@@ -69,7 +69,7 @@ MLPlanWEKA:
     _backend: weka
 
 mlr3automl:
-  version: '#826d5241f752b64da835c77616e372866a57c98d'
+  version: '#f667900292e3ded64bb419285c71cd5d1d2c4301'
   project: https://github.com/a-hanf/mlr3automl
 
 TPOT:
