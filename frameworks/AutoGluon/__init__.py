@@ -19,6 +19,10 @@ def run(dataset: Dataset, config: TaskConfig):
         ),
         problem_type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
     )
+    if dataset.train.has_auxiliary_data:
+        data['train_auxiliary_data'] = dict(path=dataset.train.auxiliary_data.path)
+    if dataset.test.has_auxiliary_data:
+        data['test_auxiliary_data'] = dict(path=dataset.test.auxiliary_data.path) 
 
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config)

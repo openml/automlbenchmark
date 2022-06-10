@@ -24,5 +24,11 @@ class DataLoader:
         else:
             raise NotImplementedError(f"data source {source} is not supported yet")
 
+    def load_auxiliary_data(self, source: DataSourceType, *args, **kwargs):
+        if source == DataSourceType.file:
+            return self.file_loader.load_auxiliary_data(*args, **kwargs)
+        else:
+            raise NotImplementedError(f"data source {source} is not supported yet")
+
 
 __all__ = ["DataLoader", "DataSourceType"]
