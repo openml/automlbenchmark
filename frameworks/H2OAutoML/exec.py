@@ -88,6 +88,10 @@ def run(dataset, config):
         test = h2o.import_file(dataset.test.path, destination_frame=frame_name('test', config), **import_kwargs)
         # test.impute(method='mean')
 
+        if config.type == 'classification' and dataset.format == 'csv':
+            train[dataset.target.index] = train[dataset.target.index].asfactor()
+            test[dataset.target.index] = test[dataset.target.index].asfactor()
+
         log.info("Running model on task %s, fold %s.", config.name, config.fold)
         log.debug("Running H2O AutoML with a maximum time of %ss on %s core(s), optimizing %s.",
                   config.max_runtime_seconds, config.cores, sort_metric)

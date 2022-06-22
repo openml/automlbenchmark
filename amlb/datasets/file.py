@@ -13,7 +13,7 @@ import pandas.api.types as pat
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
-from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, path_from_split, profile, split_path
+from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, path_from_split, profile, repr_def, split_path
 
 from .fileutils import is_archive, is_valid_url, unarchive_file, get_file_handler
 
@@ -125,6 +125,9 @@ class FileLoader:
         else:
             raise ValueError(f"Invalid dataset description: {dataset}")
 
+    def __repr__(self):
+        return repr_def(self)
+
 
 class FileDataset(Dataset):
 
@@ -165,6 +168,9 @@ class FileDataset(Dataset):
     def _get_metadata(self, prop):
         meta = self._train.load_metadata()
         return meta[prop]
+
+    def __repr__(self):
+        return repr_def(self, 'all')
 
 
 class FileDatasplit(Datasplit):
@@ -212,10 +218,16 @@ class FileDatasplit(Datasplit):
         ds_type = self.dataset._type
         if ds_type and DatasetType[ds_type] in [DatasetType.binary, DatasetType.multiclass]:
             if not target.is_categorical():
-                log.warning("Forcing target column %s as 'category' for classification problems: was originally detected as '%s'.",
+                log.warning("Forcing target column `%s` as 'category' for classification problems: was originally detected as '%s'.",
                             target.name, target.data_type)
-                # target.data_type = 'category'
+                self._convert_to_categorical(target)
         target.is_target = True
+
+    def _convert_to_categorical(self, feature: Feature):
+        feature.data_type = 'category'
+
+    def __repr__(self):
+        return repr_def(self, 'all')
 
 
 class ArffDataset(FileDataset):
@@ -292,8 +304,10 @@ class CsvDataset(FileDataset):
     def __init__(self, train_path, test_path,
                  target=None, features=None, type=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
-        super().__init__(CsvDatasplit(self, train_path), CsvDatasplit(self, test_path),
+        super().__init__(None, None,
                          target=target, features=features, type=type)
+        self._train = CsvDatasplit(self, train_path)
+        self._test = CsvDatasplit(self, test_path)
         self._dtypes = None
 
 
@@ -310,7 +324,12 @@ class CsvDatasplit(FileDatasplit):
                 # df = df.convert_dtypes()
                 dt_conversions = {name: 'category'
                                   for name, dtype in zip(df.dtypes.index, df.dtypes.values)
-                                  if pat.is_string_dtype(dtype) or pat.is_object_dtype(dtype)}
+                                  if pat.is_string_dtype(dtype)
+                                  or pat.is_object_dtype(dtype)
+                                  or (name == self.dataset._target
+                                      and self.dataset._type is not None
+                                      and DatasetType[self.dataset._type] in [DatasetType.binary, DatasetType.multiclass])
+                                  }
                 # we could be a bit more clever in the future and convert 'string' to category iff len(distinct values) << nrows
                 if dt_conversions:
                     df = df.astype(dt_conversions, copy=False)
@@ -337,8 +356,9 @@ class CsvDatasplit(FileDatasplit):
         for f in features:
             col = self._ds.iloc[:, f.index]
             f.has_missing_values = col.hasnans
+            # f.dtype = self._ds.dtypes[f.name]
             if f.is_categorical():
-                f.values = sorted(self._ds.dtypes[f.name].categories.values)
+                f.values = self._unique_values(f.name)
 
         target = self._find_target_feature(features)
         self._set_feature_as_target(target)
@@ -358,6 +378,11 @@ class CsvDatasplit(FileDatasplit):
     def release(self, properties=None):
         super().release(properties)
         self._ds = None
+
+    def _unique_values(self, col_name: str):
+        dt = self._ds.dtypes[col_name]
+        return sorted(dt.categories.values if hasattr(dt, 'categories')
+                      else self._ds[col_name].unique())
 
 
 class FileConverter:

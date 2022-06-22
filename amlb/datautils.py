@@ -171,6 +171,9 @@ class Encoder(TransformerMixin):
         else:
             raise ValueError("Encoder `type` should be one of {}.".format(['label', 'one-hot']))
 
+    def __repr__(self):
+        return repr_def(self)
+
     @property
     def _ignore_missing(self):
         return self.for_target or self.missing_policy == 'ignore'
@@ -211,8 +214,8 @@ class Encoder(TransformerMixin):
         :param params:
         :return:
         """
-        if log.isEnabledFor(5):  # logging.TRACE
-            log.debug("Transforming %s using %s", vec, repr_def(self))
+        if log.isEnabledFor(logging.TRACE):
+            log.debug("Transforming %s using %s", vec, self)
 
         return_value = lambda v: v
         if isinstance(vec, str):
