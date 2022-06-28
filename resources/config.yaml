@@ -157,7 +157,9 @@ aws:                    # configuration namespace for AWS mode.
         '4': xlarge
         '8': 2xlarge
         '16': 4xlarge
+    instance_tags: {}                    # specify custom tags for the EC2 instances here
     volume_type: standard                # one of gp2, io1, st1, sc1, or standard (default).
+    volume_tags: {}                      # specify custom tags for the volume tags here (if empty, will apply the same tags as the corresponding instance)
     root_device_name: '/dev/sda1'        #
     availability_zone:                   # the availability zone where the instances will be created (if not set, aws will pick a default one).
     subnet_id: ''                        #

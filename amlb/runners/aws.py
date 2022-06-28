@@ -568,6 +568,8 @@ class AWSBenchmark(Benchmark):
             if instance_def.volume_size:
                 ebs['VolumeSize'] = instance_def.volume_size
 
+            instance_tags = ec2_config.instance_tags | ns(Name=f"amlb_{inst_key}")
+            volume_tags = (ec2_config.volume_tags or instance_tags) | ns(Name=f"amlb_{inst_key}")
             instance_params = dict(
                 BlockDeviceMappings=[dict(
                     DeviceName=ec2_config.root_device_name,
@@ -582,15 +584,11 @@ class AWSBenchmark(Benchmark):
                 TagSpecifications=[
                     dict(
                         ResourceType='instance',
-                        Tags=[
-                            dict(Key='Name', Value=f"benchmark_{inst_key}")
-                        ]
+                        Tags=[dict(Key=k, Value=v) for k, v in instance_tags]
                     ),
                     dict(
                         ResourceType='volume',
-                        Tags=[
-                            dict(Key='Name', Value=f"benchmark_{inst_key}")
-                        ]
+                        Tags=[dict(Key=k, Value=v) for k, v in volume_tags]
                     ),
                 ],
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
