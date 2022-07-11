@@ -12,9 +12,29 @@ env:
   TAG: ${{ github.event.release.tag_name }}
 
 jobs:
-  deploy:
+  validation:
     runs-on: ubuntu-latest
-
+    steps:
+      - name: Release only from stable-v* branch
+        if: ${{ !startsWith(env.BRANCH, 'stable-v') }}
+        uses: actions/github-script@v6
+        with:
+          script: core.setFailed("Releases can only be made from 'stable-v*' branches")
+  rollback:
+    needs: validation
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback if invalid release
+        uses: author/action-rollback@stable
+        with:
+          tag: ${{ env.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  versioning:
+    needs: validation
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:

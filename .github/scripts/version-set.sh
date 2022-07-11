@@ -27,14 +27,19 @@ FINAL_VERSION=$(set_version "$VERSION_FILE" "$VERSION_PLACEHOLDER" "$NEW_VERSION
 echo "version changed to \"$FINAL_VERSION\""
 echo "VERSION=$FINAL_VERSION" >> $GITHUB_ENV
 
-if [[ "$PUSH" == "push" ]] && [[ -x "$(command -v git)" ]]; then
-  git config user.name github-actions
-  git config user.email github-actions@github.com
-  if [[ "$ADD_COMMIT" == "add-commit" ]]; then
-    git commit -am "Update version to $FINAL_VERSION"
-    git push
+if [[ "$PUSH" == "push" ]]; then
+  if [[ -x "$(command -v git)" ]]; then
+    git config user.name github-actions
+    git config user.email github-actions@github.com
+    if [[ "$ADD_COMMIT" == "add-commit" ]]; then
+      git commit -am "Update version to $FINAL_VERSION"
+      git push
+    else
+      git commit -a --amend --no-edit
+      git push -f
+    fi
   else
-    git commit -a --amend --no-edit
-    git push -f
+    echo "Can not push the version changes as git is not available."
+    exit 1
   fi
 fi
