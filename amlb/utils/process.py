@@ -288,11 +288,17 @@ def kill_proc_tree(pid=None, include_parent=True, timeout=None, on_terminate=Non
         children.append(parent)
     for proc in children:
         log.warning("Terminating process %s.", proc)
-        proc.terminate()
+        try:
+            proc.terminate()
+        except psutil.NoSuchProcess:
+            pass
     terminated, alive = psutil.wait_procs(children, timeout=timeout, callback=on_proc_terminated)
     for proc in alive:
         log.warning("Killing process %s.", proc)
-        proc.kill()
+        try:
+            proc.kill()
+        except psutil.NoSuchProcess:
+            pass
 
 
 def call_in_subprocess(target, *args, **kwargs):

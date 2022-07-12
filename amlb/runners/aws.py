@@ -265,7 +265,7 @@ class AWSBenchmark(Benchmark):
                 raise JobError(reason)
         else:
             job.ext.wait_min_secs = wait
-        self.job_runner.reschedule(job)
+        job.reschedule()
 
     def _spot_fallback(self, job, reason):
         if 'Spot' in reason and rconfig().aws.ec2.spot.fallback_to_on_demand:
@@ -456,6 +456,10 @@ class AWSBenchmark(Benchmark):
 
                 if state_code == 16:
                     if inst_desc['meta_info'] is None:
+                        volume_info = [
+                            dict(type=v.volume_type, size_gb=v.size, id=v.id)
+                            for v in instance.volumes.all()
+                        ]
                         meta_info = dict(
                             instance_type=instance.instance_type,
                             launch_time=str(instance.launch_time),
@@ -465,6 +469,7 @@ class AWSBenchmark(Benchmark):
                             private_ip=instance.private_ip_address,
                             availability_zone=instance.placement['AvailabilityZone'],
                             subnet_id=instance.subnet_id,
+                            volumes=volume_info,
                         )
                         self._update_instance(job.ext.instance_id, meta_info=meta_info)
                         log.info("Running EC2 instance %s: %s", instance.id, meta_info)
@@ -521,7 +526,8 @@ class AWSBenchmark(Benchmark):
                 return
             while not interrupt.is_set():
                 try:
-                    hanging_instances = list(filter(self._is_hanging, self.instances.keys()))
+                    active_instances = [iid for iid, info in self.instances.items() if info.instance is not None]
+                    hanging_instances = list(filter(self._is_hanging, active_instances))
                     for inst in hanging_instances:
                         if inst in self.instances:
                             inst_desc = self.instances[inst]

@@ -1,0 +1,27 @@
+name: Version reset to dev
+# reset the version if merging a release branch into main
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'app/__version__.py'
+
+  workflow_dispatch:
+
+env:
+  BRANCH: ${{ github.event.release.target_commitish }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 2  # we need the previous commit as we amend the last one
+      - name: Reset version to dev
+        run: ./.github/scripts/version-set.sh "" push no-add-commit

@@ -1,10 +1,11 @@
 import functools as ft
 import random
+import time
 from unittest.mock import patch, DEFAULT
 
 import pytest
 
-from amlb.job import MultiThreadingJobRunner
+from amlb.job import MultiThreadingJobRunner, State
 from amlb.utils import Timeout
 
 from dummy import DummyJob
@@ -84,7 +85,7 @@ def test_reschedule_job_default():
 
     def _run(self, mock, ori):
         if mock.call_count < 3:
-            runner.reschedule(self)
+            self.reschedule()
             return
         return ori()
 
@@ -125,7 +126,7 @@ def test_reschedule_job_enforce_job_priority():
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
     def _run(self, mock, ori):
         if mock.call_count < 3:
-            runner.reschedule(self)
+            self.reschedule()
             return
         return ori()
         # return DEFAULT  # ensures that the wrapped function is called after the side effect
@@ -171,7 +172,7 @@ def test_reschedule_job_high_parallelism():
 
     def _run(self, mock, ori):
         if mock.call_count < 3:
-            runner.reschedule(self)
+            self.reschedule()
             return
         return ori()
 
@@ -195,6 +196,60 @@ def test_reschedule_job_high_parallelism():
     assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == 3 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == 3 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'rescheduling', rescheduled_job_steps))) == 2 * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
+
+
+@pytest.mark.slow
+@pytest.mark.stress
+def test_reschedule_does_not_lead_to_runner_cancellation_on_high_parallelism():
+    seq_steps = []
+    attempts = 5
+    n_jobs = 200
+    jobs = [DummyJob(name=f"job_{i}", duration_secs=random.randint(10, 20)/10, result=i,
+                     steps=seq_steps, verbose=True)
+            for i in range(n_jobs)]
+
+    def _run(self, ori=None):
+        attempt = self.ext['attempt'] = self.ext.get('attempt', 0) + 1
+        if attempt < attempts:
+            self.reschedule()
+            time.sleep(self._duration_secs/10)
+            return
+        return ori()
+
+    def _on_state(self, state, ori=None):
+        ori(state)
+        if state is State.rescheduling:
+            time.sleep(random.randint(1, 10)/10)
+        elif state is State.stopped:
+            print(f"#results = {len(runner.results)}")
+
+    rescheduled_jobs = [j for i, j in enumerate(jobs) if i % 5 == 0]
+    for job in rescheduled_jobs:
+        job._run = ft.partialmethod(_run, ori=job._run).__get__(job)
+    for job in jobs:
+        job._on_state = ft.partialmethod(_on_state, ori=job._on_state).__get__(job)
+
+    runner = MultiThreadingJobRunner(jobs, parallel_jobs=50, delay_secs=0.01,
+                                     queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
+    results = runner.start()
+    # print(results)
+
+    rescheduled_job_names = [j.name for j in rescheduled_jobs]
+    normal_job_steps = [s for n, s in seq_steps if n not in rescheduled_job_names]
+    rescheduled_job_steps = [s for n, s in seq_steps if n in rescheduled_job_names]
+
+    assert len(results) == n_jobs
+    assert len(list(filter(lambda s: s == 'cancelling', rescheduled_job_steps))) == 0
+    for state in ['created', 'starting', 'running', 'completing', 'stopping', 'stopped']:
+        assert len(list(filter(lambda s: s == state, normal_job_steps))) == n_jobs - len(rescheduled_job_names)
+
+    assert len(list(filter(lambda s: s == 'created', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'starting', rescheduled_job_steps))) == attempts * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'running', rescheduled_job_steps))) == attempts * len(rescheduled_job_names)
+    assert len(list(filter(lambda s: s == 'rescheduling', rescheduled_job_steps))) == (attempts-1) * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)

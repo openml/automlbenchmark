@@ -77,7 +77,7 @@ def test_reschedule_job():
 
     def _run(self, mock, ori):
         if mock.call_count < 3:
-            runner.reschedule(self)
+            self.reschedule()
             return
         return ori()
 

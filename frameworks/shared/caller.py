@@ -101,7 +101,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             if env_val is not None:
                 env[env_var] = env_val
 
-    with TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory(prefix='amlb_', suffix='_xproc') as tmpdir:
 
         ds = _make_input_dataset(input_data, dataset, tmpdir, serialization=ser_config)
 
