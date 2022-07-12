@@ -53,7 +53,9 @@ def run(dataset, config):
     with Timer() as predict:
         predictions = aml.predict(X_test)
     probabilities = aml.predict_proba(X_test) if is_classification else None
-    labels = aml.classes_ if is_classification else None
+    labels = None
+    if is_classification:
+        labels = aml.classes_ if isinstance(aml.classes_, list) else aml.classes_.tolist()
     return result(  
                     output_file=config.output_predictions_file,
                     probabilities=probabilities,

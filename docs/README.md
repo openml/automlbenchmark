@@ -127,7 +127,8 @@ positional arguments:
                         benchmark description file, or an openml suite or
                         task. OpenML references should be formatted as
                         'openml/s/X' and 'openml/t/Y', for studies and tasks
-                        respectively. Defaults to `test`.
+                        respectively. Use 'test.openml/s/X' for the OpenML test
+                        server. Defaults to `test`.
   constraint            The constraint definition to use as defined by default
                         in resources/constraints.yaml. Defaults to `test`.
 

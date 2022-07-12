@@ -15,7 +15,7 @@ from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
 from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, path_from_split, profile, split_path
 
-from .fileutils import download_file, is_archive, is_valid_url, unarchive_file, url_exists
+from .fileutils import is_archive, is_valid_url, unarchive_file, get_file_handler
 
 
 log = logging.getLogger(__name__)
@@ -118,8 +118,9 @@ class FileLoader:
         elif is_valid_url(dataset):
             cached_file = os.path.join(self._cache_dir, os.path.basename(dataset))
             if not os.path.exists(cached_file):  # don't download if previously done
-                assert url_exists(dataset), f"Invalid path/url: {dataset}"
-                download_file(dataset, cached_file)
+                handler = get_file_handler(dataset)
+                assert handler.exists(dataset), f"Invalid path/url: {dataset}"
+                handler.download(dataset, dest_path=cached_file)
             return self._extract_train_test_paths(cached_file)
         else:
             raise ValueError(f"Invalid dataset description: {dataset}")

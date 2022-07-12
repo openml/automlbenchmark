@@ -145,7 +145,7 @@ Each dataset must contain a training set and a test set. There can be multiple t
 
 ### Datasets definition
 
-A dataset definition consists in a `yaml` file listing all the task/datasets that will used for the complete benchmark, 
+A dataset definition consists in a `yaml` file listing all the task/datasets that will be used for the complete benchmark, 
 or as an OpenML suite.
 
 Default dataset definitions are available under folder `resources/benchmarks`.
