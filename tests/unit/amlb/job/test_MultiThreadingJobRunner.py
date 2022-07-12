@@ -124,6 +124,7 @@ def test_reschedule_job_enforce_job_priority():
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=3, delay_secs=0.2,
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
+
     def _run(self, mock, ori):
         if mock.call_count < 3:
             self.reschedule()
@@ -228,9 +229,9 @@ def test_reschedule_does_not_lead_to_runner_cancellation_on_high_parallelism():
 
     rescheduled_jobs = [j for i, j in enumerate(jobs) if i % 5 == 0]
     for job in rescheduled_jobs:
-        job._run = ft.partialmethod(_run, ori=job._run).__get__(job)
+        job._run = ft.partialmethod(_run, ori=job._run).__get__(job, None)
     for job in jobs:
-        job._on_state = ft.partialmethod(_on_state, ori=job._on_state).__get__(job)
+        job._on_state = ft.partialmethod(_on_state, ori=job._on_state).__get__(job, None)
 
     runner = MultiThreadingJobRunner(jobs, parallel_jobs=50, delay_secs=0.01,
                                      queueing_strategy=MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority)
