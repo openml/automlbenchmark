@@ -3,7 +3,7 @@ name: Version Bump
 on:
   release:
     types:
-      - created
+      - published
 
   workflow_dispatch:
 
@@ -12,30 +12,36 @@ env:
   TAG: ${{ github.event.release.tag_name }}
 
 jobs:
-  deploy:
+  validation:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
+      - name: Release only from stable-v* branch
+        if: ${{ !startsWith(env.BRANCH, 'stable-v') }}
+        uses: actions/github-script@v6
+        with:
+          script: core.setFailed("Releases can only be made from 'stable-v*' branches")
+  rollback:
+    needs: validation
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback if invalid release
+        uses: author/action-rollback@stable
+        with:
+          tag: ${{ env.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  versioning:
+    needs: validation
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
         with:
           ref: ${{ env.BRANCH }}
       - name: Bump version from tag
-        run: |
-          VERSION=$(echo $TAG | sed 's/^v//')
-          PLACEHOLDER='__version__ = _dev_version'
-          VERSION_FILE='amlb/__version__.py'
-          grep "$PLACEHOLDER" "$VERSION_FILE"
-          sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-        shell: bash
-      - name: Commit version changes
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git commit -am "Update version to $VERSION"
+        run: ./.github/scripts/version-set.sh $TAG push
       - name: Update tag
-        run: |
-          git tag $TAG
-          git push
-          git push --tags -f
-
+        run: ./.github/scripts/tag-set.sh $TAG push
+      - name: Restore dev version
+        run: ./.github/scripts/version-set.sh "" push
