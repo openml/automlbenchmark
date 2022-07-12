@@ -169,7 +169,8 @@ class Scoreboard:
         for col in nanable_int_cols:
             df[col] = df[col].astype(np.object).map(int_print).astype(np.str)
         for col in low_precision_float_cols:
-            df[col] = df[col].astype(np.float).map(partial(num_print, "{:.1f}".format)).astype(np.float)
+            float_format = lambda f: ("{:.1g}" if f < 1 else "{:.1f}").format(f)
+            df[col] = df[col].astype(np.float).map(partial(num_print, float_format)).astype(np.float)
         for col in high_precision_float_cols:
             df[col] = df[col].map(partial(num_print, "{:.6g}".format)).astype(np.float)
 

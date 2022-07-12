@@ -1,6 +1,6 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.utils import call_script_in_same_dir
+from amlb.utils import call_script_in_same_dir, unsparsify
 
 
 def setup(*args, **kwargs):
@@ -14,6 +14,7 @@ def run(dataset: Dataset, config: TaskConfig):
     encode = config.framework_params.get('_encode', True)
     X_train, X_test = impute_array(dataset.train.X_enc, dataset.test.X_enc) if encode else (dataset.train.X, dataset.test.X)
     y_train, y_test = (dataset.train.y_enc, dataset.test.y_enc) if encode else (dataset.train.y, dataset.test.y)
+    y_train, y_test = unsparsify(y_train, y_test)
     data = dict(
         train=dict(
             X=X_train,

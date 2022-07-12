@@ -8,7 +8,7 @@ import sys
 # prevent asap other modules from defining the root logger using basicConfig
 import amlb.logger
 
-from openml.config import get_cache_directory
+from openml.config import cache_directory
 
 import amlb
 from amlb.utils import Namespace as ns, config_load, datetime_iso, str2bool, str_sanitize, zip_path
@@ -16,7 +16,7 @@ from amlb import log, AutoMLError
 
 
 default_dirs = ns(
-    input_dir=get_cache_directory(),
+    input_dir=cache_directory,
     output_dir="./results",
     user_dir="~/.config/automlbenchmark",
     root_dir=os.path.dirname(__file__)

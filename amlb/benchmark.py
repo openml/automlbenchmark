@@ -72,6 +72,9 @@ class Benchmark:
             return
 
         self._forward_params = locals()
+        if Benchmark.data_loader is None:
+            Benchmark.data_loader = DataLoader(rconfig())
+
         fsplits = framework_name.split(':', 1)
         framework_name = fsplits[0]
         tag = fsplits[1] if len(fsplits) > 1 else None
@@ -108,8 +111,6 @@ class Benchmark:
         and possibly download them if necessary.
         Delegates specific setup to the framework module
         """
-        Benchmark.data_loader = DataLoader(rconfig())
-
         if mode == SetupMode.skip or mode == SetupMode.auto and self._is_setup_done():
             return
 
