@@ -54,6 +54,7 @@ class DockerBenchmark(ContainerBenchmark):
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} "
+            '-u "$(id -u $USER):$(id -g $USER)" '
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
