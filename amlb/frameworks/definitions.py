@@ -22,7 +22,6 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], config: N
     frameworks = _load_and_merge_framework_definitions(frameworks_file, config)
     for tag, defs in frameworks:
         _sanitize_and_add_defaults(defs, config)
-    log.debug("Available framework definitions:\n%s", frameworks)
     return frameworks
 
 

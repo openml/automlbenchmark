@@ -234,11 +234,29 @@ class Namespace:
         return Namespace.dict(self)
 
 
-def repr_def(obj, show_private=False):
+def _attributes(obj, filtr='all'):
+    attrs = vars(obj)
+    if filtr is None or filtr == 'all':
+        return attrs
+    elif filtr == 'public':
+        return {k: v for k, v in attrs.items() if not k.startswith('_')}
+    elif filtr == 'private':
+        return {k: v for k, v in attrs.items() if k.startswith('_')}
+    elif isinstance(filtr, list):
+        return {k: v for k, v in attrs.items() if k in filtr}
+    else:
+        assert callable(filtr)
+        return {k: v for k, v in attrs.items() if filtr(k)}
+
+
+def _classname(obj):
+    return type(obj).__name__
+
+
+def repr_def(obj, attributes='public'):
     return "{cls}({attrs!r})".format(
-        cls=type(obj).__name__,
-        attrs=(vars(obj) if show_private
-               else {k: v for k, v in vars(obj).items() if k.startswith('_')})
+        cls=_classname(obj),
+        attrs=_attributes(obj, attributes)
     )
 
 

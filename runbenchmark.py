@@ -120,7 +120,7 @@ log_dir = amlb.resources.output_dirs(args.outdir or default_dirs.output_dir,
 # now_str = datetime_iso(time=False, no_sep=True)
 if args.profiling:
     logging.TRACE = logging.INFO
-log_levels = ns({logger: level.upper()
+log_levels = ns({logger: int(level) if level.isnumeric() else level.upper()
                  for logger, level in [d.split(':') for d in args.logging.split(',')]} if ':' in args.logging
                 else dict(console=args.logging.upper(), app=args.logging.upper(), root=args.logging.upper()) if args.logging
                 else {}) | ns(console='INFO', app='DEBUG', root='INFO')  # adding defaults if needed

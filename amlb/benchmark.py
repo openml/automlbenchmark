@@ -402,6 +402,9 @@ class TaskConfig:
     def __json__(self):
         return self.__dict__
 
+    def __repr__(self):
+        return repr_def(self)
+
     def estimate_system_params(self):
         on_unfulfilled = rconfig().benchmarks.on_unfulfilled_constraint
         mode = re.split(r"\W+", rconfig().run_mode, maxsplit=1)[0]
@@ -538,7 +541,7 @@ class BenchmarkTask:
 
         result = meta_result = None
         try:
-            log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, repr_def(task_config))
+            log.info("Running task %s on framework %s with config:\n%s", task_config.name, self.benchmark.framework_name, task_config)
             json_dump(task_config, task_config.output_metadata_file, style='pretty')
             meta_result = self.benchmark.framework_module.run(self._dataset, task_config)
         except Exception as e:

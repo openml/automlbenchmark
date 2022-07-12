@@ -132,6 +132,7 @@ class Resources:
         if tag not in self._frameworks:
             raise ValueError("Incorrect tag `{}`: only those among {} are allowed.".format(tag, self.config.frameworks.tags))
         frameworks = self._frameworks[tag]
+        log.debug("Available framework definitions:\n%s", frameworks)
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
         if not framework:
             raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))

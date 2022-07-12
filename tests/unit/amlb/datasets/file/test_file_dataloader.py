@@ -65,7 +65,8 @@ def test_load_binary_task_arff(file_loader):
 def _assert_kc2_features(dataset, definition):
     assert len(dataset.features) == 22
     assert len(dataset.predictors) == 21
-    _assert_target(dataset.target, name=definition.target, values=["no", "yes"])
+    target_values = ["no", "yes"]
+    _assert_target(dataset.target, name=definition.target, values=target_values)
 
     assert all([p.data_type in ['int', 'float'] for p in dataset.predictors])
     assert all([p.values is None for p in dataset.predictors])
@@ -77,6 +78,10 @@ def _assert_kc2_features(dataset, definition):
     assert dataset.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
     assert dataset.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
     assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
+
+    normalize = dataset.target.normalize
+    assert list(normalize(dataset.train.y.squeeze().unique())) == list(normalize(dataset.test.y.squeeze().unique())) == target_values
+    assert list(np.unique(dataset.train.y_enc)) == list(np.unique(dataset.test.y_enc)) == [0, 1]
 
 
 @pytest.mark.use_disk
@@ -95,6 +100,33 @@ def test_load_multiclass_task_csv(file_loader):
 
 
 @pytest.mark.use_disk
+def test_load_multiclass_task_with_num_target_no_type_csv(file_loader):
+    ds_def = ns(
+        train=os.path.join(res, "iris_num_train.csv"),
+        test=os.path.join(res, "iris_num_test.csv"),
+        target="class"
+    )
+    ds = file_loader.load(ds_def)
+    assert ds.type is DatasetType.regression, "file loader should detect num target as regression by default"
+
+
+@pytest.mark.use_disk
+def test_load_multiclass_task_with_num_target_csv(file_loader):
+    ds_def = ns(
+        train=os.path.join(res, "iris_num_train.csv"),
+        test=os.path.join(res, "iris_num_test.csv"),
+        target="class",
+        type="multiclass"
+    )
+    ds = file_loader.load(ds_def)
+    assert ds.type is DatasetType.multiclass
+    _assert_X_y_types(ds.train)
+    _assert_data_consistency(ds)
+    _assert_data_paths(ds, ds_def)
+    _assert_iris_features(ds, ds_def, num_target=True)
+
+
+@pytest.mark.use_disk
 def test_load_multiclass_task_arff(file_loader):
     ds_def = ns(
         train=os.path.join(res, "iris_train.arff"),
@@ -109,10 +141,11 @@ def test_load_multiclass_task_arff(file_loader):
     _assert_iris_features(ds, ds_def)
 
 
-def _assert_iris_features(dataset, definition):
+def _assert_iris_features(dataset, definition, num_target=False):
     assert len(dataset.features) == 5
     assert len(dataset.predictors) == 4
-    _assert_target(dataset.target, name=definition.target, values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"])  # values are case-sensitive when using file loader
+    target_values = ["1", "2", "3"] if num_target else ["iris-setosa", "iris-versicolor", "iris-virginica"]  # values are normalized
+    _assert_target(dataset.target, name=definition.target, values=target_values)
 
     assert all([p.data_type in ['int', 'float'] for p in dataset.predictors])
     assert all([p.values is None for p in dataset.predictors])
@@ -124,6 +157,10 @@ def _assert_iris_features(dataset, definition):
     assert dataset.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
     assert dataset.train.X.dtypes.filter(items=ints).apply(lambda dt: pd.api.types.is_integer_dtype(dt)).all()
     assert pd.api.types.is_categorical_dtype(dataset.train.y.dtypes.iloc[0])
+
+    normalize = dataset.target.normalize
+    assert list(normalize(dataset.train.y.squeeze().unique())) == list(normalize(dataset.test.y.squeeze().unique())) == target_values
+    assert list(np.unique(dataset.train.y_enc)) == list(np.unique(dataset.test.y_enc)) == [0, 1, 2]
 
 
 @pytest.mark.use_disk
@@ -177,6 +214,9 @@ def _assert_cholesterol_features(dataset, definition, fmt):
     assert dataset.train.X.dtypes.filter(items=floats).apply(lambda dt: pd.api.types.is_float_dtype(dt)).all()
     assert dataset.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_categorical_dtype(dt)).all()
     assert pd.api.types.is_float_dtype(dataset.train.y.dtypes.iloc[0])
+
+    assert np.array_equal(dataset.train.y_enc, dataset.train.y.squeeze().to_numpy()), "no encoding should have been applied on regression target"
+    assert np.array_equal(dataset.test.y_enc, dataset.test.y.squeeze().to_numpy()), "no encoding should have been applied on regression target"
 
 
 def _assert_target(target, name, values=None):
