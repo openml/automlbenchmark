@@ -470,8 +470,13 @@ h3 {
     padding: 25px;
   }
 
-  body {
-    background-color: #1971c2;
+  .shiny {
+    height: auto;
+    width: 100%;
+  }
+
+  .results {
+    flex-wrap: wrap;
   }
 }
 
