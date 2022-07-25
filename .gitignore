@@ -47,3 +47,4 @@ Singularityfile
 #whitelist
 !reports/**/*.csv
 !reports/**/*.png
+!docs/img/**/*.png
