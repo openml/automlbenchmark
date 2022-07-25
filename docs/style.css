@@ -259,6 +259,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .framework-header > h3 {
@@ -477,6 +478,24 @@ h3 {
 
   .results {
     flex-wrap: wrap;
+  }
+
+  .framework-header > h3 {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  h1 {
+    font-size: 48px;
+    padding-bottom: 18px;
+  }
+
+  .page-title {
+    margin-top: 32px;
+  }
+
+  .page-content {
+    padding: 0 32px;
   }
 }
 
