@@ -461,6 +461,11 @@ h3 {
   display: none;
 }
 
+.nav-mobile {
+  justify-content: space-between;
+  display: none;
+}
+
 @media (max-width: 900px) {
   .desktop {
     display: none;
@@ -506,6 +511,10 @@ h3 {
   .two-col {
     grid-template-columns: 1fr;
     row-gap: 32px;
+  }
+
+  .nav-mobile {
+    display: flex;
   }
 }
 
