@@ -497,6 +497,16 @@ h3 {
   .page-content {
     padding: 0 32px;
   }
+
+  .three-cols {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
 }
 
 .mobile * {
