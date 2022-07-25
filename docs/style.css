@@ -456,6 +456,29 @@ h3 {
   cursor: pointer;
 }
 
-/* .zoomable:hover {
-  cursor: zoom-in;
-} */
+.mobile {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .desktop {
+    display: none;
+  }
+
+  .mobile {
+    display: block;
+    padding: 25px;
+  }
+
+  body {
+    background-color: #1971c2;
+  }
+}
+
+.mobile * {
+  color: white;
+}
+
+.mobile > .summary > a {
+  font-size: 24px;
+}
