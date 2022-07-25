@@ -50,6 +50,11 @@ footer {
   padding: 8px;
 }
 
+footer > a {
+  color: #e7f5ff;
+  font-size: 14px;
+}
+
 .terminal {
   background-color: #343a40;
   color: #f8f9fa;
