@@ -259,6 +259,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .framework-header > h3 {
@@ -460,6 +461,11 @@ h3 {
   display: none;
 }
 
+.nav-mobile {
+  justify-content: space-between;
+  display: none;
+}
+
 @media (max-width: 900px) {
   .desktop {
     display: none;
@@ -470,8 +476,45 @@ h3 {
     padding: 25px;
   }
 
-  body {
-    background-color: #1971c2;
+  .shiny {
+    height: auto;
+    width: 100%;
+  }
+
+  .results {
+    flex-wrap: wrap;
+  }
+
+  .framework-header > h3 {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  h1 {
+    font-size: 48px;
+    padding-bottom: 18px;
+  }
+
+  .page-title {
+    margin-top: 32px;
+  }
+
+  .page-content {
+    padding: 0 32px;
+  }
+
+  .three-cols {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+
+  .nav-mobile {
+    display: flex;
   }
 }
 
