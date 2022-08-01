@@ -15,6 +15,16 @@ AutoGluon_bestquality:
   params:
     presets: best_quality
 
+AutoGluon_hq:
+  extends: AutoGluon
+  params:
+    presets: high_quality
+
+AutoGluon_gq:
+  extends: AutoGluon
+  params:
+    presets: good_quality
+
 autosklearn:
   version: 'stable'
 
