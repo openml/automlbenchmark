@@ -10,20 +10,30 @@
 AutoGluon:
   version: "stable"
 
-AutoGluon_bestquality:
+AutoGluon_bq:
   extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
   params:
     presets: best_quality
+    _leaderboard_test: True
 
 AutoGluon_hq:
   extends: AutoGluon
   params:
     presets: high_quality
+    _leaderboard_test: True
 
 AutoGluon_gq:
   extends: AutoGluon
   params:
     presets: good_quality
+    _leaderboard_test: True
+
+AutoGluon_mq:
+  extends: AutoGluon
+  params:
+    presets: medium_quality
+    _leaderboard_test: True
 
 autosklearn:
   version: 'stable'
