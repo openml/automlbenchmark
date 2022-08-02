@@ -1,5 +1,5 @@
 ---
-project_repository: https://github.com/openml/automlbenchmark#stable      # this is also the url used to clone the repository on ec2 instances
+project_repository: https://github.com/Innixma/automlbenchmark#ag-2022_08_03_hstree    # this is also the url used to clone the repository on ec2 instances
                                                                           # when running those without docker.
                                                                           # to clone a specific branch/tag, add a url fragment, e.g.:
                                                                           # https://github.com/openml/automlbenchmark#stable
@@ -33,7 +33,7 @@ frameworks:              # configuration namespace for the frameworks definition
     - '{root}/resources/frameworks.yaml'
   root_module: frameworks     # the default python module under which the frameworks modules are defined.
   allow_duplicates: false     # if true, the last definition is used.
-  tags: ['stable', 'latest', '2020Q2', '2021Q3']  # the list of supported tags when looking up frameworks:
+  tags: ['stable', 'latest', '2020Q2', '2021Q3', '2022AG']  # the list of supported tags when looking up frameworks:
                               # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:                     # configuration namespace for the benchmarks definitions.
@@ -47,7 +47,7 @@ benchmarks:                     # configuration namespace for the benchmarks def
                                      #   if 'fail' the benchmark will be immediately interrupted;
   os_mem_size_mb: 2048          # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048          # the default amount of volume left to the OS when task volume memory is verified.
-  overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
+  overhead_time_seconds: 72000   # amount of additional time allowed for the job to complete before sending an interruption signal
   metrics:                      # default metrics by dataset type (as listed by amlb.data.DatasetType),
                                 # only the first metric is optimized by the frameworks,
                                 # the others are computed only for information purpose.
@@ -65,8 +65,8 @@ benchmarks:                     # configuration namespace for the benchmarks def
 job_scheduler:           # configuration namespace
   exit_on_job_failure:   # if true, the entire run will be aborted on the first job failure (mainly used for testing) : set by caller (runbenchmark.py)
   parallel_jobs: 1       # the number of jobs being run in parallel in a benchmark session, set by caller (runbenchmark.py)
-  max_parallel_jobs: 10  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
-  delay_between_jobs: 5  # delay in seconds between each parallel job start
+  max_parallel_jobs: 2000  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
+  delay_between_jobs: 8  # delay in seconds between each parallel job start
 
 monitoring:               # configuration namespace describing the basic monitoring features: currently, the app only logs each statistic at a given interval.
   interval_seconds: 120   # set to <= 0 to disable monitoring
@@ -110,7 +110,7 @@ singularity:                   # configuration namespace for docker: it inherits
   library: 'automlbenchmark/default'
 
 aws:                    # configuration namespace for AWS mode.
-  region: ''            # the AWS region to use. By default, the app will use the region set in ~/.aws/config when configuring AWS CLI.
+  region: 'us-east-1'            # the AWS region to use. By default, the app will use the region set in ~/.aws/config when configuring AWS CLI.
 
   iam:                                               # sub-namespace for AWS IAM service.
                                                      # Mainly used to allow secure communication between S3 storage and EC2 instances.
@@ -122,17 +122,17 @@ aws:                    # configuration namespace for AWS mode.
                                                      # if temporary is set to true, the generated instance profile name will be `<instance_profile_name>-<now>`.
     temporary: false                                 # if true, the IAM entities will be automatically recreated during setup and deleted at the end of the benchmark run.
     credentials_propagation_waiting_time_secs: 360   # time to wait before being able to start ec2 instances when using new or temporary credentials.
-    max_role_session_duration_secs: 7200             # the max duration (in seconds) during which the ec2 instance will have access to s3.
+    max_role_session_duration_secs: 72000             # the max duration (in seconds) during which the ec2 instance will have access to s3.
                                                      # This should be a number between 900 (15mn) to 43200 (12h).
 
   s3:                               # sub-namespace for AWS S3 service.
-    bucket: automl-benchmark        # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
+    bucket: automl-benchmark-ag        # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
                                     # if temporary is set to true, the generated bucket name will be `<bucket>-<now>`.
                                     # cf. complete restrictions: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
     temporary: false                # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
                                     # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
                                     # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
-    root_key: ec2/                  #
+    root_key: ec2/2022_08_03_hstree/                  #
     delete_resources: false         #
 
   ec2:
@@ -158,9 +158,9 @@ aws:                    # configuration namespace for AWS mode.
         '4': xlarge
         '8': 2xlarge
         '16': 4xlarge
-    instance_tags: {}                    # specify custom tags for the EC2 instances here
-    volume_type: standard                # one of gp2, io1, st1, sc1, or standard (default).
-    volume_tags: {}                      # specify custom tags for the volume tags here (if empty, will apply the same tags as the corresponding instance)
+        '32': 8xlarge
+        '64': 16xlarge
+    volume_type: gp3                # one of gp2, io1, st1, sc1, or standard (default).
     root_device_name: '/dev/sda1'        #
     availability_zone:                   # the availability zone where the instances will be created (if not set, aws will pick a default one).
     subnet_id: ''                        #
@@ -202,9 +202,9 @@ aws:                    # configuration namespace for AWS mode.
       - 'Server.SpotInstanceTermination'
       - 'Server.InsufficientInstanceCapacity'
 
-  max_timeout_seconds: 21600    #
+  max_timeout_seconds: 72000    #
   os_mem_size_mb: 0             # overrides the default amount of memory left to the os in AWS mode, and set to 0 for fairness as we can't always prevent frameworks from using all available memory.
-  overhead_time_seconds: 1800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
+  overhead_time_seconds: 28800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
   query_interval_seconds: 30    # check instance state every N seconds
 
   resource_files: []            # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.

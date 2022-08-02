@@ -28,13 +28,14 @@ AutoGluon:
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
 
-AutoGluon_bestquality:
+AutoGluon_bq:
   extends: AutoGluon
   description: |
     AutoGluon with 'best_quality' preset provides the most accurate overall predictor.
     Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
   params:
     presets: best_quality
+    _leaderboard_test: True
 
 AutoGluon_hq:
   extends: AutoGluon
@@ -43,6 +44,7 @@ AutoGluon_hq:
     Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
   params:
     presets: high_quality
+    _leaderboard_test: True
 
 AutoGluon_gq:
   extends: AutoGluon
@@ -51,6 +53,13 @@ AutoGluon_gq:
     Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
   params:
     presets: good_quality
+    _leaderboard_test: True
+
+AutoGluon_mq:
+  extends: AutoGluon
+  params:
+    presets: medium_quality
+    _leaderboard_test: True
 
 autosklearn:
   version: 'stable'
