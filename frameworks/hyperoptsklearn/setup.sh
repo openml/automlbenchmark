@@ -11,7 +11,7 @@ fi
 . ${HERE}/../shared/setup.sh ${HERE} true
 
 if [[ "$VERSION" =~ ^[0-9] ]]; then
-    pip install git+https://github.com/hyperopt/hyperopt-sklearn@${VERSION}
+    PIP install git+https://github.com/hyperopt/hyperopt-sklearn@${VERSION}
 else
 #    PIP install --no-cache-dir -e git+${REPO}@${VERSION}#egg=${PKG}
     LIB=$(echo ${PKG} | sed "s/\[.*\]//")
