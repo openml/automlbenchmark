@@ -86,6 +86,9 @@ oboe:
 TPOT:
   version: 'latest'
 
+FEDOT:
+  version: 'latest'
+
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
