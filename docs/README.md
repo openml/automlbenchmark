@@ -28,7 +28,7 @@ This toolkit aims to address these problems by setting up standardized environme
 Documentation: <https://openml.github.io/automlbenchmark/>
 
 ### Features:
-* Curated suites of [benchmarking datasets]([https://openml.github.io/automlbenchmark/benchmark_datasets.html](https://github.com/openml/automlbenchmark/blob/master/docs/benchmark_datasets.md) from [OpenML](https://www.openml.org/s/218/data).
+* Curated suites of [benchmarking datasets](https://github.com/openml/automlbenchmark/blob/master/docs/benchmark_datasets.md) from [OpenML](https://www.openml.org/s/218/data).
 * Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html) on regression and classification tasks.
 * [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework)
 * Experiments can be run in Docker or Singularity containers
