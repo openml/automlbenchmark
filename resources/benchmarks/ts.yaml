@@ -1,0 +1,9 @@
+---
+
+- name: covid
+  dataset:
+    train: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/train.csv
+    test:  https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
+    target: ConfirmedCases
+  folds: 1
+

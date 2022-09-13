@@ -80,8 +80,15 @@ oboe:
 TPOT:
   version: 'latest'
 
+####################################
+### TimeSeries AutoML frameworks ###
+####################################
 
-
+AutoGluonTS:
+  version: "latest"
+  description: |
+    AutoGluon-TimeSeries
+  project: https://auto.gluon.ai
 
 #######################################
 ### Non AutoML reference frameworks ###
