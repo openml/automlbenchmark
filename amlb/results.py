@@ -20,7 +20,7 @@ import scipy as sci
 from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, log_loss, \
     mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, r2_score, roc_auc_score, \
-    read_csv, write_csv, is_data_frame, to_data_frame, get_seasonality
+    read_csv, write_csv, is_data_frame, to_data_frame
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, get_metadata, json_load, memoize, profile, set_metadata
 
