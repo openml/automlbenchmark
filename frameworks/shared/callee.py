@@ -22,6 +22,7 @@ def result(output_file=None,
            models_count=None,
            training_duration=None,
            predict_duration=None,
+           quantiles=None,
            **others):
     return locals()
 
@@ -69,7 +70,7 @@ def call_run(run_fn):
                               wait_retry_secs=10):
             result = run_fn(ds, config)
             res = dict(result)
-            for name in ['predictions', 'truth', 'probabilities']:
+            for name in ['predictions', 'truth', 'probabilities', 'quantiles']:
                 arr = result[name]
                 if arr is not None:
                     path = os.path.join(config.result_dir, '.'.join([name, 'data']))

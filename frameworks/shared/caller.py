@@ -149,7 +149,7 @@ def run_in_venv(caller_file, script_file: str, *args,
         if res.error_message is not None:
             raise NoResultError(res.error_message)
 
-        for name in ['predictions', 'truth', 'probabilities']:
+        for name in ['predictions', 'truth', 'probabilities', 'quantiles']:
             res[name] = deserialize_data(res[name], config=ser_config) if res[name] is not None else None
 
         if callable(process_results):
@@ -164,7 +164,8 @@ def run_in_venv(caller_file, script_file: str, *args,
                                     else dataset.test.y),
                              probabilities=res.probabilities,
                              probabilities_labels=res.probabilities_labels,
-                             target_is_encoded=res.target_is_encoded)
+                             target_is_encoded=res.target_is_encoded,
+                             quantiles=res.quantiles)
 
         return dict(
             models_count=res.models_count if res.models_count is not None else 1,

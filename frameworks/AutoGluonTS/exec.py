@@ -30,9 +30,9 @@ def run(dataset, config):
 
     #################
     # TODO: Need to pass the following info somehow
-    timestamp_column = "Date"
-    id_column = "name"
-    prediction_length = 30
+    timestamp_column = dataset.timestamp_column
+    id_column = dataset.id_column
+    prediction_length = dataset.prediction_length
     #################
 
     eval_metric = get_eval_metric(config)
@@ -90,7 +90,8 @@ def run(dataset, config):
                   target_is_encoded=False,
                   models_count=num_models_trained,
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  quantiles=predictions.iloc[:, 1:])
 
 
 def load_data(train_path, test_path, timestamp_column, id_column):
@@ -125,6 +126,7 @@ def get_eval_metric(config):
     metrics_mapping = dict(
         mse="MSE",
         rmse="RMSE",
+        mase="MASE",
     )
 
     eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None

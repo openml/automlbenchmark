@@ -30,7 +30,7 @@ class FileLoader:
         self._cache_dir = cache_dir if cache_dir else tempfile.mkdtemp(prefix='amlb_cache')
 
     @profile(logger=log)
-    def load(self, dataset, fold=0):
+    def load(self, dataset, fold=0, timestamp_column=None):
         dataset = dataset if isinstance(dataset, ns) else ns(path=dataset)
         log.debug("Loading dataset %s", dataset)
         paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold)
@@ -51,7 +51,7 @@ class FileLoader:
         if ext == '.arff':
             return ArffDataset(train_path, test_path, target=target, features=features, type=type_)
         elif ext == '.csv':
-            return CsvDataset(train_path, test_path, target=target, features=features, type=type_)
+            return CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=timestamp_column)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
@@ -302,25 +302,26 @@ class ArffDatasplit(FileDatasplit):
 class CsvDataset(FileDataset):
 
     def __init__(self, train_path, test_path,
-                 target=None, features=None, type=None):
+                 target=None, features=None, type=None, timestamp_column=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
         super().__init__(None, None,
                          target=target, features=features, type=type)
-        self._train = CsvDatasplit(self, train_path)
-        self._test = CsvDatasplit(self, test_path)
+        self._train = CsvDatasplit(self, train_path, timestamp_column=timestamp_column)
+        self._test = CsvDatasplit(self, test_path, timestamp_column=timestamp_column)
         self._dtypes = None
 
 
 class CsvDatasplit(FileDatasplit):
 
-    def __init__(self, dataset, path):
+    def __init__(self, dataset, path, timestamp_column=None):
         super().__init__(dataset, format='csv', path=path)
         self._ds = None
+        self.timestamp_column = timestamp_column
 
     def _ensure_loaded(self):
         if self._ds is None:
             if self.dataset._dtypes is None:
-                df = read_csv(self.path)
+                df = read_csv(self.path, timestamp_column=self.timestamp_column)
                 # df = df.convert_dtypes()
                 dt_conversions = {name: 'category'
                                   for name, dtype in zip(df.dtypes.index, df.dtypes.values)
@@ -336,8 +337,9 @@ class CsvDatasplit(FileDatasplit):
 
                 self._ds = df
                 self.dataset._dtypes = self._ds.dtypes
+
             else:
-                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict())
+                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict(), timestamp_column=self.timestamp_column)
 
     @profile(logger=log)
     def load_metadata(self):
@@ -348,7 +350,7 @@ class CsvDatasplit(FileDatasplit):
                                       else 'number' if pat.is_numeric_dtype(dt)
                                       else 'category' if pat.is_categorical_dtype(dt)
                                       else 'string' if pat.is_string_dtype(dt)
-                                      # else 'datetime' if pat.is_datetime64_dtype(dt)
+                                      else 'datetime' if pat.is_datetime64_dtype(dt)
                                       else 'object')
         features = [Feature(i, col, to_feature_type(dtypes[i]))
                     for i, col in enumerate(self._ds.columns)]

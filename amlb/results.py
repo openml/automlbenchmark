@@ -20,7 +20,7 @@ import scipy as sci
 from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, log_loss, \
     mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, r2_score, roc_auc_score, \
-    read_csv, write_csv, is_data_frame, to_data_frame
+    read_csv, write_csv, is_data_frame, to_data_frame, get_seasonality
 from .resources import get as rget, config as rconfig, output_dirs
 from .utils import Namespace, backup_file, cached, datetime_iso, get_metadata, json_load, memoize, profile, set_metadata
 
@@ -228,12 +228,16 @@ class TaskResult:
             try:
                 df = read_csv(predictions_file, dtype=object)
                 log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
-                if rconfig().test_mode:
-                    TaskResult.validate_predictions(df)
-                if df.shape[1] > 2:
-                    return ClassificationResult(df)
+                if  'y_past_period_error' in df.columns:
+                    return TimeSeriesResult(df)
                 else:
-                    return RegressionResult(df)
+                    if rconfig().test_mode:
+                        TaskResult.validate_predictions(df)
+
+                    if df.shape[1] > 2:
+                        return ClassificationResult(df)
+                    else:
+                        return RegressionResult(df)
             except Exception as e:
                 return ErrorResult(ResultError(e))
         else:
@@ -255,7 +259,8 @@ class TaskResult:
                          predictions: Union[A, DF, S] = None, truth: Union[A, DF, S] = None,
                          probabilities: Union[A, DF] = None, probabilities_labels: Union[list, A] = None,
                          target_is_encoded: bool = False,
-                         preview: bool = True):
+                         preview: bool = True,
+                         quantiles: Union[A, DF] = None):
         """ Save class probabilities and predicted labels to file in csv format.
 
         :param dataset:
@@ -308,6 +313,16 @@ class TaskResult:
 
         df = df.assign(predictions=preds)
         df = df.assign(truth=truth)
+        if quantiles is not None:
+            quantiles.reset_index(drop=True, inplace=True)
+            df = pd.concat([df, quantiles], axis=1)
+        if dataset.type == DatasetType.timeseries:
+            period_length = 1 # this period length could be adapted to the Dataset, but then we need to pass this information as well. As of now this should be fine.
+            item_ids, inverse_item_ids = np.unique(dataset.test.X[dataset.id_column].squeeze().to_numpy(), return_index=False, return_inverse=True)
+            y_past = [dataset.test.y.squeeze().to_numpy()[inverse_item_ids == i][:-dataset.prediction_length] for i in range(len(item_ids))]
+            y_past_period_error = [np.abs(y_past_item[period_length:] - y_past_item[:-period_length]).mean() for y_past_item in y_past]
+            y_past_period_error_rep = np.repeat(y_past_period_error, dataset.prediction_length)
+            df = df.assign(y_past_period_error=y_past_period_error_rep)
         if preview:
             log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(output_file)
@@ -656,6 +671,91 @@ class RegressionResult(Result):
         """R^2"""
         return float(r2_score(self.truth, self.predictions))
 
+class TimeSeriesResult(Result):
+
+    def __init__(self, predictions_df, info=None):
+        super().__init__(predictions_df, info)
+        self.truth = self.df['truth'].values if self.df is not None else None #.iloc[:, 1].values if self.df is not None else None
+        self.predictions = self.df['predictions'].values if self.df is not None else None #.iloc[:, -2].values if self.df is not None else None
+        self.y_past_period_error = self.df['y_past_period_error'].values
+        self.quantiles = self.df.iloc[:, 2:-1].values
+        self.quantiles_probs = np.array([float(q) for q in self.df.columns[2:-1]])
+        self.truth = self.truth.astype(float, copy=False)
+        self.predictions = self.predictions.astype(float, copy=False)
+        self.quantiles = self.quantiles.astype(float, copy=False)
+        self.y_past_period_error = self.y_past_period_error.astype(float, copy=False)
+
+        self.target = Feature(0, 'target', 'real', is_target=True)
+        self.type = DatasetType.timeseries
+
+    @metric(higher_is_better=False)
+    def mae(self):
+        """Mean Absolute Error"""
+        return float(mean_absolute_error(self.truth, self.predictions))
+
+    @metric(higher_is_better=False)
+    def mse(self):
+        """Mean Squared Error"""
+        return float(mean_squared_error(self.truth, self.predictions))
+
+    @metric(higher_is_better=False)
+    def msle(self):
+        """Mean Squared Logarithmic Error"""
+        return float(mean_squared_log_error(self.truth, self.predictions))
+
+    @metric(higher_is_better=False)
+    def rmse(self):
+        """Root Mean Square Error"""
+        return math.sqrt(self.mse())
+
+    @metric(higher_is_better=False)
+    def rmsle(self):
+        """Root Mean Square Logarithmic Error"""
+        return math.sqrt(self.msle())
+
+    @metric(higher_is_better=True)
+    def r2(self):
+        """R^2"""
+        return float(r2_score(self.truth, self.predictions))
+
+    @metric(higher_is_better=False)
+    def mase(self):
+        """Mean Absolute Scaled Error"""
+        return float(np.nanmean(np.abs(self.truth/self.y_past_period_error - self.predictions/self.y_past_period_error)))
+
+    @metric(higher_is_better=False)
+    def smape(self):
+        """Symmetric Mean Absolute Percentage Error"""
+        num = np.abs(self.truth - self.predictions)
+        denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
+        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
+        # might not be fully mathematically correct, but at least we don't get NaNs)
+        denom[denom == 0] = math.inf
+        return np.mean(num / denom)
+
+    @metric(higher_is_better=False)
+    def nrmse(self):
+        """Normalized Root Mean Square Error"""
+        return self.rmse() / np.mean(np.abs(self.truth))
+
+    @metric(higher_is_better=False)
+    def nd(self):
+        """nd = ?"""
+        return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
+
+    @metric(higher_is_better=False)
+    def ncrps(self):
+        """Normalized Continuous Ranked Probability Score"""
+        quantile_losses = 2 * np.sum(
+            np.abs(
+                (self.quantiles - self.truth[:, None])
+                * ((self.quantiles >= self.truth[:, None]) - self.quantiles_probs[None, :])
+            ),
+            axis=0,
+        )
+        denom = np.sum(np.abs(self.truth)) # shape [num_time_series, num_quantiles]
+        weighted_losses = quantile_losses.sum(0) / denom  # shape [num_quantiles]
+        return weighted_losses.mean()
 
 _encode_predictions_and_truth_ = False
 

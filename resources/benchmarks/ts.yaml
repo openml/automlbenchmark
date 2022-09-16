@@ -3,7 +3,11 @@
 - name: covid
   dataset:
     train: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/train.csv
-    test:  https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
+    test: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
     target: ConfirmedCases
-  folds: 1
+    type: timeseries
+    prediction_length: 30
+    id_column: name
+    timestamp_column: Date
 
+  folds: 1
