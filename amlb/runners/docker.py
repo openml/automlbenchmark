@@ -116,8 +116,8 @@ class DockerBenchmark(ContainerBenchmark):
         docker_content = """FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get install -y tzdata
-RUN apt-get -y install apt-utils dialog locales sudo
+RUN apt-get update
+RUN apt-get -y install apt-utils dialog locales tzdata sudo
 RUN apt-get -y install curl wget unzip git
 RUN apt-get -y install software-properties-common
 RUN add-apt-repository -y ppa:deadsnakes/ppa
