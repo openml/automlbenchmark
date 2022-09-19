@@ -13,6 +13,7 @@ from ..resources import config as rconfig
 from ..utils import dir_of, run_cmd, str_digest, str_sanitize, touch
 from .container import ContainerBenchmark
 
+
 log = logging.getLogger(__name__)
 
 
@@ -34,19 +35,16 @@ class DockerBenchmark(ContainerBenchmark):
         self.userid = os.getuid()
         self.usergid = os.getgid()
         self.minimize_instances = rconfig().docker.minimize_instances
-        self.container_name = "docker"
+        self.container_name = 'docker'
         self.force_branch = rconfig().docker.force_branch
-        self.custom_commands = (
-            self.framework_module.docker_commands(
-                self.framework_def.setup_args, setup_cmd=self.framework_def._setup_cmd
-            )
-            if hasattr(self.framework_module, "docker_commands")
-            else ""
-        )
+        self.custom_commands = self.framework_module.docker_commands(
+            self.framework_def.setup_args,
+            setup_cmd=self.framework_def._setup_cmd
+        ) if hasattr(self.framework_module, 'docker_commands') else ""
 
     @property
     def _script(self):
-        return os.path.join(self._framework_dir, _setup_dir_, "Dockerfile")
+        return os.path.join(self._framework_dir, _setup_dir_, 'Dockerfile')
 
     def _start_container(self, script_params=""):
         """Implementes the container run method"""
@@ -55,8 +53,7 @@ class DockerBenchmark(ContainerBenchmark):
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
-        # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
-        script_extra_params = "--session="
+        script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} "
@@ -77,10 +74,8 @@ class DockerBenchmark(ContainerBenchmark):
         log.info("Datasets are loaded by default from folder %s.", in_dir)
         log.info("Generated files will be available in folder %s.", out_dir)
         try:
-            run_cmd(
-                cmd, _capture_error_=False
-            )  # console logs are written on stderr by default: not capturing allows live display
-        except Exception:  # also want to handle KeyboardInterrupt
+            run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
+        except:  # also want to handle KeyboardInterrupt
             try:
                 run_cmd(f"docker kill {inst_name}")
             except Exception:
@@ -92,7 +87,7 @@ class DockerBenchmark(ContainerBenchmark):
         """Implements a method to see if the container image is available"""
         output, _ = run_cmd(f"docker images -q {image}")
         log.debug("docker image id: %s", output)
-        if re.match(r"^[0-9a-f]+$", output.strip()):
+        if re.match(r'^[0-9a-f]+$', output.strip()):
             return True
         try:
             run_cmd(f"docker pull {image}", _live_output_=True)
@@ -103,12 +98,12 @@ class DockerBenchmark(ContainerBenchmark):
 
     def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
-        run_cmd(
-            "docker build {options} -t {container} -f {script} .".format(
-                options="" if cache else "--no-cache", container=image, script=self._script
-            ),
+        run_cmd("docker build {options} -t {container} -f {script} .".format(
+            options="" if cache else "--no-cache",
+            container=image,
+            script=self._script),
             _live_output_=rconfig().setup.live_output,
-            _activity_timeout_=rconfig().setup.activity_timeout,
+            _activity_timeout_=rconfig().setup.activity_timeout
         )
         log.info(f"Successfully built docker image {image}.")
 
@@ -119,6 +114,7 @@ class DockerBenchmark(ContainerBenchmark):
 
     def _generate_script(self, custom_commands):
         docker_content = """FROM ubuntu:18.04
+
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y tzdata
 RUN apt-get -y install apt-utils dialog locales sudo
@@ -166,7 +162,7 @@ RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.t
 RUN chown -R {username}.{username} /bench
 RUN chown -R {username}.{username} /home/{username}
 USER {username}
-ARG DEBIAN_FRONTEND=noninteractive
+
 RUN $PY {script} {framework} -s only
 {custom_commands}
 
@@ -176,18 +172,17 @@ CMD ["{framework}", "test"]
 
 """.format(
             custom_commands=custom_commands.format(
-                setup=dir_of(os.path.join(self._framework_dir, "setup", ""), rel_to_project_root=True),
+                setup=dir_of(os.path.join(self._framework_dir, "setup", ""),
+                             rel_to_project_root=True),
                 pip="$PIP",
-                py="$PY",
+                py="$PY"
             ),
-            framework=self._forward_params["framework_name"],
+            framework=self._forward_params['framework_name'],
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
-            userid=self.userid,
-            username=self.user,
         )
 
         touch(self._script)
-        with open(self._script, "w") as file:
+        with open(self._script, 'w') as file:
             file.write(docker_content)
