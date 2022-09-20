@@ -1,5 +1,5 @@
 from amlb.benchmark import TaskConfig
-from amlb.data import Dataset
+from amlb.data import Dataset, DatasetType
 from amlb.utils import call_script_in_same_dir
 
 
@@ -9,6 +9,15 @@ def setup(*args, **kwargs):
 
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
+
+    if hasattr(dataset, 'timestamp_column') is False:
+        dataset.timestamp_column = None
+    if hasattr(dataset, 'id_column') is False:
+        dataset.id_column = None
+    if hasattr(dataset, 'prediction_length') is False:
+        raise AttributeError("Unspecified `prediction_length`.")
+    if dataset.type is not DatasetType.timeseries:
+        raise ValueError("AutoGluonTS only supports timeseries.")
 
     data = dict(
         # train=dict(path=dataset.train.data_path('parquet')),
@@ -20,9 +29,9 @@ def run(dataset: Dataset, config: TaskConfig):
             classes=dataset.target.values
         ),
         problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
-        timestamp_column=dataset.timestamp_column if dataset.timestamp_column is not None else None,
-        id_column=dataset.id_column if dataset.id_column is not None else None,
-        prediction_length=dataset.prediction_length if dataset.prediction_length is not None else None
+        timestamp_column=dataset.timestamp_column,
+        id_column=dataset.id_column,
+        prediction_length=dataset.prediction_length
     )
 
     return run_in_venv(__file__, "exec.py",
