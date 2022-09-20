@@ -489,8 +489,17 @@ class BenchmarkTask:
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
+            if self._task_def.dataset['type'] == 'timeseries' and self._task_def.dataset['timestamp_column'] is None:
+                log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
+                self._task_def.dataset['timestamp_column'] = "timestamp"
             self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold, timestamp_column=self._task_def.dataset['timestamp_column'])
             if self._dataset.type == DatasetType.timeseries:
+                if self._task_def.dataset['id_column'] is None:
+                    log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
+                    self._task_def.dataset['id_column'] = "item_id"
+                if self._task_def.dataset['prediction_length'] is None:
+                    log.warning("Warning: For timeseries task setting undefined prediction length to `1`.")
+                    self._task_def.dataset['prediction_length'] = "1"
                 self._dataset.timestamp_column=self._task_def.dataset['timestamp_column']
                 self._dataset.id_column=self._task_def.dataset['id_column']
                 self._dataset.prediction_length=self._task_def.dataset['prediction_length']
