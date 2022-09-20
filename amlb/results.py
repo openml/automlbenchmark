@@ -271,6 +271,7 @@ class TaskResult:
         :param probabilities_labels:
         :param target_is_encoded:
         :param preview:
+        :param qunatiles:
         :return: None
         """
         log.debug("Saving predictions to `%s`.", output_file)
@@ -313,14 +314,22 @@ class TaskResult:
 
         df = df.assign(predictions=preds)
         df = df.assign(truth=truth)
-        if quantiles is not None:
-            quantiles.reset_index(drop=True, inplace=True)
-            df = pd.concat([df, quantiles], axis=1)
+
         if dataset.type == DatasetType.timeseries:
-            period_length = 1 # this period length could be adapted to the Dataset, but then we need to pass this information as well. As of now this should be fine.
+            if quantiles is not None:
+                quantiles = quantiles.reset_index(drop=True)
+                df = pd.concat([df, quantiles], axis=1)
+
+            period_length = 1 # TODO: This period length could be adapted to the Dataset, but then we need to pass this information as well. As of now this works.
+
+            # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
+            # 1. retrieve item_ids for each sequence/item
             item_ids, inverse_item_ids = np.unique(dataset.test.X[dataset.id_column].squeeze().to_numpy(), return_index=False, return_inverse=True)
+            # 2. capture sequences in a list
             y_past = [dataset.test.y.squeeze().to_numpy()[inverse_item_ids == i][:-dataset.prediction_length] for i in range(len(item_ids))]
+            # 3. calculate period error per sequence
             y_past_period_error = [np.abs(y_past_item[period_length:] - y_past_item[:-period_length]).mean() for y_past_item in y_past]
+            # 4. repeat period error for each sequence, to save one for each element
             y_past_period_error_rep = np.repeat(y_past_period_error, dataset.prediction_length)
             df = df.assign(y_past_period_error=y_past_period_error_rep)
         if preview:
