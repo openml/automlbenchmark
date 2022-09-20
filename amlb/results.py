@@ -271,7 +271,7 @@ class TaskResult:
         :param probabilities_labels:
         :param target_is_encoded:
         :param preview:
-        :param qunatiles:
+        :param quantiles:
         :return: None
         """
         log.debug("Saving predictions to `%s`.", output_file)
