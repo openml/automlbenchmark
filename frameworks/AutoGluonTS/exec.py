@@ -22,18 +22,12 @@ from frameworks.shared.utils import Timer, zip_path
 log = logging.getLogger(__name__)
 
 
-# FIXME: Why does leaderboard claim a different test score than AMLB for RMSE?
-# FIXME: Currently ignoring test_path, just using train data for evaluation
-# TODO: How to evaluate more complex metrics?
 def run(dataset, config):
     log.info(f"\n**** AutoGluon TimeSeries [v{__version__}] ****\n")
 
-    #################
-    # TODO: Need to pass the following info somehow
     timestamp_column = dataset.timestamp_column
     id_column = dataset.id_column
     prediction_length = dataset.prediction_length
-    #################
 
     eval_metric = get_eval_metric(config)
     label = dataset.target.name
@@ -45,6 +39,7 @@ def run(dataset, config):
                                       test_path=dataset.test.path,
                                       timestamp_column=timestamp_column,
                                       id_column=id_column)
+    test_data_past = test_data.copy().slice_by_timestep(slice(None, -prediction_length))
 
     predictor_path = tempfile.mkdtemp() + os.sep
     with Timer() as training:
@@ -61,7 +56,6 @@ def run(dataset, config):
         )
 
     with Timer() as predict:
-        test_data_past = test_data.copy().slice_by_timestep(slice(None, -prediction_length))
         predictions = predictor.predict(test_data_past)
     log.info(predictions)
 
@@ -72,7 +66,7 @@ def run(dataset, config):
     log.info(predictions_only)
     log.info(truth_only)
 
-    leaderboard = predictor.leaderboard(test_data)
+    leaderboard = predictor.leaderboard(test_data, silent=True)
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         log.info(leaderboard)
@@ -91,7 +85,7 @@ def run(dataset, config):
                   models_count=num_models_trained,
                   training_duration=training.duration,
                   predict_duration=predict.duration,
-                  quantiles=predictions.iloc[:, 1:])
+                  quantiles=predictions.drop(columns=['mean']))
 
 
 def load_data(train_path, test_path, timestamp_column, id_column):
