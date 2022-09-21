@@ -489,7 +489,20 @@ class BenchmarkTask:
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
-            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold)
+            if self._task_def.dataset['type'] == 'timeseries' and self._task_def.dataset['timestamp_column'] is None:
+                log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
+                self._task_def.dataset['timestamp_column'] = "timestamp"
+            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold, timestamp_column=self._task_def.dataset['timestamp_column'])
+            if self._dataset.type == DatasetType.timeseries:
+                if self._task_def.dataset['id_column'] is None:
+                    log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
+                    self._task_def.dataset['id_column'] = "item_id"
+                if self._task_def.dataset['prediction_length'] is None:
+                    log.warning("Warning: For timeseries task setting undefined prediction length to `1`.")
+                    self._task_def.dataset['prediction_length'] = "1"
+                self._dataset.timestamp_column=self._task_def.dataset['timestamp_column']
+                self._dataset.id_column=self._task_def.dataset['id_column']
+                self._dataset.prediction_length=self._task_def.dataset['prediction_length']
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
@@ -522,7 +535,12 @@ class BenchmarkTask:
                              predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def = self.benchmark.framework_def
         task_config = copy(self.task_config)
-        task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
+        if self._dataset.type == DatasetType.regression:
+            task_config.type = 'regression'
+        elif self._dataset.type == DatasetType.timeseries:
+            task_config.type = 'timeseries'
+        else:
+            task_config.type = 'classification'
         task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
@@ -552,4 +570,3 @@ class BenchmarkTask:
         finally:
             self._dataset.release()
         return results.compute_score(result=result, meta_result=meta_result)
-

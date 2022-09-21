@@ -22,18 +22,12 @@ from frameworks.shared.utils import Timer, zip_path
 log = logging.getLogger(__name__)
 
 
-# FIXME: Why does leaderboard claim a different test score than AMLB for RMSE?
-# FIXME: Currently ignoring test_path, just using train data for evaluation
-# TODO: How to evaluate more complex metrics?
 def run(dataset, config):
     log.info(f"\n**** AutoGluon TimeSeries [v{__version__}] ****\n")
 
-    #################
-    # TODO: Need to pass the following info somehow
-    timestamp_column = "Date"
-    id_column = "name"
-    prediction_length = 5
-    #################
+    timestamp_column = dataset.timestamp_column
+    id_column = dataset.id_column
+    prediction_length = dataset.prediction_length
 
     eval_metric = get_eval_metric(config)
     label = dataset.target.name
@@ -41,10 +35,11 @@ def run(dataset, config):
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
-    train_data, test_data, test_data_leaderboard = load_data(train_path=dataset.train.path,
-                                                             timestamp_column=timestamp_column,
-                                                             id_column=id_column,
-                                                             prediction_length=prediction_length)
+    train_data, test_data = load_data(train_path=dataset.train.path,
+                                      test_path=dataset.test.path,
+                                      timestamp_column=timestamp_column,
+                                      id_column=id_column)
+    test_data_past = test_data.copy().slice_by_timestep(slice(None, -prediction_length))
 
     predictor_path = tempfile.mkdtemp() + os.sep
     with Timer() as training:
@@ -61,16 +56,17 @@ def run(dataset, config):
         )
 
     with Timer() as predict:
-        predictions = predictor.predict(train_data)
+        predictions = predictor.predict(test_data_past)
     log.info(predictions)
 
     predictions_only = predictions['mean'].values
-    truth_only = test_data[label].values
+    test_data_future = test_data.copy().slice_by_timestep(slice(-prediction_length, None))
+    truth_only = test_data_future[label].values
 
     log.info(predictions_only)
     log.info(truth_only)
 
-    leaderboard = predictor.leaderboard(test_data_leaderboard)
+    leaderboard = predictor.leaderboard(test_data, silent=True)
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         log.info(leaderboard)
@@ -88,26 +84,43 @@ def run(dataset, config):
                   target_is_encoded=False,
                   models_count=num_models_trained,
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  quantiles=predictions.drop(columns=['mean']))
 
 
-def load_data(train_path, timestamp_column, id_column, prediction_length):
-    df = TabularDataset(train_path)
-    df[timestamp_column] = pd.to_datetime(df[timestamp_column].astype('object'))
-    train_data = TimeSeriesDataFrame.from_data_frame(df, id_column=id_column, timestamp_column=timestamp_column)
+def load_data(train_path, test_path, timestamp_column, id_column):
 
-    test_data_leaderboard = train_data.copy()
-    # the data set with the last prediction_length time steps included, i.e., akin to `a[:-5]`
-    train_data = train_data.slice_by_timestep(slice(None, -prediction_length))
+    train_df = pd.read_csv(
+        train_path,
+        parse_dates=[timestamp_column],
+    )
 
-    test_data = test_data_leaderboard.slice_by_timestep(slice(-prediction_length, None))
+    train_data = TimeSeriesDataFrame.from_data_frame(
+        train_df,
+        id_column=id_column,
+        timestamp_column=timestamp_column,
+    )
 
-    return train_data, test_data, test_data_leaderboard
+    test_df = pd.read_csv(
+        test_path,
+        parse_dates=[timestamp_column],
+    )
+
+    test_data = TimeSeriesDataFrame.from_data_frame(
+        test_df,
+        id_column=id_column,
+        timestamp_column=timestamp_column,
+    )
+
+    return train_data, test_data
 
 
 def get_eval_metric(config):
     # TODO: Support more metrics
     metrics_mapping = dict(
+        mape="MAPE",
+        smape="sMAPE",
+        mase="MASE",
         mse="MSE",
         rmse="RMSE",
     )
