@@ -118,9 +118,11 @@ def load_data(train_path, test_path, timestamp_column, id_column):
 def get_eval_metric(config):
     # TODO: Support more metrics
     metrics_mapping = dict(
+        mape="MAPE",
+        smape="sMAPE",
+        mase="MASE",
         mse="MSE",
         rmse="RMSE",
-        mase="MASE",
     )
 
     eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None

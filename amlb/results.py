@@ -680,7 +680,7 @@ class RegressionResult(Result):
         """R^2"""
         return float(r2_score(self.truth, self.predictions))
 
-class TimeSeriesResult(Result):
+class TimeSeriesResult(RegressionResult):
 
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
@@ -698,36 +698,6 @@ class TimeSeriesResult(Result):
         self.type = DatasetType.timeseries
 
     @metric(higher_is_better=False)
-    def mae(self):
-        """Mean Absolute Error"""
-        return float(mean_absolute_error(self.truth, self.predictions))
-
-    @metric(higher_is_better=False)
-    def mse(self):
-        """Mean Squared Error"""
-        return float(mean_squared_error(self.truth, self.predictions))
-
-    @metric(higher_is_better=False)
-    def msle(self):
-        """Mean Squared Logarithmic Error"""
-        return float(mean_squared_log_error(self.truth, self.predictions))
-
-    @metric(higher_is_better=False)
-    def rmse(self):
-        """Root Mean Square Error"""
-        return math.sqrt(self.mse())
-
-    @metric(higher_is_better=False)
-    def rmsle(self):
-        """Root Mean Square Logarithmic Error"""
-        return math.sqrt(self.msle())
-
-    @metric(higher_is_better=True)
-    def r2(self):
-        """R^2"""
-        return float(r2_score(self.truth, self.predictions))
-
-    @metric(higher_is_better=False)
     def mase(self):
         """Mean Absolute Scaled Error"""
         return float(np.nanmean(np.abs(self.truth/self.y_past_period_error - self.predictions/self.y_past_period_error)))
@@ -743,13 +713,23 @@ class TimeSeriesResult(Result):
         return np.mean(num / denom)
 
     @metric(higher_is_better=False)
+    def mape(self):
+        """Symmetric Mean Absolute Percentage Error"""
+        num = np.abs(self.truth - self.predictions)
+        denom = np.abs(self.truth)
+        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
+        # might not be fully mathematically correct, but at least we don't get NaNs)
+        denom[denom == 0] = math.inf
+        return np.mean(num / denom)
+
+    @metric(higher_is_better=False)
     def nrmse(self):
         """Normalized Root Mean Square Error"""
         return self.rmse() / np.mean(np.abs(self.truth))
 
     @metric(higher_is_better=False)
-    def nd(self):
-        """nd = ?"""
+    def wape(self):
+        """Weighted Average Percentage Error"""
         return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
 
     @metric(higher_is_better=False)

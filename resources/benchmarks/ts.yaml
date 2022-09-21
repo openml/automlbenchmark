@@ -2,12 +2,12 @@
 
 - name: covid
   dataset:
-    train: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/train.csv
-    test: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
-    target: ConfirmedCases
+    train: s3://autogluon-ts-bench/data/covid_deaths/csv/train.csv # /tmp/gluonts/train_df.csv # https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/train.csv
+    test: s3://autogluon-ts-bench/data/covid_deaths/csv/test.csv # /tmp/gluonts/test_df.csv # https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
+    #target: target #target ConfirmedCases
     type: timeseries
     prediction_length: 30
-    id_column: name
-    timestamp_column: Date
+    #id_column: item_id # item_id name
+    #timestamp_column: timestamp # timestamp Date
 
   folds: 1
