@@ -492,7 +492,9 @@ class BenchmarkTask:
             if self._task_def.dataset['type'] == 'timeseries' and self._task_def.dataset['timestamp_column'] is None:
                 log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
                 self._task_def.dataset['timestamp_column'] = "timestamp"
-            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold, timestamp_column=self._task_def.dataset['timestamp_column'])
+            dataset_name_and_config = copy(self._task_def.dataset)
+            dataset_name_and_config.name = self._task_def.name
+            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=dataset_name_and_config, fold=self.fold)
             if self._dataset.type == DatasetType.timeseries:
                 if self._task_def.dataset['id_column'] is None:
                     log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")

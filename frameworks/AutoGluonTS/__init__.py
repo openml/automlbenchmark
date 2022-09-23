@@ -1,7 +1,7 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset, DatasetType
 from amlb.utils import call_script_in_same_dir
-
+from copy import deepcopy
 
 def setup(*args, **kwargs):
     call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
@@ -10,6 +10,7 @@ def setup(*args, **kwargs):
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
+    dataset = deepcopy(dataset)
     if hasattr(dataset, 'timestamp_column') is False:
         dataset.timestamp_column = None
     if hasattr(dataset, 'id_column') is False:
