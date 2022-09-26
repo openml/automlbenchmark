@@ -505,6 +505,20 @@ class BenchmarkTask:
                 self._dataset.timestamp_column=self._task_def.dataset['timestamp_column']
                 self._dataset.id_column=self._task_def.dataset['id_column']
                 self._dataset.prediction_length=self._task_def.dataset['prediction_length']
+
+                train_seqs_lengths = self._dataset.train.X.groupby(self._dataset.id_column).count()
+                test_seqs_lengths = self._dataset.test.X.groupby(self._dataset.id_column).count()
+                prediction_length_max_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
+                prediction_length_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
+                if not self._dataset.prediction_length == prediction_length_max_diff_train_test:
+                    log.warning("Warning: Prediction length {}, does not equal difference between test and train sequence lengths {}.".format(self._dataset.prediction_length, prediction_length_max_diff_train_test))
+                if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
+                    raise ValueError("Error: Not all sequences of train and test set have same sequence length difference.")
+                if self._dataset.prediction_length > prediction_length_max_diff_train_test:
+                    raise ValueError("Error: Prediction length {} longer than at least one difference between train and test sequence length.")
+                if self._dataset.prediction_length > prediction_length_max_min_train_test:
+                    raise ValueError("Error: Prediction length {} longer than minimum sequence length + 1.".format())
+
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
