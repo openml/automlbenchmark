@@ -159,8 +159,8 @@ VOLUME /custom
 ADD . /bench/
 
 RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
-RUN chown -R {username}.{username} /bench
-RUN chown -R {username}.{username} /home/{username}
+RUN chown -R {username}:{username} /bench
+RUN chown -R {username}:{username} /home/{username}
 USER {username}
 
 RUN $PY {script} {framework} -s only
