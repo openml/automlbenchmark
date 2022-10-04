@@ -45,7 +45,7 @@
   openml_task_id: 359966
 
 - name: KDDCup09-Upselling
-  openml_task_id: 360115
+  openml_task_id: 360975
 
 - name: KDDCup09_appetency
   openml_task_id: 3945
@@ -54,7 +54,7 @@
   openml_task_id: 360112
 
 - name: MIP-2016-regression
-  openml_task_id: 359947
+  openml_task_id: 360945
 
 - name: Mercedes_Benz_Greener_Manufacturing
   openml_task_id: 233215

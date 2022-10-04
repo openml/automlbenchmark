@@ -1,5 +1,5 @@
 ---
-project_repository: https://github.com/Innixma/automlbenchmark#ag-2022_10_02_zs    # this is also the url used to clone the repository on ec2 instances
+project_repository: https://github.com/Innixma/automlbenchmark#ag-2022_10_04_zs    # this is also the url used to clone the repository on ec2 instances
                                                                           # when running those without docker.
                                                                           # to clone a specific branch/tag, add a url fragment, e.g.:
                                                                           # https://github.com/openml/automlbenchmark#stable
@@ -132,7 +132,7 @@ aws:                    # configuration namespace for AWS mode.
     temporary: false                # if true, the S3 bucket is created during setup and deleted at the end of the benchmark run.
                                     # Note that for safety reasons, the bucket is then created with a generated name: <s3.bucket>-<now>.
                                     # if false, the real <s3.bucket> name is used (after creation if it doesn't exists), but never deleted.
-    root_key: ec2/2022_10_02_zs/                  #
+    root_key: ec2/2022_10_04_zs/                  #
     delete_resources: false         #
 
   ec2:
