@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/awslabs/autogluon.git"}
@@ -36,4 +37,10 @@ else
     PIP install -e tabular/[skex]
 fi
 
-PY -c "from autogluon.tabular.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
+if [[ ${MODULE} == "timeseries" ]]; then
+    PY -c "from autogluon.tabular.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
+    # TODO: GPU version install
+    PIP install "mxnet<2.0"
+else
+    PY -c "from autogluon.timeseries.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
+fi

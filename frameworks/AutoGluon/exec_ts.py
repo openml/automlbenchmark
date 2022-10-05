@@ -32,6 +32,7 @@ def run(dataset, config):
     eval_metric = get_eval_metric(config)
     label = dataset.target.name
     time_limit = config.max_runtime_seconds
+    time_limit = 10.
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
