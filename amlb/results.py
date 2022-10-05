@@ -228,12 +228,13 @@ class TaskResult:
             try:
                 df = read_csv(predictions_file, dtype=object)
                 log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
+
+                if rconfig().test_mode:
+                    TaskResult.validate_predictions(df)
+
                 if  'y_past_period_error' in df.columns:
                     return TimeSeriesResult(df)
                 else:
-                    if rconfig().test_mode:
-                        TaskResult.validate_predictions(df)
-
                     if df.shape[1] > 2:
                         return ClassificationResult(df)
                     else:
