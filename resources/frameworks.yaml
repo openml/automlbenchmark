@@ -202,8 +202,6 @@ AutoGluonTS:
     AutoGluon-TimeSeries
   setup_env:
     MODULE: timeseries
-  params:
-    presets: good_quality
 
 #######################################
 ### Non AutoML reference frameworks ###

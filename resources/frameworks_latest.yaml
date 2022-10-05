@@ -85,10 +85,12 @@ TPOT:
 ####################################
 
 AutoGluonTS:
+  extends: AutoGluon
   version: "latest"
   description: |
     AutoGluon-TimeSeries
-  project: https://auto.gluon.ai
+  setup_env:
+    MODULE: timeseries
 
 #######################################
 ### Non AutoML reference frameworks ###
@@ -111,4 +113,3 @@ TunedRandomForest:
   version: 'latest'
   params:
     n_estimators: 2000
-
