@@ -54,12 +54,9 @@ class FileLoader:
             if DatasetType[dataset['type']] == DatasetType.timeseries and dataset['timestamp_column'] is None:
                 log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
                 dataset['timestamp_column'] = "timestamp"
-
             csv_dataset = CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=dataset['timestamp_column'] if 'timestamp_column' in dataset else None)
-
             if csv_dataset.type == DatasetType.timeseries:
                 csv_dataset = self.extend_dataset_with_timeseries_config(csv_dataset, dataset)
-
             return csv_dataset
         else:
             raise ValueError(f"Unsupported file type: {ext}")

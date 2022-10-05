@@ -492,7 +492,6 @@ class BenchmarkTask:
             dataset_name_and_config = copy(self._task_def.dataset)
             dataset_name_and_config.name = self._task_def.name
             self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=dataset_name_and_config, fold=self.fold)
-
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
