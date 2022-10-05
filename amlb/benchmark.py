@@ -489,35 +489,9 @@ class BenchmarkTask:
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
-            if self._task_def.dataset['type'] == 'timeseries' and self._task_def.dataset['timestamp_column'] is None:
-                log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
-                self._task_def.dataset['timestamp_column'] = "timestamp"
             dataset_name_and_config = copy(self._task_def.dataset)
             dataset_name_and_config.name = self._task_def.name
             self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=dataset_name_and_config, fold=self.fold)
-            if self._dataset.type == DatasetType.timeseries:
-                if self._task_def.dataset['id_column'] is None:
-                    log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
-                    self._task_def.dataset['id_column'] = "item_id"
-                if self._task_def.dataset['prediction_length'] is None:
-                    log.warning("Warning: For timeseries task setting undefined prediction length to `1`.")
-                    self._task_def.dataset['prediction_length'] = "1"
-                self._dataset.timestamp_column=self._task_def.dataset['timestamp_column']
-                self._dataset.id_column=self._task_def.dataset['id_column']
-                self._dataset.prediction_length=self._task_def.dataset['prediction_length']
-
-                train_seqs_lengths = self._dataset.train.X.groupby(self._dataset.id_column).count()
-                test_seqs_lengths = self._dataset.test.X.groupby(self._dataset.id_column).count()
-                prediction_length_max_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
-                prediction_length_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
-                if not self._dataset.prediction_length == prediction_length_max_diff_train_test:
-                    log.warning("Warning: Prediction length {}, does not equal difference between test and train sequence lengths {}.".format(self._dataset.prediction_length, prediction_length_max_diff_train_test))
-                if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
-                    raise ValueError("Error: Not all sequences of train and test set have same sequence length difference.")
-                if self._dataset.prediction_length > prediction_length_max_diff_train_test:
-                    raise ValueError("Error: Prediction length {} longer than at least one difference between train and test sequence length.")
-                if self._dataset.prediction_length > prediction_length_max_min_train_test:
-                    raise ValueError("Error: Prediction length {} longer than minimum sequence length + 1.".format())
 
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
