@@ -28,7 +28,7 @@ def run(dataset, config):
 
     timestamp_column = dataset.timestamp_column
     id_column = dataset.id_column
-    prediction_length = dataset.prediction_length
+    prediction_length = dataset.forecast_range_in_steps
 
     eval_metric = get_eval_metric(config)
     label = dataset.target.name
@@ -86,11 +86,11 @@ def run(dataset, config):
     #dataset..X /. y
     item_ids, inverse_item_ids = np.unique(test_data.reset_index()[dataset.id_column].squeeze().to_numpy(), return_index=False, return_inverse=True)
     # 2. capture sequences in a list
-    y_past = [test_data[label].squeeze().to_numpy()[inverse_item_ids == i][:-dataset.prediction_length] for i in range(len(item_ids))]
+    y_past = [test_data[label].squeeze().to_numpy()[inverse_item_ids == i][:-prediction_length] for i in range(len(item_ids))]
     # 3. calculate period error per sequence
     y_past_period_error = [np.abs(y_past_item[period_length:] - y_past_item[:-period_length]).mean() for y_past_item in y_past]
     # 4. repeat period error for each sequence, to save one for each element
-    y_past_period_error_rep = np.repeat(y_past_period_error, dataset.prediction_length)
+    y_past_period_error_rep = np.repeat(y_past_period_error, prediction_length)
 
     optional_columns = quantiles
     optional_columns = optional_columns.assign(y_past_period_error=y_past_period_error_rep)

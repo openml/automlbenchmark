@@ -142,26 +142,26 @@ class FileLoader:
         if dataset_config['id_column'] is None:
             log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
             dataset_config['id_column'] = "item_id"
-        if dataset_config['prediction_length'] is None:
-            log.warning("Warning: For timeseries task setting undefined prediction length to `1`.")
-            dataset_config['prediction_length'] = "1"
+        if dataset_config['forecast_range_in_steps'] is None:
+            log.warning("Warning: For timeseries task setting undefined forecast_range_in_steps to `1`.")
+            dataset_config['forecast_range_in_steps'] = "1"
 
         dataset.timestamp_column=dataset_config['timestamp_column']
         dataset.id_column=dataset_config['id_column']
-        dataset.prediction_length=dataset_config['prediction_length']
+        dataset.forecast_range_in_steps=int(dataset_config['forecast_range_in_steps'])
 
         train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
         test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()
-        prediction_length_max_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
-        prediction_length_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
-        if not dataset.prediction_length == prediction_length_max_diff_train_test:
-            log.warning("Warning: Prediction length {}, does not equal difference between test and train sequence lengths {}.".format(dataset.prediction_length, prediction_length_max_diff_train_test))
+        forecast_range_in_steps_max_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
+        forecast_range_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
+        if not dataset.forecast_range_in_steps == forecast_range_in_steps_max_diff_train_test:
+            log.warning("Warning: Forecast range {}, does not equal difference between test and train sequence lengths {}.".format(dataset.forecast_range_in_steps, forecast_range_in_steps_max_diff_train_test))
         if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
             raise ValueError("Error: Not all sequences of train and test set have same sequence length difference.")
-        if dataset.prediction_length > prediction_length_max_diff_train_test:
-            raise ValueError("Error: Prediction length {} longer than at least one difference between train and test sequence length.")
-        if dataset.prediction_length > prediction_length_max_min_train_test:
-            raise ValueError("Error: Prediction length {} longer than minimum sequence length + 1.".format())
+        if dataset.forecast_range_in_steps > forecast_range_in_steps_max_diff_train_test:
+            raise ValueError("Error: Forecast range {} longer than at least one difference between train and test sequence length.")
+        if dataset.forecast_range_in_steps > forecast_range_in_steps_max_min_train_test:
+            raise ValueError("Error: Forecast range {} longer than minimum sequence length + 1.".format())
         return dataset
 
 

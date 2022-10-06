@@ -5,7 +5,7 @@
     train: s3://autogluon-ts-bench/data/covid_deaths/csv/train.csv
     test: s3://autogluon-ts-bench/data/covid_deaths/csv/test.csv
     type: timeseries
-    prediction_length: 30
+    forecast_range_in_steps: 30
   folds: 1
 
 - name: hospital
@@ -13,7 +13,7 @@
     train: s3://autogluon-ts-bench/data/hospital/csv/train.csv
     test: s3://autogluon-ts-bench/data/hospital/csv/test.csv
     type: timeseries
-    prediction_length: 12
+    forecast_range_in_steps: 12
   folds: 1
 
 - name: kdd_2018
@@ -21,7 +21,7 @@
     train: s3://autogluon-ts-bench/data/kdd_2018/csv/train.csv
     test: s3://autogluon-ts-bench/data/kdd_2018/csv/test.csv
     type: timeseries
-    prediction_length: 48
+    forecast_range_in_steps: 48
   folds: 1
 
 - name: m3_monthly
@@ -29,7 +29,7 @@
     train: s3://autogluon-ts-bench/data/m3_monthly/csv/train.csv
     test: s3://autogluon-ts-bench/data/m3_monthly/csv/test.csv
     type: timeseries
-    prediction_length: 18
+    forecast_range_in_steps: 18
   folds: 1
 
 - name: m3_other
@@ -37,7 +37,7 @@
     train: s3://autogluon-ts-bench/data/m3_other/csv/train.csv
     test: s3://autogluon-ts-bench/data/m3_other/csv/test.csv
     type: timeseries
-    prediction_length: 8
+    forecast_range_in_steps: 8
   folds: 1
 
 - name: m3_quarterly
@@ -45,7 +45,7 @@
     train: s3://autogluon-ts-bench/data/m3_quarterly/csv/train.csv
     test: s3://autogluon-ts-bench/data/m3_quarterly/csv/test.csv
     type: timeseries
-    prediction_length: 8
+    forecast_range_in_steps: 8
   folds: 1
 
 - name: m4_hourly
@@ -53,7 +53,7 @@
     train: s3://autogluon-ts-bench/data/m4_hourly/csv/train.csv
     test: s3://autogluon-ts-bench/data/m4_hourly/csv/test.csv
     type: timeseries
-    prediction_length: 48
+    forecast_range_in_steps: 48
   folds: 1
 
 - name: m4_weekly
@@ -61,7 +61,7 @@
     train: s3://autogluon-ts-bench/data/m4_weekly/csv/train.csv
     test: s3://autogluon-ts-bench/data/m4_weekly/csv/test.csv
     type: timeseries
-    prediction_length: 13
+    forecast_range_in_steps: 13
   folds: 1
 
 - name: nn5
@@ -69,7 +69,7 @@
     train: s3://autogluon-ts-bench/data/nn5/csv/train.csv
     test: s3://autogluon-ts-bench/data/nn5/csv/test.csv
     type: timeseries
-    prediction_length: 56
+    forecast_range_in_steps: 56
   folds: 1
 
 - name: solar
@@ -77,7 +77,7 @@
     train: s3://autogluon-ts-bench/data/solar/csv/train.csv
     test: s3://autogluon-ts-bench/data/solar/csv/test.csv
     type: timeseries
-    prediction_length: 24
+    forecast_range_in_steps: 24
   folds: 1
 
 - name: tourism_monthly
@@ -85,7 +85,7 @@
     train: s3://autogluon-ts-bench/data/tourism_monthly/csv/train.csv
     test: s3://autogluon-ts-bench/data/tourism_monthly/csv/test.csv
     type: timeseries
-    prediction_length: 24
+    forecast_range_in_steps: 24
   folds: 1
 
 - name: tourism_quarterly
@@ -93,5 +93,5 @@
     train: s3://autogluon-ts-bench/data/tourism_quarterly/csv/train.csv
     test: s3://autogluon-ts-bench/data/tourism_quarterly/csv/test.csv
     type: timeseries
-    prediction_length: 8
+    forecast_range_in_steps: 8
   folds: 1

@@ -30,8 +30,8 @@ def run(dataset: Dataset, config: TaskConfig):
             dataset.timestamp_column = None
         if not hasattr(dataset, 'id_column'):
             dataset.id_column = None
-        if not hasattr(dataset, 'prediction_length'):
-            raise AttributeError("Unspecified `prediction_length`.")
+        if not hasattr(dataset, 'forecast_range_in_steps'):
+            raise AttributeError("Unspecified `forecast_range_in_steps`.")
 
         data = dict(
             # train=dict(path=dataset.train.data_path('parquet')),
@@ -45,7 +45,7 @@ def run(dataset: Dataset, config: TaskConfig):
             problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
             timestamp_column=dataset.timestamp_column,
             id_column=dataset.id_column,
-            prediction_length=dataset.prediction_length
+            forecast_range_in_steps=dataset.forecast_range_in_steps
         )
         exec_file = "exec_ts.py"
 
