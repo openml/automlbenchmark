@@ -86,9 +86,9 @@ autoxgboost:
 flaml:
   version: 'stable'
   description: |
-    FLAML is a lightweight Python library that finds accurate machine learning models 
-    automatically, efficiently and economically. It frees users from selecting learners 
-    and hyperparameters for each learner. It is fast and cheap. 
+    FLAML is a lightweight Python library that finds accurate machine learning models
+    automatically, efficiently and economically. It frees users from selecting learners
+    and hyperparameters for each learner. It is fast and cheap.
   project: https://github.com/microsoft/FLAML
   refs: [https://arxiv.org/pdf/1911.04706.pdf]
 
@@ -139,12 +139,12 @@ mljarsupervised_compete:
   description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
-    
+
 MLNet:
   version: 'latest'
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
-    
+
 MLPlan:
   version: 'stable'
   abstract: true
@@ -196,10 +196,12 @@ TPOT:
 ####################################
 
 AutoGluonTS:
+  extends: AutoGluon
   version: "stable"
   description: |
     AutoGluon-TimeSeries
-  project: https://auto.gluon.ai
+  setup_env:
+    MODULE: timeseries
 
 #######################################
 ### Non AutoML reference frameworks ###
@@ -242,4 +244,3 @@ TunedRandomForest:
 #    _n_jobs: 1  # cf. RandomForest
 #    _tuning:
 #      n_estimators: 500
-

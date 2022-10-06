@@ -30,10 +30,10 @@ class FileLoader:
         self._cache_dir = cache_dir if cache_dir else tempfile.mkdtemp(prefix='amlb_cache')
 
     @profile(logger=log)
-    def load(self, dataset, fold=0, timestamp_column=None):
+    def load(self, dataset, fold=0):
         dataset = dataset if isinstance(dataset, ns) else ns(path=dataset)
         log.debug("Loading dataset %s", dataset)
-        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold)
+        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold, name=dataset['name'] if 'name' in dataset else None)
         assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
         # seed = rget().seed(fold)
         # if len(paths['test']) == 0:
@@ -51,21 +51,27 @@ class FileLoader:
         if ext == '.arff':
             return ArffDataset(train_path, test_path, target=target, features=features, type=type_)
         elif ext == '.csv':
-            return CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=timestamp_column)
+            if DatasetType[dataset['type']] == DatasetType.timeseries and dataset['timestamp_column'] is None:
+                log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
+                dataset['timestamp_column'] = "timestamp"
+            csv_dataset = CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=dataset['timestamp_column'] if 'timestamp_column' in dataset else None)
+            if csv_dataset.type == DatasetType.timeseries:
+                csv_dataset = self.extend_dataset_with_timeseries_config(csv_dataset, dataset)
+            return csv_dataset
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
-    def _extract_train_test_paths(self, dataset, fold=None):
+    def _extract_train_test_paths(self, dataset, fold=None, name=None):
         if isinstance(dataset, (tuple, list)):
             assert len(dataset) % 2 == 0, "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
             return self._extract_train_test_paths(ns(train=[p for i, p in enumerate(dataset) if i % 2 == 0],
                                                      test=[p for i, p in enumerate(dataset) if i % 2 == 1]),
-                                                  fold=fold)
+                                                  fold=fold, name=name)
         elif isinstance(dataset, ns):
-            return dict(train=[self._extract_train_test_paths(p)['train'][0]
+            return dict(train=[self._extract_train_test_paths(p, name=name)['train'][0]
                                if i == fold else None
                                for i, p in enumerate(as_list(dataset.train))],
-                        test=[self._extract_train_test_paths(p)['train'][0]
+                        test=[self._extract_train_test_paths(p, name=name)['train'][0]
                               if i == fold else None
                               for i, p in enumerate(as_list(dataset.test))])
         else:
@@ -116,7 +122,10 @@ class FileLoader:
                 assert len(paths) > 0, f"No dataset file found in {dataset}: they should follow the naming xxxx_train.ext, xxxx_test.ext or xxxx_train_0.ext, xxxx_test_0.ext, xxxx_train_1.ext, ..."
                 return paths
         elif is_valid_url(dataset):
-            cached_file = os.path.join(self._cache_dir, os.path.basename(dataset))
+            if name is None:
+                cached_file = os.path.join(self._cache_dir, os.path.basename(dataset))
+            else:
+                cached_file = os.path.join(self._cache_dir, name, os.path.basename(dataset))
             if not os.path.exists(cached_file):  # don't download if previously done
                 handler = get_file_handler(dataset)
                 assert handler.exists(dataset), f"Invalid path/url: {dataset}"
@@ -127,6 +136,38 @@ class FileLoader:
 
     def __repr__(self):
         return repr_def(self)
+
+
+    def extend_dataset_with_timeseries_config(self, dataset, dataset_config):
+        if dataset_config['id_column'] is None:
+            log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
+            dataset_config['id_column'] = "item_id"
+        if dataset_config['forecast_range_in_steps'] is None:
+            log.warning("Warning: For timeseries task setting undefined forecast_range_in_steps to `1`.")
+            dataset_config['forecast_range_in_steps'] = "1"
+
+        dataset.timestamp_column=dataset_config['timestamp_column']
+        dataset.id_column=dataset_config['id_column']
+        dataset.forecast_range_in_steps=int(dataset_config['forecast_range_in_steps'])
+
+        train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
+        test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()
+        forecast_range_in_steps_mean_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
+        forecast_range_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
+        if not dataset.forecast_range_in_steps == forecast_range_in_steps_mean_diff_train_test:
+            msg = f"Warning: Forecast range {dataset.forecast_range_in_steps}, does not equal mean difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
+            log.warning(msg)
+        if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
+            msg = f"Error: Not all sequences of train and test set have same sequence length difference."
+            raise ValueError(msg)
+        if dataset.forecast_range_in_steps > forecast_range_in_steps_mean_diff_train_test:
+            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
+            raise ValueError(msg)
+        if dataset.forecast_range_in_steps > forecast_range_in_steps_max_min_train_test:
+            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than minimum sequence length + 1, {forecast_range_in_steps_max_min_train_test}."
+            raise ValueError(msg)
+        return dataset
+
 
 
 class FileDataset(Dataset):

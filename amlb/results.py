@@ -228,12 +228,13 @@ class TaskResult:
             try:
                 df = read_csv(predictions_file, dtype=object)
                 log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
+
+                if rconfig().test_mode:
+                    TaskResult.validate_predictions(df)
+
                 if  'y_past_period_error' in df.columns:
                     return TimeSeriesResult(df)
                 else:
-                    if rconfig().test_mode:
-                        TaskResult.validate_predictions(df)
-
                     if df.shape[1] > 2:
                         return ClassificationResult(df)
                     else:
@@ -258,9 +259,9 @@ class TaskResult:
     def save_predictions(dataset: Dataset, output_file: str,
                          predictions: Union[A, DF, S] = None, truth: Union[A, DF, S] = None,
                          probabilities: Union[A, DF] = None, probabilities_labels: Union[list, A] = None,
+                         optional_columns: Union[A, DF] = None,
                          target_is_encoded: bool = False,
-                         preview: bool = True,
-                         quantiles: Union[A, DF] = None):
+                         preview: bool = True):
         """ Save class probabilities and predicted labels to file in csv format.
 
         :param dataset:
@@ -269,9 +270,9 @@ class TaskResult:
         :param predictions:
         :param truth:
         :param probabilities_labels:
+        :param optional_columns:
         :param target_is_encoded:
         :param preview:
-        :param quantiles:
         :return: None
         """
         log.debug("Saving predictions to `%s`.", output_file)
@@ -315,23 +316,9 @@ class TaskResult:
         df = df.assign(predictions=preds)
         df = df.assign(truth=truth)
 
-        if dataset.type == DatasetType.timeseries:
-            if quantiles is not None:
-                quantiles = quantiles.reset_index(drop=True)
-                df = pd.concat([df, quantiles], axis=1)
+        if optional_columns is not None:
+            df = pd.concat([df, optional_columns], axis=1)
 
-            period_length = 1 # TODO: This period length could be adapted to the Dataset, but then we need to pass this information as well. As of now this works.
-
-            # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
-            # 1. retrieve item_ids for each sequence/item
-            item_ids, inverse_item_ids = np.unique(dataset.test.X[dataset.id_column].squeeze().to_numpy(), return_index=False, return_inverse=True)
-            # 2. capture sequences in a list
-            y_past = [dataset.test.y.squeeze().to_numpy()[inverse_item_ids == i][:-dataset.prediction_length] for i in range(len(item_ids))]
-            # 3. calculate period error per sequence
-            y_past_period_error = [np.abs(y_past_item[period_length:] - y_past_item[:-period_length]).mean() for y_past_item in y_past]
-            # 4. repeat period error for each sequence, to save one for each element
-            y_past_period_error_rep = np.repeat(y_past_period_error, dataset.prediction_length)
-            df = df.assign(y_past_period_error=y_past_period_error_rep)
         if preview:
             log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(output_file)
