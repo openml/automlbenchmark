@@ -33,7 +33,6 @@ def run(dataset, config):
     eval_metric = get_eval_metric(config)
     label = dataset.target.name
     time_limit = config.max_runtime_seconds
-    time_limit = 10.
 
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
@@ -84,7 +83,7 @@ def run(dataset, config):
     # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
     # 1. retrieve item_ids for each sequence/item
     #dataset..X /. y
-    item_ids, inverse_item_ids = np.unique(test_data.reset_index()[dataset.id_column].squeeze().to_numpy(), return_index=False, return_inverse=True)
+    item_ids, inverse_item_ids = np.unique(test_data.reset_index()["item_id"].squeeze().to_numpy(), return_index=False, return_inverse=True)
     # 2. capture sequences in a list
     y_past = [test_data[label].squeeze().to_numpy()[inverse_item_ids == i][:-prediction_length] for i in range(len(item_ids))]
     # 3. calculate period error per sequence
