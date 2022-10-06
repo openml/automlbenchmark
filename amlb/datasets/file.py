@@ -152,16 +152,20 @@ class FileLoader:
 
         train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
         test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()
-        forecast_range_in_steps_max_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
+        forecast_range_in_steps_mean_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
         forecast_range_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
-        if not dataset.forecast_range_in_steps == forecast_range_in_steps_max_diff_train_test:
-            log.warning("Warning: Forecast range {}, does not equal difference between test and train sequence lengths {}.".format(dataset.forecast_range_in_steps, forecast_range_in_steps_max_diff_train_test))
+        if not dataset.forecast_range_in_steps == forecast_range_in_steps_mean_diff_train_test:
+            msg = f"Warning: Forecast range {dataset.forecast_range_in_steps}, does not equal mean difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
+            log.warning(msg)
         if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
-            raise ValueError("Error: Not all sequences of train and test set have same sequence length difference.")
-        if dataset.forecast_range_in_steps > forecast_range_in_steps_max_diff_train_test:
-            raise ValueError("Error: Forecast range {} longer than at least one difference between train and test sequence length.")
+            msg = f"Error: Not all sequences of train and test set have same sequence length difference."
+            raise ValueError(msg)
+        if dataset.forecast_range_in_steps > forecast_range_in_steps_mean_diff_train_test:
+            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
+            raise ValueError(msg)
         if dataset.forecast_range_in_steps > forecast_range_in_steps_max_min_train_test:
-            raise ValueError("Error: Forecast range {} longer than minimum sequence length + 1.".format())
+            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than minimum sequence length + 1, {forecast_range_in_steps_max_min_train_test}."
+            raise ValueError(msg)
         return dataset
 
 
