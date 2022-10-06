@@ -1,97 +1,13 @@
 ---
 
-- name: covid_deaths
+- name: covid
   dataset:
-    train: s3://autogluon-ts-bench/data/covid_deaths/csv/train.csv
-    test: s3://autogluon-ts-bench/data/covid_deaths/csv/test.csv
+    train: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/train.csv
+    test: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
+    target: ConfirmedCases
     type: timeseries
-    forecast_range_in_steps: 30
-  folds: 1
+    forecast_range_in_steps: 19
+    id_column: name
+    timestamp_column: Date
 
-- name: hospital
-  dataset:
-    train: s3://autogluon-ts-bench/data/hospital/csv/train.csv
-    test: s3://autogluon-ts-bench/data/hospital/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 12
-  folds: 1
-
-- name: kdd_2018
-  dataset:
-    train: s3://autogluon-ts-bench/data/kdd_2018/csv/train.csv
-    test: s3://autogluon-ts-bench/data/kdd_2018/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 48
-  folds: 1
-
-- name: m3_monthly
-  dataset:
-    train: s3://autogluon-ts-bench/data/m3_monthly/csv/train.csv
-    test: s3://autogluon-ts-bench/data/m3_monthly/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 18
-  folds: 1
-
-- name: m3_other
-  dataset:
-    train: s3://autogluon-ts-bench/data/m3_other/csv/train.csv
-    test: s3://autogluon-ts-bench/data/m3_other/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 8
-  folds: 1
-
-- name: m3_quarterly
-  dataset:
-    train: s3://autogluon-ts-bench/data/m3_quarterly/csv/train.csv
-    test: s3://autogluon-ts-bench/data/m3_quarterly/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 8
-  folds: 1
-
-- name: m4_hourly
-  dataset:
-    train: s3://autogluon-ts-bench/data/m4_hourly/csv/train.csv
-    test: s3://autogluon-ts-bench/data/m4_hourly/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 48
-  folds: 1
-
-- name: m4_weekly
-  dataset:
-    train: s3://autogluon-ts-bench/data/m4_weekly/csv/train.csv
-    test: s3://autogluon-ts-bench/data/m4_weekly/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 13
-  folds: 1
-
-- name: nn5
-  dataset:
-    train: s3://autogluon-ts-bench/data/nn5/csv/train.csv
-    test: s3://autogluon-ts-bench/data/nn5/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 56
-  folds: 1
-
-- name: solar
-  dataset:
-    train: s3://autogluon-ts-bench/data/solar/csv/train.csv
-    test: s3://autogluon-ts-bench/data/solar/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 24
-  folds: 1
-
-- name: tourism_monthly
-  dataset:
-    train: s3://autogluon-ts-bench/data/tourism_monthly/csv/train.csv
-    test: s3://autogluon-ts-bench/data/tourism_monthly/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 24
-  folds: 1
-
-- name: tourism_quarterly
-  dataset:
-    train: s3://autogluon-ts-bench/data/tourism_quarterly/csv/train.csv
-    test: s3://autogluon-ts-bench/data/tourism_quarterly/csv/test.csv
-    type: timeseries
-    forecast_range_in_steps: 8
   folds: 1
