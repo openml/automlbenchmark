@@ -140,10 +140,10 @@ class FileLoader:
 
     def extend_dataset_with_timeseries_config(self, dataset, dataset_config):
         if dataset_config['id_column'] is None:
-            log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
+            log.warning("Warning: For timeseries task setting undefined `id_column` to `item_id`.")
             dataset_config['id_column'] = "item_id"
         if dataset_config['forecast_range_in_steps'] is None:
-            log.warning("Warning: For timeseries task setting undefined forecast_range_in_steps to `1`.")
+            log.warning("Warning: For timeseries task setting undefined `forecast_range_in_steps` to `1`.")
             dataset_config['forecast_range_in_steps'] = "1"
 
         dataset.timestamp_column=dataset_config['timestamp_column']
