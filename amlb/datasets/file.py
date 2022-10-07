@@ -16,7 +16,7 @@ from ..resources import config as rconfig
 from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, path_from_split, profile, repr_def, split_path
 
 from .fileutils import is_archive, is_valid_url, unarchive_file, get_file_handler
-
+from copy import deepcopy
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ class FileLoader:
         elif ext == '.csv':
             if DatasetType[dataset['type']] == DatasetType.timeseries and dataset['timestamp_column'] is None:
                 log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
+                dataset = deepcopy(dataset)
                 dataset['timestamp_column'] = "timestamp"
             csv_dataset = CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=dataset['timestamp_column'] if 'timestamp_column' in dataset else None)
             if csv_dataset.type == DatasetType.timeseries:
@@ -139,11 +140,13 @@ class FileLoader:
 
 
     def extend_dataset_with_timeseries_config(self, dataset, dataset_config):
+        dataset = deepcopy(dataset)
+        dataset_config = deepcopy(dataset_config)
         if dataset_config['id_column'] is None:
-            log.warning("Warning: For timeseries task setting undefined itemid column to `item_id`.")
+            log.warning("Warning: For timeseries task setting undefined `id_column` to `item_id`.")
             dataset_config['id_column'] = "item_id"
         if dataset_config['forecast_range_in_steps'] is None:
-            log.warning("Warning: For timeseries task setting undefined forecast_range_in_steps to `1`.")
+            log.warning("Warning: For timeseries task setting undefined `forecast_range_in_steps` to `1`.")
             dataset_config['forecast_range_in_steps'] = "1"
 
         dataset.timestamp_column=dataset_config['timestamp_column']
