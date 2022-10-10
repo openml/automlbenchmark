@@ -16,6 +16,7 @@ venv/
 .idea/
 *.iml
 *.swp
+launch.json
 
 # tmp files
 .ipynb_checkpoints/

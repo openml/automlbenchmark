@@ -228,12 +228,17 @@ class TaskResult:
             try:
                 df = read_csv(predictions_file, dtype=object)
                 log.debug("Predictions preview:\n %s\n", df.head(10).to_string())
+
                 if rconfig().test_mode:
                     TaskResult.validate_predictions(df)
-                if df.shape[1] > 2:
-                    return ClassificationResult(df)
+
+                if  'y_past_period_error' in df.columns:
+                    return TimeSeriesResult(df)
                 else:
-                    return RegressionResult(df)
+                    if df.shape[1] > 2:
+                        return ClassificationResult(df)
+                    else:
+                        return RegressionResult(df)
             except Exception as e:
                 return ErrorResult(ResultError(e))
         else:
@@ -254,6 +259,7 @@ class TaskResult:
     def save_predictions(dataset: Dataset, output_file: str,
                          predictions: Union[A, DF, S] = None, truth: Union[A, DF, S] = None,
                          probabilities: Union[A, DF] = None, probabilities_labels: Union[list, A] = None,
+                         optional_columns: Union[A, DF] = None,
                          target_is_encoded: bool = False,
                          preview: bool = True):
         """ Save class probabilities and predicted labels to file in csv format.
@@ -264,6 +270,7 @@ class TaskResult:
         :param predictions:
         :param truth:
         :param probabilities_labels:
+        :param optional_columns:
         :param target_is_encoded:
         :param preview:
         :return: None
@@ -308,6 +315,10 @@ class TaskResult:
 
         df = df.assign(predictions=preds)
         df = df.assign(truth=truth)
+
+        if optional_columns is not None:
+            df = pd.concat([df, optional_columns], axis=1)
+
         if preview:
             log.info("Predictions preview:\n %s\n", df.head(20).to_string())
         backup_file(output_file)
@@ -656,6 +667,71 @@ class RegressionResult(Result):
         """R^2"""
         return float(r2_score(self.truth, self.predictions))
 
+class TimeSeriesResult(RegressionResult):
+
+    def __init__(self, predictions_df, info=None):
+        super().__init__(predictions_df, info)
+        self.truth = self.df['truth'].values if self.df is not None else None #.iloc[:, 1].values if self.df is not None else None
+        self.predictions = self.df['predictions'].values if self.df is not None else None #.iloc[:, -2].values if self.df is not None else None
+        self.y_past_period_error = self.df['y_past_period_error'].values
+        self.quantiles = self.df.iloc[:, 2:-1].values
+        self.quantiles_probs = np.array([float(q) for q in self.df.columns[2:-1]])
+        self.truth = self.truth.astype(float, copy=False)
+        self.predictions = self.predictions.astype(float, copy=False)
+        self.quantiles = self.quantiles.astype(float, copy=False)
+        self.y_past_period_error = self.y_past_period_error.astype(float, copy=False)
+
+        self.target = Feature(0, 'target', 'real', is_target=True)
+        self.type = DatasetType.timeseries
+
+    @metric(higher_is_better=False)
+    def mase(self):
+        """Mean Absolute Scaled Error"""
+        return float(np.nanmean(np.abs(self.truth/self.y_past_period_error - self.predictions/self.y_past_period_error)))
+
+    @metric(higher_is_better=False)
+    def smape(self):
+        """Symmetric Mean Absolute Percentage Error"""
+        num = np.abs(self.truth - self.predictions)
+        denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
+        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
+        # might not be fully mathematically correct, but at least we don't get NaNs)
+        denom[denom == 0] = math.inf
+        return np.mean(num / denom)
+
+    @metric(higher_is_better=False)
+    def mape(self):
+        """Symmetric Mean Absolute Percentage Error"""
+        num = np.abs(self.truth - self.predictions)
+        denom = np.abs(self.truth)
+        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
+        # might not be fully mathematically correct, but at least we don't get NaNs)
+        denom[denom == 0] = math.inf
+        return np.mean(num / denom)
+
+    @metric(higher_is_better=False)
+    def nrmse(self):
+        """Normalized Root Mean Square Error"""
+        return self.rmse() / np.mean(np.abs(self.truth))
+
+    @metric(higher_is_better=False)
+    def wape(self):
+        """Weighted Average Percentage Error"""
+        return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
+
+    @metric(higher_is_better=False)
+    def ncrps(self):
+        """Normalized Continuous Ranked Probability Score"""
+        quantile_losses = 2 * np.sum(
+            np.abs(
+                (self.quantiles - self.truth[:, None])
+                * ((self.quantiles >= self.truth[:, None]) - self.quantiles_probs[None, :])
+            ),
+            axis=0,
+        )
+        denom = np.sum(np.abs(self.truth)) # shape [num_time_series, num_quantiles]
+        weighted_losses = quantile_losses.sum(0) / denom  # shape [num_quantiles]
+        return weighted_losses.mean()
 
 _encode_predictions_and_truth_ = False
 

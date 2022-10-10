@@ -489,7 +489,9 @@ class BenchmarkTask:
             # TODO
             raise NotImplementedError("OpenML datasets without task_id are not supported yet.")
         elif hasattr(self._task_def, 'dataset'):
-            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=self._task_def.dataset, fold=self.fold)
+            dataset_name_and_config = copy(self._task_def.dataset)
+            dataset_name_and_config.name = self._task_def.name
+            self._dataset = Benchmark.data_loader.load(DataSourceType.file, dataset=dataset_name_and_config, fold=self.fold)
         else:
             raise ValueError("Tasks should have one property among [openml_task_id, openml_dataset_id, dataset].")
 
@@ -522,7 +524,12 @@ class BenchmarkTask:
                              predictions_dir=self.benchmark.output_dirs.predictions)
         framework_def = self.benchmark.framework_def
         task_config = copy(self.task_config)
-        task_config.type = 'regression' if self._dataset.type == DatasetType.regression else 'classification'
+        if self._dataset.type == DatasetType.regression:
+            task_config.type = 'regression'
+        elif self._dataset.type == DatasetType.timeseries:
+            task_config.type = 'timeseries'
+        else:
+            task_config.type = 'classification'
         task_config.type_ = self._dataset.type.name
         task_config.framework = self.benchmark.framework_name
         task_config.framework_params = framework_def.params
@@ -552,4 +559,3 @@ class BenchmarkTask:
         finally:
             self._dataset.release()
         return results.compute_score(result=result, meta_result=meta_result)
-

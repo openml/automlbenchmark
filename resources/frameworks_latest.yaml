@@ -80,8 +80,17 @@ oboe:
 TPOT:
   version: 'latest'
 
+####################################
+### TimeSeries AutoML frameworks ###
+####################################
 
-
+AutoGluonTS:
+  extends: AutoGluon
+  version: "latest"
+  description: |
+    AutoGluon-TimeSeries
+  setup_env:
+    MODULE: timeseries
 
 #######################################
 ### Non AutoML reference frameworks ###
@@ -104,4 +113,3 @@ TunedRandomForest:
   version: 'latest'
   params:
     n_estimators: 2000
-
