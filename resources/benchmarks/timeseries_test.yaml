@@ -1,0 +1,9 @@
+---
+
+- name: covid_deaths
+  dataset:
+    train: s3://autogluon-ts-bench/data/covid_deaths/csv/train.csv
+    test: s3://autogluon-ts-bench/data/covid_deaths/csv/test.csv
+    type: timeseries
+    forecast_range_in_steps: 30
+  folds: 1
