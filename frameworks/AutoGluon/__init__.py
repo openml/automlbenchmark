@@ -3,18 +3,27 @@ from amlb.utils import call_script_in_same_dir
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset, DatasetType
 from copy import deepcopy
-
+import os
 
 def setup(*args, **kwargs):
     call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
 
 def run(dataset: Dataset, config: TaskConfig):
+    env_vars = read_setup_env_vars()
 
-    if dataset.type is not DatasetType.timeseries:
-        return run_autogluon_tabular(dataset, config)
+    if 'MODULE' not in env_vars or not env_vars['MODULE'] == "timeseries":
+        if dataset.type is not DatasetType.timeseries:
+            return run_autogluon_tabular(dataset, config)
+        else:
+            msg=f'Error: Installed module autogluon.tabular but task equals DatasetType.timeseries.'
+            raise ValueError(msg)
 
     else:
-        return run_autogluon_timeseries(dataset, config)
+        if dataset.type is not DatasetType.timeseries:
+            msg=f'Error: Installed module autogluon.timeseries but task does not equal DatasetType.timeseries.'
+            raise ValueError(msg)
+        else:
+            return run_autogluon_timeseries(dataset, config)
 
 def run_autogluon_tabular(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
@@ -58,3 +67,17 @@ def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
 
     return run_in_venv(__file__, "exec_ts.py",
                        input_data=data, dataset=dataset, config=config)
+
+def read_setup_env_vars():
+    env_vars = {}
+    fpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.setup', 'setup_env')
+    try:
+        with open(fpath, 'r') as f:
+            for line in f:
+                if line.startswith('#') or not line.strip():
+                    continue
+                key, value = line.strip().split('=', 1)
+                env_vars[key] = value
+    except OSError:
+        print(f'Could not open/read file {fpath}')
+    return env_vars
