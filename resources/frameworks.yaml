@@ -203,6 +203,85 @@ AutoGluonTS:
   setup_env:
     MODULE: timeseries
 
+GluonTS:
+  version: "stable"
+  description: |
+    GluonTS
+  project: https://ts.gluon.ai
+  refs: [https://arxiv.org/pdf/1906.05264.pdf]
+  params:
+    model: DeepAR
+
+GluonTS_Prophet:
+  extends: GluonTS
+  description: |
+    GluonTS, Prophet.
+  params:
+    model: Prophet
+
+GluonTS_DeepAR:
+  extends: GluonTS
+  description: |
+    GluonTS, DeepAR.
+  params:
+    model: DeepAR
+
+GluonTS_NBEATS:
+  extends: GluonTS
+  description: |
+    GluonTS, NBEATS.
+  params:
+    model: NBEATS
+
+GluonTS_NPTS:
+  extends: GluonTS
+  description: |
+    GluonTS, NPTS.
+  params:
+    model: NPTS
+
+GluonTS_SeasonalNaive:
+  extends: GluonTS
+  description: |
+    GluonTS, SeasonalNaive.
+  params:
+    model: SeasonalNaive
+
+GluonTS_SimpleFeedForward:
+  extends: GluonTS
+  description: |
+    GluonTS, SimpleFeedForwardEstimator.
+  params:
+    model: SimpleFeedForward
+
+GluonTS_MQCNN:
+  extends: GluonTS
+  description: |
+    GluonTS, MQCNNEstimator.
+  params:
+    model: MQCNN
+
+GluonTS_MQRNN:
+  extends: GluonTS
+  description: |
+    GluonTS, MQRNNEstimator.
+  params:
+    model: MQRNN
+
+GluonTS_Transformer:
+  extends: GluonTS
+  description: |
+    GluonTS, TransformerEstimator.
+  params:
+    model: Transformer
+
+GluonTS_TFT:
+  extends: GluonTS
+  description: |
+    GluonTS, TFT.
+  params:
+    model: TFT
+
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
