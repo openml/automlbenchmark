@@ -38,9 +38,10 @@ else
 fi
 
 if [[ ${MODULE} == "timeseries" ]]; then
-    PY -c "from autogluon.timeseries.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
     # TODO: GPU version install
     PIP install "mxnet<2.0"
+
+    PY -c "from autogluon.timeseries.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
 else
     PY -c "from autogluon.tabular.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
 fi
