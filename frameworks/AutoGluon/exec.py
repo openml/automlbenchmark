@@ -120,7 +120,7 @@ def run(dataset, config):
 
 
 def save_artifacts(predictor, leaderboard, config, test_data):
-    artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
+    artifacts = config.framework_params.get('_save_artifacts', ['leaderboard', 'zeroshot'])
     try:
         if 'leaderboard' in artifacts:
             leaderboard_dir = output_subdir("leaderboard", config)
