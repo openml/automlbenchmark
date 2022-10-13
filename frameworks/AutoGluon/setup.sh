@@ -38,10 +38,12 @@ else
 fi
 
 if [[ ${MODULE} == "timeseries" ]]; then
+    echo "Info: AutoGluon installed module is timeseries."
     # TODO: GPU version install
     PIP install "mxnet<2.0"
 
     PY -c "from autogluon.timeseries.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
 else
+    echo "Info: AutoGluon installed module is tabular."
     PY -c "from autogluon.tabular.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
 fi
