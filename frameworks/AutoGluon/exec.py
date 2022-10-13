@@ -105,7 +105,7 @@ def run(dataset, config):
     else:
         num_models_ensemble = 1
 
-    save_artifacts(predictor, leaderboard, config)
+    save_artifacts(predictor, leaderboard, config, test_data=test_data)
     shutil.rmtree(predictor.path, ignore_errors=True)
 
     return result(output_file=config.output_predictions_file,
@@ -119,7 +119,7 @@ def run(dataset, config):
                   predict_duration=predict.duration)
 
 
-def save_artifacts(predictor, leaderboard, config):
+def save_artifacts(predictor, leaderboard, config, test_data):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
         if 'leaderboard' in artifacts:
@@ -135,8 +135,41 @@ def save_artifacts(predictor, leaderboard, config):
             shutil.rmtree(os.path.join(predictor.path, "utils"), ignore_errors=True)
             models_dir = output_subdir("models", config)
             zip_path(predictor.path, os.path.join(models_dir, "models.zip"))
+
+        if 'zeroshot' in artifacts:
+            zeroshot_dir = output_subdir("zeroshot", config)
+            zeroshot_dict = get_zeroshot_artifact(predictor=predictor, test_data=test_data)
+            save_pkl.save(path=os.path.join(zeroshot_dir, "zeroshot_metadata.pkl"), object=zeroshot_dict)
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
+
+
+def get_zeroshot_artifact(predictor, test_data) -> dict:
+    models = predictor.get_model_names(can_infer=True)
+
+    pred_proba_dict_val = predictor.get_model_pred_proba_dict(inverse_transform=False, models=models)
+    pred_proba_dict_test = predictor.get_model_pred_proba_dict(test_data, inverse_transform=False, models=models)
+
+    val_data_source = 'train' if predictor._trainer.bagged_mode else 'val'
+    _, y_val = predictor.load_data_internal(data=val_data_source, return_X=False, return_y=True)
+    y_test = test_data[predictor.label]
+    y_test = predictor.transform_labels(y_test, inverse=False)
+
+    zeroshot_dict = dict(
+        pred_proba_dict_val=pred_proba_dict_val,
+        pred_proba_dict_test=pred_proba_dict_test,
+        y_val=y_val,
+        y_test=y_test,
+        eval_metric=predictor.eval_metric.name,
+        problem_type=predictor.problem_type,
+        ordered_class_labels=predictor._learner.label_cleaner.ordered_class_labels,
+        ordered_class_labels_transformed=predictor._learner.label_cleaner.ordered_class_labels_transformed,
+        problem_type_transform=predictor._learner.label_cleaner.problem_type_transform,
+        num_classes=predictor._learner.label_cleaner.num_classes,
+        label=predictor.label,
+    )
+
+    return zeroshot_dict
 
 
 if __name__ == '__main__':
