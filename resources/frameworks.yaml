@@ -282,6 +282,57 @@ GluonTS_TFT:
   params:
     model: TFT
 
+StatsmodelsTS:
+  version: "stable"
+  description: |
+    Statsmodels
+  project: https://www.statsmodels.org
+  refs: [https://conference.scipy.org/proceedings/scipy2010/pdfs/seabold.pdf]
+  params:
+    model: ARIMA
+
+StatsmodelsTS_ARIMA:
+  extends: StatsmodelsTS
+  description: |
+    StatsmodelsTS, ARIMA.
+  params:
+    model: ARIMA
+
+StatsmodelsTS_ETS:
+  extends: StatsmodelsTS
+  description: |
+    StatsmodelsTS, ETS.
+  params:
+    model: ETS
+
+StatsmodelsTS_Theta:
+  extends: StatsmodelsTS
+  description: |
+    StatsmodelsTS, Theta.
+  params:
+    model: Theta
+
+StatsmodelsTS_STL-AR:
+  extends: StatsmodelsTS
+  description: |
+    StatsmodelsTS, STL-AR.
+  params:
+    model: STL-AR
+
+StatsmodelsTS_STL-ARIMA:
+  extends: StatsmodelsTS
+  description: |
+    StatsmodelsTS, STL-ARIMA.
+  params:
+    model: STL-ARIMA
+
+StatsmodelsTS_STL-ETS:
+  extends: StatsmodelsTS
+  description: |
+    StatsmodelsTS, STL-ETS.
+  params:
+    model: STL-ETS
+
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
