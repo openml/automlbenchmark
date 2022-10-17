@@ -18,15 +18,18 @@ from gluonts.mx import Trainer
 from gluonts.mx.trainer.callback import Callback
 from gluonts.evaluation import make_evaluation_predictions
 
-from gluonts.model.deepar import DeepAREstimator
-from gluonts.model.prophet import ProphetPredictor
-from gluonts.model.n_beats import NBEATSEstimator
+
 from gluonts.model.npts import NPTSEstimator
 from gluonts.model.prophet import ProphetPredictor
 from gluonts.model.seasonal_naive import SeasonalNaivePredictor
+from gluonts.model.r_forecast import RForecastPredictor
+
+from gluonts.model.deepar import DeepAREstimator
+from gluonts.model.n_beats import NBEATSEstimator
 from gluonts.model.seq2seq import MQCNNEstimator, MQRNNEstimator
 from gluonts.model.simple_feedforward import SimpleFeedForwardEstimator
 from gluonts.model.tft import TemporalFusionTransformerEstimator
+
 
 from frameworks.shared.callee import call_run, result, output_subdir
 from frameworks.shared.utils import Timer, zip_path
@@ -144,17 +147,17 @@ def estimate_predictor(model, prediction_length, freq, dataset_train_gluonts, ti
         estimator = TemporalFusionTransformerEstimator(prediction_length=prediction_length, freq=freq, trainer=Trainer(callbacks = [TimeLimitCallback(time_limit)]))
         predictor = estimator.train(dataset_train_gluonts)
 
-    #elif model == "ARIMA":
-    #    predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="arima")
+    elif model == "ARIMA":
+        predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="arima")
 
-    #elif model == "ETS":
-    #    predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="ets")
+    elif model == "ETS":
+        predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="ets")
 
-    #elif model == "STL-AR":
-    #    predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="stlar")
+    elif model == "STL-AR":
+        predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="stlar")
 
-    #elif model == "Theta":
-    #    predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="thetaf")
+    elif model == "Theta":
+        predictor = RForecastPredictor(prediction_length=prediction_length, freq=freq, method_name="thetaf")
 
     else:
         msg = f"Not implemented model {model}."

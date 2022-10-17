@@ -204,7 +204,7 @@ AutoGluonTS:
     MODULE: timeseries
 
 GluonTS:
-  version: "stable"
+  version: "0.10.0"
   description: |
     GluonTS
   project: https://ts.gluon.ai
@@ -282,56 +282,33 @@ GluonTS_TFT:
   params:
     model: TFT
 
-StatsmodelsTS:
-  version: "stable"
+GluonTS_ARIMA:
+  extends: GluonTS
   description: |
-    Statsmodels
-  project: https://www.statsmodels.org
-  refs: [https://conference.scipy.org/proceedings/scipy2010/pdfs/seabold.pdf]
+    GluonTS, ARIMA.
   params:
     model: ARIMA
 
-StatsmodelsTS_ARIMA:
-  extends: StatsmodelsTS
+GluonTS_ETS:
+  extends: GluonTS
   description: |
-    StatsmodelsTS, ARIMA.
-  params:
-    model: ARIMA
-
-StatsmodelsTS_ETS:
-  extends: StatsmodelsTS
-  description: |
-    StatsmodelsTS, ETS.
+    GluonTS, ETS.
   params:
     model: ETS
 
-StatsmodelsTS_Theta:
-  extends: StatsmodelsTS
+GluonTS_STL-AR:
+  extends: GluonTS
   description: |
-    StatsmodelsTS, Theta.
-  params:
-    model: Theta
-
-StatsmodelsTS_STL-AR:
-  extends: StatsmodelsTS
-  description: |
-    StatsmodelsTS, STL-AR.
+    GluonTS, STL-AR.
   params:
     model: STL-AR
 
-StatsmodelsTS_STL-ARIMA:
-  extends: StatsmodelsTS
+GluonTS_Theta:
+  extends: GluonTS
   description: |
-    StatsmodelsTS, STL-ARIMA.
+    GluonTS, Theta.
   params:
-    model: STL-ARIMA
-
-StatsmodelsTS_STL-ETS:
-  extends: StatsmodelsTS
-  description: |
-    StatsmodelsTS, STL-ETS.
-  params:
-    model: STL-ETS
+    model: Theta
 
 #######################################
 ### Non AutoML reference frameworks ###
