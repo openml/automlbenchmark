@@ -3,6 +3,7 @@ import os
 import warnings
 import sys
 import numpy as np
+from gluonts.evaluation import Evaluator
 warnings.simplefilter("ignore")
 
 if sys.platform == 'darwin':
@@ -33,6 +34,7 @@ from gluonts.model.tft import TemporalFusionTransformerEstimator
 
 from frameworks.shared.callee import call_run, result, output_subdir
 from frameworks.shared.utils import Timer, zip_path
+import csv
 
 log = logging.getLogger(__name__)
 
@@ -75,15 +77,16 @@ def run(dataset, config):
     quantiles_steps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     forecasts = list(forecast_it)
+    tss = list(ts_it)
     quantiles = np.array([[forecast.quantile(quantile_step) for forecast in forecasts] for quantile_step in quantiles_steps], dtype=test_data_future[target_column])
     quantiles = pd.DataFrame(quantiles.reshape(9, -1).T, columns=[str(quantile_step) for quantile_step in quantiles_steps])
 
     predictions_only = quantiles['0.5'].values
     truth_only = test_data_future[target_column].values
 
-    # evaluator = Evaluator(quantiles=quantiles_steps)
-    # agg_metrics, item_metrics = evaluator(tss, forecasts)
-    # item_metrics['seasonal_error']
+    evaluator = Evaluator(quantiles=quantiles_steps)
+    agg_metrics, item_metrics = evaluator(tss, forecasts)
+    save_artifacts(agg_metrics, item_metrics, config)
 
     period_length = 1 # TODO: This period length could be adapted to the Dataset, but then we need to pass this information as well. As of now this works.
 
@@ -185,6 +188,21 @@ class TimeLimitCallback(Callback):
                 log.warning("Time limit exceed during training, stop training.")
                 return False
         return True
+
+def save_artifacts(agg_metrics, item_metrics, config):
+    artifacts = config.framework_params.get('_save_artifacts', ['agg_metrics'])
+    try:
+        metrics_dir = output_subdir('metrics', config)
+        if 'agg_metrics' in artifacts:
+            with open(os.path.join(metrics_dir, 'agg_metrics.csv'), 'w') as f: # b
+                w = csv.writer(f)
+                w.writerow(agg_metrics.keys())
+                w.writerow(agg_metrics.values())
+        if 'item_metrics' in artifacts:
+            item_metrics.to_csv(os.path.join(metrics_dir, 'item_metrics.csv'))
+    except Exception:
+        log.warning("Error when saving artifacts.", exc_info=True)
+
 
 if __name__ == '__main__':
     call_run(run)
