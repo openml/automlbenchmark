@@ -13,8 +13,7 @@ if sys.platform == 'darwin':
 import pandas as pd
 
 from autogluon.core.utils.savers import save_pd, save_pkl
-from autogluon.tabular import TabularDataset
-from autogluon.timeseries import TimeSeriesPredictor, TimeSeriesDataFrame
+from autogluon.timeseries import TimeSeriesPredictor, TimeSeriesDataFrame, TimeSeriesEvaluator
 from autogluon.timeseries.version import __version__
 
 from frameworks.shared.callee import call_run, result, output_subdir
@@ -74,7 +73,7 @@ def run(dataset, config):
 
     num_models_trained = len(leaderboard)
 
-    save_artifacts(predictor=predictor, leaderboard=leaderboard, config=config)
+    save_artifacts(predictor=predictor, leaderboard=leaderboard, config=config, test_data=test_data, predictions=predictions)
     shutil.rmtree(predictor.path, ignore_errors=True)
 
     quantiles = predictions.drop(columns=['mean']).reset_index(drop=True)
@@ -148,12 +147,27 @@ def get_eval_metric(config):
     return eval_metric
 
 
-def save_artifacts(predictor, leaderboard, config):
-    artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
+def save_artifacts(predictor, leaderboard, config, test_data, predictions):
+    artifacts = config.framework_params.get('_save_artifacts', ['leaderboard', 'metrics'])
     try:
         if 'leaderboard' in artifacts:
             leaderboard_dir = output_subdir("leaderboard", config)
             save_pd.save(path=os.path.join(leaderboard_dir, "leaderboard.csv"), df=leaderboard)
+
+        if 'metrics' in artifacts:
+            metrics_dir = output_subdir('metrics', config)
+            metrics_keys = ['MSE', 'RMSE', 'MAPE', 'MASE', 'sMAPE', 'mean_wQuantileLoss']
+            metrics = {}
+            for key in metrics_keys:
+                #metrics[key] = [predictor.evaluate(data=test_data, metric='MSE')]
+                evaluator = TimeSeriesEvaluator(
+                    eval_metric=key,
+                    prediction_length=predictor.prediction_length,
+                    target_column=predictor.target,
+                )
+                metrics[key] = [evaluator(test_data, predictions)]
+            metrics_df = pd.DataFrame(metrics)
+            save_pd.save(path=os.path.join(metrics_dir, 'metrics.csv'), df=metrics_df)
 
         if 'info' in artifacts:
             ag_info = predictor.info()
@@ -164,9 +178,9 @@ def save_artifacts(predictor, leaderboard, config):
             shutil.rmtree(os.path.join(predictor.path, "utils"), ignore_errors=True)
             models_dir = output_subdir("models", config)
             zip_path(predictor.path, os.path.join(models_dir, "models.zip"))
+
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
-
 
 if __name__ == '__main__':
     call_run(run)
