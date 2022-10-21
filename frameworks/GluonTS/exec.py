@@ -81,7 +81,7 @@ def run(dataset, config):
     quantiles = np.array([[forecast.quantile(quantile_step) for forecast in forecasts] for quantile_step in quantiles_steps], dtype=test_data_future[target_column])
     quantiles = pd.DataFrame(quantiles.reshape(9, -1).T, columns=[str(quantile_step) for quantile_step in quantiles_steps])
 
-    predictions_only = quantiles['0.5'].values
+    predictions_only = np.array([forecast.mean for forecast in forecasts], dtype=test_data_future[target_column])
     truth_only = test_data_future[target_column].values
 
     evaluator = Evaluator(quantiles=quantiles_steps)
