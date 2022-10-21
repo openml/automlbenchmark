@@ -684,44 +684,57 @@ class TimeSeriesResult(RegressionResult):
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = DatasetType.timeseries
 
+    def finite_mean(self, np_array):
+        return float(np.mean(np_array[np.isfinite(np_array)]))
+
     @metric(higher_is_better=False)
     def mase(self):
         """Mean Absolute Scaled Error"""
-        return float(np.nanmean(np.abs(self.truth/self.y_past_period_error - self.predictions/self.y_past_period_error)))
+        num = np.abs(self.truth - self.predictions)
+        denom = np.abs(self.y_past_period_error)
+        return self.finite_mean(num / denom)
 
     @metric(higher_is_better=False)
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.predictions)
         denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
-        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
-        # might not be fully mathematically correct, but at least we don't get NaNs)
-        denom[denom == 0] = math.inf
-        return np.mean(num / denom)
+        return self.finite_mean(num / denom)
 
     @metric(higher_is_better=False)
     def mape(self):
-        """Symmetric Mean Absolute Percentage Error"""
+        """Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.predictions)
         denom = np.abs(self.truth)
-        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
-        # might not be fully mathematically correct, but at least we don't get NaNs)
-        denom[denom == 0] = math.inf
-        return np.mean(num / denom)
+        return self.finite_mean(num / denom)
+
+    @metric(higher_is_better=False)
+    def mse(self):
+        return np.mean(np.square(self.truth - self.predictions))
+
+    @metric(higher_is_better=False)
+    def rmse(self):
+        return np.sqrt(self.mse())
 
     @metric(higher_is_better=False)
     def nrmse(self):
         """Normalized Root Mean Square Error"""
-        return self.rmse() / np.mean(np.abs(self.truth))
+        num = self.rmse()
+        denom = np.mean(np.abs(self.truth))
+        return num / denom
 
     @metric(higher_is_better=False)
     def wape(self):
         """Weighted Average Percentage Error"""
-        return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
+        num = np.sum(np.abs(self.truth - self.predictions))
+        denom = np.sum(np.abs(self.truth))
+        return num / denom
 
     @metric(higher_is_better=False)
-    def ncrps(self):
-        """Normalized Continuous Ranked Probability Score"""
+    def mwql(self):
+        """Mean Weighted Quantile Loss
+           approx. of Normalized Continuous Ranked Probability Score
+        """
         quantile_losses = 2 * np.sum(
             np.abs(
                 (self.quantiles - self.truth[:, None])
@@ -729,9 +742,9 @@ class TimeSeriesResult(RegressionResult):
             ),
             axis=0,
         )
-        denom = np.sum(np.abs(self.truth)) # shape [num_time_series, num_quantiles]
-        weighted_losses = quantile_losses.sum(0) / denom  # shape [num_quantiles]
-        return weighted_losses.mean()
+        num = quantile_losses # shape: [num_quantiles]
+        denom = np.sum(np.abs(self.truth)) # shape: [1]
+        return self.finite_mean(num / denom)
 
 _encode_predictions_and_truth_ = False
 
