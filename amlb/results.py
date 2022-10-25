@@ -232,7 +232,7 @@ class TaskResult:
                 if rconfig().test_mode:
                     TaskResult.validate_predictions(df)
 
-                if  'y_past_period_error' in df.columns:
+                if  'naive_1_error' in df.columns:
                     return TimeSeriesResult(df)
                 else:
                     if df.shape[1] > 2:
@@ -671,46 +671,71 @@ class TimeSeriesResult(RegressionResult):
 
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
+        self.quantiles_probs_str = list(column for column in self.df.columns if column.startswith('0.'))
+        if not all(x in self.df.columns for x in ['truth', 'predictions', 'item_id', 'naive_1_error']) or len(self.quantiles_probs_str) == 0:
+            msg=f'Missing columns for calculating time series metrics. Given columns are {list(self.df.columns)}.'
+            raise ValueError(msg)
+
         self.truth = self.df['truth'].values if self.df is not None else None #.iloc[:, 1].values if self.df is not None else None
         self.predictions = self.df['predictions'].values if self.df is not None else None #.iloc[:, -2].values if self.df is not None else None
-        self.y_past_period_error = self.df['y_past_period_error'].values
-        self.quantiles = self.df.iloc[:, 2:-1].values
-        self.quantiles_probs = np.array([float(q) for q in self.df.columns[2:-1]])
-        self.truth = self.truth.astype(float, copy=False)
-        self.predictions = self.predictions.astype(float, copy=False)
-        self.quantiles = self.quantiles.astype(float, copy=False)
-        self.y_past_period_error = self.y_past_period_error.astype(float, copy=False)
+
+        self.naive_1_error = self.df['naive_1_error'].values
+        self.quantiles_probs = np.array(list(float(quantile_prob_str) for quantile_prob_str in self.quantiles_probs_str))
+        self.quantiles = self.df.filter(self.quantiles_probs_str).values
+        self.item_ids = self.df['item_id'].values
+        _, unique_item_ids_counts = np.unique(self.item_ids, return_counts=True)
+        if np.sum(np.abs(np.mean(unique_item_ids_counts) - unique_item_ids_counts)) != 0.:
+            msg = f'Error: Predicted sequences have different lengths {unique_item_ids_counts}.'
+            raise ValueError(msg)
+        self.prediction_length = unique_item_ids_counts[0]
+        self.unique_item_ids = self.item_ids.copy()[::self.prediction_length]
+
+        self.dtype=np.float64 # float
+        self.truth = self.truth.astype(self.dtype, copy=False)
+        self.predictions = self.predictions.astype(self.dtype, copy=False)
+        self.quantiles = self.quantiles.astype(self.dtype, copy=False)
+        self.naive_1_error = self.naive_1_error.astype(self.dtype, copy=False)
 
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = DatasetType.timeseries
 
+    def itemwise_mean(self, values):
+        return np.array([self.finite_mean(values[self.item_ids == unique_item_id]) for unique_item_id in self.unique_item_ids], dtype=self.dtype)
+
+    def itemwise_select_first(self, values):
+        return values.copy()[::self.prediction_length]
+
     def finite_mean(self, np_array):
-        return float(np.mean(np_array[np.isfinite(np_array)]))
+        return np.mean(np_array[np.isfinite(np_array)])
 
     @metric(higher_is_better=False)
     def mase(self):
         """Mean Absolute Scaled Error"""
         num = np.abs(self.truth - self.predictions)
-        denom = np.abs(self.y_past_period_error)
-        return self.finite_mean(num / denom)
+        denom = self.itemwise_select_first(self.naive_1_error)
+        means_per_item = self.itemwise_mean(num) / denom
+        return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.predictions)
         denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
-        return self.finite_mean(num / denom)
+        means_per_item = self.itemwise_mean(num / denom)
+        return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
     def mape(self):
         """Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.predictions)
         denom = np.abs(self.truth)
-        return self.finite_mean(num / denom)
+        means_per_item = self.itemwise_mean(num / denom)
+        return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
     def mse(self):
-        return np.mean(np.square(self.truth - self.predictions))
+        means_per_item = self.itemwise_mean(np.square(self.truth - self.predictions))
+        return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
     def rmse(self):
@@ -745,6 +770,13 @@ class TimeSeriesResult(RegressionResult):
         num = quantile_losses # shape: [num_quantiles]
         denom = np.sum(np.abs(self.truth)) # shape: [1]
         return self.finite_mean(num / denom)
+
+    @metric(higher_is_better=False)
+    def mean_naive_1_error(self):
+        """Mean Naive 1 Error"""
+
+        means_per_item = self.itemwise_select_first(self.naive_1_error)
+        return self.finite_mean(means_per_item)
 
 _encode_predictions_and_truth_ = False
 
