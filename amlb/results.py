@@ -676,8 +676,8 @@ class TimeSeriesResult(RegressionResult):
             msg=f'Missing columns for calculating time series metrics. Given columns are {list(self.df.columns)}.'
             raise ValueError(msg)
 
-        self.truth = self.df['truth'].values if self.df is not None else None #.iloc[:, 1].values if self.df is not None else None
-        self.predictions = self.df['predictions'].values if self.df is not None else None #.iloc[:, -2].values if self.df is not None else None
+        self.truth = self.df['truth'].values if self.df is not None else None
+        self.pred_mean = self.df['predictions'].values if self.df is not None else None
 
         self.naive_1_error = self.df['naive_1_error'].values
         self.quantiles_probs = np.array(list(float(quantile_prob_str) for quantile_prob_str in self.quantiles_probs_str))
@@ -690,10 +690,14 @@ class TimeSeriesResult(RegressionResult):
         self.prediction_length = unique_item_ids_counts[0]
         self.unique_item_ids = self.item_ids.copy()[::self.prediction_length]
 
-        self.dtype=np.float64 # float
+        self.dtype = float
         self.truth = self.truth.astype(self.dtype, copy=False)
-        self.predictions = self.predictions.astype(self.dtype, copy=False)
+        self.pred_mean = self.pred_mean.astype(self.dtype, copy=False)
         self.quantiles = self.quantiles.astype(self.dtype, copy=False)
+        if len(np.where(self.quantiles_probs == 0.5)[0]) > 0:
+            self.pred_median = self.quantiles[:, np.where(self.quantiles_probs == 0.5)[0][0]]
+        else:
+            self.pred_median = self.pred_mean
         self.naive_1_error = self.naive_1_error.astype(self.dtype, copy=False)
 
         self.target = Feature(0, 'target', 'real', is_target=True)
@@ -711,7 +715,7 @@ class TimeSeriesResult(RegressionResult):
     @metric(higher_is_better=False)
     def mase(self):
         """Mean Absolute Scaled Error"""
-        num = np.abs(self.truth - self.predictions)
+        num = np.abs(self.truth - self.pred_median)
         denom = self.itemwise_select_first(self.naive_1_error)
         means_per_item = self.itemwise_mean(num) / denom
         return self.finite_mean(means_per_item)
@@ -719,22 +723,22 @@ class TimeSeriesResult(RegressionResult):
     @metric(higher_is_better=False)
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
-        num = np.abs(self.truth - self.predictions)
-        denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
+        num = np.abs(self.truth - self.pred_median)
+        denom = (np.abs(self.truth) + np.abs(self.pred_mean)) / 2
         means_per_item = self.itemwise_mean(num / denom)
         return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
     def mape(self):
         """Mean Absolute Percentage Error"""
-        num = np.abs(self.truth - self.predictions)
+        num = np.abs(self.truth - self.pred_median)
         denom = np.abs(self.truth)
         means_per_item = self.itemwise_mean(num / denom)
         return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
     def mse(self):
-        means_per_item = self.itemwise_mean(np.square(self.truth - self.predictions))
+        means_per_item = self.itemwise_mean(np.square(self.truth - self.pred_mean))
         return self.finite_mean(means_per_item)
 
     @metric(higher_is_better=False)
@@ -751,7 +755,7 @@ class TimeSeriesResult(RegressionResult):
     @metric(higher_is_better=False)
     def wape(self):
         """Weighted Average Percentage Error"""
-        num = np.sum(np.abs(self.truth - self.predictions))
+        num = np.sum(np.abs(self.truth - self.pred_mean))
         denom = np.sum(np.abs(self.truth))
         return num / denom
 
