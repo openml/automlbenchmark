@@ -6,7 +6,7 @@
     test: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
     target: ConfirmedCases
     type: timeseries
-    forecast_range_in_steps: 19
+    forecast_horizon_in_steps: 19
     id_column: name
     timestamp_column: Date
 
