@@ -145,29 +145,29 @@ class FileLoader:
         if dataset_config['id_column'] is None:
             log.warning("Warning: For timeseries task setting undefined `id_column` to `item_id`.")
             dataset_config['id_column'] = "item_id"
-        if dataset_config['forecast_range_in_steps'] is None:
-            log.warning("Warning: For timeseries task setting undefined `forecast_range_in_steps` to `1`.")
-            dataset_config['forecast_range_in_steps'] = "1"
+        if dataset_config['forecast_horizon_in_steps'] is None:
+            log.warning("Warning: For timeseries task setting undefined `forecast_horizon_in_steps` to `1`.")
+            dataset_config['forecast_horizon_in_steps'] = "1"
 
         dataset.timestamp_column=dataset_config['timestamp_column']
         dataset.id_column=dataset_config['id_column']
-        dataset.forecast_range_in_steps=int(dataset_config['forecast_range_in_steps'])
+        dataset.forecast_horizon_in_steps=int(dataset_config['forecast_horizon_in_steps'])
 
         train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
         test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()
-        forecast_range_in_steps_mean_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
-        forecast_range_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
-        if not dataset.forecast_range_in_steps == forecast_range_in_steps_mean_diff_train_test:
-            msg = f"Warning: Forecast range {dataset.forecast_range_in_steps}, does not equal mean difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
+        forecast_horizon_in_steps_mean_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
+        forecast_horizon_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
+        if not dataset.forecast_horizon_in_steps == forecast_horizon_in_steps_mean_diff_train_test:
+            msg = f"Warning: Forecast range {dataset.forecast_horizon_in_steps}, does not equal mean difference between test and train sequence lengths {forecast_horizon_in_steps_mean_diff_train_test}."
             log.warning(msg)
         if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
             msg = f"Error: Not all sequences of train and test set have same sequence length difference."
             raise ValueError(msg)
-        if dataset.forecast_range_in_steps > forecast_range_in_steps_mean_diff_train_test:
-            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
+        if dataset.forecast_horizon_in_steps > forecast_horizon_in_steps_mean_diff_train_test:
+            msg = f"Error: Forecast range {dataset.forecast_horizon_in_steps} longer than difference between test and train sequence lengths {forecast_horizon_in_steps_mean_diff_train_test}."
             raise ValueError(msg)
-        if dataset.forecast_range_in_steps > forecast_range_in_steps_max_min_train_test:
-            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than minimum sequence length + 1, {forecast_range_in_steps_max_min_train_test}."
+        if dataset.forecast_horizon_in_steps > forecast_horizon_in_steps_max_min_train_test:
+            msg = f"Error: Forecast range {dataset.forecast_horizon_in_steps} longer than minimum sequence length + 1, {forecast_horizon_in_steps_max_min_train_test}."
             raise ValueError(msg)
         return dataset
 

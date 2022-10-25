@@ -44,7 +44,7 @@ def run(dataset, config):
 
     timestamp_column = dataset.timestamp_column
     id_column = dataset.id_column
-    prediction_length = dataset.forecast_range_in_steps
+    prediction_length = dataset.forecast_horizon_in_steps
     target_column = dataset.target.name
     time_limit = config.max_runtime_seconds
     model=config.framework_params["model"]
@@ -60,7 +60,7 @@ def run(dataset, config):
     dataset_train = pd.concat([dataset.train.X, dataset.train.y], axis=1)
     dataset_test = pd.concat([dataset.test.X, dataset.test.y], axis=1)
     test_data_future = pd.concat([item_id_and_df[1].iloc[-prediction_length:] for item_id_and_df in dataset_test.groupby(id_column)], axis=0)
-
+    dtype = test_data_future[target_column].dtype
     dataset_train_gluonts = PandasDataset.from_long_dataframe(dataframe=dataset_train, item_id=id_column, target=target_column, timestamp=timestamp_column, freq=freq)
     dataset_test_gluonts = PandasDataset.from_long_dataframe(dataframe=dataset_test, item_id=id_column, target=target_column, timestamp=timestamp_column, freq=freq)
 
@@ -75,34 +75,26 @@ def run(dataset, config):
         )
 
     quantiles_steps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-
     forecasts = list(forecast_it)
     tss = list(ts_it)
-    quantiles = np.array([[forecast.quantile(quantile_step) for forecast in forecasts] for quantile_step in quantiles_steps], dtype=test_data_future[target_column])
+    quantiles = np.array([[forecast.quantile(quantile_step) for forecast in forecasts] for quantile_step in quantiles_steps], dtype=dtype)
     quantiles = pd.DataFrame(quantiles.reshape(9, -1).T, columns=[str(quantile_step) for quantile_step in quantiles_steps])
 
-    predictions_only = np.array([forecast.mean for forecast in forecasts], dtype=test_data_future[target_column])
+    predictions_only = np.array([forecast.mean for forecast in forecasts], dtype=dtype)
     truth_only = test_data_future[target_column].values
 
     evaluator = Evaluator(quantiles=quantiles_steps)
     agg_metrics, item_metrics = evaluator(tss, forecasts)
     save_artifacts(agg_metrics, item_metrics, config)
 
-    period_length = 1 # TODO: This period length could be adapted to the Dataset, but then we need to pass this information as well. As of now this works.
+    forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
+    forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
 
-    # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
-    # 1. retrieve item_ids for each sequence/item
-    #dataset..X /. y
-    item_ids, inverse_item_ids = np.unique(dataset_test.reset_index()[id_column].squeeze().to_numpy(), return_index=False, return_inverse=True)
-    # 2. capture sequences in a list
-    y_past = [dataset_test[target_column].squeeze().to_numpy()[inverse_item_ids == i][:-prediction_length] for i in range(len(item_ids))]
-    # 3. calculate period error per sequence
-    y_past_period_error = [np.abs(y_past_item[period_length:] - y_past_item[:-period_length]).mean() for y_past_item in y_past]
-    # 4. repeat period error for each sequence, to save one for each element
-    y_past_period_error_rep = np.repeat(y_past_period_error, prediction_length)
+    naive_1_error_rep = calc_naive_1_error(dataset_test=dataset_test, id_column=id_column, target_column=target_column, prediction_length=prediction_length)
 
     optional_columns = quantiles
-    optional_columns = optional_columns.assign(y_past_period_error=y_past_period_error_rep)
+    optional_columns = optional_columns.assign(naive_1_error=naive_1_error_rep)
+    optional_columns = optional_columns.assign(item_id=forecast_item_ids)
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions_only,
@@ -203,6 +195,34 @@ def save_artifacts(agg_metrics, item_metrics, config):
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 
+def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length):
+    """Calculates the naive 1 error for the test dataset and repeates it for each element in the forecast sequence.
+
+    Args:
+        dataset_test (pd.DataFrame) : Dataframe containing target and item id column, shape (N, K>=2)
+        id_column (str) : Name of item id column.
+        target_column (str) : Name of target column.
+        prediction_length (int) : Prediction length which is evaluated.
+    Returns:
+        naive_1_error_rep (np.ndarray) : Naive 1 error for each sequence. Shape (N,)
+
+    """
+    period_length = 1
+
+    dtype=dataset_test[target_column].dtype
+    # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
+    # 1. retrieve item_ids for each sequence/item
+    #dataset..X /. y
+    unique_item_ids, unique_item_ids_indices, unique_item_ids_inverse = np.unique(dataset_test.reset_index()[id_column].squeeze().to_numpy(), return_index=True, return_inverse=True)
+
+    # 2. capture sequences in a list
+    y_past = [dataset_test[target_column].squeeze().to_numpy(dtype=dtype)[unique_item_ids_inverse == i][:-prediction_length] for i in np.argsort(unique_item_ids_indices)]
+    # 3. calculate period error per sequence
+    naive_1_error = np.array([np.mean(np.abs(y_past_item[period_length:] - y_past_item[:-period_length])) for y_past_item in y_past], dtype=dtype)
+    # 4. repeat period error for each sequence, to save one for each element
+    naive_1_error_rep = np.repeat(naive_1_error, prediction_length)
+
+    return naive_1_error_rep
 
 if __name__ == '__main__':
     call_run(run)
