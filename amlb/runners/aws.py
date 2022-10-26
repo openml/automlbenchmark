@@ -574,14 +574,8 @@ class AWSBenchmark(Benchmark):
             if instance_def.volume_size:
                 ebs['VolumeSize'] = instance_def.volume_size
 
-            if hasattr(ec2_config, 'instance_tags'):
-                instance_tags = ec2_config.instance_tags | ns(Name=f"amlb_{inst_key}")
-            else:
-                instance_tags = ns(Name=f"amlb_{inst_key}")
-            if hasattr(ec2_config, 'volume_tags'):
-                volume_tags = (ec2_config.volume_tags or instance_tags) | ns(Name=f"amlb_{inst_key}")
-            else:
-                volume_tags = instance_tags | ns(Name=f"amlb_{inst_key}")
+            instance_tags = ec2_config.instance_tags | ns(Name=f"amlb_{inst_key}")
+            volume_tags = (ec2_config.volume_tags or instance_tags) | ns(Name=f"amlb_{inst_key}")
             instance_params = dict(
                 BlockDeviceMappings=[dict(
                     DeviceName=ec2_config.root_device_name,

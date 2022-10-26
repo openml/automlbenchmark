@@ -1,0 +1,61 @@
+---
+project_repository: https://github.com/Innixma/automlbenchmark#ag-2022_10_26_clean    # this is also the url used to clone the repository on ec2 instances
+                                                                          # when running those without docker.
+                                                                          # to clone a specific branch/tag, add a url fragment, e.g.:
+                                                                          # https://github.com/openml/automlbenchmark#stable
+
+frameworks:              # configuration namespace for the frameworks definitions.
+  definition_file:       # list of yaml files describing the frameworks base definitions.
+    - '{root}/resources/frameworks.yaml'
+    - '{user}/frameworks.yaml'
+  allow_duplicates: true     # if true, the last definition is used.
+  tags: ['stable', 'latest', 'zeroshot', '2020Q2', '2021Q3', '2022AG']  # the list of supported tags when looking up frameworks:
+                              # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
+
+benchmarks:                     # configuration namespace for the benchmarks definitions.
+  definition_dir:               # list of directories containing the benchmarks yaml definitions.
+    - '{root}/resources/benchmarks'
+    - '{user}/benchmarks'
+  constraints_file:             # list of yaml files describing the benchmarks runtime constraints.
+    - '{root}/resources/constraints.yaml'
+    - '{user}/constraints.yaml'
+  overhead_time_seconds: 72000   # amount of additional time allowed for the job to complete before sending an interruption signal
+
+job_scheduler:           # configuration namespace
+  max_parallel_jobs: 2000  # safety limit: increase this if you want to be able to run many jobs in parallel, especially in aws mode. Defaults to 10 to allow running the usual 10 folds in parallel with no problem.
+  delay_between_jobs: 8  # delay in seconds between each parallel job start
+
+aws:                    # configuration namespace for AWS mode.
+  region: 'us-east-1'            # the AWS region to use. By default, the app will use the region set in ~/.aws/config when configuring AWS CLI.
+
+  iam:                                               # sub-namespace for AWS IAM service.
+    max_role_session_duration_secs: 72000             # the max duration (in seconds) during which the ec2 instance will have access to s3.
+                                                     # This should be a number between 900 (15mn) to 43200 (12h).
+
+  s3:                               # sub-namespace for AWS S3 service.
+    bucket: automl-benchmark-ag        # must be unique im whole Amazon s3, max 40 chars, and include only numbers, lowercase characters and hyphens.
+    root_key: ec2/2022_10_26_clean/                  #
+
+  ec2:
+    instance_type:                       #
+      series: m6i                        #
+      map:                               # map between num cores required and ec2 instance type sizes
+        default: large
+        '1': small
+        '2': large
+        '4': xlarge
+        '8': 2xlarge
+        '16': 4xlarge
+        '32': 8xlarge
+        '64': 16xlarge
+    volume_type: gp3                # one of gp2, io1, st1, sc1, or standard (default).
+
+  max_timeout_seconds: 72000    #
+  overhead_time_seconds: 28800   # amount of additional time allowed for the job to complete on aws before the instance is stopped.
+
+  resource_files:               # additional resource files or directories that are made available to benchmark runs on ec2, from remote input or user directory.
+    - '{user}/config.yaml'
+    - '{user}/frameworks.yaml'
+    - '{user}/constraints.yaml'
+    - '{user}/benchmarks'
+    - '{user}/extensions'

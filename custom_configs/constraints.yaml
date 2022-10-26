@@ -1,32 +1,59 @@
 ---
 
+toy:
+  folds: 1
+  max_runtime_seconds: 20
+  cores: 8
+  min_vol_size_mb: 100000
+
 test:
   folds: 2
   max_runtime_seconds: 600
   cores: 4
+  min_vol_size_mb: 100000
 
 1h4c:
   folds: 10
   max_runtime_seconds: 3600
   cores: 4
+  min_vol_size_mb: 100000
 
 1h8c:
   folds: 10
   max_runtime_seconds: 3600
   cores: 8
-  min_vol_size_mb: 16384
+  min_vol_size_mb: 100000
 
 4h8c:
   folds: 10
   max_runtime_seconds: 14400
   cores: 8
-  min_vol_size_mb: 65536
+  min_vol_size_mb: 100000
 
 8h8c:
   folds: 10
   max_runtime_seconds: 28800
   cores: 8
-  min_vol_size_mb: 131072
+  min_vol_size_mb: 100000
+
+16h8c:
+  folds: 10
+  max_runtime_seconds: 57600
+  cores: 8
+  min_vol_size_mb: 100000
+
+1h64c:
+  folds: 10
+  max_runtime_seconds: 3600
+  cores: 64
+  min_vol_size_mb: 100000
+
+4h64c:
+  folds: 10
+  max_runtime_seconds: 14400
+  cores: 64
+  min_vol_size_mb: 100000
+
 
 1h8c_gp3:
   folds: 10

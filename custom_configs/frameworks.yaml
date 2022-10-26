@@ -1,0 +1,48 @@
+---
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  version: "stable"
+  description: |
+    AutoGluon-Tabular: Unlike existing AutoML frameworks that primarily focus on model/hyperparameter selection,
+    AutoGluon-Tabular succeeds by ensembling multiple models and stacking them in multiple layers.
+  project: https://auto.gluon.ai
+  refs: [https://arxiv.org/abs/2003.06505]
+#  params:
+#    _save_artifacts: ['leaderboard', 'models', 'info']
+
+AutoGluon_bq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'best_quality' preset provides the most accurate overall predictor.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: best_quality
+    _leaderboard_test: True
+
+AutoGluon_hq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'high_quality' preset provides a very strong predictor with 8x+ faster inference speed than 'best_quality'.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: high_quality
+    _leaderboard_test: True
+
+AutoGluon_gq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'good_quality' preset provides a strong predictor with 16x+ faster inference speed than 'best_quality'.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: good_quality
+    _leaderboard_test: True
+
+AutoGluon_mq:
+  extends: AutoGluon
+  params:
+    presets: medium_quality
+    _leaderboard_test: True
