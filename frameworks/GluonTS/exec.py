@@ -64,6 +64,7 @@ def run(dataset, config):
     dataset_train_gluonts = PandasDataset.from_long_dataframe(dataframe=dataset_train, item_id=id_column, target=target_column, timestamp=timestamp_column, freq=freq)
     dataset_test_gluonts = PandasDataset.from_long_dataframe(dataframe=dataset_test, item_id=id_column, target=target_column, timestamp=timestamp_column, freq=freq)
 
+    log.info(f'Number items {len(item_ids)}.')
     with Timer() as training:
         predictor = estimate_predictor(model, prediction_length, freq, dataset_train_gluonts, time_limit)
 
@@ -79,8 +80,10 @@ def run(dataset, config):
     tss = list(ts_it)
     quantiles = np.array([[forecast.quantile(quantile_step) for forecast in forecasts] for quantile_step in quantiles_steps], dtype=dtype)
     quantiles = pd.DataFrame(quantiles.reshape(9, -1).T, columns=[str(quantile_step) for quantile_step in quantiles_steps])
+    log.info(f'Quantiles Shape {quantiles.shape}')
 
-    predictions_only = np.array([forecast.mean for forecast in forecasts], dtype=dtype)
+    predictions_only = np.concatenate([forecast.mean for forecast in forecasts], dtype=dtype)
+    log.info(f'Predictions Shape {predictions_only.shape}')
     truth_only = test_data_future[target_column].values
 
     evaluator = Evaluator(quantiles=quantiles_steps)
