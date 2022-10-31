@@ -3,6 +3,7 @@ from amlb.utils import call_script_in_same_dir
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset, DatasetType
 from copy import deepcopy
+from copy import copy
 import os
 
 def setup(*args, **kwargs):
@@ -42,7 +43,7 @@ def run_autogluon_tabular(dataset: Dataset, config: TaskConfig):
 
 def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
-    dataset = deepcopy(dataset)
+    dataset = copy(dataset)
     if not hasattr(dataset, 'timestamp_column'):
         dataset.timestamp_column = None
     if not hasattr(dataset, 'id_column'):
