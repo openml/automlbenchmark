@@ -74,7 +74,7 @@ fi
 
 # TOPIC: installing Prophet
 echo "installing Prophet..."
-PIP install "prophet"
+#PIP install "prophet"
 # -------------------------
 
 # TOPIC: installing orjson
