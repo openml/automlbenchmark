@@ -9,14 +9,12 @@ if sys.platform == 'darwin':
     os.environ['OMP_NUM_THREADS'] = '1'
 
 import pandas as pd
-import time
 
 from autoPyTorch import __version__
 from autoPyTorch.api.time_series_forecasting import TimeSeriesForecastingTask
 
 from frameworks.shared.callee import call_run, result, output_subdir
 from frameworks.shared.utils import Timer, zip_path
-import csv
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +22,9 @@ log = logging.getLogger(__name__)
 def run(dataset, config):
     log.info(f"\n**** AutoPyTorchTS [v{__version__}] ****\n")
 
-    timestamp_column = dataset.timestamp_column
     id_column = dataset.id_column
     prediction_length = dataset.forecast_horizon_in_steps
     target_column = dataset.target.name
-    time_limit = config.max_runtime_seconds
 
     # data and metric imports
     # from sktime.datasets import load_longley
@@ -56,7 +52,6 @@ def run(dataset, config):
 
     y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(pd.concat([dataset.train.X, dataset.train.y], axis=1).groupby(dataset.id_column))]
     y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(pd.concat([dataset.test.X, dataset.test.y], axis=1).groupby(dataset.id_column))]
-
 
     #X_train = [features[: -forecasting_horizon]]
     #X_test = [features[-forecasting_horizon:]]
@@ -93,8 +88,8 @@ def run(dataset, config):
             memory_limit=16 * 1024,  # Currently, forecasting models use much more memories
             freq=FREQ_MAP[freq],
             start_times=start_times,
-            #func_eval_time_limit_secs=500, # 50,
-            total_walltime_limit=600, #config.max_runtime_seconds, #60,
+            #func_eval_time_limit_secs=50,
+            total_walltime_limit=config.max_runtime_seconds,
             min_num_test_instances=1000,  # proxy validation sets. This only works for the tasks with more than 1000 series
             known_future_features=known_future_features,
         )
@@ -103,18 +98,12 @@ def run(dataset, config):
         # our dataset could directly generate sequences for new datasets
         test_sets = api.dataset.generate_test_seqs()
 
-        #print(f'Type test sets {type(test_sets)}')
-        #print(test_sets)
-
         # Calculate test accuracy
         y_pred = api.predict(test_sets)
 
     predictions_only = np.array(y_pred, dtype=np.float64).flatten()
     log.info(f'Predictions Shape {predictions_only.shape}')
     truth_only = np.array(y_test, dtype=np.float64).flatten() # test_data_future[target_column].values
-
-    #score = api.score(y_pred, y_test)
-    #print("Forecasting score", score)
 
     forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
