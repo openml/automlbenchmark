@@ -29,12 +29,12 @@ PIP install --upgrade setuptools wheel
 
 
 
-# if [[ "${OS}" == "Amazon Linux 2" ]]; then
-#     # TOPIC: update system
-#     echo "updating system..."
-#     SUDO yum clean all
-#     SUDO rm -rf /var/cache/yum
-#     SUDO yum -y update
+if [[ "${OS}" == "Amazon Linux 2" ]]; then
+    # TOPIC: update system
+    echo "updating system..."
+    SUDO yum clean all
+    SUDO rm -rf /var/cache/yum
+    SUDO yum -y update
 
 #     # TOPIC: install readline-devel (for rpy2)
 #     echo "installing readline-devel..."
@@ -50,16 +50,16 @@ PIP install --upgrade setuptools wheel
 #     SUDO  yum -y install libcurl-devel
 #     SUDO  R -e 'install.packages(c("forecast"), repos="https://cloud.r-project.org")'
 
-# elif [[ "${OS}" == "Ubuntu 18.04" || "${OS}" == "Ubuntu 20.04" ]]; then
-#     # TOPIC: update system
-#     echo "updating system..."
-#     DEBIAN_FRONTEND=noninteractive
-#     SUDO apt-get update -y
-#     SUDO apt-get upgrade -y
-#     SUDO apt-get install -y apt-utils make cmake build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
-#         libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
-#         libffi-dev liblzma-dev libcurl4-openssl-dev p7zip-full awscli python3-dev
-#     # ------------------
+elif [[ "${OS}" == "Ubuntu 18.04" || "${OS}" == "Ubuntu 20.04" ]]; then
+    # TOPIC: update system
+    echo "updating system..."
+    DEBIAN_FRONTEND=noninteractive
+    SUDO apt-get update -y
+    SUDO apt-get upgrade -y
+    # SUDO apt-get install -y apt-utils make cmake build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
+    #     libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
+    #     libffi-dev liblzma-dev libcurl4-openssl-dev p7zip-full awscli python3-dev
+    # ------------------
 
 #     # TOPIC: install R
 #     echo "installing R..."
@@ -73,7 +73,8 @@ PIP install --upgrade setuptools wheel
 #     apt install -y r-base
 #     SUDO R -e 'install.packages(c("forecast", "nnfor"), repos="https://cloud.r-project.org")'
 #     # ---------------------
-# fi
+    SUDO apt-get install -y python3-opencv
+fi
 
 if [[ ${MODULE} == "timeseries" ]]; then
     echo "Info: AutoPyTorch: Installing forecasting extension."
