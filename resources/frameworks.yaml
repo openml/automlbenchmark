@@ -268,13 +268,6 @@ GluonTS_MQRNN:
   params:
     model: MQRNN
 
-GluonTS_Transformer:
-  extends: GluonTS
-  description: |
-    GluonTS, TransformerEstimator.
-  params:
-    model: Transformer
-
 GluonTS_TFT:
   extends: GluonTS
   description: |
