@@ -34,6 +34,11 @@ def run(dataset, config):
     dataset_test = pd.concat([dataset.test.X, dataset.test.y], axis=1)
 
     forecast_horizon = dataset.forecast_horizon_in_steps
+    eval_metric = get_eval_metric(config)
+
+    #y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(pd.concat([dataset.train.X, dataset.train.y], axis=1).groupby(dataset.id_column))]
+    y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(dataset_test.groupby(dataset.id_column))]
+    y_test_past = [seq[1][dataset.target.name].reset_index(drop=True)[:-forecast_horizon] for seq in list(dataset_test.groupby(dataset.id_column))]
 
     """
     FREQ_MAP = {
@@ -50,10 +55,6 @@ def run(dataset, config):
     }
     """
 
-    eval_metric = get_eval_metric(config)
-
-    y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(pd.concat([dataset.train.X, dataset.train.y], axis=1).groupby(dataset.id_column))]
-    y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(pd.concat([dataset.test.X, dataset.test.y], axis=1).groupby(dataset.id_column))]
 
     #X_train = [features[: -forecasting_horizon]]
     #X_test = [features[-forecasting_horizon:]]
@@ -64,11 +65,16 @@ def run(dataset, config):
     known_future_features = None
 
     # start_times = [targets.index.to_timestamp()[0]]
-    start_times = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
+    # start_times = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
+    start_times = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.test.X.groupby(dataset.id_column))]
 
+    log.info(f'There are {len(list(dataset.test.X.groupby(dataset.id_column)))} sequences in the dataset.')
     # freq = '1Y'
-    item_ids =  dataset.train.X[dataset.id_column].unique()
-    items_indices_timestamp = [dataset.train.X[dataset.train.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
+    #item_ids =  dataset.train.X[dataset.id_column].unique()
+    #items_indices_timestamp = [dataset.train.X[dataset.train.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
+
+    item_ids =  dataset.test.X[dataset.id_column].unique()
+    items_indices_timestamp = [dataset.test.X[dataset.test.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
     items_freqs = [item_id_indices_timestamp.freq or item_id_indices_timestamp.inferred_freq for item_id_indices_timestamp in items_indices_timestamp]
     items_freqs_unique = set(items_freqs)
     if not len(items_freqs_unique) == 1:
@@ -83,11 +89,11 @@ def run(dataset, config):
         # Search for an ensemble of machine learning algorithms
         api.search(
             X_train=X_train,
-            y_train=y_train,
+            y_train=y_test_past,
             X_test=X_test,
             optimize_metric=eval_metric,
             n_prediction_steps=forecast_horizon,
-            memory_limit=32 * 1024,  # Currently, forecasting models use much more memories
+            memory_limit=30 * 1024,  # Currently, forecasting models use much more memories
             freq=freq, #FREQ_MAP[freq],
             start_times=start_times,
             #func_eval_time_limit_secs=50,
@@ -104,16 +110,21 @@ def run(dataset, config):
         y_pred = api.predict(test_sets)
 
     predictions_only = np.array(y_pred, dtype=np.float64).flatten()
-    log.info(f'Predictions Shape {predictions_only.shape}')
     truth_only = np.array(y_test, dtype=np.float64).flatten() # test_data_future[target_column].values
 
     forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
 
+
     naive_1_error_rep = calc_naive_1_error(dataset_test=dataset_test, id_column=id_column, target_column=target_column, prediction_length=prediction_length)
 
     quantiles_steps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     quantiles = pd.DataFrame(predictions_only.repeat(9).reshape(-1, 9), columns=[str(quantile_step) for quantile_step in quantiles_steps])
+
+
+    log.info(f'Predictions Shape {predictions_only.shape}.')
+    log.info(f'Truth Shape {truth_only.shape}.')
+    log.info(f'Quantiles Shape {quantiles.shape}.')
 
     optional_columns = quantiles
     optional_columns = optional_columns.assign(naive_1_error=naive_1_error_rep)
