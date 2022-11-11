@@ -87,7 +87,7 @@ def run(dataset, config):
             X_test=X_test,
             optimize_metric=eval_metric,
             n_prediction_steps=forecast_horizon,
-            memory_limit=16 * 1024,  # Currently, forecasting models use much more memories
+            memory_limit=32 * 1024,  # Currently, forecasting models use much more memories
             freq=freq, #FREQ_MAP[freq],
             start_times=start_times,
             #func_eval_time_limit_secs=50,
