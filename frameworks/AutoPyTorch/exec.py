@@ -35,6 +35,7 @@ def run(dataset, config):
 
     forecast_horizon = dataset.forecast_horizon_in_steps
 
+    """
     FREQ_MAP = {
         "M": "1M",
         "Y": "1Y",
@@ -47,6 +48,7 @@ def run(dataset, config):
         "10min": "10min",
         "0.5H": "30min"
     }
+    """
 
     eval_metric = get_eval_metric(config)
 
@@ -86,7 +88,7 @@ def run(dataset, config):
             optimize_metric=eval_metric,
             n_prediction_steps=forecast_horizon,
             memory_limit=16 * 1024,  # Currently, forecasting models use much more memories
-            freq=FREQ_MAP[freq],
+            freq=freq, #FREQ_MAP[freq],
             start_times=start_times,
             #func_eval_time_limit_secs=50,
             total_walltime_limit=config.max_runtime_seconds,
