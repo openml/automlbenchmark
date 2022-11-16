@@ -736,20 +736,12 @@ class TimeSeriesResult(RegressionResult):
         means_per_item = self.itemwise_mean(num / denom)
         return self.finite_mean(means_per_item)
 
-    @metric(higher_is_better=False)
-    def mse(self):
-        means_per_item = self.itemwise_mean(np.square(self.truth - self.pred_mean))
-        return self.finite_mean(means_per_item)
-
-    @metric(higher_is_better=False)
-    def rmse(self):
-        return np.sqrt(self.mse())
 
     @metric(higher_is_better=False)
     def nrmse(self):
         """Normalized Root Mean Square Error"""
         num = self.rmse()
-        denom = np.mean(np.abs(self.truth))
+        denom = self.finite_mean(np.abs(self.truth))
         return num / denom
 
     @metric(higher_is_better=False)
