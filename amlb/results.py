@@ -725,17 +725,16 @@ class TimeSeriesResult(RegressionResult):
         """Symmetric Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.pred_median)
         denom = (np.abs(self.truth) + np.abs(self.pred_mean)) / 2
-        means_per_item = self.itemwise_mean(num / denom)
-        return self.finite_mean(means_per_item)
+        denom[denom == 0] = np.inf
+        return self.finite_mean(num / denom)
 
     @metric(higher_is_better=False)
     def mape(self):
         """Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.pred_median)
         denom = np.abs(self.truth)
-        means_per_item = self.itemwise_mean(num / denom)
-        return self.finite_mean(means_per_item)
-
+        denom[denom == 0] = np.inf
+        return self.finite_mean(num / denom)
 
     @metric(higher_is_better=False)
     def nrmse(self):
