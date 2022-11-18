@@ -724,7 +724,7 @@ class TimeSeriesResult(RegressionResult):
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.pred_median)
-        denom = (np.abs(self.truth) + np.abs(self.pred_mean)) / 2
+        denom = (np.abs(self.truth) + np.abs(self.pred_median)) / 2
         denom[denom == 0] = np.inf
         return self.finite_mean(num / denom)
 
