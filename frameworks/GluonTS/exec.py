@@ -56,6 +56,7 @@ def run(dataset, config):
         msg=f"Found not exactly one frequency across all items. Unique inferred frequencies are {items_freqs_unique}"
         raise ValueError(msg)
     freq = items_freqs[0]
+    seasonality = get_seasonality_from_freq(freq)
 
     dataset_train = pd.concat([dataset.train.X, dataset.train.y], axis=1)
     dataset_test = pd.concat([dataset.test.X, dataset.test.y], axis=1)
@@ -93,10 +94,12 @@ def run(dataset, config):
     forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
 
-    naive_1_error_rep = calc_naive_1_error(dataset_test=dataset_test, id_column=id_column, target_column=target_column, prediction_length=prediction_length)
+    seasonal_error_rep = calc_seasonal_error(dataset_test=dataset_test, id_column=id_column,
+                                             target_column=target_column, prediction_length=prediction_length,
+                                             seasonality=seasonality)
 
     optional_columns = quantiles
-    optional_columns = optional_columns.assign(naive_1_error=naive_1_error_rep)
+    optional_columns = optional_columns.assign(seasonal_error=seasonal_error_rep)
     optional_columns = optional_columns.assign(item_id=forecast_item_ids)
 
     return result(output_file=config.output_predictions_file,
@@ -198,8 +201,8 @@ def save_artifacts(agg_metrics, item_metrics, config):
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 
-def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length):
-    """Calculates the naive 1 error for the test dataset and repeates it for each element in the forecast sequence.
+def calc_seasonal_error(dataset_test, id_column, target_column, prediction_length, seasonality):
+    """Calculates the sesonal error for the test dataset and repeates it for each element in the forecast sequence.
 
     Args:
         dataset_test (pd.DataFrame) : Dataframe containing target and item id column, shape (N, K>=2)
@@ -207,10 +210,9 @@ def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length
         target_column (str) : Name of target column.
         prediction_length (int) : Prediction length which is evaluated.
     Returns:
-        naive_1_error_rep (np.ndarray) : Naive 1 error for each sequence. Shape (N,)
+        seasonal_error_rep (np.ndarray) : Naive 1 error for each sequence. Shape (N,)
 
     """
-    period_length = 1
 
     dtype=dataset_test[target_column].dtype
     # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
@@ -221,11 +223,44 @@ def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length
     # 2. capture sequences in a list
     y_past = [dataset_test[target_column].squeeze().to_numpy(dtype=dtype)[unique_item_ids_inverse == i][:-prediction_length] for i in np.argsort(unique_item_ids_indices)]
     # 3. calculate period error per sequence
-    naive_1_error = np.array([np.mean(np.abs(y_past_item[period_length:] - y_past_item[:-period_length])) for y_past_item in y_past], dtype=dtype)
+    seasonal_error = np.array([np.mean(np.abs(y_past_item[seasonality:] - y_past_item[:-seasonality])) for y_past_item in y_past], dtype=dtype)
     # 4. repeat period error for each sequence, to save one for each element
-    naive_1_error_rep = np.repeat(naive_1_error, prediction_length)
+    seasonal_error_rep = np.repeat(seasonal_error, prediction_length)
 
-    return naive_1_error_rep
+    return seasonal_error_rep
+
+def get_seasonality_from_freq(freq: str) -> int:
+    """Calculates the seasonality from a frequency.
+
+    Args:
+        freq (str) : Frequency of time series.
+    Returns:
+        seasonality (int) : Seasonality.
+
+    >>> get_seasonality_from_freq("2H")
+    12
+    """
+
+    seasonalities = {
+        "S": 3600,  # 1 hour
+        "T": 1440,  # 1 day
+        "H": 24,  # 1 day
+        "D": 1,  # 1 day
+        "W": 1,  # 1 week
+        "M": 12, # 1 year
+        "B": 5,  # 1 business week
+        "Q": 4,  # 1 year
+    }
+
+    offset = pd.tseries.frequencies.to_offset(freq)
+    base_seasonality = seasonalities.get(offset.name.split("-")[0], 1)
+    seasonality, remainder = divmod(base_seasonality, offset.n)
+    if not remainder:
+        return seasonality
+
+    log.warning(f'Multiple {offset.n} does not divide base seasonality {base_seasonality}.')
+    log.warning(f'Falling back to seasonality 1.')
+    return 1
 
 if __name__ == '__main__':
     call_run(run)

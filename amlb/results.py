@@ -232,7 +232,7 @@ class TaskResult:
                 if rconfig().test_mode:
                     TaskResult.validate_predictions(df)
 
-                if  'naive_1_error' in df.columns:
+                if  'seasonal_error' in df.columns:
                     return TimeSeriesResult(df)
                 else:
                     if df.shape[1] > 2:
@@ -672,14 +672,14 @@ class TimeSeriesResult(RegressionResult):
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
         self.quantiles_probs_str = list(column for column in self.df.columns if column.startswith('0.'))
-        if not all(x in self.df.columns for x in ['truth', 'predictions', 'item_id', 'naive_1_error']) or len(self.quantiles_probs_str) == 0:
+        if not all(x in self.df.columns for x in ['truth', 'predictions', 'item_id', 'seasonal_error']) or len(self.quantiles_probs_str) == 0:
             msg=f'Missing columns for calculating time series metrics. Given columns are {list(self.df.columns)}.'
             raise ValueError(msg)
 
         self.truth = self.df['truth'].values if self.df is not None else None
         self.pred_mean = self.df['predictions'].values if self.df is not None else None
 
-        self.naive_1_error = self.df['naive_1_error'].values
+        self.seasonal_error = self.df['seasonal_error'].values
         self.quantiles_probs = np.array(list(float(quantile_prob_str) for quantile_prob_str in self.quantiles_probs_str))
         self.quantiles = self.df.filter(self.quantiles_probs_str).values
         self.item_ids = self.df['item_id'].values
@@ -698,7 +698,7 @@ class TimeSeriesResult(RegressionResult):
             self.pred_median = self.quantiles[:, np.where(self.quantiles_probs == 0.5)[0][0]]
         else:
             self.pred_median = self.pred_mean
-        self.naive_1_error = self.naive_1_error.astype(self.dtype, copy=False)
+        self.seasonal_error = self.seasonal_error.astype(self.dtype, copy=False)
 
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = DatasetType.timeseries
@@ -716,7 +716,7 @@ class TimeSeriesResult(RegressionResult):
     def mase(self):
         """Mean Absolute Scaled Error"""
         num = np.abs(self.truth - self.pred_median)
-        denom = self.itemwise_select_first(self.naive_1_error)
+        denom = self.itemwise_select_first(self.seasonal_error)
         means_per_item = self.itemwise_mean(num) / denom
         return self.finite_mean(means_per_item)
 
@@ -767,10 +767,10 @@ class TimeSeriesResult(RegressionResult):
         return self.finite_mean(num / denom)
 
     @metric(higher_is_better=False)
-    def mean_naive_1_error(self):
-        """Mean Naive 1 Error"""
+    def mean_seasonal_error(self):
+        """Mean Seasonal Error"""
 
-        means_per_item = self.itemwise_select_first(self.naive_1_error)
+        means_per_item = self.itemwise_select_first(self.seasonal_error)
         return self.finite_mean(means_per_item)
 
 _encode_predictions_and_truth_ = False
