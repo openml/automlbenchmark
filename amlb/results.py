@@ -739,14 +739,14 @@ class TimeSeriesResult(RegressionResult):
     @metric(higher_is_better=False)
     def nrmse(self):
         """Normalized Root Mean Square Error"""
-        num = self.rmse()
+        num = np.sqrt(self.finite_mean(np.square(self.truth - self.pred_median)))
         denom = self.finite_mean(np.abs(self.truth))
         return num / denom
 
     @metric(higher_is_better=False)
     def wape(self):
         """Weighted Average Percentage Error"""
-        num = np.sum(np.abs(self.truth - self.pred_mean))
+        num = np.sum(np.abs(self.truth - self.pred_median))
         denom = np.sum(np.abs(self.truth))
         return num / denom
 
