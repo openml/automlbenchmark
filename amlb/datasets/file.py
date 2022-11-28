@@ -143,15 +143,19 @@ class FileLoader:
         dataset = deepcopy(dataset)
         dataset_config = deepcopy(dataset_config)
         if dataset_config['id_column'] is None:
-            log.warning("Warning: For timeseries task setting undefined `id_column` to `item_id`.")
-            dataset_config['id_column'] = "item_id"
+            log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`.")
+            dataset_config['id_column'] = 'item_id'
         if dataset_config['forecast_horizon_in_steps'] is None:
-            log.warning("Warning: For timeseries task setting undefined `forecast_horizon_in_steps` to `1`.")
-            dataset_config['forecast_horizon_in_steps'] = "1"
+            log.warning("Warning: For timeseries task, setting undefined `forecast_horizon_in_steps` to `1`.")
+            dataset_config['forecast_horizon_in_steps'] = '1'
+        if dataset_config['seasonality'] is None:
+            log.warning("Warning: For timeseries task, setting undefined `seasonality` to `1`.")
+            dataset_config['seasonality'] = '1'
 
         dataset.timestamp_column=dataset_config['timestamp_column']
         dataset.id_column=dataset_config['id_column']
         dataset.forecast_horizon_in_steps=int(dataset_config['forecast_horizon_in_steps'])
+        dataset.seasonality=int(dataset_config['seasonality'])
 
         train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
         test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()

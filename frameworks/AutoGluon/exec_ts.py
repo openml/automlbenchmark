@@ -39,8 +39,7 @@ def run(dataset, config):
                                       test_path=dataset.test.path,
                                       timestamp_column=timestamp_column,
                                       id_column=id_column)
-    freq=test_data.freq
-    seasonality = get_seasonality_from_freq(freq)
+    seasonality = dataset.seasonality
 
     test_data_past = test_data.copy().slice_by_timestep(slice(None, -prediction_length))
 
@@ -202,39 +201,6 @@ def calc_seasonal_error(dataset_test, id_column, target_column, prediction_lengt
     seasonal_error_rep = np.repeat(seasonal_error, prediction_length)
 
     return seasonal_error_rep
-
-def get_seasonality_from_freq(freq: str) -> int:
-    """Calculates the seasonality from a frequency.
-
-    Args:
-        freq (str) : Frequency of time series.
-    Returns:
-        seasonality (int) : Seasonality.
-
-    >>> get_seasonality_from_freq("2H")
-    12
-    """
-
-    seasonalities = {
-        "S": 3600,  # 1 hour
-        "T": 1440,  # 1 day
-        "H": 24,  # 1 day
-        "D": 1,  # 1 day
-        "W": 1,  # 1 week
-        "M": 12, # 1 year
-        "B": 5,  # 1 business week
-        "Q": 4,  # 1 year
-    }
-
-    offset = pd.tseries.frequencies.to_offset(freq)
-    base_seasonality = seasonalities.get(offset.name.split("-")[0], 1)
-    seasonality, remainder = divmod(base_seasonality, offset.n)
-    if not remainder:
-        return seasonality
-
-    log.warning(f'Multiple {offset.n} does not divide base seasonality {base_seasonality}.')
-    log.warning(f'Falling back to seasonality 1.')
-    return 1
 
 if __name__ == '__main__':
     call_run(run)

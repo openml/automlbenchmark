@@ -20,6 +20,8 @@ def run(dataset: Dataset, config: TaskConfig):
         dataset.id_column = None
     if not hasattr(dataset, 'forecast_horizon_in_steps'):
         raise AttributeError("Unspecified `forecast_horizon_in_steps`.")
+    if not hasattr(dataset, 'seasonality'):
+        raise AttributeError("Unspecified `seasonality`.")
 
     data = dict(
         # train=dict(path=dataset.train.data_path('parquet')),
@@ -33,7 +35,8 @@ def run(dataset: Dataset, config: TaskConfig):
         problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
         timestamp_column=dataset.timestamp_column,
         id_column=dataset.id_column,
-        forecast_horizon_in_steps=dataset.forecast_horizon_in_steps
+        forecast_horizon_in_steps=dataset.forecast_horizon_in_steps,
+        seasonality=dataset.seasonality
     )
 
     return run_in_venv(__file__, "exec.py",

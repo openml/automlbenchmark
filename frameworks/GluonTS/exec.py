@@ -56,7 +56,7 @@ def run(dataset, config):
         msg=f"Found not exactly one frequency across all items. Unique inferred frequencies are {items_freqs_unique}"
         raise ValueError(msg)
     freq = items_freqs[0]
-    seasonality = get_seasonality_from_freq(freq)
+    seasonality = dataset.seasonality
 
     dataset_train = pd.concat([dataset.train.X, dataset.train.y], axis=1)
     dataset_test = pd.concat([dataset.test.X, dataset.test.y], axis=1)
@@ -228,39 +228,6 @@ def calc_seasonal_error(dataset_test, id_column, target_column, prediction_lengt
     seasonal_error_rep = np.repeat(seasonal_error, prediction_length)
 
     return seasonal_error_rep
-
-def get_seasonality_from_freq(freq: str) -> int:
-    """Calculates the seasonality from a frequency.
-
-    Args:
-        freq (str) : Frequency of time series.
-    Returns:
-        seasonality (int) : Seasonality.
-
-    >>> get_seasonality_from_freq("2H")
-    12
-    """
-
-    seasonalities = {
-        "S": 3600,  # 1 hour
-        "T": 1440,  # 1 day
-        "H": 24,  # 1 day
-        "D": 1,  # 1 day
-        "W": 1,  # 1 week
-        "M": 12, # 1 year
-        "B": 5,  # 1 business week
-        "Q": 4,  # 1 year
-    }
-
-    offset = pd.tseries.frequencies.to_offset(freq)
-    base_seasonality = seasonalities.get(offset.name.split("-")[0], 1)
-    seasonality, remainder = divmod(base_seasonality, offset.n)
-    if not remainder:
-        return seasonality
-
-    log.warning(f'Multiple {offset.n} does not divide base seasonality {base_seasonality}.')
-    log.warning(f'Falling back to seasonality 1.')
-    return 1
 
 if __name__ == '__main__':
     call_run(run)
