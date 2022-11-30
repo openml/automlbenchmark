@@ -12,6 +12,7 @@ import pandas as pd
 
 from autoPyTorch import __version__
 from autoPyTorch.api.time_series_forecasting import TimeSeriesForecastingTask
+from autoPyTorch.datasets.time_series_dataset import TimeSeriesSequence
 
 from frameworks.shared.callee import call_run, result, output_subdir
 from frameworks.shared.utils import Timer, zip_path
@@ -32,14 +33,14 @@ def run(dataset, config):
     # targets, features = load_longley()
     # targets: pandas.core.series.Series (N, ), index = timestamp
     # features: pandas.core.frame.DataFrame (N, D) , index = timestamp
+    dataset_train = pd.concat([dataset.train.X, dataset.train.y], axis=1)
     dataset_test = pd.concat([dataset.test.X, dataset.test.y], axis=1)
 
     forecast_horizon = dataset.forecast_horizon_in_steps
     eval_metric = get_eval_metric(config)
 
-    #y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(pd.concat([dataset.train.X, dataset.train.y], axis=1).groupby(dataset.id_column))]
     y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(dataset_test.groupby(dataset.id_column))]
-    y_test_past = [seq[1][dataset.target.name].reset_index(drop=True)[:-forecast_horizon] for seq in list(dataset_test.groupby(dataset.id_column))]
+    y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(dataset_train.groupby(dataset.id_column))]
 
     #X_train = [features[: -forecasting_horizon]]
     #X_test = [features[-forecasting_horizon:]]
@@ -51,7 +52,7 @@ def run(dataset, config):
 
     # start_times = [targets.index.to_timestamp()[0]]
     # start_times = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
-    start_times = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.test.X.groupby(dataset.id_column))]
+    start_times_train = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
 
     log.info(f'There are {len(list(dataset.test.X.groupby(dataset.id_column)))} sequences in the dataset.')
     # freq = '1Y'
@@ -74,13 +75,13 @@ def run(dataset, config):
         # Search for an ensemble of machine learning algorithms
         api.search(
             X_train=X_train,
-            y_train=y_test_past,
+            y_train=y_train,
             X_test=X_test,
             optimize_metric=eval_metric,
             n_prediction_steps=forecast_horizon,
             memory_limit=30 * 1024,  # Currently, forecasting models use much more memories
             freq=freq, #FREQ_MAP[freq],
-            start_times=start_times,
+            start_times=start_times_train,
             #func_eval_time_limit_secs=50,
             total_walltime_limit=config.max_runtime_seconds,
             min_num_test_instances=1000,  # proxy validation sets. This only works for the tasks with more than 1000 series
@@ -88,10 +89,21 @@ def run(dataset, config):
         )
 
     with Timer() as predict:
-        # our dataset could directly generate sequences for new datasets
-        test_sets = api.dataset.generate_test_seqs()
 
-        # Calculate test accuracy
+        test_sets = []
+        for seq in list(dataset_test.groupby(dataset.id_column)):
+            ts = TimeSeriesSequence(
+                X=None,
+                Y=seq[1][dataset.target.name].reset_index(drop=True)[:-forecast_horizon],
+                start_time=seq[1][dataset.timestamp_column].iloc[0],
+                freq=freq,
+                time_feature_transform=api.dataset.time_feature_transform,
+                train_transforms=api.dataset.train_transform,
+                val_transforms=api.dataset.val_transform,
+                n_prediction_steps=prediction_length,
+                sp=api.dataset.seasonality,
+                is_test_set=True)
+            test_sets.append(ts)
         y_pred = api.predict(test_sets)
 
     predictions_only = np.array(y_pred, dtype=np.float64).flatten()
