@@ -25,6 +25,7 @@ def run(dataset, config):
     id_column = dataset.id_column
     prediction_length = dataset.forecast_horizon_in_steps
     target_column = dataset.target.name
+    seasonality = dataset.seasonality
 
     # data and metric imports
     # from sktime.datasets import load_longley
@@ -39,22 +40,6 @@ def run(dataset, config):
     #y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(pd.concat([dataset.train.X, dataset.train.y], axis=1).groupby(dataset.id_column))]
     y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(dataset_test.groupby(dataset.id_column))]
     y_test_past = [seq[1][dataset.target.name].reset_index(drop=True)[:-forecast_horizon] for seq in list(dataset_test.groupby(dataset.id_column))]
-
-    """
-    FREQ_MAP = {
-        "M": "1M",
-        "Y": "1Y",
-        "Q": "1Q",
-        "D": "1D",
-        "W": "1W",
-        "H": "1H",
-        "1H": "1H",
-        "min": "1min",
-        "10min": "10min",
-        "0.5H": "30min"
-    }
-    """
-
 
     #X_train = [features[: -forecasting_horizon]]
     #X_test = [features[-forecasting_horizon:]]
@@ -116,7 +101,7 @@ def run(dataset, config):
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
 
 
-    naive_1_error_rep = calc_naive_1_error(dataset_test=dataset_test, id_column=id_column, target_column=target_column, prediction_length=prediction_length)
+    seasonal_error_rep = calc_seasonal_error(dataset_test=dataset_test, id_column=id_column, target_column=target_column, prediction_length=prediction_length, seasonality=seasonality)
 
     quantiles_steps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     quantiles = pd.DataFrame(predictions_only.repeat(9).reshape(-1, 9), columns=[str(quantile_step) for quantile_step in quantiles_steps])
@@ -127,7 +112,7 @@ def run(dataset, config):
     log.info(f'Quantiles Shape {quantiles.shape}.')
 
     optional_columns = quantiles
-    optional_columns = optional_columns.assign(naive_1_error=naive_1_error_rep)
+    optional_columns = optional_columns.assign(seasonal_error=seasonal_error_rep)
     optional_columns = optional_columns.assign(item_id=forecast_item_ids)
 
 
@@ -162,8 +147,8 @@ def get_eval_metric(config):
         log.warning("Performance metric %s not supported.", config.metric)
     return eval_metric
 
-def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length):
-    """Calculates the naive 1 error for the test dataset and repeates it for each element in the forecast sequence.
+def calc_seasonal_error(dataset_test, id_column, target_column, prediction_length, seasonality):
+    """Calculates the sesonal error for the test dataset and repeates it for each element in the forecast sequence.
 
     Args:
         dataset_test (pd.DataFrame) : Dataframe containing target and item id column, shape (N, K>=2)
@@ -171,10 +156,9 @@ def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length
         target_column (str) : Name of target column.
         prediction_length (int) : Prediction length which is evaluated.
     Returns:
-        naive_1_error_rep (np.ndarray) : Naive 1 error for each sequence. Shape (N,)
+        seasonal_error_rep (np.ndarray) : Naive 1 error for each sequence. Shape (N,)
 
     """
-    period_length = 1
 
     dtype=dataset_test[target_column].dtype
     # we aim to calculate the mean period error from the past for each sequence: 1/N sum_{i=1}^N |x(t_i) - x(t_i - T)|
@@ -185,11 +169,12 @@ def calc_naive_1_error(dataset_test, id_column, target_column, prediction_length
     # 2. capture sequences in a list
     y_past = [dataset_test[target_column].squeeze().to_numpy(dtype=dtype)[unique_item_ids_inverse == i][:-prediction_length] for i in np.argsort(unique_item_ids_indices)]
     # 3. calculate period error per sequence
-    naive_1_error = np.array([np.mean(np.abs(y_past_item[period_length:] - y_past_item[:-period_length])) for y_past_item in y_past], dtype=dtype)
+    seasonal_error = np.array([np.mean(np.abs(y_past_item[seasonality:] - y_past_item[:-seasonality])) for y_past_item in y_past], dtype=dtype)
     # 4. repeat period error for each sequence, to save one for each element
-    naive_1_error_rep = np.repeat(naive_1_error, prediction_length)
+    seasonal_error_rep = np.repeat(seasonal_error, prediction_length)
 
-    return naive_1_error_rep
+    return seasonal_error_rep
+
 
 if __name__ == '__main__':
     call_run(run)
