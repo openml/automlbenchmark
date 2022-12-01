@@ -1,0 +1,43 @@
+---
+#
+#  Please note: frameworks defined in this file are all set to "latest" which is usually not be a stable/release version
+#  but rather the current state of `master` branch for example or the last nightly build.
+#
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  version: "local"
+
+AutoGluon_bestquality:
+  extends: AutoGluon
+  params:
+    presets: best_quality
+
+AutoGluon_hq:
+  extends: AutoGluon
+  params:
+    presets: high_quality
+
+AutoGluon_gq:
+  extends: AutoGluon
+  params:
+    presets: good_quality
+
+####################################
+### TimeSeries AutoML frameworks ###
+####################################
+
+AutoGluonTS:
+  extends: AutoGluon
+  version: "local"
+  description: |
+    AutoGluon-TimeSeries
+  setup_env:
+    MODULE: timeseries
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
