@@ -9,5 +9,6 @@
     forecast_horizon_in_steps: 19
     id_column: name
     timestamp_column: Date
+    seasonality: 1
 
   folds: 1
