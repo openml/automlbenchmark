@@ -222,6 +222,52 @@ AutoGluonTS:
   setup_env:
     MODULE: timeseries
 
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor:
+  description: |
+    Fast dummy classifier mainly used to test the app and/or datasets: this doesn't encode data.
+  project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
+
+DecisionTree:
+  version: 'stable'
+  description: |
+    A simple decision tree implementation (scikit-learn) used for testing or as a reference base.
+  project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
+
+RandomForest:
+  version: 'stable'
+  description: |
+    A simple Random Forest implementation (scikit-learn) used for testing or as a reference base.
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  params:
+    n_estimators: 2000
+#    _n_jobs: 1   # faster, fitter, happier (running OoM on some datasets when using multiprocessing)
+#    verbose: true
+
+ranger:
+  version: 'stable'
+  description: |
+    A Random Forest implementation on R, mainly used for testing and as an example of R integration.
+  project: https://github.com/imbs-hl/ranger
+
+TunedRandomForest:
+  version: 'stable'
+  description: |
+    A Tuned Random Forest implementation (scikit-learn) trying to optimize over max_features, and used as a reference base.
+  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+  params:
+    n_estimators: 2000
+#    _n_jobs: 1  # cf. RandomForest
+#    _tuning:
+#      n_estimators: 500
+
+##################################################
+### TimeSeries Non AutoML reference frameworks ###
+##################################################
+
 GluonTS:
   version: "0.10.8"
   description: |
@@ -321,45 +367,3 @@ GluonTS_Theta:
     GluonTS, Theta.
   params:
     model: Theta
-
-#######################################
-### Non AutoML reference frameworks ###
-#######################################
-
-constantpredictor:
-  description: |
-    Fast dummy classifier mainly used to test the app and/or datasets: this doesn't encode data.
-  project: https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
-
-DecisionTree:
-  version: 'stable'
-  description: |
-    A simple decision tree implementation (scikit-learn) used for testing or as a reference base.
-  project: https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
-
-RandomForest:
-  version: 'stable'
-  description: |
-    A simple Random Forest implementation (scikit-learn) used for testing or as a reference base.
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
-  params:
-    n_estimators: 2000
-#    _n_jobs: 1   # faster, fitter, happier (running OoM on some datasets when using multiprocessing)
-#    verbose: true
-
-ranger:
-  version: 'stable'
-  description: |
-    A Random Forest implementation on R, mainly used for testing and as an example of R integration.
-  project: https://github.com/imbs-hl/ranger
-
-TunedRandomForest:
-  version: 'stable'
-  description: |
-    A Tuned Random Forest implementation (scikit-learn) trying to optimize over max_features, and used as a reference base.
-  project: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
-  params:
-    n_estimators: 2000
-#    _n_jobs: 1  # cf. RandomForest
-#    _tuning:
-#      n_estimators: 500
