@@ -704,13 +704,10 @@ class TimeSeriesResult(RegressionResult):
         self.type = DatasetType.timeseries
 
     def itemwise_mean(self, values):
-        return np.array([self.finite_mean(values[self.item_ids == unique_item_id]) for unique_item_id in self.unique_item_ids], dtype=self.dtype)
+        return np.array([np.mean(values[self.item_ids == unique_item_id]) for unique_item_id in self.unique_item_ids], dtype=self.dtype)
 
     def itemwise_select_first(self, values):
         return values.copy()[::self.prediction_length]
-
-    def finite_mean(self, np_array):
-        return np.mean(np_array[np.isfinite(np_array)])
 
     @metric(higher_is_better=False)
     def mase(self):
@@ -718,7 +715,7 @@ class TimeSeriesResult(RegressionResult):
         num = np.abs(self.truth - self.pred_median)
         denom = self.itemwise_select_first(self.seasonal_error)
         means_per_item = self.itemwise_mean(num) / denom
-        return self.finite_mean(means_per_item)
+        return np.mean(means_per_item)
 
     @metric(higher_is_better=False)
     def smape(self):
@@ -726,7 +723,7 @@ class TimeSeriesResult(RegressionResult):
         num = np.abs(self.truth - self.pred_median)
         denom = (np.abs(self.truth) + np.abs(self.pred_median)) / 2
         denom[denom == 0] = np.inf
-        return self.finite_mean(num / denom)
+        return np.mean(num / denom)
 
     @metric(higher_is_better=False)
     def mape(self):
@@ -734,13 +731,13 @@ class TimeSeriesResult(RegressionResult):
         num = np.abs(self.truth - self.pred_median)
         denom = np.abs(self.truth)
         denom[denom == 0] = np.inf
-        return self.finite_mean(num / denom)
+        return np.mean(num / denom)
 
     @metric(higher_is_better=False)
     def nrmse(self):
         """Normalized Root Mean Square Error"""
-        num = np.sqrt(self.finite_mean(np.square(self.truth - self.pred_median)))
-        denom = self.finite_mean(np.abs(self.truth))
+        num = np.sqrt(np.mean(np.square(self.truth - self.pred_median)))
+        denom = np.mean(np.abs(self.truth))
         return num / denom
 
     @metric(higher_is_better=False)
@@ -764,14 +761,14 @@ class TimeSeriesResult(RegressionResult):
         )
         num = quantile_losses # shape: [num_quantiles]
         denom = np.sum(np.abs(self.truth)) # shape: [1]
-        return self.finite_mean(num / denom)
+        return np.mean(num / denom)
 
     @metric(higher_is_better=False)
     def mean_seasonal_error(self):
         """Mean Seasonal Error"""
 
         means_per_item = self.itemwise_select_first(self.seasonal_error)
-        return self.finite_mean(means_per_item)
+        return np.mean(means_per_item)
 
 _encode_predictions_and_truth_ = False
 
