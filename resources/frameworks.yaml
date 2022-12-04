@@ -28,6 +28,14 @@ AutoGluon:
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
 
+AutoPyTorch:
+  version: "stable"
+  description: |
+    AutoPyTorch Tabular,
+    https://automl.github.io/Auto-PyTorch/master/examples/20_basics/example_tabular_classification.html#sphx-glr-examples-20-basics-example-tabular-classification-py
+  project: https://www.automl.org/automl/autopytorch
+  refs: [https://arxiv.org/abs/2006.13799]
+
 AutoGluon_bestquality:
   extends: AutoGluon
   description: |
@@ -194,6 +202,17 @@ TPOT:
 ####################################
 ### TimeSeries AutoML frameworks ###
 ####################################
+
+AutoPyTorchTS:
+  extends: AutoPyTorch
+  version: "stable"
+  description: |
+    AutoPyTorch Forecasting
+    https://automl.github.io/Auto-PyTorch/master/examples/20_basics/example_time_series_forecasting.html#sphx-glr-examples-20-basics-example-time-series-forecasting-py
+  project: https://www.automl.org/automl/autopytorch
+  refs: [https://doi.org/10.48550/arXiv.2205.05511]
+  setup_env:
+    MODULE: timeseries
 
 AutoGluonTS:
   extends: AutoGluon
