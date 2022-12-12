@@ -164,6 +164,20 @@ class Benchmark:
         with open(path, 'w') as f:
             f.write('\n'.join([f"{k}={v}" for k, v in setup_env.items()]+[""]))
 
+    def _read_setup_env(self):
+        fpath = os.path.join(self.framework_module.__path__[0], _setup_dir_, _setup_env_file_)
+        env_vars = {}
+        try:
+            with open(fpath, 'r') as f:
+                for line in f:
+                    if line.startswith('#') or not line.strip():
+                        continue
+                    key, value = line.strip().split('=', 1)
+                    env_vars[key] = value
+        except OSError:
+            print(f'Could not open/read file {fpath}')
+        return env_vars
+
     def _installed_file(self):
         return os.path.join(self._framework_dir, _setup_dir_, _installed_file_)
 
@@ -374,7 +388,7 @@ class TaskConfig:
 
     def __init__(self, name, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
-                 input_dir, output_dir):
+                 input_dir, output_dir, setup_env):
         self.framework = None
         self.framework_params = None
         self.framework_version = None
@@ -389,6 +403,7 @@ class TaskConfig:
         self.min_vol_size_mb = min_vol_size_mb
         self.input_dir = input_dir
         self.output_dir = output_dir
+        self.setup_env = setup_env
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
         self.ext = ns()  # used if frameworks require extra config points
 
@@ -470,6 +485,7 @@ class BenchmarkTask:
             min_vol_size_mb=task_def.min_vol_size_mb,
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
+            setup_env=benchmark._read_setup_env(),
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:

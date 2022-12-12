@@ -10,9 +10,8 @@ def setup(*args, **kwargs):
     call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
 
 def run(dataset: Dataset, config: TaskConfig):
-    env_vars = read_setup_env_vars()
 
-    if 'MODULE' not in env_vars or not env_vars['MODULE'] == "timeseries":
+    if 'MODULE' not in config.setup_env or not config.setup_env['MODULE'] == "timeseries":
         if dataset.type is not DatasetType.timeseries:
             return run_autogluon_tabular(dataset, config)
         else:
@@ -71,17 +70,3 @@ def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
 
     return run_in_venv(__file__, "exec_ts.py",
                        input_data=data, dataset=dataset, config=config)
-
-def read_setup_env_vars():
-    env_vars = {}
-    fpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.setup', 'setup_env')
-    try:
-        with open(fpath, 'r') as f:
-            for line in f:
-                if line.startswith('#') or not line.strip():
-                    continue
-                key, value = line.strip().split('=', 1)
-                env_vars[key] = value
-    except OSError:
-        print(f'Could not open/read file {fpath}')
-    return env_vars

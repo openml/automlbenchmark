@@ -82,7 +82,7 @@ parser.add_argument('--logging', type=str, default="console:info,app:debug,root:
                          "\nAccepted values for each logger are: notset, debug, info, warning, error, fatal, critical."
                          "\nExamples:"
                          "\n  --logging=info (applies the same level to all loggers)"
-                         "\n  --logging=root:debug (keeps defaults for non-specified loggers)" 
+                         "\n  --logging=root:debug (keeps defaults for non-specified loggers)"
                          "\n  --logging=console:warning,app:info"
                          "\n(default: '%(default)s')")
 parser.add_argument('--profiling', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
