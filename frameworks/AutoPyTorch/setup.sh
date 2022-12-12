@@ -73,7 +73,7 @@ elif [[ "${OS}" == "Ubuntu 18.04" || "${OS}" == "Ubuntu 20.04" ]]; then
 #     apt install -y r-base
 #     SUDO R -e 'install.packages(c("forecast", "nnfor"), repos="https://cloud.r-project.org")'
 #     # ---------------------
-    SUDO apt-get install -y python3-opencv
+    #SUDO apt-get install -y python3-opencv
 fi
 
 if [[ ${MODULE} == "timeseries" ]]; then
