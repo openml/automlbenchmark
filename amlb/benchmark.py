@@ -116,9 +116,7 @@ class Benchmark:
 
         log.info("Setting up framework {}.".format(self.framework_name))
 
-        framework_def_plus_user_dir_dict = self.framework_def.setup_env
-        framework_def_plus_user_dir_dict['USER_DIR'] = rconfig().user_dir
-        self._write_setup_env(self.framework_module.__path__[0], **dict(framework_def_plus_user_dir_dict))
+        self._write_setup_env(self.framework_module.__path__[0], **dict(self.framework_def.setup_env))
         self._mark_setup_start()
 
         if hasattr(self.framework_module, 'setup'):
@@ -157,7 +155,8 @@ class Benchmark:
     def _write_setup_env(self, dest_dir, **kwargs):
         setup_env = dict(
             AMLB_ROOT=rconfig().root_dir,
-            PY_EXEC_PATH=sys.executable
+            PY_EXEC_PATH=sys.executable,
+            USER_DIR=rconfig().user_dir,
         )
         setup_env.update(**kwargs)
         path = os.path.join(dest_dir, _setup_dir_, _setup_env_file_)
