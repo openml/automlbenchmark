@@ -14,8 +14,8 @@ from autoPyTorch import __version__
 from autoPyTorch.api.time_series_forecasting import TimeSeriesForecastingTask
 from autoPyTorch.datasets.time_series_dataset import TimeSeriesSequence
 
-from frameworks.shared.callee import call_run, result, output_subdir
-from frameworks.shared.utils import Timer, zip_path
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
 
@@ -28,11 +28,6 @@ def run(dataset, config):
     target_column = dataset.target.name
     seasonality = dataset.seasonality
 
-    # data and metric imports
-    # from sktime.datasets import load_longley
-    # targets, features = load_longley()
-    # targets: pandas.core.series.Series (N, ), index = timestamp
-    # features: pandas.core.frame.DataFrame (N, D) , index = timestamp
     dataset_train = pd.concat([dataset.train.X, dataset.train.y], axis=1)
     dataset_test = pd.concat([dataset.test.X, dataset.test.y], axis=1)
 
@@ -42,22 +37,14 @@ def run(dataset, config):
     y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(dataset_test.groupby(dataset.id_column))]
     y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(dataset_train.groupby(dataset.id_column))]
 
-    #X_train = [features[: -forecasting_horizon]]
-    #X_test = [features[-forecasting_horizon:]]
     X_train = None
     X_test = None
 
-    # known_future_features = list(features.columns)
     known_future_features = None
 
-    # start_times = [targets.index.to_timestamp()[0]]
-    # start_times = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
     start_times_train = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
 
     log.info(f'There are {len(list(dataset.test.X.groupby(dataset.id_column)))} sequences in the dataset.')
-    # freq = '1Y'
-    #item_ids =  dataset.train.X[dataset.id_column].unique()
-    #items_indices_timestamp = [dataset.train.X[dataset.train.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
 
     item_ids =  dataset.test.X[dataset.id_column].unique()
     items_indices_timestamp = [dataset.test.X[dataset.test.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
@@ -80,7 +67,7 @@ def run(dataset, config):
             optimize_metric=eval_metric,
             n_prediction_steps=forecast_horizon,
             memory_limit=30 * 1024,  # Currently, forecasting models use much more memories
-            freq=freq, #FREQ_MAP[freq],
+            freq=freq,
             start_times=start_times_train,
             #func_eval_time_limit_secs=50,
             total_walltime_limit=config.max_runtime_seconds,
@@ -112,12 +99,10 @@ def run(dataset, config):
     forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
 
-
     seasonal_error_rep = calc_seasonal_error(dataset_test=dataset_test, id_column=id_column, target_column=target_column, prediction_length=prediction_length, seasonality=seasonality)
 
     quantiles_steps = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     quantiles = pd.DataFrame(predictions_only.repeat(9).reshape(-1, 9), columns=[str(quantile_step) for quantile_step in quantiles_steps])
-
 
     log.info(f'Predictions Shape {predictions_only.shape}.')
     log.info(f'Truth Shape {truth_only.shape}.')
@@ -126,7 +111,6 @@ def run(dataset, config):
     optional_columns = quantiles
     optional_columns = optional_columns.assign(seasonal_error=seasonal_error_rep)
     optional_columns = optional_columns.assign(item_id=forecast_item_ids)
-
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions_only,
