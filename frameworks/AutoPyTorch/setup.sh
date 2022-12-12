@@ -26,9 +26,6 @@ fi
 PIP install --upgrade pip
 PIP install --upgrade setuptools wheel
 
-
-
-
 if [[ "${OS}" == "Amazon Linux 2" ]]; then
     # TOPIC: update system
     echo "updating system..."
@@ -36,44 +33,13 @@ if [[ "${OS}" == "Amazon Linux 2" ]]; then
     SUDO rm -rf /var/cache/yum
     SUDO yum -y update
 
-#     # TOPIC: install readline-devel (for rpy2)
-#     echo "installing readline-devel..."
-#     SUDO  yum install -y readline readline-devel
-#     # ---------------------
-
-#     # TOPIC: install R
-#     echo "installing R..."
-#     SUDO  yum install -y gcc make sqlite-devel zlib-devel libffi-devel openssl-devel bzip2-devel wget tar gzip
-#     SUDO  yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-#     SUDO  yum install -y R
-#     # R version=3.6.0
-#     SUDO  yum -y install libcurl-devel
-#     SUDO  R -e 'install.packages(c("forecast"), repos="https://cloud.r-project.org")'
-
 elif [[ "${OS}" == "Ubuntu 18.04" || "${OS}" == "Ubuntu 20.04" ]]; then
     # TOPIC: update system
     echo "updating system..."
     DEBIAN_FRONTEND=noninteractive
     SUDO apt-get update -y
     SUDO apt-get upgrade -y
-    # SUDO apt-get install -y apt-utils make cmake build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
-    #     libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev \
-    #     libffi-dev liblzma-dev libcurl4-openssl-dev p7zip-full awscli python3-dev
-    # ------------------
-
-#     # TOPIC: install R
-#     echo "installing R..."
-#     # forecast requires R 3.6 (Which is not available for Ubuntu 18.04 by default.)
-#     if [[ "${OS}" == "Ubuntu 18.04" ]]; then
-#         SUDO apt install -y software-properties-common
-#         SUDO apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-#         SUDO add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
-#         SUDO apt-get -y update
-#     fi
-#     apt install -y r-base
-#     SUDO R -e 'install.packages(c("forecast", "nnfor"), repos="https://cloud.r-project.org")'
-#     # ---------------------
-    #SUDO apt-get install -y python3-opencv
+    SUDO apt-get install -y python3-opencv
 fi
 
 if [[ ${MODULE} == "timeseries" ]]; then
