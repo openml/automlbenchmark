@@ -39,7 +39,7 @@ elif [[ "${OS}" == "Ubuntu 18.04" || "${OS}" == "Ubuntu 20.04" ]]; then
     DEBIAN_FRONTEND=noninteractive
     SUDO apt-get update -y
     SUDO apt-get upgrade -y
-    SUDO apt-get install -y python3-opencv
+    #SUDO apt-get install -y python3-opencv
 fi
 
 if [[ ${MODULE} == "timeseries" ]]; then
