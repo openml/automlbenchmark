@@ -30,7 +30,7 @@ elif [[ "$VERSION" == "local" ]]; then
     mkdir "${HERE}/lib"
     TARGET_DIR="${HERE}/lib/${PKG}"
     SOURCE_DIR="${USER_DIR}/code/${PKG}"
-    ln -s ${SOURCE_DIR}  ${TARGET_DIR}
+    ln -s ${SOURCE_DIR} ${TARGET_DIR}
     cd ${TARGET_DIR}
     PY_EXEC_NO_ARGS="$(cut -d' ' -f1 <<<"$py_exec")"
     PY_EXEC_DIR=$(dirname "$PY_EXEC_NO_ARGS")
