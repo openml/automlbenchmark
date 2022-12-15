@@ -27,12 +27,12 @@ elif [[ "$VERSION" =~ ^[0-9] ]]; then
     PIP install --no-cache-dir -U "${PKG}==${VERSION}"
     PIP install --no-cache-dir -U "${PKG}.tabular[skex]==${VERSION}"
 elif [[ "$VERSION" == "local" ]]; then
-    PIP install -e ${USER_DIR}/code/${PKG}/common/[]
+    PIP install -e ${USER_DIR}/code/${PKG}/common/
     PIP install -e ${USER_DIR}/code/${PKG}/core/[all]
     PIP install -e ${USER_DIR}/code/${PKG}/features/
     PIP install -e ${USER_DIR}/code/${PKG}/tabular/[all]
-    PIP install -e ${USER_DIR}/code/${PKG}/multimodal/[]
-    PIP install -e ${USER_DIR}/code/${PKG}/text/[]
+    PIP install -e ${USER_DIR}/code/${PKG}/multimodal/
+    PIP install -e ${USER_DIR}/code/${PKG}/text/
     PIP install -e ${USER_DIR}/code/${PKG}/vision/
     PIP install -e ${USER_DIR}/code/${PKG}/timeseries/[all]
     PIP install -e ${USER_DIR}/code/${PKG}/eda/
