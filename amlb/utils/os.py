@@ -58,7 +58,7 @@ def list_all_files(paths, filter_=None):
     for path in paths:
         # path = normalize_path(path)
         if os.path.isdir(path):
-            for root_dir, sub_dirs, files in os.walk(path):
+            for root_dir, sub_dirs, files in os.walk(path, followlinks=True):
                 for name in files:
                     full_path = os.path.join(root_dir, name)
                     if filter_(full_path):
@@ -172,5 +172,3 @@ class TmpDir:
     def __exit__(self, *args):
         shutil.rmtree(self.tmp_dir)
         # pass
-
-
