@@ -27,16 +27,15 @@ elif [[ "$VERSION" =~ ^[0-9] ]]; then
     PIP install --no-cache-dir -U "${PKG}==${VERSION}"
     PIP install --no-cache-dir -U "${PKG}.tabular[skex]==${VERSION}"
 elif [[ "$VERSION" == "local" ]]; then
-    PIP install -e ${USER_DIR}/code/${PKG}/common/
-    PIP install -e ${USER_DIR}/code/${PKG}/core/[all]
-    PIP install -e ${USER_DIR}/code/${PKG}/features/
-    PIP install -e ${USER_DIR}/code/${PKG}/tabular/[all]
-    PIP install -e ${USER_DIR}/code/${PKG}/multimodal/
-    PIP install -e ${USER_DIR}/code/${PKG}/text/
-    PIP install -e ${USER_DIR}/code/${PKG}/vision/
-    PIP install -e ${USER_DIR}/code/${PKG}/timeseries/[all]
-    PIP install -e ${USER_DIR}/code/${PKG}/eda/
-    PIP install -e ${USER_DIR}/code/${PKG}/autogluon/
+    mkdir "${HERE}/lib"
+    TARGET_DIR="${HERE}/lib/${PKG}"
+    SOURCE_DIR="${USER_DIR}/code/${PKG}"
+    ln -s ${SOURCE_DIR}  ${TARGET_DIR}
+    cd ${TARGET_DIR}
+    PY_EXEC_NO_ARGS="$(cut -d' ' -f1 <<<"$py_exec")"
+    PY_EXEC_DIR=$(dirname "$PY_EXEC_NO_ARGS")
+    env PATH="$PY_EXEC_DIR:$PATH" bash -c ./full_install.sh
+    PIP install -e ${TARGET_DIR}/tabular/[skex]
 else
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
