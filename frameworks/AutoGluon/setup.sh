@@ -34,6 +34,7 @@ elif [[ "$VERSION" == "local" ]]; then
     cd ${TARGET_DIR}
     PY_EXEC_NO_ARGS="$(cut -d' ' -f1 <<<"$py_exec")"
     PY_EXEC_DIR=$(dirname "$PY_EXEC_NO_ARGS")
+    chmod +x ./full_install.sh
     env PATH="$PY_EXEC_DIR:$PATH" bash -c ./full_install.sh
     PIP install -e ${TARGET_DIR}/tabular/[skex]
 else
