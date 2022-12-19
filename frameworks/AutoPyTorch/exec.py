@@ -34,7 +34,7 @@ def run(dataset, config):
     forecast_horizon = dataset.forecast_horizon_in_steps
     eval_metric = get_eval_metric(config)
 
-    y_test = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(dataset_test.groupby(dataset.id_column))]
+    y_test_future = [seq[1][dataset.target.name].reset_index(drop=True)[-forecast_horizon:] for seq in list(dataset_test.groupby(dataset.id_column))]
     y_train = [seq[1][dataset.target.name].reset_index(drop=True) for seq in list(dataset_train.groupby(dataset.id_column))]
 
     X_train = None
@@ -44,7 +44,9 @@ def run(dataset, config):
 
     start_times_train = [seq[1][dataset.timestamp_column].iloc[0] for seq in list(dataset.train.X.groupby(dataset.id_column))]
 
-    log.info(f'There are {len(list(dataset.test.X.groupby(dataset.id_column)))} sequences in the dataset.')
+    log.info(f'Target name {dataset.target.name}. Forecast horizon {forecast_horizon}.')
+    log.info(f'There are {len(list(dataset_test.groupby(dataset.id_column)))} sequences in the test dataset.')
+    log.info(f'There are {len(list(dataset_train.groupby(dataset.id_column)))} sequences in the train dataset.')
 
     item_ids =  dataset.test.X[dataset.id_column].unique()
     items_indices_timestamp = [dataset.test.X[dataset.test.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
@@ -81,7 +83,7 @@ def run(dataset, config):
         for seq in list(dataset_test.groupby(dataset.id_column)):
             ts = TimeSeriesSequence(
                 X=None,
-                Y=seq[1][dataset.target.name].reset_index(drop=True)[:-forecast_horizon],
+                Y=seq[1][dataset.target.name].reset_index(drop=True).to_numpy()[:-forecast_horizon, None],
                 start_time=seq[1][dataset.timestamp_column].iloc[0],
                 freq=freq,
                 time_feature_transform=api.dataset.time_feature_transform,
@@ -94,7 +96,7 @@ def run(dataset, config):
         y_pred = api.predict(test_sets)
 
     predictions_only = np.array(y_pred, dtype=np.float64).flatten()
-    truth_only = np.array(y_test, dtype=np.float64).flatten() # test_data_future[target_column].values
+    truth_only = np.array(y_test_future, dtype=np.float64).flatten() # test_data_future[target_column].values
 
     forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
