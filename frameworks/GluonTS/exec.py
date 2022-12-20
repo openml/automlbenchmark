@@ -206,7 +206,7 @@ def save_artifacts(agg_metrics, item_metrics, config):
         log.warning("Error when saving artifacts.", exc_info=True)
 
 def calc_seasonal_error(dataset_test, id_column, target_column, prediction_length, seasonality):
-    """Calculates the sesonal error for the test dataset and repeates it for each element in the forecast sequence.
+    """Calculates the seasonal error for the test dataset and repeates it for each element in the forecast sequence.
 
     Args:
         dataset_test (pd.DataFrame) : Dataframe containing target and item id column, shape (N, K>=2)
