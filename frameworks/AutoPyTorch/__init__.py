@@ -22,15 +22,13 @@ def run(dataset: Dataset, config: TaskConfig):
         raise AttributeError("Unspecified `forecast_horizon_in_steps`.")
 
     data = dict(
-        # train=dict(path=dataset.train.data_path('parquet')),
-        # test=dict(path=dataset.test.data_path('parquet')),
         train=dict(X=dataset.train.X, y=dataset.train.y, path=dataset.train.path),
         test=dict(X=dataset.test.X, y=dataset.test.y, path=dataset.test.path),
         target=dict(
             name=dataset.target.name,
             classes=dataset.target.values
         ),
-        problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
+        problem_type=dataset.type.name,
         timestamp_column=dataset.timestamp_column,
         id_column=dataset.id_column,
         forecast_horizon_in_steps=dataset.forecast_horizon_in_steps,

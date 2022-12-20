@@ -71,7 +71,6 @@ def run(dataset, config):
             memory_limit=30 * 1024,  # Currently, forecasting models use much more memories
             freq=freq,
             start_times=start_times_train,
-            #func_eval_time_limit_secs=50,
             total_walltime_limit=config.max_runtime_seconds,
             min_num_test_instances=1000,  # proxy validation sets. This only works for the tasks with more than 1000 series
             known_future_features=known_future_features,
@@ -96,7 +95,7 @@ def run(dataset, config):
         y_pred = api.predict(test_sets)
 
     predictions_only = np.array(y_pred, dtype=np.float64).flatten()
-    truth_only = np.array(y_test_future, dtype=np.float64).flatten() # test_data_future[target_column].values
+    truth_only = np.array(y_test_future, dtype=np.float64).flatten()
 
     forecast_unique_item_ids = np.arange(predictions_only.shape[0] / prediction_length)
     forecast_item_ids = np.repeat(forecast_unique_item_ids, prediction_length)
@@ -120,7 +119,7 @@ def run(dataset, config):
                   probabilities=None,
                   probabilities_labels=None,
                   target_is_encoded=False,
-                  models_count=1, #num_models_trained,
+                  models_count=1,
                   training_duration=training.duration,
                   predict_duration=predict.duration,
                   optional_columns=optional_columns)
@@ -136,8 +135,6 @@ def get_eval_metric(config):
         median_mape='median_MAPE_forecasting',
         mse='mean_MSE_forecasting',
         median_mse='median_MSE_forecasting'
-        #smape=None,
-        #rmse=None,
     )
 
     eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None

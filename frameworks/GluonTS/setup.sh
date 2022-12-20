@@ -72,18 +72,10 @@ elif [[ "${OS}" == "Ubuntu 18.04" || "${OS}" == "Ubuntu 20.04" ]]; then
     # ---------------------
 fi
 
-# TOPIC: installing Prophet
-echo "installing Prophet..."
-#PIP install "prophet"
-# -------------------------
-
 # TOPIC: installing orjson
 echo "installing orjson..."
 PIP install "orjson"
 # -------------------------
-
-#PIP install 'pystan~=2.19'
-#PIP install 'mxnet<2.0'
 
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U "${PKG}[mxnet,pro,Prophet,R]"
