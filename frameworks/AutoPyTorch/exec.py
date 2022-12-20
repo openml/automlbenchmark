@@ -22,6 +22,7 @@ log = logging.getLogger(__name__)
 
 def run(dataset, config):
     log.info(f"\n**** AutoPyTorchTS [v{__version__}] ****\n")
+    log.warning("Ignoring cores constraint of %s cores.", config.cores)
 
     id_column = dataset.id_column
     prediction_length = dataset.forecast_horizon_in_steps
@@ -68,7 +69,7 @@ def run(dataset, config):
             X_test=X_test,
             optimize_metric=eval_metric,
             n_prediction_steps=forecast_horizon,
-            memory_limit=30 * 1024,  # Currently, forecasting models use much more memories
+            memory_limit=config.max_mem_size_mb,  # Currently, forecasting models use much more memories
             freq=freq,
             start_times=start_times_train,
             total_walltime_limit=config.max_runtime_seconds,

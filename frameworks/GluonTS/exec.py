@@ -41,6 +41,9 @@ log = logging.getLogger(__name__)
 
 def run(dataset, config):
     log.info(f"\n**** GluonTS [v{__version__}] ****\n")
+    log.warning("Ignoring cores constraint of %s cores.", config.cores)
+    log.warning("Ignoring performance metric %s.", config.metric)
+    log.warning("Ignoring memory constraint metric of %s MB.", config.max_mem_size_mb)
 
     timestamp_column = dataset.timestamp_column
     id_column = dataset.id_column
