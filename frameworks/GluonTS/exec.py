@@ -129,6 +129,7 @@ def estimate_predictor(model, prediction_length, freq, dataset_train_gluonts, ti
         predictor = estimator.train(dataset_train_gluonts)
 
     elif model == "NPTS":
+        log.warning("Ignoring training time constraint of %s seconds.", time_limit)
         estimator = NPTSEstimator(prediction_length=prediction_length, freq=freq)
         predictor = estimator.train(dataset_train_gluonts)
 
