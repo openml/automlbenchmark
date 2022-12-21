@@ -671,20 +671,26 @@ class TimeSeriesResult(RegressionResult):
 
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
-        self.quantiles_probs_str = list(column for column in self.df.columns if column.startswith('0.'))
-        if not all(x in self.df.columns for x in ['truth', 'predictions', 'item_id', 'seasonal_error']) or len(self.quantiles_probs_str) == 0:
-            msg=f'Missing columns for calculating time series metrics. Given columns are {list(self.df.columns)}.'
+        self.quantiles_columns = list(column for column in self.df.columns if column.startswith('0.'))
+
+        if not self.quantiles_columns:
+            msg=f'Expected quantile columns that start with "0.", but found: {self.df.columns}.'
             raise ValueError(msg)
 
-        self.truth = self.df['truth'].values if self.df is not None else None
-        self.pred_mean = self.df['predictions'].values if self.df is not None else None
+        required_columns = {'truth', 'predictions', 'item_id', 'seasonal_error'}
+        if required_columns - set(self.df.columns):
+            msg=f'Missing columns for calculating time series metrics: {required_columns - set(self.df.columns)}.'
+            raise ValueError(msg)
+
+        self.truth = self.df['truth'].values
+        self.pred_mean = self.df['predictions'].values
 
         self.seasonal_error = self.df['seasonal_error'].values
-        self.quantiles_probs = np.array(list(float(quantile_prob_str) for quantile_prob_str in self.quantiles_probs_str))
-        self.quantiles = self.df.filter(self.quantiles_probs_str).values
+        self.quantiles_probs = np.fromiter(self.quantiles_columns, dtype=float)
+        self.quantiles = self.df[self.quantiles_columns].values
         self.item_ids = self.df['item_id'].values
         _, unique_item_ids_counts = np.unique(self.item_ids, return_counts=True)
-        if np.sum(np.abs(np.mean(unique_item_ids_counts) - unique_item_ids_counts)) != 0.:
+        if len(set(unique_item_ids_counts)) != 1:
             msg = f'Error: Predicted sequences have different lengths {unique_item_ids_counts}.'
             raise ValueError(msg)
         self.prediction_length = unique_item_ids_counts[0]
@@ -694,8 +700,9 @@ class TimeSeriesResult(RegressionResult):
         self.truth = self.truth.astype(self.dtype, copy=False)
         self.pred_mean = self.pred_mean.astype(self.dtype, copy=False)
         self.quantiles = self.quantiles.astype(self.dtype, copy=False)
-        if len(np.where(self.quantiles_probs == 0.5)[0]) > 0:
-            self.pred_median = self.quantiles[:, np.where(self.quantiles_probs == 0.5)[0][0]]
+
+        if 0.5 in self.quantiles_probs:
+            self.pred_median = self.quantiles[:, self.quantiles_probs == 0.5].squeeze()
         else:
             self.pred_median = self.pred_mean
         self.seasonal_error = self.seasonal_error.astype(self.dtype, copy=False)
