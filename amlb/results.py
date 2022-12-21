@@ -704,10 +704,10 @@ class TimeSeriesResult(RegressionResult):
         self.type = DatasetType.timeseries
 
     def itemwise_mean(self, values):
-        return np.array([np.mean(values[self.item_ids == unique_item_id]) for unique_item_id in self.unique_item_ids], dtype=self.dtype)
+        return pd.DataFrame(np.stack([self.item_ids, values], axis=1), columns=['item_id', 'value']).groupby('item_id').mean()['value'].values
 
     def itemwise_select_first(self, values):
-        return values.copy()[::self.prediction_length]
+        return pd.DataFrame(np.stack([self.item_ids, values], axis=1), columns=['item_id', 'value']).groupby('item_id').first()['value'].values
 
     @metric(higher_is_better=False)
     def mase(self):
