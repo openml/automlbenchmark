@@ -28,14 +28,6 @@ AutoGluon:
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
 
-AutoPyTorch:
-  version: "stable"
-  description: |
-    AutoPyTorch Tabular,
-    https://automl.github.io/Auto-PyTorch/master/examples/20_basics/example_tabular_classification.html#sphx-glr-examples-20-basics-example-tabular-classification-py
-  project: https://www.automl.org/automl/autopytorch
-  refs: [https://arxiv.org/abs/2006.13799]
-
 AutoGluon_bestquality:
   extends: AutoGluon
   description: |
@@ -199,29 +191,6 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
-####################################
-### TimeSeries AutoML frameworks ###
-####################################
-
-AutoPyTorchTS:
-  extends: AutoPyTorch
-  version: "stable"
-  description: |
-    AutoPyTorch Forecasting
-    https://automl.github.io/Auto-PyTorch/master/examples/20_basics/example_time_series_forecasting.html#sphx-glr-examples-20-basics-example-time-series-forecasting-py
-  project: https://www.automl.org/automl/autopytorch
-  refs: [https://doi.org/10.48550/arXiv.2205.05511]
-  setup_env:
-    MODULE: timeseries
-
-AutoGluonTS:
-  extends: AutoGluon
-  version: "stable"
-  description: |
-    AutoGluon-TimeSeries
-  setup_env:
-    MODULE: timeseries
-
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
@@ -263,107 +232,3 @@ TunedRandomForest:
 #    _n_jobs: 1  # cf. RandomForest
 #    _tuning:
 #      n_estimators: 500
-
-##################################################
-### TimeSeries Non AutoML reference frameworks ###
-##################################################
-
-GluonTS:
-  version: "0.10.8"
-  description: |
-    GluonTS
-  project: https://ts.gluon.ai
-  refs: [https://arxiv.org/pdf/1906.05264.pdf]
-  params:
-    model: DeepAR
-
-GluonTS_Prophet:
-  extends: GluonTS
-  description: |
-    GluonTS, Prophet.
-  params:
-    model: Prophet
-
-GluonTS_DeepAR:
-  extends: GluonTS
-  description: |
-    GluonTS, DeepAR.
-  params:
-    model: DeepAR
-
-GluonTS_NBEATS:
-  extends: GluonTS
-  description: |
-    GluonTS, NBEATS.
-  params:
-    model: NBEATS
-
-GluonTS_NPTS:
-  extends: GluonTS
-  description: |
-    GluonTS, NPTS.
-  params:
-    model: NPTS
-
-GluonTS_SeasonalNaive:
-  extends: GluonTS
-  description: |
-    GluonTS, SeasonalNaive.
-  params:
-    model: SeasonalNaive
-
-GluonTS_SimpleFeedForward:
-  extends: GluonTS
-  description: |
-    GluonTS, SimpleFeedForwardEstimator.
-  params:
-    model: SimpleFeedForward
-
-GluonTS_MQCNN:
-  extends: GluonTS
-  description: |
-    GluonTS, MQCNNEstimator.
-  params:
-    model: MQCNN
-
-GluonTS_MQRNN:
-  extends: GluonTS
-  description: |
-    GluonTS, MQRNNEstimator.
-  params:
-    model: MQRNN
-
-GluonTS_TFT:
-  extends: GluonTS
-  description: |
-    GluonTS, TFT.
-  params:
-    model: TFT
-
-GluonTS_ARIMA:
-  extends: GluonTS
-  description: |
-    GluonTS, ARIMA.
-  params:
-    model: ARIMA
-
-GluonTS_ETS:
-  extends: GluonTS
-  description: |
-    GluonTS, ETS.
-  params:
-    model: ETS
-
-GluonTS_STL-AR:
-  extends: GluonTS
-  description: |
-    GluonTS, STL-AR.
-  params:
-    model: STL-AR
-
-GluonTS_Theta:
-  extends: GluonTS
-  description: |
-    GluonTS, Theta.
-  params:
-    model: Theta
