@@ -53,7 +53,7 @@ def run(dataset, config):
     items_indices_timestamp = [dataset.test.X[dataset.test.X[dataset.id_column] == item_id].set_index(dataset.timestamp_column).index for item_id in item_ids[:100]]
     items_freqs = [item_id_indices_timestamp.freq or item_id_indices_timestamp.inferred_freq for item_id_indices_timestamp in items_indices_timestamp]
     items_freqs_unique = set(items_freqs)
-    if not len(items_freqs_unique) == 1:
+    if len(items_freqs_unique) != 1:
         msg=f"Found not exactly one frequency across all items. Unique inferred frequencies are {items_freqs_unique}"
         raise ValueError(msg)
     freq = items_freqs[0]
@@ -138,7 +138,7 @@ def get_eval_metric(config):
         median_mse='median_MSE_forecasting'
     )
 
-    eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    eval_metric = metrics_mapping.get(config.metric)
     if eval_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
     return eval_metric
