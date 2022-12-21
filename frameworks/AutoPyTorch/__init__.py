@@ -13,13 +13,13 @@ def run(dataset: Dataset, config: TaskConfig):
         raise ValueError("Framework `AutoPyTorch` does expect timeseries tasks for now.")
 
     from frameworks.shared.caller import run_in_venv
+    if not hasattr(dataset, 'forecast_horizon_in_steps'):
+        raise AttributeError("Unspecified `forecast_horizon_in_steps`.")
     dataset = deepcopy(dataset)
     if not hasattr(dataset, 'timestamp_column'):
         dataset.timestamp_column = None
     if not hasattr(dataset, 'id_column'):
         dataset.id_column = None
-    if not hasattr(dataset, 'forecast_horizon_in_steps'):
-        raise AttributeError("Unspecified `forecast_horizon_in_steps`.")
 
     data = dict(
         train=dict(X=dataset.train.X, y=dataset.train.y, path=dataset.train.path),
