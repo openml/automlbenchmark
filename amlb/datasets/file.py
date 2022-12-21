@@ -6,9 +6,9 @@ import tempfile
 from typing import List, Union
 
 import arff
-import numpy as np
 import pandas as pd
 import pandas.api.types as pat
+import math
 
 from ..data import Dataset, DatasetType, Datasplit, Feature
 from ..datautils import read_csv, to_data_frame
@@ -157,22 +157,16 @@ class FileLoader:
         dataset.forecast_horizon_in_steps=int(dataset_config['forecast_horizon_in_steps'])
         dataset.seasonality=int(dataset_config['seasonality'])
 
-        train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
-        test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()
-        forecast_horizon_in_steps_mean_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
-        forecast_horizon_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
-        if not dataset.forecast_horizon_in_steps == forecast_horizon_in_steps_mean_diff_train_test:
-            msg = f"Warning: Forecast range {dataset.forecast_horizon_in_steps}, does not equal mean difference between test and train sequence lengths {forecast_horizon_in_steps_mean_diff_train_test}."
-            log.warning(msg)
-        if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
-            msg = f"Error: Not all sequences of train and test set have same sequence length difference."
+        min_context_length_data_train = dataset.train.X.groupby(dataset.id_column).count().values.min()
+        min_sequence_length_data_test = dataset.test.X.groupby(dataset.id_column).count().values.min()
+        min_context_length_data_test = min_sequence_length_data_test - dataset.forecast_horizon_in_steps
+        if min_context_length_data_test < 1:
+            msg = f'The minimum context length of the test data is smaller than 1. Consider reducing the forecast horizon to {min_sequence_length_data_test - 1}.'
             raise ValueError(msg)
-        if dataset.forecast_horizon_in_steps > forecast_horizon_in_steps_mean_diff_train_test:
-            msg = f"Error: Forecast range {dataset.forecast_horizon_in_steps} longer than difference between test and train sequence lengths {forecast_horizon_in_steps_mean_diff_train_test}."
-            raise ValueError(msg)
-        if dataset.forecast_horizon_in_steps > forecast_horizon_in_steps_max_min_train_test:
-            msg = f"Error: Forecast range {dataset.forecast_horizon_in_steps} longer than minimum sequence length + 1, {forecast_horizon_in_steps_max_min_train_test}."
-            raise ValueError(msg)
+        if min_context_length_data_train < 2 * dataset.forecast_horizon_in_steps + 1:
+            log.warning(f'The minimum context length of the train data is smaller than (2 x forecast horizon + 1). Consider reducing the forecast horizon to {math.floor((min_context_length_data_train - 1) / 2)}.')
+        if min_context_length_data_test < 2 * dataset.forecast_horizon_in_steps:
+            log.warning(f'The minimum context length of the train data is smaller than (2 x forecast horizon). Consider reducing the forecast horizon to {math.floor((min_context_length_data_train) / 2)}.')
         return dataset
 
 
