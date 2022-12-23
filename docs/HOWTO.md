@@ -289,7 +289,7 @@ Then the datasets can be declared in the benchmark definition file as follow:
 - Remote files are downloaded to the `input_dir` folder and archives are decompressed there as well, so you may want to change the value of this folder in your [custom config.yaml file](#custom-configuration) or specify it at the command line with the `-i` or `--indir` argument (by default, it points to the `~/.openml/cache` folder).
 - time series tasks can only be defined with file paths to CSV files. Adding the task type `timeseries` and the file paths is required. Each file is expected to consist of three columns 1) target, 2) timestamp, 3) item_id. If not defined the default values for these are `target=target`, `timestamp_column=timestamp`, `id_column=item_id`.
 - For evaluation, each time series sequence of the test dataset is split into observations and forecast horizon. Default is `forecast_horizon_in_steps=1`.
-- For evaluation of MASE, the seasonality error is calculated for each sequence sequence inside the test dataset depending on the previous observations and the seasonality. Default is `seasonality=1`.
+- For evaluation of MASE, the seasonality error is calculated for each sequence in the test dataset depending on the previous observations and the seasonality. Default is `seasonality=1`.
 
 #### OpenML suites
 
