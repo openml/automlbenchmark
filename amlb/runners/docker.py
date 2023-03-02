@@ -123,6 +123,7 @@ RUN apt-get -y install software-properties-common
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 RUN apt-get update
 RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+RUN apt-get -y install libhdf5-serial-dev
 #RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
 RUN adduser --disabled-password --gecos '' -uid {userid} {username}
@@ -139,6 +140,9 @@ ENV PYTHONIOENCODING utf-8
 # RUN locale-gen en-US.UTF-8
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
+
+# Setup HDF5 for installing `tables`
+ENV HDF5_DIR /usr/lib/aarch64-linux-gnu/hdf5/serial
 
 WORKDIR /bench
 
