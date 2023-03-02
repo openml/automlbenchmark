@@ -181,6 +181,8 @@ CMD ["{framework}", "test"]
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
+            userid=self.userid,
+            username=self.user,
         )
 
         touch(self._script)
