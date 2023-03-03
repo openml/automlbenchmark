@@ -128,7 +128,7 @@ class AWSBenchmark(Benchmark):
         self.region = (region if region
                        else rconfig().aws.region if rconfig().aws['region']
                        else boto3.session.Session().region_name)
-        self.ami = rconfig().aws.ec2.regions[self.region].ami
+        self.ami = rconfig().aws.ec2.regions[self.region].ami if not rconfig().aws.use_packer_ami else rconfig().aws.ec2.regions[self.region].packer_ami
         self.cloudwatch = None
         self.ec2 = None
         self.iam = None
@@ -153,7 +153,10 @@ class AWSBenchmark(Benchmark):
 
     def _validate2(self):
         if self.ami is None:
-            raise ValueError("Region {} not supported by AMI yet.".format(self.region))
+            if rconfig().aws.use_packer_ami:
+                raise ValueError("Region {} has no pre-build packer AMI configured.".format(self.region))
+            else:
+                raise ValueError("Region {} not supported by AMI yet.".format(self.region))
 
     def setup(self, mode):
         if mode == SetupMode.skip:
@@ -1118,6 +1121,31 @@ power_state:
   timeout: {timeout}
   condition: True
 """ if rconfig().aws.use_docker else """
+#cloud-config
+
+runcmd:
+  - apt-get -y remove unattended-upgrades
+  - systemctl stop apt-daily.timer
+  - systemctl disable apt-daily.timer
+  - systemctl disable apt-daily.service
+  - systemctl daemon-reload
+  - cd /repo
+  - alias PY='/repo/venv/bin/python3 -W ignore'
+  - aws s3 cp '{s3_input}' /s3bucket/input --recursive
+  - aws s3 cp '{s3_user}' /s3bucket/user --recursive
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
+  - PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
+  - aws s3 cp /s3bucket/output '{s3_output}' --recursive
+
+final_message: "AutoML benchmark {ikey} completed after $UPTIME s"
+
+power_state:
+  delay: "+1"
+  mode: poweroff
+  message: "I'm losing power"
+  timeout: {timeout}
+  condition: True
+""" if rconfig().aws.use_packer_ami else """
 #cloud-config
 
 package_update: true

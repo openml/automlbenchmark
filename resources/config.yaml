@@ -135,19 +135,27 @@ aws:                    # configuration namespace for AWS mode.
     root_key: ec2/                  #
     delete_resources: false         #
 
+  use_packer_ami: false # if true, the EC2 instance will be started with the AMI ID of the pre build packer AMI. 
+                        # Note, make sure to enter the AMI ID of your packer build image in the packer_ami field (i.e. ec2.regions.[region].packer_ami).
+                        # For more information, see the aws_ami directory.
+
   ec2:
     regions:                             #
       us-east-1:
         ami: ami-0ac019f4fcb7cb7e6
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        packer_ami:
       us-west-1:
         ami: ami-063aa838bd7631e0b
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        packer_ami:
       eu-west-1:
         ami: ami-00035f41c82244dab
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        packer_ami:
       eu-central-1:
         ami: ami-0bdf93799014acdc4
+        packer_ami:
         description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
     instance_type:                       #
       series: m5                         #
