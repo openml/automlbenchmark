@@ -67,7 +67,7 @@ class Job:
 
     def __init__(self, name: str = "",
                  timeout_secs: int = -1,
-                 priority: int = None,
+                 priority: Optional[int] = None,
                  raise_on_failure: bool = False):
         """
 
@@ -206,7 +206,7 @@ class JobRunner:
         allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
         return allowed and new_state in allowed
 
-    def __init__(self, jobs: List, on_new_result: Callable = None):
+    def __init__(self, jobs: List, on_new_result: Optional[Callable] = None):
         self.jobs = jobs
         self.results = []
         self.state = None
@@ -241,7 +241,7 @@ class JobRunner:
         if 0 < len(self.jobs) == len(self.results):
             self.stop()
 
-    def put(self, job: Job, priority: int = None):
+    def put(self, job: Job, priority: Optional[int] = None):
         if self.state in [State.stopping, State.stopped]:
             return
         if priority is None:
@@ -254,7 +254,7 @@ class JobRunner:
         else:
             log.warning("Ignoring job `%s`. Runner state: `%s`", job.name, self.state)
 
-    def reschedule(self, job: Job, priority: int = None):
+    def reschedule(self, job: Job, priority: Optional[int] = None):
         if self.state not in [State.running]:
             return
         job.reschedule()
@@ -312,7 +312,7 @@ class JobRunner:
 
 class SimpleJobRunner(JobRunner):
 
-    def __init__(self, jobs: List, on_new_result: Callable = None):
+    def __init__(self, jobs: List, on_new_result: Optional[Callable] = None):
         super().__init__(jobs, on_new_result=on_new_result)
         self._interrupt = threading.Event()
 
@@ -340,7 +340,7 @@ class MultiThreadingJobRunner(JobRunner):
         enforce_job_priority = 1
 
     def __init__(self, jobs: List,
-                 on_new_result: Callable = None,
+                 on_new_result: Optional[Callable] = None,
                  parallel_jobs: int = 1,
                  done_async: bool = True,
                  delay_secs: int = 0,

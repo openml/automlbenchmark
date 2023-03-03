@@ -208,7 +208,8 @@ class AWSBenchmark(Benchmark):
                 task_names = None if tasks is None else [task_def.name for task_def in task_defs]
                 job = self._make_aws_job(task_names, folds)
                 results = self._run_jobs([job])
-                return self._results_summary(self._process_results(results))
+                scoreboard = self._process_results(results)
+                return self._results_summary(scoreboard)
             finally:
                 self.cleanup()
 
