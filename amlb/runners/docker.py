@@ -32,8 +32,11 @@ class DockerBenchmark(ContainerBenchmark):
         super().__init__(framework_name, benchmark_name, constraint_name)
         self._custom_image_name = rconfig().docker.image
         self.user = os.getlogin()
-        self.userid = os.getuid()
-        self.usergid = os.getgid()
+        # For linux specifically, files created within docker are not
+        # automatically owned by the user starting the docker instance.
+        # For Windows permissions are set fine, so we don't need user information.
+        self.userid = None if os.name == 'nt' else os.getuid()
+        self.usergid =  None if os.name == 'nt' else os.getgid()
         self.minimize_instances = rconfig().docker.minimize_instances
         self.container_name = 'docker'
         self.force_branch = rconfig().docker.force_branch
@@ -56,13 +59,13 @@ class DockerBenchmark(ContainerBenchmark):
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
-            "docker run --name {name} {options} "
-            f'-u "{self.userid}:{self.usergid}" '
+            "docker run --name {name} {options} {run_as_user}"
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
             name=inst_name,
             options=rconfig().docker.run_extra_options,
+            run_as_user='' if os.name == 'nt' else f'-u "{self.userid}:{self.usergid}" ',
             input=in_dir,
             output=self.output_dirs.session,
             custom=custom_dir,
@@ -99,7 +102,7 @@ class DockerBenchmark(ContainerBenchmark):
     def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
-            options="" if cache else "--no-cache",
+            options="--no-cache",
             container=image,
             script=self._script),
             _live_output_=rconfig().setup.live_output,
@@ -126,7 +129,7 @@ RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
 RUN apt-get -y install libhdf5-serial-dev
 #RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
-RUN adduser --disabled-password --gecos '' -uid {userid} {username}
+RUN adduser --disabled-password --gecos '' {userid_option} {username}
 RUN adduser {username} sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
@@ -185,7 +188,7 @@ CMD ["{framework}", "test"]
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
-            userid=self.userid,
+            userid_option=f"-uid {self.userid}" if self.userid else '',
             username=self.user,
         )
 
