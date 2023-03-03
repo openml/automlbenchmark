@@ -102,7 +102,7 @@ class DockerBenchmark(ContainerBenchmark):
     def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
         run_cmd("docker build {options} -t {container} -f {script} .".format(
-            options="--no-cache",
+            options="" if cache else "--no-cache",
             container=image,
             script=self._script),
             _live_output_=rconfig().setup.live_output,
