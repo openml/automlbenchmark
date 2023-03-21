@@ -14,17 +14,21 @@ jobs:
   run_benchmark:
     runs-on: ${{ inputs.os }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Runs on ${{ inputs.os }}
+        run: echo Preparing to benchmark ${{ inputs.framework }}
+      - name: Checkout ${{ github.ref_name }}
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.ref_name }}
-      - uses: actions/setup-python@v4
+      - name: Install Py${{ inputs.python_version }}
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ inputs.python_version }}
-      - name: install dependencies
+      - name: Install benchmark dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-      - name: install ${{ inputs.framework }}
+      - name: Install ${{ inputs.framework }}
         run: python runbenchmark.py ${{ inputs.framework }} -s only
-      - name: benchmark ${{ inputs.framework }}
+      - name: Benchmark ${{ inputs.framework }}
         run: python runbenchmark.py ${{ inputs.framework }}
