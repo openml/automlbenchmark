@@ -1,0 +1,32 @@
+name: Run `runbenchmark.py`
+
+on:
+  workflow_dispatch:
+    inputs:
+      python_version:
+        default: '3.9'
+      os:
+        default: 'ubuntu-latest'
+      framework:
+        default: 'randomforest'
+      branch:
+        default: ''
+
+jobs:
+  run_benchmark:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
+      - name: install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: install ${{ inputs.framework }}
+        run: python runbenchmark.py ${{ inputs.framework }} -s only
+      - name: benchmark ${{ inputs.framework }}
+        run: python runbenchmark.py ${{ inputs.framework }}
