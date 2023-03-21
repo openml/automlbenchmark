@@ -9,13 +9,15 @@ on:
         default: 'ubuntu-latest'
       framework:
         default: 'randomforest'
+      options:
+        default: ''
 
 jobs:
   run_benchmark:
     runs-on: ${{ inputs.os }}
     steps:
       - name: Runs on ${{ inputs.os }}
-        run: echo Preparing to benchmark ${{ inputs.framework }}
+        run: echo Preparing to benchmark ${{ inputs.framework }} ${{ inputs.options }}
       - name: Checkout ${{ github.ref_name }}
         uses: actions/checkout@v3
         with:
@@ -31,4 +33,4 @@ jobs:
       - name: Install ${{ inputs.framework }}
         run: python runbenchmark.py ${{ inputs.framework }} -s only
       - name: Benchmark ${{ inputs.framework }}
-        run: python runbenchmark.py ${{ inputs.framework }}
+        run: python runbenchmark.py ${{ inputs.framework }} ${{ inputs.options }}
