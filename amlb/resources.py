@@ -134,10 +134,16 @@ class Resources:
         frameworks = self._frameworks[tag]
         log.debug("Available framework definitions:\n%s", frameworks)
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
+        # TODO: Clean up this workflow and error messaging as part of #518
+        base_framework = next((f for n, f in self._frameworks[default_tag] if n.lower() == lname), None)
+        if framework and framework['removed']:
+            raise ValueError(f"Framework definition `{name}` has been removed from the benchmark: {framework['removed']}")
+        if not framework and (base_framework and base_framework['removed']):
+            raise ValueError(f"Framework definition `{name}` has been removed from the benchmark: {base_framework['removed']}")
         if not framework:
-            raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
+            raise ValueError(f"Incorrect framework `{name}`: not listed in {self.config.frameworks.definition_file}.")
         if framework['abstract']:
-            raise ValueError("Framework definition `{}` is abstract and cannot be run directly.".format(name))
+            raise ValueError(f"Framework definition `{name}` is abstract and cannot be run directly.")
         return framework, framework.name
 
     @lazy_property

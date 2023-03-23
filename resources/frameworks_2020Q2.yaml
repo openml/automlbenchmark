@@ -19,9 +19,6 @@ autosklearn:
 AutoWEKA:
   version: '2.6'
 
-autoxgboost:
-  version: 'latest'
-
 GAMA:
   version: '20.1.0'
 
