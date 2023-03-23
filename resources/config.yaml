@@ -88,7 +88,7 @@ openml:                # configuration namespace for openML.
 
 versions:              # configuration namespace for versions enforcement (libraries versions are usually enforced in requirements.txt for the app and for each framework).
   pip:
-  python: 3.7          # the Python minor version that will be used by the application in containers and cloud instances, , also used as a based version for virtual environments created for each framework.
+  python: 3.9          # the Python minor version that will be used by the application in containers and cloud instances, also used as a based version for virtual environments created for each framework.
 
 container: &container          # parent configuration namespace for container modes.
   force_branch: true           # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
