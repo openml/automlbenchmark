@@ -1,3 +1,2 @@
-packaging
+packaging<22.0
 openml
-scipy>=0.14.1,<1.7.0
