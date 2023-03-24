@@ -77,7 +77,8 @@ AutoWEKA:
   refs: [https://www.cs.ubc.ca/labs/beta/Projects/autoweka/papers/16-599.pdf]
 
 autoxgboost:
-  version: 'latest'
+  removed: |
+    Autoxgboost is no longer supported. The last confirmed working version was at v2.0.2 with docker image 'automlbenchmark/autoxgboost:908631665f4c763d548ed203d48f05fe68613844-v2.0.2'.
   description: |
     autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO.
   project: https://github.com/ja-thomas/autoxgboost

@@ -52,7 +52,7 @@ jobs:
           skip_evaluation=0
           if [[ $is_common -eq 0 ]];
           then
-            FRAMEWORKS='["autogluon", "autosklearn", "autoxgboost", "gama", "h2oautoml", "mlplanweka", "mlr3automl", "tpot", "tunedrandomforest"]'
+            FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "mlr3automl", "tpot", "tunedrandomforest"]'
             TASKS='["iris", "kc2", "cholesterol"]'
             BENCHMARK='["test"]'
           else

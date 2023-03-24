@@ -12,7 +12,6 @@ h2oautoml
 tpot
 oboe
 autoweka
-autoxgboost
 #hyperoptsklearn
 #ranger
 )
