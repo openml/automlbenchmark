@@ -91,10 +91,10 @@ jobs:
       fail-fast:  false
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Python 3.8
+      - name: Setup Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Create venv
         run: python -m venv venv
       - uses: actions/cache@v2
@@ -126,7 +126,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
         framework: ${{ fromJson(needs.detect_changes.outputs.frameworks) }}
         task: ${{ fromJson(needs.detect_changes.outputs.tasks) }}
         benchmark: ${{ fromJson(needs.detect_changes.outputs.benchmark) }}

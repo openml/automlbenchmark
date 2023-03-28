@@ -155,24 +155,24 @@ class Scoreboard:
 
     @memoize
     def as_printable_data_frame(self, verbosity=3):
-        str_print = lambda val: '' if val in [None, '', 'None'] or (isinstance(val, float) and np.isnan(val)) else val
-        int_print = lambda val: int(val) if isinstance(val, float) and not np.isnan(val) else str_print(val)
-        num_print = lambda fn, val: None if isinstance(val, str) else fn(val)
+        str_print = lambda val: '' if val in [None, '', 'None'] or (isinstance(val, float) and np.isnan(val)) else str(val)
+        int_print = lambda val: int(val) if isinstance(val, (float, int)) and not np.isnan(val) else str_print(val)
 
         df = self.as_data_frame()
         force_str_cols = ['id']
         nanable_int_cols = ['fold', 'models_count', 'seed']
         low_precision_float_cols = ['duration', 'training_duration', 'predict_duration']
-        high_precision_float_cols = [col for col in df.select_dtypes(include=[np.float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
+        high_precision_float_cols = [col for col in df.select_dtypes(include=[float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
         for col in force_str_cols:
-            df[col] = df[col].astype(np.object).map(str_print).astype(np.str)
+            df[col] = df[col].map(str_print)
         for col in nanable_int_cols:
-            df[col] = df[col].astype(np.object).map(int_print).astype(np.str)
+            df[col] = df[col].map(int_print)
         for col in low_precision_float_cols:
             float_format = lambda f: ("{:.1g}" if f < 1 else "{:.1f}").format(f)
-            df[col] = df[col].astype(np.float).map(partial(num_print, float_format)).astype(np.float)
+            # The .astype(float) is required to maintain NaN as 'NaN' instead of 'nan'
+            df[col] = df[col].map(float_format).astype(float)
         for col in high_precision_float_cols:
-            df[col] = df[col].map(partial(num_print, "{:.6g}".format)).astype(np.float)
+            df[col] = df[col].map("{:.6g}".format).astype(float)
 
         cols = ([] if verbosity == 0
                 else ['task', 'fold', 'framework', 'constraint', 'result', 'metric', 'info'] if verbosity == 1
