@@ -7,11 +7,14 @@ from contextlib import contextmanager
 from datetime import datetime
 import logging
 import os
+import pathlib
+import sys
 from typing import Optional
 
 import openml
 from openml import OpenMLRun
 
+from defaults import default_dirs
 from amlb.resources import config_load
 from amlb.uploads import process_task_folder, missing_folds, _load_task_data
 
@@ -23,7 +26,7 @@ def parse_args():
     description = "Script to upload results from the benchmark to OpenML."
     parser = argparse.ArgumentParser(description)
     parser.add_argument(
-        '-i', type=str, default=None, dest='input_directory',
+        '-i', type=pathlib.Path, default=None, dest='input_directory',
         help="Directory that stores results from the runbenchmark.py invocation. "
              "By default use the most recent folder in the results "
              "folder as specified in the configuration."
@@ -58,26 +61,24 @@ def parse_args():
     return args
 
 
-def find_most_recent_result_folder() -> str:
-    root_dir = os.path.dirname(__file__)
-    config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
+def find_most_recent_result_folder() -> pathlib.Path:
+    root_dir = pathlib.Path(__file__).parent
+    config = config_load(root_dir / "resources" / "config.yaml")
+    output_dir = pathlib.Path(config.output_dir or default_dirs.output_dir)
 
-    def dir_to_datetime(dirname: str) -> datetime:
-        timestamp = dirname.split('.')[-1]
+    def dirname_to_datetime(dirname: str) -> datetime:
+        _, timestamp = dirname.rsplit('.', 1)
         return datetime.strptime(timestamp, "%Y%m%dT%H%M%S")
 
-    run_directories = [d for d in os.listdir(config.output_dir) if d.count('.') == 4]
-    _, run_directory = max((dir_to_datetime(d), d) for d in run_directories)
-    return os.path.join(config.output_dir, run_directory)
+    run_directories = output_dir.glob("*.*.*.*")
+    _, run_directory = max((dirname_to_datetime(str(d)), d) for d in run_directories)
+    return run_directory
 
 
-def resolve_input_directory(path: Optional[str]) -> str:
-    if path is None:
-        path = find_most_recent_result_folder()
-
-    path = os.path.expanduser(path)
-    path = os.path.abspath(path)
-    if not os.path.isdir(path):
+def resolve_input_directory(path: Optional[pathlib.Path]) -> pathlib.Path:
+    path = path or find_most_recent_result_folder()
+    path = path.expanduser().absolute()
+    if not path.is_dir():
         raise ValueError(f"{path} is not a directory.")
     return path
 
@@ -163,10 +164,10 @@ if __name__ == '__main__':
     configure_logging(args.verbose)
     valid_key = configure_apikey(args.apikey)
     if not valid_key and args.mode == 'upload':
-        log.error("No valid OpenML API key configured, use the '--api-key' argument "
-                  "or follow instructions: https://openml.github.io/openml-python/master/usage.html#configuration")
-        quit()
-
+        raise ValueError(
+            "No valid OpenML API key configured, use the '--api-key' argument "
+            "or follow instructions: https://openml.github.io/openml-python/master/usage.html#configuration"
+        )
     input_directory = resolve_input_directory(args.input_directory)
     mode_verb = 'Uploading' if args.mode == 'upload' else 'Checking'
     log.info("%s results from '%s'." % (mode_verb, input_directory))
