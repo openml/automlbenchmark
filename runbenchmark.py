@@ -212,7 +212,7 @@ finally:
             if d in out_dirs:
                 zip_path(out_dirs[d], os.path.join(out_dirs.session, f"{d}.zip"), arc_path_format='long')
                 shutil.rmtree(out_dirs[d], ignore_errors=True)
-    if args.test_server:
+    if args.openml_test_server:
         openml.config.stop_using_configuration_for_example()
 
     sys.exit(exit_code)
