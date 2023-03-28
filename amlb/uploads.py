@@ -1,6 +1,6 @@
 import json
 import logging
-import os
+import pathlib
 from collections import OrderedDict
 import textwrap
 from typing import Set, Optional, List
@@ -11,23 +11,21 @@ from openml import OpenMLTask, OpenMLFlow
 from openml.runs.functions import format_prediction
 
 from .utils.core import Namespace
-from .__version__ import __version__
-
 
 log = logging.getLogger(__name__)
 
 
-def _load_task_data(task_folder: str, fold: int = 0) -> Namespace:
+def _load_task_data(task_folder: pathlib.Path, fold: int = 0) -> Namespace:
     """ Loads the metadata of the given fold of a task as a namespace. """
-    with open(os.path.join(task_folder, str(fold), 'metadata.json'), 'r') as fh:
+    with open(task_folder / str(fold) / 'metadata.json', 'r') as fh:
         metadata = json.load(fh)
     metadata = Namespace.from_dict(metadata)
     return metadata
 
 
-def _load_fold(task_folder: str, fold: int, task: OpenMLTask) -> pd.DataFrame:
+def _load_fold(task_folder: pathlib.Path, fold: int, task: OpenMLTask) -> pd.DataFrame:
     """ Load the predictions and add openml repeat/fold/index information. """
-    prediction_file = os.path.join(task_folder, f"{fold}/predictions.csv")
+    prediction_file = task_folder / f"{fold}/predictions.csv"
     predictions = pd.read_csv(prediction_file, sep=',', header=0)
 
     train_indices, test_indices = task.get_train_test_split_indices(fold, repeat=0, sample=0)
@@ -37,7 +35,7 @@ def _load_fold(task_folder: str, fold: int, task: OpenMLTask) -> pd.DataFrame:
     return predictions
 
 
-def _load_predictions(task_folder: str) -> pd.DataFrame:
+def _load_predictions(task_folder: pathlib.Path) -> pd.DataFrame:
     """ Loads predictions of all folds for a task with index information required for upload. """
     metadata = _load_task_data(task_folder)
     task = openml.tasks.get_task(metadata.openml_task_id)
@@ -45,11 +43,11 @@ def _load_predictions(task_folder: str) -> pd.DataFrame:
     return pd.concat(results)
 
 
-def _list_completed_folds(task_folder: str) -> Set[str]:
+def _list_completed_folds(task_folder: pathlib.Path) -> Set[str]:
     completed_folds = set()
-    for fold_dir in os.listdir(task_folder):
-        if "predictions.csv" in os.listdir(os.path.join(task_folder, fold_dir)):
-            completed_folds.add(fold_dir)
+    for fold_dir in [d for d in task_folder.iterdir() if d.is_dir()]:
+        if (task_folder / fold_dir / "predictions.csv").is_file():
+            completed_folds.add(fold_dir.name)
     return completed_folds
 
 
@@ -128,7 +126,7 @@ def _extract_and_format_hyperparameter_configuration(metadata: Namespace, flow: 
     ]
 
 
-def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
+def _upload_results(task_folder: pathlib.Path) -> openml.runs.OpenMLRun:
     metadata = _load_task_data(task_folder)
     predictions = _load_predictions(task_folder)
 
@@ -178,14 +176,14 @@ def _upload_results(task_folder: str) -> openml.runs.OpenMLRun:
     ).publish()
 
 
-def missing_folds(task_folder: str) -> Set[str]:
+def missing_folds(task_folder: pathlib.Path) -> Set[str]:
     completed_folds = _list_completed_folds(task_folder)
     all_folds = {str(f) for f in range(10)}
     return all_folds.difference(completed_folds)
 
 
-def process_task_folder(task_folder: str) -> Optional[openml.runs.OpenMLRun]:
-    """ Uploads """
+def process_task_folder(task_folder: pathlib.Path) -> Optional[openml.runs.OpenMLRun]:
+    """ Uploads the task folder iff predictions for all 10 folds are present. """
     if len(missing_folds(task_folder)) > 0:
         log.warning(
             "Task %s is missing predictions for folds %s.",

@@ -8,7 +8,6 @@ from datetime import datetime
 import logging
 import os
 import pathlib
-import sys
 from typing import Optional
 
 import openml
@@ -104,7 +103,7 @@ def _connect_to_test_server():
     openml.config.stop_using_configuration_for_example()
 
 
-def server_for_task(task: str):
+def server_for_task(task: pathlib.Path):
     metadata = _load_task_data(task)
     if metadata.test_server:
         server_connection = _connect_to_test_server()
@@ -113,7 +112,7 @@ def server_for_task(task: str):
     return server_connection
 
 
-def upload_task(task_directory: str) -> OpenMLRun:
+def upload_task(task_directory: pathlib.Path) -> Optional[OpenMLRun]:
     task_name = os.path.basename(task_directory)
     try:
         with server_for_task(task_directory):
@@ -121,6 +120,7 @@ def upload_task(task_directory: str) -> OpenMLRun:
             run = process_task_folder(task_directory)
             log.info("%s result stored at %s/r/%d"
                      % (task_name, openml.config.server[:-11], run.id))
+            return run
     except Exception as e:
         message = e.message if hasattr(e, "message") else e.args[0]
         log.warning("Task %s failed to upload: %s" % (task_name, message))
@@ -128,19 +128,18 @@ def upload_task(task_directory: str) -> OpenMLRun:
             raise
 
 
-def process_results(result_dir: str, mode: str = 'check'):
-    prediction_directory = os.path.join(result_dir, 'predictions')
+def process_results(result_dir: pathlib.Path, mode: str = 'check'):
+    prediction_directory = result_dir / "predictions"
 
     if args.task is None:
-        tasks_to_process = os.listdir(prediction_directory)
-    elif os.path.isdir(os.path.join(prediction_directory, args.task)):
+        tasks_to_process = [d for d in prediction_directory.iterdir() if d.is_dir()]
+    elif (prediction_directory / args.task).is_dir():
         tasks_to_process = [args.task]
     else:
-        log.error(f"Task '%s' not in '%s'." % (args.task, prediction_directory))
-        quit()
+        raise ValueError(f"Task '{args.task}' not in '{prediction_directory}'.")
 
     for task_name in tasks_to_process:
-        full_task_directory = os.path.join(prediction_directory, task_name)
+        full_task_directory = prediction_directory / task_name
 
         folds = missing_folds(full_task_directory)
         if len(folds) > 0:
