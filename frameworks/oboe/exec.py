@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
-from auto_learner import AutoLearner
+from oboe import AutoLearner
 
 from frameworks.shared.callee import call_run, result
 from frameworks.shared.utils import Timer
