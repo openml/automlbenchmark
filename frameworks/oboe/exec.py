@@ -72,6 +72,7 @@ def run(dataset, config):
                       n_cores=n_cores,
                       runtime_limit=config.max_runtime_seconds,
                       **training_params)
+    aml.error_matrix = aml.error_matrix.to_numpy()
 
     aml_models = lambda: [aml.ensemble, *aml.ensemble.base_learners] if len(aml.ensemble.base_learners) > 0 else []
 
