@@ -12,6 +12,28 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
+    log.info(f"\n**** Testing example of oboe [{config.framework_version}] ****\n")
+    method = 'Oboe'  # 'Oboe' or 'TensorOboe'
+    problem_type = 'classification'
+
+    from oboe import AutoLearner, error  # This may take around 15 seconds at first run.
+
+    import numpy as np
+    from sklearn.datasets import load_iris
+    from sklearn.model_selection import train_test_split
+
+    data = load_iris()
+    x = np.array(data['data'])
+    y = np.array(data['target'])
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+    m = AutoLearner(p_type=problem_type, runtime_limit=30, method=method, verbose=False)
+    m.fit(x_train, y_train)
+    y_predicted = m.predict(x_test)
+
+    log.info("prediction error (balanced error rate): {}".format(error(y_test, y_predicted, 'classification')))
+    log.info("selected models: {}".format(m.get_models()))
+
     log.info(f"\n**** Oboe [{config.framework_version}] ****\n")
 
     is_classification = config.type == 'classification'
