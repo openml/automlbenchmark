@@ -100,7 +100,7 @@ jobs:
       - uses: actions/cache@v2
         id: cache
         with:
-          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.8/site-packages
+          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
           key: pip-v3-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-v3-
@@ -143,7 +143,7 @@ jobs:
     - uses: actions/cache@v2
       id: cache
       with:
-        path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.8/site-packages
+        path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
         key: pip-v3-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           pip-v3-
