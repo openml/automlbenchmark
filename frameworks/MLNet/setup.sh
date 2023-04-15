@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
-MLNET='mlnet'
+MLNET_PACKAGE='mlnet-linux-x64'
 VERSION=${1:-"latest"}
 
 DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
-SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
+SOURCE="https://api.nuget.org/v3/index.json"
 
 export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
@@ -21,13 +21,16 @@ if [[ ! -x "$MLNET" ]]; then
     if [[ ! -x "$DOTNET" ]]; then
         wget -P "$DOTNET_INSTALL_DIR" https://dot.net/v1/dotnet-install.sh
         chmod +x "$DOTNET_INSTALL_DIR/dotnet-install.sh"
-        "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 3.1 --verbose
+        "$DOTNET_INSTALL_DIR/dotnet-install.sh" -c Current --install-dir "$DOTNET_INSTALL_DIR" -Channel 6.0 --verbose
     fi
-    $DOTNET tool install mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
+    $DOTNET tool install $MLNET_PACKAGE --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 else
-  $DOTNET tool update mlnet --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
+  $DOTNET tool update $MLNET_PACKAGE --add-source "$SOURCE" --version "$VERSION" --tool-path "$DOTNET_INSTALL_DIR"
 fi
 
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+
+# enable predict command in mlnet
+export MLNetCLIEnablePredict=True
 
 $MLNET --version | grep + | sed -e "s/\(.?*\)+.*/\1/" >> "${HERE}/.setup/installed"
