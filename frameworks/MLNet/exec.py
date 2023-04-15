@@ -57,7 +57,7 @@ def run(dataset: Dataset, config: TaskConfig):
         cmd = (f"{mlnet} {sub_command}"
                f" --dataset {train_dataset_path} --test-dataset {test_dataset_path} --train-time {train_time_in_seconds}"
                f" --label-col {label} --output {os.path.dirname(output_dir)} --name {config.fold}"
-               f" --verbosity q --log-file-path {log_path}")
+               f" --verbosity diag --log-file-path {log_path}")
 
         with Timer() as training:
             run_cmd(cmd)
