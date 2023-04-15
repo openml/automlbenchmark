@@ -60,7 +60,7 @@ def run(dataset: Dataset, config: TaskConfig):
                f" --verbosity diag --log-file-path {log_path}")
 
         with Timer() as training:
-            run_cmd(cmd)
+            run_cmd(cmd , _live_output_=True)
 
         train_result_json = os.path.join(output_dir, '{}.mbconfig'.format(config.fold))
         if not os.path.exists(train_result_json):
