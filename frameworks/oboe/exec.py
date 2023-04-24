@@ -6,7 +6,7 @@ from sklearn.model_selection import StratifiedKFold
 import numpy as np
 
 sys.path.append("{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__))))
-from oboe import AutoLearner
+from oboe.auto_learner import AutoLearner
 
 from frameworks.shared.callee import call_run, result
 from frameworks.shared.utils import Timer
@@ -61,7 +61,7 @@ def run(dataset, config):
 
     X_train = dataset.train.X
     y_train = dataset.train.y
-
+    
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
     n_cores = config.framework_params.get('_n_cores', config.cores)
 
@@ -87,6 +87,8 @@ def run(dataset, config):
     log.info('Predicting on the test set.')
     X_test = dataset.test.X
     y_test = dataset.test.y
+    print(f"{type(X_test)=}, {X_test.shape=}")
+    print(f"{type(y_test)=}, {y_test.shape=}")
     with Timer() as predict:
         predictions = aml.predict(X_test)
     predictions = predictions.reshape(len(X_test))
