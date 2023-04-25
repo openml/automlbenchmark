@@ -15,7 +15,7 @@ jobs:
       skip_baseline: ${{ steps.find-required-tests.outputs.skip_baseline }}
       skip_evaluation: ${{ steps.find-required-tests.outputs.skip_evaluation }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: pull base branch
         run: |
           git fetch --unshallow origin $GITHUB_BASE_REF
@@ -90,14 +90,14 @@ jobs:
         task: [iris, kc2, cholesterol]
       fail-fast:  false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Create venv
         run: python -m venv venv
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: cache
         with:
           path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
@@ -133,14 +133,14 @@ jobs:
       fail-fast:  true  # not sure about this one, but considering the big workload it might be nicer
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Create venv
       run: python -m venv venv
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: cache
       with:
         path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
