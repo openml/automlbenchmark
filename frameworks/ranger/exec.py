@@ -16,9 +16,10 @@ def run(dataset: Dataset, config: TaskConfig):
     here = dir_of(__file__)
     meta_results_file = os.path.join(config.output_dir, "meta_results.csv")
     run_cmd(("Rscript --vanilla -e \""
-             "source('{script}'); "
+             ".libPaths('{package_directory}'); source('{script}'); "
              "run('{train}', '{test}', '{output}', cores={cores}, meta_results_file='{meta_results}', task_type='{task_type}')"
              "\"").format(
+        package_directory=os.path.join(here, "lib"),
         script=os.path.join(here, 'exec.R'),
         train=dataset.train.path,
         test=dataset.test.path,
