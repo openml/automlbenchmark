@@ -155,7 +155,7 @@ class SingularityBenchmark(ContainerBenchmark):
 
     def _generate_script(self, custom_commands):
         singularity_content = """Bootstrap: docker
-From: ubuntu:18.04
+From: ubuntu:22.04
 %files
 . /bench/
 %post

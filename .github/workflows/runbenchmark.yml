@@ -32,5 +32,7 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Install ${{ inputs.framework }}
         run: python runbenchmark.py ${{ inputs.framework }} -s only
+        env:
+          GITHUB_PAT: ${{ secrets.PUBLIC_ACCESS_GITHUB_PAT }}
       - name: Benchmark ${{ inputs.framework }}
         run: python runbenchmark.py ${{ inputs.framework }} ${{ inputs.options }}
