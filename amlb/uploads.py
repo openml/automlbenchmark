@@ -135,6 +135,8 @@ def _upload_results(task_folder: pathlib.Path) -> openml.runs.OpenMLRun:
 
     denormalize_map = {label.strip().lower(): label for label in oml_task.class_labels}
     predictions.columns = [col if col not in denormalize_map else denormalize_map[col] for col in predictions]
+    predictions["truth"] = predictions["truth"].apply(denormalize_map.get)
+    predictions["predictions"] = predictions["predictions"].apply(denormalize_map.get)
 
     formatted_predictions = []
     for _, row in predictions.iterrows():
