@@ -138,17 +138,17 @@ aws:                    # configuration namespace for AWS mode.
   ec2:
     regions:                             #
       us-east-1:
-        ami: ami-0ac019f4fcb7cb7e6
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-053b0d53c279acc90
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       us-west-1:
-        ami: ami-063aa838bd7631e0b
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-0f8e81a3da6e2510a
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       eu-west-1:
-        ami: ami-00035f41c82244dab
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-01dd271720c1ba44f
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       eu-central-1:
-        ami: ami-0bdf93799014acdc4
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-04e601abe3e1a910f
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
     instance_type:                       #
       series: m5                         #
       map:                               # map between num cores required and ec2 instance type sizes
