@@ -130,6 +130,8 @@ def upload_task(task_directory: pathlib.Path) -> Optional[OpenMLRun]:
 
 def process_results(result_dir: pathlib.Path, mode: str = 'check'):
     prediction_directory = result_dir / "predictions"
+    if not prediction_directory.exists():
+        raise ValueError(f"result_dir '{result_dir!s}' has no predictions.")
 
     if args.task is None:
         tasks_to_process = [d for d in prediction_directory.iterdir() if d.is_dir()]
