@@ -54,7 +54,7 @@ def _list_completed_folds(task_folder: pathlib.Path) -> Set[str]:
 def _get_flow(metadata: Namespace, sync_with_server: bool = True) -> openml.flows.OpenMLFlow:
     """ Creates or retrieves an OpenML flow for the given run metadata. """
     if metadata.git_info.repo != "NA":
-        amlb_version = metadata.git_info.commit[:8] if metadata.git_info.tags == [] else metadata.git_info.tags[0]
+        amlb_version = next(iter(metadata.git_info.tags), metadata.git_info.commit[:8])
 
         *_, owner, _ = metadata.git_info.repo.rsplit('/')
         if owner != 'openml':
