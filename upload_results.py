@@ -149,7 +149,14 @@ def process_results(result_dir: pathlib.Path, mode: str = 'check'):
         folds = missing_folds(full_task_directory)
         if len(folds) > 0:
             log.info("%s has missing folds: %s" % (task_name, ', '.join(sorted(folds))))
-        elif mode == 'check':
+            continue
+
+        metadata = _load_task_data(full_task_directory)
+        if "openml_task_id" not in metadata:
+            log.info("%s has openml task metadata" % task_name)
+            continue
+
+        if mode == 'check':
             log.info("%s is ready for upload." % task_name)
         elif mode == 'upload':
             upload_task(full_task_directory)
