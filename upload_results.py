@@ -32,7 +32,10 @@ def parse_args():
     )
     parser.add_argument(
         '-a', '--api-key', dest='apikey', default=None,
-        help="OpenML API key to use for uploading results."
+        help="OpenML API key *required* for uploading results to the main server, "
+             "upload to the OpenML server will fail otherwise."
+             "This argument is ignored when uploading to the test server, as "
+             "the default openml-python test server api key will be used instead."
     )
     parser.add_argument(
         '-m', '--mode', dest='mode', default='check',
