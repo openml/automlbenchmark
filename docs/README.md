@@ -339,7 +339,8 @@ usage: Script to upload results from the benchmark to OpenML. [-h] [-i INPUT_DIR
 
 optional arguments:
   -h, --help            show this help message and exit
-  -i INPUT_DIRECTORY    Directory that stores results from the runbenchmark.py invocation. By default use the most recent folder in the results folder as
+  -i INPUT_DIRECTORY, --input-directory INPUT_DIRECTORY
+                        Directory that stores results from the runbenchmark.py invocation. By default use the most recent folder in the results folder as
                         specified in the configuration.
   -a APIKEY, --api-key APIKEY
                         OpenML API key to use for uploading results.

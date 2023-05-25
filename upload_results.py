@@ -25,7 +25,7 @@ def parse_args():
     description = "Script to upload results from the benchmark to OpenML."
     parser = argparse.ArgumentParser(description)
     parser.add_argument(
-        '-i', type=pathlib.Path, default=None, dest='input_directory',
+        '-i', '--input-directory', type=pathlib.Path, default=None, dest='input_directory',
         help="Directory that stores results from the runbenchmark.py invocation. "
              "By default use the most recent folder in the results "
              "folder as specified in the configuration."
