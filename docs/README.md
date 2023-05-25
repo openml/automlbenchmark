@@ -109,8 +109,13 @@ python3 runbenchmark.py --help
 ```
 
 ```text
-usage: runbenchmark.py [-h] [-m {local,aws,docker,singularity}] [-t [task_id ...]] [-f [fold_num ...]] [-i input_dir] [-o output_dir] [-u user_dir] [-p parallel_jobs] [-s {auto,skip,force,only}]
-                       [-k [true|false]] [-e] [--logging LOGGING] [--openml-run-tag OPENML_RUN_TAG]
+usage: runbenchmark.py [-h] [-m {local,aws,docker,singularity}]
+                       [-t [task_id [task_id ...]]
+                       [-f [fold_num ...]] [-i input_dir]
+                       [-o output_dir] [-u user_dir] [-p parallel_jobs]
+                       [-s {auto,skip,force,only}] [-k [true|false]]
+                       [-e] [--logging LOGGING]
+                       [--openml-run-tag OPENML_RUN_TAG]
                        framework [benchmark] [constraint]
 
 positional arguments:
