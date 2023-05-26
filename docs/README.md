@@ -110,7 +110,7 @@ python3 runbenchmark.py --help
 
 ```text
 usage: runbenchmark.py [-h] [-m {local,aws,docker,singularity}]
-                       [-t [task_id [task_id ...]]
+                       [-t [task_id [task_id ...]]]
                        [-f [fold_num ...]] [-i input_dir]
                        [-o output_dir] [-u user_dir] [-p parallel_jobs]
                        [-s {auto,skip,force,only}] [-k [true|false]]
@@ -145,7 +145,7 @@ optional arguments:
                         If fold is not provided, then all folds from the task definition will be run.
   -i input_dir, --indir input_dir
                         Folder from where the datasets are loaded by default.
-                        (default: '/Users/pietergijsbers/.openml')
+                        (default: '~/.openml')
   -o output_dir, --outdir output_dir
                         Folder where all the outputs should be written.(default: './results')
   -u user_dir, --userdir user_dir
