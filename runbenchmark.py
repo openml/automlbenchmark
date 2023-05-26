@@ -6,6 +6,8 @@ import shutil
 import sys
 
 # prevent asap other modules from defining the root logger using basicConfig
+import amlb.logger
+
 import openml
 
 import amlb
