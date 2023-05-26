@@ -13,7 +13,7 @@ from typing import Optional
 import openml
 from openml import OpenMLRun
 
-from defaults import default_dirs
+from amlb.defaults import default_dirs
 from amlb.resources import config_load
 from amlb.uploads import process_task_folder, missing_folds, _load_task_data
 
