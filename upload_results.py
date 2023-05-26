@@ -32,8 +32,10 @@ def parse_args():
     )
     parser.add_argument(
         '-a', '--api-key', dest='apikey', default=None,
-        help="OpenML API key *required* for uploading results to the main server, "
-             "upload to the OpenML server will fail otherwise."
+        help="By default, the api key configured in your OpenML configuration file is"
+             "used. Specify this parameter if you want to overwrite this value or"
+             "you do not have an OpenML configuration file. A valid key is "
+             "*required* to upload to the OpenML server."
              "This argument is ignored when uploading to the test server, as "
              "the default openml-python test server api key will be used instead."
     )
