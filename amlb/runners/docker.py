@@ -9,7 +9,7 @@ import os
 import re
 
 from ..benchmark import _setup_dir_
-from ..resources import config as rconfig, get as rget
+from ..resources import config as rconfig
 from ..utils import dir_of, run_cmd, str_digest, str_sanitize, touch
 from .container import ContainerBenchmark
 
@@ -31,6 +31,12 @@ class DockerBenchmark(ContainerBenchmark):
         """
         super().__init__(framework_name, benchmark_name, constraint_name)
         self._custom_image_name = rconfig().docker.image
+        self.user = os.getlogin()
+        # For linux specifically, files created within docker are not
+        # automatically owned by the user starting the docker instance.
+        # For Windows permissions are set fine, so we don't need user information.
+        self.userid = None if os.name == 'nt' else os.getuid()
+        self.usergid =  None if os.name == 'nt' else os.getgid()
         self.minimize_instances = rconfig().docker.minimize_instances
         self.container_name = 'docker'
         self.force_branch = rconfig().docker.force_branch
@@ -53,13 +59,13 @@ class DockerBenchmark(ContainerBenchmark):
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
-            "docker run --name {name} {options} "
-            '-u "$(id -u $USER):$(id -g $USER)" '
+            "docker run --name {name} {options} {run_as_user}"
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
             name=inst_name,
             options=rconfig().docker.run_extra_options,
+            run_as_user='' if os.name == 'nt' else f'-u "{self.userid}:{self.usergid}" ',
             input=in_dir,
             output=self.output_dirs.session,
             custom=custom_dir,
@@ -114,13 +120,18 @@ class DockerBenchmark(ContainerBenchmark):
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
-RUN apt-get -y install apt-utils dialog locales
+RUN apt-get -y install apt-utils dialog locales tzdata sudo
 RUN apt-get -y install curl wget unzip git
 RUN apt-get -y install software-properties-common
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 RUN apt-get update
 RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
+RUN apt-get -y install libhdf5-serial-dev
 #RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
+
+RUN adduser --disabled-password --gecos '' {userid_option} {username}
+RUN adduser {username} sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # aliases for the python system
 ENV SPIP python{pyv} -m pip
@@ -132,6 +143,9 @@ ENV PYTHONIOENCODING utf-8
 # RUN locale-gen en-US.UTF-8
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
+
+# Setup HDF5 for installing `tables`
+ENV HDF5_DIR /usr/lib/aarch64-linux-gnu/hdf5/serial
 
 WORKDIR /bench
 
@@ -152,6 +166,9 @@ VOLUME /custom
 ADD . /bench/
 
 RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
+RUN chown -R {username}:{username} /bench
+RUN chown -R {username}:{username} /home/{username}
+USER {username}
 
 RUN $PY {script} {framework} -s only
 {custom_commands}
@@ -171,7 +188,8 @@ CMD ["{framework}", "test"]
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
-            user=rconfig().user_dir,
+            userid_option=f"-uid {self.userid}" if self.userid else '',
+            username=self.user,
         )
 
         touch(self._script)

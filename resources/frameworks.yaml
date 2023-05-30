@@ -32,8 +32,25 @@ AutoGluon_bestquality:
   extends: AutoGluon
   description: |
     AutoGluon with 'best_quality' preset provides the most accurate overall predictor.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
   params:
     presets: best_quality
+
+AutoGluon_hq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'high_quality' preset provides a very strong predictor with 8x+ faster inference speed than 'best_quality'.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: high_quality
+
+AutoGluon_gq:
+  extends: AutoGluon
+  description: |
+    AutoGluon with 'good_quality' preset provides a strong predictor with 16x+ faster inference speed than 'best_quality'.
+    Refer to https://auto.gluon.ai/stable/tutorials/tabular_prediction/tabular-quickstart.html#presets for a description of the presets.
+  params:
+    presets: good_quality
 
 autosklearn:
   version: 'stable'
@@ -60,7 +77,8 @@ AutoWEKA:
   refs: [https://www.cs.ubc.ca/labs/beta/Projects/autoweka/papers/16-599.pdf]
 
 autoxgboost:
-  version: 'latest'
+  removed: |
+    Autoxgboost is no longer supported. The last confirmed working version was at v2.0.2 with docker image 'automlbenchmark/autoxgboost:908631665f4c763d548ed203d48f05fe68613844-v2.0.2'.
   description: |
     autoxgboost aims to find an optimal xgboost model automatically using the machine learning framework mlr and the bayesian optimization framework mlrMBO.
   project: https://github.com/ja-thomas/autoxgboost
@@ -69,9 +87,9 @@ autoxgboost:
 flaml:
   version: 'stable'
   description: |
-    FLAML is a lightweight Python library that finds accurate machine learning models 
-    automatically, efficiently and economically. It frees users from selecting learners 
-    and hyperparameters for each learner. It is fast and cheap. 
+    FLAML is a lightweight Python library that finds accurate machine learning models
+    automatically, efficiently and economically. It frees users from selecting learners
+    and hyperparameters for each learner. It is fast and cheap.
   project: https://github.com/microsoft/FLAML
   refs: [https://arxiv.org/pdf/1911.04706.pdf]
 
@@ -122,12 +140,12 @@ mljarsupervised_compete:
   description: "MLJAR is using 'Compete' mode to provide the most accurate predictor"
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
-    
+
 MLNet:
   version: 'latest'
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
-    
+
 MLPlan:
   version: 'stable'
   abstract: true
@@ -174,7 +192,17 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
+####################################
+### TimeSeries AutoML frameworks ###
+####################################
 
+AutoGluonTS:
+  extends: AutoGluon
+  version: "stable"
+  description: |
+    AutoGluon-TimeSeries
+  setup_env:
+    MODULE: timeseries
 
 #######################################
 ### Non AutoML reference frameworks ###
@@ -217,4 +245,3 @@ TunedRandomForest:
 #    _n_jobs: 1  # cf. RandomForest
 #    _tuning:
 #      n_estimators: 500
-

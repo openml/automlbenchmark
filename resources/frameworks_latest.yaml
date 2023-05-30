@@ -16,6 +16,16 @@ AutoGluon_bestquality:
   params:
     presets: best_quality
 
+AutoGluon_hq:
+  extends: AutoGluon
+  params:
+    presets: high_quality
+
+AutoGluon_gq:
+  extends: AutoGluon
+  params:
+    presets: good_quality
+
 autosklearn:
   version: 'latest'
 
@@ -25,9 +35,6 @@ autosklearn2:
     _askl2: true
 
 AutoWEKA:
-  version: 'latest'
-
-autoxgboost:
   version: 'latest'
 
 GAMA:
@@ -70,8 +77,17 @@ oboe:
 TPOT:
   version: 'latest'
 
+####################################
+### TimeSeries AutoML frameworks ###
+####################################
 
-
+AutoGluonTS:
+  extends: AutoGluon
+  version: "latest"
+  description: |
+    AutoGluon-TimeSeries
+  setup_env:
+    MODULE: timeseries
 
 #######################################
 ### Non AutoML reference frameworks ###
@@ -94,4 +110,3 @@ TunedRandomForest:
   version: 'latest'
   params:
     n_estimators: 2000
-

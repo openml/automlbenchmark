@@ -1,9 +1,0 @@
-cvxpy>=1.0,<2.0
-numpy==1.16.4
-scipy==1.4.1
-pandas==0.24.2
-scikit-learn==0.22.1
-multiprocess>=0.70.5
-openml==0.10.2
-mkl>=1.0.0
-tensorly

@@ -172,6 +172,7 @@ class DatasetType(Enum):
     binary = 1
     multiclass = 2
     regression = 3
+    timeseries = 4
 
 
 class Dataset(ABC):

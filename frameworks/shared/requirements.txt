@@ -9,4 +9,3 @@ numpy==1.24.2
 psutil==5.8.0
     # via -r frameworks/shared/requirements.in
 pyarrow==11.0.0
-    # via -r frameworks/shared/requirements.in

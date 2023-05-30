@@ -17,6 +17,7 @@ class FrameworkError(Exception):
 def result(output_file=None,
            predictions=None, truth=None,
            probabilities=None, probabilities_labels=None,
+           optional_columns=None,
            target_is_encoded=False,
            error_message=None,
            models_count=None,
@@ -69,7 +70,7 @@ def call_run(run_fn):
                               wait_retry_secs=10):
             result = run_fn(ds, config)
             res = dict(result)
-            for name in ['predictions', 'truth', 'probabilities']:
+            for name in ['predictions', 'truth', 'probabilities', 'optional_columns']:
                 arr = result[name]
                 if arr is not None:
                     path = os.path.join(config.result_dir, '.'.join([name, 'data']))

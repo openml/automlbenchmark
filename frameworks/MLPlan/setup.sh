@@ -26,7 +26,7 @@ rm -Rf ${TARGET_DIR}
 
 mkdir -p $DOWNLOAD_DIR
 echo "Download ML-Plan from extern"
-wget -q https://download.mlplan.org/version/$VERSION -O $DOWNLOAD_DIR/$MLPLAN_ARC
+wget -q --no-check-certificate https://download.mlplan.org/version/$VERSION -O $DOWNLOAD_DIR/$MLPLAN_ARC
 echo "Download finished. Now unzip the downloaded file."
 unzip $DOWNLOAD_DIR/$MLPLAN_ARC -d $TARGET_DIR
 
