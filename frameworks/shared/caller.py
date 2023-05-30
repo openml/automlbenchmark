@@ -123,7 +123,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             PYTHONPATH=os.pathsep.join([
                 rconfig().root_dir,
             ]),
-            AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
+            AMLB_PATH=os.path.join(rconfig().root_dir),
             AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
             **{k: str(v) for k, v in env}
         )

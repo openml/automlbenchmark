@@ -903,7 +903,7 @@ class AWSBenchmark(Benchmark):
                 try:
                     download_file(obj, dest_path)
                     if is_result and not success:
-                        self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
+                        self._exec_send(lambda path: self._save_global(Scoreboard.from_file(path)), dest_path)
                         success = True
                 except Exception as e:
                     if is_result:

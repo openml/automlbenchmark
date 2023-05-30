@@ -3,7 +3,6 @@ import importlib.util
 import logging
 import os
 import sys
-from types import ModuleType
 
 
 def setup_logger():
@@ -18,7 +17,9 @@ def setup_logger():
         logging.TRACE = int(trace_level)
 
 
-setup_logger()
+# setup_logger()
+#
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 def load_module(name, path):
@@ -29,14 +30,20 @@ def load_module(name, path):
     return module
 
 
-def load_utils():
-    amlb_path = os.environ.get("AMLB_PATH")
+def load_amlb_module(mod, amlb_path=None):
+    amlb_path = amlb_path or os.environ.get("AMLB_PATH")
     if amlb_path:
-        return load_module("amlb.utils", os.path.join(amlb_path, "utils", "__init__.py"))
-    return import_module("amlb.utils")
+        tokens = mod.split('.')
+        mod_path = os.path.join(amlb_path, *tokens)
+        if os.path.isdir(mod_path):
+            tokens.append("__init__.py")
+            mod_path = os.path.join(amlb_path, *tokens)
+        return load_module(mod, mod_path)
+    return import_module(mod)
 
 
-utils = load_utils()
+utils = load_amlb_module("amlb.utils")
 # unorthodox for it's only now that we can safely import those functions
 from amlb.utils import *
 
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

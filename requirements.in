@@ -8,3 +8,4 @@ openml==0.12.2
 scikit-learn>=0.24
 pyarrow>=4.0
 tables>=3.6
+filelock>=3.4
