@@ -61,11 +61,12 @@ def run(dataset: Dataset, config: TaskConfig):
 
         with Timer() as training:
             try:
-                run_cmd(cmd , _live_output_=True)
-            except:
+                run_cmd(cmd, _live_output_=True)
+            except Exception:
                 with open(log_path, 'r') as f:
                     for line in f:
                         log.info(line)
+                raise
 
         train_result_json = os.path.join(output_dir, '{}.mbconfig'.format(config.fold))
         if not os.path.exists(train_result_json):
