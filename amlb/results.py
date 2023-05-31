@@ -165,6 +165,9 @@ class Scoreboard:
         int_print = lambda val: int(val) if isinstance(val, (float, int)) and not np.isnan(val) else str_print(val)
 
         df = self.as_data_frame()
+        if df.empty:
+            return df
+
         force_str_cols = ['id']
         nanable_int_cols = ['fold', 'models_count', 'seed']
         low_precision_float_cols = ['duration', 'training_duration', 'predict_duration']
