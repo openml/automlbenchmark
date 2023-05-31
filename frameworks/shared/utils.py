@@ -17,8 +17,8 @@ def setup_logger():
         logging.TRACE = int(trace_level)
 
 
-# setup_logger()
-#
+setup_logger()
+
 __no_export = set(dir())  # all variables defined above this are not exported
 
 
