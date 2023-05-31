@@ -172,9 +172,20 @@ def live_output_unix(process, input=None, timeout=None, activity_timeout=None, m
                 reads[i] = line
         return reads if len(pipes) > 1 else reads[0]
 
-    output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                 process.stderr if process.stderr else 2], activity_timeout),
-                              ['', '']))
+    process_output = list(iter(
+        lambda: read_pipe(
+            [process.stdout if process.stdout else 1,
+             process.stderr if process.stderr else 2
+             ], activity_timeout
+    ), ['', '']))
+    if not process_output:
+        log.warning(
+            "No framework process output detected, "
+            "this might indicate a problem with the logging configuration."
+        )
+        return '', ''
+
+    output, error = zip(*process_output)
     print()  # ensure that the log buffer is flushed at the end
     return ''.join(output), ''.join(error)
 
