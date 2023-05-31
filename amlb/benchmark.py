@@ -357,11 +357,11 @@ class Benchmark:
                               "the partial board `%s` could not be appended to `%s`",
                               dest_path, timeout, board.path, dest_path)
 
-
     def _results_summary(self, scoreboard=None):
         board = scoreboard or Scoreboard.all(self.output_dirs.scores)
+        results = board.as_printable_data_frame(verbosity=2)
         log.info("Summing up scores for current run:\n%s",
-                 board.as_printable_data_frame(verbosity=2).dropna(how='all', axis='columns').to_string(index=False))
+                 results.dropna(how='all', axis='columns').to_string(index=False))
         return board.as_data_frame()
 
     @lazy_property
