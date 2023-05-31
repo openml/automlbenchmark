@@ -357,7 +357,14 @@ class MultiThreadingJobRunner(JobRunner):
 
     def _add_result(self, result):
         sup_call = super()._add_result
-        self._exec.submit(sup_call, result)
+        if self._exec:
+            self._exec.submit(sup_call, result)
+        else:
+            log.warning("Application is submitting a function while the thread executor is not running: executing the function in the calling thread.")
+            try:
+                sup_call(result)
+            except:
+                pass
 
     def _run(self):
         q = queue.Queue()
