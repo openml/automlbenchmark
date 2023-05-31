@@ -924,6 +924,11 @@ class AWSBenchmark(Benchmark):
         self._update_instance(instance_id, success=success)
         return success, error
 
+    def _results_summary(self, scoreboard=None):
+        log.info(
+            "Result summary not available for AWS mode (reference files instead)."
+        )
+
     def _create_instance_profile(self):
         """
         see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
