@@ -159,6 +159,7 @@ def live_output_unix(process, input=None, timeout=None, activity_timeout=None, m
     def read_pipe(pipe, timeout):
         pipes = as_list(pipe)
         # wait until a pipe is ready for reading, non-Windows only.
+        log.info(f"{timeout=}")
         ready, *_ = select.select(pipes, [], [], timeout)
         reads = [''] * len(pipes)
         # print update for each pipe that is ready for reading
@@ -172,9 +173,19 @@ def live_output_unix(process, input=None, timeout=None, activity_timeout=None, m
                 reads[i] = line
         return reads if len(pipes) > 1 else reads[0]
 
-    output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                 process.stderr if process.stderr else 2], activity_timeout),
-                              ['', '']))
+    def reads():
+        pipes = [
+            process.stdout if process.stdout else 1,
+            process.stderr if process.stderr else 2
+        ]
+        log.info(f"{pipes=}")
+        rval = read_pipe(pipes, activity_timeout)
+        log.info(f"{rval=}")
+        return rval
+
+    pipe_outputs = list(iter(reads, ['', ''])) + [['', '']]
+    log.info(f"{pipe_outputs=}")
+    output, error = zip(*pipe_outputs)
     print()  # ensure that the log buffer is flushed at the end
     return ''.join(output), ''.join(error)
 
