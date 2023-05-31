@@ -61,8 +61,9 @@ def run(dataset: Dataset, config: TaskConfig):
 
         with Timer() as training:
             try:
-                run_cmd(cmd, _live_output_=True)
-            except Exception:
+                run_cmd(cmd, _live_output_='line')
+            except Exception as e:
+                log.error(e, exc_info=e)
                 with open(log_path, 'r') as f:
                     for line in f:
                         log.info(line)
