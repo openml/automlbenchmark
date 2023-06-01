@@ -43,8 +43,7 @@ flaml:
 
 flaml_benchmark:
   extends: flaml
-  setup_args: ['stable', 'https://github.com/microsoft/FLAML.git', 'flaml', ' benchmark']
-
+  version: "benchmark"
 
 GAMA:
   version: 'stable'
