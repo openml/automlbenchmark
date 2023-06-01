@@ -57,6 +57,9 @@ mljarsupervised_compete:
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
+MLNet:
+  version: 'latest'
+
 MLPlan:
   abstract: true
   version: 'latest'
@@ -70,6 +73,9 @@ MLPlanWEKA:
   extends: MLPlan
   params:
     _backend: weka
+
+mlr3automl:
+  version: 'latest'
 
 oboe:
   version: 'latest'
