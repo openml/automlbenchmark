@@ -36,6 +36,16 @@ autosklearn2:
 AutoWEKA:
   version: 'stable'
 
+
+flaml:
+  version: 'stable'
+
+
+flaml_benchmark:
+  extends: flaml
+  setup_args: ['stable', 'https://github.com/microsoft/FLAML.git', 'flaml', ' benchmark']
+
+
 GAMA:
   version: 'stable'
 
