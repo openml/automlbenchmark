@@ -101,6 +101,9 @@ def _add_default_setup_env(framework):
 
 
 def _add_default_setup_args(framework):
+    if "setup_args" in framework and isinstance(framework.setup_args, list):
+        return
+
     if "setup_args" in framework and isinstance(framework.setup_args, str):
         framework.setup_args = [framework.setup_args]
     else:
