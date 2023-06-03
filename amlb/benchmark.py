@@ -435,7 +435,9 @@ class TaskConfig:
         super().__setattr__(name, value)
 
     def __json__(self):
-        return self.__dict__
+        d = self.__dict__
+        d["evaluation_metrics"] = self.evaluation_metrics
+        return d
 
     def __repr__(self):
         return repr_def(self)

@@ -426,8 +426,11 @@ class TaskResult:
             seed=metadata.seed,
             app_version=rget().app_version,
             utc=datetime_iso(),
-            metric=metadata.metric,
-            duration=nan
+            evaluation_metrics=metadata.evaluation_metrics,
+            optimization_metrics=metadata.optimization_metrics,
+            duration=nan,
+            result_metrics=[],
+            result=[],
         )
         required_meta_res = ['training_duration', 'predict_duration', 'models_count']
         for m in required_meta_res:
@@ -443,21 +446,22 @@ class TaskResult:
             return score
 
         def set_score(score):
-            entry.metric = score.metric
-            entry.result = score.value
-            if score.higher_is_better is False:  # if unknown metric, and higher_is_better is None, then no change
-                entry.metric = f"neg_{entry.metric}"
-                entry.result = - entry.result
+            metric = score.metric if score.higher_is_better else f"neg_{score.metric}"
+            result = score.value if score.higher_is_better else -score.value
+            entry.result_metrics.append(metric)
+            entry.result.append(result)
 
-        for metric in metadata.metrics or []:
+        for metric in metadata.evaluation_metrics:
             sc = do_score(metric)
             entry[metric] = sc.value
-            if metric == entry.metric:
+            if metric in entry.optimization_metrics:
                 set_score(sc)
 
-        if 'result' not in entry:
-            set_score(do_score(entry.metric))
-
+        entry.result = tuple(entry.result)
+        entry.result_metrics = tuple(entry.result_metrics)
+        entry.evaluation_metrics = tuple(entry.evaluation_metrics)
+        entry.optimization_metrics = tuple(entry.optimization_metrics)
+        entry.metric = entry.optimization_metrics
         entry.info = result.info
         if scoring_errors:
             entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
