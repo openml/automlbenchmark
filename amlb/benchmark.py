@@ -24,9 +24,10 @@ from .data import DatasetType
 from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, json_dump, lazy_property, profile, repr_def, \
-    run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
-
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, \
+    json_dump, lazy_property, profile, repr_def, \
+    run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, \
+    system_memory_mb, system_volume_mb, touch, Namespace
 
 log = logging.getLogger(__name__)
 
@@ -371,9 +372,33 @@ class Benchmark:
 
 class TaskConfig:
 
-    def __init__(self, name, fold, metrics, seed,
+    def __init__(self, *, name, fold, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
-                 input_dir, output_dir):
+                 input_dir, output_dir,
+                 metrics: Union[list[str], str, None] = None,
+                 optimization_metrics: Union[list[str], str, None] = None,
+                 evaluation_metrics: Union[list[str], str, None] = None,
+                 ):
+
+        if metrics:
+            log.warning(
+                "WARNING: The `metric` field of the task definition is deprecated"
+                " and will not work in the future. Please specify the metric(s) to "
+                "optimize for with `optimization_metrics` and any additional metric(s) "
+                "used only for evaluation in `evaluation_metrics`."
+            )
+            if optimization_metrics:
+                raise ValueError(
+                    "Detected both `metric` and `optimization_metrics` for task "
+                    f"'{name}'. Aborting because desired setup is unclear."
+                    "Please only use `optimization_metrics`."
+                )
+            optimization_metrics = as_list(metrics)[:1]
+            evaluation_metrics = as_list(metrics)[1:]
+
+        self.optimization_metrics = optimization_metrics or []
+        self._evaluation_metrics = evaluation_metrics or []
+
         self.framework = None
         self.framework_params = None
         self.framework_version = None
@@ -391,12 +416,22 @@ class TaskConfig:
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
         self.ext = ns()  # used if frameworks require extra config points
 
+    @property
+    def evaluation_metrics(self) -> list[str]:
+        return self.optimization_metrics + self._evaluation_metrics
+
+    def load_default_metrics(self, *, dataset_type: str):
+        """ Sets `optimization/evaluation_metrics` based on defaults from config.yaml"""
+        metrics = as_list(rconfig().benchmarks.metrics[dataset_type])
+        self.optimization_metrics = metrics[:1]
+        self._evaluation_metrics = metrics[1:]
+
     def __setattr__(self, name, value):
-        if name == 'metrics':
-            self.metric = value[0] if isinstance(value, list) else value
-        elif name == 'max_runtime_seconds':
-            self.job_timeout_seconds = min(value * 2,
-                                           value + rconfig().benchmarks.overhead_time_seconds)
+        if name == 'max_runtime_seconds':
+            self.job_timeout_seconds = min(
+                value * 2,
+                value + rconfig().benchmarks.overhead_time_seconds
+            )
         super().__setattr__(name, value)
 
     def __json__(self):
@@ -458,10 +493,13 @@ class BenchmarkTask:
         self.benchmark = benchmark
         self._task_def = task_def
         self.fold = fold
+
         self.task_config = TaskConfig(
             name=task_def.name,
             fold=fold,
             metrics=task_def.metric,
+            optimization_metrics=Namespace.get(task_def, "optimization_metrics"),
+            evaluation_metrics=Namespace.get(task_def, "evaluation_metrics"),
             seed=rget().seed(fold),
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
@@ -542,9 +580,8 @@ class BenchmarkTask:
         task_config.output_predictions_file = results._predictions_file
         task_config.output_metadata_file = results._metadata_file
         touch(os.path.dirname(task_config.output_predictions_file), as_dir=True)
-        if task_config.metrics is None:
-            task_config.metrics = as_list(rconfig().benchmarks.metrics[self._dataset.type.name])
-            task_config.metric = task_config.metrics[0]
+        if not task_config.optimization_metrics:
+            task_config.load_default_metrics(dataset_type=self._dataset.type.name)
 
         result = meta_result = None
         try:
