@@ -32,10 +32,12 @@ def run(dataset, config):
         rmse='rmse',
         r2='r2',
     )
-    perf_metric = metrics_mapping[
-        config.metric] if config.metric in metrics_mapping else 'auto'
-    if perf_metric is None:
-        log.warning("Performance metric %s not supported.", config.metric)
+    perf_metric = metrics_mapping.get(config.optimization_metrics[0], 'auto')
+    if perf_metric == 'auto' and config.optimization_metrics[0] != 'auto':
+        log.warning(
+            f"Performance metric '{config.optimization_metrics[0]}' not supported, "
+            f"using metric='auto' instead.",
+        )
 
     training_params = {k: v for k, v in config.framework_params.items()
                        if not k.startswith('_')}

@@ -43,10 +43,10 @@ def run(dataset, config):
         rmse='rmse',
         rmsle='rmsle'
     )
-    sort_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    sort_metric = metrics_mapping.get(config.optimization_metrics[0])
     if sort_metric is None:
         # TODO: Figure out if we are going to blindly pass metrics through, or if we use a strict mapping
-        log.warning("Performance metric %s not supported, defaulting to AUTO.", config.metric)
+        log.warning(f"Performance metric {config.optimization_metrics[0]} not supported, defaulting to AUTO.")
 
     try:
         training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}

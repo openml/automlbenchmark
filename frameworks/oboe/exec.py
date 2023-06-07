@@ -66,7 +66,7 @@ def run(dataset, config):
     n_cores = config.framework_params.get('_n_cores', config.cores)
 
     log.info('Running oboe with a maximum time of {}s on {} cores.'.format(config.max_runtime_seconds, n_cores))
-    log.warning('We completely ignore the advice to optimize towards metric: {}.'.format(config.metric))
+    log.warning(f'We ignore the advice to optimize for: {config.optimization_metrics[0]}.')
 
     aml = AutoLearner(p_type='classification' if is_classification else 'regression',
                       n_cores=n_cores,

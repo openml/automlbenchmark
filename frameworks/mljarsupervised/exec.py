@@ -24,7 +24,7 @@ def run(dataset, config):
         logloss='logloss',
         rmse='rmse'
     )
-    eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else "auto"
+    eval_metric = metrics_mapping.get(config.optimization_metrics[0], 'auto')
     
     # Mapping of benchmark task to MLJAR ML task
     problem_mapping = dict(

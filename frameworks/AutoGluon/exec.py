@@ -38,10 +38,10 @@ def run(dataset, config):
         rmse=metrics.root_mean_squared_error,
     )
 
-    perf_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    perf_metric = metrics_mapping.get(config.optimization_metrics[0])
     if perf_metric is None:
         # TODO: figure out if we are going to blindly pass metrics through, or if we use a strict mapping
-        log.warning("Performance metric %s not supported.", config.metric)
+        log.warning(f"Performance metric {config.optimization_metrics[0]} not supported.")
 
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}

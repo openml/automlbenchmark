@@ -142,9 +142,9 @@ def get_eval_metric(config):
         rmse="RMSE",
     )
 
-    eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    eval_metric = metrics_mapping.get(config.optimization_metrics[0])
     if eval_metric is None:
-        log.warning("Performance metric %s not supported.", config.metric)
+        log.warning(f"Performance metric {config.optimization_metrics[0]} not supported.")
     return eval_metric
 
 
