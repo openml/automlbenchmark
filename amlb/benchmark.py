@@ -418,13 +418,12 @@ class TaskConfig:
 
     @property
     def evaluation_metrics(self) -> list[str]:
-        return self.optimization_metrics + self._evaluation_metrics
+        return list(set(self.optimization_metrics) | set(self._evaluation_metrics))
 
     def load_default_metrics(self, *, dataset_type: str):
         """ Sets `optimization/evaluation_metrics` based on defaults from config.yaml"""
-        metrics = as_list(rconfig().benchmarks.metrics[dataset_type])
-        self.optimization_metrics = metrics[:1]
-        self._evaluation_metrics = metrics[1:]
+        self.optimization_metrics = as_list(rconfig().benchmarks.optimization_metrics[dataset_type])
+        self._evaluation_metrics = as_list(rconfig().benchmarks.evaluation_metrics[dataset_type])
 
     def __setattr__(self, name, value):
         if name == 'max_runtime_seconds':

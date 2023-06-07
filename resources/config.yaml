@@ -48,13 +48,17 @@ benchmarks:                     # configuration namespace for the benchmarks def
   os_mem_size_mb: 2048          # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048          # the default amount of volume left to the OS when task volume memory is verified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal
-  metrics:                      # default metrics by dataset type (as listed by amlb.data.DatasetType),
-                                # only the first metric is optimized by the frameworks,
-                                # the others are computed only for information purpose.
-    binary: ['auc', 'logloss', 'acc', 'balacc']     # available metrics: auc (AUC), acc (Accuracy), balacc (Balanced Accuracy), pr_auc (Precision Recall AUC), logloss (Log Loss), f1, f2, f05 (F-beta scores with beta=1, 2, or 0.5), max_pce, mean_pce (Max/Mean Per-Class Error).
-    multiclass: ['logloss', 'acc', 'balacc']        # available metrics: same as for binary, except auc, replaced by auc_ovo (AUC One-vs-One), auc_ovr (AUC One-vs-Rest). AUC metrics and F-beta metrics are computed with weighted average.
-    regression: ['rmse', 'r2', 'mae']               # available metrics: mae (Mean Absolute Error), mse (Mean Squared Error), msle (Mean Squared Logarithmic Error), rmse (Root Mean Square Error), rmsle (Root Mean Square Logarithmic Error), r2 (R^2).
-    timeseries: ['mase', 'mape', 'smape', 'rmse', 'mse', 'nrmse', 'wape', 'ncrps']
+  optimization_metrics:  # default metrics to optimize for by dataset type (as listed by amlb.data.DatasetType)
+    binary: ['auc']     # available metrics: auc (AUC), acc (Accuracy), balacc (Balanced Accuracy), pr_auc (Precision Recall AUC), logloss (Log Loss), f1, f2, f05 (F-beta scores with beta=1, 2, or 0.5), max_pce, mean_pce (Max/Mean Per-Class Error).
+    multiclass: ['logloss']  # available metrics: same as for binary, except auc, replaced by auc_ovo (AUC One-vs-One), auc_ovr (AUC One-vs-Rest). AUC metrics and F-beta metrics are computed with weighted average.
+    regression: ['rmse']     # available metrics: mae (Mean Absolute Error), mse (Mean Squared Error), msle (Mean Squared Logarithmic Error), rmse (Root Mean Square Error), rmsle (Root Mean Square Logarithmic Error), r2 (R^2).
+    timeseries: ['mase']
+  evaluation_metrics:  # default metrics to report by dataset type (as listed by amlb.data.DatasetType)
+    binary: ['logloss', 'acc', 'balacc']  # available metrics are identical to those described for `optimization_metrics`.
+    multiclass: ['acc', 'balacc']     # any `optimization_metric` is also reported on, duplicating it here is not necessary.
+    regression: ['r2', 'mae']
+    timeseries: ['mape', 'smape', 'rmse', 'mse', 'nrmse', 'wape', 'ncrps']
+
   defaults:            # the default constraints, usually overridden by a constraint.
     folds: 10          # the amount of fold-runs executed for each dataset.
     max_runtime_seconds: 3600   # default time allocated to the framework to train a model.
