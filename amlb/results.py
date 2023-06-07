@@ -130,8 +130,6 @@ class Scoreboard:
 
     @cached
     def as_data_frame(self):
-        # index = ['task', 'framework', 'fold']
-        index = []
         df = (self.scores if is_data_frame(self.scores)
               else to_data_frame([dict(sc) for sc in self.scores]))
         if df.empty:
@@ -139,14 +137,12 @@ class Scoreboard:
             return df
         fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'type', 'result', 'metric', 'mode', 'version',
                       'params', 'app_version', 'utc', 'duration', 'training_duration', 'predict_duration', 'models_count', 'seed', 'info']
-        fixed_cols = [col for col in fixed_cols if col not in index]
         metrics_cols = [col for col in df.columns
                         if (col in dir(ClassificationResult) or col in dir(RegressionResult))
                         and not col.startswith('_')]
         metrics_cols.sort()
         dynamic_cols = [col for col in df.columns
-                        if col not in index
-                        and col not in fixed_cols
+                        if  col not in fixed_cols
                         and col not in metrics_cols]
         dynamic_cols.sort()
         df = df.reindex(columns=[]+fixed_cols+metrics_cols+dynamic_cols)
