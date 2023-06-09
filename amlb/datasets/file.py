@@ -51,7 +51,7 @@ class FileLoader:
         if ext == '.arff':
             return ArffDataset(train_path, test_path, target=target, features=features, type=type_)
         elif ext == '.csv':
-            if DatasetType[dataset['type']] == DatasetType.timeseries and dataset['timestamp_column'] is None:
+            if type_ is not None and DatasetType[type_] == DatasetType.timeseries and dataset['timestamp_column'] is None:
                 log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
                 dataset = deepcopy(dataset)
                 dataset['timestamp_column'] = "timestamp"
