@@ -1,5 +1,6 @@
 import os
 from collections import OrderedDict
+import pathlib
 
 import openml
 import pandas as pd
@@ -8,11 +9,11 @@ import pytest
 from amlb.uploads import _load_predictions, _load_fold, _get_flow, _load_task_data, \
     _extract_and_format_hyperparameter_configuration, _upload_results
 
-here = os.path.realpath(os.path.dirname(__file__))
-res = os.path.join(here, 'resources')
+here = pathlib.Path(__file__).parent.absolute()
+resources = here /'resources'
 
-iris_constant = f"{res}/iris_constant/"
-iris_h2o = f"{res}/iris_h2o/"
+iris_constant = resources / "iris_constant"
+iris_h2o = resources / "iris_h2o"
 
 
 @pytest.fixture(scope="module")
