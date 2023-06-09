@@ -80,7 +80,9 @@ monitoring:               # configuration namespace describing the basic monitor
 
 results:                 # configuration namespace for the results.csv file.
   error_max_length: 200  # the max length of the error message as rendered in the results file.
-  save: true             # set by runbenchmark.py
+  global_save: true      # set by runbenchmark.py, if true adds the results to the main `results.csv` in the {output.dir}
+  global_lock_timeout: 5 # the timeout used to wait for the lock on the global results file.
+  incremental_save: true # if true save results after each job., otherwise save results only when all jobs are completed.
 
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
@@ -138,17 +140,17 @@ aws:                    # configuration namespace for AWS mode.
   ec2:
     regions:                             #
       us-east-1:
-        ami: ami-0ac019f4fcb7cb7e6
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-053b0d53c279acc90
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       us-west-1:
-        ami: ami-063aa838bd7631e0b
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-0f8e81a3da6e2510a
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       eu-west-1:
-        ami: ami-00035f41c82244dab
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-01dd271720c1ba44f
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       eu-central-1:
-        ami: ami-0bdf93799014acdc4
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-04e601abe3e1a910f
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
     instance_type:                       #
       series: m5                         #
       map:                               # map between num cores required and ec2 instance type sizes
