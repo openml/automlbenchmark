@@ -36,7 +36,11 @@ def run(dataset, config):
         r2=(default, False), # lambda y, pred: 1.0 - r2_score(y, pred)
         rmse=(mean_squared_error, False),
     )
-    loss_fn, continuous_loss_fn = metrics_to_loss_mapping[config.metric] if config.metric in metrics_to_loss_mapping else (None, False)
+
+    loss_fn, continuous_loss_fn = metrics_to_loss_mapping.get(
+        config.optimization_metrics[0],
+        (None, False)
+    )
     if loss_fn is None:
         log.warning("Performance metric %s not supported: defaulting to %s.",
                     config.metric, 'accuracy' if is_classification else 'r2')

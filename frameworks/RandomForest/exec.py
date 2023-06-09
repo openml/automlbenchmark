@@ -47,7 +47,7 @@ def run(dataset, config):
     memory_margin = config.framework_params.get('_memory_margin', 0.9)
 
     log.info("Running RandomForest with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, n_jobs))
-    log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
+    log.warning(f"We ignore the advice to optimize for: {config.optimization_metrics}.")
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
     rf = estimator(n_jobs=n_jobs,

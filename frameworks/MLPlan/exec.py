@@ -30,10 +30,10 @@ def run(dataset, config):
         rmsle='ROOT_MEAN_SQUARED_LOGARITHM_ERROR',
         mae='MEAN_ABSOLUTE_ERROR'
     )
-
-    metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    metric = metrics_mapping.get(config.optimization_metrics[0])
     if metric is None:
-        raise ValueError('Performance metric {} is not supported.'.format(config.metric))
+        msg = f'Performance metric {config.optimization_metrics[0]} is not supported.'
+        raise ValueError(msg)
     
     train_file = dataset.train.path
     test_file = dataset.test.path

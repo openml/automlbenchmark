@@ -76,7 +76,11 @@ def run(dataset, config):
         mse='neg_mean_squared_error',
         r2='r2',
         rmse='neg_root_mean_squared_error',
-    )[config.metric]
+    ).get(config.optimization_metrics[0])
+
+    if not metric:
+        msg = f"TunedRandomForest doesn't support {config.optimization_metrics[0]}"
+        raise ValueError(msg)
 
     n_features = X_train.shape[1]
     default_value = max(1, int(math.sqrt(n_features)))

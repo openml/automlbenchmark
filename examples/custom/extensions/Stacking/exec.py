@@ -33,8 +33,8 @@ def run(dataset, config):
     estimators_params = {e: config.framework_params.get(f'_{e}_params', {}) for e in ['rf', 'gbm', 'linear', 'svc', 'final']}
 
     log.info("Running Sklearn Stacking Ensemble with a maximum time of {}s on {} cores.".format(config.max_runtime_seconds, n_jobs))
-    log.warning("We completely ignore the requirement to stay within the time limit.")
-    log.warning("We completely ignore the advice to optimize towards metric: {}.".format(config.metric))
+    log.warning("We ignore the requirement to stay within the time limit.")
+    log.warning(f"We ignore the advice to optimize for: {config.optimization_metrics}.")
 
 
     if is_classification:

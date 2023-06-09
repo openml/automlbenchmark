@@ -36,9 +36,10 @@ def run(dataset, config):
         r2='r2',
         rmse='neg_mean_squared_error',  # TPOT can score on mse, as app computes rmse independently on predictions
     )
-    scoring_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    scoring_metric = metrics_mapping.get(config.optimization_metrics[0])
     if scoring_metric is None:
-        raise ValueError("Performance metric {} not supported.".format(config.metric))
+        msg = f"Performance metric {config.optimization_metrics[0]} not supported."
+        raise ValueError(msg)
 
     X_train = dataset.train.X
     y_train = dataset.train.y
