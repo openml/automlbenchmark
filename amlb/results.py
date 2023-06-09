@@ -3,7 +3,6 @@
 as well as logic to compute, format, save, read and merge scores obtained from those predictions (cf. ``Result`` and ``Scoreboard``).
 """
 import inspect
-from functools import partial
 import collections
 import io
 import logging
@@ -136,7 +135,7 @@ class Scoreboard:
         if df.empty:
             # avoid dtype conversions during reindexing on empty frame
             return df
-        fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'type', 'result', 'metric', 'mode', 'version',
+        fixed_cols = ['id', 'task', 'framework', 'constraint', 'fold', 'type', 'optimization_metrics', 'mode', 'version',
                       'params', 'app_version', 'utc', 'duration', 'training_duration', 'predict_duration', 'models_count', 'seed', 'info']
         metrics_cols = [
             col for col in df.columns
@@ -171,9 +170,12 @@ class Scoreboard:
         for col in high_precision_float_cols:
             df[col] = df[col].map("{:.6g}".format).astype(float)
 
+        unique_metrics = (set(metrics.split(",")) for metrics in df['optimization_metrics'].unique())
+        optimized_metrics = set.union(*unique_metrics)
+
         cols = ([] if verbosity == 0
-                else ['task', 'fold', 'framework', 'constraint', 'result', 'metric', 'info'] if verbosity == 1
-                else ['id', 'task', 'fold', 'framework', 'constraint', 'result', 'metric',
+                else ['task', 'fold', 'framework', 'constraint', *optimized_metrics, 'optimization_metrics', 'info'] if verbosity == 1
+                else ['id', 'task', 'fold', 'framework', 'constraint', *optimized_metrics, 'optimization_metrics',
                       'duration', 'seed', 'info'] if verbosity == 2
                 else slice(None))
         return df.loc[:, cols]
@@ -423,11 +425,8 @@ class TaskResult:
             seed=metadata.seed,
             app_version=rget().app_version,
             utc=datetime_iso(),
-            evaluation_metrics=metadata.evaluation_metrics,
             optimization_metrics=metadata.optimization_metrics,
             duration=nan,
-            result_metrics=[],
-            result=[],
         )
         required_meta_res = ['training_duration', 'predict_duration', 'models_count']
         for m in required_meta_res:
@@ -435,30 +434,13 @@ class TaskResult:
         result = self.get_result() if result is None else result
 
         scoring_errors = []
-
-        def do_score(m):
-            score = result.evaluate(m)
+        for metric_ in metadata.evaluation_metrics:
+            score = result.evaluate(metric_)
             if 'message' in score:
                 scoring_errors.append(score.message)
-            return score
+            entry[metric_] = score.value
 
-        def set_score(score):
-            metric = score.metric if score.higher_is_better else f"neg_{score.metric}"
-            result = score.value if score.higher_is_better else -score.value
-            entry.result_metrics.append(metric)
-            entry.result.append(result)
-
-        for metric in metadata.evaluation_metrics:
-            sc = do_score(metric)
-            entry[metric] = sc.value
-            if metric in entry.optimization_metrics:
-                set_score(sc)
-
-        entry.result = tuple(entry.result)
-        entry.result_metrics = tuple(entry.result_metrics)
-        entry.evaluation_metrics = tuple(entry.evaluation_metrics)
-        entry.optimization_metrics = tuple(entry.optimization_metrics)
-        entry.metric = entry.optimization_metrics
+        entry.optimization_metrics = ','.join(entry.optimization_metrics)
         entry.info = result.info
         if scoring_errors:
             entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
