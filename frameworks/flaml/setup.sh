@@ -21,7 +21,7 @@ fi
 
 
 if [[ "$VERSION" == "stable" ]]; then
-    PIP install --no-cache-dir -U ${PKG}${OPTIONALS}
+    PIP install --no-cache-dir -U "${PKG}${OPTIONALS}<2"
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
     PIP install --no-cache-dir -U ${PKG}${OPTIONALS}==${VERSION}
 else
