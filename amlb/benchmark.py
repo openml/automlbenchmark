@@ -7,6 +7,7 @@
 - run the jobs.
 - collect and save results.
 """
+import time
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
@@ -24,8 +25,9 @@ from .data import DatasetType
 from .datautils import read_csv
 from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
-from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, flatten, json_dump, lazy_property, profile, repr_def, \
-    run_cmd, run_script, signal_handler, str2bool, str_sanitize, system_cores, system_memory_mb, system_volume_mb, touch
+from .utils import Namespace as ns, OSMonitoring, as_list, datetime_iso, file_lock, flatten, json_dump, \
+    lazy_property, profile, repr_def, run_cmd, run_script, signal_handler, str2bool, str_sanitize, \
+    system_cores, system_memory_mb, system_volume_mb, touch
 
 
 log = logging.getLogger(__name__)
@@ -209,22 +211,21 @@ class Benchmark:
             results = self._run_jobs(jobs)
             log.info(f"Processing results for {self.sid}")
             log.debug(results)
-            if tasks is None:
-                scoreboard = self._process_results(results)
-            else:
-                for task_def in task_defs:
-                    task_results = filter(lambda res: res.result is not None and res.result.task == task_def.name, results)
-                    scoreboard = self._process_results(task_results, task_name=task_def.name)
-            return scoreboard
+
+            if not rconfig().results.incremental_save:
+                self._process_results(results)
+            return self._results_summary()
         finally:
             self.cleanup()
 
     def _create_job_runner(self, jobs):
+        on_new_result = self._process_results if rconfig().results.incremental_save else None
         if self.parallel_jobs == 1:
-            return SimpleJobRunner(jobs)
+            return SimpleJobRunner(jobs, on_new_result=on_new_result)
         else:
-            # return ThreadPoolExecutorJobRunner(jobs, self.parallel_jobs)
-            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+            return MultiThreadingJobRunner(jobs,
+                                           on_new_result=on_new_result,
+                                           parallel_jobs=self.parallel_jobs,
                                            delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True)
 
@@ -254,10 +255,6 @@ class Benchmark:
             pass
         finally:
             results = self.job_runner.results
-
-        for res in results:
-            if res.result is not None and math.isnan(res.result.duration):
-                res.result.duration = res.duration
         return results
 
     def _benchmark_tasks(self):
@@ -327,34 +324,45 @@ class Benchmark:
 
         return False
 
-    def _process_results(self, results, task_name=None):
+    def _process_results(self, results):
+        if not isinstance(results, list):
+            results = [results]
         scores = list(filter(None, flatten([res.result for res in results])))
         if len(scores) == 0:
             return None
 
-        board = (Scoreboard(scores,
-                            framework_name=self.framework_name,
-                            task_name=task_name,
-                            scores_dir=self.output_dirs.scores) if task_name
-                 else Scoreboard(scores,
-                                 framework_name=self.framework_name,
-                                 benchmark_name=self.benchmark_name,
-                                 scores_dir=self.output_dirs.scores))
+        for res in results:
+            if math.isnan(res.result.duration):
+                res.result.duration = res.duration
 
-        if rconfig().results.save:
-            self._save(board)
-
-        log.info("Summing up scores for current run:\n%s",
-                 board.as_printable_data_frame(verbosity=2).dropna(how='all', axis='columns').to_string(index=False))
-        return board.as_data_frame()
+        board = Scoreboard(scores, scores_dir=self.output_dirs.scores)
+        self._save(board)
+        return board
 
     def _save(self, board):
         board.save(append=True)
-        self._append(board)
+        self._save_global(board)
 
-    def _append(self, board):
-        Scoreboard.all().append(board).save()
-        Scoreboard.all(rconfig().output_dir).append(board).save()
+    def _save_global(self, board):
+        # Scoreboard.all().append(board).save()
+        if rconfig().results.global_save:
+            global_board = Scoreboard.all(rconfig().output_dir, autoload=False)
+            dest_path = global_board.path
+            timeout = rconfig().results.global_lock_timeout
+            try:
+                with file_lock(dest_path, timeout=timeout):
+                    global_board.load().append(board).save()
+            except TimeoutError:
+                log.exception("Failed to acquire the lock on `%s` after %ss: "
+                              "the partial board `%s` could not be appended to `%s`",
+                              dest_path, timeout, board.path, dest_path)
+
+    def _results_summary(self, scoreboard=None):
+        board = scoreboard or Scoreboard.all(self.output_dirs.scores)
+        results = board.as_printable_data_frame(verbosity=2)
+        log.info("Summing up scores for current run:\n%s",
+                 results.dropna(how='all', axis='columns').to_string(index=False))
+        return board.as_data_frame()
 
     @lazy_property
     def output_dirs(self):

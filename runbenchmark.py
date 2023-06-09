@@ -137,7 +137,7 @@ config_default_dirs = default_dirs
 config_user = config_load(extras.get('config', os.path.join(args.userdir or default_dirs.user_dir, "config.yaml")))
 # config listing properties set by command line
 config_args = ns.parse(
-    {'results.save': args.keep_scores},
+    {'results.global_save': args.keep_scores},
     input_dir=args.indir,
     output_dir=args.outdir,
     user_dir=args.userdir,

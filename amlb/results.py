@@ -55,8 +55,8 @@ class Scoreboard:
     results_file = 'results.csv'
 
     @classmethod
-    def all(cls, scores_dir=None):
-        return cls(scores_dir=scores_dir)
+    def all(cls, scores_dir=None, autoload=True):
+        return cls(scores_dir=scores_dir, autoload=autoload)
 
     @classmethod
     def from_file(cls, path):
@@ -105,28 +105,34 @@ class Scoreboard:
     def save_df(data_frame, path, append=False):
         exists = os.path.isfile(path)
         new_format = False
+        df = data_frame
         if exists:
-            df = read_csv(path, nrows=1)
-            new_format = list(df.columns) != list(data_frame.columns)
+            head = read_csv(path, nrows=1)
+            new_format = list(head.columns) != list(data_frame.columns)
         if new_format or (exists and not append):
             backup_file(path)
+        if new_format and append:
+            df = read_csv(path).append(data_frame)
         new_file = not exists or not append or new_format
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
         log.debug("Saving scores to `%s`.", path)
-        write_csv(data_frame,
+        write_csv(df,
                   path=path,
                   header=new_file,
                   index=not is_default_index,
                   append=not new_file)
         log.info("Scores saved to `%s`.", path)
 
-    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
+    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None,
+                 scores_dir=None, autoload=True):
         self.framework_name = framework_name
         self.benchmark_name = benchmark_name
         self.task_name = task_name
         self.scores_dir = (scores_dir if scores_dir
                            else output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores)
-        self.scores = scores if scores is not None else self._load()
+        self.scores = (scores if scores is not None
+                       else self.load_df(self.path) if autoload
+                       else None)
 
     @cached
     def as_data_frame(self):
@@ -159,6 +165,9 @@ class Scoreboard:
         int_print = lambda val: int(val) if isinstance(val, (float, int)) and not np.isnan(val) else str_print(val)
 
         df = self.as_data_frame()
+        if df.empty:
+            return df
+
         force_str_cols = ['id']
         nanable_int_cols = ['fold', 'models_count', 'seed']
         low_precision_float_cols = ['duration', 'training_duration', 'predict_duration']
@@ -181,15 +190,17 @@ class Scoreboard:
                 else slice(None))
         return df.loc[:, cols]
 
-    def _load(self):
-        return self.load_df(self._score_file())
+    def load(self):
+        self.scores = self.load_df(self.path)
+        return self
 
     def save(self, append=False):
-        self.save_df(self.as_printable_data_frame(), path=self._score_file(), append=append)
+        self.save_df(self.as_printable_data_frame(), path=self.path, append=append)
+        return self
 
     def append(self, board_or_df, no_duplicates=True):
         to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
-        scores = self.as_data_frame().append(to_append, sort=False)
+        scores = self.as_data_frame().append(to_append)
         if no_duplicates:
             scores = scores.drop_duplicates()
         return Scoreboard(scores=scores,
@@ -198,7 +209,8 @@ class Scoreboard:
                           task_name=self.task_name,
                           scores_dir=self.scores_dir)
 
-    def _score_file(self):
+    @property
+    def path(self):
         sep = rconfig().token_separator
         if self.framework_name:
             if self.task_name:

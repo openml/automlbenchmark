@@ -105,8 +105,8 @@ def run(dataset, config):
                                            check_on_exit=True,
                                            verbosity=config.ext.monitoring.verbosity)
                    if config.framework_params.get('_monitor_backend', False)
-                   # else contextlib.nullcontext  # Py 3.7+ only
-                   else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
+                   else contextlib.nullcontext()  # Py 3.7+ only
+                   # else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
                    )
         with Timer() as training:
             with monitor:
