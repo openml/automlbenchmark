@@ -1,9 +1,10 @@
-name: Run non-stress tests
+name: Light-weight Unit Tests
 
 on: pull_request
 
 
 jobs:
+  pytest_not_stress:
     name: pytest
     runs-on: ubuntu-latest
     steps:
