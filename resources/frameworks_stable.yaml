@@ -36,6 +36,15 @@ autosklearn2:
 AutoWEKA:
   version: 'stable'
 
+
+flaml:
+  version: 'stable'
+
+
+flaml_benchmark:
+  extends: flaml
+  version: "benchmark"
+
 GAMA:
   version: 'stable'
 
