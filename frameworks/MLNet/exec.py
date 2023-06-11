@@ -55,12 +55,19 @@ def run(dataset: Dataset, config: TaskConfig):
         log.info(f'test dataset: {test_dataset_path}')
 
         cmd = (f"{mlnet} {sub_command}"
-               f" --dataset {train_dataset_path} --test-dataset {test_dataset_path} --train-time {train_time_in_seconds}"
+               f" --dataset {train_dataset_path} --train-time {train_time_in_seconds}"
                f" --label-col {label} --output {os.path.dirname(output_dir)} --name {config.fold}"
-               f" --verbosity q --log-file-path {log_path}")
+               f" --verbosity diag --log-file-path {log_path}")
 
         with Timer() as training:
-            run_cmd(cmd)
+            try:
+                run_cmd(cmd, _live_output_='line')
+            except Exception as e:
+                log.error(e, exc_info=e)
+                with open(log_path, 'r') as f:
+                    for line in f:
+                        log.info(line)
+                raise
 
         train_result_json = os.path.join(output_dir, '{}.mbconfig'.format(config.fold))
         if not os.path.exists(train_result_json):
