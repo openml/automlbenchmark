@@ -4,6 +4,8 @@ import pprint
 import sys
 import tempfile as tmp
 
+import pandas as pd
+
 if sys.platform == 'darwin':
     os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
@@ -13,7 +15,8 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 from tpot import TPOTClassifier, TPOTRegressor, __version__
 
-from frameworks.shared.callee import call_run, output_subdir, result
+from frameworks.shared.callee import call_run, output_subdir, result, \
+    measure_inference_times
 from frameworks.shared.utils import Timer, is_sparse
 
 
@@ -67,6 +70,18 @@ def run(dataset, config):
     y_test = dataset.test.y
     with Timer() as predict:
         predictions = tpot.predict(X_test)
+
+    def infer(path):
+        data = pd.read_parquet(path)
+        if is_classification:
+            try:
+                return tpot.predict_proba(data)
+            except RuntimeError:
+                return tpot.predict(data)
+        return tpot.predict(data)
+
+    inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
     except RuntimeError:
@@ -82,7 +97,9 @@ def run(dataset, config):
                   target_is_encoded=is_classification,
                   models_count=len(tpot.evaluated_individuals_),
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  inference_times=inference_times,
+                  )
 
 
 def save_artifacts(estimator, config):

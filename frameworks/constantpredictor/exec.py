@@ -1,11 +1,13 @@
 import logging
 
+import pandas as pd
 from sklearn.dummy import DummyClassifier, DummyRegressor
 
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.results import save_predictions
 from amlb.utils import Timer, unsparsify
+from frameworks.shared.callee import measure_inference_times
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +31,12 @@ def run(dataset: Dataset, config: TaskConfig):
         predictions = predictor.predict(X_test)
     probabilities = predictor.predict_proba(X_test) if is_classification else None
 
+    def infer(path):
+        data = pd.read_parquet(path)
+        return predictor.predict(data)
+
+    inference_times = measure_inference_times(infer, dataset.inference_subsample_files(fmt="parquet"))
+
     save_predictions(dataset=dataset,
                      output_file=config.output_predictions_file,
                      probabilities=probabilities,
@@ -39,5 +47,6 @@ def run(dataset: Dataset, config: TaskConfig):
     return dict(
         models_count=1,
         training_duration=training.duration,
-        predict_duration=predict.duration
+        predict_duration=predict.duration,
+        inference_times=inference_times,
     )

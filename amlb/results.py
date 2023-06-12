@@ -444,6 +444,10 @@ class TaskResult:
         required_meta_res = ['training_duration', 'predict_duration', 'models_count']
         for m in required_meta_res:
             entry[m] = meta_result[m] if m in meta_result else nan
+
+        if inference_times := Namespace.get(meta_result, "inference_times"):
+            for n_samples, measured_times in Namespace.dict(inference_times).items():
+                entry[f"inference_{n_samples}_rows"] = np.mean(measured_times)
         result = self.get_result() if result is None else result
 
         scoring_errors = []
@@ -473,7 +477,7 @@ class TaskResult:
         entry.info = result.info
         if scoring_errors:
             entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
-        entry |= Namespace({k: v for k, v in meta_result if k not in required_meta_res})
+        entry |= Namespace({k: v for k, v in meta_result if k not in required_meta_res and k != "inference_times"})
         log.info("Metric scores: %s", entry)
         return entry
 

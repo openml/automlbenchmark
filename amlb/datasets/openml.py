@@ -93,6 +93,12 @@ class OpenmlDataset(Dataset):
         self._ensure_split_created()
         return self._test
 
+    def inference_subsample_files(self, fmt: str) -> list[Tuple[int, str]]:
+        return [
+            (n, str(self._inference_subsample(fmt=fmt, n=n)))
+            for n in [1, 1000, 10_000]
+        ]
+
     @profile(logger=log)
     def _inference_subsample(self, fmt: str, n: int) -> pathlib.Path:
         """ Write subset of `n` samples from the test split to disk in `fmt` format """
