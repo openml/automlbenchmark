@@ -447,7 +447,7 @@ class TaskResult:
 
         if inference_times := Namespace.get(meta_result, "inference_times"):
             for n_samples, measured_times in Namespace.dict(inference_times).items():
-                entry[f"inference_{n_samples}_rows"] = np.mean(measured_times)
+                entry[f"infer_batch_size_{n_samples}"] = np.mean(measured_times)
         result = self.get_result() if result is None else result
 
         scoring_errors = []
