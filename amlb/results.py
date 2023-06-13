@@ -446,8 +446,9 @@ class TaskResult:
             entry[m] = meta_result[m] if m in meta_result else nan
 
         if inference_times := Namespace.get(meta_result, "inference_times"):
-            for n_samples, measured_times in Namespace.dict(inference_times).items():
-                entry[f"infer_batch_size_{n_samples}"] = np.mean(measured_times)
+            for data_type, measurements in Namespace.dict(inference_times).items():
+                for n_samples, measured_times in Namespace.dict(measurements).items():
+                    entry[f"infer_batch_size_{data_type}_{n_samples}"] = np.mean(measured_times)
         result = self.get_result() if result is None else result
 
         scoring_errors = []

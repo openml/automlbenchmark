@@ -77,9 +77,14 @@ def run(dataset, config):
         return predictor.predict(data, as_pandas=False), None
 
     infer = inference_time_classification if is_classification else inference_time_regression
-    inference_times = None
+    inference_times = {}
     if config.measure_inference_time:
-        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        test_data = pd.read_parquet(dataset.test.path)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, test_data.sample(1, random_state=i)) for i in range(100)],
+        )
 
     test_data = TabularDataset(test_path)
     with Timer() as predict:
