@@ -3,6 +3,8 @@ import os
 import sys
 import tempfile as tmp
 
+import pandas as pd
+
 if sys.platform == 'darwin':
     os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
@@ -18,7 +20,8 @@ import sklearn
 from gama.data_loading import file_to_pandas
 from gama import GamaClassifier, GamaRegressor, __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer, touch
 
 
@@ -83,12 +86,21 @@ def run(dataset, config):
     # data = file_to_pandas(dataset.test.path, encoding='utf-8')
     # X_test, y_test = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
 
+    def infer(path: str):
+        test_data = pd.read_parquet(path)
+        predict_fn = gama_automl.predict_proba if is_classification else gama_automl.predict
+        return predict_fn(test_data)
+
+    inference_times = None
+    if config.measure_inference_time:
+        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+
     with Timer() as predict_timer:
         predictions = gama_automl.predict(X_test)
+
+    probabilities = None
     if is_classification:
         probabilities = gama_automl.predict_proba(X_test)
-    else:
-        probabilities = None
 
     return result(
         output_file=config.output_predictions_file,
@@ -98,7 +110,8 @@ def run(dataset, config):
         target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
         training_duration=training_timer.duration,
-        predict_duration=predict_timer.duration
+        predict_duration=predict_timer.duration,
+        inference_times=inference_times,
     )
 
 
