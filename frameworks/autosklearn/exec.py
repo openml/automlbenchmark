@@ -5,6 +5,8 @@ import shutil
 import tempfile as tmp
 import warnings
 
+import pandas as pd
+
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -15,7 +17,8 @@ from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer, system_memory_mb, walk_apply, zip_path
 
 log = logging.getLogger(__name__)
@@ -130,10 +133,18 @@ def run(dataset, config):
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, feat_type=predictors_type, **fit_extra_params)
 
+    def infer(path: str):
+        test_data = pd.read_parquet(path)
+        predict_fn = auto_sklearn.predict_proba if is_classification else auto_sklearn.predict
+        return predict_fn(test_data)
+
+    inference_times = None
+    if config.measure_inference_time:
+        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
     X_test = dataset.test.X
-    y_test = dataset.test.y
     with Timer() as predict:
         predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
@@ -142,12 +153,14 @@ def run(dataset, config):
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,
-                  truth=y_test,
+                  truth=dataset.test.y,
                   probabilities=probabilities,
                   target_is_encoded=is_classification,
                   models_count=len(auto_sklearn.get_models_with_weights()),
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  inference_times=inference_times,
+                  )
 
 
 def save_artifacts(estimator, config):

@@ -21,7 +21,8 @@ def run(dataset: Dataset, config: TaskConfig):
             X=X_test,
             y=y_test
         ),
-        predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors]
+        predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors],
+        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
 
     return run_in_venv(__file__, "exec.py",
