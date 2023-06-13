@@ -80,7 +80,10 @@ def run(dataset, config):
                 return tpot.predict(data)
         return tpot.predict(data)
 
-    inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+    inference_times = None
+    if config.measure_inference_time:
+        log.info("TPOT inference time measurements exclude preprocessing time of AMLB.")
+        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
 
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
