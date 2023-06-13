@@ -5,13 +5,16 @@ import warnings
 
 import matplotlib
 import numpy as np
+import pandas as pd
+
 matplotlib.use("agg")  # no need for tk
 
 from lightautoml.tasks import Task
 from lightautoml.automl.presets.tabular_presets import TabularAutoML, TabularUtilizedAutoML
 from lightautoml import __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
@@ -36,6 +39,15 @@ def run(dataset, config):
     log.info("Training...")
     with Timer() as training:
         automl.fit_predict(train_data=df_train, roles={'target': label})
+
+    def infer(path: str):
+        batch = pd.read_parquet(path)
+        return automl.predict(batch)
+
+    inference_times = None
+    if config.measure_inference_time:
+        inference_times = measure_inference_times(infer,
+                                                  dataset.inference_subsample_files)
 
     X_test, y_test = dataset.test.X, dataset.test.y
     log.info("Predicting on the test set...")
@@ -75,6 +87,7 @@ def run(dataset, config):
         predictions=predictions,
         training_duration=training.duration,
         predict_duration=predict.duration,
+        inference_times=inference_times,
     )
 
 
