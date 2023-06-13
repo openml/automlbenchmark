@@ -1,6 +1,8 @@
 import contextlib
 import logging
 import os
+import pathlib
+
 import psutil
 import re
 
@@ -10,7 +12,8 @@ import pandas as pd
 import h2o
 from h2o.automl import H2OAutoML
 
-from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result
+from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, \
+    measure_inference_times
 from frameworks.shared.utils import Monitoring, Namespace as ns, Timer, clean_dir, touch, zip_path
 
 log = logging.getLogger(__name__)
@@ -115,6 +118,16 @@ def run(dataset, config):
         if not aml.leader:
             raise FrameworkError("H2O could not produce any model in the requested time.")
 
+        def infer(path: str):
+            filename = pathlib.Path(path).name
+            batch = h2o.import_file(path, destination_frame=frame_name(filename, config), **import_kwargs)
+            return aml.predict(batch)
+
+        inference_times = None
+        if config.measure_inference_time:
+            inference_times = measure_inference_times(infer,
+                                                      dataset.inference_subsample_files)
+
         with Timer() as predict:
             preds = aml.predict(test)
 
@@ -129,7 +142,8 @@ def run(dataset, config):
             probabilities_labels=preds.probabilities_labels,
             models_count=len(aml.leaderboard),
             training_duration=training.duration,
-            predict_duration=predict.duration
+            predict_duration=predict.duration,
+            inference_times=inference_times,
         )
 
     finally:

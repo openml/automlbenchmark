@@ -93,7 +93,7 @@ class OpenmlDataset(Dataset):
         self._ensure_split_created()
         return self._test
 
-    def inference_subsample_files(self, fmt: str) -> list[Tuple[int, str]]:
+    def inference_subsample_files(self, fmt: str, with_labels: bool = False) -> list[Tuple[int, str]]:
         """Generates n subsamples of size k from the test dataset in `fmt` data format.
 
         We measure the inference time of the models for various batch sizes
@@ -104,20 +104,21 @@ class OpenmlDataset(Dataset):
         """
         seed = rget().seed(self.fold)
         return [
-            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i)))
+            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels)))
             for n in rconfig().inference_time_measurements.batch_sizes
             for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
         ]
 
     @profile(logger=log)
-    def _inference_subsample(self, fmt: str, n: int, seed: int = 0) -> pathlib.Path:
+    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False) -> pathlib.Path:
         """ Write subset of `n` samples from the test split to disk in `fmt` format """
         # Just a hack for now, the splitters all work specifically with openml tasks.
         # The important thing is that we split to disk and can load it later.
 
         # We should consider taking a stratified sample if n is large enough,
         # inference time might differ based on class
-        subsample = self._test.X.sample(
+        test = self._test.data if with_labels else self._test.X
+        subsample = test.sample(
             n=n,
             replace=True,
             random_state=seed,
