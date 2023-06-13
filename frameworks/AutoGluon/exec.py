@@ -77,7 +77,9 @@ def run(dataset, config):
         return predictor.predict(data, as_pandas=False), None
 
     infer = inference_time_classification if is_classification else inference_time_regression
-    inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+    inference_times = None
+    if config.measure_inference_time:
+        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
 
     test_data = TabularDataset(test_path)
     with Timer() as predict:
