@@ -94,14 +94,15 @@ class OpenmlDataset(Dataset):
         return self._test
 
     def inference_subsample_files(self, fmt: str) -> list[Tuple[int, str]]:
+        seed = rget().seed(self.fold)
         return [
-            (n, str(self._inference_subsample(fmt=fmt, n=n)))
+            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i)))
             for n in rconfig().inference_time_measurements.batch_sizes
-            for _ in range(rconfig().inference_time_measurements.repeats)
+            for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
         ]
 
     @profile(logger=log)
-    def _inference_subsample(self, fmt: str, n: int) -> pathlib.Path:
+    def _inference_subsample(self, fmt: str, n: int, seed: int = 0) -> pathlib.Path:
         """ Write subset of `n` samples from the test split to disk in `fmt` format """
         # Just a hack for now, the splitters all work specifically with openml tasks.
         # The important thing is that we split to disk and can load it later.
@@ -114,7 +115,7 @@ class OpenmlDataset(Dataset):
         subsample = self._test.X.sample(
             n=n,
             replace=True,
-            random_state=rget().seed(self.fold)
+            random_state=seed,
         )
 
         _, test_path = self._get_split_paths()
