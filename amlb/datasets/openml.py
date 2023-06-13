@@ -125,7 +125,7 @@ class OpenmlDataset(Dataset):
 
         _, test_path = self._get_split_paths()
         test_path = pathlib.Path(test_path)
-        subsample_path = test_path.parent / f"{test_path.stem}_{n}.{fmt}"
+        subsample_path = test_path.parent / f"{test_path.stem}_{n}_{seed}.{fmt}"
         if fmt == "csv":
             subsample.to_csv(subsample_path, header=True, index=False)
         elif fmt == "arff":
