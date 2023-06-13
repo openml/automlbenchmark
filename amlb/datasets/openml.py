@@ -96,7 +96,8 @@ class OpenmlDataset(Dataset):
     def inference_subsample_files(self, fmt: str) -> list[Tuple[int, str]]:
         return [
             (n, str(self._inference_subsample(fmt=fmt, n=n)))
-            for n in [1, 1000, 10_000]
+            for n in rconfig().inference_time_measurements.batch_sizes
+            for _ in range(rconfig().inference_time_measurements.repeats)
         ]
 
     @profile(logger=log)

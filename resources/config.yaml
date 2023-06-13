@@ -84,6 +84,11 @@ results:                 # configuration namespace for the results.csv file.
   global_lock_timeout: 5 # the timeout used to wait for the lock on the global results file.
   incremental_save: true # if true save results after each job., otherwise save results only when all jobs are completed.
 
+inference_time_measurements:  # configuration namespace for performing additional inference time measurements on various batch sizes
+  enabled: true
+  batch_sizes: [1, 10, 100, 1000, 10000]  # the batch sizes for which inference speed should be measured
+  repeats: 100                            # the number of times to repeat the inference measurement for each batch size
+
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
   infer_dtypes: False

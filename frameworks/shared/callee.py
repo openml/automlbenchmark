@@ -98,8 +98,7 @@ def call_run(run_fn):
 def measure_inference_times(predict_fn: Callable[[str], Any], files: list[Tuple[int, str]]) -> dict[int, list[float]]:
     inference_times = defaultdict(list)
     for subsample_size, subsample_path in files:
-        for _ in range(10):
-            with Timer() as predict:
-                predict_fn(subsample_path)
-            inference_times[subsample_size].append(predict.duration)
+        with Timer() as predict:
+            predict_fn(subsample_path)
+        inference_times[subsample_size].append(predict.duration)
     return inference_times
