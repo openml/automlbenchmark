@@ -1,9 +1,11 @@
 import logging
 import os
 
+import pandas as pd
 from flaml import AutoML, __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
@@ -49,7 +51,16 @@ def run(dataset, config):
                 n_jobs=n_jobs,
                 log_file_name= flaml_log_file_name,
                 time_budget=time_budget, **training_params)
-    
+
+    def infer(path: str):
+        data = pd.read_parquet(path)
+        predict_fn = aml.predict_proba if is_classification else aml.predict
+        return predict_fn(data)
+
+    inference_times = None
+    if config.measure_inference_time:
+        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+
     with Timer() as predict:
         predictions = aml.predict(X_test)
     probabilities = aml.predict_proba(X_test) if is_classification else None
@@ -65,6 +76,7 @@ def run(dataset, config):
                     training_duration=training.duration,
                     predict_duration=predict.duration,
                     probabilities_labels=labels,
+                    inference_times=inference_times,
                 )
 
 
