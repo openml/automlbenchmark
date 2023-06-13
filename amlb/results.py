@@ -448,7 +448,7 @@ class TaskResult:
         if inference_times := Namespace.get(meta_result, "inference_times"):
             for data_type, measurements in Namespace.dict(inference_times).items():
                 for n_samples, measured_times in Namespace.dict(measurements).items():
-                    entry[f"infer_batch_size_{data_type}_{n_samples}"] = np.mean(measured_times)
+                    entry[f"infer_batch_size_{data_type}_{n_samples}"] = np.median(measured_times)
         result = self.get_result() if result is None else result
 
         scoring_errors = []
