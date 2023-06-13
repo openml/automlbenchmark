@@ -4,12 +4,15 @@ import logging
 
 import numpy as np
 import matplotlib
+import pandas as pd
+
 matplotlib.use("agg")  # no need for tk
 
 import supervised
 from supervised.automl import AutoML
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(os.path.basename(__file__))
@@ -56,6 +59,16 @@ def run(dataset, config):
     with Timer() as training:
         automl.fit(X_train, y_train)
 
+
+    def infer(path: str):
+        batch = pd.read_parquet(path)
+        return automl.predict_all(batch)
+
+    inference_times = None
+    if config.measure_inference_time:
+        inference_times = measure_inference_times(infer,
+                                                  dataset.inference_subsample_files)
+
     with Timer() as predict:
         preds = automl.predict_all(X_test)
 
@@ -88,7 +101,8 @@ def run(dataset, config):
         probabilities_labels=probabilities_labels,
         models_count=len(automl._models),
         training_duration=training.duration,
-        predict_duration=predict.duration
+        predict_duration=predict.duration,
+        inference_times=inference_times,
     )
 
 
