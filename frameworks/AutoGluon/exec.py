@@ -4,6 +4,8 @@ import shutil
 import warnings
 import sys
 import tempfile
+from typing import Union
+
 warnings.simplefilter("ignore")
 
 if sys.platform == 'darwin':
@@ -65,25 +67,23 @@ def run(dataset, config):
             **training_params
         )
 
-    test_data = TabularDataset(test_path)
     # Persist model in memory that is going to be predicting to get correct inference latency
     predictor.persist_models('best')
 
-    def inference_time_classification(path: str):
-        data = TabularDataset(path)
+    def inference_time_classification(data: Union[str, pd.DataFrame]):
         return None, predictor.predict_proba(data, as_multiclass=True)
 
-    def inference_time_regression(path: str):
-        data = TabularDataset(path)
+    def inference_time_regression(data: Union[str, pd.DataFrame]):
         return predictor.predict(data, as_pandas=False), None
 
     infer = inference_time_classification if is_classification else inference_time_regression
+    inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+
+    test_data = TabularDataset(test_path)
     with Timer() as predict:
         predictions, probabilities = infer(test_data)
     if is_classification:
         predictions = probabilities.idxmax(axis=1).to_numpy()
-
-    inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
 
     prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
 
