@@ -94,6 +94,14 @@ class OpenmlDataset(Dataset):
         return self._test
 
     def inference_subsample_files(self, fmt: str) -> list[Tuple[int, str]]:
+        """Generates n subsamples of size k from the test dataset in `fmt` data format.
+
+        We measure the inference time of the models for various batch sizes
+        (number of rows). We generate config.inference_time_measurements.repeats
+        subsamples for each of the config.inference_time_measurements.batch_sizes.
+        These subsamples are stored to file in the `fmt` format (parquet, arff, or csv).
+        The function returns a list of tuples of (batch size, file path).
+        """
         seed = rget().seed(self.fold)
         return [
             (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i)))
@@ -106,9 +114,6 @@ class OpenmlDataset(Dataset):
         """ Write subset of `n` samples from the test split to disk in `fmt` format """
         # Just a hack for now, the splitters all work specifically with openml tasks.
         # The important thing is that we split to disk and can load it later.
-        if fmt not in ["csv", "arff", "parquet"]:
-            msg = f"{fmt=}, but must be one of 'csv', 'arff', or 'parquet'."
-            raise ValueError(msg)
 
         # We should consider taking a stratified sample if n is large enough,
         # inference time might differ based on class
@@ -131,6 +136,9 @@ class OpenmlDataset(Dataset):
             )
         elif fmt == "parquet":
             subsample.to_parquet(subsample_path)
+        else:
+            msg = f"{fmt=}, but must be one of 'csv', 'arff', or 'parquet'."
+            raise ValueError(msg)
 
         return subsample_path
 
