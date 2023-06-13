@@ -88,6 +88,11 @@ def call_run(run_fn):
         # ensure there's no subprocess left
         kill_proc_tree(include_parent=False, timeout=5)
 
+    inference_measurements = res.get("others", {}).get("inference_times")
+    if inference_measurements:
+        inference_file = pathlib.Path(config.result_file).parent / "inference_times.json"
+        json_dump(inference_measurements, inference_file, style="compact")
+        res["others"]["inference_times"] = str(inference_file)
     json_dump(res, config.result_file, style='compact')
 
 def measure_inference_times(predict_fn: Callable[[str], Any], files: list[Tuple[int, str]]) -> dict[int, list[float]]:
