@@ -1,6 +1,7 @@
 import os
 import shutil
 import logging
+from typing import Union
 
 import numpy as np
 import matplotlib
@@ -45,7 +46,6 @@ def run(dataset, config):
     }
 
     X_train, y_train = dataset.train.X, dataset.train.y.squeeze()
-    X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
 
     automl = AutoML(
         results_path=results_path,
@@ -60,16 +60,20 @@ def run(dataset, config):
         automl.fit(X_train, y_train)
 
 
-    def infer(path: str):
-        batch = pd.read_parquet(path)
+    def infer(data: Union[str, pd.DataFrame]):
+        batch = pd.read_parquet(data) if isinstance(data, str) else data
         return automl.predict_all(batch)
 
-    inference_times = None
+    inference_times = {}
     if config.measure_inference_time:
-        inference_times = measure_inference_times(infer,
-                                                  dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
+        )
 
     with Timer() as predict:
+        X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
         preds = automl.predict_all(X_test)
 
     predictions, probabilities, probabilities_labels = None, None, None
