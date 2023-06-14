@@ -10,16 +10,18 @@ def setup(*args, **kwargs):
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
 
-    X_train, X_test = dataset.train.X_enc, dataset.test.X_enc
-    y_train, y_test = unsparsify(dataset.train.y_enc, dataset.test.y_enc)
     data = dict(
         train=dict(
-            X=X_train,
-            y=y_train
+            X=dataset.train.X,
+            y=dataset.train.y,
+            X_enc=dataset.train.X_enc,
+            y_enc=unsparsify(dataset.train.y_enc),
         ),
         test=dict(
-            X=X_test,
-            y=y_test
+            X=dataset.test.X,
+            y=dataset.test.y,
+            X_enc=dataset.test.X_enc,
+            y_enc=unsparsify(dataset.test.y_enc),
         ),
         predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors],
         inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),

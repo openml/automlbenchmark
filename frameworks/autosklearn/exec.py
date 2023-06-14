@@ -67,8 +67,9 @@ def run(dataset, config):
     )
     log.info("Environment: %s", os.environ)
 
-    X_train = dataset.train.X
-    y_train = dataset.train.y
+    use_pandas = askl_version >= version.parse("0.15")
+    X_train = dataset.train.X if use_pandas else dataset.train.X_enc
+    y_train = dataset.train.y if use_pandas else dataset.train.y_enc
     predictors_type = dataset.predictors_type
     log.debug("predictors_type=%s", predictors_type)
 
@@ -123,6 +124,10 @@ def run(dataset, config):
     else:
         fit_extra_params['metric'] = perf_metric
 
+    if not use_pandas:
+        fit_extra_params["feat_type"] = predictors_type
+
+
     constr_params["time_left_for_this_task"] = config.max_runtime_seconds
     constr_params["n_jobs"] = n_jobs
     constr_params["seed"] = config.seed
@@ -133,7 +138,7 @@ def run(dataset, config):
 
     auto_sklearn = estimator(**constr_params, **training_params)
     with Timer() as training:
-        auto_sklearn.fit(X_train, y_train, feat_type=predictors_type, **fit_extra_params)
+        auto_sklearn.fit(X_train, y_train, **fit_extra_params)
 
     def infer(data: Union[str, pd.DataFrame]):
         test_data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -143,17 +148,20 @@ def run(dataset, config):
     inference_times = {}
     if config.measure_inference_time:
         inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        test_data = dataset.test.X if use_pandas else dataset.test.X_enc
+        def sample_one_test_row(seed: int):
+            if use_pandas:
+                return test_data.sample(1, random_state=seed)
+            return test_data[default_rng(seed=seed).integers(len(test_data)), :]
+
         inference_times["df"] = measure_inference_times(
-            infer, [
-                (1, dataset.test.X[default_rng(seed=i).integers(len(dataset.test.X)), :].reshape(1, -1))
-                for i in range(100)
-            ],
+            infer, [(1, sample_one_test_row(seed=i)) for i in range(100)],
         )
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
     with Timer() as predict:
-        X_test = dataset.test.X
+        X_test = dataset.test.X if use_pandas else dataset.test.X_enc
         predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
 
@@ -161,9 +169,9 @@ def run(dataset, config):
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,
-                  truth=dataset.test.y,
+                  truth=dataset.test.y if use_pandas else dataset.test.y_enc,
                   probabilities=probabilities,
-                  target_is_encoded=is_classification,
+                  target_is_encoded=is_classification and not use_pandas,
                   models_count=len(auto_sklearn.get_models_with_weights()),
                   training_duration=training.duration,
                   predict_duration=predict.duration,
