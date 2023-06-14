@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import tempfile as tmp
+from typing import Union
 
 import pandas as pd
 
@@ -79,7 +80,7 @@ def run(dataset, config):
         gama_automl.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
-    def infer(data):
+    def infer(data: Union[str, pd.DataFrame]):
         test_data = pd.read_parquet(data) if isinstance(data, str) else data
         predict_fn = gama_automl.predict_proba if is_classification else gama_automl.predict
         return predict_fn(test_data)
