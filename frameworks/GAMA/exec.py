@@ -75,27 +75,24 @@ def run(dataset, config):
     gama_automl = estimator(**kwargs)
 
     X_train, y_train = dataset.train.X, dataset.train.y
-    # data = file_to_pandas(dataset.train.path, encoding='utf-8')
-    # X_train, y_train = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
-
     with Timer() as training_timer:
         gama_automl.fit(X_train, y_train)
 
     log.info('Predicting on the test set.')
-    X_test, y_test = dataset.test.X, dataset.test.y
-    # data = file_to_pandas(dataset.test.path, encoding='utf-8')
-    # X_test, y_test = data.loc[:, data.columns != dataset.target], data.loc[:, dataset.target]
-
-    def infer(path: str):
-        test_data = pd.read_parquet(path)
+    def infer(data):
+        test_data = pd.read_parquet(data) if isinstance(data, str) else data
         predict_fn = gama_automl.predict_proba if is_classification else gama_automl.predict
         return predict_fn(test_data)
 
-    inference_times = None
+    inference_times = {}
     if config.measure_inference_time:
-        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
-
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
+        )
     with Timer() as predict_timer:
+        X_test, y_test = dataset.test.X, dataset.test.y
         predictions = gama_automl.predict(X_test)
 
     probabilities = None
