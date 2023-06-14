@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 import warnings
+from typing import Union
 
 import matplotlib
 import numpy as np
@@ -40,18 +41,21 @@ def run(dataset, config):
     with Timer() as training:
         automl.fit_predict(train_data=df_train, roles={'target': label})
 
-    def infer(path: str):
-        batch = pd.read_parquet(path)
+    def infer(data: Union[str, pd.DataFrame]):
+        batch = pd.read_parquet(data) if isinstance(data, str) else data
         return automl.predict(batch)
 
-    inference_times = None
+    inference_times = {}
     if config.measure_inference_time:
-        inference_times = measure_inference_times(infer,
-                                                  dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
+        )
 
-    X_test, y_test = dataset.test.X, dataset.test.y
     log.info("Predicting on the test set...")
     with Timer() as predict:
+        X_test, y_test = dataset.test.X, dataset.test.y
         preds = automl.predict(X_test).data
 
     probabilities_labels = None
