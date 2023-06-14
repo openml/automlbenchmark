@@ -5,6 +5,7 @@ import sys
 import tempfile as tmp
 
 import pandas as pd
+from numpy.random import default_rng
 
 if sys.platform == 'darwin':
     os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
@@ -65,14 +66,8 @@ def run(dataset, config):
     with Timer() as training:
         tpot.fit(X_train, y_train)
 
-    log.info('Predicting on the test set.')
-    X_test = dataset.test.X
-    y_test = dataset.test.y
-    with Timer() as predict:
-        predictions = tpot.predict(X_test)
-
-    def infer(path):
-        data = pd.read_parquet(path)
+    def infer(data):
+        data = pd.read_parquet(data) if isinstance(data, str) else data
         if is_classification:
             try:
                 return tpot.predict_proba(data)
@@ -80,10 +75,22 @@ def run(dataset, config):
                 return tpot.predict(data)
         return tpot.predict(data)
 
-    inference_times = None
+    inference_times = {}
     if config.measure_inference_time:
         log.info("TPOT inference time measurements exclude preprocessing time of AMLB.")
-        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer, [
+                (1, dataset.test.X[default_rng(seed=i).integers(len(dataset.test.X)), :].reshape(1, -1))
+                for i in range(100)
+            ],
+        )
+
+    log.info('Predicting on the test set.')
+    y_test = dataset.test.y
+    with Timer() as predict:
+        X_test = dataset.test.X
+        predictions = tpot.predict(X_test)
 
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
