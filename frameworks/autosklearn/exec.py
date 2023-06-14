@@ -4,8 +4,10 @@ import os
 import shutil
 import tempfile as tmp
 import warnings
+from typing import Union
 
 import pandas as pd
+from numpy.random import default_rng
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
@@ -133,19 +135,25 @@ def run(dataset, config):
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, feat_type=predictors_type, **fit_extra_params)
 
-    def infer(path: str):
-        test_data = pd.read_parquet(path)
+    def infer(data: Union[str, pd.DataFrame]):
+        test_data = pd.read_parquet(data) if isinstance(data, str) else data
         predict_fn = auto_sklearn.predict_proba if is_classification else auto_sklearn.predict
         return predict_fn(test_data)
 
-    inference_times = None
+    inference_times = {}
     if config.measure_inference_time:
-        inference_times = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer, [
+                (1, dataset.test.X[default_rng(seed=i).integers(len(dataset.test.X)), :].reshape(1, -1))
+                for i in range(100)
+            ],
+        )
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_test = dataset.test.X
     with Timer() as predict:
+        X_test = dataset.test.X
         predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
 
