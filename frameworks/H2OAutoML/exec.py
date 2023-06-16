@@ -120,19 +120,14 @@ def run(dataset, config):
 
         def infer(path: str):
             filename = pathlib.Path(path).name
-            batch = h2o.import_file(path, destination_frame=frame_name(filename, config), **import_kwargs)
+            # H2O can't do inference on single row arff, it needs columns explicitly:
+            # https://github.com/h2oai/h2o-3/issues/15572
+            batch = h2o.import_file(path, col_names=train.names, destination_frame=frame_name(filename, config), **import_kwargs)
             return aml.predict(batch)
 
         inference_times = {}
         if config.measure_inference_time:
-            # H2O can't do inference on single row arff:
-            # https://github.com/h2oai/h2o-3/issues/15572
-            without_single_row_files = [
-                (subsample_size, subsample_path)
-                for subsample_size, subsample_path in dataset.inference_subsample_files
-                if subsample_size > 1
-            ]
-            inference_times["file"] = measure_inference_times(infer, without_single_row_files)
+            inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
 
         with Timer() as predict:
             preds = aml.predict(test)
