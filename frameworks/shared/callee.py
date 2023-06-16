@@ -5,12 +5,11 @@ import re
 import signal
 import sys
 from collections import defaultdict
-from typing import Callable, Any, Tuple, Union, TypeVar
-
-import pandas as pd
+from typing import Callable, Any, Tuple, Union, TypeVar, TYPE_CHECKING
 
 from .utils import InterruptTimeout, Namespace as ns, json_dump, json_loads, kill_proc_tree, touch
 from .utils import deserialize_data, serialize_data, Timer
+
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +96,14 @@ def call_run(run_fn):
         res["others"]["inference_times"] = str(inference_file)
     json_dump(res, config.result_file, style='compact')
 
-DATA_INPUT = TypeVar("DATA_INPUT", bound=Union[str, pd.DataFrame])
+try:
+    import pandas as pd
+    DATA_TYPES = Union[str, pd.DataFrame]
+except ImportError:
+    DATA_TYPES = str
+
+DATA_INPUT = TypeVar("DATA_INPUT", bound=DATA_TYPES)
+
 def measure_inference_times(predict_fn: Callable[[DATA_INPUT], Any], files: list[Tuple[int, DATA_INPUT]]) -> dict[int, list[float]]:
     inference_times = defaultdict(list)
     for subsample_size, subsample_path in files:
