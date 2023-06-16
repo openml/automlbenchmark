@@ -35,7 +35,8 @@ def run(dataset: Dataset, config: TaskConfig):
         data = pd.read_parquet(path)
         return predictor.predict(data)
 
-    inference_times = measure_inference_times(infer, dataset.inference_subsample_files(fmt="parquet"))
+    inference_times = {}
+    inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files(fmt="parquet"))
 
     save_predictions(dataset=dataset,
                      output_file=config.output_predictions_file,
