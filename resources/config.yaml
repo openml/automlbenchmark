@@ -85,7 +85,7 @@ results:                 # configuration namespace for the results.csv file.
   incremental_save: true # if true save results after each job., otherwise save results only when all jobs are completed.
 
 inference_time_measurements:  # configuration namespace for performing additional inference time measurements on various batch sizes
-  enabled: true
+  enabled: false
   batch_sizes: [1, 10, 100, 1000, 10000]  # the batch sizes for which inference speed should be measured
   repeats: 100                            # the number of times to repeat the inference measurement for each batch size
   additional_job_time: 300  # the time in seconds that will be added to the maximum job time if inference time is measured
