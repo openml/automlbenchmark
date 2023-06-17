@@ -71,7 +71,7 @@ def run(dataset, config):
         if is_classification:
             try:
                 return tpot.predict_proba(data)
-            except RuntimeError:
+            except (RuntimeError, AttributeError):
                 return tpot.predict(data)
         return tpot.predict(data)
 
@@ -94,8 +94,9 @@ def run(dataset, config):
 
     try:
         probabilities = tpot.predict_proba(X_test) if is_classification else None
-    except RuntimeError:
-        # TPOT throws a RuntimeError if the optimized pipeline does not support `predict_proba`.
+    except (RuntimeError, AttributeError):
+        # TPOT throws a RuntimeError or AttributeError if the optimized pipeline
+        # does not support `predict_proba` (which one depends on the version).
         probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
 
     save_artifacts(tpot, config)

@@ -32,4 +32,4 @@ jobs:
       - name: Run unit tests
         run: |
           source venv/bin/activate
-          python -m pytest -vv -m "not stress"
+          python -m pytest -vv -m "not stress and not openml_upload"

@@ -379,14 +379,16 @@ class Benchmark:
 
 class TaskConfig:
 
-    def __init__(self, name, fold, metrics, seed,
+    def __init__(self, name, openml_task_id, test_server, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
-                 input_dir, output_dir, measure_inference_time: bool = False):
+                 input_dir, output_dir, tag, command, git_info, measure_inference_time: bool = False):
         self.framework = None
         self.framework_params = None
         self.framework_version = None
         self.type = None
         self.name = name
+        self.openml_task_id = openml_task_id
+        self.test_server = test_server
         self.fold = fold
         self.metrics = [metrics] if isinstance(metrics, str) else metrics
         self.seed = seed
@@ -397,6 +399,9 @@ class TaskConfig:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.output_predictions_file = os.path.join(output_dir, "predictions.csv")
+        self.tag = tag
+        self.command = command
+        self.git_info = git_info
         self.measure_inference_time = measure_inference_time
         self.ext = ns()  # used if frameworks require extra config points
 
@@ -472,6 +477,7 @@ class BenchmarkTask:
         self.fold = fold
         self.task_config = TaskConfig(
             name=task_def.name,
+            openml_task_id=task_def.openml_task_id,
             fold=fold,
             metrics=task_def.metric,
             seed=rget().seed(fold),
@@ -481,6 +487,10 @@ class BenchmarkTask:
             min_vol_size_mb=task_def.min_vol_size_mb,
             input_dir=rconfig().input_dir,
             output_dir=benchmark.output_dirs.session,
+            test_server=rget().config.test_server,
+            tag=rget().config.__dict__.get("tag"),
+            command=rget().config.command,
+            git_info=rget().git_info,
             measure_inference_time=rconfig().inference_time_measurements.enabled,
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
