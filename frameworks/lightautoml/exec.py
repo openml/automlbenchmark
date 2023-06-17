@@ -2,16 +2,20 @@ import logging
 import os
 import pickle
 import warnings
+from typing import Union
 
 import matplotlib
 import numpy as np
+import pandas as pd
+
 matplotlib.use("agg")  # no need for tk
 
 from lightautoml.tasks import Task
 from lightautoml.automl.presets.tabular_presets import TabularAutoML, TabularUtilizedAutoML
 from lightautoml import __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
@@ -37,9 +41,21 @@ def run(dataset, config):
     with Timer() as training:
         automl.fit_predict(train_data=df_train, roles={'target': label})
 
-    X_test, y_test = dataset.test.X, dataset.test.y
+    def infer(data: Union[str, pd.DataFrame]):
+        batch = pd.read_parquet(data) if isinstance(data, str) else data
+        return automl.predict(batch)
+
+    inference_times = {}
+    if config.measure_inference_time:
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
+        )
+
     log.info("Predicting on the test set...")
     with Timer() as predict:
+        X_test, y_test = dataset.test.X, dataset.test.y
         preds = automl.predict(X_test).data
 
     probabilities_labels = None
@@ -75,6 +91,7 @@ def run(dataset, config):
         predictions=predictions,
         training_duration=training.duration,
         predict_duration=predict.duration,
+        inference_times=inference_times,
     )
 
 

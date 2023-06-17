@@ -116,7 +116,7 @@ class DockerBenchmark(ContainerBenchmark):
         log.info(f"Successfully published docker image {image}.")
 
     def _generate_script(self, custom_commands):
-        docker_content = """FROM ubuntu:18.04
+        docker_content = """FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update

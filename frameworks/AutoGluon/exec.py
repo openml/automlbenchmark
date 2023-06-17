@@ -4,6 +4,8 @@ import shutil
 import warnings
 import sys
 import tempfile
+from typing import Union
+
 warnings.simplefilter("ignore")
 
 if sys.platform == 'darwin':
@@ -18,7 +20,8 @@ from autogluon.core.utils.savers import save_pd, save_pkl
 import autogluon.core.metrics as metrics
 from autogluon.tabular.version import __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer, zip_path
 
 log = logging.getLogger(__name__)
@@ -64,18 +67,30 @@ def run(dataset, config):
             **training_params
         )
 
-    test_data = TabularDataset(test_path)
     # Persist model in memory that is going to be predicting to get correct inference latency
     predictor.persist_models('best')
 
+    def inference_time_classification(data: Union[str, pd.DataFrame]):
+        return None, predictor.predict_proba(data, as_multiclass=True)
+
+    def inference_time_regression(data: Union[str, pd.DataFrame]):
+        return predictor.predict(data, as_pandas=False), None
+
+    infer = inference_time_classification if is_classification else inference_time_regression
+    inference_times = {}
+    if config.measure_inference_time:
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        test_data = pd.read_parquet(dataset.test.path)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, test_data.sample(1, random_state=i)) for i in range(100)],
+        )
+
+    test_data = TabularDataset(test_path)
+    with Timer() as predict:
+        predictions, probabilities = infer(test_data)
     if is_classification:
-        with Timer() as predict:
-            probabilities = predictor.predict_proba(test_data, as_multiclass=True)
         predictions = probabilities.idxmax(axis=1).to_numpy()
-    else:
-        with Timer() as predict:
-            predictions = predictor.predict(test_data, as_pandas=False)
-        probabilities = None
 
     prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
 
@@ -107,7 +122,8 @@ def run(dataset, config):
                   models_count=num_models_trained,
                   models_ensemble_count=num_models_ensemble,
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  inference_times=inference_times,)
 
 
 def save_artifacts(predictor, leaderboard, config):

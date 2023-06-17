@@ -1,11 +1,15 @@
 import logging
 import os
+import pathlib
 import re
 import signal
 import sys
+from collections import defaultdict
+from typing import Callable, Any, Tuple, Union, TypeVar, TYPE_CHECKING
 
 from .utils import InterruptTimeout, Namespace as ns, json_dump, json_loads, kill_proc_tree, touch
-from .utils import deserialize_data, serialize_data
+from .utils import deserialize_data, serialize_data, Timer
+
 
 log = logging.getLogger(__name__)
 
@@ -85,4 +89,25 @@ def call_run(run_fn):
         # ensure there's no subprocess left
         kill_proc_tree(include_parent=False, timeout=5)
 
+    inference_measurements = res.get("others", {}).get("inference_times")
+    if inference_measurements:
+        inference_file = pathlib.Path(config.result_file).parent / "inference_times.json"
+        json_dump(inference_measurements, inference_file, style="compact")
+        res["others"]["inference_times"] = str(inference_file)
     json_dump(res, config.result_file, style='compact')
+
+try:
+    import pandas as pd
+    DATA_TYPES = Union[str, pd.DataFrame]
+except ImportError:
+    DATA_TYPES = str
+
+DATA_INPUT = TypeVar("DATA_INPUT", bound=DATA_TYPES)
+
+def measure_inference_times(predict_fn: Callable[[DATA_INPUT], Any], files: list[Tuple[int, DATA_INPUT]]) -> dict[int, list[float]]:
+    inference_times = defaultdict(list)
+    for subsample_size, subsample_path in files:
+        with Timer() as predict:
+            predict_fn(subsample_path)
+        inference_times[subsample_size].append(predict.duration)
+    return inference_times
