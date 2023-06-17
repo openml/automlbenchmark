@@ -381,7 +381,7 @@ class TaskConfig:
 
     def __init__(self, name, openml_task_id, test_server, fold, metrics, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
-                 input_dir, output_dir, tag, command, git_info):
+                 input_dir, output_dir, tag, command, git_info, measure_inference_time: bool = False):
         self.framework = None
         self.framework_params = None
         self.framework_version = None
@@ -402,14 +402,18 @@ class TaskConfig:
         self.tag = tag
         self.command = command
         self.git_info = git_info
+        self.measure_inference_time = measure_inference_time
         self.ext = ns()  # used if frameworks require extra config points
 
     def __setattr__(self, name, value):
         if name == 'metrics':
             self.metric = value[0] if isinstance(value, list) else value
         elif name == 'max_runtime_seconds':
-            self.job_timeout_seconds = min(value * 2,
-                                           value + rconfig().benchmarks.overhead_time_seconds)
+            inference_time_extension = 0
+            if rconfig().inference_time_measurements.enabled:
+                inference_time_extension = rconfig().inference_time_measurements.additional_job_time
+            self.job_timeout_seconds = min(value * 2 + inference_time_extension,
+                                           value + rconfig().benchmarks.overhead_time_seconds + inference_time_extension)
         super().__setattr__(name, value)
 
     def __json__(self):
@@ -487,6 +491,7 @@ class BenchmarkTask:
             tag=rget().config.__dict__.get("tag"),
             command=rget().config.command,
             git_info=rget().git_info,
+            measure_inference_time=rconfig().inference_time_measurements.enabled,
         )
         # allowing to override some task parameters through command line, e.g.: -Xt.max_runtime_seconds=60
         if rconfig()['t'] is not None:

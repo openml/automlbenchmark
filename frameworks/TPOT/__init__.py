@@ -21,7 +21,8 @@ def run(dataset: Dataset, config: TaskConfig):
         test=dict(
             X=X_test,
             y=y_test
-        )
+        ),
+        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
 
     def process_results(results):

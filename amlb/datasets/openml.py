@@ -2,13 +2,14 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
+import pathlib
 from abc import abstractmethod
 import copy
 import functools
 import logging
 import os
 import re
-from typing import Generic, Tuple, TypeVar, Union
+from typing import Generic, Tuple, TypeVar
 
 import arff
 import pandas.api.types as pat
@@ -16,7 +17,7 @@ import openml as oml
 import xmltodict
 
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
-from ..resources import config as rconfig
+from ..resources import config as rconfig, get as rget
 from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
 
 
@@ -91,6 +92,56 @@ class OpenmlDataset(Dataset):
     def test(self):
         self._ensure_split_created()
         return self._test
+
+    def inference_subsample_files(self, fmt: str, with_labels: bool = False) -> list[Tuple[int, str]]:
+        """Generates n subsamples of size k from the test dataset in `fmt` data format.
+
+        We measure the inference time of the models for various batch sizes
+        (number of rows). We generate config.inference_time_measurements.repeats
+        subsamples for each of the config.inference_time_measurements.batch_sizes.
+        These subsamples are stored to file in the `fmt` format (parquet, arff, or csv).
+        The function returns a list of tuples of (batch size, file path).
+        """
+        seed = rget().seed(self.fold)
+        return [
+            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels)))
+            for n in rconfig().inference_time_measurements.batch_sizes
+            for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
+        ]
+
+    @profile(logger=log)
+    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False) -> pathlib.Path:
+        """ Write subset of `n` samples from the test split to disk in `fmt` format """
+        # Just a hack for now, the splitters all work specifically with openml tasks.
+        # The important thing is that we split to disk and can load it later.
+
+        # We should consider taking a stratified sample if n is large enough,
+        # inference time might differ based on class
+        test = self._test.data if with_labels else self._test.X
+        subsample = test.sample(
+            n=n,
+            replace=True,
+            random_state=seed,
+        )
+
+        _, test_path = self._get_split_paths()
+        test_path = pathlib.Path(test_path)
+        subsample_path = test_path.parent / f"{test_path.stem}_{n}_{seed}.{fmt}"
+        if fmt == "csv":
+            subsample.to_csv(subsample_path, header=True, index=False)
+        elif fmt == "arff":
+            ArffSplitter(self)._save_split(
+                subsample,
+                subsample_path,
+                name=f"{self._oml_dataset.name}_inference_{self.fold}_{n}"
+            )
+        elif fmt == "parquet":
+            subsample.to_parquet(subsample_path)
+        else:
+            msg = f"{fmt=}, but must be one of 'csv', 'arff', or 'parquet'."
+            raise ValueError(msg)
+
+        return subsample_path
 
     @lazy_property
     @profile(logger=log)

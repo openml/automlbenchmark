@@ -21,7 +21,8 @@ def run(dataset: Dataset, config: TaskConfig):
         target=dict(
             name=dataset.target.name,
         ),
-        problem_type=dataset.type.name
+        problem_type=dataset.type.name,
+        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
     options = dict(
         serialization=dict(sparse_dataframe_deserialized_format='dense')

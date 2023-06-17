@@ -17,7 +17,8 @@ def run(dataset, config):
             X=dataset.test.X,
             y=dataset.test.y
         ),
-        problem_type=dataset.type.name
+        problem_type=dataset.type.name,
+        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
     options = dict(
         serialization=dict(sparse_dataframe_deserialized_format='dense')

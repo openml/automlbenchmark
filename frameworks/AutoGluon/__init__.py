@@ -25,7 +25,8 @@ def run_autogluon_tabular(dataset: Dataset, config: TaskConfig):
             name=dataset.target.name,
             classes=dataset.target.values
         ),
-        problem_type=dataset.type.name  # AutoGluon problem_type is using same names as amlb.data.DatasetType
+        problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
+        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
 
     return run_in_venv(__file__, "exec.py",

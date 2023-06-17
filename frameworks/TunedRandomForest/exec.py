@@ -21,7 +21,7 @@ import pandas as pd
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from frameworks.shared.callee import call_run, result
+from frameworks.shared.callee import call_run, result, measure_inference_times
 from frameworks.shared.utils import Timer
 from custom_validate import cross_validate
 
@@ -211,6 +211,19 @@ def run(dataset, config):
         predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
 
+    def infer(data):
+        data = pd.read_parquet(data) if isinstance(data, str) else data
+        return rf.predict(data)
+
+    inference_times = {}
+    if config.measure_inference_time:
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        test_data = X_test if isinstance(X_test, pd.DataFrame) else pd.DataFrame(X_test)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, test_data.sample(1, random_state=i)) for i in range(100)],
+        )
+
     return result(
         output_file=config.output_predictions_file,
         predictions=predictions,
@@ -219,7 +232,8 @@ def run(dataset, config):
         target_is_encoded=is_classification,
         models_count=len(rf),
         training_duration=training.duration,
-        predict_duration=predict.duration
+        predict_duration=predict.duration,
+        inference_times=inference_times,
     )
 
 
