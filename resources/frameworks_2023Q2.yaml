@@ -1,0 +1,119 @@
+---
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  abstract: true
+  version: "0.8.0"
+
+AutoGluon_benchmark:
+  extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
+  params:
+    _save_artifacts: ['leaderboard', 'infer_speed', 'info']
+    presets: best_quality
+    _leaderboard_test: True
+
+AutoGluon_hq:
+  extends: AutoGluon
+  description: "AutoGluon with 'high_quality' preset provides generally fast inference speed with high accuracy"
+  params:
+    _save_artifacts: ['leaderboard', 'infer_speed', 'info']
+    presets: high_quality
+    _leaderboard_test: True
+
+AutoGluon_hq_il001:
+  extends: AutoGluon
+  description: "AutoGluon ~3x faster inference at slight performance loss to 'high quality' (self-reported)."
+  params:
+    _save_artifacts: ['leaderboard', 'infer_speed', 'info']
+    presets: high_quality
+    _leaderboard_test: True
+    infer_limit: 0.01
+
+autosklearn:
+  version: '0.15.0'
+
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
+
+AutoWEKA:
+  version: '2.6'
+
+flaml:
+  version: '1.2.4'
+
+GAMA:
+  abstract: true
+  version: '22.0.0'
+
+GAMA_benchmark:
+  extends: GAMA
+  params:
+    goal: performance
+
+H2OAutoML:
+  version: '3.40.0.4'
+
+lightautoml:
+  version: '0.3.7.3'
+
+mljarsupervised:
+  abstract: true
+  version: '0.11.5'
+
+mljarsupervised_benchmark:
+  extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  params:
+    mode: Compete
+
+mljarsupervised_perform:
+  extends: mljarsupervised
+  description: "MLJar using 'Perform' mode to provide fast inference"
+  params:
+    mode: Perform
+
+MLPlan:
+  abstract: true
+  version: '0.2.5'
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+mlr3automl:
+  version: '#f667900292e3ded64bb419285c71cd5d1d2c4301'
+  project: https://github.com/a-hanf/mlr3automl
+
+TPOT:
+  version: '0.12.0'
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor: {}
+
+DecisionTree:
+  version: '1.2.2'
+
+RandomForest:
+  version: '1.2.2'
+  params:
+    n_estimators: 2000
+
+ranger:
+  version: 'stable'
+
+TunedRandomForest:
+  version: '1.2.2'
+  params:
+    n_estimators: 2000
+
