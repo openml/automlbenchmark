@@ -14,6 +14,7 @@ import pprint
 import queue
 import signal
 import threading
+from functools import partial
 from typing import Callable, List, Optional
 
 from .utils import Namespace, Timer, ThreadSafeCounter, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
@@ -354,17 +355,28 @@ class MultiThreadingJobRunner(JobRunner):
         self._queueing_strategy = queueing_strategy
         self._interrupt = threading.Event()
         self._exec = None
+        self.futures = []
+
+    def _safe_call_from_exec(self, fn):
+        if self._exec:
+            future = self._exec.submit(fn)
+            self.futures.append(future)
+        else:
+            log.warning(
+                "Application is submitting a function while the thread executor is not running: executing the function in the calling thread.")
+            try:
+                fn()
+            except Exception as e:
+                log.exception(e)
 
     def _add_result(self, result):
-        sup_call = super()._add_result
-        if self._exec:
-            self._exec.submit(sup_call, result)
-        else:
-            log.warning("Application is submitting a function while the thread executor is not running: executing the function in the calling thread.")
-            try:
-                sup_call(result)
-            except:
-                pass
+        sup_call = partial(super()._add_result, result)
+        self._safe_call_from_exec(sup_call)
+
+    def stop_if_complete(self):
+        # Direct calls introduce a race condition by the queued '_add_result' calls
+        sup_call = super().stop_if_complete
+        self._safe_call_from_exec(sup_call)
 
     def _run(self):
         q = queue.Queue()
