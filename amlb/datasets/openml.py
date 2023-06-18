@@ -12,11 +12,13 @@ import re
 from typing import Generic, Tuple, TypeVar
 
 import arff
+import pandas as pd
 import pandas.api.types as pat
 import openml as oml
 import xmltodict
 
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
+from ..datautils import impute_array
 from ..resources import config as rconfig, get as rget
 from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
 
@@ -93,32 +95,52 @@ class OpenmlDataset(Dataset):
         self._ensure_split_created()
         return self._test
 
-    def inference_subsample_files(self, fmt: str, with_labels: bool = False) -> list[Tuple[int, str]]:
+    def inference_subsample_files(self, fmt: str, with_labels: bool = False, scikit_safe: bool = False) -> list[Tuple[int, str]]:
         """Generates n subsamples of size k from the test dataset in `fmt` data format.
 
         We measure the inference time of the models for various batch sizes
         (number of rows). We generate config.inference_time_measurements.repeats
         subsamples for each of the config.inference_time_measurements.batch_sizes.
+
         These subsamples are stored to file in the `fmt` format (parquet, arff, or csv).
         The function returns a list of tuples of (batch size, file path).
+
+        Iff `with_labels` is true, the target column will be included in the split file.
+        Iff `scikit_safe` is true, categorical values are encoded and missing values
+        are imputed.
         """
         seed = rget().seed(self.fold)
         return [
-            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels)))
+            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels, scikit_safe=scikit_safe)))
             for n in rconfig().inference_time_measurements.batch_sizes
             for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
         ]
 
     @profile(logger=log)
-    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False) -> pathlib.Path:
-        """ Write subset of `n` samples from the test split to disk in `fmt` format """
+    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False, scikit_safe: bool = False) -> pathlib.Path:
+        """ Write subset of `n` samples from the test split to disk in `fmt` format
+
+        Iff `with_labels` is true, the target column will be included in the split file.
+        Iff `scikit_safe` is true, categorical values are encoded and missing values
+        are imputed.
+        """
         # Just a hack for now, the splitters all work specifically with openml tasks.
         # The important thing is that we split to disk and can load it later.
 
         # We should consider taking a stratified sample if n is large enough,
         # inference time might differ based on class
-        test = self._test.data if with_labels else self._test.X
-        subsample = test.sample(
+        if scikit_safe:
+            if with_labels:
+                _, data = impute_array(self.train.data_enc, self.test.data_enc)
+            else:
+                _, data = impute_array(self.train.X_enc, self.test.X_enc)
+
+            columns = self._test.data.columns if with_labels else self._test.X.columns
+            data = pd.DataFrame(data, columns=columns)
+        else:
+            data = self._test.data if with_labels else self._test.X
+
+        subsample = data.sample(
             n=n,
             replace=True,
             random_state=seed,
