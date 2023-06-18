@@ -33,7 +33,7 @@ frameworks:              # configuration namespace for the frameworks definition
     - '{root}/resources/frameworks.yaml'
   root_module: frameworks     # the default python module under which the frameworks modules are defined.
   allow_duplicates: false     # if true, the last definition is used.
-  tags: ['stable', 'latest', '2020Q2', '2021Q3']  # the list of supported tags when looking up frameworks:
+  tags: ['stable', 'latest', '2020Q2', '2021Q3', '2023Q2']  # the list of supported tags when looking up frameworks:
                               # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:                     # configuration namespace for the benchmarks definitions.
