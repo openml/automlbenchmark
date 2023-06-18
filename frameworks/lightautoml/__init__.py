@@ -22,8 +22,9 @@ def run(dataset: Dataset, config: TaskConfig):
             name=dataset.target.name,
         ),
         problem_type=dataset.type.name,
-        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
+    if config.measure_inference_time:
+        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet")
     options = dict(
         serialization=dict(sparse_dataframe_deserialized_format='dense')
     )

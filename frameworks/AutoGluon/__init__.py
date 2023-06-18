@@ -26,8 +26,9 @@ def run_autogluon_tabular(dataset: Dataset, config: TaskConfig):
             classes=dataset.target.values
         ),
         problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
-        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet"),
     )
+    if config.measure_inference_time:
+        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet")
 
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config)
