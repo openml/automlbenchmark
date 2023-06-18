@@ -24,8 +24,9 @@ def run(dataset: Dataset, config: TaskConfig):
             X=X_test,
             y=y_test
         ),
-        inference_subsample_files=dataset.inference_subsample_files(fmt="parquet", scikit_safe=True),
     )
+    if config.measure_inference_time:
+        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet", scikit_safe=True)
 
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config)
