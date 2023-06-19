@@ -69,6 +69,15 @@ class OpenmlDataset(Dataset):
         self.fold = fold
         self._train = None
         self._test = None
+        self._nrows = None
+
+
+    @property
+    def nrows(self) -> int:
+        if self._nrows is None:
+            self._nrows = len(self._load_full_data(fmt='dataframe'))
+        return self._nrows
+
 
     @lazy_property
     def type(self):
@@ -110,9 +119,13 @@ class OpenmlDataset(Dataset):
         are imputed.
         """
         seed = rget().seed(self.fold)
+        batch_sizes = [
+            batch_size for batch_size in rconfig().inference_time_measurements.batch_sizes
+            if not (batch_size > self.nrows and rconfig().inference_time_measurements.limit_by_dataset_size)
+        ]
         return [
             (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels, scikit_safe=scikit_safe)))
-            for n in rconfig().inference_time_measurements.batch_sizes
+            for n in batch_sizes
             for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
         ]
 
