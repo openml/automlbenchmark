@@ -87,8 +87,10 @@ results:                 # configuration namespace for the results.csv file.
 inference_time_measurements:  # configuration namespace for performing additional inference time measurements on various batch sizes
   enabled: false
   batch_sizes: [1, 10, 100, 1000, 10000]  # the batch sizes for which inference speed should be measured
-  repeats: 100                            # the number of times to repeat the inference measurement for each batch size
+  repeats: 10                            # the number of times to repeat the inference measurement for each batch size
   additional_job_time: 300  # the time in seconds that will be added to the maximum job time if inference time is measured
+  limit_by_dataset_size: true  # Don't measure inference time on `batch size` if it exceeds the number of rows in the dataset.
+                               # E.g., on micro-mass (571 rows) with `batch_sizes` [1, 10, 100, 1000, 10000], only measure [1, 10, 100].
 
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
