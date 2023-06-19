@@ -114,6 +114,7 @@ container: &container          # parent configuration namespace for container mo
 docker:                        # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
   run_extra_options: '--shm-size=2048M'
+  build_extra_options: ''
 
 singularity:                   # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
