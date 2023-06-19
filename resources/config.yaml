@@ -148,6 +148,9 @@ aws:                    # configuration namespace for AWS mode.
       us-east-1:
         ami: ami-053b0d53c279acc90
         description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
+      us-east-2:
+        ami: ami-024e6efaf93d85776
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       us-west-1:
         ami: ami-0f8e81a3da6e2510a
         description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
