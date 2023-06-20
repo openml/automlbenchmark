@@ -101,12 +101,14 @@ class DockerBenchmark(ContainerBenchmark):
 
     def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
-        run_cmd("docker build {options} -t {container} -f {script} .".format(
+        run_cmd("docker build {options} {build_extra_options} -t {container} -f {script} .".format(
             options="" if cache else "--no-cache",
             container=image,
-            script=self._script),
+            script=self._script,
+            build_extra_options=rconfig().docker.build_extra_options,
+        ),
             _live_output_=rconfig().setup.live_output,
-            _activity_timeout_=rconfig().setup.activity_timeout
+            _activity_timeout_=rconfig().setup.activity_timeout,
         )
         log.info(f"Successfully built docker image {image}.")
 
