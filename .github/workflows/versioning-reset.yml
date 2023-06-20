@@ -7,7 +7,7 @@ on:
       - main
       - master
     paths:
-      - 'app/__version__.py'
+      - 'amlb/__version__.py'
 
   workflow_dispatch:
 
