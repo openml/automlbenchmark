@@ -1,2 +1,3 @@
 packaging<22.0
 openml
+pandas<2.0  # https://github.com/automl/auto-sklearn/issues/1672
