@@ -12,7 +12,7 @@ AutoGluon_benchmark:
   extends: AutoGluon
   description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
   params:
-    _save_artifacts: ['leaderboard', 'infer_speed', 'info']
+    _save_artifacts: ['leaderboard', 'info']
     presets: best_quality
     _leaderboard_test: True
 
@@ -20,7 +20,7 @@ AutoGluon_hq:
   extends: AutoGluon
   description: "AutoGluon with 'high_quality' preset provides generally fast inference speed with high accuracy"
   params:
-    _save_artifacts: ['leaderboard', 'infer_speed', 'info']
+    _save_artifacts: ['leaderboard', 'info']
     presets: high_quality
     _leaderboard_test: True
 
@@ -28,7 +28,7 @@ AutoGluon_hq_il001:
   extends: AutoGluon
   description: "AutoGluon ~3x faster inference at slight performance loss to 'high quality' (self-reported)."
   params:
-    _save_artifacts: ['leaderboard', 'infer_speed', 'info']
+    _save_artifacts: ['leaderboard', 'info']
     presets: high_quality
     _leaderboard_test: True
     infer_limit: 0.01
