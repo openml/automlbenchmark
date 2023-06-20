@@ -8,24 +8,17 @@ def setup(*args, **kwargs):
     call_script_in_same_dir(__file__, "setup.sh", *args, **kwargs)
 
 
-# def version():
-#     from frameworks.shared.caller import run_cmd_in_venv
-#     out, err = run_cmd_in_venv(__file__, """{py} -c "from h2o import __version__; print(__version__)" | grep "^\d\." """)
-#     if err:
-#         raise ValueError(err)
-#     return out
-
-
 def run(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
-
     data = dict(
         train=dict(path=dataset.train.path),
         test=dict(path=dataset.test.path),
         target=dict(index=dataset.target.index),
-        domains=dict(cardinalities=[0 if f.values is None else len(f.values) for f in dataset.features])
+        domains=dict(cardinalities=[0 if f.values is None else len(f.values) for f in dataset.features]),
+        format=dataset.train.format,
     )
-
+    if config.measure_inference_time:
+        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt=dataset.train.format, with_labels=True)
     config.ext.monitoring = rconfig().monitoring
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config)

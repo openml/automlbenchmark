@@ -16,6 +16,7 @@ venv/
 .idea/
 *.iml
 *.swp
+launch.json
 
 # tmp files
 .ipynb_checkpoints/
@@ -47,3 +48,4 @@ Singularityfile
 #whitelist
 !reports/**/*.csv
 !reports/**/*.png
+!docs/img/**/*.png

@@ -43,7 +43,7 @@ class Feature:
         self.index = index
         self.name = name
         self.data_type = data_type.lower() if data_type is not None else None
-        self.values = self.normalize(values).tolist() if values is not None else None
+        self.values = values
         self.has_missing_values = has_missing_values
         self.is_target = is_target
         # print(self)
@@ -80,8 +80,16 @@ class Feature:
     def normalize(self, arr):
         return np.char.lower(np.char.strip(np.asarray(arr).astype(str)))
 
+    @property
+    def values(self):
+        return self._values
+
+    @values.setter
+    def values(self, values):
+        self._values = self.normalize(values).tolist() if values is not None else None
+
     def __repr__(self):
-        return repr_def(self)
+        return repr_def(self, 'all')
 
 
 class Datasplit(ABC):
@@ -134,8 +142,7 @@ class Datasplit(ABC):
     @lazy_property
     @profile(logger=log)
     def data_enc(self) -> AM:
-        data = np.where(self.data.notna(), self.data.values, None)
-        encoded_cols = [f.label_encoder.transform(data[:, f.index]) for f in self.dataset.features]
+        encoded_cols = [f.label_encoder.transform(self.data.iloc[:, f.index]) for f in self.dataset.features]
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
         self.release(['data', 'X', 'y'])
@@ -165,6 +172,7 @@ class DatasetType(Enum):
     binary = 1
     multiclass = 2
     regression = 3
+    timeseries = 4
 
 
 class Dataset(ABC):

@@ -1,6 +1,8 @@
 import contextlib
 import logging
 import os
+import pathlib
+
 import psutil
 import re
 
@@ -10,7 +12,8 @@ import pandas as pd
 import h2o
 from h2o.automl import H2OAutoML
 
-from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result
+from frameworks.shared.callee import FrameworkError, call_run, output_subdir, result, \
+    measure_inference_times
 from frameworks.shared.utils import Monitoring, Namespace as ns, Timer, clean_dir, touch, zip_path
 
 log = logging.getLogger(__name__)
@@ -88,6 +91,10 @@ def run(dataset, config):
         test = h2o.import_file(dataset.test.path, destination_frame=frame_name('test', config), **import_kwargs)
         # test.impute(method='mean')
 
+        if config.type == 'classification' and dataset.format == 'csv':
+            train[dataset.target.index] = train[dataset.target.index].asfactor()
+            test[dataset.target.index] = test[dataset.target.index].asfactor()
+
         log.info("Running model on task %s, fold %s.", config.name, config.fold)
         log.debug("Running H2O AutoML with a maximum time of %ss on %s core(s), optimizing %s.",
                   config.max_runtime_seconds, config.cores, sort_metric)
@@ -101,8 +108,8 @@ def run(dataset, config):
                                            check_on_exit=True,
                                            verbosity=config.ext.monitoring.verbosity)
                    if config.framework_params.get('_monitor_backend', False)
-                   # else contextlib.nullcontext  # Py 3.7+ only
-                   else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
+                   else contextlib.nullcontext()  # Py 3.7+ only
+                   # else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
                    )
         with Timer() as training:
             with monitor:
@@ -110,6 +117,17 @@ def run(dataset, config):
 
         if not aml.leader:
             raise FrameworkError("H2O could not produce any model in the requested time.")
+
+        def infer(path: str):
+            filename = pathlib.Path(path).name
+            # H2O can't do inference on single row arff, it needs columns explicitly:
+            # https://github.com/h2oai/h2o-3/issues/15572
+            batch = h2o.import_file(path, col_names=train.names, destination_frame=frame_name(filename, config), **import_kwargs)
+            return aml.predict(batch)
+
+        inference_times = {}
+        if config.measure_inference_time:
+            inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
 
         with Timer() as predict:
             preds = aml.predict(test)
@@ -125,7 +143,8 @@ def run(dataset, config):
             probabilities_labels=preds.probabilities_labels,
             models_count=len(aml.leaderboard),
             training_duration=training.duration,
-            predict_duration=predict.duration
+            predict_duration=predict.duration,
+            inference_times=inference_times,
         )
 
     finally:

@@ -1,0 +1,35 @@
+name: Light-weight Unit Tests
+
+on: pull_request
+
+
+jobs:
+  pytest_not_stress:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Create venv
+        run: python -m venv venv
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
+          key: pip-v3-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/requirements-dev.txt') }}
+          restore-keys: |
+            pip-v3-
+      - name: Install Requirements
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Run unit tests
+        run: |
+          source venv/bin/activate
+          python -m pytest -vv -m "not stress and not openml_upload"

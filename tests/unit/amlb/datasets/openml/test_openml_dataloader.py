@@ -113,8 +113,7 @@ def _assert_cholesterol_features(dataset):
 
     assert dataset.train.X.dtypes.filter(items=numericals).apply(lambda dt: pd.api.types.is_numeric_dtype(dt)).all()
     assert dataset.train.X.dtypes.filter(items=categoricals).apply(lambda dt: pd.api.types.is_categorical_dtype(dt)).all()
-    assert len(dataset.train.X.select_dtypes(include=['float']).columns) == 2
-    assert len(dataset.train.X.select_dtypes(include=['uint8']).columns) == 4
+    assert len(dataset.train.X.select_dtypes(include=['float']).columns) == 6
     assert pd.api.types.is_float_dtype(dataset.train.y.dtypes.iloc[0])
 
 

@@ -132,11 +132,18 @@ class Resources:
         if tag not in self._frameworks:
             raise ValueError("Incorrect tag `{}`: only those among {} are allowed.".format(tag, self.config.frameworks.tags))
         frameworks = self._frameworks[tag]
+        log.debug("Available framework definitions:\n%s", frameworks)
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
+        # TODO: Clean up this workflow and error messaging as part of #518
+        base_framework = next((f for n, f in self._frameworks[default_tag] if n.lower() == lname), None)
+        if framework and framework['removed']:
+            raise ValueError(f"Framework definition `{name}` has been removed from the benchmark: {framework['removed']}")
+        if not framework and (base_framework and base_framework['removed']):
+            raise ValueError(f"Framework definition `{name}` has been removed from the benchmark: {base_framework['removed']}")
         if not framework:
-            raise ValueError("Incorrect framework `{}`: not listed in {}.".format(name, self.config.frameworks.definition_file))
+            raise ValueError(f"Incorrect framework `{name}`: not listed in {self.config.frameworks.definition_file}.")
         if framework['abstract']:
-            raise ValueError("Framework definition `{}` is abstract and cannot be run directly.".format(name))
+            raise ValueError(f"Framework definition `{name}` is abstract and cannot be run directly.")
         return framework, framework.name
 
     @lazy_property
@@ -217,7 +224,9 @@ class Resources:
                                  else None) or task.name) if task['dataset'] is not None
                           else None)
             if not lenient and task[conf] is None:
-                raise ValueError("task definition must contain one property among ['openml_task_id', 'dataset']")
+                raise ValueError("task definition must contain an ID or one property "
+                                 "among ['openml_task_id', 'dataset'] to create an ID, "
+                                 "but task definition is {task}".format(task=str(task)))
 
         conf = 'metric'
         if task[conf] is None:

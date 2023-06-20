@@ -15,7 +15,8 @@ if [[ -x "$(command -v apt-get)" ]]; then
     SUDO apt-get install -y r-base r-base-dev
 fi
 #PIP install --no-cache-dir -r $HERE/requirements.txt
+LIB="${HERE}/lib/"
+mkdir "${LIB}"
 
-Rscript -e 'options(install.packages.check.source="no"); install.packages(c("ranger", "mlr3", "mlr3learners", "mlr3pipelines", "farff"), repos="https://cloud.r-project.org/")'
-
+Rscript -e 'options(install.packages.check.source="no"); install.packages(c("ranger", "mlr3", "mlr3learners", "mlr3pipelines", "farff"), repos="https://cloud.r-project.org/", lib="'"${LIB}"'")'
 Rscript -e 'packageVersion("ranger")' | awk '{print $2}' | sed "s/[‘’]//g" >> "${HERE}/.setup/installed"

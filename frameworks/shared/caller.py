@@ -1,9 +1,10 @@
 import gc
 import logging
 import os
+import pathlib
 import re
 from tempfile import TemporaryDirectory, mktemp
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
+from amlb.utils import json_dump, Namespace
 
 from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load, profile
 from .utils import is_serializable_data, deserialize_data, serialize_data
@@ -82,7 +84,8 @@ def run_in_venv(caller_file, script_file: str, *args,
                 input_data: Union[dict, ns], dataset: Dataset, config: TaskConfig,
                 options: Union[None, dict, ns] = None,
                 process_results=None,
-                python_exec=None):
+                python_exec=None,
+                retained_env_vars: Optional[List[str]] = ['TMP', 'TEMP', 'TMPDIR']):
     here = dir_of(caller_file)
     if python_exec is None:  # use local virtual env by default
         python_exec = venv_python_exec(here)
@@ -92,6 +95,13 @@ def run_in_venv(caller_file, script_file: str, *args,
     options = ns.from_dict(options) if options else ns()
     ser_config = options['serialization']
     env = options['env'] or ns()
+
+    # Add any env variables specified if they are defined in the environment
+    if retained_env_vars:
+        for env_var in retained_env_vars:
+            env_val = os.environ.get(env_var)
+            if env_val is not None:
+                env[env_var] = env_val
 
     with TemporaryDirectory(prefix='amlb_', suffix='_xproc') as tmpdir:
 
@@ -115,7 +125,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             PYTHONPATH=os.pathsep.join([
                 rconfig().root_dir,
             ]),
-            AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
+            AMLB_PATH=os.path.join(rconfig().root_dir),
             AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
             **{k: str(v) for k, v in env}
         )
@@ -141,8 +151,15 @@ def run_in_venv(caller_file, script_file: str, *args,
         if res.error_message is not None:
             raise NoResultError(res.error_message)
 
-        for name in ['predictions', 'truth', 'probabilities']:
+        for name in ['predictions', 'truth', 'probabilities', 'optional_columns']:
             res[name] = deserialize_data(res[name], config=ser_config) if res[name] is not None else None
+
+        inference_filepath = Namespace.dict(res.others).get("inference_times")
+        if inference_filepath:
+            inference_times = json_load(inference_filepath)
+            inference_filepath = pathlib.Path(res.output_file).parent / "inference.json"
+            json_dump(inference_times, inference_filepath)
+            res["others"]["inference_times"] = inference_times
 
         if callable(process_results):
             res = process_results(res)
@@ -156,6 +173,7 @@ def run_in_venv(caller_file, script_file: str, *args,
                                     else dataset.test.y),
                              probabilities=res.probabilities,
                              probabilities_labels=res.probabilities_labels,
+                             optional_columns=res.optional_columns,
                              target_is_encoded=res.target_is_encoded)
 
         return dict(

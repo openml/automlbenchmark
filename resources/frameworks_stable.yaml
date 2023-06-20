@@ -15,6 +15,16 @@ AutoGluon_bestquality:
   params:
     presets: best_quality
 
+AutoGluon_hq:
+  extends: AutoGluon
+  params:
+    presets: high_quality
+
+AutoGluon_gq:
+  extends: AutoGluon
+  params:
+    presets: good_quality
+
 autosklearn:
   version: 'stable'
 
@@ -26,13 +36,22 @@ autosklearn2:
 AutoWEKA:
   version: 'stable'
 
-autoxgboost:
+
+flaml:
   version: 'stable'
+
+
+flaml_benchmark:
+  extends: flaml
+  version: "benchmark"
 
 GAMA:
   version: 'stable'
 
 H2OAutoML:
+  version: 'stable'
+
+lightautoml:
   version: 'stable'
 
 hyperoptsklearn:
@@ -59,6 +78,9 @@ MLPlanWEKA:
   extends: MLPlan
   params:
     _backend: weka
+
+mlr3automl:
+  version: 'stable'
 
 oboe:
   version: 'stable'

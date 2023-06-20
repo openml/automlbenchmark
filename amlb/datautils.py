@@ -26,7 +26,7 @@ from .utils import profile, path_from_split, repr_def, split_path, touch
 log = logging.getLogger(__name__)
 
 
-def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None):
+def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None, timestamp_column=None):
     """
     read csv file to DataFrame.
 
@@ -37,13 +37,19 @@ def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dty
     :param header: if the columns header should be read.
     :param as_data_frame: if the result should be returned as a data frame (default) or a numpy array.
     :param dtype: data type for columns.
+    :param timestamp_column: column name for timestamp, to ensure dates are correctly parsed by pandas.
     :return: a DataFrame
     """
+    if dtype is not None and timestamp_column is not None and timestamp_column in dtype:
+            dtype = dtype.copy() # to avoid outer context manipulation
+            del dtype[timestamp_column]
+
     df = pd.read_csv(path,
                      nrows=nrows,
                      header=0 if header else None,
                      index_col=0 if index else None,
-                     dtype=dtype)
+                     dtype=dtype,
+                     parse_dates=[timestamp_column] if timestamp_column is not None else None)
     return df if as_data_frame else df.values
 
 
@@ -171,6 +177,9 @@ class Encoder(TransformerMixin):
         else:
             raise ValueError("Encoder `type` should be one of {}.".format(['label', 'one-hot']))
 
+    def __repr__(self):
+        return repr_def(self)
+
     @property
     def _ignore_missing(self):
         return self.for_target or self.missing_policy == 'ignore'
@@ -211,8 +220,8 @@ class Encoder(TransformerMixin):
         :param params:
         :return:
         """
-        if log.isEnabledFor(5):  # logging.TRACE
-            log.debug("Transforming %s using %s", vec, repr_def(self))
+        if log.isEnabledFor(logging.TRACE):
+            log.debug("Transforming %s using %s", vec, self)
 
         return_value = lambda v: v
         if isinstance(vec, str):

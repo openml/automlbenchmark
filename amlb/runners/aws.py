@@ -196,7 +196,7 @@ class AWSBenchmark(Benchmark):
                 try:
                     jobs = flatten([self._make_aws_job([task_def.name], folds) for task_def in task_defs])
                     results = self._run_jobs(jobs)
-                    return self._process_results(results, task_name=tasks)
+                    return self._results_summary(self._process_results(results))
                 finally:
                     self.cleanup()
             else:
@@ -208,7 +208,8 @@ class AWSBenchmark(Benchmark):
                 task_names = None if tasks is None else [task_def.name for task_def in task_defs]
                 job = self._make_aws_job(task_names, folds)
                 results = self._run_jobs([job])
-                return self._process_results(results, task_name=tasks)
+                scoreboard = self._process_results(results)
+                return self._results_summary(scoreboard)
             finally:
                 self.cleanup()
 
@@ -217,7 +218,8 @@ class AWSBenchmark(Benchmark):
             return SimpleJobRunner(jobs)
         else:
             queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
-            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+            return MultiThreadingJobRunner(jobs,
+                                           parallel_jobs=self.parallel_jobs,
                                            delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True,
                                            queueing_strategy=queueing_strategy)
@@ -574,6 +576,8 @@ class AWSBenchmark(Benchmark):
             if instance_def.volume_size:
                 ebs['VolumeSize'] = instance_def.volume_size
 
+            instance_tags = ec2_config.instance_tags | ns(Name=f"amlb_{inst_key}")
+            volume_tags = (ec2_config.volume_tags or instance_tags) | ns(Name=f"amlb_{inst_key}")
             instance_params = dict(
                 BlockDeviceMappings=[dict(
                     DeviceName=ec2_config.root_device_name,
@@ -588,15 +592,11 @@ class AWSBenchmark(Benchmark):
                 TagSpecifications=[
                     dict(
                         ResourceType='instance',
-                        Tags=[
-                            dict(Key='Name', Value=f"benchmark_{inst_key}")
-                        ]
+                        Tags=[dict(Key=k, Value=v) for k, v in instance_tags]
                     ),
                     dict(
                         ResourceType='volume',
-                        Tags=[
-                            dict(Key='Name', Value=f"benchmark_{inst_key}")
-                        ]
+                        Tags=[dict(Key=k, Value=v) for k, v in volume_tags]
                     ),
                 ],
                 UserData=self._ec2_startup_script(inst_key, script_params=script_params, timeout_secs=timeout_secs)
@@ -902,10 +902,8 @@ class AWSBenchmark(Benchmark):
                 dest_path = os.path.join(self.output_dirs.session, rel_path)
                 try:
                     download_file(obj, dest_path)
-                    # if obj.key == result_key:
                     if is_result and not success:
-                        if rconfig().results.save:
-                            self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
+                        self._exec_send(lambda path: self._save_global(Scoreboard.from_file(path)), dest_path)
                         success = True
                 except Exception as e:
                     if is_result:
@@ -925,6 +923,11 @@ class AWSBenchmark(Benchmark):
         log.info("Instance `%s` success=%s", instance_id, success)
         self._update_instance(instance_id, success=success)
         return success, error
+
+    def _results_summary(self, scoreboard=None):
+        log.info(
+            "Result summary not available for AWS mode (reference files instead)."
+        )
 
     def _create_instance_profile(self):
         """
@@ -1107,7 +1110,7 @@ runcmd:
   - pip3 install -U awscli wheel
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
-  - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
+  - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -u "0:0" -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   #- rm -f /var/lib/cloud/instance/sem/config_scripts_user
 

@@ -38,7 +38,7 @@ Documentation: <https://openml.github.io/automlbenchmark/>
 ## Installation
 ### Pre-requisites
 To run the benchmarks, you will need:
-* Python 3.7+.
+* Python 3.9+.
 * PIP3: ensure you have a recent version. If necessary, upgrade your pip using `python -m pip install -U pip`.
 * The Python libraries listed in [requirements.txt](../requirements.txt): it is strongly recommended to first create a [Python virtual environment](https://docs.python.org/3/library/venv.html#venv-def) (cf. also [Pyenv](https://github.com/pyenv/pyenv): quick install using `curl https://pyenv.run | bash` or `brew install pyenv`) and work in it if you don't want to mess up your global Python environment.
 * [Docker](https://docs.docker.com/install/), if you plan to run the benchmarks in a container.
@@ -70,7 +70,7 @@ venv\Scripts\activate
 
 or using pyenv:
 ```bash
-pyenv install {python_version: 3.7.4}
+pyenv install {python_version: 3.9.16}
 pyenv virtualenv ve-automl
 pyenv local ve-automl
 ```
@@ -111,65 +111,74 @@ python3 runbenchmark.py --help
 ```text
 usage: runbenchmark.py [-h] [-m {local,aws,docker,singularity}]
                        [-t [task_id [task_id ...]]]
-                       [-f [fold_num [fold_num ...]]] [-i input_dir]
+                       [-f [fold_num ...]] [-i input_dir]
                        [-o output_dir] [-u user_dir] [-p parallel_jobs]
                        [-s {auto,skip,force,only}] [-k [true|false]]
+                       [-e] [--logging LOGGING]
+                       [--openml-run-tag OPENML_RUN_TAG]
                        framework [benchmark] [constraint]
 
 positional arguments:
-  framework             The framework to evaluate as defined by default in
-                        resources/frameworks.yaml. To use a labelled framework
-                        (i.e. a framework defined in
-                        resources/frameworks_{label}.yaml), use the syntax
-                        {framework}:{label}.
-  benchmark             The benchmark type to run as defined by default in
-                        resources/benchmarks/{benchmark}.yaml, a path to a
-                        benchmark description file, or an openml suite or
-                        task. OpenML references should be formatted as
-                        'openml/s/X' and 'openml/t/Y', for studies and tasks
-                        respectively. Defaults to `test`.
-  constraint            The constraint definition to use as defined by default
-                        in resources/constraints.yaml. Defaults to `test`.
+  framework             The framework to evaluate as defined by default in resources/frameworks.yaml.
+                        To use a labelled framework (i.e. a framework defined in resources/frameworks-{label}.yaml),
+                        use the syntax {framework}:{label}.
+  benchmark             The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml,
+                        a path to a benchmark description file, or an openml suite or task.
+                        OpenML references should be formatted as 'openml/s/X' and 'openml/t/Y',
+                        for studies and tasks respectively. Use 'test.openml/s/X' for the 
+                        OpenML test server.
+                        (default: 'test')
+  constraint            The constraint definition to use as defined by default in resources/constraints.yaml.
+                        (default: 'test')
 
 optional arguments:
   -h, --help            show this help message and exit
-  -m {local,docker,aws,singularity}, --mode {local,docker,aws,singularity}
-                        The mode that specifies how/where the benchmark tasks
-                        will be running. Defaults to local.
-  -t [task_id [task_id ...]], --task [task_id [task_id ...]]
-                        The specific task name (as defined in the benchmark
-                        file) to run. When an OpenML reference is used as
-                        benchmark, the dataset name should be used instead. If
-                        not provided, then all tasks from the benchmark will
-                        be run.
-  -f [fold_num [fold_num ...]], --fold [fold_num [fold_num ...]]
-                        If task is provided, the specific fold(s) to run. If
-                        fold is not provided, then all folds from the task
-                        definition will be run.
+  -m {local,aws,docker,singularity}, --mode {local,aws,docker,singularity}
+                        The mode that specifies how/where the benchmark tasks will be running.
+                        (default: 'local')
+  -t [task_id ...], --task [task_id ...]
+                        The specific task name (as defined in the benchmark file) to run.
+                        When an OpenML reference is used as benchmark, the dataset name should be used instead.
+                        If not provided, then all tasks from the benchmark will be run.
+  -f [fold_num ...], --fold [fold_num ...]
+                        If task is provided, the specific fold(s) to run.
+                        If fold is not provided, then all folds from the task definition will be run.
   -i input_dir, --indir input_dir
-                        Folder where datasets are loaded by default. Defaults
-                        to `input_dir` as defined in resources/config.yaml
+                        Folder from where the datasets are loaded by default.
+                        (default: '~/.openml')
   -o output_dir, --outdir output_dir
-                        Folder where all the outputs should be written.
-                        Defaults to `output_dir` as defined in
-                        resources/config.yaml
+                        Folder where all the outputs should be written.(default: './results')
   -u user_dir, --userdir user_dir
-                        Folder where all the customizations are stored.
-                        Defaults to `user_dir` as defined in
-                        resources/config.yaml
+                        Folder where all the customizations are stored.(default: '~/.config/automlbenchmark')
   -p parallel_jobs, --parallel parallel_jobs
-                        The number of jobs (i.e. tasks or folds) that can run
-                        in parallel. Defaults to 1. Currently supported only
-                        in docker and aws mode.
+                        The number of jobs (i.e. tasks or folds) that can run in parallel.
+                        A hard limit is defined by property `job_scheduler.max_parallel_jobs`
+                         in `resources/config.yaml`.
+                        Override this limit in your custom `config.yaml` file if needed.
+                        Supported only in aws mode or container mode (docker, singularity).
+                        (default: 1)
   -s {auto,skip,force,only}, --setup {auto,skip,force,only}
-                        Framework/platform setup mode. Defaults to auto.
-                        •auto: setup is executed only if strictly necessary.
-                        •skip: setup is skipped. •force: setup is always
-                        executed before the benchmark. •only: only setup is
-                        executed (no benchmark).
+                        Framework/platform setup mode. Available values are:
+                        • auto: setup is executed only if strictly necessary.
+                        • skip: setup is skipped.
+                        • force: setup is always executed before the benchmark.
+                        • only: only setup is executed (no benchmark).
+                        (default: 'auto')
   -k [true|false], --keep-scores [true|false]
-                        Set to true [default] to save/add scores in output
-                        directory.
+                        Set to true (default) to save/add scores in output directory.
+  -e, --exit-on-error   If set, terminates on the first task that does not complete with a model.
+  --logging LOGGING     Set the log levels for the 3 available loggers:
+                        • console
+                        • app: for the log file including only logs from amlb (.log extension).
+                        • root: for the log file including logs from libraries (.full.log extension).
+                        Accepted values for each logger are: notset, debug, info, warning, error, fatal, critical.
+                        Examples:
+                          --logging=info (applies the same level to all loggers)
+                          --logging=root:debug (keeps defaults for non-specified loggers)
+                          --logging=console:warning,app:info
+                        (default: 'console:info,app:debug,root:info')
+  --openml-run-tag OPENML_RUN_TAG
+                        Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.
 ```
 
 The script will produce output that records task metadata and the result.
@@ -326,6 +335,32 @@ By default, a benchmark run creates the following subdirectories and files in th
   Those last predictions are systematically backed up with current data to `predictions/backup` subdirectory before a new prediction is written.
 * `logs`: this subdirectory contains logs produced by the `automlbenchmark` app, including when it's been run in Docker container or on AWS.
 
+
+### Uploading results to OpenML
+The `upload_results.py` script can be used to upload results to OpenML with the following usage:
+```text
+>python upload_results.py --help
+usage: Script to upload results from the benchmark to OpenML. [-h] [-i INPUT_DIRECTORY] [-a APIKEY] [-m MODE] [-x] [-v] [-t TASK]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT_DIRECTORY, --input-directory INPUT_DIRECTORY
+                        Directory that stores results from the runbenchmark.py invocation. By default use the most recent folder in the results folder as
+                        specified in the configuration.
+  -a APIKEY, --api-key APIKEY
+                        OpenML API key to use for uploading results.
+  -m MODE, --mode MODE  Run mode (default=check).
+                        • check: only report whether results can be uploaded.
+                        • upload: upload all complete results.
+  -x, --fail-fast       Stop as soon as a task fails to upload due to an error during uploading.
+  -v, --verbose         Output progress to console.
+  -t TASK, --task TASK  Only upload results for this specific task.
+```
+
+Note that the default behavior does not upload data but only verifies data is complete.
+We strongly encourage you to only upload your data after verifying all expected results are complete.
+The OpenML Python package is used for uploading results, so to ensure your API credentials are configured, please refer to their [configuration documentation](https://openml.github.io/openml-python/master/usage.html#installation-set-up).
+Results obtained on tasks on the test server (e.g. through the `--test-server` option of `runbenchmark.py`) are uploaded to the test server and don't require additional authentication.
 
 ## Advanced configuration
 If you need to create your own benchmark, add a framework, create a plugin for a proprietary framework, or simply want to use some advanced options (e.g. run some frameworks with non-default parameters), see the [HOWTO].

@@ -1,9 +1,12 @@
 import logging
 import os
+from typing import Union
 
+import pandas as pd
 from flaml import AutoML, __version__
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
@@ -13,7 +16,6 @@ def run(dataset, config):
     log.info(f"\n**** FLAML [v{__version__}] ****\n")
 
     X_train, y_train = dataset.train.X, dataset.train.y.squeeze()
-    X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
 
     is_classification = config.type == 'classification'
     time_budget = config.max_runtime_seconds
@@ -49,11 +51,27 @@ def run(dataset, config):
                 n_jobs=n_jobs,
                 log_file_name= flaml_log_file_name,
                 time_budget=time_budget, **training_params)
-    
+
+    def infer(data: Union[str, pd.DataFrame]):
+        data = pd.read_parquet(data) if isinstance(data, str) else data
+        predict_fn = aml.predict_proba if is_classification else aml.predict
+        return predict_fn(data)
+
+    inference_times = {}
+    if config.measure_inference_time:
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
+        )
+
     with Timer() as predict:
+        X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
         predictions = aml.predict(X_test)
     probabilities = aml.predict_proba(X_test) if is_classification else None
-    labels = aml.classes_ if is_classification else None
+    labels = None
+    if is_classification:
+        labels = aml.classes_ if isinstance(aml.classes_, list) else aml.classes_.tolist()
     return result(  
                     output_file=config.output_predictions_file,
                     probabilities=probabilities,
@@ -63,6 +81,7 @@ def run(dataset, config):
                     training_duration=training.duration,
                     predict_duration=predict.duration,
                     probabilities_labels=labels,
+                    inference_times=inference_times,
                 )
 
 

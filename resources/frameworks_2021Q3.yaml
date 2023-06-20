@@ -22,9 +22,6 @@ autosklearn2:
   params:
     _askl2: true
 
-autoxgboost:
-  version: '#908631665f4c763d548ed203d48f05fe68613844'
-
 AutoWEKA:
   version: '2.6'
 
