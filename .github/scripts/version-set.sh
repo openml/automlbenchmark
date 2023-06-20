@@ -3,7 +3,7 @@ VERSION="$1"
 PUSH=${2:-"no-push"}
 ADD_COMMIT=${3:-"add-commit"}
 
-VERSION_FILE='app/__version__.py'
+VERSION_FILE='amlb/__version__.py'
 VERSION_PLACEHOLDER='__version__ =\s+"(.*)"$'
 DEV_PLACEHOLDER='_dev_version =\s+"(.*)"$'
 
