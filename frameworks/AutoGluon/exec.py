@@ -48,6 +48,17 @@ def run(dataset, config):
 
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    if "high_quality" in training_params.get("presets", []):
+        preserve = 0.9
+        msg = (
+            "Detected `high_quality` preset, reducing `max_runtime_seconds` "
+            f"from {config.max_runtime_seconds}s to "
+            f"{preserve * config.max_runtime_seconds}s to account for `refit_full` "
+            f"call after fit, which can take up to ~15% of total time. "
+            "See https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.refit_full.html"
+        )
+        log.info(msg)
+        config.max_runtime_seconds = preserve * config.max_runtime_seconds
 
     train_path, test_path = dataset.train.path, dataset.test.path
     label = dataset.target.name
@@ -68,6 +79,7 @@ def run(dataset, config):
         )
 
     # Persist model in memory that is going to be predicting to get correct inference latency
+    # max_memory=0.4 will be future default: https://github.com/autogluon/autogluon/pull/3338
     predictor.persist_models('best', max_memory=0.4)
 
     def inference_time_classification(data: Union[str, pd.DataFrame]):
