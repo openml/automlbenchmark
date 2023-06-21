@@ -68,7 +68,7 @@ def run(dataset, config):
         )
 
     # Persist model in memory that is going to be predicting to get correct inference latency
-    predictor.persist_models('best')
+    predictor.persist_models('best', max_memory=0.4)
 
     def inference_time_classification(data: Union[str, pd.DataFrame]):
         return None, predictor.predict_proba(data, as_multiclass=True)
