@@ -48,10 +48,13 @@ def run(dataset, config):
 
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
-    if "high_quality" in training_params.get("presets", []):
+    presets = training_params.get("presets", [])
+    presets = presets if isinstance(presets, list) else [presets]
+    if preset_with_refit_full := (set(presets) & {"good_quality", "high_quality"}):
         preserve = 0.9
+        preset = next(iter(preset_with_refit_full))
         msg = (
-            "Detected `high_quality` preset, reducing `max_runtime_seconds` "
+            f"Detected `{preset}` preset, reducing `max_runtime_seconds` "
             f"from {config.max_runtime_seconds}s to "
             f"{preserve * config.max_runtime_seconds}s to account for `refit_full` "
             f"call after fit, which can take up to ~15% of total time. "
