@@ -51,6 +51,7 @@ def run(dataset, config):
                 n_jobs=n_jobs,
                 log_file_name= flaml_log_file_name,
                 time_budget=time_budget, **training_params)
+    log.info(f"Finished fit in {training.duration}s.")
 
     def infer(data: Union[str, pd.DataFrame]):
         data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -64,6 +65,7 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
+        log.info(f"Finished inference time measurements.")
 
     with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
@@ -72,6 +74,8 @@ def run(dataset, config):
     labels = None
     if is_classification:
         labels = aml.classes_ if isinstance(aml.classes_, list) else aml.classes_.tolist()
+    log.info(f"Finished predict in {predict.duration}s.")
+
     return result(  
                     output_file=config.output_predictions_file,
                     probabilities=probabilities,

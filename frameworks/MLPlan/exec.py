@@ -79,6 +79,7 @@ def run(dataset, config):
 
         with Timer() as training:
             run_cmd(cmd, _live_output_=True)
+        log.info(f"Finished fit in {training.duration}s.")
 
     with open(statistics_file, 'r') as f:
         stats = json.load(f)

@@ -78,6 +78,7 @@ def run(dataset, config):
                           before_interrupt=ft.partial(kill_proc_tree, timeout=5, include_parent=False)):
         with Timer() as training:
             estimator.fit(X_train, y_train)
+        log.info(f"Finished fit in {training.duration}s.")
 
     log.info('Predicting on the test set.')
     X_test = dataset.test.X
@@ -89,6 +90,8 @@ def run(dataset, config):
         probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
     else:
         probabilities = None
+    log.info(f"Finished predict in {predict.duration}s.")
+
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,

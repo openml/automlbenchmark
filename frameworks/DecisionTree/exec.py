@@ -25,9 +25,12 @@ def run(dataset: Dataset, config: TaskConfig):
 
     with Timer() as training:
         predictor.fit(X_train, y_train)
+    log.info(f"Finished fit in {training.duration}s.")
+
     with Timer() as predict:
         predictions = predictor.predict(X_test)
     probabilities = predictor.predict_proba(X_test) if is_classification else None
+    log.info(f"Finished predict in {predict.duration}s.")
 
     save_predictions(dataset=dataset,
                      output_file=config.output_predictions_file,
