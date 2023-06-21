@@ -393,12 +393,17 @@ class AWSBenchmark(Benchmark):
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
                                 _self.ext.instance_id)
                 _self.ext.terminate = terminate
+                start_time = self.instances.get(_self.ext.instance_id, {}).get('start_time', '')
+                stop_time = self.instances.get(_self.ext.instance_id, {}).get('stop_time', '')
                 if failure:
                     self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
                                     failure,
                                     tasks=_self.ext.tasks,
                                     folds=_self.ext.folds,
-                                    seed=_self.ext.seed)
+                                    seed=_self.ext.seed,
+                                    start_time=start_time,
+                                    stop_time=stop_time,
+                                    )
 
             elif state == JobState.rescheduling:
                 self._stop_instance(_self.ext.instance_id, terminate=True, wait=False)
@@ -744,8 +749,10 @@ class AWSBenchmark(Benchmark):
                         str_iter(kwargs.get('tasks', [])),
                         str_iter(kwargs.get('folds', [])),
                         str_def(kwargs.get('seed', None)),
+                        kwargs.get('start_time', "unknown"),
+                        kwargs.get('stop_time', "unknown"),
                         str_def(reason, if_none="unknown"))],
-                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'error'],
+                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'start_time', 'stop_time', 'error'],
                       header=not os.path.exists(file),
                       path=file,
                       append=True)
