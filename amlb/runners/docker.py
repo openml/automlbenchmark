@@ -31,12 +31,6 @@ class DockerBenchmark(ContainerBenchmark):
         """
         super().__init__(framework_name, benchmark_name, constraint_name)
         self._custom_image_name = rconfig().docker.image
-        self.user = os.getlogin()
-        # For linux specifically, files created within docker are not
-        # automatically owned by the user starting the docker instance.
-        # For Windows permissions are set fine, so we don't need user information.
-        self.userid = None if os.name == 'nt' else os.getuid()
-        self.usergid =  None if os.name == 'nt' else os.getgid()
         self.minimize_instances = rconfig().docker.minimize_instances
         self.container_name = 'docker'
         self.force_branch = rconfig().docker.force_branch
@@ -56,16 +50,18 @@ class DockerBenchmark(ContainerBenchmark):
         custom_dir = rconfig().user_dir
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
+
+        run_as = resolve_docker_run_as_option(rconfig().docker.run_as)
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
-            "docker run --name {name} {options} {run_as_user}"
+            "docker run --name {name} {options} {run_as} "
             "-v {input}:/input -v {output}:/output -v {custom}:/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
             name=inst_name,
             options=rconfig().docker.run_extra_options,
-            run_as_user='' if os.name == 'nt' else f'-u "{self.userid}:{self.usergid}" ',
+            run_as=run_as,
             input=in_dir,
             output=self.output_dirs.session,
             custom=custom_dir,
@@ -131,8 +127,6 @@ RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
 RUN apt-get -y install libhdf5-serial-dev
 #RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
-RUN adduser --disabled-password --gecos '' {userid_option} {username}
-RUN adduser {username} sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # aliases for the python system
@@ -168,9 +162,6 @@ VOLUME /custom
 ADD . /bench/
 
 RUN (grep -v '^\\s*#' | xargs -L 1 $PIP install --no-cache-dir) < requirements.txt
-RUN chown -R {username}:{username} /bench
-RUN chown -R {username}:{username} /home/{username}
-USER {username}
 
 RUN $PY {script} {framework} -s only
 {custom_commands}
@@ -190,10 +181,34 @@ CMD ["{framework}", "test"]
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
-            userid_option=f"-uid {self.userid}" if self.userid else '',
-            username=self.user,
         )
 
         touch(self._script)
         with open(self._script, 'w') as file:
             file.write(docker_content)
+
+
+def resolve_docker_run_as_option(option: str) -> str:
+    """ Resolve `docker.run_as` option into the correct `-u` option for `docker run`.
+
+    option, str: one of 'user' (unix only), 'root', 'default', or a valid `-u` option.
+               * 'user': set as `-u $(id -u):$(id -g)`, only on unix systems.
+               * 'root': set as `-u 0:0`
+               * 'default': does not set `-u`
+               * any string that starts with `-u`, which will be directly forwarded.
+
+    For linux specifically, files created within docker are *not always*
+    automatically owned by the user starting the docker instance.
+    We had reports of different behavior even for people running the same OS and Docker.
+    """
+    if option == "default":
+        return ''
+    if option == "root":
+        return '-u 0:0'
+    if option == "user":
+        if os.name == 'nt':
+            raise ValueError("docker.run_as: 'user' is not supported on Windows.")
+        return f'-u "{os.getuid()}:{os.getgid()}"'
+    if option.startswith("-u"):
+        return rconfig().docker.run_as
+    raise ValueError(f"Invalid setting for `docker.run_as`: '{option}'.")
