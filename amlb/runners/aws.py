@@ -38,8 +38,9 @@ from ..datautils import read_csv, write_csv
 from ..job import Job, JobError, MultiThreadingJobRunner, SimpleJobRunner, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, NoResultError, Scoreboard, TaskResult
-from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, \
-    retry_after, retry_policy, str_def, str_iter, tail, touch
+from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, \
+    list_all_files, normalize_path, \
+    retry_after, retry_policy, str_def, str_iter, tail, touch, Namespace
 from .docker import DockerBenchmark
 
 
@@ -393,8 +394,9 @@ class AWSBenchmark(Benchmark):
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
                                 _self.ext.instance_id)
                 _self.ext.terminate = terminate
-                start_time = self.instances.get(_self.ext.instance_id, {}).get('start_time', '')
-                stop_time = self.instances.get(_self.ext.instance_id, {}).get('stop_time', '')
+                instance = self.instances.get(_self.ext.instance_id, {})
+                start_time = Namespace.get(instance, 'start_time', '')
+                stop_time = Namespace.get(instance, 'stop_time', '')
                 if failure:
                     self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
                                     failure,
