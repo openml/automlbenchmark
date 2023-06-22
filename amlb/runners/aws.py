@@ -13,6 +13,7 @@ necessary to run a benchmark on EC2 instances:
 - merge downloaded results with existing/local results.
 - properly cleans up AWS resources (S3, EC2).
 """
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
 import datetime as dt
@@ -397,6 +398,9 @@ class AWSBenchmark(Benchmark):
                 instance = self.instances.get(_self.ext.instance_id, {})
                 start_time = Namespace.get(instance, 'start_time', '')
                 stop_time = Namespace.get(instance, 'stop_time', '')
+                log_time = datetime.datetime.now(
+                    datetime.timezone.utc
+                ).strftime("%Y-%m-%dT%H:%M:%S")
                 if failure:
                     self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
                                     failure,
@@ -405,6 +409,7 @@ class AWSBenchmark(Benchmark):
                                     seed=_self.ext.seed,
                                     start_time=start_time,
                                     stop_time=stop_time,
+                                    log_time=log_time,
                                     )
 
             elif state == JobState.rescheduling:
@@ -753,8 +758,9 @@ class AWSBenchmark(Benchmark):
                         str_def(kwargs.get('seed', None)),
                         kwargs.get('start_time', "unknown"),
                         kwargs.get('stop_time', "unknown"),
+                        kwargs.get('log_time', "unknown"),
                         str_def(reason, if_none="unknown"))],
-                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'start_time', 'stop_time', 'error'],
+                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'start_time', 'stop_time', 'log_time', 'error'],
                       header=not os.path.exists(file),
                       path=file,
                       append=True)
