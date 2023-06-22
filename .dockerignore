@@ -1,5 +1,13 @@
 .git
 
+# files not required for running the benchmark
+.pytest_cache
+amlb_report
+docs
+examples
+reports
+tests
+
 # generated files/folders
 .ipynb_checkpoints
 logs
