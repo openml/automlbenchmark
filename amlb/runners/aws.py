@@ -13,6 +13,7 @@ necessary to run a benchmark on EC2 instances:
 - merge downloaded results with existing/local results.
 - properly cleans up AWS resources (S3, EC2).
 """
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
 import datetime as dt
@@ -38,8 +39,9 @@ from ..datautils import read_csv, write_csv
 from ..job import Job, JobError, MultiThreadingJobRunner, SimpleJobRunner, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, NoResultError, Scoreboard, TaskResult
-from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, \
-    retry_after, retry_policy, str_def, str_iter, tail, touch
+from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, \
+    list_all_files, normalize_path, \
+    retry_after, retry_policy, str_def, str_iter, tail, touch, Namespace
 from .docker import DockerBenchmark
 
 
@@ -393,12 +395,22 @@ class AWSBenchmark(Benchmark):
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
                                 _self.ext.instance_id)
                 _self.ext.terminate = terminate
+                instance = self.instances.get(_self.ext.instance_id, {})
+                start_time = Namespace.get(instance, 'start_time', '')
+                stop_time = Namespace.get(instance, 'stop_time', '')
+                log_time = datetime.datetime.now(
+                    datetime.timezone.utc
+                ).strftime("%Y-%m-%dT%H:%M:%S")
                 if failure:
                     self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
                                     failure,
                                     tasks=_self.ext.tasks,
                                     folds=_self.ext.folds,
-                                    seed=_self.ext.seed)
+                                    seed=_self.ext.seed,
+                                    start_time=start_time,
+                                    stop_time=stop_time,
+                                    log_time=log_time,
+                                    )
 
             elif state == JobState.rescheduling:
                 self._stop_instance(_self.ext.instance_id, terminate=True, wait=False)
@@ -744,8 +756,11 @@ class AWSBenchmark(Benchmark):
                         str_iter(kwargs.get('tasks', [])),
                         str_iter(kwargs.get('folds', [])),
                         str_def(kwargs.get('seed', None)),
+                        kwargs.get('start_time', "unknown"),
+                        kwargs.get('stop_time', "unknown"),
+                        kwargs.get('log_time', "unknown"),
                         str_def(reason, if_none="unknown"))],
-                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'error'],
+                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'start_time', 'stop_time', 'log_time', 'error'],
                       header=not os.path.exists(file),
                       path=file,
                       append=True)
