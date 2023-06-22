@@ -81,6 +81,8 @@ def run(dataset, config):
             **training_params
         )
 
+    log.info(f"Finished fit in {training.duration}s.")
+
     # Persist model in memory that is going to be predicting to get correct inference latency
     # max_memory=0.4 will be future default: https://github.com/autogluon/autogluon/pull/3338
     predictor.persist_models('best', max_memory=0.4)
@@ -100,6 +102,7 @@ def run(dataset, config):
             infer,
             [(1, test_data.sample(1, random_state=i)) for i in range(100)],
         )
+        log.info(f"Finished inference time measurements.")
 
     test_data = TabularDataset(test_path)
     with Timer() as predict:
@@ -108,6 +111,7 @@ def run(dataset, config):
         predictions = probabilities.idxmax(axis=1).to_numpy()
 
     prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
+    log.info(f"Finished predict in {predict.duration}s.")
 
     _leaderboard_extra_info = config.framework_params.get('_leaderboard_extra_info', False)  # whether to get extra model info (very verbose)
     _leaderboard_test = config.framework_params.get('_leaderboard_test', False)  # whether to compute test scores in leaderboard (expensive)

@@ -114,6 +114,8 @@ def run(dataset, config):
         with Timer() as training:
             with monitor:
                 aml.train(y=dataset.target.index, training_frame=train)
+        log.info(f"Finished fit in {training.duration}s.")
+
 
         if not aml.leader:
             raise FrameworkError("H2O could not produce any model in the requested time.")
@@ -128,9 +130,11 @@ def run(dataset, config):
         inference_times = {}
         if config.measure_inference_time:
             inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+            log.info(f"Finished inference time measurements.")
 
         with Timer() as predict:
             preds = aml.predict(test)
+        log.info(f"Finished predict in {predict.duration}s.")
 
         preds = extract_preds(preds, test, dataset=dataset)
         save_artifacts(aml, dataset=dataset, config=config)

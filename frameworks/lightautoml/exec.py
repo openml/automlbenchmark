@@ -40,6 +40,7 @@ def run(dataset, config):
     log.info("Training...")
     with Timer() as training:
         automl.fit_predict(train_data=df_train, roles={'target': label})
+    log.info(f"Finished fit in {training.duration}s.")
 
     def infer(data: Union[str, pd.DataFrame]):
         batch = pd.read_parquet(data) if isinstance(data, str) else data
@@ -52,6 +53,8 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
+    log.info(f"Finished inference time measurements.")
+
 
     log.info("Predicting on the test set...")
     with Timer() as predict:
@@ -81,6 +84,8 @@ def run(dataset, config):
 
     log.debug(probabilities)
     log.debug(config.output_predictions_file)
+    log.info(f"Finished predict in {predict.duration}s.")
+
 
     save_artifacts(automl, config)
 
