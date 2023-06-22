@@ -282,6 +282,9 @@ def config():
 
 def output_dirs(root, session=None, subdirs=None, create=False):
     root = root if root is not None else '.'
+    if create and not os.path.exists(root):
+        touch(root, as_dir=True)
+
     dirs = Namespace(
         root=root,
         session=os.path.join(root, session) if session is not None else root
