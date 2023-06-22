@@ -114,6 +114,12 @@ container: &container          # parent configuration namespace for container mo
 docker:                        # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
   run_extra_options: '--shm-size=2048M'
+  run_as: 'default'    # Sets the user inside the docker container (`docker run -u`), one of:
+                       #  * 'user': set as `-u $(id -u):$(id -g)`, only on unix systems.
+                       #  * 'root': set as `-u 0:0`
+                       #  * 'default': does not set `-u`
+                       #  * any string that starts with `-u`, which will be directly forwarded.
+                       # Try this setting if you have problems with permissions in docker.
   build_extra_options: ''
 
 singularity:                   # configuration namespace for docker: it inherits from `container` namespace.

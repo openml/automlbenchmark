@@ -139,6 +139,7 @@ def run(dataset, config):
     auto_sklearn = estimator(**constr_params, **training_params)
     with Timer() as training:
         auto_sklearn.fit(X_train, y_train, **fit_extra_params)
+    log.info(f"Finished fit in {training.duration}s.")
 
     def infer(data: Union[str, pd.DataFrame]):
         test_data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -157,6 +158,7 @@ def run(dataset, config):
         inference_times["df"] = measure_inference_times(
             infer, [(1, sample_one_test_row(seed=i)) for i in range(100)],
         )
+        log.info(f"Finished inference time measurements.")
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
@@ -164,6 +166,7 @@ def run(dataset, config):
         X_test = dataset.test.X if use_pandas else dataset.test.X_enc
         predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
+    log.info(f"Finished predict in {predict.duration}s.")
 
     save_artifacts(auto_sklearn, config)
 

@@ -27,9 +27,12 @@ def run(dataset: Dataset, config: TaskConfig):
 
     with Timer() as training:
         predictor.fit(X_train, y_train)
+    log.info(f"Finished fit in {training.duration}s.")
+
     with Timer() as predict:
         predictions = predictor.predict(X_test)
     probabilities = predictor.predict_proba(X_test) if is_classification else None
+    log.info(f"Finished predict in {predict.duration}s.")
 
     def infer(data):
         data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -43,6 +46,7 @@ def run(dataset: Dataset, config: TaskConfig):
             infer,
             [(1, test_data.sample(1, random_state=i)) for i in range(100)],
         )
+        log.info(f"Finished inference time measurements.")
 
     save_predictions(dataset=dataset,
                      output_file=config.output_predictions_file,

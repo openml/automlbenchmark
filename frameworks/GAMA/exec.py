@@ -76,8 +76,10 @@ def run(dataset, config):
     gama_automl = estimator(**kwargs)
 
     X_train, y_train = dataset.train.X, dataset.train.y
-    with Timer() as training_timer:
+    with Timer() as training:
         gama_automl.fit(X_train, y_train)
+    log.info(f"Finished fit in {training.duration}s.")
+
 
     log.info('Predicting on the test set.')
     def infer(data: Union[str, pd.DataFrame]):
@@ -92,9 +94,12 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-    with Timer() as predict_timer:
+        log.info(f"Finished inference time measurements.")
+
+    with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y
         predictions = gama_automl.predict(X_test)
+    log.info(f"Finished predict in {predict.duration}s.")
 
     probabilities = None
     if is_classification:
@@ -107,8 +112,8 @@ def run(dataset, config):
         truth=y_test,
         target_is_encoded=False,
         models_count=len(gama_automl._final_pop),
-        training_duration=training_timer.duration,
-        predict_duration=predict_timer.duration,
+        training_duration=training.duration,
+        predict_duration=predict.duration,
         inference_times=inference_times,
     )
 

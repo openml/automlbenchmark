@@ -21,7 +21,7 @@ AutoGluon_hq:
   description: "AutoGluon with 'high_quality' preset provides generally fast inference speed with high accuracy"
   params:
     _save_artifacts: ['leaderboard', 'info']
-    presets: high_quality
+    presets: ['high_quality', 'optimize_for_deployment']
     _leaderboard_test: True
 
 AutoGluon_hq_il001:
@@ -29,7 +29,7 @@ AutoGluon_hq_il001:
   description: "AutoGluon ~3x faster inference at slight performance loss to 'high quality' (self-reported)."
   params:
     _save_artifacts: ['leaderboard', 'info']
-    presets: high_quality
+    presets: ['high_quality', 'optimize_for_deployment']
     _leaderboard_test: True
     infer_limit: 0.01
 
@@ -49,12 +49,12 @@ flaml:
 
 GAMA:
   abstract: true
-  version: '22.0.0'
+  version: '23.0.0'
 
 GAMA_benchmark:
   extends: GAMA
   params:
-    goal: performance
+    preset: performance
 
 H2OAutoML:
   version: '3.40.0.4'
