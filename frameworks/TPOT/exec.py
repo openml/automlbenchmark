@@ -65,6 +65,8 @@ def run(dataset, config):
 
     with Timer() as training:
         tpot.fit(X_train, y_train)
+    log.info(f"Finished fit in {training.duration}s.")
+
 
     def infer(data):
         data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -85,6 +87,7 @@ def run(dataset, config):
                 for i in range(100)
             ],
         )
+        log.info(f"Finished inference time measurements.")
 
     log.info('Predicting on the test set.')
     y_test = dataset.test.y
@@ -99,6 +102,7 @@ def run(dataset, config):
         # does not support `predict_proba` (which one depends on the version).
         probabilities = "predictions"  # encoding is handled by caller in `__init__.py`
 
+    log.info(f"Finished predict in {predict.duration}s.")
     save_artifacts(tpot, config)
 
     return result(output_file=config.output_predictions_file,

@@ -58,6 +58,7 @@ def run(dataset, config):
 
     with Timer() as training:
         automl.fit(X_train, y_train)
+    log.info(f"Finished fit in {training.duration}s.")
 
 
     def infer(data: Union[str, pd.DataFrame]):
@@ -71,6 +72,7 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
+    log.info(f"Finished inference time measurements.")
 
     with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
@@ -92,6 +94,7 @@ def run(dataset, config):
         probabilities = preds[probabilities_labels].values
     else:
         predictions = preds["prediction"].values
+    log.info(f"Finished predict in {predict.duration}s.")
 
     # clean the results
     if not config.framework_params.get("_save_artifacts", False):
