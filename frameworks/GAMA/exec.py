@@ -94,13 +94,12 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-    log.info(f"Finished inference time measurements.")
+        log.info(f"Finished inference time measurements.")
 
     with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y
         predictions = gama_automl.predict(X_test)
     log.info(f"Finished predict in {predict.duration}s.")
-
 
     probabilities = None
     if is_classification:
