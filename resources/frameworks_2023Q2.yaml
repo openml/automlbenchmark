@@ -49,12 +49,12 @@ flaml:
 
 GAMA:
   abstract: true
-  version: '22.0.0'
+  version: '23.0.0'
 
 GAMA_benchmark:
   extends: GAMA
   params:
-    goal: performance
+    preset: performance
 
 H2OAutoML:
   version: '3.40.0.4'
