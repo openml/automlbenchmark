@@ -1125,7 +1125,7 @@ runcmd:
   - pip3 install -U awscli wheel
   - aws s3 cp '{s3_input}' /s3bucket/input --recursive
   - aws s3 cp '{s3_user}' /s3bucket/user --recursive
-  - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -u "0:0" -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
+  - docker run {docker_options} -v /s3bucket/input:/input -v /s3bucket/output:/output -v /s3bucket/user:/custom --rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=aws.docker {extra_params}
   - aws s3 cp /s3bucket/output '{s3_output}' --recursive
   #- rm -f /var/lib/cloud/instance/sem/config_scripts_user
 
