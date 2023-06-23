@@ -9,7 +9,7 @@ import functools
 import logging
 import os
 import re
-from typing import Generic, Tuple, TypeVar
+from typing import Generic, Tuple, TypeVar, List
 
 import arff
 import pandas as pd
@@ -137,6 +137,12 @@ class OpenmlDataset(Dataset):
         Iff `scikit_safe` is true, categorical values are encoded and missing values
         are imputed.
         """
+        def get_non_empty_columns(data: DF) -> List[str]:
+            return [
+                c
+                for c, is_empty in data.isnull().all(axis=0).items()
+                if not is_empty
+            ]
         # Just a hack for now, the splitters all work specifically with openml tasks.
         # The important thing is that we split to disk and can load it later.
 
@@ -145,10 +151,12 @@ class OpenmlDataset(Dataset):
         if scikit_safe:
             if with_labels:
                 _, data = impute_array(self.train.data_enc, self.test.data_enc)
+                columns = get_non_empty_columns(self.train.data)
             else:
                 _, data = impute_array(self.train.X_enc, self.test.X_enc)
+                columns = get_non_empty_columns(self.train.X)
 
-            columns = self._test.data.columns if with_labels else self._test.X.columns
+            # `impute_array` drops columns that only have missing values
             data = pd.DataFrame(data, columns=columns)
         else:
             data = self._test.data if with_labels else self._test.X
