@@ -265,7 +265,7 @@ class Encoder(TransformerMixin):
         return self.delegate.inverse_transform(vec, **params)
 
 
-def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean"):
+def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean", keep_empty_features: bool = False):
     """
     :param X_fit: {array-like, sparse matrix} used to fit the imputer. This array is also imputed.
     :param X_s: the additional (optional) arrays that are imputed using the same imputer.
@@ -275,6 +275,7 @@ def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean"):
                      'mode' -> missing values are imputed with the mode of the corresponding vector.
                      ('constant', value) -> missing values are imputed with the constant value provided as the second term of the tuple.
                      None -> no-op (for internal use).
+    :param keep_empty_features: bool (default False), if False remove all columns which only have nan values.
     :return: a list of imputed arrays, returned in the same order as they were provided.
     """
     if strategy is None:
@@ -282,7 +283,7 @@ def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean"):
     strategy, fill_value = strategy if isinstance(strategy, tuple) and strategy[0] == 'constant' else (strategy, None)
     strategy = dict(mode='most_frequent').get(strategy, strategy)
 
-    imputer = Imputer(missing_values=missing_values, strategy=strategy, fill_value=fill_value)
+    imputer = Imputer(missing_values=missing_values, strategy=strategy, fill_value=fill_value, keep_empty_features=keep_empty_features)
     imputed = _restore_dtypes(imputer.fit_transform(X_fit), X_fit)
     if len(X_s) > 0:
         result = [imputed]

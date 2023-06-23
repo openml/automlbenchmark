@@ -104,7 +104,7 @@ class OpenmlDataset(Dataset):
         self._ensure_split_created()
         return self._test
 
-    def inference_subsample_files(self, fmt: str, with_labels: bool = False, scikit_safe: bool = False) -> list[Tuple[int, str]]:
+    def inference_subsample_files(self, fmt: str, with_labels: bool = False, scikit_safe: bool = False, keep_empty_features: bool = False) -> list[Tuple[int, str]]:
         """Generates n subsamples of size k from the test dataset in `fmt` data format.
 
         We measure the inference time of the models for various batch sizes
@@ -124,18 +124,20 @@ class OpenmlDataset(Dataset):
             if not (batch_size > self.nrows and rconfig().inference_time_measurements.limit_by_dataset_size)
         ]
         return [
-            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels, scikit_safe=scikit_safe)))
+            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels, scikit_safe=scikit_safe, keep_empty_features=keep_empty_features)))
             for n in batch_sizes
             for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
         ]
 
     @profile(logger=log)
-    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False, scikit_safe: bool = False) -> pathlib.Path:
+    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False, scikit_safe: bool = False, keep_empty_features: bool = False) -> pathlib.Path:
         """ Write subset of `n` samples from the test split to disk in `fmt` format
 
         Iff `with_labels` is true, the target column will be included in the split file.
         Iff `scikit_safe` is true, categorical values are encoded and missing values
         are imputed.
+        If `keep_empty_features` is true, columns with all nan values will be imputed as 0.
+        If false, they get removed instead.
         """
         def get_non_empty_columns(data: DF) -> List[str]:
             return [
@@ -150,11 +152,11 @@ class OpenmlDataset(Dataset):
         # inference time might differ based on class
         if scikit_safe:
             if with_labels:
-                _, data = impute_array(self.train.data_enc, self.test.data_enc)
-                columns = get_non_empty_columns(self.train.data)
+                _, data = impute_array(self.train.data_enc, self.test.data_enc, keep_empty_features=keep_empty_features)
+                columns = self.train.data.columns if keep_empty_features else get_non_empty_columns(self.train.data)
             else:
-                _, data = impute_array(self.train.X_enc, self.test.X_enc)
-                columns = get_non_empty_columns(self.train.X)
+                _, data = impute_array(self.train.X_enc, self.test.X_enc, keep_empty_features=keep_empty_features)
+                columns = self.train.X.columns if keep_empty_features else get_non_empty_columns(self.train.X)
 
             # `impute_array` drops columns that only have missing values
             data = pd.DataFrame(data, columns=columns)
