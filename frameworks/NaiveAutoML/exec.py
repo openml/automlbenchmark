@@ -45,19 +45,30 @@ def run(dataset, config):
     if scoring_metric is None:
         raise ValueError(f"Performance metric {config.metric} not supported.")
 
-    automl = NaiveAutoML(
+    kwargs = dict(
         scoring=scoring_metric,
         num_cpus=config.cores,
-        timeout=config.max_runtime_seconds,
-        # naiveautoml has a static per-pipeline evaluation time of 10 seconds,
-        # which is not accommodation for larger datasets.
-        # execution_timeout=max(config.max_runtime_seconds // 20, 10)
     )
-    is_classification = (config.type == 'classification')
+    # NAML wasn't really designed to run for long time constraints, so we
+    # make it easy to run NAML with its default configuration for time/iterations.
+    if not config.framework_params.get("_use_default_time_and_iterations", False):
+        log.info("`_use_default_time_and_iterations` is set, ignoring time constraint.")
+        kwargs["timeout"] = config.max_runtime_seconds
+        # NAML stops at its first met criterion: iterations or time.
+        # To ensure time is the first criterion, set max_hpo_iterations very high
+        kwargs["max_hpo_iterations"] = 1e10
+        # NAML has a static per-pipeline evaluation time of 10 seconds,
+        # which is not accommodation for larger datasets.
+        kwargs["execution_timeout"] = max(config.max_runtime_seconds // 20, 10)
+
+    kwargs |= {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
+    automl = NaiveAutoML(**kwargs)
 
     with Timer() as training:
         automl.fit(dataset.train.X, dataset.train.y)
     log.info(f"Finished fit in {training.duration}s.")
+
+    is_classification = (config.type == 'classification')
 
     def infer(data: Union[str, pd.DataFrame]):
         test_data = pd.read_parquet(data) if isinstance(data, str) else data
