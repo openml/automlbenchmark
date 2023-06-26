@@ -206,10 +206,12 @@ def run(dataset, config):
                     "Stop training because it expects to exceed its memory budget.")
                 break
             rf.n_estimators += step_size
+    log.info(f"Finished fit in {training.duration}s.")
 
     with Timer() as predict:
         predictions = rf.predict(X_test)
     probabilities = rf.predict_proba(X_test) if is_classification else None
+    log.info(f"Finished predict in {predict.duration}s.")
 
     def infer(data):
         data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -223,6 +225,7 @@ def run(dataset, config):
             infer,
             [(1, test_data.sample(1, random_state=i)) for i in range(100)],
         )
+        log.info(f"Finished inference time measurements.")
 
     return result(
         output_file=config.output_predictions_file,
