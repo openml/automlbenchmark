@@ -52,7 +52,6 @@ def run(dataset, config):
     # NAML wasn't really designed to run for long time constraints, so we
     # make it easy to run NAML with its default configuration for time/iterations.
     if not config.framework_params.get("_use_default_time_and_iterations", False):
-        log.info("`_use_default_time_and_iterations` is set, ignoring time constraint.")
         kwargs["timeout"] = config.max_runtime_seconds
         # NAML stops at its first met criterion: iterations or time.
         # To ensure time is the first criterion, set max_hpo_iterations very high
@@ -60,6 +59,8 @@ def run(dataset, config):
         # NAML has a static per-pipeline evaluation time of 10 seconds,
         # which is not accommodation for larger datasets.
         kwargs["execution_timeout"] = max(config.max_runtime_seconds // 20, 10)
+    else:
+        log.info("`_use_default_time_and_iterations` is set, ignoring time constraint.")
 
     kwargs |= {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
     automl = NaiveAutoML(**kwargs)
