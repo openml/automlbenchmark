@@ -477,7 +477,7 @@ class BenchmarkTask:
         self.fold = fold
         self.task_config = TaskConfig(
             name=task_def.name,
-            openml_task_id=task_def.openml_task_id,
+            openml_task_id=task_def["openml_task_id"],
             fold=fold,
             metrics=task_def.metric,
             seed=rget().seed(fold),

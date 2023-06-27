@@ -244,7 +244,7 @@ class TaskResult:
                 if rconfig().test_mode:
                     TaskResult.validate_predictions(df)
 
-                if  'y_past_period_error' in df.columns:
+                if 'seasonal_error' in df.columns:
                     return TimeSeriesResult(df)
                 else:
                     if df.shape[1] > 2:
@@ -688,57 +688,95 @@ class TimeSeriesResult(RegressionResult):
 
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
-        self.truth = self.df['truth'].values if self.df is not None else None #.iloc[:, 1].values if self.df is not None else None
-        self.predictions = self.df['predictions'].values if self.df is not None else None #.iloc[:, -2].values if self.df is not None else None
-        self.y_past_period_error = self.df['y_past_period_error'].values
-        self.quantiles = self.df.iloc[:, 2:-1].values
-        self.quantiles_probs = np.array([float(q) for q in self.df.columns[2:-1]])
-        self.truth = self.truth.astype(float, copy=False)
-        self.predictions = self.predictions.astype(float, copy=False)
-        self.quantiles = self.quantiles.astype(float, copy=False)
-        self.y_past_period_error = self.y_past_period_error.astype(float, copy=False)
+        self.quantiles_columns = list(column for column in self.df.columns if column.startswith('0.'))
+
+        if not self.quantiles_columns:
+            msg=f'Expected quantile columns that start with "0.", but found: {self.df.columns}.'
+            raise ValueError(msg)
+
+        required_columns = {'truth', 'predictions', 'item_id', 'seasonal_error'}
+        if required_columns - set(self.df.columns):
+            msg=f'Missing columns for calculating time series metrics: {required_columns - set(self.df.columns)}.'
+            raise ValueError(msg)
+
+        self.truth = self.df['truth'].values
+        self.pred_mean = self.df['predictions'].values
+
+        self.seasonal_error = self.df['seasonal_error'].values
+        self.quantiles_probs = np.fromiter(self.quantiles_columns, dtype=float)
+        self.quantiles = self.df[self.quantiles_columns].values
+        self.item_ids = self.df['item_id'].values
+        _, unique_item_ids_counts = np.unique(self.item_ids, return_counts=True)
+        if len(set(unique_item_ids_counts)) != 1:
+            msg = f'Error: Predicted sequences have different lengths {unique_item_ids_counts}.'
+            raise ValueError(msg)
+        self.prediction_length = unique_item_ids_counts[0]
+        self.unique_item_ids = self.item_ids.copy()[::self.prediction_length]
+
+        self.dtype = float
+        self.truth = self.truth.astype(self.dtype, copy=False)
+        self.pred_mean = self.pred_mean.astype(self.dtype, copy=False)
+        self.quantiles = self.quantiles.astype(self.dtype, copy=False)
+
+        if 0.5 in self.quantiles_probs:
+            self.pred_median = self.quantiles[:, self.quantiles_probs == 0.5].squeeze()
+        else:
+            self.pred_median = self.pred_mean
+        self.seasonal_error = self.seasonal_error.astype(self.dtype, copy=False)
 
         self.target = Feature(0, 'target', 'real', is_target=True)
         self.type = DatasetType.timeseries
 
+    def itemwise_mean(self, values):
+        return pd.DataFrame(np.stack([self.item_ids, values], axis=1), columns=['item_id', 'value']).groupby('item_id').mean()['value'].values
+
+    def itemwise_select_first(self, values):
+        return pd.DataFrame(np.stack([self.item_ids, values], axis=1), columns=['item_id', 'value']).groupby('item_id').first()['value'].values
+
     @metric(higher_is_better=False)
     def mase(self):
         """Mean Absolute Scaled Error"""
-        return float(np.nanmean(np.abs(self.truth/self.y_past_period_error - self.predictions/self.y_past_period_error)))
+        num = np.abs(self.truth - self.pred_median)
+        denom = self.itemwise_select_first(self.seasonal_error)
+        means_per_item = self.itemwise_mean(num) / denom
+        return np.mean(means_per_item)
+
 
     @metric(higher_is_better=False)
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
-        num = np.abs(self.truth - self.predictions)
-        denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
-        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
-        # might not be fully mathematically correct, but at least we don't get NaNs)
-        denom[denom == 0] = math.inf
+        num = np.abs(self.truth - self.pred_median)
+        denom = (np.abs(self.truth) + np.abs(self.pred_median)) / 2
+        denom[denom == 0] = np.inf
         return np.mean(num / denom)
 
     @metric(higher_is_better=False)
     def mape(self):
-        """Symmetric Mean Absolute Percentage Error"""
-        num = np.abs(self.truth - self.predictions)
+        """Mean Absolute Percentage Error"""
+        num = np.abs(self.truth - self.pred_median)
         denom = np.abs(self.truth)
-        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
-        # might not be fully mathematically correct, but at least we don't get NaNs)
-        denom[denom == 0] = math.inf
+        denom[denom == 0] = np.inf
         return np.mean(num / denom)
 
     @metric(higher_is_better=False)
     def nrmse(self):
         """Normalized Root Mean Square Error"""
-        return self.rmse() / np.mean(np.abs(self.truth))
+        num = np.sqrt(np.mean(np.square(self.truth - self.pred_median)))
+        denom = np.mean(np.abs(self.truth))
+        return num / denom
 
     @metric(higher_is_better=False)
     def wape(self):
         """Weighted Average Percentage Error"""
-        return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
+        num = np.sum(np.abs(self.truth - self.pred_median))
+        denom = np.sum(np.abs(self.truth))
+        return num / denom
 
     @metric(higher_is_better=False)
-    def ncrps(self):
-        """Normalized Continuous Ranked Probability Score"""
+    def mwql(self):
+        """Mean Weighted Quantile Loss
+           approx. of Normalized Continuous Ranked Probability Score
+        """
         quantile_losses = 2 * np.sum(
             np.abs(
                 (self.quantiles - self.truth[:, None])
@@ -746,9 +784,17 @@ class TimeSeriesResult(RegressionResult):
             ),
             axis=0,
         )
-        denom = np.sum(np.abs(self.truth)) # shape [num_time_series, num_quantiles]
-        weighted_losses = quantile_losses.sum(0) / denom  # shape [num_quantiles]
-        return weighted_losses.mean()
+        num = quantile_losses # shape: [num_quantiles]
+        denom = np.sum(np.abs(self.truth)) # shape: [1]
+        return np.mean(num / denom)
+
+    @metric(higher_is_better=False)
+    def mean_seasonal_error(self):
+        """Mean Seasonal Error"""
+
+        means_per_item = self.itemwise_select_first(self.seasonal_error)
+        return np.mean(means_per_item)
+
 
 _encode_predictions_and_truth_ = False
 

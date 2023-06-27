@@ -1,13 +1,14 @@
 ---
 
-- name: covid
+- name: m4_hourly
   dataset:
-    train: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/train.csv
-    test: https://autogluon.s3-us-west-2.amazonaws.com/datasets/CovidTimeSeries/test.csv
-    target: ConfirmedCases
+    train: https://autogluon.s3.amazonaws.com/datasets/timeseries/m4_hourly/train.csv
+    test: https://autogluon.s3.amazonaws.com/datasets/timeseries/m4_hourly/test.csv
     type: timeseries
-    forecast_range_in_steps: 19
-    id_column: name
-    timestamp_column: Date
+    target: target
+    id_column: item_id
+    timestamp_column: timestamp
+    forecast_range_in_steps: 48
+    seasonality: 24
 
   folds: 1
