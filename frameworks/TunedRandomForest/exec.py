@@ -227,19 +227,6 @@ def run(dataset, config):
         )
         log.info(f"Finished inference time measurements.")
 
-    def infer(data):
-        data = pd.read_parquet(data) if isinstance(data, str) else data
-        return rf.predict(data)
-
-    inference_times = {}
-    if config.measure_inference_time:
-        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
-        test_data = X_test if isinstance(X_test, pd.DataFrame) else pd.DataFrame(X_test)
-        inference_times["df"] = measure_inference_times(
-            infer,
-            [(1, test_data.sample(1, random_state=i)) for i in range(100)],
-        )
-
     return result(
         output_file=config.output_predictions_file,
         predictions=predictions,
