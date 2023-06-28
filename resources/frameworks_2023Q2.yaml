@@ -35,11 +35,14 @@ AutoGluon_hq_il001:
 
 autosklearn:
   version: '0.15.0'
+  params:
+    _save_artifacts: ['models', 'debug_as_zip']
 
 autosklearn2:
   extends: autosklearn
   params:
     _askl2: true
+    _save_artifacts: ['models', 'debug_as_zip']
 
 AutoWEKA:
   version: '2.6'
@@ -58,6 +61,8 @@ GAMA_benchmark:
 
 H2OAutoML:
   version: '3.40.0.4'
+  params:
+    _save_artifacts: ['leaderboard', 'logs']
 
 lightautoml:
   version: '0.3.7.3'
@@ -93,6 +98,8 @@ mlr3automl:
 
 TPOT:
   version: '0.12.0'
+  params:
+    _save_artifacts: ['models']
 
 
 #######################################
