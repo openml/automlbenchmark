@@ -82,6 +82,9 @@ MLPlanWEKA:
 mlr3automl:
   version: 'stable'
 
+NaiveAutoML:
+  version: 'stable'
+
 oboe:
   version: 'stable'
 
