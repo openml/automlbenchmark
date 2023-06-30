@@ -45,9 +45,11 @@ def run(dataset, config):
     if scoring_metric is None:
         raise ValueError(f"Performance metric {config.metric} not supported.")
 
+    is_classification = (config.type == 'classification')
     kwargs = dict(
         scoring=scoring_metric,
         num_cpus=config.cores,
+        task_type=config.type,
     )
     # NAML wasn't really designed to run for long time constraints, so we
     # make it easy to run NAML with its default configuration for time/iterations.
@@ -63,13 +65,12 @@ def run(dataset, config):
         log.info("`_use_default_time_and_iterations` is set, ignoring time constraint.")
 
     kwargs |= {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
+    log.info(f"Initializing NaiveAutoml(**{kwargs})")
     automl = NaiveAutoML(**kwargs)
 
     with Timer() as training:
         automl.fit(dataset.train.X, dataset.train.y)
     log.info(f"Finished fit in {training.duration}s.")
-
-    is_classification = (config.type == 'classification')
 
     def infer(data: Union[str, pd.DataFrame]):
         test_data = pd.read_parquet(data) if isinstance(data, str) else data
