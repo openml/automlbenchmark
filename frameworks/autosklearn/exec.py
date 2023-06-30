@@ -8,6 +8,7 @@ import warnings
 from typing import Union
 
 import pandas as pd
+import pandas.api.types
 from numpy.random import default_rng
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
@@ -68,7 +69,10 @@ def run(dataset, config):
     )
     log.info("Environment: %s", os.environ)
 
-    use_pandas = askl_version >= version.parse("0.15")
+    def is_sparse(data: pd.DataFrame) -> bool:
+        return any(pd.api.types.is_sparse(data[column]) for column in data)
+
+    use_pandas = (askl_version >= version.parse("0.15")) and not is_sparse(dataset.train.X)
     X_train = dataset.train.X if use_pandas else dataset.train.X_enc
     y_train = dataset.train.y if use_pandas else dataset.train.y_enc
     predictors_type = dataset.predictors_type
