@@ -65,6 +65,7 @@ def run(dataset, config):
         log.info("`_use_default_time_and_iterations` is set, ignoring time constraint.")
 
     kwargs |= {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
+    log.info(f"Initializing NaiveAutoml(**{kwargs})")
     automl = NaiveAutoML(**kwargs)
 
     with Timer() as training:

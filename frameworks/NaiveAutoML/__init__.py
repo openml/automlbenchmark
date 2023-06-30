@@ -1,6 +1,6 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.utils import call_script_in_same_dir
+from amlb.utils import call_script_in_same_dir, unsparsify
 
 
 def setup(*args, **kwargs):
@@ -14,11 +14,11 @@ def run(dataset: Dataset, config: TaskConfig):
         target=dataset.target.name,
         train=dict(
             X=dataset.train.X,
-            y=dataset.train.y_enc,
+            y=unsparsify(dataset.train.y_enc),
         ),
         test=dict(
             X=dataset.test.X,
-            y=dataset.test.y_enc,
+            y=unsparsify(dataset.test.y_enc),
         ),
     )
     if config.measure_inference_time:
