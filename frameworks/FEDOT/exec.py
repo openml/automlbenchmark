@@ -31,7 +31,8 @@ def run(dataset, config):
     if scoring_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
 
-    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    training_params = {"preset": "best_quality"}
+    training_params |= {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
 
     n_jobs = config.framework_params.get('_n_jobs',
                                          config.cores)  # useful to disable multicore, regardless of the dataset config
@@ -41,11 +42,10 @@ def run(dataset, config):
     runtime_min = config.max_runtime_seconds / 60
 
     fedot = Fedot(problem=config.type, timeout=runtime_min, n_jobs=n_jobs, metric=scoring_metric, seed=config.seed,
-                  preset='best_quality',
                   max_pipeline_fit_time=runtime_min / 10, **training_params)
 
     with Timer() as training:
-        model = fedot.fit(features=dataset.train.X_enc, target=dataset.train.y_enc)
+        fedot.fit(features=dataset.train.X_enc, target=dataset.train.y_enc)
 
     log.info('Predicting on the test set.')
     with Timer() as predict:
@@ -67,25 +67,34 @@ def run(dataset, config):
 
 
 def save_artifacts(automl, config):
-    try:
-        artifacts = config.framework_params.get('_save_artifacts', [])
-        if 'models' in artifacts:
+
+    artifacts = config.framework_params.get('_save_artifacts', [])
+    if 'models' in artifacts:
+        try:
             models_dir = output_subdir('models', config)
             models_file = os.path.join(models_dir, 'model.json')
             automl.current_pipeline.save(models_file)
+        except Exception as e:
+            log.info(f"Error when saving 'models': {e}.", exc_info=True)
 
-        if 'info' in artifacts:
+    if 'info' in artifacts:
+        try:
             info_dir = output_subdir("info", config)
             if automl.history:
                 automl.history.save(os.path.join(info_dir, 'history.json'))
+            else:
+                log.info(f"There is no optimization history info to save.")
+        except Exception as e:
+            log.info(f"Error when saving info about optimisation history: {e}.", exc_info=True)
 
-        if 'leaderboard' in artifacts:
+    if 'leaderboard' in artifacts:
+        try:
             leaderboard_dir = output_subdir("leaderboard", config)
             if automl.history:
                 lb = automl.history.get_leaderboard()
                 Path(os.path.join(leaderboard_dir, "leaderboard.csv")).write_text(lb)
-    except Exception:
-        log.debug("Error when saving artifacts.", exc_info=True)
+        except Exception as e:
+            log.info(f"Error when saving 'leaderboard': {e}.", exc_info=True)
 
 
 if __name__ == '__main__':
