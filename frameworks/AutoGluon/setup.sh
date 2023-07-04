@@ -21,10 +21,10 @@ PIP install --upgrade pip
 PIP install --upgrade setuptools wheel
 
 if [[ "$VERSION" == "stable" ]]; then
-    PIP install --no-cache-dir -U "${PKG}.tabular[all]" "${PKG}.timeseries[all]"
+    PIP install --no-cache-dir -U "${PKG}"
     PIP install --no-cache-dir -U "${PKG}.tabular[skex]"
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
-    PIP install --no-cache-dir -U "${PKG}.tabular[all]==${VERSION}" "${PKG}.timeseries[all]==${VERSION}"
+    PIP install --no-cache-dir -U "${PKG}==${VERSION}"
     PIP install --no-cache-dir -U "${PKG}.tabular[skex]==${VERSION}"
 else
     TARGET_DIR="${HERE}/lib/${PKG}"

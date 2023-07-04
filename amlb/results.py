@@ -759,7 +759,7 @@ class TimeSeriesResult(RegressionResult):
         )
 
     @metric(higher_is_better=False)
-    def ql(self):
+    def mql(self):
         """Quantile Loss, also known as Pinball Loss, averaged across all quantile levels & time steps.
 
         Equivalent to the Weighted Interval Score if the quantile_levels are symmetric around 0.5
