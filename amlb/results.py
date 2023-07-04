@@ -244,7 +244,7 @@ class TaskResult:
                 if rconfig().test_mode:
                     TaskResult.validate_predictions(df)
 
-                if 'seasonal_error' in df.columns:
+                if 'repeated_item_id' in df.columns:
                     return TimeSeriesResult(df)
                 else:
                     if df.shape[1] > 2:
@@ -684,116 +684,107 @@ class RegressionResult(Result):
         """R^2"""
         return float(r2_score(self.truth, self.predictions))
 
-class TimeSeriesResult(RegressionResult):
 
+class TimeSeriesResult(RegressionResult):
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
-        self.quantiles_columns = list(column for column in self.df.columns if column.startswith('0.'))
-
-        if not self.quantiles_columns:
-            msg=f'Expected quantile columns that start with "0.", but found: {self.df.columns}.'
-            raise ValueError(msg)
-
-        required_columns = {'truth', 'predictions', 'item_id', 'seasonal_error'}
+        required_columns = {'truth', 'predictions', 'repeated_item_id', 'repeated_abs_seasonal_error'}
         if required_columns - set(self.df.columns):
-            msg=f'Missing columns for calculating time series metrics: {required_columns - set(self.df.columns)}.'
-            raise ValueError(msg)
+            raise ValueError(f'Missing columns for calculating time series metrics: {required_columns - set(self.df.columns)}.')
 
-        self.truth = self.df['truth'].values
-        self.pred_mean = self.df['predictions'].values
+        quantile_columns = [column for column in self.df.columns if column.startswith('0.')]
+        unrecognized_columns = [column for column in self.df.columns if column not in required_columns and column not in quantile_columns]
+        if len(unrecognized_columns) > 0:
+            raise ValueError(f'Predictions contain unrecognized columns: {unrecognized_columns}.')
 
-        self.seasonal_error = self.df['seasonal_error'].values
-        self.quantiles_probs = np.fromiter(self.quantiles_columns, dtype=float)
-        self.quantiles = self.df[self.quantiles_columns].values
-        self.item_ids = self.df['item_id'].values
+        self.type = DatasetType.timeseries
+        self.truth = self.df['truth'].values.astype(float)
+        self.item_ids = self.df['repeated_item_id'].values
+        self.abs_seasonal_error = self.df['repeated_abs_seasonal_error'].values.astype(float)
+        # predictions = point forecast, quantile_predictions = quantile forecast
+        self.predictions = self.df['predictions'].values.astype(float)
+        self.quantile_predictions = self.df[quantile_columns].values.astype(float)
+        self.quantile_levels = np.array(quantile_columns, dtype=float)
+
+        if (~np.isfinite(self.predictions)).any() or (~np.isfinite(self.quantile_predictions)).any():
+            raise ValueError('Predictions contain NaN or Inf values')
+
         _, unique_item_ids_counts = np.unique(self.item_ids, return_counts=True)
         if len(set(unique_item_ids_counts)) != 1:
-            msg = f'Error: Predicted sequences have different lengths {unique_item_ids_counts}.'
-            raise ValueError(msg)
-        self.prediction_length = unique_item_ids_counts[0]
-        self.unique_item_ids = self.item_ids.copy()[::self.prediction_length]
+            raise ValueError(f'Error: Predicted sequences have different lengths {unique_item_ids_counts}.')
 
-        self.dtype = float
-        self.truth = self.truth.astype(self.dtype, copy=False)
-        self.pred_mean = self.pred_mean.astype(self.dtype, copy=False)
-        self.quantiles = self.quantiles.astype(self.dtype, copy=False)
+    def _itemwise_mean(self, values):
+        """Compute mean for each time series."""
+        return pd.Series(values).groupby(self.item_ids, sort=False).mean().values
 
-        if 0.5 in self.quantiles_probs:
-            self.pred_median = self.quantiles[:, self.quantiles_probs == 0.5].squeeze()
-        else:
-            self.pred_median = self.pred_mean
-        self.seasonal_error = self.seasonal_error.astype(self.dtype, copy=False)
-
-        self.target = Feature(0, 'target', 'real', is_target=True)
-        self.type = DatasetType.timeseries
-
-    def itemwise_mean(self, values):
-        return pd.DataFrame(np.stack([self.item_ids, values], axis=1), columns=['item_id', 'value']).groupby('item_id').mean()['value'].values
-
-    def itemwise_select_first(self, values):
-        return pd.DataFrame(np.stack([self.item_ids, values], axis=1), columns=['item_id', 'value']).groupby('item_id').first()['value'].values
-
-    @metric(higher_is_better=False)
-    def mase(self):
-        """Mean Absolute Scaled Error"""
-        num = np.abs(self.truth - self.pred_median)
-        denom = self.itemwise_select_first(self.seasonal_error)
-        means_per_item = self.itemwise_mean(num) / denom
-        return np.mean(means_per_item)
-
+    def _safemean(self, values):
+        """Compute mean, while ignoring nan, +inf, -inf values."""
+        return np.mean(values[np.isfinite(values)])
 
     @metric(higher_is_better=False)
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
-        num = np.abs(self.truth - self.pred_median)
-        denom = (np.abs(self.truth) + np.abs(self.pred_median)) / 2
-        denom[denom == 0] = np.inf
-        return np.mean(num / denom)
+        num = np.abs(self.truth - self.predictions)
+        denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
+        return self._safemean(num / denom)
 
     @metric(higher_is_better=False)
     def mape(self):
         """Mean Absolute Percentage Error"""
-        num = np.abs(self.truth - self.pred_median)
+        num = np.abs(self.truth - self.predictions)
         denom = np.abs(self.truth)
-        denom[denom == 0] = np.inf
-        return np.mean(num / denom)
-
-    @metric(higher_is_better=False)
-    def nrmse(self):
-        """Normalized Root Mean Square Error"""
-        num = np.sqrt(np.mean(np.square(self.truth - self.pred_median)))
-        denom = np.mean(np.abs(self.truth))
-        return num / denom
+        return self._safemean(num / denom)
 
     @metric(higher_is_better=False)
     def wape(self):
         """Weighted Average Percentage Error"""
-        num = np.sum(np.abs(self.truth - self.pred_median))
-        denom = np.sum(np.abs(self.truth))
-        return num / denom
+        return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
 
     @metric(higher_is_better=False)
-    def mwql(self):
-        """Mean Weighted Quantile Loss
-           approx. of Normalized Continuous Ranked Probability Score
+    def mase(self):
+        """Mean Absolute Scaled Error
+
+        Error for each item is normalized by the in-sample error of the naive forecaster.
+        This makes scores comparable across different items.
         """
-        quantile_losses = 2 * np.sum(
-            np.abs(
-                (self.quantiles - self.truth[:, None])
-                * ((self.quantiles >= self.truth[:, None]) - self.quantiles_probs[None, :])
-            ),
-            axis=0,
+        error = np.abs(self.truth - self.predictions)
+        error_per_item = self._itemwise_mean(error / self.abs_seasonal_error)
+        return self._safemean(error_per_item)
+
+    def _quantile_loss_per_step(self):
+        # Array of shape [len(self.predictions), len(self.quantile_levels)]
+        return 2 * np.abs(
+            (self.quantile_predictions - self.truth[:, None])
+            * ((self.quantile_predictions >= self.truth[:, None]) - self.quantile_levels)
         )
-        num = quantile_losses # shape: [num_quantiles]
-        denom = np.sum(np.abs(self.truth)) # shape: [1]
-        return np.mean(num / denom)
 
     @metric(higher_is_better=False)
-    def mean_seasonal_error(self):
-        """Mean Seasonal Error"""
+    def ql(self):
+        """Quantile Loss, also known as Pinball Loss, averaged across all quantile levels & time steps.
 
-        means_per_item = self.itemwise_select_first(self.seasonal_error)
-        return np.mean(means_per_item)
+        Equivalent to the Weighted Interval Score if the quantile_levels are symmetric around 0.5
+
+        Approximates the Continuous Ranked Probability Score
+        """
+        return np.mean(self._quantile_loss_per_step())
+
+    @metric(higher_is_better=False)
+    def wql(self):
+        """Weighted Quantile Loss.
+
+        Defined as total quantile loss normalized by the total value of target time series.
+        """
+        return self._quantile_loss_per_step().mean(axis=1).sum() / self.target.sum()
+
+    @metric(higher_is_better=False)
+    def sql(self):
+        """Scaled Quantile Loss, also known as Scaled Pinball Loss.
+
+        Similar to MASE, the quantile loss for each item is normalized by the in-sample error of the naive forecaster.
+        This makes scores comparable across different items.
+        """
+        pl_per_item = self._itemwise_mean(self._quantile_loss_per_step().mean(axis=1) / self.abs_seasonal_error)
+        return self._safemean(pl_per_item)
 
 
 _encode_predictions_and_truth_ = False

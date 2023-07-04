@@ -46,17 +46,16 @@ def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
         raise AttributeError("Unspecified `seasonality`.")
 
     data = dict(
-        train=dict(path=dataset.train.path),
-        test=dict(path=dataset.test.path),
-        target=dict(
-            name=dataset.target.name,
-            classes=dataset.target.values
-        ),
-        problem_type=dataset.type.name,  # AutoGluon problem_type is using same names as amlb.data.DatasetType
-        timestamp_column=dataset.timestamp_column,
+        train_path=dataset.train.path,
+        test_path=dataset.test.path,
+        target=dataset.target.name,
         id_column=dataset.id_column,
+        timestamp_column=dataset.timestamp_column,
         forecast_horizon_in_steps=dataset.forecast_horizon_in_steps,
-        seasonality=dataset.seasonality
+        seasonality=dataset.seasonality,
+        quantile_levels=dataset.quantile_levels,
+        repeated_abs_seasonal_error=dataset.repeated_abs_seasonal_error,
+        repeated_item_id=dataset.repeated_item_id,
     )
 
     return run_in_venv(__file__, "exec_ts.py",

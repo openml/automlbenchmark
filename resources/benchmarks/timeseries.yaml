@@ -8,7 +8,8 @@
     target: target
     id_column: item_id
     timestamp_column: timestamp
-    forecast_range_in_steps: 48
+    forecast_horizon_in_steps: 48
     seasonality: 24
+  metric: [mase, smape, mae, pl, spl]
 
   folds: 1

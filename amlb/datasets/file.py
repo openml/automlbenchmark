@@ -36,10 +36,6 @@ class FileLoader:
         log.debug("Loading dataset %s", dataset)
         paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold, name=dataset['name'] if 'name' in dataset else None)
         assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
-        # seed = rget().seed(fold)
-        # if len(paths['test']) == 0:
-        #     log.warning("No test file in the dataset, the train set will automatically be split 90%/10% using the given seed.")
-        # else:
         assert fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
 
         target = dataset['target']
@@ -139,31 +135,46 @@ class FileLoader:
     def __repr__(self):
         return repr_def(self)
 
-
     def extend_dataset_with_timeseries_config(self, dataset, dataset_config):
         dataset = deepcopy(dataset)
         dataset_config = deepcopy(dataset_config)
+        if dataset_config['forecast_horizon_in_steps'] is None:
+            raise AssertionError("Task definition for timeseries must include `forecast_horizon_in_steps`")
         if dataset_config['id_column'] is None:
             log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`.")
             dataset_config['id_column'] = 'item_id'
-        if dataset_config['forecast_horizon_in_steps'] is None:
-            log.warning("Warning: For timeseries task, setting undefined `forecast_horizon_in_steps` to `1`.")
-            dataset_config['forecast_horizon_in_steps'] = '1'
         if dataset_config['seasonality'] is None:
             log.warning("Warning: For timeseries task, setting undefined `seasonality` to `1`.")
-            dataset_config['seasonality'] = '1'
+            dataset_config['seasonality'] = 1
+        if dataset_config['quantile_levels'] is None:
+            default_quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+            log.warning(f"Warning: For timeseries task, setting undefined `quantile_levels` to `{default_quantile_levels}`.")
+            dataset_config['quantile_levels'] = default_quantile_levels
 
         dataset.timestamp_column = dataset_config['timestamp_column']
         dataset.id_column = dataset_config['id_column']
         dataset.forecast_horizon_in_steps = int(dataset_config['forecast_horizon_in_steps'])
         dataset.seasonality = int(dataset_config['seasonality'])
+        dataset.quantile_levels = sorted(float(q) for q in dataset_config['quantile_levels'])
+
+        num_timeseries = dataset.train.data[dataset.id_column].nunique()
+        if (len(dataset.test.data) - len(dataset.train.data)) / num_timeseries != dataset.forecast_horizon_in_steps:
+            raise AssertionError("Test dataset must contain train data + values in the forecast horizon")
+
+        # Compute in-sample seasonal error - needed later for metrics like MASE.
+        # We need to store this information here because Result object has no access to past time series values.
+        train_set_with_index = dataset.train.data.set_index(dataset.id_column)
+        seasonal_diffs = train_set_with_index.groupby(level=dataset.id_column, sort=False).diff(dataset.seasonality).abs()
+        abs_seasonal_error = seasonal_diffs.groupby(level=dataset.id_column, sort=False).mean().fillna(1.0).values
+        # Repeat seasonal error & item_id for each time step in the forecast horizon
+        dataset.repeated_abs_seasonal_error = np.repeat(abs_seasonal_error, dataset.forecast_horizon_in_steps)
+        dataset.repeated_item_id = np.repeat(np.arange(num_timeseries), dataset.forecast_horizon_in_steps)
 
         min_context_length_data_train = dataset.train.X.groupby(dataset.id_column).count().values.min()
         min_sequence_length_data_test = dataset.test.X.groupby(dataset.id_column).count().values.min()
         min_context_length_data_test = min_sequence_length_data_test - dataset.forecast_horizon_in_steps
         if min_context_length_data_test < 1:
-            msg = f'The minimum context length of the test data is smaller than 1. Consider reducing the forecast horizon to {min_sequence_length_data_test - 1}.'
-            raise ValueError(msg)
+            raise ValueError(f'The minimum context length of the test data is smaller than 1. Consider reducing the forecast horizon to {min_sequence_length_data_test - 1}.')
         if min_context_length_data_train < 2 * dataset.forecast_horizon_in_steps + 1:
             log.warning(f'The minimum context length of the train data is smaller than (2 x forecast horizon + 1). Consider reducing the forecast horizon to {math.floor((min_context_length_data_train - 1) / 2)}.')
         if min_context_length_data_test < 2 * dataset.forecast_horizon_in_steps:
