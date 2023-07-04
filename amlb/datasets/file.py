@@ -140,12 +140,11 @@ class FileLoader:
         dataset_config = deepcopy(dataset_config)
         if dataset_config['forecast_horizon_in_steps'] is None:
             raise AssertionError("Task definition for timeseries must include `forecast_horizon_in_steps`")
+        if dataset_config['seasonality'] is None:
+            raise AssertionError("Task definition for timeseries must include `seasonality`")
         if dataset_config['id_column'] is None:
             log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`.")
             dataset_config['id_column'] = 'item_id'
-        if dataset_config['seasonality'] is None:
-            log.warning("Warning: For timeseries task, setting undefined `seasonality` to `1`.")
-            dataset_config['seasonality'] = 1
         if dataset_config['quantile_levels'] is None:
             default_quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
             log.warning(f"Warning: For timeseries task, setting undefined `quantile_levels` to `{default_quantile_levels}`.")
