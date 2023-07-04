@@ -772,9 +772,9 @@ class TimeSeriesResult(RegressionResult):
     def wql(self):
         """Weighted Quantile Loss.
 
-        Defined as total quantile loss normalized by the total value of target time series.
+        Defined as total quantile loss normalized by the total abs value of target time series.
         """
-        return self._quantile_loss_per_step().mean(axis=1).sum() / self.target.sum()
+        return self._quantile_loss_per_step().mean(axis=1).sum() / np.sum(np.abs(self.truth))
 
     @metric(higher_is_better=False)
     def sql(self):

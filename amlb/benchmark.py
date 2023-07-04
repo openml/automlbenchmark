@@ -379,7 +379,7 @@ class Benchmark:
 
 class TaskConfig:
 
-    def __init__(self, name, openml_task_id, test_server, fold, metrics, seed,
+    def __init__(self, name, openml_task_id, test_server, fold, metrics, quantile_levels, seed,
                  max_runtime_seconds, cores, max_mem_size_mb, min_vol_size_mb,
                  input_dir, output_dir, tag, command, git_info, measure_inference_time: bool = False):
         self.framework = None
@@ -404,6 +404,9 @@ class TaskConfig:
         self.git_info = git_info
         self.measure_inference_time = measure_inference_time
         self.ext = ns()  # used if frameworks require extra config points
+        if quantile_levels is None:
+            quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        self.quantile_levels = list(sorted(quantile_levels))
 
     def __setattr__(self, name, value):
         if name == 'metrics':
@@ -480,6 +483,7 @@ class BenchmarkTask:
             openml_task_id=task_def["openml_task_id"],
             fold=fold,
             metrics=task_def.metric,
+            quantile_levels=task_def["quantile_levels"],
             seed=rget().seed(fold),
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,

@@ -145,16 +145,11 @@ class FileLoader:
         if dataset_config['id_column'] is None:
             log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`.")
             dataset_config['id_column'] = 'item_id'
-        if dataset_config['quantile_levels'] is None:
-            default_quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-            log.warning(f"Warning: For timeseries task, setting undefined `quantile_levels` to `{default_quantile_levels}`.")
-            dataset_config['quantile_levels'] = default_quantile_levels
 
         dataset.timestamp_column = dataset_config['timestamp_column']
         dataset.id_column = dataset_config['id_column']
         dataset.forecast_horizon_in_steps = int(dataset_config['forecast_horizon_in_steps'])
         dataset.seasonality = int(dataset_config['seasonality'])
-        dataset.quantile_levels = sorted(float(q) for q in dataset_config['quantile_levels'])
 
         num_timeseries = dataset.train.data[dataset.id_column].nunique()
         if (len(dataset.test.data) - len(dataset.train.data)) / num_timeseries != dataset.forecast_horizon_in_steps:

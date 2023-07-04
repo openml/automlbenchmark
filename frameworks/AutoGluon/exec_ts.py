@@ -46,7 +46,7 @@ def run(dataset, config):
             prediction_length=prediction_length,
             eval_metric=get_eval_metric(config),
             eval_metric_seasonal_period=dataset.seasonality,
-            quantile_levels=dataset.quantile_levels,
+            quantile_levels=config.quantile_levels,
         )
         predictor.fit(
             train_data=train_data,
@@ -76,7 +76,7 @@ def run(dataset, config):
         repeated_item_id=np.load(dataset.repeated_item_id),
         repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
     )
-    for q in dataset.quantile_levels:
+    for q in config.quantile_levels:
         optional_columns[str(q)] = predictions[str(q)].values
 
     return result(output_file=config.output_predictions_file,

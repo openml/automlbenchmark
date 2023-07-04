@@ -10,7 +10,7 @@
     timestamp_column: timestamp
     forecast_horizon_in_steps: 48
     seasonality: 24
-  metric: [mase, smape, rmse, wql, sql]
+  metric: [mase, smape, mape, rmse, mql, wql, sql]
   quantile_levels: [0.05, 0.5, 0.95]
 
   folds: 1
