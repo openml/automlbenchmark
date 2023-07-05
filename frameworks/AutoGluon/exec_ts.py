@@ -57,7 +57,7 @@ def run(dataset, config):
     with Timer() as predict:
         predictions = pd.DataFrame(predictor.predict(train_data))
 
-    predictions_only = predictions['mean'].values
+    predictions_only = get_point_forecast(predictions, config.metric)
     test_data_future = test_data.slice_by_timestep(-prediction_length, None)
     assert test_data_future.index.equals(predictions.index), "Predictions and test data index do not match"
     truth_only = test_data_future[dataset.target].values
@@ -103,6 +103,15 @@ def get_eval_metric(config):
     if eval_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
     return eval_metric
+
+
+def get_point_forecast(predictions, metric):
+    # Return median for metrics optimized by median, if possible
+    if metric.lower() in ["mape", "smape", "mase"] and "0.5" in predictions.columns:
+        log.info("Using median as point forecast")
+        return predictions["0.5"].values
+    else:
+        return predictions["mean"].values
 
 
 def save_artifacts(predictor, leaderboard, config):
