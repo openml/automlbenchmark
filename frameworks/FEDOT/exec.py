@@ -31,36 +31,34 @@ def run(dataset, config):
     if scoring_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
 
-    training_params = {"preset": "best_quality"}
+    n_jobs = config.cores
+    training_params = {"preset": "best_quality", "n_jobs": n_jobs}
     training_params |= {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
-
-    n_jobs = config.framework_params.get('_n_jobs',
-                                         config.cores)  # useful to disable multicore, regardless of the dataset config
 
     log.info('Running FEDOT with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
     runtime_min = config.max_runtime_seconds / 60
 
-    fedot = Fedot(problem=config.type, timeout=runtime_min, n_jobs=n_jobs, metric=scoring_metric, seed=config.seed,
+    fedot = Fedot(problem=config.type, timeout=runtime_min, metric=scoring_metric, seed=config.seed,
                   max_pipeline_fit_time=runtime_min / 10, **training_params)
 
     with Timer() as training:
-        fedot.fit(features=dataset.train.X_enc, target=dataset.train.y_enc)
+        fedot.fit(features=dataset.train.X, target=dataset.train.y)
 
     log.info('Predicting on the test set.')
     with Timer() as predict:
-        predictions = fedot.predict(features=dataset.test.X_enc)
+        predictions = fedot.predict(features=dataset.test.X)
         probabilities = None
         if is_classification:
-            probabilities = fedot.predict_proba(features=dataset.test.X_enc, probs_for_all_classes=True)
+            probabilities = fedot.predict_proba(features=dataset.test.X, probs_for_all_classes=True)
 
     save_artifacts(fedot, config)
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,
-                  truth=dataset.test.y_enc,
+                  truth=dataset.test.y,
                   probabilities=probabilities,
-                  target_is_encoded=is_classification,
+                  target_is_encoded=False,
                   models_count=fedot.current_pipeline.length,
                   training_duration=training.duration,
                   predict_duration=predict.duration)
