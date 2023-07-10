@@ -36,14 +36,6 @@ def run_autogluon_tabular(dataset: Dataset, config: TaskConfig):
 def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
     dataset = deepcopy(dataset)
-    if not hasattr(dataset, 'timestamp_column'):
-        dataset.timestamp_column = None
-    if not hasattr(dataset, 'id_column'):
-        dataset.id_column = None
-    if not hasattr(dataset, 'forecast_horizon_in_steps'):
-        raise AttributeError("Unspecified `forecast_horizon_in_steps`.")
-    if not hasattr(dataset, 'seasonality'):
-        raise AttributeError("Unspecified `seasonality`.")
 
     data = dict(
         train_path=dataset.train.path,

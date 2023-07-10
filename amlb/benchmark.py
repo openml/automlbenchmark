@@ -404,8 +404,6 @@ class TaskConfig:
         self.git_info = git_info
         self.measure_inference_time = measure_inference_time
         self.ext = ns()  # used if frameworks require extra config points
-        if quantile_levels is None:
-            quantile_levels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
         self.quantile_levels = list(sorted(quantile_levels))
 
     def __setattr__(self, name, value):
@@ -483,7 +481,7 @@ class BenchmarkTask:
             openml_task_id=task_def["openml_task_id"],
             fold=fold,
             metrics=task_def.metric,
-            quantile_levels=task_def["quantile_levels"],
+            quantile_levels=task_def.quantile_levels,
             seed=rget().seed(fold),
             max_runtime_seconds=task_def.max_runtime_seconds,
             cores=task_def.cores,
