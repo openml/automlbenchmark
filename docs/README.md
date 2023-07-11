@@ -1,6 +1,6 @@
 # OpenML AutoML Benchmark
 
-The OpenML AutoML Benchmark provides a framework for evaluating and comparing open-source AutoML systems.  The system is *extensible* because you can [add your own](https://github.com/openml/automlbenchmark/blob/master/docs/extending.md) AutoML frameworks and datasets. For a thorough explanation of the benchmark, and evaluation of results, you can read our [paper](https://openml.github.io/automlbenchmark/paper.html) which was accepted at the [2019 ICML AutoML Workshop](https://sites.google.com/view/automl2019icml/).
+The OpenML AutoML Benchmark provides a framework for evaluating and comparing open-source AutoML systems. The system is *extensible* because you can [add your own](https://github.com/openml/automlbenchmark/blob/master/docs/extending.md) AutoML frameworks and datasets. For a thorough explanation of the benchmark, and evaluation of results, refer to our preprint [AMLB: an AutoML Benchmark](https://arxiv.org/pdf/2207.12560.pdf).
 
 _**NOTE:**_ _This benchmarking framework currently features binary and multiclass classification; extending to regression is a work in progress.  Please file an issue with any concerns/questions._
 
@@ -28,7 +28,7 @@ This toolkit aims to address these problems by setting up standardized environme
 Documentation: <https://openml.github.io/automlbenchmark/>
 
 ### Features:
-* Curated suites of [benchmarking datasets](https://openml.github.io/automlbenchmark/benchmark_datasets.html) from [OpenML](https://www.openml.org/s/218/data).
+* Curated suites of [benchmarking datasets](https://github.com/openml/automlbenchmark/blob/master/docs/benchmark_datasets.md) from [OpenML](https://www.openml.org/s/218/data).
 * Includes code to benchmark a number of [popular AutoML systems](https://openml.github.io/automlbenchmark/automl_overview.html) on regression and classification tasks.
 * [New AutoML systems can be added](./HOWTO.md#add-an-automl-framework)
 * Experiments can be run in Docker or Singularity containers
