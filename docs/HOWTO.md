@@ -3,7 +3,7 @@
   * [Run a benchmark](#run-a-benchmark)
      * [Custom configuration](#custom-configuration)
         * [Run a framework with different (hyper-)parameters](#run-a-framework-with-different-hyper-parameters)
-     * [Advanced AWS Support](#advanced-aws-support) 
+     * [Advanced AWS Support](#advanced-aws-support)
   * [Add a benchmark](#add-a-benchmark)
      * [Datasets definition](#datasets-definition)
         * [OpenML datasets](#openml-datasets)
@@ -68,11 +68,11 @@ aws:
     - '{user}/extensions'
 
   use_docker: true  # you can decide to always use the prebuilt docker images on AWS.
-```  
+```
 
 **Note:** configurations support the following placeholders:
 - `{input}`: replaced by the value of config `input_dir`. Folder from which datasets are loaded (and/or downloaded) by default. Defaults to `~/.openml/cache`, but can also be overridden in a custom `config.yaml` or at the command line using `-i` or `--indir`.
-- `{output}`: replaced by the value of config `output_dir`. Folder where all outputs (results, logs, predictions...) will be stored. Defaults to `./results`, but can also be overridden in a custom `config.yaml` or at the command line using `-o` or `--outdir`. 
+- `{output}`: replaced by the value of config `output_dir`. Folder where all outputs (results, logs, predictions...) will be stored. Defaults to `./results`, but can also be overridden in a custom `config.yaml` or at the command line using `-o` or `--outdir`.
 - `{user}`: replaced by the value of config `user_dir`. Folder containing customizations (`config.yaml`, benchmark definitions, framework definitions...). Defaults to `~/.config/automlbenchmark`, but can be overridden at the command line using `-u` or `--userdir`.
 - `{root}`: replaced by the value of config `root_dir`. The root folder of the `automlbenchmark` application: this is detected at runtime.
 
@@ -97,7 +97,7 @@ RandomForest_custom:
 **NOTE:** by convention, param names starting with `_` are filtered out (they are not passed to the classifier/regressor) but are used for custom logic in the `exec.py`.
 
 _Example:_
- 
+
 In the definition below, the `_n_jobs` param is handled by custom code in `RandomForest/exec.py`: here it overrides the default `n_jobs` automatically calculated by the application (using all assigned cores).
 ```yaml
 RandomForest_custom:
@@ -145,7 +145,7 @@ Each dataset must contain a training set and a test set. There can be multiple t
 
 ### Datasets definition
 
-A dataset definition consists in a `yaml` file listing all the task/datasets that will be used for the complete benchmark, 
+A dataset definition consists in a `yaml` file listing all the task/datasets that will be used for the complete benchmark,
 or as an OpenML suite.
 
 Default dataset definitions are available under folder `resources/benchmarks`.
@@ -158,7 +158,7 @@ python runbenchmark.py randomforest validation -t bioresponse
 python runbenchmark.py randomforest validation -t bioresponse eucalyptus
 python runbenchmark.py randomforest validation -t bioresponse -f 0
 python runbenchmark.py randomforest validation -t bioresponse eucalyptus -f 0 1 2
-``` 
+```
 
 _Example:_
 
@@ -186,7 +186,7 @@ The automlbenchmark application can directly consume those tasks using the follo
 - name: bioresponse
   openml_task_id: 9910
 ```
-where `openml_task_id` allows accessing the OpenML task at `https://www.openml.org/t/{openml_task_id}` (in this example: <https://www.openml.org/t/9910>). 
+where `openml_task_id` allows accessing the OpenML task at `https://www.openml.org/t/{openml_task_id}` (in this example: <https://www.openml.org/t/9910>).
 
 Alternatively, you can run the benchmark on a single OpenML task without writing a benchmark definition:
 ```bash
@@ -195,7 +195,11 @@ python runbenchmark.py randomforest openml/t/59
 
 #### File datasets
 
-It is also possible to benchmark your own datasets, as soon as they follow some requirements:
+It is also possible to benchmark using your own datasets stored locally or on the web.
+
+##### Classification and regression
+
+For classification and regression tasks, the datasets must satisfy the following requirements:
 - The data files should be in one of the currently supported format: [ARFF], [CSV] (ideally with header).
 - Each dataset must contain at least one file for training data and one file for test data.
 - If the dataset is represented as an archive (.zip, .tar, .tgz, .tbz) or a directory, then the data files must follow this naming convention to be detected correctly:
@@ -217,23 +221,23 @@ Then the datasets can be declared in the benchmark definition file as follow:
 
 - name: example_multi_folds
   dataset:
-    train: 
+    train:
       - /path/to/data/ExampleTraining_0.csv
       - /path/to/data/ExampleTraining_1.csv
-    test:  
+    test:
       - /path/to/data/ExampleTest_0.csv
       - /path/to/data/ExampleTest_1.csv
     target: TargetColumn
   folds: 2
 
 - name: example_dir   # let's assume that the data folder contains 2 files: example_train.arff and example_test.arff
-  dataset: 
+  dataset:
     path: /path/to/data
     target: TargetColumn
   folds: 1
 
 - name: example_dir_multi_folds   # let's assume that the data folder contains 6 files: example_train_0.arff, ..., example_train_2.arff, example_test_0.arff, ...
-  dataset: 
+  dataset:
     path: /path/to/data
     target: TargetColumn
   folds: 3
@@ -276,6 +280,62 @@ Then the datasets can be declared in the benchmark definition file as follow:
   0. using the last column as a fallback.
 - the `folds` attribute is also optional but recommended for those datasets as the default value is `folds=10` (default amount of folds in openml datasets), so if you don't have that many folds for your custom datasets, it is better to declare it explicitly here.
 - Remote files are downloaded to the `input_dir` folder and archives are decompressed there as well, so you may want to change the value of this folder in your [custom config.yaml file](#custom-configuration) or specify it at the command line with the `-i` or `--indir` argument (by default, it points to the `~/.openml/cache` folder).
+
+##### Time series forecasting
+
+For time series forecasting tasks, the dataset must be stored as a single [CSV] file in [long format](https://doc.dataiku.com/dss/latest/time-series/data-formatting.html#long-format).
+
+The CSV file must include 3 columns:
+  - unique ID of each time series
+  - timestamp of the observation
+  - target value of the time series
+
+
+_Example:_
+
+The following file contains 2 time series with daily frequency: `A` with 3 observations and `B` with 4 observations.
+
+| IdColumn |	TimestampColumn |	TargetColumn |
+|---------|-----------|--------|
+| A       |	2020-01-01|	2.0    |
+| A       |	2020-01-02|	1.0    |
+| A       |	2020-01-03|	5.0    |
+| B       |	2019-01-01|	8.0    |
+| B       |	2019-01-01|	2.0    |
+| B       |	2019-01-01|	1.0    |
+| B       |	2019-01-01|	9.0    |
+
+Suppose the above table is saved as a CSV file under `/path/to/data.csv`.
+
+The respective task definition may look like:
+
+```yaml
+- name: example_time_series_data
+  dataset:
+    path: /path/to/data.csv
+    freq: D
+    forecast_horizon_in_steps: 1
+    seasonality: 7
+    id_column: IdColumn  # defaults to 'item_id'
+    timestamp_column: TimestampColumn  # defaults to 'timestamp'
+    target: TargetColumn
+  folds: 1
+```
+The configuration of a time series task **must** include the following parameters:
+- `path` - a local or remote (e.g., S3) path to the CSV file with time series data.
+- `freq` - a [pandas-compatible frequency string](https://pandas.pydata.org/docs/user_guide/timeseries.html#offset-aliases) that denotes the frequency of the time series. For example, `D` for daily, `H` for hourly, or `15min` for 15-minute frequency.
+- `forecast_horizon_in_steps` - a positive integer denoting how many future time series values need to be predicted.
+- `seasonality` - a positive integer denoting the seasonal period of the data that is used for computing metrics like [mean absolute scaled error](https://en.wikipedia.org/wiki/Mean_absolute_scaled_error#Seasonal_time_series).
+
+
+**Note**:
+- AMLB automatically generates the train & test splits from the raw data depending on the chosen `forecast_horizon_in_steps` and `fold` parameters. For each time series `x` in the datasets, the folds are constructed as:
+  - In fold `0`, use `x[:-forecast_horizon_in_steps]` as the train set and `x[-forecast_horizon_in_steps:]` as the test set (forecast horizon).
+  - In fold `1`, use `x[:-2*forecast_horizon_in_steps]` as the train set and `x[-2*forecast_horizon_in_steps:-forecast_horizon_in_steps]` as the test set.
+  - In fold `n`, use `x[:-(n+1)*forecast_horizon_in_steps]` as the train set and `x[-(n+1)*forecast_horizon_in_steps:-n*forecast_horizon_in_steps]` as the test set.
+- Time series may have different lengths or have different starting timestamps, but need to have the same frequency
+- The shortest time series in the dataset must have length of at least `folds * forecast_horizon_in_step + 1`
+- All time series must have regular timestamp index
 
 #### OpenML suites
 
@@ -351,7 +411,7 @@ Adding an AutoML framework consist in several steps:
  1. write some integration code
    - to download/setup the framework dynamically: by convention, this is done by a `setup.sh` script defined in the module.
    - to run the framework using the data and constraints/parameters provided by the benchmark application: by convention, this is done by an `exec.py` script in the module, but it may require more files depending on the framework, for example if it runs on Python or R, Java...
-   
+
 
 ### Framework definition
 
@@ -359,7 +419,7 @@ The framework definition consists in an entry in a `yaml` file with the framewor
  1. to describe the framework and define which version will be used: `project`, `version`.
  1. to indicate the Python module with the integration code: `module` or `extends`.
  1. to pass optional parameters to the framework and/or the integration code: `params`.
- 
+
 Default framework definitions are defined in file `resources/frameworks.yaml` in lexicographic order, where `version` should be set to `stable`, which will point dynamically to the most recent official release available.
 
 Frameworks that offer the possibility to test cutting edge version (e.g. nightly builds, `dev`/`master` repo, ...) can add an entry to `resources/frameworks_latest.yaml`, where `version` should be set to `latest`.
@@ -418,19 +478,19 @@ H2OAutoML_custom:
 ```
 
 This example shows
-- the definitions for 2 new frameworks: `GradientBoosting` and `Stacking`. 
+- the definitions for 2 new frameworks: `GradientBoosting` and `Stacking`.
   - Those definitions (optionally) externalize some parameters (e.g. `n_estimators`): the `params` property always appears in json format in the results, so that we can clearly see what has been tuned when analyzing the results later.
   - Note that the module is case sensitive and should point to the module containing the integration code.
-  - The application will search for modules from the sys path, which includes the application `root_dir` and the `user_dir`: 
-    - that's why the default frameworks use `module: frameworks.autosklearn` for example, 
-    - and the example above can use `module: extensions.GradientBoosting` because those examples must be run by setting the `user_dir` to `examples/config`, e.g. 
+  - The application will search for modules from the sys path, which includes the application `root_dir` and the `user_dir`:
+    - that's why the default frameworks use `module: frameworks.autosklearn` for example,
+    - and the example above can use `module: extensions.GradientBoosting` because those examples must be run by setting the `user_dir` to `examples/config`, e.g.
       > `python runbenchmark.py gradientboosting -u examples/custom`.
 - a custom definition (`H2OAutoML_nightly`) for the existing `frameworks.H2OAutoML` module, allowing to reuse the module for a dynamic version of the module:
     - the `setup_cmd` is executed after the default setup of the module, so it can be used to make additional setup. To customize the setup, it is possible to use:
       - `setup_args: my_version` (only if the `setup.sh` in the framework module supports new arguments).
-      - `setup_cmd` (as shown in this example). 
+      - `setup_cmd` (as shown in this example).
       - `setup_script: my_additional_setup.sh`.
-- 2 custom definitions (`H2OAutoML_blending` and `H2OAutoML_custom`) simply extending the existing `H2OAutoML` definition (therefore inheriting from all its properties, including the `module` one), but overriding the `params` property, thus allowing to provide multiple "flavours" of the same framework.  
+- 2 custom definitions (`H2OAutoML_blending` and `H2OAutoML_custom`) simply extending the existing `H2OAutoML` definition (therefore inheriting from all its properties, including the `module` one), but overriding the `params` property, thus allowing to provide multiple "flavours" of the same framework.
 
 The frameworks defined in this example can then be used like any other framework as soon as both the framework module and the definition file are made available to the application: in our case, this is done by the creation of the integration modules under `examples/custom/extensions` and by exposing the definitions in `examples/custom/frameworks.yaml` thanks to the entry in `examples/custom/config.yaml`:
 ```yaml
@@ -507,8 +567,8 @@ def run(*args, **kwargs):
 ```
 
 where we see that the module should expose (only `run` is actually required) the following functions:
-- `setup` (optional): called by the application to setup the given framework, usually by simply running a `setup.sh` script that will be responsible for potentially creating a local virtual env, downloading and installing the dependencies. 
-   The `setup` function can also receive the optional `setup_args` param from the [framework definition](#framework-definition) as an argument. 
+- `setup` (optional): called by the application to setup the given framework, usually by simply running a `setup.sh` script that will be responsible for potentially creating a local virtual env, downloading and installing the dependencies.
+   The `setup` function can also receive the optional `setup_args` param from the [framework definition](#framework-definition) as an argument.
 - `run`: called by the benchmark application to execute a task against the framework, using the selected dataset and constraints. We will describe the parameters in detail below, for now, just note that by convention, we just load the `exec.py` file from the module and delegate the execution to its `run` function.
 - `docker_commands` (optional): called by the application to collect docker instructions that are specific to the framework. If the framework requires a `setup` phase, then the string returned by this function should at least ensure that the setup is also executed during the docker image creation, that's one reason why it is preferable to do all the setup in a `setup.sh` script, to allow the docker support above.
 
@@ -538,7 +598,7 @@ Noticeable differences with a basic integration:
 
 *Note A*:
 
-As the serialization/deserialization of `numpy` arrays can be costly for very large datasets, it is recommended to use dataset serialization only if the framework itself doesn't support loading datasets from files. 
+As the serialization/deserialization of `numpy` arrays can be costly for very large datasets, it is recommended to use dataset serialization only if the framework itself doesn't support loading datasets from files.
 
 This means that, in the `__init__.py` instead of implementing `run` as:
 ```python
@@ -639,16 +699,16 @@ Here are the main differences:
 
 #### Add a default framework
 
-Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.  
+Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.
 
 *NOTE:*
 There are a few requirements when integrating a new default framework:
 - The code snippet triggering the training should use only defaults (no AutoML hyper parameters), plus possibly a generic `**kwargs` in order to support `params` section in custom framework definitions.  In other words, one of the requirements for being included in the benchmark is that the framework is submitted without any tweaks to default settings.  This is to prevent submissions (systems) from overfitting or tuning to the benchmark.
 - There must be a way to limit the runtime of the algorithm (a maximum runtime parameter).
 - Exceptions:
-  - the problem type ("classification", "regression", "binary", "multiclass"): this is available through `config.type` or `dataset.type`. 
+  - the problem type ("classification", "regression", "binary", "multiclass"): this is available through `config.type` or `dataset.type`.
   - information about data, for example the column types: available through the `dataset` object.
-  - time, cpu and memory constraints: those must be provided by the benchmark application through the `config` object.  
+  - time, cpu and memory constraints: those must be provided by the benchmark application through the `config` object.
   - the objective function: provided by `config.metric` (usually requires a translation for a given framework).
   - seed: provided by `config.seed`
   - paths to folders (output, temporary...): if possible, use `config.output_dir` or a subfolder (see existing integrations).
@@ -661,7 +721,7 @@ good_framework:
 bad_framework:
    version: "0.0.1"
    project: "http://go.to/bad_framework"
-   params: 
+   params:
      enable_this: true
      use: ['this', 'that']
 ```
@@ -671,7 +731,7 @@ Using the instructions above:
  1. create a private branch for your integration changes.
  1. create the framework module (e.g. `MyFramework`) under `frameworks` folder.
  1. define the module (if possible without any `params`) in `resources/frameworks.yaml`.
- 1. try to setup the framework: 
+ 1. try to setup the framework:
     > python runbenchmark.py myframework -s only
  1. fixes the framework setup until it works: the setup being usually a simple `setup.sh` script, you should be able to test it directly without using the application.
  1. try to run simple test against one fold using defaults (`test` benchmark and `test` constraints) with the `-Xtest_mode` that will trigger additional validations:
@@ -679,9 +739,9 @@ Using the instructions above:
  1. fix the module integration code until the test produce all results with no error (if the integration generated an error, it is visible in the results).
  1. if this works, validate it against the `validation` dataset using one fold:
     > python runbenchmark.py myframework validation 1h4c -f 0 -Xtest_mode
- 1. if this works, try to run it in docker to validate the docker image setup: 
+ 1. if this works, try to run it in docker to validate the docker image setup:
     > python runbenchmark.py myframework -m docker
- 1. if this works, try to run it in aws: 
+ 1. if this works, try to run it in aws:
     > python runbenchmark.py myframework -m aws
  1. add a brief description of the framework to the documentation in [docs/automl_overview](./automl_overview.md) following the same formatting as the other entries.
  1. create a pull request, and ask a review from authors of `automlbenchmark`: they'll also be happy to help you during this integration.
@@ -774,7 +834,7 @@ Here is a short description of each column:
 - `tag`: the branch tag of the `automlbenchmark` app that was running the job.
 - `utc`: the UTC timestamp at the job completion.
 - `duration`: the training duration: the framework integration is supposed to provide this information to ensure that it takes only into account the time taken by the framework itself. When benchmarking large data, the application can use a significant amount of time to prepare the data: this additional time doesn't appear in this `duration` column.
-- `models`: for some frameworks, it is possible to know how many models in total were trained by the AutoML framework. 
+- `models`: for some frameworks, it is possible to know how many models in total were trained by the AutoML framework.
 - `seed`: the seed or random state passed to the framework. With some frameworks, it is enough to obtain reproducible results. Note that the seed can be specified at the command line using `-Xseed=` arg (for example `python randomforest -Xseed=1452956522`): when there are multiple folds, the seed is then incremented by the fold number.
 - `info`: additional info in text format, this usually contains error messages if the job failed.
 - `acc`, `auc`, `logloss` metrics: all the metrics that were computed based on the generated predictions. For each job/row, one of them matches the `result` column, the others are purely informative. Those additional metric columns are simply added in alphabetical order.
@@ -792,9 +852,9 @@ This predictions file:
   - `predictions` column containing the predictions of the test predictor data (`test.X`) by the model trained by the framework,
   - `truth` being the test target data (`test.y`).
 - for regression problems, the header should look like `predictions | truth`, with
-  - `predictions` column containing the predictions of the test predictor data (`test.X`) by the model trained by the framework, 
-  - `truth` being the test target data (`test.y`). 
-  
+  - `predictions` column containing the predictions of the test predictor data (`test.X`) by the model trained by the framework,
+  - `truth` being the test target data (`test.y`).
+
 _Examples_:
 
 Predictions sample on `binary` classification (`kc2`):
@@ -810,13 +870,13 @@ no,yes,predictions,truth
 ```
 as table:
 
-| no                | yes                  | predictions | truth | 
-|-------------------|----------------------|-------------|-------| 
-| 0.965857617846013 | 0.034142382153998944 | no          | no    | 
-| 0.965857617846013 | 0.034142382153998944 | no          | no    | 
-| 0.5845            | 0.4155               | no          | no    | 
-| 0.6795            | 0.3205               | no          | no    | 
-| 0.965857617846013 | 0.034142382153998944 | no          | no    | 
+| no                | yes                  | predictions | truth |
+|-------------------|----------------------|-------------|-------|
+| 0.965857617846013 | 0.034142382153998944 | no          | no    |
+| 0.965857617846013 | 0.034142382153998944 | no          | no    |
+| 0.5845            | 0.4155               | no          | no    |
+| 0.6795            | 0.3205               | no          | no    |
+| 0.965857617846013 | 0.034142382153998944 | no          | no    |
 
 
 Predictions sample on `multiclass` classification (`iris`):
@@ -842,23 +902,23 @@ Iris-setosa,Iris-versicolor,Iris-virginica,predictions,truth
 ```
 as table:
 
-| Iris-setosa | Iris-versicolor | Iris-virginica | predictions     | truth           | 
-|-------------|-----------------|----------------|-----------------|-----------------| 
-| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     | 
-| 0.9715      | 0.028           | 0.0005         | Iris-setosa     | Iris-setosa     | 
-| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     | 
-| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     | 
-| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     | 
-| 0.0         | 1.0             | 0.0            | Iris-versicolor | Iris-versicolor | 
-| 0.0         | 0.976           | 0.024          | Iris-versicolor | Iris-versicolor | 
-| 0.0         | 0.994           | 0.006          | Iris-versicolor | Iris-versicolor | 
-| 0.0         | 0.9925          | 0.0075         | Iris-versicolor | Iris-versicolor | 
-| 0.0         | 0.995           | 0.005          | Iris-versicolor | Iris-versicolor | 
-| 0.0         | 0.829           | 0.171          | Iris-versicolor | Iris-virginica  | 
-| 0.0         | 0.008           | 0.992          | Iris-virginica  | Iris-virginica  | 
-| 0.0         | 0.0005          | 0.9995         | Iris-virginica  | Iris-virginica  | 
-| 0.0         | 0.0015          | 0.9985         | Iris-virginica  | Iris-virginica  | 
-| 0.0         | 0.0395          | 0.9605         | Iris-virginica  | Iris-virginica  | 
+| Iris-setosa | Iris-versicolor | Iris-virginica | predictions     | truth           |
+|-------------|-----------------|----------------|-----------------|-----------------|
+| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     |
+| 0.9715      | 0.028           | 0.0005         | Iris-setosa     | Iris-setosa     |
+| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     |
+| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     |
+| 1.0         | 0.0             | 0.0            | Iris-setosa     | Iris-setosa     |
+| 0.0         | 1.0             | 0.0            | Iris-versicolor | Iris-versicolor |
+| 0.0         | 0.976           | 0.024          | Iris-versicolor | Iris-versicolor |
+| 0.0         | 0.994           | 0.006          | Iris-versicolor | Iris-versicolor |
+| 0.0         | 0.9925          | 0.0075         | Iris-versicolor | Iris-versicolor |
+| 0.0         | 0.995           | 0.005          | Iris-versicolor | Iris-versicolor |
+| 0.0         | 0.829           | 0.171          | Iris-versicolor | Iris-virginica  |
+| 0.0         | 0.008           | 0.992          | Iris-virginica  | Iris-virginica  |
+| 0.0         | 0.0005          | 0.9995         | Iris-virginica  | Iris-virginica  |
+| 0.0         | 0.0015          | 0.9985         | Iris-virginica  | Iris-virginica  |
+| 0.0         | 0.0395          | 0.9605         | Iris-virginica  | Iris-virginica  |
 
 Predictions sample on `regression` (`cholesterol`):
 
@@ -873,13 +933,13 @@ predictions,truth
 ```
 as table:
 
-| predictions | truth | 
-|-------------|-------| 
-| 241.204     | 207.0 | 
-| 248.9575    | 249.0 | 
-| 302.278     | 268.0 | 
-| 225.9215    | 234.0 | 
-| 226.6995    | 201.0 | 
+| predictions | truth |
+|-------------|-------|
+| 241.204     | 207.0 |
+| 248.9575    | 249.0 |
+| 302.278     | 268.0 |
+| 225.9215    | 234.0 |
+| 226.6995    | 201.0 |
 
 
 ### Extract more information
@@ -935,11 +995,11 @@ will create a subfolder `randomforest_validation_1h4c_aws_20200108T184305`.
 
 
 Then each subfolder contains:
- - a `score` folder with a `results.csv` file concatenating the results from all the tasks in the benchmark, as well as potentially other individual results for each task.  
+ - a `score` folder with a `results.csv` file concatenating the results from all the tasks in the benchmark, as well as potentially other individual results for each task.
  - a `predictions` folder with the predictions for each task in the benchmark.
  - a `logs` folder: only if benchmark was executed with `-o output_dir` argument.
  - possibly more folders if the framework saves additional artifacts.
- 
+
  Also the `output_dir` contains a `results.csv` concatenating **ALL results** from all subfolders.
 
 
@@ -951,7 +1011,7 @@ The application can collect various logs:
 - local benchmark application logs: those are always collected. For each run, the application generated 2 log files locally:
   - `runbenchmark_{timestamp}.log`: contains logs for the application only (from DEBUG level).
   - `runbenchmark_{timestamp}_full.log`: contains logs for the application + other Python libraries (from INFO level); e.g. `boto3` logs when running in `aws` mode.
-- remote application logs: for `aws` mode only, logs generated on the remote instances are automatically downloaded to the results folder, together with other result artifacts. 
+- remote application logs: for `aws` mode only, logs generated on the remote instances are automatically downloaded to the results folder, together with other result artifacts.
 - framework logs (optional): if the framework integration supports it, it is possible to ask for the framework logs by creating a custom framework definition as follow:
   ```yaml
   H2OAutoML:
@@ -986,7 +1046,7 @@ _Examples of method duration info when using this custom profiling_:
 [PROFILING] `amlb.data.Datasplit.X_enc` executed in 6.570s.
 ```
 
-### Python library version conflict 
+### Python library version conflict
 see [Framework integration](#frameworks-requiring-a-dedicated-virtual-env)
 
 ### Framework setup is not executed

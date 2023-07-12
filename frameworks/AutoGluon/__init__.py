@@ -44,6 +44,7 @@ def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
         id_column=dataset.id_column,
         timestamp_column=dataset.timestamp_column,
         forecast_horizon_in_steps=dataset.forecast_horizon_in_steps,
+        freq=dataset.freq,
         seasonality=dataset.seasonality,
         repeated_abs_seasonal_error=dataset.repeated_abs_seasonal_error,
         repeated_item_id=dataset.repeated_item_id,

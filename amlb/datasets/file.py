@@ -320,6 +320,8 @@ class TimeSeriesDataset(FileDataset):
         super().__init__(None, None, target=target, features=features, type="timeseries")
         if config['forecast_horizon_in_steps'] is None:
             raise AssertionError("Task definition for timeseries must include `forecast_horizon_in_steps`")
+        if config['freq'] is None:
+            raise AssertionError("Task definition for timeseries must include `freq`")
         if config['seasonality'] is None:
             raise AssertionError("Task definition for timeseries must include `seasonality`")
 
@@ -336,6 +338,7 @@ class TimeSeriesDataset(FileDataset):
             raise ValueError(f'The timestamp_column with name {config["timestamp_column"]} is missing from the dataset')
 
         self.forecast_horizon_in_steps = int(config['forecast_horizon_in_steps'])
+        self.freq = pd.tseries.frequencies.to_offset(config['freq']).freqstr
         self.seasonality = int(config['seasonality'])
         self.id_column = config['id_column']
         self.timestamp_column = config['timestamp_column']
