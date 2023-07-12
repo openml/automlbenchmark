@@ -34,13 +34,17 @@ class FileLoader:
     def load(self, dataset, fold=0):
         dataset = dataset if isinstance(dataset, ns) else ns(path=dataset)
         log.debug("Loading dataset %s", dataset)
+        target = dataset['target']
+        type_ = dataset['type']
+        features = dataset['features']
+
+        if DatasetType[type_] == DatasetType.timeseries:
+            return TimeSeriesDataset(path=dataset['path'], fold=fold, target=target, features=features, cache_dir=self._cache_dir, config=dataset)
+
         paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold, name=dataset['name'] if 'name' in dataset else None)
         assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
         assert fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
 
-        target = dataset['target']
-        type_ = dataset['type']
-        features = dataset['features']
         ext = os.path.splitext(paths['train'][fold])[1].lower()
         train_path = paths['train'][fold]
         test_path = paths['test'][fold] if len(paths['test']) > 0 else None
@@ -48,14 +52,7 @@ class FileLoader:
         if ext == '.arff':
             return ArffDataset(train_path, test_path, target=target, features=features, type=type_)
         elif ext == '.csv':
-            if type_ is not None and DatasetType[type_] == DatasetType.timeseries and dataset['timestamp_column'] is None:
-                log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
-                dataset = deepcopy(dataset)
-                dataset['timestamp_column'] = "timestamp"
-            csv_dataset = CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=dataset['timestamp_column'] if 'timestamp_column' in dataset else None)
-            if csv_dataset.type == DatasetType.timeseries:
-                csv_dataset = self.extend_dataset_with_timeseries_config(csv_dataset, dataset)
-            return csv_dataset
+            return CsvDataset(train_path, test_path, target=target, features=features, type=type_)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
@@ -134,48 +131,6 @@ class FileLoader:
 
     def __repr__(self):
         return repr_def(self)
-
-    def extend_dataset_with_timeseries_config(self, dataset, dataset_config):
-        dataset = deepcopy(dataset)
-        dataset_config = deepcopy(dataset_config)
-        if dataset_config['forecast_horizon_in_steps'] is None:
-            raise AssertionError("Task definition for timeseries must include `forecast_horizon_in_steps`")
-        if dataset_config['seasonality'] is None:
-            raise AssertionError("Task definition for timeseries must include `seasonality`")
-        if dataset_config['id_column'] is None:
-            log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`.")
-            dataset_config['id_column'] = 'item_id'
-
-        dataset.timestamp_column = dataset_config['timestamp_column']
-        dataset.id_column = dataset_config['id_column']
-        dataset.forecast_horizon_in_steps = int(dataset_config['forecast_horizon_in_steps'])
-        dataset.seasonality = int(dataset_config['seasonality'])
-
-        num_timeseries = dataset.train.data[dataset.id_column].nunique()
-        if (len(dataset.test.data) - len(dataset.train.data)) / num_timeseries != dataset.forecast_horizon_in_steps:
-            raise AssertionError("Test dataset must contain train data + values in the forecast horizon")
-
-        # Compute in-sample seasonal error - needed later for metrics like MASE.
-        # We need to store this information here because Result object has no access to past time series values.
-        train_set_with_index = dataset.train.data.set_index(dataset.id_column)
-        seasonal_diffs = train_set_with_index.groupby(level=dataset.id_column, sort=False).diff(dataset.seasonality).abs()
-        abs_seasonal_error = seasonal_diffs.groupby(level=dataset.id_column, sort=False).mean().fillna(1.0).values
-        # Repeat seasonal error & item_id for each time step in the forecast horizon
-        dataset.repeated_abs_seasonal_error = np.repeat(abs_seasonal_error, dataset.forecast_horizon_in_steps)
-        dataset.repeated_item_id = np.repeat(np.arange(num_timeseries), dataset.forecast_horizon_in_steps)
-
-        min_context_length_data_train = dataset.train.X.groupby(dataset.id_column).count().values.min()
-        min_sequence_length_data_test = dataset.test.X.groupby(dataset.id_column).count().values.min()
-        min_context_length_data_test = min_sequence_length_data_test - dataset.forecast_horizon_in_steps
-        if min_context_length_data_test < 1:
-            raise ValueError(f'The minimum context length of the test data is smaller than 1. Consider reducing the forecast horizon to {min_sequence_length_data_test - 1}.')
-        if min_context_length_data_train < 2 * dataset.forecast_horizon_in_steps + 1:
-            log.warning(f'The minimum context length of the train data is smaller than (2 x forecast horizon + 1). Consider reducing the forecast horizon to {math.floor((min_context_length_data_train - 1) / 2)}.')
-        if min_context_length_data_test < 2 * dataset.forecast_horizon_in_steps:
-            log.warning(f'The minimum context length of the train data is smaller than (2 x forecast horizon). Consider reducing the forecast horizon to {math.floor((min_context_length_data_train) / 2)}.')
-
-        return dataset
-
 
 
 class FileDataset(Dataset):
@@ -351,26 +306,99 @@ class ArffDatasplit(FileDatasplit):
 class CsvDataset(FileDataset):
 
     def __init__(self, train_path, test_path,
-                 target=None, features=None, type=None, timestamp_column=None):
+                 target=None, features=None, type=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
         super().__init__(None, None,
                          target=target, features=features, type=type)
-        self._train = CsvDatasplit(self, train_path, timestamp_column=timestamp_column)
-        self._test = CsvDatasplit(self, test_path, timestamp_column=timestamp_column)
+        self._train = CsvDatasplit(self, train_path)
+        self._test = CsvDatasplit(self, test_path)
         self._dtypes = None
+
+
+class TimeSeriesDataset(FileDataset):
+    def __init__(self, path, fold, target, features, cache_dir, config):
+        super().__init__(None, None, target=target, features=features, type="timeseries")
+        if config['forecast_horizon_in_steps'] is None:
+            raise AssertionError("Task definition for timeseries must include `forecast_horizon_in_steps`")
+        if config['seasonality'] is None:
+            raise AssertionError("Task definition for timeseries must include `seasonality`")
+
+        full_data = read_csv(path)
+        if config['id_column'] is None:
+            log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`")
+            config['id_column'] = 'item_id'
+        if config['id_column'] not in full_data.columns:
+            raise ValueError(f'The id_column with name {config["id_column"]} is missing from the dataset')
+        if config['timestamp_column'] is None:
+            log.warning("Warning: For timeseries task, setting undefined `timestamp_column` to `timestamp`")
+            config['timestamp_column'] = 'timestamp'
+        if config['timestamp_column'] not in full_data.columns:
+            raise ValueError(f'The timestamp_column with name {config["timestamp_column"]} is missing from the dataset')
+
+        self.forecast_horizon_in_steps = int(config['forecast_horizon_in_steps'])
+        self.seasonality = int(config['seasonality'])
+        self.id_column = config['id_column']
+        self.timestamp_column = config['timestamp_column']
+        self.abs_seasonal_error = 'abs_seasonal_error'
+        if self.abs_seasonal_error in full_data.columns:
+            raise ValueError(f'Dataset contains column with name `{self.abs_seasonal_error_column}` that is reserved for internal usage')
+
+        full_data[self.timestamp_column] = pd.to_datetime(full_data[self.timestamp_column])
+        save_dir = os.path.join(cache_dir, config['name'], str(fold))
+        train_path, test_path = self.save_train_and_test_splits(full_data, fold=fold, save_dir=save_dir)
+
+        self._train = CsvDatasplit(self, train_path)
+        self._test = CsvDatasplit(self, test_path)
+        self._dtypes = None
+
+        # Store repeated item_id & in-sample seasonal error for each time step in the forecast horizon - needed later for metrics like MASE.
+        # We need to store this information here because Result object has no access to past time series values.
+        self.repeated_item_id = self.test.data[self.id_column].cat.codes.to_numpy()
+        self.repeated_abs_seasonal_error = self.compute_seasonal_error()
+
+    def save_train_and_test_splits(self, full_data, fold, save_dir):
+        full_data = full_data.sort_values(by=[self.id_column, self.timestamp_column])
+        shortest_ts_length = full_data.groupby(self.id_column).size().min()
+        min_expected_ts_length = (fold + 1) * self.forecast_horizon_in_steps
+        if shortest_ts_length <= min_expected_ts_length:
+            raise ValueError(
+                f'All time series in the dataset must have length > `(fold + 1) * forecast_horizon_in_steps` '
+                f'(at least {min_expected_ts_length + 1}), but shortest time series has length {shortest_ts_length}'
+            )
+        # Remove the last `steps_to_remove` steps from each time series to obtain the correct fold
+        if fold > 0:
+            steps_to_remove = (fold + 1) * self.forecast_horizon_in_steps
+            full_data = full_data.groupby(self.id_column, as_index=False).nth(slice(None, -steps_to_remove))
+        train_data = full_data.groupby(self.id_column, as_index=False).nth(slice(None, -self.forecast_horizon_in_steps))
+        test_data = full_data.groupby(self.id_column, as_index=False).nth(slice(-self.forecast_horizon_in_steps, None))
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        train_path = os.path.join(save_dir, "train.csv")
+        test_path = os.path.join(save_dir, "test.csv")
+
+        train_data.to_csv(train_path, index=False)
+        test_data.to_csv(test_path, index=False)
+        return train_path, test_path
+
+    def compute_seasonal_error(self):
+        train_data_with_index = self.train.data.set_index(self.id_column)
+        seasonal_diffs = train_data_with_index[self.target.name].groupby(level=self.id_column).diff(self.seasonality).abs()
+        abs_seasonal_error = seasonal_diffs.groupby(level=self.id_column).mean().fillna(1.0).values
+        # Repeat seasonal error for each time step in the forecast horizon
+        return np.repeat(abs_seasonal_error, self.forecast_horizon_in_steps)
 
 
 class CsvDatasplit(FileDatasplit):
 
-    def __init__(self, dataset, path, timestamp_column=None):
+    def __init__(self, dataset, path):
         super().__init__(dataset, format='csv', path=path)
         self._ds = None
-        self.timestamp_column = timestamp_column
 
     def _ensure_loaded(self):
         if self._ds is None:
             if self.dataset._dtypes is None:
-                df = read_csv(self.path, timestamp_column=self.timestamp_column)
+                df = read_csv(self.path)
                 # df = df.convert_dtypes()
                 dt_conversions = {name: 'category'
                                   for name, dtype in zip(df.dtypes.index, df.dtypes.values)
@@ -388,7 +416,7 @@ class CsvDatasplit(FileDatasplit):
                 self.dataset._dtypes = self._ds.dtypes
 
             else:
-                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict(), timestamp_column=self.timestamp_column)
+                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict())
 
     @profile(logger=log)
     def load_metadata(self):

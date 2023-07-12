@@ -32,12 +32,6 @@ def run(dataset, config):
         timestamp_column=dataset.timestamp_column,
     )
 
-    test_data = TimeSeriesDataFrame.from_path(
-        dataset.test_path,
-        id_column=dataset.id_column,
-        timestamp_column=dataset.timestamp_column,
-    )
-
     predictor_path = tempfile.mkdtemp() + os.sep
     with Timer() as training:
         predictor = TimeSeriesPredictor(
@@ -58,11 +52,21 @@ def run(dataset, config):
         predictions = pd.DataFrame(predictor.predict(train_data))
 
     predictions_only = get_point_forecast(predictions, config.metric)
-    test_data_future = test_data.slice_by_timestep(-prediction_length, None)
-    assert test_data_future.index.equals(predictions.index), "Predictions and test data index do not match"
-    truth_only = test_data_future[dataset.target].values
 
-    leaderboard = predictor.leaderboard(test_data, silent=True)
+    # Add columns necessary for the metric computation to `optional_columns`
+    test_data_future = pd.read_csv(dataset.test_path, parse_dates=[dataset.timestamp_column])
+    optional_columns = dict(
+        repeated_item_id=np.load(dataset.repeated_item_id),
+        repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
+    )
+    for q in config.quantile_levels:
+        optional_columns[str(q)] = predictions[str(q)].values
+
+    future_index = pd.MultiIndex.from_frame(test_data_future[[dataset.id_column, dataset.timestamp_column]])
+    assert predictions.index.equals(future_index), "Predictions and test data index do not match"
+
+    test_data_full = pd.concat([train_data, test_data_future.set_index([dataset.id_column, dataset.timestamp_column])])
+    leaderboard = predictor.leaderboard(test_data_full, silent=True)
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         log.info(leaderboard)
@@ -72,16 +76,13 @@ def run(dataset, config):
     save_artifacts(predictor=predictor, leaderboard=leaderboard, config=config)
     shutil.rmtree(predictor.path, ignore_errors=True)
 
-    optional_columns = dict(
-        repeated_item_id=np.load(dataset.repeated_item_id),
-        repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
-    )
-    for q in config.quantile_levels:
-        optional_columns[str(q)] = predictions[str(q)].values
+    # Kill child processes spawned by Joblib to avoid spam in the AMLB log
+    from joblib.externals.loky import get_reusable_executor
+    get_reusable_executor().shutdown(wait=True)
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions_only,
-                  truth=truth_only,
+                  truth=test_data_future[dataset.target].values,
                   target_is_encoded=False,
                   models_count=num_models_trained,
                   training_duration=training.duration,
@@ -107,11 +108,12 @@ def get_eval_metric(config):
 
 def get_point_forecast(predictions, metric):
     # Return median for metrics optimized by median, if possible
-    if metric.lower() in ["mape", "smape", "mase"] and "0.5" in predictions.columns:
+    if metric.lower() in ["rmse", "mse"] or "0.5" not in predictions.columns:
+        log.info("Using mean as point forecast")
+        return predictions["mean"].values
+    else:
         log.info("Using median as point forecast")
         return predictions["0.5"].values
-    else:
-        return predictions["mean"].values
 
 
 def save_artifacts(predictor, leaderboard, config):
