@@ -1,20 +1,20 @@
 import logging
+import numpy as np
 import os
+import pandas as pd
 import shutil
-import warnings
 import sys
 import tempfile
-import numpy as np
+import warnings
 warnings.simplefilter("ignore")
 
 if sys.platform == 'darwin':
     os.environ['OMP_NUM_THREADS'] = '1'
 
-import pandas as pd
-
 from autogluon.core.utils.savers import save_pd, save_pkl
 from autogluon.timeseries import TimeSeriesPredictor, TimeSeriesDataFrame
 from autogluon.timeseries.version import __version__
+from joblib.externals.loky import get_reusable_executor
 
 from frameworks.shared.callee import call_run, result, output_subdir
 from frameworks.shared.utils import Timer, zip_path
@@ -51,9 +51,7 @@ def run(dataset, config):
     with Timer() as predict:
         predictions = pd.DataFrame(predictor.predict(train_data))
 
-    predictions_only = get_point_forecast(predictions, config.metric)
-
-    # Add columns necessary for the metric computation to `optional_columns`
+    # Add columns necessary for the metric computation + quantile forecast to `optional_columns`
     test_data_future = pd.read_csv(dataset.test_path, parse_dates=[dataset.timestamp_column])
     optional_columns = dict(
         repeated_item_id=np.load(dataset.repeated_item_id),
@@ -62,6 +60,10 @@ def run(dataset, config):
     for q in config.quantile_levels:
         optional_columns[str(q)] = predictions[str(q)].values
 
+    predictions_only = get_point_forecast(predictions, config.metric)
+    truth_only = test_data_future[dataset.target].values
+
+    # Sanity check - make sure predictions are ordered correctly
     future_index = pd.MultiIndex.from_frame(test_data_future[[dataset.id_column, dataset.timestamp_column]])
     assert predictions.index.equals(future_index), "Predictions and test data index do not match"
 
@@ -71,20 +73,17 @@ def run(dataset, config):
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         log.info(leaderboard)
 
-    num_models_trained = len(leaderboard)
-
     save_artifacts(predictor=predictor, leaderboard=leaderboard, config=config)
     shutil.rmtree(predictor.path, ignore_errors=True)
 
     # Kill child processes spawned by Joblib to avoid spam in the AMLB log
-    from joblib.externals.loky import get_reusable_executor
     get_reusable_executor().shutdown(wait=True)
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions_only,
-                  truth=test_data_future[dataset.target].values,
+                  truth=truth_only,
                   target_is_encoded=False,
-                  models_count=num_models_trained,
+                  models_count=len(leaderboard),
                   training_duration=training.duration,
                   predict_duration=predict.duration,
                   optional_columns=pd.DataFrame(optional_columns))
