@@ -362,8 +362,8 @@ class TimeSeriesDataset(FileDataset):
     def save_train_and_test_splits(self, full_data, fold, save_dir):
         full_data = full_data.sort_values(by=[self.id_column, self.timestamp_column])
         shortest_ts_length = full_data.groupby(self.id_column).size().min()
-        min_expected_ts_length = (fold + 1) * self.forecast_horizon_in_steps
-        if shortest_ts_length <= min_expected_ts_length:
+        min_expected_ts_length = (fold + 1) * self.forecast_horizon_in_steps + 1
+        if shortest_ts_length < min_expected_ts_length:
             raise ValueError(
                 f'All time series in the dataset must have length > `(fold + 1) * forecast_horizon_in_steps` '
                 f'(at least {min_expected_ts_length + 1}), but shortest time series has length {shortest_ts_length}'

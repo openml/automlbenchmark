@@ -300,10 +300,11 @@ The following file contains 2 time series with daily frequency: `A` with 3 obser
 | A       |	2020-01-01|	2.0    |
 | A       |	2020-01-02|	1.0    |
 | A       |	2020-01-03|	5.0    |
-| B       |	2019-01-01|	8.0    |
-| B       |	2019-01-01|	2.0    |
-| B       |	2019-01-01|	1.0    |
-| B       |	2019-01-01|	9.0    |
+| B       |	2019-05-02|	8.0    |
+| B       |	2019-05-03|	2.0    |
+| B       |	2019-05-04|	1.0    |
+| B       |	2019-05-05|	9.0    |
+
 
 Suppose the above table is saved as a CSV file under `/path/to/data.csv`.
 
@@ -325,14 +326,20 @@ The configuration of a time series task **must** include the following parameter
 - `path` - a local or remote (e.g., S3) path to the CSV file with time series data.
 - `freq` - a [pandas-compatible frequency string](https://pandas.pydata.org/docs/user_guide/timeseries.html#offset-aliases) that denotes the frequency of the time series. For example, `D` for daily, `H` for hourly, or `15min` for 15-minute frequency.
 - `forecast_horizon_in_steps` - a positive integer denoting how many future time series values need to be predicted.
-- `seasonality` - a positive integer denoting the seasonal period of the data that is used for computing metrics like [mean absolute scaled error](https://en.wikipedia.org/wiki/Mean_absolute_scaled_error#Seasonal_time_series).
-
+- `seasonality` - a positive integer denoting the seasonal period of the data, measured in steps. This parameter is used for computing metrics like [mean absolute scaled error](https://en.wikipedia.org/wiki/Mean_absolute_scaled_error#Seasonal_time_series) (denoted as *m* on Wikipedia).
 
 **Note**:
-- AMLB automatically generates the train & test splits from the raw data depending on the chosen `forecast_horizon_in_steps` and `fold` parameters. For each time series `x` in the datasets, the folds are constructed as:
-  - In fold `0`, use `x[:-forecast_horizon_in_steps]` as the train set and `x[-forecast_horizon_in_steps:]` as the test set (forecast horizon).
-  - In fold `1`, use `x[:-2*forecast_horizon_in_steps]` as the train set and `x[-2*forecast_horizon_in_steps:-forecast_horizon_in_steps]` as the test set.
-  - In fold `n`, use `x[:-(n+1)*forecast_horizon_in_steps]` as the train set and `x[-(n+1)*forecast_horizon_in_steps:-n*forecast_horizon_in_steps]` as the test set.
+- AMLB automatically generates the train & test splits from the raw data depending on the chosen `forecast_horizon_in_steps` and `folds` parameters. Assuming `forecast_horizon_in_steps = K` and `folds = n`, and each time series has length `n * K`, the folds will be generated as follows:
+
+  rows | fold 0 | fold 1 | ... | fold (n-2) | fold (n-1)
+  -- | -- | -- | -- | -- | --
+  1..K | train | train | ... | train | train
+  K..2K | train | train | ... | train | test
+  2..3K | train  | train | ... | test |
+  ... |   |   |     |  
+  (n-2)K...(n-1)K | train  |  test   | |
+  (n-1)K...nK | test  |    | |
+
 - Time series may have different lengths or have different starting timestamps, but need to have the same frequency
 - The shortest time series in the dataset must have length of at least `folds * forecast_horizon_in_step + 1`
 - All time series must have regular timestamp index
