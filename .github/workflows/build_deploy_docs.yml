@@ -39,7 +39,7 @@ jobs:
       - name: Replace GITHUB token
         # Use different sed delimiter to avoid clashing with forward slash in URL
         run: |
-          find docs/ -type f -exec sed -i "s@GITHUB@${GITHUB_REPOSITORY}\/blob\/master@g" {} \;
+          find docs/ -type f -exec sed -i "s@GITHUB@${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}\/blob\/master@g" {} \;
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11' 
