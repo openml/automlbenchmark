@@ -300,3 +300,66 @@ def test_load_timeseries_task_csv(file_loader):
     ds_def['train'] = ds.train.path
     ds_def['test'] = ds.test.path
     _assert_data_paths(ds, ds_def)
+
+
+@pytest.mark.parametrize("missing_key", ["freq", "forecast_horizon_in_steps", "seasonality"])
+def test_when_timeseries_task_key_is_missing_then_exception_is_raised(file_loader, missing_key):
+    task_kwargs = dict(
+        path=os.path.join(res, "m4_hourly_subset.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        target="target",
+        type="timeseries",
+    )
+    task_kwargs.pop(missing_key)
+    ds_def = ns.from_dict(task_kwargs)
+    with pytest.raises(AssertionError, match=f"Task definition for timeseries must include `{missing_key}`"):
+        file_loader.load(ds_def)
+
+
+@pytest.mark.parametrize("missing_key", ["id_column", "timestamp_column"])
+def test_given_nondefault_column_names_when_key_is_missing_then_exception_is_raised(file_loader, missing_key):
+    task_kwargs = dict(
+        path=os.path.join(res, "m4_hourly_subset_nondefault_cols.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        type="timeseries",
+        target="CustomTarget",
+        id_column="CustomId",
+        timestamp_column="CustomTimestamp",
+    )
+    task_kwargs.pop(missing_key)
+    ds_def = ns.from_dict(task_kwargs)
+    with pytest.raises(ValueError, match=missing_key):
+        file_loader.load(ds_def)
+
+
+def test_given_nondefault_column_names_then_timeseries_dataset_can_be_loaded(file_loader):
+    task_kwargs = dict(
+        path=os.path.join(res, "m4_hourly_subset_nondefault_cols.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        type="timeseries",
+        target="CustomTarget",
+        id_column="CustomId",
+        timestamp_column="CustomTimestamp",
+    )
+    ds_def = ns.from_dict(task_kwargs)
+    ds = file_loader.load(ds_def)
+    _assert_data_consistency(ds, check_encoded=False)
+
+
+@pytest.mark.parametrize("forecast_horizon, fold", [(50, 2), (100, 0), (10, 9)])
+def test_if_timeseries_dataset_too_short_for_requested_fold_then_exception_is_raised(file_loader, forecast_horizon, fold):
+    ds_def = ns(
+        path=os.path.join(res, "m4_hourly_subset.csv"),
+        forecast_horizon_in_steps=forecast_horizon,
+        seasonality=24,
+        freq="H",
+        type="timeseries",
+    )
+    with pytest.raises(ValueError, match="All time series in the dataset must have length"):
+        file_loader.load(ds_def, fold=fold)
