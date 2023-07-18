@@ -26,7 +26,7 @@ from .utils import profile, path_from_split, repr_def, split_path, touch
 log = logging.getLogger(__name__)
 
 
-def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None):
+def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None, timestamp_column=None):
     """
     read csv file to DataFrame.
 
@@ -37,13 +37,21 @@ def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dty
     :param header: if the columns header should be read.
     :param as_data_frame: if the result should be returned as a data frame (default) or a numpy array.
     :param dtype: data type for columns.
+    :param timestamp_column: name of the column that should be parsed as date.
     :return: a DataFrame
     """
+    if timestamp_column is None:
+        parse_dates = None
+    else:
+        if dtype is not None:
+            dtype.pop(timestamp_column, None)
+        parse_dates = [timestamp_column]
     df = pd.read_csv(path,
                      nrows=nrows,
                      header=0 if header else None,
                      index_col=0 if index else None,
-                     dtype=dtype)
+                     dtype=dtype,
+                     parse_dates=parse_dates)
     return df if as_data_frame else df.values
 
 

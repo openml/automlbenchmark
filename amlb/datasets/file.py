@@ -38,7 +38,7 @@ class FileLoader:
         type_ = dataset['type']
         features = dataset['features']
 
-        if DatasetType[type_] == DatasetType.timeseries:
+        if type_ and DatasetType[type_] == DatasetType.timeseries:
             return TimeSeriesDataset(path=dataset['path'], fold=fold, target=target, features=features, cache_dir=self._cache_dir, config=dataset)
 
         paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold, name=dataset['name'] if 'name' in dataset else None)
@@ -342,16 +342,17 @@ class TimeSeriesDataset(FileDataset):
         self.seasonality = int(config['seasonality'])
         self.id_column = config['id_column']
         self.timestamp_column = config['timestamp_column']
-        self.abs_seasonal_error = 'abs_seasonal_error'
-        if self.abs_seasonal_error in full_data.columns:
-            raise ValueError(f'Dataset contains column with name `{self.abs_seasonal_error_column}` that is reserved for internal usage')
 
         full_data[self.timestamp_column] = pd.to_datetime(full_data[self.timestamp_column])
-        save_dir = os.path.join(cache_dir, config['name'], str(fold))
+        if config['name'] is not None:
+            file_name = config['name']
+        else:
+            file_name = os.path.splitext(os.path.basename(path))[0]
+        save_dir = os.path.join(cache_dir, file_name, str(fold))
         train_path, test_path = self.save_train_and_test_splits(full_data, fold=fold, save_dir=save_dir)
 
-        self._train = CsvDatasplit(self, train_path)
-        self._test = CsvDatasplit(self, test_path)
+        self._train = CsvDatasplit(self, train_path, timestamp_column=self.timestamp_column)
+        self._test = CsvDatasplit(self, test_path, timestamp_column=self.timestamp_column)
         self._dtypes = None
 
         # Store repeated item_id & in-sample seasonal error for each time step in the forecast horizon - needed later for metrics like MASE.
@@ -394,14 +395,15 @@ class TimeSeriesDataset(FileDataset):
 
 class CsvDatasplit(FileDatasplit):
 
-    def __init__(self, dataset, path):
+    def __init__(self, dataset, path, timestamp_column=None):
         super().__init__(dataset, format='csv', path=path)
         self._ds = None
+        self.timestamp_column = timestamp_column
 
     def _ensure_loaded(self):
         if self._ds is None:
             if self.dataset._dtypes is None:
-                df = read_csv(self.path)
+                df = read_csv(self.path, timestamp_column=self.timestamp_column)
                 # df = df.convert_dtypes()
                 dt_conversions = {name: 'category'
                                   for name, dtype in zip(df.dtypes.index, df.dtypes.values)
@@ -417,9 +419,8 @@ class CsvDatasplit(FileDatasplit):
 
                 self._ds = df
                 self.dataset._dtypes = self._ds.dtypes
-
             else:
-                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict())
+                self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict(), timestamp_column=self.timestamp_column)
 
     @profile(logger=log)
     def load_metadata(self):
@@ -432,8 +433,7 @@ class CsvDatasplit(FileDatasplit):
                                       else 'string' if pat.is_string_dtype(dt)
                                       else 'datetime' if pat.is_datetime64_dtype(dt)
                                       else 'object')
-        features = [Feature(i, col, to_feature_type(dtypes[i]))
-                    for i, col in enumerate(self._ds.columns)]
+        features = [Feature(i, col, to_feature_type(dtypes[i])) for i, col in enumerate(self._ds.columns)]
 
         for f in features:
             col = self._ds.iloc[:, f.index]
