@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime as dt
 import logging
 import math
@@ -41,8 +43,8 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     return datetime.strftime(strf)
 
 
-def countdown(timeout_secs, on_timeout: Callable = None, message: str = None, interval=1, log_level=logging.INFO,
-              interrupt_event: threading.Event = None, interrupt_cond: Callable = None):
+def countdown(timeout_secs, on_timeout: Callable | None = None, message: str = "", interval=1, log_level=logging.INFO,
+              interrupt_event: threading.Event | None = None, interrupt_cond: Callable | None = None):
     timeout_epoch = time.time() + timeout_secs
     remaining = timeout_secs
     interrupt = interrupt_event or threading.Event()
