@@ -182,3 +182,137 @@ You can even make use of the [special directives](../../using/configuration/#cus
 
 After creating a benchmark definition, e.g. `~/.config/automlbenchmark/benchmarks/my_benchmark.yaml`,
 it can then be referenced when running `runbenchmark.py`: `python runbenchmark.py FRAMEWORK my_benchmark`.
+
+## Defining a Time Series Forecasting Dataset
+
+!!! warning "Time Series Forecasting should be considered experimental"
+
+    Time series forecasting support should be considered experimental and is currently
+    only supported with the AutoGluon integration.
+
+Benchmark definitions for time series datasets work in much the same way, but there are
+some additional fields and requirements to a valid time series dataset.
+
+First, the dataset must be stored as a single csv file in 
+[long format](https://doc.dataiku.com/dss/latest/time-series/data-formatting.html#long-format) 
+and must include 3 columns:
+
+  - `id_column`: An indicator column that specifies to which time series the sample belongs by a unique id.
+    The default expected name of this column is "item_id".
+  - `timestamp_column`: A column with the timestamp of the observation.
+    The default expected name of this column is "timestamp".
+  - `target`: A column with the target value of the time series
+
+Additionally, the data must satisfy the following criteria:
+
+ - The shortest time series in the dataset must have length of at least `folds * forecast_horizon_in_step + 1` (see [Generated Folds](#generated-folds)).
+ - Time series may have different lengths or have different starting timestamps, 
+   but must have the same frequency.
+ - All time series must have regular timestamp index.
+
+If the `id_column` or `timestamp_column` names are not the default expected ones,
+they must be explicitly stated in the definition, as can be seen in the examples below.
+Moreover, the definition must also contain the following fields:
+
+  - `path`: a local or remote path to the CSV file with time series data.
+  - `freq`: a [pandas-compatible frequency string](https://pandas.pydata.org/docs/user_guide/timeseries.html#offset-aliases) 
+    that denotes the frequency of the time series. For example, `D` for daily, `H` for hourly, or `15min` for 15-minute frequency.
+  - `forecast_horizon_in_steps`: a positive integer denoting how many future time series values need to be predicted.
+  - `seasonality`: a positive integer denoting the seasonal period of the data, measured in steps. 
+    This parameter is used for computing metrics like [mean absolute scaled error](https://en.wikipedia.org/wiki/Mean_absolute_scaled_error#Seasonal_time_series) (denoted as *m* on Wikipedia).
+
+
+=== "Default Column Names"
+
+    Given a file at `path.to/data.csv` that contains two time series with daily frequency, 
+    `A` with three observations and `B` with four observations:
+    
+    | IdColumn |	TimestampColumn |	TargetColumn |
+    |---------|-----------|--------:|
+    | A       |	2020-01-01|	2.0    |
+    | A       |	2020-01-02|	1.0    |
+    | A       |	2020-01-03|	5.0    |
+    | B       |	2019-05-02|	8.0    |
+    | B       |	2019-05-03|	2.0    |
+    | B       |	2019-05-04|	1.0    |
+    | B       |	2019-05-05|	9.0    |
+
+    When we specify the fields outlined above, then the respective task definition may 
+    look like the one below. Note that we do not have to specify `id_column` or 
+    `timestamp_column` as their names match the default expected value.
+    
+    ```yaml
+    - name: example_time_series_data
+      dataset:
+        path: /path/to/data.csv
+        freq: D
+        forecast_horizon_in_steps: 1
+        seasonality: 7
+        target: TargetColumn
+      folds: 1
+    ```
+
+    
+
+=== "Non-default Column Names"
+
+    Given a file at `path.to/data.csv` that contains two time series with daily frequency, 
+    `A` with three observations and `B` with four observations. It is identical to
+    the example "default column values", but the header provides different column names:
+    
+    | Product |	Date |	Value |
+    |---------|-----------|--------:|
+    | A       |	2020-01-01|	2.0    |
+    | A       |	2020-01-02|	1.0    |
+    | A       |	2020-01-03|	5.0    |
+    | B       |	2019-05-02|	8.0    |
+    | B       |	2019-05-03|	2.0    |
+    | B       |	2019-05-04|	1.0    |
+    | B       |	2019-05-05|	9.0    |
+
+    When we specify the fields outlined above, then the respective task definition may 
+    look like the one below. Note that we do *have to* specify `id_column` or 
+    `timestamp_column` as their names do not match the default expected value. If left 
+    unspecified, the benchmark tool will raise an error.
+    
+    ```yaml
+    - name: example_time_series_data
+      dataset:
+        path: /path/to/data.csv
+        freq: D
+        forecast_horizon_in_steps: 1
+        seasonality: 7
+        id_column: Product
+        timestamp_column: Date
+        target: Value
+      folds: 1
+    ```
+
+    
+
+### Generated Folds
+
+AMLB automatically generates the train and test splits from the raw data depending 
+on the chosen `forecast_horizon_in_steps` and `folds` parameters. Assuming 
+`forecast_horizon_in_steps = K` and `folds = n`, and each time series has length `n * K`,
+the folds will be generated as follows:
+
+  rows | fold 0 | fold 1 | ... | fold (n-2) | fold (n-1)
+  -- | -- | -- | -- | -- | --
+  1..K | train | train | ... | train | train
+  K..2K | train | train | ... | train | test
+  2..3K | train  | train | ... | test |
+  ... |   |   |     |  
+  (n-2)K...(n-1)K | train  |  test   | |
+  (n-1)K...nK | test  |    | |
+
+As a consequence, the shortest time series in the dataset must have length of at least 
+`folds * forecast_horizon_in_step + 1`.
+
+!!! warning "This is still batch learning!"
+    
+    It is important to note that the model does not carry over between folds, each fold
+    the model is trained from scratch on the available training data. As such, it is
+    still batch learning, as opposed to [train-then-test](https://scikit-multiflow.readthedocs.io/en/stable/user-guide/core-concepts.html) 
+    (or prequential) evaluation where a single model is continuously updated instead.
+    
