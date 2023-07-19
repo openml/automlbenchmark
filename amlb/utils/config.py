@@ -1,4 +1,4 @@
-from collections import namedtuple
+from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from importlib.util import find_spec
@@ -62,12 +62,12 @@ def config_load(path, verbose=False):
 @dataclass
 class TransformRule:
     from_key: Union[str, List[str]]
-    to_key: str = None
+    to_key: str | None = None  # if not provided, used for transformations on same key
     fn: Callable = identity
     keep_from: bool = False
 
 
-def transform_config(config: Namespace, transform_rules: [TransformRule], inplace=True) -> Namespace:
+def transform_config(config: Namespace, transform_rules: list[TransformRule], inplace=True) -> Namespace:
     """
     Allows to modify a configuration namespace (for example if the configuration format is modified)
     by applying a list of transformation rules.
