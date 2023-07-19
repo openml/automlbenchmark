@@ -1,0 +1,33 @@
+[tool.mypy]
+files=[
+    "amlb/**/*.py"
+]
+
+[[tool.mypy.overrides]]
+ignore_errors = false
+module = "amlb.utils.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.benchmarks.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.datasets.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.frameworks.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.runners.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.*"

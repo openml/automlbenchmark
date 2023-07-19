@@ -59,10 +59,6 @@ def config_load(path, verbose=False):
         return loader(file, as_namespace=True)
 
 
-# TransformRule = namedtuple('TransformRule',
-#                            ['from_key', 'to_key', 'fn', 'keep_from'],
-#                            defaults=[None, identity, False],
-#                            module=__name__)
 @dataclass
 class TransformRule:
     from_key: Union[str, List[str]]
