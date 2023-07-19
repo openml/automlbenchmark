@@ -4,7 +4,7 @@
   dataset:
     path: https://autogluon.s3.amazonaws.com/datasets/timeseries/m4_hourly/test.csv
     type: timeseries
-    freq: D
+    freq: H
     forecast_horizon_in_steps: 48
     seasonality: 24
     target: target
