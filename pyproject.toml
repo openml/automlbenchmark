@@ -3,6 +3,9 @@ files=[
     "amlb/**/*.py"
 ]
 python_version = "3.9"
+# Required because the normal usage pattern of namespaces raises [attr-defined] errors.
+# I can't a way to disable [attr-defined] errors for `Namespace` only.
+disable_error_code = "attr-defined"
 
 [[tool.mypy.overrides]]
 ignore_errors = false
