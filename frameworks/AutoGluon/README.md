@@ -2,7 +2,7 @@
 
 To run v0.5.2: ```python3 ../automlbenchmark/runbenchmark.py autogluon ...```
 
-To run mainline: ```python3 ../automlbenchmark/runbenchmark.py autogluonts:latest ...```
+To run mainline: ```python3 ../automlbenchmark/runbenchmark.py autogluon:latest ...```
 
 
 # AutoGluonTS
