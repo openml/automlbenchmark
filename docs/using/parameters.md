@@ -69,3 +69,26 @@ optional arguments:
   --openml-run-tag OPENML_RUN_TAG
                         Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.
 ```
+
+
+## Profiling the application
+
+Currently, the application provides a global flag `--profiling` to activate profiling 
+for some specific methods that can be slow or memory intensive:
+
+```bash
+python runbenchmark.py randomforest --profiling
+```
+
+Not all methods and functions are not profiled, but if you need to profile more, 
+you just need to decorate the function with the `@profile()` decorator (from `amlb.utils`).
+Profiling reports on memory usage and function durations:
+
+```{ .text title="Example of profiling logs" }
+[PROFILING] `amlb.datasets.openml.OpenmlLoader.load` executed in 7.456s.
+[PROFILING] `amlb.datasets.openml.OpenmlDatasplit.data` returned object size: 45.756 MB.
+[PROFILING] `amlb.datasets.openml.OpenmlDatasplit.data` memory change; process: +241.09 MB/379.51 MB, resident: +241.09 MB/418.00 MB, virtual: +230.01 MB/4918.16 MB.
+[PROFILING] `amlb.data.Datasplit.X_enc` executed in 6.570s.
+[PROFILING] `amlb.data.Datasplit.release` executed in 0.007s.
+[PROFILING] `amlb.data.Datasplit.release` memory change; process: -45.73 MB/238.80 MB, resident: +0.00 MB/414.60 MB, virtual: +0.00 MB/4914.25 MB.
+```

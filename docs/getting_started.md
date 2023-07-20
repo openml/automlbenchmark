@@ -18,7 +18,8 @@ These instructions assume that [Python 3.9 (or higher)](https://www.python.org/d
 and [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) are installed,
 and are available under the alias `python` and `git`, respectively. We recommend
 [Pyenv](https://github.com/pyenv/pyenv) for managing multiple Python installations,
-if applicable.
+if applicable. We support Ubuntu 22.04, but many linux and MacOS versions likely work
+(for MacOS, it may be necessary to have [`brew`](https://brew.sh) installed).
 
 First, clone the repository:
 
@@ -66,6 +67,14 @@ python -m pip install -r requirements.txt
     examples below. First, install and run `docker`. 
     Then, whenever there is a `python runbenchmark.py ...` 
     command in the tutorial, add `-m docker` to it (`python runbenchmark.py ... -m docker`).
+
+!!! question "Problem with the installation?"
+
+    On some platforms, we need to ensure that requirements are installed sequentially.
+    Use `xargs -L 1 python -m pip install < requirements.txt` to do so. If problems 
+    persist, [open an issue](https://github.com/openml/automlbenchmark/issues/new) with
+    the error and information about your environment (OS, Python version, pip version).
+
 
 ## Running the Benchmark
 
