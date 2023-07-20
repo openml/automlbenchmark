@@ -25,13 +25,17 @@ The framework definition consists in an entry in a `yaml` file with the framewor
  1. to indicate the Python module with the integration code: `module` or `extends`.
  1. to pass optional parameters to the framework and/or the integration code: `params`.
  
-Default framework definitions are defined in file `resources/frameworks.yaml` in lexicographic order, where `version` should be set to `stable`, which will point dynamically to the most recent official release available.
+Default framework definitions are defined in file `resources/frameworks.yaml` in lexicographic order, 
+where `version` should be set to `stable`, which will point dynamically to the most recent official release available.
 
-Frameworks that offer the possibility to test cutting edge version (e.g. nightly builds, `dev`/`master` repo, ...) can add an entry to `resources/frameworks_latest.yaml`, where `version` should be set to `latest`.
+Frameworks that offer the possibility to test cutting edge version (e.g. nightly builds, 
+`dev`/`master` repo, ...) can add an entry to `resources/frameworks_latest.yaml`, where `version` should be set to `latest`.
 
-Maintainers of this repository try to regularly — ideally, every quarter — create a framework definition using frozen framework versions in order to favour the reproducibility of the published benchmarks.
+Maintainers of this repository try to regularly — ideally, every quarter — create a 
+framework definition using frozen framework versions in order to favour the reproducibility of the published benchmarks.
 
-Following the [custom configuration](#custom-configuration), it is possible to override and/or add a framework definitions by creating a `frameworks.yaml` file in your `user_dir`.
+Following the [custom configuration](../using/configuration.md#custom-configurations), 
+it is possible to override and/or add a framework definitions by creating a `frameworks.yaml` file in your `user_dir`.
 
 See for example the `examples/custom/frameworks.yaml`:
 
@@ -140,7 +144,7 @@ Among the existing frameworks, we can see different type of integrations:
 - trivial integration: these are frameworks running on Python and using dependencies (`numpy`, `sklearn`) already required by the application itself. These are not really AutoML toolkits, but rather integrations using `sklearn` to provide a reference when analyzing the results: cf. `constantpredictor`, `DecisionTree`.
 - Python API integration: these are frameworks that can be run directly from Python: cf. `autosklearn`, `H2OAutoML`, `TPOT`, `RandomForest`, `TunedRandomForest`.
    - contrary to the trivial integration, those require a `setup` phase.
-   - Most of them currently run using the same dependencies as the application, which is not recommended due to potential version conflicts (especially with `sklearn`). This was not a major constraint with the first frameworks implemented, but now, those integrations can and will be slightly changed to [run in their dedicated virtual environment](#frameworks-requiring-a-dedicated-virtual-env), using their own dependencies: cf. `RandomForest` and `examples/custom/extensions/Stacking` for examples.
+   - Most of them currently run using the same dependencies as the application, which is not recommended due to potential version conflicts (especially with `sklearn`). This was not a major constraint with the first frameworks implemented, but now, those integrations can and will be slightly changed to [run in their dedicated virtual environment], using their own dependencies: cf. `RandomForest` and `examples/custom/extensions/Stacking` for examples.
 - non-Python frameworks: those frameworks typically run in `R` or `Java` and don't provide any Python API. The integration is then still done by spawning the `Java` or `R` process from the `exec.py`: cf. `AutoWEKA` or `ranger`, respectively.
 
 #### Recommended structure
@@ -373,7 +377,7 @@ Using the instructions above:
  1. follow the same steps as for a "default" framework to implement the integration: setup, test, ... except that you always need to specify the `user_dir`, e.g. for testing:
     > python runbenchmark.py myframework -f 0 -u {user_dir}
  1. there may be some issues when trying to build the docker image when the framework is in a custom folder, as all the files should be under the docker build context: solving this probably requires a multi-stage build, needs more investigation. For now, if you really need a docker image, you can either build it manually, or simply copy the `extensions` folder temporarily under `automlbenchmark`.
- 1. even without docker image, you can run the framework on AWS, as soon as the custom `config.yaml`, `frameworks.yaml` and `extensions` folder are made available as AWS resources: cf. again the [custom configuration](#custom-configuration). The application will copy those files to the EC2 instances into a local `user_dir` and will be able to setup the framework there.
+ 1. even without docker image, you can run the framework on AWS, as soon as the custom `config.yaml`, `frameworks.yaml` and `extensions` folder are made available as AWS resources: cf. again the [custom configuration](../using/configuration.md#custom-configurations). The application will copy those files to the EC2 instances into a local `user_dir` and will be able to setup the framework there.
 
 
 ## Using a Different Hyperparameter Configuration

@@ -79,7 +79,7 @@ python -m pip install -r requirements.txt
 ## Running the Benchmark
 
 To run a benchmark call the `runbenchmark.py` script specifying the framework to evaluate.
-See [integrated frameworks](#ADD) for a list of supported frameworks, or the [adding a frameworking](#ADD) page on how to add your own.
+See [integrated frameworks](../frameworks.html) for a list of supported frameworks, or the [adding a frameworking](extending/framework.md) page on how to add your own.
 
 ### Example: a test run with Random Forest
 Let's try evaluating the `RandomForest` baseline, which uses [scikit-learn](https://scikit-learn.org/stable/)'s random forest:
@@ -160,14 +160,14 @@ for the `runbenchmark.py` script, but the most important ones are:
 `Framework (required)`
 
 : The AutoML framework or baseline to evaluate and is not case-sensitive. See
-  [integrated frameworks](#ADD) for a list of supported frameworks. 
+  [integrated frameworks](../frameworks.html) for a list of supported frameworks. 
   In the above example, this benchmarked framework `randomforest`.
 
 `Benchmark (optional, default='test')`
 
 : The benchmark suite is the dataset or set of datasets to evaluate the framework on.
-  These can be defined as on [OpenML](https://www.openml.org) as a [study or task](#ADD-link-to-adding-openml-datasets) 
-  (formatted as `openml/s/X` or `openml/t/Y` respectively) or in a [local file](#ADD-link-to-adding-local-benchmarks).
+  These can be defined as on [OpenML](https://www.openml.org) as a [study or task](extending/benchmark.md#defining-a-benchmark-on-openml) 
+  (formatted as `openml/s/X` or `openml/t/Y` respectively) or in a [local file](extending/benchmark.md#defining-a-benchmark-with-a-file).
   The default is a short evaluation on two folds of `iris`, `kc2`, and `cholesterol`.
 
 `Constraints (optional, default='test')`
@@ -211,7 +211,7 @@ python runbenchmark.py --help
 
 The defaults are very useful for performing a quick test, as the datasets are small
 and cover different task types (binary classification, multiclass classification, and 
-regression). We also have a ["validation" benchmark](#ADD-link-to-validation-benchmark)
+regression). We also have a ["validation" benchmark](GITHUB/resources/benchmarks/validation.yaml)
 suite for more elaborate testing that also includes missing data, categorical data, 
 wide data, and more. The benchmark defines 9 tasks, and evaluating two folds with a
 10-minute time constraint would take roughly 3 hours (=9 tasks * 2 folds * 10 minutes,
@@ -239,7 +239,9 @@ Similarly to the test run, you will find additional files in the `results` direc
 ### Example: Benchmarks on OpenML
 
 In the previous examples, we used benchmarks which were defined in a local file
-([test.yaml]() and [validation.yaml](), respectively). However, we can also use tasks and
+([test.yaml](GITHUB/resources/benchmarks/test.yaml) and 
+[validation.yaml](GITHUB/resources/benchmarks/validation.yaml), respectively). 
+However, we can also use tasks and
 benchmarking suites defined on OpenML directly from the command line. When referencing
 an OpenML task or suite, we can use `openml/t/ID` or `openml/s/ID` respectively as 
 argument for the benchmark parameter. Running on the [iris task](https://openml.org/t/59):

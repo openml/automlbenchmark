@@ -49,7 +49,7 @@ which is 10-fold cross-validation on the [iris dataset](https://www.openml.org/d
 
 When defining a benchmark with a `yaml` file, the `yaml` will contain information about
 tasks that are located either on disk or on OpenML. We make a few default benchmarks
-available in our [`resources/benchmarks`](../../resources/benchmarks) folder:
+available in our [`resources/benchmarks`](GITHUB/resources/benchmarks) folder:
 
  * `test`: a collection of three small datasets covering regression, binary classification, 
     and multiclass classification. This makes it incredibly useful for small tests and
