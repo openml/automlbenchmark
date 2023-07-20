@@ -11,7 +11,7 @@ theme:
     admonition:
       windows: fontawesome/brands/windows
 extra:
-  homepage: ../index.html
+  homepage: WEBSITE/index.html
 
 nav:
   - index.md
