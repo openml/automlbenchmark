@@ -208,7 +208,8 @@ Additionally, the data must satisfy the following criteria:
  - The shortest time series in the dataset must have length of at least `folds * forecast_horizon_in_step + 1` (see [Generated Folds](#generated-folds)).
  - Time series may have different lengths or have different starting timestamps, 
    but must have the same frequency.
- - All time series must have regular timestamp index.
+ - All time series must have regular timestamp index, i.e., it must have an observation
+   for each time step from start to end.
 
 If the `id_column` or `timestamp_column` names are not the default expected ones,
 they must be explicitly stated in the definition, as can be seen in the examples below.
@@ -227,7 +228,7 @@ Moreover, the definition must also contain the following fields:
     Given a file at `path.to/data.csv` that contains two time series with daily frequency, 
     `A` with three observations and `B` with four observations:
     
-    | IdColumn |	TimestampColumn |	TargetColumn |
+    | item_id |	timestamp |	target |
     |---------|-----------|--------:|
     | A       |	2020-01-01|	2.0    |
     | A       |	2020-01-02|	1.0    |
@@ -248,7 +249,7 @@ Moreover, the definition must also contain the following fields:
         freq: D
         forecast_horizon_in_steps: 1
         seasonality: 7
-        target: TargetColumn
+        target: target
       folds: 1
     ```
 
