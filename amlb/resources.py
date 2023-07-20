@@ -210,7 +210,7 @@ class Resources:
         if not lenient and len(missing) > 0:
             raise ValueError("{missing} mandatory properties as missing in task definition {taskdef}.".format(missing=missing, taskdef=task))
 
-        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'min_vol_size_mb']:
+        for conf in ['max_runtime_seconds', 'cores', 'folds', 'max_mem_size_mb', 'min_vol_size_mb', 'quantile_levels']:
             if task[conf] is None:
                 task[conf] = self.config.benchmarks.defaults[conf]
                 log.debug("Config `{config}` not set for task {name}, using default `{value}`.".format(config=conf, name=task.name, value=task[conf]))
@@ -310,4 +310,3 @@ _backward_compatibility_config_rules_ = [
     TransformRule(from_key='aws.query_frequency_seconds', to_key='aws.query_interval_seconds'),
     TransformRule(from_key='aws.ec2.monitoring.cpu.query_frequency_seconds', to_key='aws.ec2.monitoring.cpu.query_interval_seconds'),
 ]
-

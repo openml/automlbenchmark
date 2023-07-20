@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import logging
+import math
 import os
 import re
 import tempfile
@@ -33,17 +34,17 @@ class FileLoader:
     def load(self, dataset, fold=0):
         dataset = dataset if isinstance(dataset, ns) else ns(path=dataset)
         log.debug("Loading dataset %s", dataset)
-        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold, name=dataset['name'] if 'name' in dataset else None)
-        assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
-        # seed = rget().seed(fold)
-        # if len(paths['test']) == 0:
-        #     log.warning("No test file in the dataset, the train set will automatically be split 90%/10% using the given seed.")
-        # else:
-        assert fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
-
         target = dataset['target']
         type_ = dataset['type']
         features = dataset['features']
+
+        if type_ and DatasetType[type_] == DatasetType.timeseries:
+            return TimeSeriesDataset(path=dataset['path'], fold=fold, target=target, features=features, cache_dir=self._cache_dir, config=dataset)
+
+        paths = self._extract_train_test_paths(dataset.path if 'path' in dataset else dataset, fold=fold, name=dataset['name'] if 'name' in dataset else None)
+        assert fold < len(paths['train']), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
+        assert fold < len(paths['test']), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
+
         ext = os.path.splitext(paths['train'][fold])[1].lower()
         train_path = paths['train'][fold]
         test_path = paths['test'][fold] if len(paths['test']) > 0 else None
@@ -51,14 +52,7 @@ class FileLoader:
         if ext == '.arff':
             return ArffDataset(train_path, test_path, target=target, features=features, type=type_)
         elif ext == '.csv':
-            if type_ is not None and DatasetType[type_] == DatasetType.timeseries and dataset['timestamp_column'] is None:
-                log.warning("Warning: For timeseries task setting undefined timestamp column to `timestamp`.")
-                dataset = deepcopy(dataset)
-                dataset['timestamp_column'] = "timestamp"
-            csv_dataset = CsvDataset(train_path, test_path, target=target, features=features, type=type_, timestamp_column=dataset['timestamp_column'] if 'timestamp_column' in dataset else None)
-            if csv_dataset.type == DatasetType.timeseries:
-                csv_dataset = self.extend_dataset_with_timeseries_config(csv_dataset, dataset)
-            return csv_dataset
+            return CsvDataset(train_path, test_path, target=target, features=features, type=type_)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
@@ -137,40 +131,6 @@ class FileLoader:
 
     def __repr__(self):
         return repr_def(self)
-
-
-    def extend_dataset_with_timeseries_config(self, dataset, dataset_config):
-        dataset = deepcopy(dataset)
-        dataset_config = deepcopy(dataset_config)
-        if dataset_config['id_column'] is None:
-            log.warning("Warning: For timeseries task setting undefined `id_column` to `item_id`.")
-            dataset_config['id_column'] = "item_id"
-        if dataset_config['forecast_range_in_steps'] is None:
-            log.warning("Warning: For timeseries task setting undefined `forecast_range_in_steps` to `1`.")
-            dataset_config['forecast_range_in_steps'] = "1"
-
-        dataset.timestamp_column=dataset_config['timestamp_column']
-        dataset.id_column=dataset_config['id_column']
-        dataset.forecast_range_in_steps=int(dataset_config['forecast_range_in_steps'])
-
-        train_seqs_lengths = dataset.train.X.groupby(dataset.id_column).count()
-        test_seqs_lengths = dataset.test.X.groupby(dataset.id_column).count()
-        forecast_range_in_steps_mean_diff_train_test = int((test_seqs_lengths - train_seqs_lengths).mean())
-        forecast_range_in_steps_max_min_train_test = int(min(int(test_seqs_lengths.min()), int(train_seqs_lengths.min()))) - 1
-        if not dataset.forecast_range_in_steps == forecast_range_in_steps_mean_diff_train_test:
-            msg = f"Warning: Forecast range {dataset.forecast_range_in_steps}, does not equal mean difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
-            log.warning(msg)
-        if not (test_seqs_lengths - train_seqs_lengths).var().item() == 0.:
-            msg = f"Error: Not all sequences of train and test set have same sequence length difference."
-            raise ValueError(msg)
-        if dataset.forecast_range_in_steps > forecast_range_in_steps_mean_diff_train_test:
-            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than difference between test and train sequence lengths {forecast_range_in_steps_mean_diff_train_test}."
-            raise ValueError(msg)
-        if dataset.forecast_range_in_steps > forecast_range_in_steps_max_min_train_test:
-            msg = f"Error: Forecast range {dataset.forecast_range_in_steps} longer than minimum sequence length + 1, {forecast_range_in_steps_max_min_train_test}."
-            raise ValueError(msg)
-        return dataset
-
 
 
 class FileDataset(Dataset):
@@ -346,13 +306,91 @@ class ArffDatasplit(FileDatasplit):
 class CsvDataset(FileDataset):
 
     def __init__(self, train_path, test_path,
-                 target=None, features=None, type=None, timestamp_column=None):
+                 target=None, features=None, type=None):
         # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
         super().__init__(None, None,
                          target=target, features=features, type=type)
-        self._train = CsvDatasplit(self, train_path, timestamp_column=timestamp_column)
-        self._test = CsvDatasplit(self, test_path, timestamp_column=timestamp_column)
+        self._train = CsvDatasplit(self, train_path)
+        self._test = CsvDatasplit(self, test_path)
         self._dtypes = None
+
+
+class TimeSeriesDataset(FileDataset):
+    def __init__(self, path, fold, target, features, cache_dir, config):
+        super().__init__(None, None, target=target, features=features, type="timeseries")
+        if config['forecast_horizon_in_steps'] is None:
+            raise AssertionError("Task definition for timeseries must include `forecast_horizon_in_steps`")
+        if config['freq'] is None:
+            raise AssertionError("Task definition for timeseries must include `freq`")
+        if config['seasonality'] is None:
+            raise AssertionError("Task definition for timeseries must include `seasonality`")
+
+        full_data = read_csv(path)
+        if config['id_column'] is None:
+            log.warning("Warning: For timeseries task, setting undefined `id_column` to `item_id`")
+            config['id_column'] = 'item_id'
+        if config['id_column'] not in full_data.columns:
+            raise ValueError(f'The id_column with name {config["id_column"]} is missing from the dataset')
+        if config['timestamp_column'] is None:
+            log.warning("Warning: For timeseries task, setting undefined `timestamp_column` to `timestamp`")
+            config['timestamp_column'] = 'timestamp'
+        if config['timestamp_column'] not in full_data.columns:
+            raise ValueError(f'The timestamp_column with name {config["timestamp_column"]} is missing from the dataset')
+
+        self.forecast_horizon_in_steps = int(config['forecast_horizon_in_steps'])
+        self.freq = pd.tseries.frequencies.to_offset(config['freq']).freqstr
+        self.seasonality = int(config['seasonality'])
+        self.id_column = config['id_column']
+        self.timestamp_column = config['timestamp_column']
+
+        full_data[self.timestamp_column] = pd.to_datetime(full_data[self.timestamp_column])
+        if config['name'] is not None:
+            file_name = config['name']
+        else:
+            file_name = os.path.splitext(os.path.basename(path))[0]
+        save_dir = os.path.join(cache_dir, file_name, str(fold))
+        train_path, test_path = self.save_train_and_test_splits(full_data, fold=fold, save_dir=save_dir)
+
+        self._train = CsvDatasplit(self, train_path, timestamp_column=self.timestamp_column)
+        self._test = CsvDatasplit(self, test_path, timestamp_column=self.timestamp_column)
+        self._dtypes = None
+
+        # Store repeated item_id & in-sample seasonal error for each time step in the forecast horizon - needed later for metrics like MASE.
+        # We need to store this information here because Result object has no access to past time series values.
+        self.repeated_item_id = self.test.data[self.id_column].cat.codes.to_numpy()
+        self.repeated_abs_seasonal_error = self.compute_seasonal_error()
+
+    def save_train_and_test_splits(self, full_data, fold, save_dir):
+        full_data = full_data.sort_values(by=[self.id_column, self.timestamp_column])
+        shortest_ts_length = full_data.groupby(self.id_column).size().min()
+        min_expected_ts_length = (fold + 1) * self.forecast_horizon_in_steps + 1
+        if shortest_ts_length < min_expected_ts_length:
+            raise ValueError(
+                f'All time series in the dataset must have length > `(fold + 1) * forecast_horizon_in_steps` '
+                f'(at least {min_expected_ts_length + 1}), but shortest time series has length {shortest_ts_length}'
+            )
+        # Remove the last `steps_to_remove` steps from each time series to obtain the correct fold
+        if fold > 0:
+            steps_to_remove = (fold + 1) * self.forecast_horizon_in_steps
+            full_data = full_data.groupby(self.id_column, as_index=False).nth(slice(None, -steps_to_remove))
+        train_data = full_data.groupby(self.id_column, as_index=False).nth(slice(None, -self.forecast_horizon_in_steps))
+        test_data = full_data.groupby(self.id_column, as_index=False).nth(slice(-self.forecast_horizon_in_steps, None))
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        train_path = os.path.join(save_dir, "train.csv")
+        test_path = os.path.join(save_dir, "test.csv")
+
+        train_data.to_csv(train_path, index=False)
+        test_data.to_csv(test_path, index=False)
+        return train_path, test_path
+
+    def compute_seasonal_error(self):
+        train_data_with_index = self.train.data.set_index(self.id_column)
+        seasonal_diffs = train_data_with_index[self.target.name].groupby(level=self.id_column).diff(self.seasonality).abs()
+        abs_seasonal_error = seasonal_diffs.groupby(level=self.id_column).mean().fillna(1.0).values
+        # Repeat seasonal error for each time step in the forecast horizon
+        return np.repeat(abs_seasonal_error, self.forecast_horizon_in_steps)
 
 
 class CsvDatasplit(FileDatasplit):
@@ -381,7 +419,6 @@ class CsvDatasplit(FileDatasplit):
 
                 self._ds = df
                 self.dataset._dtypes = self._ds.dtypes
-
             else:
                 self._ds = read_csv(self.path, dtype=self.dataset._dtypes.to_dict(), timestamp_column=self.timestamp_column)
 
@@ -396,8 +433,7 @@ class CsvDatasplit(FileDatasplit):
                                       else 'string' if pat.is_string_dtype(dt)
                                       else 'datetime' if pat.is_datetime64_dtype(dt)
                                       else 'object')
-        features = [Feature(i, col, to_feature_type(dtypes[i]))
-                    for i, col in enumerate(self._ds.columns)]
+        features = [Feature(i, col, to_feature_type(dtypes[i])) for i, col in enumerate(self._ds.columns)]
 
         for f in features:
             col = self._ds.iloc[:, f.index]
