@@ -359,7 +359,7 @@ Using the instructions above:
     > python runbenchmark.py myframework -m docker
  1. if this works, try to run it in aws: 
     > python runbenchmark.py myframework -m aws
- 1. add a brief description of the framework to the documentation in [docs/website/framework.html](../frameworks.html) following the same formatting as the other entries.
+ 1. add a brief description of the framework to the documentation in [docs/website/framework.html](GITHUB/docs/website/frameworks.html) following the same formatting as the other entries.
  1. create a pull request, and ask a review from authors of `automlbenchmark`: they'll also be happy to help you during this integration.
 
 #### Add a custom framework

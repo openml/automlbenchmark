@@ -4,10 +4,10 @@ These are the AutoML Benchmark documentation pages with information on how to
 configure and use the AutoML Benchmark tool. For first time users, we advise
 visiting the [getting started](getting_started.md) page.
 
-This documentation is accompanied by [our website](https://openml.github.io/automlbenchmark/) 
-which has information on [our papers](https://openml.github.io/automlbenchmark/papers.html),
-[integrated frameworks](https://openml.github.io/automlbenchmark/frameworks.html), 
-and [evaluation results](https://openml.github.io/automlbenchmark/results.html).
+This documentation is accompanied by [our website](WEBSITE) 
+which has information on [our papers](WEBSITE/papers.html),
+[integrated frameworks](WEBSITE/frameworks.html), 
+and [evaluation results](WEBSITE/results.html).
 
 !!! note "Help Wanted!"
 

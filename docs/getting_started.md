@@ -79,7 +79,7 @@ python -m pip install -r requirements.txt
 ## Running the Benchmark
 
 To run a benchmark call the `runbenchmark.py` script specifying the framework to evaluate.
-See [integrated frameworks](../frameworks.html) for a list of supported frameworks, or the [adding a frameworking](extending/framework.md) page on how to add your own.
+See [integrated frameworks](WEBSITE/frameworks.html) for a list of supported frameworks, or the [adding a frameworking](extending/framework.md) page on how to add your own.
 
 ### Example: a test run with Random Forest
 Let's try evaluating the `RandomForest` baseline, which uses [scikit-learn](https://scikit-learn.org/stable/)'s random forest:
@@ -160,7 +160,7 @@ for the `runbenchmark.py` script, but the most important ones are:
 `Framework (required)`
 
 : The AutoML framework or baseline to evaluate and is not case-sensitive. See
-  [integrated frameworks](../frameworks.html) for a list of supported frameworks. 
+  [integrated frameworks](WEBSITE/frameworks.html) for a list of supported frameworks. 
   In the above example, this benchmarked framework `randomforest`.
 
 `Benchmark (optional, default='test')`
