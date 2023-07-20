@@ -203,18 +203,6 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
-####################################
-### TimeSeries AutoML frameworks ###
-####################################
-
-AutoGluonTS:
-  extends: AutoGluon
-  version: "stable"
-  description: |
-    AutoGluon-TimeSeries
-  setup_env:
-    MODULE: timeseries
-
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
