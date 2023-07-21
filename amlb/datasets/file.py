@@ -7,7 +7,7 @@ import re
 import tempfile
 from typing import List, Union
 
-import arff  # type: ignore
+import arff
 import numpy as np
 import pandas as pd
 import pandas.api.types as pat

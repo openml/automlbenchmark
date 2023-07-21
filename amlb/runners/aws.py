@@ -30,7 +30,7 @@ from posixpath import join as url_join, relpath as url_relpath
 import re
 import time
 import threading
-from typing import List, Union
+from typing import List, Union, cast
 from urllib.parse import quote_plus as uenc
 
 import boto3
@@ -68,7 +68,7 @@ class AWSBenchmark(Benchmark):
     an extension of Benchmark class, to run benchmarks on AWS
     """
 
-    framework_install_required = False
+    framework_install_required = cast(bool, False)
 
     @classmethod
     def fetch_results(cls, instances_file, instance_selector=None):

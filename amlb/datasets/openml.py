@@ -13,7 +13,7 @@ import os
 import re
 from typing import Generic, Tuple, TypeVar, Hashable
 
-import arff  # type: ignore
+import arff
 import numpy as np
 import pandas as pd
 import pandas.api.types as pat

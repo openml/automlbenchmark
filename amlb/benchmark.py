@@ -68,6 +68,7 @@ class Benchmark:
         self.job_runner = None
 
         if rconfig().run_mode == 'script':
+            # Used for recovery script
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
             self.constraint_def, self.constraint_name = None, None
