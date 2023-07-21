@@ -4,6 +4,8 @@ that are preconfigured with a given automl framework, and that can be used to ru
 The image embeds a version of the automlbenchmark app so that tasks are later run in local mode inside the container,
 providing the same parameters and features allowing to import config and export results through mounted folders.
 """
+from __future__ import annotations
+
 from abc import abstractmethod
 import logging
 import re
@@ -85,7 +87,7 @@ class ContainerBenchmark(Benchmark):
         # TODO: remove generated script? anything else?
         pass
 
-    def run(self, tasks: Union[str, List[str]] = None, folds: Union[int, List[int]] = None):
+    def run(self, tasks: str | list[str] | None = None, folds: int | list[int] | None = None):
         self._get_task_defs(tasks)  # validates tasks
         if self.parallel_jobs > 1 or not self.minimize_instances:
             return super().run(tasks, folds)
