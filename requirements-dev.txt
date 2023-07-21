@@ -3,5 +3,7 @@ pytest-mock
 pip-tools
 
 types-psutil
+types-xmltodict
 pandas-stubs
+boto3-stubs
 mypy
