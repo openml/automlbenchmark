@@ -13,6 +13,8 @@ necessary to run a benchmark on EC2 instances:
 - merge downloaded results with existing/local results.
 - properly cleans up AWS resources (S3, EC2).
 """
+from __future__ import annotations
+
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
@@ -188,7 +190,7 @@ class AWSBenchmark(Benchmark):
         if rconfig().aws.s3.temporary is True:
             self._delete_s3_bucket()
 
-    def run(self, tasks: Union[str, List[str]] = None, folds: Union[int, List[int]] = None):
+    def run(self, tasks: str | list[str] | None = None, folds: int | list[int] | None = None):
         task_defs = self._get_task_defs(tasks)  # validates tasks
         self._exec_start()
         self._monitoring_start()
@@ -1211,68 +1213,6 @@ power_state:
             timeout=timeout_secs if timeout_secs > 0 else rconfig().aws.max_timeout_seconds,
         )
 
-    def _ec2_startup_script_bash(self, instance_key, script_params="", timeout_secs=-1):
-        """
-        Backup UserData version if the cloud-config version doesn't work as expected.
-
-        Generates the UserData is bash format for the EC2 instance:
-        this script is automatically executed by the instance at the end of its boot process.
-        TODO: current version doesn't handle errors at all, that's why the cloud-config version is currently preferred.
-        :param instance_key: the unique local identifier for the instance.
-            This is different from EC2 instance id as we don't know it yet.
-            Mainly used to put output files to dedicated key on s3.
-        :param script_params: the custom params passed to the benchmark script, usually only task, fold params
-        :return: the UserData for the new ec2 instance
-        """
-        script_extra_params = "--session="
-        return """#!/bin/bash
-apt-get update
-#apt-get -y upgrade
-apt-get -y install curl wget unzip git
-#apt-get -y install docker.io
-apt-get -y install software-properties-common
-add-apt-repository -y ppa:deadsnakes/ppa
-apt-get update
-apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip python3-apt
-#update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
-
-mkdir -p /s3bucket/input
-mkdir -p /s3bucket/output
-mkdir -p /s3bucket/user
-mkdir /repo
-cd /repo
-git clone --depth 1 --single-branch --branch {branch} {repo} .
-
-python{pyv} -m pip install -U pip wheel awscli
-python{pyv} -m venv venv
-alias PIP='/repo/venv/bin/python3 -m pip'
-alias PY='/repo/venv/bin/python3 -W ignore'
-#PIP install -U pip=={pipv}
-PIP install -U pip wheel
-(grep -v '^\\s*#' | xargs -L 1 PIP install --no-cache-dir) < requirements.txt
-
-aws s3 cp '{s3_input}' /s3bucket/input --recursive
-aws s3 cp '{s3_user}' /s3bucket/user --recursive
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -s only --session=
-PY {script} {params} -i /s3bucket/input -o /s3bucket/output -u /s3bucket/user -Xrun_mode=aws -Xproject_repository={repo}#{branch} {extra_params}
-aws s3 cp /s3bucket/output '{s3_output}' --recursive
-#rm -f /var/lib/cloud/instance/sem/config_scripts_user
-shutdown -P +1 "I'm losing power"
-""".format(
-            repo=rget().project_info.repo,
-            branch=rget().project_info.branch,
-            pyv=rconfig().versions.python,
-            pipv=rconfig().versions.pip,
-            s3_base_url=self._s3_session(absolute=True, encode=True),
-            s3_user=self._s3_user(absolute=True, encode=True),
-            s3_input=self._s3_input(absolute=True, encode=True),
-            s3_output=self._s3_output(instance_key, absolute=True, encode=True),
-            script=rconfig().script,
-            ikey=instance_key,
-            params=script_params,
-            extra_params=script_extra_params,
-        )
-
 
 class AWSRemoteBenchmark(Benchmark):
 
@@ -1288,10 +1228,6 @@ class AWSRemoteBenchmark(Benchmark):
 
     def run(self, save_scores=False):
         super().run(save_scores)
-        self._upload_results()
-
-    def run_one(self, task_name: str, fold, save_scores=False):
-        super().run_one(task_name, fold, save_scores)
         self._upload_results()
 
     def _make_job(self, task_name=None, folds=None):
