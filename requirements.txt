@@ -40,7 +40,7 @@ numpy==1.24.2
     #   pyarrow
     #   scikit-learn
     #   scipy
-openml==0.13.1
+openml==0.14.1
     # via -r requirements.in
 pandas==1.5.3
     # via
