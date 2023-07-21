@@ -6,6 +6,8 @@ python_version = "3.9"
 # Required because the normal usage pattern of namespaces raises [attr-defined] errors.
 # I can't a way to disable [attr-defined] errors for `Namespace` only.
 disable_error_code = "attr-defined"
+#  problem with ruamel: https://github.com/python/mypy/issues/12664
+incremental = false
 
 [[tool.mypy.overrides]]
 ignore_errors = false
@@ -13,7 +15,7 @@ module = "amlb.utils.*"
 
 
 [[tool.mypy.overrides]]
-ignore_errors = true
+ignore_errors = false
 module = "amlb.benchmarks.*"
 
 
