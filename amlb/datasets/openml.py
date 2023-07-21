@@ -39,7 +39,7 @@ class OpenmlLoader:
     def __init__(self, api_key, cache_dir=None):
         oml.config.apikey = api_key
         if cache_dir:
-            oml.config.set_cache_directory(cache_dir)
+            oml.config.set_root_cache_directory(cache_dir)
 
         if oml.config.retry_policy != "robot":
             log.debug("Setting openml retry_policy from '%s' to 'robot'." % oml.config.retry_policy)

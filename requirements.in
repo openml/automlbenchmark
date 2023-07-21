@@ -6,7 +6,7 @@ filelock>=3.4
 
 numpy>=1.24,<2.0
 pandas>=1.5,<2.0
-openml==0.13.1
+openml==0.14.1
 scikit-learn>=1.0,<2.0
 
 pyarrow>=11.0
