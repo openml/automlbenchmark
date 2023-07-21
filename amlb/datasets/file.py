@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 import logging
-import math
 import os
 import re
 import tempfile
 from typing import List, Union
 
-import arff
+import arff  # type: ignore
 import numpy as np
 import pandas as pd
 import pandas.api.types as pat
@@ -136,7 +137,26 @@ class FileLoader:
 class FileDataset(Dataset):
 
     def __init__(self, train: Datasplit, test: Datasplit,
-                 target: Union[int, str] = None, features: List[Union[ns, str]] = None, type: str = None):
+                 target: int | str | None = None, features: list[ns | str] | None = None, type: str | None = None):
+        """
+        
+        Parameters
+        ----------
+        train: Datasplit
+        test: Datasplit
+        target: int or str, optional
+            If int, specifies the column index of the target feature.
+            If str, specifies the column name of the target features.
+            If None, defaults to a feature with name "class" or "target", or the last
+            feature otherwise.
+        features: list[ns | str]
+            #TODO: DEADCODE?
+            I don't see this accessed anywhere, and `features` property is retrieved
+            from split metadata, which also do not reference this.
+        type: str, optional
+          A valid DatasetType. If not specified, it is inferred by the properties of the
+          target column.
+        """
         super().__init__()
         self._train = train
         self._test = test
@@ -213,9 +233,10 @@ class FileDatasplit(Datasplit):
 
     def _find_target_feature(self, features: List[Feature]):
         target = self.dataset._target
+        default_target = next((f for f in features if f.name.lower() in ['target', 'class']), features[-1])
         return (features[target] if isinstance(target, int)
                 else next(f for f in features if f.name == target) if isinstance(target, str)
-                else next((f for f in features if f.name.lower() in ['target', 'class']), None) or features[-1])
+                else default_target)
 
     def _set_feature_as_target(self, target: Feature):
         # for classification problems, ensure that the target appears as categorical
@@ -468,7 +489,7 @@ class CsvDatasplit(FileDatasplit):
 
 
 class FileConverter:
-    format = None
+    format: str | None = None
 
     def __init__(self) -> None:
         super().__init__()
