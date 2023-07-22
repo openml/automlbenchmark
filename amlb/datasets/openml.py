@@ -25,6 +25,12 @@ from ..resources import config as rconfig, get as rget
 from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
 
 
+# https://github.com/openml/automlbenchmark/pull/574#issuecomment-1646179921
+try:
+  set_openml_cache = oml.config.set_cache_directory
+except AttributeError:
+  set_openml_cache = oml.config.set_root_cache_directory
+
 log = logging.getLogger(__name__)
 
 # hack (only adding a ? to the regexp pattern) to ensure that '?' values remain quoted when we save dataplits in arff format.
@@ -39,7 +45,7 @@ class OpenmlLoader:
     def __init__(self, api_key, cache_dir=None):
         oml.config.apikey = api_key
         if cache_dir:
-            oml.config.set_cache_directory(cache_dir)
+            set_openml_cache(cache_dir)
 
         if oml.config.retry_policy != "robot":
             log.debug("Setting openml retry_policy from '%s' to 'robot'." % oml.config.retry_policy)
