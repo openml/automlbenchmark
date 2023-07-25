@@ -357,7 +357,7 @@ class TimeSeriesDataset(FileDataset):
 
         # Store repeated item_id & in-sample seasonal error for each time step in the forecast horizon - needed later for metrics like MASE.
         # We need to store this information here because Result object has no access to past time series values.
-        self.repeated_item_id = self.test.data[self.id_column].cat.codes.to_numpy()
+        self.repeated_item_id = self.test.data[self.id_column].astype("category").cat.codes.to_numpy()
         self.repeated_abs_seasonal_error = self.compute_seasonal_error()
 
     def save_train_and_test_splits(self, full_data, fold, save_dir):
