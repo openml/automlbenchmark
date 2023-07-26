@@ -31,9 +31,9 @@ def run(dataset, config):
     if scoring_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
 
-    n_jobs = config.cores
-    training_params = {"preset": "best_quality", "n_jobs": n_jobs}
+    training_params = {"preset": "best_quality", "n_jobs": config.cores}
     training_params |= {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    n_jobs = training_params["n_jobs"]
 
     log.info('Running FEDOT with a maximum time of %ss on %s cores, optimizing %s.',
              config.max_runtime_seconds, n_jobs, scoring_metric)
