@@ -203,6 +203,16 @@ TPOT:
 #    population_size: 25
 #    verbosity: 2
 
+FEDOT:
+  version: 'master'
+  description: |
+    FEDOT is a AutoML tool that optimizes composite machine learning pipelines using evolutionary optimisation.
+  project: https://github.com/aimclub/FEDOT
+  refs:
+    - https://doi.org/10.1016/j.future.2021.08.022
+#  params:
+#    _save_artifacts: ['leaderboard', 'models', 'info']
+
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
