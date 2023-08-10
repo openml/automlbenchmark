@@ -269,11 +269,16 @@ def _assert_data_consistency(dataset, check_encoded=True):
         assert np.issubdtype(dataset.train.y_enc.dtype, np.floating)  # not ideal given that it's also for classification targets, but well…
 
 
+def _assert_static_covariates_consistency(dataset):
+    static_covariates = pd.read_csv(dataset.static_covariates_path)
+    assert set(dataset.train.data[dataset.id_column].unique()) == set(static_covariates[dataset.id_column].unique())
+
 
 @pytest.mark.use_disk
 def test_load_timeseries_task_csv(file_loader):
     ds_def = ns(
         path=os.path.join(res, "m4_hourly_subset.csv"),
+        static_covariates_path=os.path.join(res, "m4_hourly_subset_static_covariates.csv"),
         forecast_horizon_in_steps=24,
         seasonality=24,
         freq="H",
@@ -286,13 +291,14 @@ def test_load_timeseries_task_csv(file_loader):
     _assert_data_consistency(ds, check_encoded=False)
     _assert_X_y_types(ds.train, check_encoded=False)
     _assert_X_y_types(ds.test, check_encoded=False)
+    _assert_static_covariates_consistency(ds)
 
     assert isinstance(ds.train.data, pd.DataFrame)
     assert isinstance(ds.test.data, pd.DataFrame)
     assert len(ds.repeated_abs_seasonal_error) == len(ds.test.data)
     assert len(ds.repeated_item_id) == len(ds.test.data)
 
-    assert pat.is_categorical_dtype(ds._dtypes[ds.id_column])
+    assert pat.is_string_dtype(ds._dtypes[ds.id_column])
     assert pat.is_datetime64_dtype(ds._dtypes[ds.timestamp_column])
     assert pat.is_float_dtype(ds._dtypes[ds.target.name])
 
@@ -336,9 +342,24 @@ def test_given_nondefault_column_names_when_key_is_missing_then_exception_is_rai
         file_loader.load(ds_def)
 
 
+def test_if_static_covariates_contain_wrong_item_ids_then_exception_is_raised(file_loader):
+    ds_def = ns(
+        path=os.path.join(res, "m4_hourly_subset.csv"),
+        static_covariates_path=os.path.join(res, "m4_hourly_subset_static_covariates_wrong_items.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        target="target",
+        type="timeseries",
+    )
+    with pytest.raises(ValueError, match="contain different item ids"):
+        ds = file_loader.load(ds_def)
+
+
 def test_given_nondefault_column_names_then_timeseries_dataset_can_be_loaded(file_loader):
     task_kwargs = dict(
         path=os.path.join(res, "m4_hourly_subset_nondefault_cols.csv"),
+        static_covariates_path=os.path.join(res, "m4_hourly_subset_static_covariates_nondefault_cols.csv"),
         forecast_horizon_in_steps=24,
         seasonality=24,
         freq="H",
@@ -350,6 +371,7 @@ def test_given_nondefault_column_names_then_timeseries_dataset_can_be_loaded(fil
     ds_def = ns.from_dict(task_kwargs)
     ds = file_loader.load(ds_def)
     _assert_data_consistency(ds, check_encoded=False)
+    _assert_static_covariates_consistency(ds)
 
 
 @pytest.mark.parametrize("forecast_horizon, fold", [(50, 2), (100, 0), (10, 9)])

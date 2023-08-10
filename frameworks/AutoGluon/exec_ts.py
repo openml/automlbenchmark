@@ -17,7 +17,7 @@ from autogluon.timeseries.version import __version__
 from joblib.externals.loky import get_reusable_executor
 
 from frameworks.shared.callee import call_run, result, output_subdir
-from frameworks.shared.utils import Timer, zip_path
+from frameworks.shared.utils import Timer, zip_path, load_timeseries_dataset
 
 log = logging.getLogger(__name__)
 
@@ -26,11 +26,29 @@ def run(dataset, config):
     log.info(f"\n**** AutoGluon TimeSeries [v{__version__}] ****\n")
     prediction_length = dataset.forecast_horizon_in_steps
 
-    train_data = TimeSeriesDataFrame.from_path(
-        dataset.train_path,
+    train_df, test_df, static_covariates = load_timeseries_dataset(dataset)
+    if static_covariates is not None:
+        static_covariates = static_covariates.set_index(dataset.id_column)
+
+    train_data = TimeSeriesDataFrame.from_data_frame(
+        train_df,
         id_column=dataset.id_column,
         timestamp_column=dataset.timestamp_column,
     )
+    train_data.static_features = static_covariates
+
+
+    test_data = TimeSeriesDataFrame.from_data_frame(
+        test_df,
+        id_column=dataset.id_column,
+        timestamp_column=dataset.timestamp_column,
+    )
+    if len(train_data.columns) > 1:
+        future_known_covariates = test_data.drop(dataset.target, axis=1)
+        known_covariates_names = future_known_covariates.columns
+    else:
+        future_known_covariates = None
+        known_covariates_names = None
 
     predictor_path = tempfile.mkdtemp() + os.sep
     with Timer() as training:
@@ -41,18 +59,19 @@ def run(dataset, config):
             eval_metric=get_eval_metric(config),
             eval_metric_seasonal_period=dataset.seasonality,
             quantile_levels=config.quantile_levels,
+            known_covariates_names=known_covariates_names,
         )
         predictor.fit(
             train_data=train_data,
             time_limit=config.max_runtime_seconds,
+            random_seed=config.seed,
             **{k: v for k, v in config.framework_params.items() if not k.startswith('_')},
         )
 
     with Timer() as predict:
-        predictions = pd.DataFrame(predictor.predict(train_data))
+        predictions = pd.DataFrame(predictor.predict(train_data, known_covariates=future_known_covariates))
 
     # Add columns necessary for the metric computation + quantile forecast to `optional_columns`
-    test_data_future = pd.read_csv(dataset.test_path, parse_dates=[dataset.timestamp_column])
     optional_columns = dict(
         repeated_item_id=np.load(dataset.repeated_item_id),
         repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
@@ -61,13 +80,13 @@ def run(dataset, config):
         optional_columns[str(q)] = predictions[str(q)].values
 
     predictions_only = get_point_forecast(predictions, config.metric)
-    truth_only = test_data_future[dataset.target].values
+    truth_only = test_df[dataset.target].values
 
     # Sanity check - make sure predictions are ordered correctly
-    future_index = pd.MultiIndex.from_frame(test_data_future[[dataset.id_column, dataset.timestamp_column]])
-    assert predictions.index.equals(future_index), "Predictions and test data index do not match"
+    assert predictions.index.equals(test_data.index), "Predictions and test data index do not match"
 
-    test_data_full = pd.concat([train_data, test_data_future.set_index([dataset.id_column, dataset.timestamp_column])])
+    test_data_full = pd.concat([train_data, test_data])
+    test_data_full.static_features = static_covariates
     leaderboard = predictor.leaderboard(test_data_full, silent=True)
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
@@ -97,6 +116,7 @@ def get_eval_metric(config):
         mase="MASE",
         mse="MSE",
         rmse="RMSE",
+        wql="mean_wQuantileLoss",
     )
 
     eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None

@@ -343,6 +343,8 @@ class TimeSeriesDataset(FileDataset):
         self.id_column = config['id_column']
         self.timestamp_column = config['timestamp_column']
 
+        # Ensure that id_column is parsed as string to avoid incorrect sorting
+        full_data[self.id_column] = full_data[self.id_column].astype(str)
         full_data[self.timestamp_column] = pd.to_datetime(full_data[self.timestamp_column])
         if config['name'] is not None:
             file_name = config['name']
@@ -353,7 +355,9 @@ class TimeSeriesDataset(FileDataset):
 
         self._train = CsvDatasplit(self, train_path, timestamp_column=self.timestamp_column)
         self._test = CsvDatasplit(self, test_path, timestamp_column=self.timestamp_column)
-        self._dtypes = None
+        self._dtypes = full_data.dtypes
+
+        self.static_covariates_path = self.save_static_covariates(config['static_covariates_path'], save_dir=save_dir)
 
         # Store repeated item_id & in-sample seasonal error for each time step in the forecast horizon - needed later for metrics like MASE.
         # We need to store this information here because Result object has no access to past time series values.
@@ -384,6 +388,23 @@ class TimeSeriesDataset(FileDataset):
         train_data.to_csv(train_path, index=False)
         test_data.to_csv(test_path, index=False)
         return train_path, test_path
+
+    def save_static_covariates(self, static_covariates_path, save_dir):
+        if static_covariates_path is not None:
+            static_covariates = read_csv(static_covariates_path)
+            if self.id_column not in static_covariates:
+                raise ValueError(f'The id_column with name {self.id_column} is missing from the static covariates')
+            ids_in_train_data = self.train.data[self.id_column].unique()
+            ids_in_static_covariates = static_covariates[self.id_column].astype(str)
+            if set(ids_in_train_data) != set(ids_in_static_covariates):
+                raise ValueError(f'Time series dataset and static covariates contain different item ids')
+
+            # save static_covariates locally because some framework venvs don't have dependencies to load files from S3
+            save_path = os.path.join(save_dir, "static_covariates.csv")
+            static_covariates.to_csv(save_path, index=False)
+            return save_path
+        else:
+            return None
 
     def compute_seasonal_error(self):
         train_data_with_index = self.train.data.set_index(self.id_column)

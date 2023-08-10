@@ -40,6 +40,7 @@ def run_autogluon_timeseries(dataset: Dataset, config: TaskConfig):
     data = dict(
         train_path=dataset.train.path,
         test_path=dataset.test.path,
+        static_covariates_path=dataset.static_covariates_path,
         target=dataset.target.name,
         id_column=dataset.id_column,
         timestamp_column=dataset.timestamp_column,
