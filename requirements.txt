@@ -9,6 +9,7 @@ boto3==1.26.98
 botocore==1.29.98
     # via
     #   boto3
+    #   s3fs
     #   s3transfer
 certifi==2022.12.7
     # via
@@ -18,6 +19,10 @@ charset-normalizer==3.1.0
     # via requests
 filelock==3.12.0
     # via -r requirements.in
+fsspec==2023.6.0
+    # via
+    #   -r requirements.in
+    #   s3fs
 idna==3.4
     # via requests
 jmespath==1.0.1
@@ -65,6 +70,8 @@ ruamel-yaml==0.17.21
     # via -r requirements.in
 ruamel-yaml-clib==0.2.7
     # via ruamel-yaml
+s3fs==0.4.2
+    # via -r requirements.in
 s3transfer==0.6.0
     # via boto3
 scikit-learn==1.2.2
