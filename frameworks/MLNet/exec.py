@@ -117,4 +117,4 @@ def run(dataset: Dataset, config: TaskConfig):
             zip_path(output_dir, models_zip)
             clean_dir(output_dir, filter_=lambda p: p != models_zip)
 
-        # shutil.rmtree(tmpdir, ignore_errors=True)
+        shutil.rmtree(tmpdir, ignore_errors=True)
