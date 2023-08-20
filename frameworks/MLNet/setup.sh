@@ -6,7 +6,7 @@ VERSION=${1:-"latest"}
 DOTNET_INSTALL_DIR="$HERE/lib"
 MLNET="$DOTNET_INSTALL_DIR/mlnet"
 DOTNET="$DOTNET_INSTALL_DIR/dotnet"
-SOURCE="https://api.nuget.org/v3/index.json"
+SOURCE="https://mlnetcli.blob.core.windows.net/mlnetcli/index.json"
 
 export DOTNET_CLI_HOME="$DOTNET_INSTALL_DIR"
 
