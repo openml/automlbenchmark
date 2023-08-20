@@ -62,7 +62,9 @@ def run(dataset: Dataset, config: TaskConfig):
         with Timer() as training:
             try:
                 run_cmd(cmd , _live_output_=True)
+                log.info(f"Finished fit in {training.duration}s.")
             except:
+                log.info(f"error: please visit {log_path} for more infomation")
                 with open(log_path, 'r') as f:
                     for line in f:
                         log.info(line)
@@ -80,8 +82,9 @@ def run(dataset: Dataset, config: TaskConfig):
             # predict
             predict_cmd = (f"{mlnet} predict --task-type {config.type}"
                            f" --model {model_path} --dataset {test_dataset_path} --label-col {dataset.target.name} > {output_prediction_path}")
-            with Timer() as prediction:
+            with Timer() as predict:
                 run_cmd(predict_cmd)
+            log.info(f"Finished predict in {predict.duration}s.")
             if config.type == 'classification':
                 prediction_df = pd.read_csv(output_prediction_path, dtype={'PredictedLabel': 'object'})
 
@@ -106,7 +109,7 @@ def run(dataset: Dataset, config: TaskConfig):
             return dict(
                     models_count=models_count,
                     training_duration=training.duration,
-                    predict_duration=prediction.duration,
+                    predict_duration=predict.duration,
                 )
     finally:
         if 'logs' in artifacts:

@@ -36,10 +36,22 @@ autosklearn2:
 AutoWEKA:
   version: 'stable'
 
+
+flaml:
+  version: 'stable'
+
+
+flaml_benchmark:
+  extends: flaml
+  version: "benchmark"
+
 GAMA:
   version: 'stable'
 
 H2OAutoML:
+  version: 'stable'
+
+lightautoml:
   version: 'stable'
 
 hyperoptsklearn:
@@ -67,14 +79,20 @@ MLPlanWEKA:
   params:
     _backend: weka
 
+mlr3automl:
+  version: 'stable'
+
+NaiveAutoML:
+  version: 'stable'
+
 oboe:
   version: 'stable'
 
 TPOT:
   version: 'stable'
 
-
-
+FEDOT:
+  version: 'stable'
 
 #######################################
 ### Non AutoML reference frameworks ###

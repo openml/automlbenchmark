@@ -11,16 +11,17 @@ run <- function(train_file, test_file, output_predictions_file, cores=1, meta_re
   colnames(train) <- make.names(colnames(train))
   colnames(test) <- make.names(colnames(test))
   target <- colnames(train)[ncol(train)]
-  is_classifaction <- task_type == "classification"
-  task_class <- if (is_classifaction) TaskClassif else TaskRegr
+  is_classification <- task_type == "classification"
+  task_class <- if (is_classification) TaskClassif else TaskRegr
   train_task <- task_class$new(id="ranger.benchmark.train", backend = train, target = target)
   test_task <- task_class$new(id="ranger.benchmark.test", backend = test, target = target)
 
   learner <- po("removeconstants") %>>%
          po("imputeoor") %>>%
-         po("learner", learner = lrn(if (is_classifaction) "classif.ranger" else "regr.ranger",
-                                     num.threads = cores,
-                                     predict_type = if (is_classifaction) "prob" else "response"))
+         po("learner",
+            learner = lrn(if (is_classification) "classif.ranger" else "regr.ranger",
+                          num.threads = cores,
+                          predict_type = if (is_classification) "prob" else "response"))
 
   mod <- NULL
   preds <- NULL
@@ -28,7 +29,7 @@ run <- function(train_file, test_file, output_predictions_file, cores=1, meta_re
   prediction <- function() preds <<- learner$predict(test_task)[[mod]]
   train_duration <- system.time(training())[['elapsed']]
   predict_duration <- system.time(prediction())[['elapsed']]
-  if (is_classifaction) {
+  if (is_classification) {
     labels <- colnames(preds$prob)
     as_label <- function(x) labels[[x]]
     predictions <- cbind(preds$prob,

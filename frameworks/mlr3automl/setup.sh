@@ -24,7 +24,7 @@ fi
 
 . $HERE/../shared/setup.sh "$HERE"
 if [[ -x "$(command -v apt-get)" ]]; then
-SUDO apt-get update
+  SUDO apt-get update
   SUDO apt-get install -y software-properties-common dirmngr
   SUDO apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
   SUDO add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"

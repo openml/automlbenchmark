@@ -37,10 +37,4 @@ else
     PIP install -e tabular/[skex]
 fi
 
-if [[ ${MODULE} == "timeseries" ]]; then
-    PY -c "from autogluon.timeseries.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
-    # TODO: GPU version install
-    PIP install "mxnet<2.0"
-else
-    PY -c "from autogluon.tabular.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"
-fi
+PY -c "from autogluon.tabular.version import __version__; print(__version__)" >> "${HERE}/.setup/installed"

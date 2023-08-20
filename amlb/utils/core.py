@@ -11,22 +11,10 @@ import pprint
 import re
 import sys
 import threading
-import types
 
 log = logging.getLogger(__name__)
 
-
-def register_module(module_name):
-    if module_name not in sys.modules:
-        mod = types.ModuleType(module_name)
-        sys.modules[module_name] = mod
-    return sys.modules[module_name]
-
-
-def register_submodule(mod, name):
-    fullname = '.'.join([mod.__name__, name])
-    module = register_module(fullname)
-    setattr(mod, name, module)
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 class Namespace:
@@ -478,3 +466,5 @@ def threadsafe_generator(fn):
         return threadsafe_iterator(fn(*args, **kwargs))
     return gen
 
+
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

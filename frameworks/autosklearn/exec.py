@@ -1,9 +1,14 @@
+import json
 import logging
 import math
 import os
 import shutil
 import tempfile as tmp
 import warnings
+from typing import Union
+
+import pandas as pd
+from numpy.random import default_rng
 
 os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
 os.environ['OMP_NUM_THREADS'] = '1'
@@ -15,7 +20,8 @@ from autosklearn.experimental.askl2 import AutoSklearn2Classifier
 import autosklearn.metrics as metrics
 from packaging import version
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, \
+    measure_inference_times
 from frameworks.shared.utils import Timer, system_memory_mb, walk_apply, zip_path
 
 log = logging.getLogger(__name__)
@@ -62,8 +68,9 @@ def run(dataset, config):
     )
     log.info("Environment: %s", os.environ)
 
-    X_train = dataset.train.X
-    y_train = dataset.train.y
+    use_pandas = askl_version >= version.parse("0.15")
+    X_train = dataset.train.X if use_pandas else dataset.train.X_enc
+    y_train = dataset.train.y if use_pandas else dataset.train.y_enc
     predictors_type = dataset.predictors_type
     log.debug("predictors_type=%s", predictors_type)
 
@@ -118,6 +125,10 @@ def run(dataset, config):
     else:
         fit_extra_params['metric'] = perf_metric
 
+    if not use_pandas:
+        fit_extra_params["feat_type"] = predictors_type
+
+
     constr_params["time_left_for_this_task"] = config.max_runtime_seconds
     constr_params["n_jobs"] = n_jobs
     constr_params["seed"] = config.seed
@@ -128,38 +139,86 @@ def run(dataset, config):
 
     auto_sklearn = estimator(**constr_params, **training_params)
     with Timer() as training:
-        auto_sklearn.fit(X_train, y_train, feat_type=predictors_type, **fit_extra_params)
+        auto_sklearn.fit(X_train, y_train, **fit_extra_params)
+    # Any log call after `auto_sklearn.fit` gets swallowed because it reconfigures logging
+    # Have to open an issue to set up `logging_config` right or have better defaults.
+    log.info(f"Finished fit in {training.duration}s.")
+    print(f"Finished fit in {training.duration}s.")
+
+    def infer(data: Union[str, pd.DataFrame]):
+        test_data = pd.read_parquet(data) if isinstance(data, str) else data
+        predict_fn = auto_sklearn.predict_proba if is_classification else auto_sklearn.predict
+        return predict_fn(test_data)
+
+    inference_times = {}
+    if config.measure_inference_time:
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        test_data = dataset.test.X if use_pandas else dataset.test.X_enc
+        def sample_one_test_row(seed: int):
+            if use_pandas:
+                return test_data.sample(1, random_state=seed)
+            return test_data[default_rng(seed=seed).integers(len(test_data)), :]
+
+        inference_times["df"] = measure_inference_times(
+            infer, [(1, sample_one_test_row(seed=i)) for i in range(100)],
+        )
+        log.info(f"Finished inference time measurements.")
+        print(f"Finished inference time measurements.")
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")
-    X_test = dataset.test.X
-    y_test = dataset.test.y
     with Timer() as predict:
+        X_test = dataset.test.X if use_pandas else dataset.test.X_enc
         predictions = auto_sklearn.predict(X_test)
     probabilities = auto_sklearn.predict_proba(X_test) if is_classification else None
+    log.info(f"Finished predict in {predict.duration}s.")
+    print(f"Finished predict in {predict.duration}s.")
 
     save_artifacts(auto_sklearn, config)
 
     return result(output_file=config.output_predictions_file,
                   predictions=predictions,
-                  truth=y_test,
+                  truth=dataset.test.y if use_pandas else dataset.test.y_enc,
                   probabilities=probabilities,
-                  target_is_encoded=is_classification,
+                  target_is_encoded=is_classification and not use_pandas,
                   models_count=len(auto_sklearn.get_models_with_weights()),
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  inference_times=inference_times,
+                  )
+
+
+def save_models(estimator, config):
+    models_repr = estimator.show_models()
+    log.info("Trained Ensemble:\n%s", models_repr)
+    print("Trained Ensemble:\n%s", models_repr)
+
+    if isinstance(models_repr, str):
+        models_file = os.path.join(output_subdir('models', config), 'models.txt')
+        with open(models_file, 'w') as f:
+            f.write(models_repr)
+    elif isinstance(models_repr, dict):
+        models_file = os.path.join(output_subdir('models', config), 'models.json')
+        with open(models_file, 'w') as f:
+            json.dump(models_repr, f, default=lambda obj: str(obj))
+    else:
+        log.warning(f"Saving 'models' where {type(models_repr)=} not supported.")
+        print(f"Saving 'models' where {type(models_repr)=} not supported.")
 
 
 def save_artifacts(estimator, config):
-    try:
-        models_repr = estimator.show_models()
-        log.debug("Trained Ensemble:\n%s", models_repr)
-        artifacts = config.framework_params.get('_save_artifacts', [])
-        if 'models' in artifacts:
-            models_file = os.path.join(output_subdir('models', config), 'models.txt')
-            with open(models_file, 'w') as f:
-                f.write(models_repr)
-        if 'debug_as_files' in artifacts or 'debug_as_zip' in artifacts:
+    artifacts = config.framework_params.get('_save_artifacts', [])
+    artifacts = [artifacts] if isinstance(artifacts, str) else artifacts
+    if 'models' in artifacts:
+        try:
+            save_models(estimator, config)
+        except Exception as e:
+            log.info(f"Error when saving 'models': {e}.", exc_info=True)
+            print(f"Error when saving 'models': {e}.")
+
+    if 'debug_as_files' in artifacts or 'debug_as_zip' in artifacts:
+        try:
+            log.info('Saving debug artifacts!')
             print('Saving debug artifacts!')
             debug_dir = output_subdir('debug', config)
             ignore_extensions = ['.npy', '.pcs', '.model', '.cv_model', '.ensemble', '.pkl']
@@ -184,8 +243,9 @@ def save_artifacts(estimator, config):
                     os.path.join(debug_dir, "artifacts.zip"),
                     filter_=lambda p: os.path.splitext(p)[1] not in ignore_extensions
                 )
-    except Exception as e:
-        log.debug("Error when saving artifacts= {e}.".format(e), exc_info=True)
+        except Exception as e:
+            log.info(f"Error when saving 'debug': {e}.", exc_info=True)
+            print(f"Error when saving 'debug': {e}.")
 
 
 if __name__ == '__main__':

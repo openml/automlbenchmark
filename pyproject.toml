@@ -1,0 +1,37 @@
+[tool.mypy]
+files=[
+    "amlb/**/*.py"
+]
+python_version = "3.9"
+# Required because the normal usage pattern of namespaces raises [attr-defined] errors.
+# I can't a way to disable [attr-defined] errors for `Namespace` only.
+disable_error_code = "attr-defined"
+
+[[tool.mypy.overrides]]
+ignore_errors = false
+module = "amlb.utils.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.benchmarks.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.datasets.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.frameworks.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.runners.*"
+
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "amlb.*"

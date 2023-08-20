@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import gc
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -18,15 +20,34 @@ import sys
 import threading
 import _thread
 import traceback
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple, cast
 
 import psutil
 
 from .core import Namespace, as_list, flatten, fn_name
-from .os import dir_of, to_mb
+from .os import dir_of, to_mb, path_from_split, split_path
 from .time import Timeout, Timer
 
 log = logging.getLogger(__name__)
+
+__no_export = set(dir())  # all variables defined above this are not exported
+
+
+@contextmanager
+def file_lock(path, timeout=-1):
+    """
+    :param path: the path of the file to lock.
+        A matching lock file is automatically generated and associated to the file that we want to manipulate.
+    :param timeout: timeout in seconds to wait for the lock to be acquired. Disabled by default.
+    :raise: Timeout if the lock could not be acquired after timeout.
+    """
+    import filelock
+    splits = split_path(path)
+    splits.basename = f".{splits.basename}"  # keep the lock file as a hidden file as it's not deleted by filelock on release
+    splits.extension = f"{splits.extension}.lock"
+    lock_path = path_from_split(splits, real_path=False)
+    with filelock.FileLock(lock_path, timeout=timeout):
+        yield
 
 
 def run_subprocess(*popenargs,
@@ -99,7 +120,7 @@ def live_output_windows(process: subprocess.Popen, **_) -> Tuple[str, str]:
             queue=queue.Queue(),
             lines=[],
         ),
-    )
+    )  # type: ignore  # no reasonable type annotation, should refactor
 
     def forward_output(stream, queue_):
         if isinstance(stream, io.TextIOWrapper):
@@ -116,12 +137,14 @@ def live_output_windows(process: subprocess.Popen, **_) -> Tuple[str, str]:
         for output in outputs.values():
             while True:
                 try:
-                    line = output["queue"].get(timeout=0.5)
-                    output["lines"].append(line)
+                    line = cast(queue.Queue, output["queue"]).get(timeout=0.5)
+                    cast(list[str], output["lines"]).append(line)
                     print(line.rstrip())
                 except queue.Empty:
                     break
-    return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
+    stdout = ''.join(cast(list[str], outputs["out"]["lines"]))
+    stderr = ''.join(cast(list[str], outputs["err"]["lines"]))
+    return stdout, stderr
 
 
 def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **_):
@@ -153,9 +176,20 @@ def live_output_unix(process, input=None, timeout=None, activity_timeout=None, m
                 reads[i] = line
         return reads if len(pipes) > 1 else reads[0]
 
-    output, error = zip(*iter(lambda: read_pipe([process.stdout if process.stdout else 1,
-                                                 process.stderr if process.stderr else 2], activity_timeout),
-                              ['', '']))
+    process_output = list(iter(
+        lambda: read_pipe(
+            [process.stdout if process.stdout else 1,
+             process.stderr if process.stderr else 2
+             ], activity_timeout
+    ), ['', '']))
+    if not process_output:
+        log.warning(
+            "No framework process output detected, "
+            "this might indicate a problem with the logging configuration."
+        )
+        return '', ''
+
+    output, error = zip(*process_output)
     print()  # ensure that the log buffer is flushed at the end
     return ''.join(output), ''.join(error)
 
@@ -418,7 +452,7 @@ class InterruptTimeout(Timeout):
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
                  interrupt='thread', sig=signal.SIGINT, id=None,
-                 interruptions: Union[Dict, List[Dict]] = None, wait_retry_secs=1,
+                 interruptions: Union[Dict, List[Dict]] | None = None, wait_retry_secs=1,
                  before_interrupt=None):
         def interruption():
             inter_iter = iter(self._interruptions)
@@ -743,3 +777,4 @@ def profile(logger=log, log_level=None, duration=True, memory=True):
     return decorator
 
 
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

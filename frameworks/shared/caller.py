@@ -1,6 +1,7 @@
 import gc
 import logging
 import os
+import pathlib
 import re
 from tempfile import TemporaryDirectory, mktemp
 from typing import List, Optional, Union
@@ -11,6 +12,7 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
+from amlb.utils import json_dump, Namespace
 
 from .utils import Namespace as ns, Timer, dir_of, run_cmd, json_dumps, json_load, profile
 from .utils import is_serializable_data, deserialize_data, serialize_data
@@ -123,7 +125,7 @@ def run_in_venv(caller_file, script_file: str, *args,
             PYTHONPATH=os.pathsep.join([
                 rconfig().root_dir,
             ]),
-            AMLB_PATH=os.path.join(rconfig().root_dir, "amlb"),
+            AMLB_PATH=os.path.join(rconfig().root_dir),
             AMLB_LOG_TRACE=str(logging.TRACE if hasattr(logging, 'TRACE') else ''),
             **{k: str(v) for k, v in env}
         )
@@ -151,6 +153,13 @@ def run_in_venv(caller_file, script_file: str, *args,
 
         for name in ['predictions', 'truth', 'probabilities', 'optional_columns']:
             res[name] = deserialize_data(res[name], config=ser_config) if res[name] is not None else None
+
+        inference_filepath = Namespace.dict(res.others).get("inference_times")
+        if inference_filepath:
+            inference_times = json_load(inference_filepath)
+            inference_filepath = pathlib.Path(res.output_file).parent / "inference.json"
+            json_dump(inference_times, inference_filepath)
+            res["others"]["inference_times"] = inference_times
 
         if callable(process_results):
             res = process_results(res)

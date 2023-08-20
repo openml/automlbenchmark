@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime as dt
 import logging
 import math
@@ -8,6 +10,8 @@ from typing import Callable
 from .core import identity, threadsafe_generator
 
 log = logging.getLogger(__name__)
+
+__no_export = set(dir())  # all variables defined above this are not exported
 
 
 def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
@@ -39,8 +43,8 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     return datetime.strftime(strf)
 
 
-def countdown(timeout_secs, on_timeout: Callable = None, message: str = None, interval=1, log_level=logging.INFO,
-              interrupt_event: threading.Event = None, interrupt_cond: Callable = None):
+def countdown(timeout_secs, on_timeout: Callable | None = None, message: str = "", interval=1, log_level=logging.INFO,
+              interrupt_event: threading.Event | None = None, interrupt_cond: Callable | None = None):
     timeout_epoch = time.time() + timeout_secs
     remaining = timeout_secs
     interrupt = interrupt_event or threading.Event()
@@ -160,3 +164,5 @@ class Timeout:
         if self.timer:
             self.timer.cancel()
 
+
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]

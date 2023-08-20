@@ -1,3 +1,7 @@
 pytest
 pytest-mock
 pip-tools
+
+types-psutil
+pandas-stubs
+mypy

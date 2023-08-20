@@ -1,0 +1,2 @@
+pandas  # https://github.com/fmohr/naiveautoml/issues/19
+ConfigSpace<0.7.1  # https://github.com/fmohr/naiveautoml/issues/20

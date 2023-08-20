@@ -13,6 +13,7 @@ necessary to run a benchmark on EC2 instances:
 - merge downloaded results with existing/local results.
 - properly cleans up AWS resources (S3, EC2).
 """
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 import copy as cp
 import datetime as dt
@@ -38,8 +39,9 @@ from ..datautils import read_csv, write_csv
 from ..job import Job, JobError, MultiThreadingJobRunner, SimpleJobRunner, State as JobState
 from ..resources import config as rconfig, get as rget
 from ..results import ErrorResult, NoResultError, Scoreboard, TaskResult
-from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, list_all_files, normalize_path, \
-    retry_after, retry_policy, str_def, str_iter, tail, touch
+from ..utils import Namespace as ns, countdown, datetime_iso, file_filter, flatten, \
+    list_all_files, normalize_path, \
+    retry_after, retry_policy, str_def, str_iter, tail, touch, Namespace
 from .docker import DockerBenchmark
 
 
@@ -196,7 +198,7 @@ class AWSBenchmark(Benchmark):
                 try:
                     jobs = flatten([self._make_aws_job([task_def.name], folds) for task_def in task_defs])
                     results = self._run_jobs(jobs)
-                    return self._process_results(results, task_name=tasks)
+                    return self._results_summary(self._process_results(results))
                 finally:
                     self.cleanup()
             else:
@@ -208,7 +210,8 @@ class AWSBenchmark(Benchmark):
                 task_names = None if tasks is None else [task_def.name for task_def in task_defs]
                 job = self._make_aws_job(task_names, folds)
                 results = self._run_jobs([job])
-                return self._process_results(results, task_name=tasks)
+                scoreboard = self._process_results(results)
+                return self._results_summary(scoreboard)
             finally:
                 self.cleanup()
 
@@ -217,7 +220,8 @@ class AWSBenchmark(Benchmark):
             return SimpleJobRunner(jobs)
         else:
             queueing_strategy = MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
-            return MultiThreadingJobRunner(jobs, self.parallel_jobs,
+            return MultiThreadingJobRunner(jobs,
+                                           parallel_jobs=self.parallel_jobs,
                                            delay_secs=rconfig().job_scheduler.delay_between_jobs,
                                            done_async=True,
                                            queueing_strategy=queueing_strategy)
@@ -391,12 +395,22 @@ class AWSBenchmark(Benchmark):
                                 "please terminate it manually or restart it (after clearing its UserData) if you want to inspect the instance.",
                                 _self.ext.instance_id)
                 _self.ext.terminate = terminate
+                instance = self.instances.get(_self.ext.instance_id, {})
+                start_time = Namespace.get(instance, 'start_time', '')
+                stop_time = Namespace.get(instance, 'stop_time', '')
+                log_time = datetime.datetime.now(
+                    datetime.timezone.utc
+                ).strftime("%Y-%m-%dT%H:%M:%S")
                 if failure:
                     self._exec_send((lambda reason, **kwargs: self._save_failures(reason, **kwargs)),
                                     failure,
                                     tasks=_self.ext.tasks,
                                     folds=_self.ext.folds,
-                                    seed=_self.ext.seed)
+                                    seed=_self.ext.seed,
+                                    start_time=start_time,
+                                    stop_time=stop_time,
+                                    log_time=log_time,
+                                    )
 
             elif state == JobState.rescheduling:
                 self._stop_instance(_self.ext.instance_id, terminate=True, wait=False)
@@ -742,8 +756,11 @@ class AWSBenchmark(Benchmark):
                         str_iter(kwargs.get('tasks', [])),
                         str_iter(kwargs.get('folds', [])),
                         str_def(kwargs.get('seed', None)),
+                        kwargs.get('start_time', "unknown"),
+                        kwargs.get('stop_time', "unknown"),
+                        kwargs.get('log_time', "unknown"),
                         str_def(reason, if_none="unknown"))],
-                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'error'],
+                      columns=['framework', 'benchmark', 'constraint', 'tasks', 'folds', 'seed', 'start_time', 'stop_time', 'log_time', 'error'],
                       header=not os.path.exists(file),
                       path=file,
                       append=True)
@@ -900,10 +917,8 @@ class AWSBenchmark(Benchmark):
                 dest_path = os.path.join(self.output_dirs.session, rel_path)
                 try:
                     download_file(obj, dest_path)
-                    # if obj.key == result_key:
                     if is_result and not success:
-                        if rconfig().results.save:
-                            self._exec_send(lambda path: self._append(Scoreboard.load_df(path)), dest_path)
+                        self._exec_send(lambda path: self._save_global(Scoreboard.from_file(path)), dest_path)
                         success = True
                 except Exception as e:
                     if is_result:
@@ -923,6 +938,11 @@ class AWSBenchmark(Benchmark):
         log.info("Instance `%s` success=%s", instance_id, success)
         self._update_instance(instance_id, success=success)
         return success, error
+
+    def _results_summary(self, scoreboard=None):
+        log.info(
+            "Result summary not available for AWS mode (reference files instead)."
+        )
 
     def _create_instance_profile(self):
         """
@@ -1294,4 +1314,3 @@ class AWSRemoteBenchmark(Benchmark):
 
     def _upload_results(self):
         pass
-

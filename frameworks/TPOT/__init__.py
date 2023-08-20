@@ -21,8 +21,10 @@ def run(dataset: Dataset, config: TaskConfig):
         test=dict(
             X=X_test,
             y=y_test
-        )
+        ),
     )
+    if config.measure_inference_time:
+        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet", scikit_safe=True, keep_empty_features=True)
 
     def process_results(results):
         if isinstance(results.probabilities, str) and results.probabilities == "predictions":

@@ -55,8 +55,8 @@ class Scoreboard:
     results_file = 'results.csv'
 
     @classmethod
-    def all(cls, scores_dir=None):
-        return cls(scores_dir=scores_dir)
+    def all(cls, scores_dir=None, autoload=True):
+        return cls(scores_dir=scores_dir, autoload=autoload)
 
     @classmethod
     def from_file(cls, path):
@@ -105,28 +105,34 @@ class Scoreboard:
     def save_df(data_frame, path, append=False):
         exists = os.path.isfile(path)
         new_format = False
+        df = data_frame
         if exists:
-            df = read_csv(path, nrows=1)
-            new_format = list(df.columns) != list(data_frame.columns)
+            head = read_csv(path, nrows=1)
+            new_format = list(head.columns) != list(data_frame.columns)
         if new_format or (exists and not append):
             backup_file(path)
+        if new_format and append:
+            df = read_csv(path).append(data_frame)
         new_file = not exists or not append or new_format
         is_default_index = data_frame.index.name is None and not any(data_frame.index.names)
         log.debug("Saving scores to `%s`.", path)
-        write_csv(data_frame,
+        write_csv(df,
                   path=path,
                   header=new_file,
                   index=not is_default_index,
                   append=not new_file)
         log.info("Scores saved to `%s`.", path)
 
-    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None, scores_dir=None):
+    def __init__(self, scores=None, framework_name=None, benchmark_name=None, task_name=None,
+                 scores_dir=None, autoload=True):
         self.framework_name = framework_name
         self.benchmark_name = benchmark_name
         self.task_name = task_name
         self.scores_dir = (scores_dir if scores_dir
                            else output_dirs(rconfig().output_dir, rconfig().sid, ['scores']).scores)
-        self.scores = scores if scores is not None else self._load()
+        self.scores = (scores if scores is not None
+                       else self.load_df(self.path) if autoload
+                       else None)
 
     @cached
     def as_data_frame(self):
@@ -155,24 +161,27 @@ class Scoreboard:
 
     @memoize
     def as_printable_data_frame(self, verbosity=3):
-        str_print = lambda val: '' if val in [None, '', 'None'] or (isinstance(val, float) and np.isnan(val)) else val
-        int_print = lambda val: int(val) if isinstance(val, float) and not np.isnan(val) else str_print(val)
-        num_print = lambda fn, val: None if isinstance(val, str) else fn(val)
+        str_print = lambda val: '' if val in [None, '', 'None'] or (isinstance(val, float) and np.isnan(val)) else str(val)
+        int_print = lambda val: int(val) if isinstance(val, (float, int)) and not np.isnan(val) else str_print(val)
 
         df = self.as_data_frame()
+        if df.empty:
+            return df
+
         force_str_cols = ['id']
         nanable_int_cols = ['fold', 'models_count', 'seed']
         low_precision_float_cols = ['duration', 'training_duration', 'predict_duration']
-        high_precision_float_cols = [col for col in df.select_dtypes(include=[np.float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
+        high_precision_float_cols = [col for col in df.select_dtypes(include=[float]).columns if col not in ([] + nanable_int_cols + low_precision_float_cols)]
         for col in force_str_cols:
-            df[col] = df[col].astype(np.object).map(str_print).astype(np.str)
+            df[col] = df[col].map(str_print)
         for col in nanable_int_cols:
-            df[col] = df[col].astype(np.object).map(int_print).astype(np.str)
+            df[col] = df[col].map(int_print)
         for col in low_precision_float_cols:
             float_format = lambda f: ("{:.1g}" if f < 1 else "{:.1f}").format(f)
-            df[col] = df[col].astype(np.float).map(partial(num_print, float_format)).astype(np.float)
+            # The .astype(float) is required to maintain NaN as 'NaN' instead of 'nan'
+            df[col] = df[col].map(float_format).astype(float)
         for col in high_precision_float_cols:
-            df[col] = df[col].map(partial(num_print, "{:.6g}".format)).astype(np.float)
+            df[col] = df[col].map("{:.6g}".format).astype(float)
 
         cols = ([] if verbosity == 0
                 else ['task', 'fold', 'framework', 'constraint', 'result', 'metric', 'info'] if verbosity == 1
@@ -181,15 +190,17 @@ class Scoreboard:
                 else slice(None))
         return df.loc[:, cols]
 
-    def _load(self):
-        return self.load_df(self._score_file())
+    def load(self):
+        self.scores = self.load_df(self.path)
+        return self
 
     def save(self, append=False):
-        self.save_df(self.as_printable_data_frame(), path=self._score_file(), append=append)
+        self.save_df(self.as_printable_data_frame(), path=self.path, append=append)
+        return self
 
     def append(self, board_or_df, no_duplicates=True):
         to_append = board_or_df.as_data_frame() if isinstance(board_or_df, Scoreboard) else board_or_df
-        scores = self.as_data_frame().append(to_append, sort=False)
+        scores = self.as_data_frame().append(to_append)
         if no_duplicates:
             scores = scores.drop_duplicates()
         return Scoreboard(scores=scores,
@@ -198,7 +209,8 @@ class Scoreboard:
                           task_name=self.task_name,
                           scores_dir=self.scores_dir)
 
-    def _score_file(self):
+    @property
+    def path(self):
         sep = rconfig().token_separator
         if self.framework_name:
             if self.task_name:
@@ -232,7 +244,7 @@ class TaskResult:
                 if rconfig().test_mode:
                     TaskResult.validate_predictions(df)
 
-                if  'y_past_period_error' in df.columns:
+                if 'repeated_item_id' in df.columns:
                     return TimeSeriesResult(df)
                 else:
                     if df.shape[1] > 2:
@@ -432,6 +444,11 @@ class TaskResult:
         required_meta_res = ['training_duration', 'predict_duration', 'models_count']
         for m in required_meta_res:
             entry[m] = meta_result[m] if m in meta_result else nan
+
+        if inference_times := Namespace.get(meta_result, "inference_times"):
+            for data_type, measurements in Namespace.dict(inference_times).items():
+                for n_samples, measured_times in Namespace.dict(measurements).items():
+                    entry[f"infer_batch_size_{data_type}_{n_samples}"] = np.median(measured_times)
         result = self.get_result() if result is None else result
 
         scoring_errors = []
@@ -461,7 +478,7 @@ class TaskResult:
         entry.info = result.info
         if scoring_errors:
             entry.info = "; ".join(filter(lambda it: it, [entry.info, *scoring_errors]))
-        entry |= Namespace({k: v for k, v in meta_result if k not in required_meta_res})
+        entry |= Namespace({k: v for k, v in meta_result if k not in required_meta_res and k != "inference_times"})
         log.info("Metric scores: %s", entry)
         return entry
 
@@ -667,52 +684,56 @@ class RegressionResult(Result):
         """R^2"""
         return float(r2_score(self.truth, self.predictions))
 
-class TimeSeriesResult(RegressionResult):
 
+class TimeSeriesResult(RegressionResult):
     def __init__(self, predictions_df, info=None):
         super().__init__(predictions_df, info)
-        self.truth = self.df['truth'].values if self.df is not None else None #.iloc[:, 1].values if self.df is not None else None
-        self.predictions = self.df['predictions'].values if self.df is not None else None #.iloc[:, -2].values if self.df is not None else None
-        self.y_past_period_error = self.df['y_past_period_error'].values
-        self.quantiles = self.df.iloc[:, 2:-1].values
-        self.quantiles_probs = np.array([float(q) for q in self.df.columns[2:-1]])
-        self.truth = self.truth.astype(float, copy=False)
-        self.predictions = self.predictions.astype(float, copy=False)
-        self.quantiles = self.quantiles.astype(float, copy=False)
-        self.y_past_period_error = self.y_past_period_error.astype(float, copy=False)
+        required_columns = {'truth', 'predictions', 'repeated_item_id', 'repeated_abs_seasonal_error'}
+        if required_columns - set(self.df.columns):
+            raise ValueError(f'Missing columns for calculating time series metrics: {required_columns - set(self.df.columns)}.')
 
-        self.target = Feature(0, 'target', 'real', is_target=True)
+        quantile_columns = [column for column in self.df.columns if column.startswith('0.')]
+        unrecognized_columns = [column for column in self.df.columns if column not in required_columns and column not in quantile_columns]
+        if len(unrecognized_columns) > 0:
+            raise ValueError(f'Predictions contain unrecognized columns: {unrecognized_columns}.')
+
         self.type = DatasetType.timeseries
+        self.truth = self.df['truth'].values.astype(float)
+        self.item_ids = self.df['repeated_item_id'].values
+        self.abs_seasonal_error = self.df['repeated_abs_seasonal_error'].values.astype(float)
+        # predictions = point forecast, quantile_predictions = quantile forecast
+        self.predictions = self.df['predictions'].values.astype(float)
+        self.quantile_predictions = self.df[quantile_columns].values.astype(float)
+        self.quantile_levels = np.array(quantile_columns, dtype=float)
 
-    @metric(higher_is_better=False)
-    def mase(self):
-        """Mean Absolute Scaled Error"""
-        return float(np.nanmean(np.abs(self.truth/self.y_past_period_error - self.predictions/self.y_past_period_error)))
+        if (~np.isfinite(self.predictions)).any() or (~np.isfinite(self.quantile_predictions)).any():
+            raise ValueError('Predictions contain NaN or Inf values')
+
+        _, unique_item_ids_counts = np.unique(self.item_ids, return_counts=True)
+        if len(set(unique_item_ids_counts)) != 1:
+            raise ValueError(f'Error: Predicted sequences have different lengths {unique_item_ids_counts}.')
+
+    def _itemwise_mean(self, values):
+        """Compute mean for each time series."""
+        return pd.Series(values).groupby(self.item_ids, sort=False).mean().values
+
+    def _safemean(self, values):
+        """Compute mean, while ignoring nan, +inf, -inf values."""
+        return np.mean(values[np.isfinite(values)])
 
     @metric(higher_is_better=False)
     def smape(self):
         """Symmetric Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.predictions)
         denom = (np.abs(self.truth) + np.abs(self.predictions)) / 2
-        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
-        # might not be fully mathematically correct, but at least we don't get NaNs)
-        denom[denom == 0] = math.inf
-        return np.mean(num / denom)
+        return self._safemean(num / denom)
 
     @metric(higher_is_better=False)
     def mape(self):
-        """Symmetric Mean Absolute Percentage Error"""
+        """Mean Absolute Percentage Error"""
         num = np.abs(self.truth - self.predictions)
         denom = np.abs(self.truth)
-        # If the denominator is 0, we set it to float('inf') such that any division yields 0 (this
-        # might not be fully mathematically correct, but at least we don't get NaNs)
-        denom[denom == 0] = math.inf
-        return np.mean(num / denom)
-
-    @metric(higher_is_better=False)
-    def nrmse(self):
-        """Normalized Root Mean Square Error"""
-        return self.rmse() / np.mean(np.abs(self.truth))
+        return self._safemean(num / denom)
 
     @metric(higher_is_better=False)
     def wape(self):
@@ -720,18 +741,51 @@ class TimeSeriesResult(RegressionResult):
         return np.sum(np.abs(self.truth - self.predictions)) / np.sum(np.abs(self.truth))
 
     @metric(higher_is_better=False)
-    def ncrps(self):
-        """Normalized Continuous Ranked Probability Score"""
-        quantile_losses = 2 * np.sum(
-            np.abs(
-                (self.quantiles - self.truth[:, None])
-                * ((self.quantiles >= self.truth[:, None]) - self.quantiles_probs[None, :])
-            ),
-            axis=0,
+    def mase(self):
+        """Mean Absolute Scaled Error
+
+        Error for each item is normalized by the in-sample error of the naive forecaster.
+        This makes scores comparable across different items.
+        """
+        error = np.abs(self.truth - self.predictions)
+        error_per_item = self._itemwise_mean(error / self.abs_seasonal_error)
+        return self._safemean(error_per_item)
+
+    def _quantile_loss_per_step(self):
+        # Array of shape [len(self.predictions), len(self.quantile_levels)]
+        return 2 * np.abs(
+            (self.quantile_predictions - self.truth[:, None])
+            * ((self.quantile_predictions >= self.truth[:, None]) - self.quantile_levels)
         )
-        denom = np.sum(np.abs(self.truth)) # shape [num_time_series, num_quantiles]
-        weighted_losses = quantile_losses.sum(0) / denom  # shape [num_quantiles]
-        return weighted_losses.mean()
+
+    @metric(higher_is_better=False)
+    def mql(self):
+        """Quantile Loss, also known as Pinball Loss, averaged across all quantile levels & time steps.
+
+        Equivalent to the Weighted Interval Score if the quantile_levels are symmetric around 0.5
+
+        Approximates the Continuous Ranked Probability Score
+        """
+        return np.mean(self._quantile_loss_per_step())
+
+    @metric(higher_is_better=False)
+    def wql(self):
+        """Weighted Quantile Loss.
+
+        Defined as total quantile loss normalized by the total abs value of target time series.
+        """
+        return self._quantile_loss_per_step().mean(axis=1).sum() / np.sum(np.abs(self.truth))
+
+    @metric(higher_is_better=False)
+    def sql(self):
+        """Scaled Quantile Loss, also known as Scaled Pinball Loss.
+
+        Similar to MASE, the quantile loss for each item is normalized by the in-sample error of the naive forecaster.
+        This makes scores comparable across different items.
+        """
+        pl_per_item = self._itemwise_mean(self._quantile_loss_per_step().mean(axis=1) / self.abs_seasonal_error)
+        return self._safemean(pl_per_item)
+
 
 _encode_predictions_and_truth_ = False
 

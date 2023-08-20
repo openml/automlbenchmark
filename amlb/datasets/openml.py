@@ -2,23 +2,34 @@
 **openml** module implements the abstractions defined in **data** module
 to expose `OpenML<https://www.openml.org>`_ datasets.
 """
+from __future__ import annotations
+
+import pathlib
 from abc import abstractmethod
 import copy
 import functools
 import logging
 import os
 import re
-from typing import Generic, Tuple, TypeVar, Union
+from typing import Generic, Tuple, TypeVar, List
 
 import arff
+import pandas as pd
 import pandas.api.types as pat
 import openml as oml
 import xmltodict
 
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
-from ..resources import config as rconfig
+from ..datautils import impute_array
+from ..resources import config as rconfig, get as rget
 from ..utils import as_list, lazy_property, path_from_split, profile, split_path, unsparsify
 
+
+# https://github.com/openml/automlbenchmark/pull/574#issuecomment-1646179921
+try:
+  set_openml_cache = oml.config.set_cache_directory
+except AttributeError:
+  set_openml_cache = oml.config.set_root_cache_directory
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +45,7 @@ class OpenmlLoader:
     def __init__(self, api_key, cache_dir=None):
         oml.config.apikey = api_key
         if cache_dir:
-            oml.config.set_cache_directory(cache_dir)
+            set_openml_cache(cache_dir)
 
         if oml.config.retry_policy != "robot":
             log.debug("Setting openml retry_policy from '%s' to 'robot'." % oml.config.retry_policy)
@@ -66,6 +77,15 @@ class OpenmlDataset(Dataset):
         self.fold = fold
         self._train = None
         self._test = None
+        self._nrows = None
+
+
+    @property
+    def nrows(self) -> int:
+        if self._nrows is None:
+            self._nrows = len(self._load_full_data(fmt='dataframe'))
+        return self._nrows
+
 
     @lazy_property
     def type(self):
@@ -91,6 +111,90 @@ class OpenmlDataset(Dataset):
     def test(self):
         self._ensure_split_created()
         return self._test
+
+    def inference_subsample_files(self, fmt: str, with_labels: bool = False, scikit_safe: bool = False, keep_empty_features: bool = False) -> list[Tuple[int, str]]:
+        """Generates n subsamples of size k from the test dataset in `fmt` data format.
+
+        We measure the inference time of the models for various batch sizes
+        (number of rows). We generate config.inference_time_measurements.repeats
+        subsamples for each of the config.inference_time_measurements.batch_sizes.
+
+        These subsamples are stored to file in the `fmt` format (parquet, arff, or csv).
+        The function returns a list of tuples of (batch size, file path).
+
+        Iff `with_labels` is true, the target column will be included in the split file.
+        Iff `scikit_safe` is true, categorical values are encoded and missing values
+        are imputed.
+        """
+        seed = rget().seed(self.fold)
+        batch_sizes = [
+            batch_size for batch_size in rconfig().inference_time_measurements.batch_sizes
+            if not (batch_size > self.nrows and rconfig().inference_time_measurements.limit_by_dataset_size)
+        ]
+        return [
+            (n, str(self._inference_subsample(fmt=fmt, n=n, seed=seed + i, with_labels=with_labels, scikit_safe=scikit_safe, keep_empty_features=keep_empty_features)))
+            for n in batch_sizes
+            for i, _ in enumerate(range(rconfig().inference_time_measurements.repeats))
+        ]
+
+    @profile(logger=log)
+    def _inference_subsample(self, fmt: str, n: int, seed: int = 0, with_labels: bool = False, scikit_safe: bool = False, keep_empty_features: bool = False) -> pathlib.Path:
+        """ Write subset of `n` samples from the test split to disk in `fmt` format
+
+        Iff `with_labels` is true, the target column will be included in the split file.
+        Iff `scikit_safe` is true, categorical values are encoded and missing values
+        are imputed.
+        If `keep_empty_features` is true, columns with all nan values will be imputed as 0.
+        If false, they get removed instead.
+        """
+        def get_non_empty_columns(data: DF) -> List[str]:
+            return [
+                c
+                for c, is_empty in data.isnull().all(axis=0).items()
+                if not is_empty
+            ]
+        # Just a hack for now, the splitters all work specifically with openml tasks.
+        # The important thing is that we split to disk and can load it later.
+
+        # We should consider taking a stratified sample if n is large enough,
+        # inference time might differ based on class
+        if scikit_safe:
+            if with_labels:
+                _, data = impute_array(self.train.data_enc, self.test.data_enc, keep_empty_features=keep_empty_features)
+                columns = self.train.data.columns if keep_empty_features else get_non_empty_columns(self.train.data)
+            else:
+                _, data = impute_array(self.train.X_enc, self.test.X_enc, keep_empty_features=keep_empty_features)
+                columns = self.train.X.columns if keep_empty_features else get_non_empty_columns(self.train.X)
+
+            # `impute_array` drops columns that only have missing values
+            data = pd.DataFrame(data, columns=columns)
+        else:
+            data = self._test.data if with_labels else self._test.X
+
+        subsample = data.sample(
+            n=n,
+            replace=True,
+            random_state=seed,
+        )
+
+        _, test_path = self._get_split_paths()
+        test_path = pathlib.Path(test_path)
+        subsample_path = test_path.parent / f"{test_path.stem}_{n}_{seed}.{fmt}"
+        if fmt == "csv":
+            subsample.to_csv(subsample_path, header=True, index=False)
+        elif fmt == "arff":
+            ArffSplitter(self)._save_split(
+                subsample,
+                subsample_path,
+                name=f"{self._oml_dataset.name}_inference_{self.fold}_{n}"
+            )
+        elif fmt == "parquet":
+            subsample.to_parquet(subsample_path)
+        else:
+            msg = f"{fmt=}, but must be one of 'csv', 'arff', or 'parquet'."
+            raise ValueError(msg)
+
+        return subsample_path
 
     @lazy_property
     @profile(logger=log)
@@ -238,16 +342,25 @@ class ArffSplitter(DataSplitter[str]):
         log.debug("Saving %s split dataset to %s.", name, path)
         with open(path, 'w') as file:
             description = f"Split dataset file generated by automlbenchmark from OpenML dataset openml.org/d/{self.ds._oml_dataset.dataset_id}"
-            attributes = [(c,
-                           ('INTEGER' if pat.is_integer_dtype(dt)
-                            else 'REAL' if pat.is_float_dtype(dt)
-                           # columns with all values missing will be interpreted as string by default,
-                           # but we can use openml meta-data to find out if it should be considered numeric instead.
-                            else 'NUMERIC' if pat.is_numeric_dtype(dt) or self._is_numeric(c)
-                            else self._get_categorical_values(c) if pat.is_categorical_dtype(dt)
-                            else 'STRING'
-                           ))
-                          for c, dt in zip(df.columns, df.dtypes)]
+
+            def determine_arff_type(column_name: str, dtype: 'dtype') -> str | list[str]:
+                if pat.is_integer_dtype(dtype):
+                    return "INTEGER"
+                if pat.is_float_dtype(dtype):
+                    return "REAL"
+                if pat.is_bool_dtype(dtype) and not self._is_numeric(column_name):
+                    # We observe OpenML annotation on determining how to treat a bool
+                    # Bools will match on `is_numeric_dtype` as well.
+                    return self._get_categorical_values(column_name)
+                if pat.is_numeric_dtype(dtype):
+                    return 'NUMERIC'
+                if pat.is_categorical_dtype(dtype):
+                    return self._get_categorical_values(column_name)
+                return 'STRING'
+
+            attributes = [
+                (c, determine_arff_type(c, dt)) for c, dt in zip(df.columns, df.dtypes)
+            ]
             arff.dump(dict(
                 description=description,
                 relation=name,

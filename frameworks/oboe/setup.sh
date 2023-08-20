@@ -21,5 +21,5 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
-cat ${HERE}/requirements.txt | sed '/^$/d' | while read -r i; do PIP install --no-cache-dir -U "$i"; done
+#cat ${HERE}/requirements.txt | sed '/^$/d' | while read -r i; do PIP install --no-cache-dir -U "$i"; done
 #PIP install --no-cache-dir -U -e git+https://github.com/udellgroup/oboe.git@${VERSION}#egg=oboe

@@ -57,6 +57,9 @@ mljarsupervised_compete:
   params:
     mode: Compete   # set mode for Compete, default mode is Explain
 
+MLNet:
+  version: 'latest'
+
 MLPlan:
   abstract: true
   version: 'latest'
@@ -71,23 +74,20 @@ MLPlanWEKA:
   params:
     _backend: weka
 
+mlr3automl:
+  version: 'latest'
+
+NaiveAutoML:
+  version: 'latest'
+
 oboe:
   version: 'latest'
 
 TPOT:
   version: 'latest'
 
-####################################
-### TimeSeries AutoML frameworks ###
-####################################
-
-AutoGluonTS:
-  extends: AutoGluon
-  version: "latest"
-  description: |
-    AutoGluon-TimeSeries
-  setup_env:
-    MODULE: timeseries
+FEDOT:
+  version: 'latest'
 
 #######################################
 ### Non AutoML reference frameworks ###

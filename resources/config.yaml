@@ -33,7 +33,7 @@ frameworks:              # configuration namespace for the frameworks definition
     - '{root}/resources/frameworks.yaml'
   root_module: frameworks     # the default python module under which the frameworks modules are defined.
   allow_duplicates: false     # if true, the last definition is used.
-  tags: ['stable', 'latest', '2020Q2', '2021Q3']  # the list of supported tags when looking up frameworks:
+  tags: ['stable', 'latest', '2020Q2', '2021Q3', '2023Q2']  # the list of supported tags when looking up frameworks:
                               # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:                     # configuration namespace for the benchmarks definitions.
@@ -54,13 +54,15 @@ benchmarks:                     # configuration namespace for the benchmarks def
     binary: ['auc', 'logloss', 'acc', 'balacc']     # available metrics: auc (AUC), acc (Accuracy), balacc (Balanced Accuracy), pr_auc (Precision Recall AUC), logloss (Log Loss), f1, f2, f05 (F-beta scores with beta=1, 2, or 0.5), max_pce, mean_pce (Max/Mean Per-Class Error).
     multiclass: ['logloss', 'acc', 'balacc']        # available metrics: same as for binary, except auc, replaced by auc_ovo (AUC One-vs-One), auc_ovr (AUC One-vs-Rest). AUC metrics and F-beta metrics are computed with weighted average.
     regression: ['rmse', 'r2', 'mae']               # available metrics: mae (Mean Absolute Error), mse (Mean Squared Error), msle (Mean Squared Logarithmic Error), rmse (Root Mean Square Error), rmsle (Root Mean Square Logarithmic Error), r2 (R^2).
-    timeseries: ['mase', 'mape', 'smape', 'rmse', 'mse', 'nrmse', 'wape', 'ncrps']
+    timeseries: ['mase', 'mape', 'smape', 'wape', 'rmse', 'mse', 'mql', 'wql', 'sql']  # available metrics: mase (Mean Absolute Scaled Error), mape (Mean Absolute Percentage Error), smape (Symmetric Mean Absolute Percentage Error), wape (Weighted Absolute Percentage Error), rmse (Root Mean Square Error), mse (Mean Square Error), mql (Mean Quantile Loss), wql (Weighted Quantile Loss), sql (Scaled Quantile Loss).
+
   defaults:            # the default constraints, usually overridden by a constraint.
     folds: 10          # the amount of fold-runs executed for each dataset.
     max_runtime_seconds: 3600   # default time allocated to the framework to train a model.
     cores: -1                   # default amount of cores used for each automl task. If <= 0, will try to use all cores.
     max_mem_size_mb: -1         # default amount of memory assigned to each automl task. If <= 0, then the amount of memory is computed from os available memory.
     min_vol_size_mb: -1         # default minimum amount of free space required on the volume. If <= 0, skips verification.
+    quantile_levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]  # default quantile_levels for timeseries problem type
 
 job_scheduler:           # configuration namespace
   exit_on_job_failure:   # if true, the entire run will be aborted on the first job failure (mainly used for testing) : set by caller (runbenchmark.py)
@@ -80,7 +82,17 @@ monitoring:               # configuration namespace describing the basic monitor
 
 results:                 # configuration namespace for the results.csv file.
   error_max_length: 200  # the max length of the error message as rendered in the results file.
-  save: true             # set by runbenchmark.py
+  global_save: true      # set by runbenchmark.py, if true adds the results to the main `results.csv` in the {output.dir}
+  global_lock_timeout: 5 # the timeout used to wait for the lock on the global results file.
+  incremental_save: true # if true save results after each job., otherwise save results only when all jobs are completed.
+
+inference_time_measurements:  # configuration namespace for performing additional inference time measurements on various batch sizes
+  enabled: false
+  batch_sizes: [1, 10, 100, 1000, 10000]  # the batch sizes for which inference speed should be measured
+  repeats: 10                            # the number of times to repeat the inference measurement for each batch size
+  additional_job_time: 300  # the time in seconds that will be added to the maximum job time if inference time is measured
+  limit_by_dataset_size: true  # Don't measure inference time on `batch size` if it exceeds the number of rows in the dataset.
+                               # E.g., on micro-mass (571 rows) with `batch_sizes` [1, 10, 100, 1000, 10000], only measure [1, 10, 100].
 
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
@@ -88,7 +100,7 @@ openml:                # configuration namespace for openML.
 
 versions:              # configuration namespace for versions enforcement (libraries versions are usually enforced in requirements.txt for the app and for each framework).
   pip:
-  python: 3.7          # the Python minor version that will be used by the application in containers and cloud instances, , also used as a based version for virtual environments created for each framework.
+  python: 3.9          # the Python minor version that will be used by the application in containers and cloud instances, also used as a based version for virtual environments created for each framework.
 
 container: &container          # parent configuration namespace for container modes.
   force_branch: true           # set to true if image can only be built from a clean branch, with same tag as defined in `project_repository`.
@@ -104,6 +116,13 @@ container: &container          # parent configuration namespace for container mo
 docker:                        # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
   run_extra_options: '--shm-size=2048M'
+  run_as: 'default'    # Sets the user inside the docker container (`docker run -u`), one of:
+                       #  * 'user': set as `-u $(id -u):$(id -g)`, only on unix systems.
+                       #  * 'root': set as `-u 0:0`
+                       #  * 'default': does not set `-u`
+                       #  * any string that starts with `-u`, which will be directly forwarded.
+                       # Try this setting if you have problems with permissions in docker.
+  build_extra_options: ''
 
 singularity:                   # configuration namespace for docker: it inherits from `container` namespace.
   <<: *container
@@ -138,17 +157,20 @@ aws:                    # configuration namespace for AWS mode.
   ec2:
     regions:                             #
       us-east-1:
-        ami: ami-0ac019f4fcb7cb7e6
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-053b0d53c279acc90
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
+      us-east-2:
+        ami: ami-024e6efaf93d85776
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       us-west-1:
-        ami: ami-063aa838bd7631e0b
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-0f8e81a3da6e2510a
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       eu-west-1:
-        ami: ami-00035f41c82244dab
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-01dd271720c1ba44f
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
       eu-central-1:
-        ami: ami-0bdf93799014acdc4
-        description: Ubuntu Server 18.04 LTS (HVM), EBS General Purpose (SSD) VolumeType
+        ami: ami-04e601abe3e1a910f
+        description: Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-05-16
     instance_type:                       #
       series: m5                         #
       map:                               # map between num cores required and ec2 instance type sizes
@@ -197,10 +219,12 @@ aws:                    # configuration namespace for AWS mode.
       - 'MaxSpotInstanceCountExceeded'
       - 'InsufficientFreeAddressesInSubnet'
       - 'InsufficientInstanceCapacity'
+      - 'VolumeLimitExceeded'
     retry_on_states:                         # EC2 instance states that will trigger a job reschedule.
       - 'Server.SpotInstanceShutdown'
       - 'Server.SpotInstanceTermination'
       - 'Server.InsufficientInstanceCapacity'
+      - 'Client.VolumeLimitExceeded'
 
   max_timeout_seconds: 21600    #
   os_mem_size_mb: 0             # overrides the default amount of memory left to the os in AWS mode, and set to 0 for fairness as we can't always prevent frameworks from using all available memory.

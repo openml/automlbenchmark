@@ -10,6 +10,8 @@ from .process import profile
 
 log = logging.getLogger(__name__)
 
+__no_export = set(dir())  # all variables defined above this are not exported
+
 
 def _import_data_libraries():
     try:
@@ -21,7 +23,7 @@ def _import_data_libraries():
     except ImportError:
         pd = None
     try:
-        import scipy.sparse as sp
+        import scipy.sparse as sp  # type: ignore # https://github.com/scipy/scipy/issues/17158
     except ImportError:
         sp = None
     return np, pd, sp
@@ -236,3 +238,4 @@ def deserialize_data(path, config: Optional[ns] = None):
         raise SerializationError(f"Can not deserialize file `{path}` in unknown format.")
 
 
+__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
