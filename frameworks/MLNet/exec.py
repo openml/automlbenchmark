@@ -55,7 +55,7 @@ def run(dataset: Dataset, config: TaskConfig):
         log.info(f'test dataset: {test_dataset_path}')
 
         cmd = (f"{mlnet} {sub_command}"
-               f" --dataset {train_dataset_path} --test-dataset {test_dataset_path} --train-time {train_time_in_seconds}"
+               f" --dataset {train_dataset_path} --train-time {train_time_in_seconds}"
                f" --label-col {label} --output {os.path.dirname(output_dir)} --name {config.fold}"
                f" --verbosity diag --log-file-path {log_path}")
 
@@ -64,7 +64,7 @@ def run(dataset: Dataset, config: TaskConfig):
                 run_cmd(cmd , _live_output_=True)
                 log.info(f"Finished fit in {training.duration}s.")
             except:
-                log.info(f"error: please visit {log_path} for more infomation")
+                log.info(f"error: please visit {log_path} for more information")
                 with open(log_path, 'r') as f:
                     for line in f:
                         log.info(line)
