@@ -32,7 +32,7 @@ def run(dataset: Dataset, config: TaskConfig):
     os.environ['MLNetCLIEnablePredict'] = 'True'
     os.environ['MLNET_MAX_THREAD'] = str(config.cores)
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
-    train_time_in_seconds = config.max_runtime_seconds * 0.7
+    train_time_in_seconds = int(config.max_runtime_seconds * 0.7)
     sub_command = config.type
 
     # set up MODELBUILDER_AUTOML
