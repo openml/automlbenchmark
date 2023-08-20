@@ -32,12 +32,9 @@ def run(dataset: Dataset, config: TaskConfig):
     os.environ['MLNetCLIEnablePredict'] = 'True'
     os.environ['MLNET_MAX_THREAD'] = str(config.cores)
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
-    train_time_in_seconds = int(config.max_runtime_seconds * 0.7)
+    train_time_in_seconds = int(config.max_runtime_seconds * 0.3)
     sub_command = config.type
 
-    # set up MODELBUILDER_AUTOML
-    MODELBUILDER_AUTOML = config.framework_params.get('automl_type', 'NNI')
-    os.environ['MODELBUILDER_AUTOML'] = MODELBUILDER_AUTOML
 
     artifacts = config.framework_params.get('_save_artifacts', [])
     tmpdir = tempfile.mkdtemp()
@@ -75,7 +72,7 @@ def run(dataset: Dataset, config: TaskConfig):
         with open(train_result_json, 'r') as f:
             json_str = f.read()
             mb_config = json.loads(json_str)
-            model_path = os.path.join(output_dir, f"{config.fold}.zip")
+            model_path = os.path.join(output_dir, f"{config.fold}.mlnet")
             output_prediction_path = os.path.join(log_dir, "prediction.txt")  # keeping this in log dir as it contains useful error when prediction fails
             models_count = len(mb_config['RunHistory']['Trials'])
             # predict
@@ -120,4 +117,4 @@ def run(dataset: Dataset, config: TaskConfig):
             zip_path(output_dir, models_zip)
             clean_dir(output_dir, filter_=lambda p: p != models_zip)
 
-        shutil.rmtree(tmpdir, ignore_errors=True)
+        # shutil.rmtree(tmpdir, ignore_errors=True)
