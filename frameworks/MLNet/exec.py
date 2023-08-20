@@ -32,7 +32,7 @@ def run(dataset: Dataset, config: TaskConfig):
     os.environ['MLNetCLIEnablePredict'] = 'True'
     os.environ['MLNET_MAX_THREAD'] = str(config.cores)
     mlnet = os.path.join(DOTNET_INSTALL_DIR, 'mlnet')
-    train_time_in_seconds = config.max_runtime_seconds
+    train_time_in_seconds = config.max_runtime_seconds * 0.7
     sub_command = config.type
 
     # set up MODELBUILDER_AUTOML
@@ -50,9 +50,8 @@ def run(dataset: Dataset, config: TaskConfig):
         label = dataset.target.index
         train_dataset_path = dataset.train.data_path('csv')
         test_dataset_path = dataset.test.data_path('csv')
-
         log.info(f'train dataset: {train_dataset_path}')
-        log.info(f'test dataset: {test_dataset_path}')
+        log.info(f'train dataset: {train_dataset_path}')
 
         cmd = (f"{mlnet} {sub_command}"
                f" --dataset {train_dataset_path} --train-time {train_time_in_seconds}"
