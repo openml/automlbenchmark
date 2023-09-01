@@ -97,8 +97,7 @@ mlr3automl:
   project: https://github.com/a-hanf/mlr3automl
 
 NaiveAutoML:
-  repo: https://github.com/pgijsbers/naiveautoml
-  version: '#1af07c22b64510df7700798f4c0f32c3ca76ab93'
+  version: '0.0.27'
 
 TPOT:
   version: '0.12.0'

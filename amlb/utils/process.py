@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import gc
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -18,7 +20,7 @@ import sys
 import threading
 import _thread
 import traceback
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple, cast
 
 import psutil
 
@@ -118,7 +120,7 @@ def live_output_windows(process: subprocess.Popen, **_) -> Tuple[str, str]:
             queue=queue.Queue(),
             lines=[],
         ),
-    )
+    )  # type: ignore  # no reasonable type annotation, should refactor
 
     def forward_output(stream, queue_):
         if isinstance(stream, io.TextIOWrapper):
@@ -135,12 +137,14 @@ def live_output_windows(process: subprocess.Popen, **_) -> Tuple[str, str]:
         for output in outputs.values():
             while True:
                 try:
-                    line = output["queue"].get(timeout=0.5)
-                    output["lines"].append(line)
+                    line = cast(queue.Queue, output["queue"]).get(timeout=0.5)
+                    cast(list[str], output["lines"]).append(line)
                     print(line.rstrip())
                 except queue.Empty:
                     break
-    return ''.join(outputs["out"]["lines"]), ''.join(outputs["err"]["lines"])
+    stdout = ''.join(cast(list[str], outputs["out"]["lines"]))
+    stderr = ''.join(cast(list[str], outputs["err"]["lines"]))
+    return stdout, stderr
 
 
 def live_output_unix(process, input=None, timeout=None, activity_timeout=None, mode='line', **_):
@@ -448,7 +452,7 @@ class InterruptTimeout(Timeout):
 
     def __init__(self, timeout_secs, message=None, log_level=logging.WARNING,
                  interrupt='thread', sig=signal.SIGINT, id=None,
-                 interruptions: Union[Dict, List[Dict]] = None, wait_retry_secs=1,
+                 interruptions: Union[Dict, List[Dict]] | None = None, wait_retry_secs=1,
                  before_interrupt=None):
         def interruption():
             inter_iter = iter(self._interruptions)

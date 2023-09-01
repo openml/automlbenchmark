@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import pytest
+import pandas.api.types as pat
 
 from amlb.resources import from_config
 from amlb.data import DatasetType
@@ -241,14 +242,15 @@ def _assert_data_paths(dataset, definition):
             assert dataset.train.data_path(f) == path_from_split(s)
 
 
-def _assert_X_y_types(data_split):
+def _assert_X_y_types(data_split, check_encoded=True):
     assert isinstance(data_split.X, pd.DataFrame)
     assert isinstance(data_split.y, pd.DataFrame)
-    assert isinstance(data_split.X_enc, np.ndarray)
-    assert isinstance(data_split.y_enc, np.ndarray)
+    if check_encoded:
+        assert isinstance(data_split.X_enc, np.ndarray)
+        assert isinstance(data_split.y_enc, np.ndarray)
 
 
-def _assert_data_consistency(dataset):
+def _assert_data_consistency(dataset, check_encoded=True):
     assert len(dataset.train.X) == len(dataset.train.y)
     assert len(dataset.train.X.columns) == len(dataset.predictors)
     assert len(dataset.train.y.columns) == 1
@@ -257,11 +259,107 @@ def _assert_data_consistency(dataset):
 
     assert not any([p.is_target for p in dataset.predictors])
 
-    assert dataset.train.X_enc.shape == dataset.train.X.shape
 
     assert dataset.test.X.dtypes.equals(dataset.train.X.dtypes)
     assert dataset.test.y.dtypes.equals(dataset.train.y.dtypes)
 
-    assert np.issubdtype(dataset.train.X_enc.dtype, np.floating)
-    assert np.issubdtype(dataset.train.y_enc.dtype, np.floating)  # not ideal given that it's also for classification targets, but well…
+    if check_encoded:
+        assert dataset.train.X_enc.shape == dataset.train.X.shape
+        assert np.issubdtype(dataset.train.X_enc.dtype, np.floating)
+        assert np.issubdtype(dataset.train.y_enc.dtype, np.floating)  # not ideal given that it's also for classification targets, but well…
 
+
+
+@pytest.mark.use_disk
+def test_load_timeseries_task_csv(file_loader):
+    ds_def = ns(
+        path=os.path.join(res, "m4_hourly_subset.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        target="target",
+        type="timeseries",
+    )
+    ds = file_loader.load(ds_def)
+    assert ds.type is DatasetType.timeseries
+    print(ds.train.X.dtypes)
+    _assert_data_consistency(ds, check_encoded=False)
+    _assert_X_y_types(ds.train, check_encoded=False)
+    _assert_X_y_types(ds.test, check_encoded=False)
+
+    assert isinstance(ds.train.data, pd.DataFrame)
+    assert isinstance(ds.test.data, pd.DataFrame)
+    assert len(ds.repeated_abs_seasonal_error) == len(ds.test.data)
+    assert len(ds.repeated_item_id) == len(ds.test.data)
+
+    assert pat.is_categorical_dtype(ds._dtypes[ds.id_column])
+    assert pat.is_datetime64_dtype(ds._dtypes[ds.timestamp_column])
+    assert pat.is_float_dtype(ds._dtypes[ds.target.name])
+
+    # timeseries uses different task schema - set attributes for test to work
+    ds_def['train'] = ds.train.path
+    ds_def['test'] = ds.test.path
+    _assert_data_paths(ds, ds_def)
+
+
+@pytest.mark.parametrize("missing_key", ["freq", "forecast_horizon_in_steps", "seasonality"])
+def test_when_timeseries_task_key_is_missing_then_exception_is_raised(file_loader, missing_key):
+    task_kwargs = dict(
+        path=os.path.join(res, "m4_hourly_subset.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        target="target",
+        type="timeseries",
+    )
+    task_kwargs.pop(missing_key)
+    ds_def = ns.from_dict(task_kwargs)
+    with pytest.raises(AssertionError, match=f"Task definition for timeseries must include `{missing_key}`"):
+        file_loader.load(ds_def)
+
+
+@pytest.mark.parametrize("missing_key", ["id_column", "timestamp_column"])
+def test_given_nondefault_column_names_when_key_is_missing_then_exception_is_raised(file_loader, missing_key):
+    task_kwargs = dict(
+        path=os.path.join(res, "m4_hourly_subset_nondefault_cols.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        type="timeseries",
+        target="CustomTarget",
+        id_column="CustomId",
+        timestamp_column="CustomTimestamp",
+    )
+    task_kwargs.pop(missing_key)
+    ds_def = ns.from_dict(task_kwargs)
+    with pytest.raises(ValueError, match=missing_key):
+        file_loader.load(ds_def)
+
+
+def test_given_nondefault_column_names_then_timeseries_dataset_can_be_loaded(file_loader):
+    task_kwargs = dict(
+        path=os.path.join(res, "m4_hourly_subset_nondefault_cols.csv"),
+        forecast_horizon_in_steps=24,
+        seasonality=24,
+        freq="H",
+        type="timeseries",
+        target="CustomTarget",
+        id_column="CustomId",
+        timestamp_column="CustomTimestamp",
+    )
+    ds_def = ns.from_dict(task_kwargs)
+    ds = file_loader.load(ds_def)
+    _assert_data_consistency(ds, check_encoded=False)
+
+
+@pytest.mark.parametrize("forecast_horizon, fold", [(50, 2), (100, 0), (10, 9)])
+def test_if_timeseries_dataset_too_short_for_requested_fold_then_exception_is_raised(file_loader, forecast_horizon, fold):
+    ds_def = ns(
+        path=os.path.join(res, "m4_hourly_subset.csv"),
+        forecast_horizon_in_steps=forecast_horizon,
+        seasonality=24,
+        freq="H",
+        type="timeseries",
+    )
+    with pytest.raises(ValueError, match="All time series in the dataset must have length"):
+        file_loader.load(ds_def, fold=fold)

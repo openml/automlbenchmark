@@ -1,0 +1,51 @@
+site_name: AutoML Benchmark
+theme:
+  name: material
+  features:
+    - navigation.expand
+    - navigation.indexes
+    - content.tabs.link
+    - content.code.annotate
+  icon:
+    logo: material/home
+    admonition:
+      windows: fontawesome/brands/windows
+extra:
+  homepage: WEBSITE/index.html
+
+nav:
+  - index.md
+  - getting_started.md
+  - Using the Benchmark:
+      - Parameters: using/parameters.md
+      - Configuration: using/configuration.md
+      - using/aws.md
+      - using/result_analysis.md
+  - Extending the Benchmark:
+      - extending/index.md
+      - extending/benchmark.md
+      - extending/constraint.md
+      - Frameworks: extending/framework.md
+  - FAQ: faq.md
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - def_list
+  - admonition
+  - toc
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
