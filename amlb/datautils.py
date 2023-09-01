@@ -37,19 +37,21 @@ def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dty
     :param header: if the columns header should be read.
     :param as_data_frame: if the result should be returned as a data frame (default) or a numpy array.
     :param dtype: data type for columns.
-    :param timestamp_column: column name for timestamp, to ensure dates are correctly parsed by pandas.
+    :param timestamp_column: name of the column that should be parsed as date.
     :return: a DataFrame
     """
-    if dtype is not None and timestamp_column is not None and timestamp_column in dtype:
-            dtype = dtype.copy() # to avoid outer context manipulation
-            del dtype[timestamp_column]
-
+    if timestamp_column is None:
+        parse_dates = None
+    else:
+        if dtype is not None:
+            dtype.pop(timestamp_column, None)
+        parse_dates = [timestamp_column]
     df = pd.read_csv(path,
                      nrows=nrows,
                      header=0 if header else None,
                      index_col=0 if index else None,
                      dtype=dtype,
-                     parse_dates=[timestamp_column] if timestamp_column is not None else None)
+                     parse_dates=parse_dates)
     return df if as_data_frame else df.values
 
 

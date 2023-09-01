@@ -91,8 +91,8 @@ oboe:
 TPOT:
   version: 'stable'
 
-
-
+FEDOT:
+  version: 'stable'
 
 #######################################
 ### Non AutoML reference frameworks ###

@@ -86,17 +86,8 @@ oboe:
 TPOT:
   version: 'latest'
 
-####################################
-### TimeSeries AutoML frameworks ###
-####################################
-
-AutoGluonTS:
-  extends: AutoGluon
-  version: "latest"
-  description: |
-    AutoGluon-TimeSeries
-  setup_env:
-    MODULE: timeseries
+FEDOT:
+  version: 'latest'
 
 #######################################
 ### Non AutoML reference frameworks ###

@@ -1,0 +1,527 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 18px;
+}
+.grey {
+  color: #495057;
+}
+
+/* main: #1971c2 */
+
+body {
+  font-family: "lato", sans-serif;
+  color: #343a40;
+}
+
+section {
+  margin-bottom: 64px;
+}
+
+a {
+  color: #1971c2;
+}
+
+.page-content {
+  padding: 0 clamp(15%, 100%, calc((100vw - 1000px) / 2)); /* should maybe set width in px instead */
+}
+
+h1 {
+  font-size: 72px;
+  padding-bottom: 24px;
+}
+
+h2 {
+  font-size: 48px;
+  padding-bottom: 24px;
+}
+
+h3 {
+  font-size: 32px;
+  padding-bottom: 16px;
+}
+
+footer {
+  color: #e7f5ff;
+  font-size: 14px;
+  background-color: #1971c2;
+  text-align: center;
+  padding: 8px;
+}
+
+footer > a {
+  color: #e7f5ff;
+  font-size: 14px;
+}
+
+.terminal {
+  background-color: #343a40;
+  color: #f8f9fa;
+  font-family: "Inconsolata", sans-serif;
+  padding: 8px;
+  margin: 16px 5%;
+}
+
+/* NAVBAR */
+.construction-banner {
+  background-color: #1c7ed6;
+  color: white;
+  text-align: center;
+}
+
+.navigation-bar {
+  background-color: #1971c2;
+  color: white;
+  text-transform: uppercase;
+
+  display: flex;
+  gap: 24px;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px;
+  height: 60px;
+}
+
+nav a:first-child {
+  flex-grow: 1;
+}
+
+.nav-icon {
+  height: 24px;
+  fill: white;
+}
+
+.nav-icon-with-text {
+  height: 18px;
+}
+
+.nav-icon:hover,
+.nav-icon:active {
+  height: 28px;
+}
+
+.nav-link:link,
+.nav-link:visited {
+  text-decoration: none;
+  color: white;
+}
+.nav-link:hover,
+.nav-link:active {
+  color: white;
+  font-weight: bold;
+}
+
+/* TITLE */
+
+.title,
+.subtitle {
+  color: #343a40;
+  text-align: center;
+}
+
+.title {
+  font-size: 74px;
+  padding-top: 48px;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 62px;
+  font-weight: bold;
+  padding-bottom: 24px;
+}
+
+.summary {
+  font-size: 24px;
+  color: #495057;
+  padding: 0 max((100% - 900px) / 2, 0px); /* does not seem to work with just the math expression */
+}
+
+/* CARDS */
+
+.three-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 5%;
+}
+
+.card {
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.card img {
+  padding: 16px 2%;
+}
+
+.card > svg {
+  display: block;
+  margin: 16px auto;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.card > .card-nav {
+  color: #1971c2;
+  text-decoration: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.card > .card-nav > svg {
+  height: 24px;
+  fill: #1971c2;
+}
+
+h3 {
+  font-size: 24px;
+  padding-bottom: 10px;
+}
+
+/* Frameworks */
+/* .icon-grid {
+  padding: 24px;
+  display: grid;
+  grid-auto-rows: 60px;
+} */
+.icon-flex {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+}
+
+.icon-flex a img {
+  height: 90px;
+}
+/* Paper */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 2%;
+
+  background-color: #1971c2;
+  color: #e7f5ff;
+  border-radius: 5px;
+}
+
+.two-col a {
+  color: white;
+}
+
+.two-col h3 {
+  color: white;
+}
+
+.flat-card {
+  padding: 16px;
+}
+
+/* FRAMEWORKS PAGE */
+.page-title {
+  margin-top: 72px;
+}
+
+.framework-card-list {
+  background-color: #e7f5ff;
+  padding: 32px 5%;
+  border-radius: 10px;
+}
+
+.framework-card-list > .accordion {
+  margin-bottom: 32px;
+}
+/* 
+.framework-card {
+  background-color: white;
+  margin-bottom: 64;
+  padding: 32;
+  border-radius: 10px;
+} */
+.framework-card:last-of-type {
+  margin-bottom: 0;
+}
+
+.framework-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.framework-header > h3 {
+  padding-bottom: 0px;
+  font-size: 32px;
+}
+
+.framework-links {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+
+  flex-grow: 1;
+}
+
+.framework-links > a {
+  text-decoration: none;
+  font-size: 24px;
+}
+
+/* RESULTS */
+
+.limitations-list {
+  padding: 0px 32px 16px 32px;
+}
+
+.limitations-list li {
+  padding: 8px 0px;
+}
+
+.results {
+  display: flex;
+  gap: 40px;
+}
+
+/* Accordions */
+.accordion {
+}
+
+.acard {
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  background-color: white;
+}
+
+.accordion > div {
+  padding: 8px 32px;
+}
+
+.accordion > div:first-child {
+  padding-top: 16px;
+}
+
+.accordion > label {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.accordion-input {
+  display: none;
+}
+
+.accordion-icon {
+  height: 24px;
+}
+
+.accordion-input:checked ~ .accordion-content {
+  display: block;
+}
+
+.accordion-input:checked ~ label .accordion-chevron-down {
+  display: none;
+}
+
+.accordion-input:checked ~ label .accordion-chevron-up {
+  display: block;
+}
+
+.accordion-input ~ .accordion-content {
+  display: none;
+}
+
+.accordion-input ~ label .accordion-chevron-up {
+  display: none;
+}
+
+.accordion-input ~ label .accordion-chevron-down {
+  display: block;
+}
+
+.accordion > label {
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), white);
+  border-radius: 10px;
+  padding-bottom: 8px;
+}
+
+.accordion > label:hover {
+  cursor: pointer;
+}
+
+/* Papers */
+.paper {
+  margin-bottom: 48px;
+}
+
+.paper-title {
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+}
+
+.paper-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 16px;
+}
+
+.paper-links > a {
+  color: white;
+  background-color: #1c7ed6;
+  padding: 4px 12px;
+  border-radius: 4px;
+
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.paper-year {
+  color: #343a40;
+  display: inline;
+  font-weight: bold;
+}
+
+.paper-venue {
+  color: #495057;
+  display: inline;
+}
+
+.paper-authors {
+  color: #4263eb;
+  padding-bottom: 8px;
+}
+
+.paper-abstract {
+  color: #495057;
+  padding-bottom: 16px;
+}
+
+.hover-expand {
+  display: flex;
+  gap: 20px;
+
+  color: #343a40;
+  background-color: white;
+  border: 2px solid #495057;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.hover-expand > div {
+  display: none;
+}
+
+.hover-expand:hover > div {
+  display: block;
+}
+
+.hidden-content {
+  display: none;
+}
+
+.hidden-content-checkbox {
+  display: none;
+}
+
+.hidden-content-checkbox:checked ~ .hidden-content {
+  display: block;
+}
+
+.bibtex {
+  font-family: "Inconsolata", sans-serif;
+  color: #343a40;
+  background-color: #e7f5ff;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.flat-button {
+  cursor: pointer;
+}
+
+.flat-button > label {
+  cursor: pointer;
+}
+
+.mobile {
+  display: none;
+}
+
+.nav-mobile {
+  justify-content: space-between;
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .desktop {
+    display: none;
+  }
+
+  .mobile {
+    display: block;
+    padding: 25px;
+  }
+
+  .shiny {
+    height: auto;
+    width: 100%;
+  }
+
+  .results {
+    flex-wrap: wrap;
+  }
+
+  .framework-header > h3 {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  h1 {
+    font-size: 48px;
+    padding-bottom: 18px;
+  }
+
+  .page-title {
+    margin-top: 32px;
+  }
+
+  .page-content {
+    padding: 0 32px;
+  }
+
+  .three-cols {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+
+  .nav-mobile {
+    display: flex;
+  }
+}
+
+.mobile * {
+  color: white;
+}
+
+.mobile > .summary > a {
+  font-size: 24px;
+}

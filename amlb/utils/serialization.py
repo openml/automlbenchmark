@@ -23,7 +23,7 @@ def _import_data_libraries():
     except ImportError:
         pd = None
     try:
-        import scipy.sparse as sp
+        import scipy.sparse as sp  # type: ignore # https://github.com/scipy/scipy/issues/17158
     except ImportError:
         sp = None
     return np, pd, sp

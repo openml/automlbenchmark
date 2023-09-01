@@ -1314,4 +1314,3 @@ class AWSRemoteBenchmark(Benchmark):
 
     def _upload_results(self):
         pass
-
