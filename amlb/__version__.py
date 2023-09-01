@@ -1,3 +1,3 @@
 # major.minor.patch[-label]
 _dev_version = "dev"
-__version__ = "dev"
+__version__ = "2.1.7"
