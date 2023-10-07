@@ -5,3 +5,6 @@ pip-tools
 types-psutil
 pandas-stubs
 mypy
+
+# documentation
+mkdocs-material
