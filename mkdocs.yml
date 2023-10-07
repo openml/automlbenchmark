@@ -27,6 +27,7 @@ nav:
       - extending/constraint.md
       - Frameworks: extending/framework.md
   - FAQ: faq.md
+  - Contributing: CONTRIBUTING.md
 
 extra_css:
   - stylesheets/extra.css
