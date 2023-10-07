@@ -2,7 +2,7 @@
 shopt -s expand_aliases
 HERE=$(dirname "$0")
 
-. "$HERE/.setup_env"
+. "$HERE/.setup/setup_env"
 . "$AMLB_ROOT/frameworks/shared/setup.sh" "$HERE" true
 PIP install -r "$HERE/requirements.txt"
 
