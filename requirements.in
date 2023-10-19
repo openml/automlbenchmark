@@ -11,3 +11,7 @@ scikit-learn>=1.0,<2.0
 
 pyarrow>=11.0
 # tables>=3.6
+
+# Allow loading datasets from S3
+fsspec
+s3fs
