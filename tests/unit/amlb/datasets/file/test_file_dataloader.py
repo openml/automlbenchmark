@@ -292,7 +292,7 @@ def test_load_timeseries_task_csv(file_loader):
     assert len(ds.repeated_abs_seasonal_error) == len(ds.test.data)
     assert len(ds.repeated_item_id) == len(ds.test.data)
 
-    assert pat.is_categorical_dtype(ds._dtypes[ds.id_column])
+    assert pat.is_string_dtype(ds._dtypes[ds.id_column])
     assert pat.is_datetime64_dtype(ds._dtypes[ds.timestamp_column])
     assert pat.is_float_dtype(ds._dtypes[ds.target.name])
 

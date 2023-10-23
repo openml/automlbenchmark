@@ -2,6 +2,7 @@ from importlib import import_module
 import importlib.util
 import logging
 import os
+import pandas as pd
 import sys
 
 
@@ -40,6 +41,13 @@ def load_amlb_module(mod, amlb_path=None):
             mod_path = os.path.join(amlb_path, *tokens)
         return load_module(mod, mod_path)
     return import_module(mod)
+
+
+def load_timeseries_dataset(dataset):
+    # Ensure that id_column is loaded as string to avoid incorrect sorting
+    train_data = pd.read_csv(dataset.train_path, dtype={dataset.id_column: str}, parse_dates=[dataset.timestamp_column])
+    test_data = pd.read_csv(dataset.test_path, dtype={dataset.id_column: str}, parse_dates=[dataset.timestamp_column])
+    return train_data, test_data
 
 
 utils = load_amlb_module("amlb.utils")

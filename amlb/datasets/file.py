@@ -343,6 +343,8 @@ class TimeSeriesDataset(FileDataset):
         self.id_column = config['id_column']
         self.timestamp_column = config['timestamp_column']
 
+        # Ensure that id_column is parsed as string to avoid incorrect sorting
+        full_data[self.id_column] = full_data[self.id_column].astype(str)
         full_data[self.timestamp_column] = pd.to_datetime(full_data[self.timestamp_column])
         if config['name'] is not None:
             file_name = config['name']
@@ -353,7 +355,7 @@ class TimeSeriesDataset(FileDataset):
 
         self._train = CsvDatasplit(self, train_path, timestamp_column=self.timestamp_column)
         self._test = CsvDatasplit(self, test_path, timestamp_column=self.timestamp_column)
-        self._dtypes = None
+        self._dtypes = full_data.dtypes
 
         # Store repeated item_id & in-sample seasonal error for each time step in the forecast horizon - needed later for metrics like MASE.
         # We need to store this information here because Result object has no access to past time series values.
