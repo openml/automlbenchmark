@@ -51,7 +51,7 @@ def run(dataset, config):
     time_limit = config.max_runtime_seconds
     presets = training_params.get("presets", [])
     presets = presets if isinstance(presets, list) else [presets]
-    if (preset_with_refit_full := (set(presets) & {"good_quality", "high_quality"})) & (time_limit is not None):
+    if (preset_with_refit_full := (set(presets) & {"good_quality", "high_quality"})) and (time_limit is not None):
         preserve = 0.9
         preset = next(iter(preset_with_refit_full))
         msg = (
