@@ -14,22 +14,7 @@ def run(dataset, config):
     log.info("\n**** FEDOT ****\n")
 
     is_classification = config.type == 'classification'
-    # Mapping of benchmark metrics to FEDOT metrics
-    metrics_mapping = dict(
-        acc='acc',
-        auc='roc_auc',
-        f1='f1',
-        logloss='logloss',
-        mae='mae',
-        mse='mse',
-        msle='msle',
-        r2='r2',
-        rmse='rmse'
-    )
-    scoring_metric = metrics_mapping.get(config.metric, None)
-
-    if scoring_metric is None:
-        log.warning("Performance metric %s not supported.", config.metric)
+    problem, scoring_metric = get_fedot_config(config)
 
     training_params = {"preset": "best_quality", "n_jobs": config.cores}
     training_params |= {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
@@ -39,7 +24,7 @@ def run(dataset, config):
              config.max_runtime_seconds, n_jobs, scoring_metric)
     runtime_min = config.max_runtime_seconds / 60
 
-    fedot = Fedot(problem=config.type, timeout=runtime_min, metric=scoring_metric, seed=config.seed,
+    fedot = Fedot(problem=problem, timeout=runtime_min, metric=scoring_metric, seed=config.seed,
                   max_pipeline_fit_time=runtime_min / 10, **training_params)
 
     with Timer() as training:
@@ -62,6 +47,36 @@ def run(dataset, config):
                   models_count=fedot.current_pipeline.length,
                   training_duration=training.duration,
                   predict_duration=predict.duration)
+
+
+def get_fedot_config(config):
+    problem_mapping = dict(
+        classification='classification',
+        regression='regression',
+        timeseries='ts_forecasting',
+    )
+    metrics_mapping = dict(
+        acc='acc',
+        auc='roc_auc',
+        f1='f1',
+        logloss='logloss',
+        mae='mae',
+        mse='mse',
+        msle='msle',
+        r2='r2',
+        rmse='rmse',
+        mape='mape'
+    )
+    problem = problem_mapping.get(config.type, None)
+    scoring_metric = metrics_mapping.get(config.metric, None)
+
+    if problem is None:
+        log.warning("Problem type %s not supported.", config.type)
+
+    if scoring_metric is None:
+        log.warning("Performance metric %s not supported.", config.metric)
+
+    return problem, scoring_metric
 
 
 def save_artifacts(automl, config):
