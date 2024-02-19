@@ -1,14 +1,15 @@
 import logging
 import os
 from pathlib import Path
+import numpy as np
 
 from fedot.api.main import Fedot
 from fedot.core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
 from fedot.core.data.data import InputData
+from fedot.core.repository.dataset_types import DataTypesEnum
 
 from frameworks.shared.callee import call_run, result, output_subdir
-from frameworks.shared.utils import Timer
-from joblib.externals.loky import get_reusable_executor
+from frameworks.shared.utils import Timer, load_timeseries_dataset
 
 log = logging.getLogger(__name__)
 
@@ -30,42 +31,58 @@ def run(dataset, config):
         TaskTypesEnum.ts_forecasting,
         TsForecastingParams(forecast_length=dataset.forecast_horizon_in_steps)
     )
-    train_input = InputData.from_csv_time_series(
-        file_path=dataset.train_path,
-        task=task,
-        target_column=dataset.target,
-        index_col=dataset.timestamp_column
-    )
-    test_input = InputData.from_csv_time_series(
-        file_path=dataset.test_path,
-        task=task,
-        target_column=dataset.target,
-        index_col=dataset.timestamp_column
-    )
 
-    fedot = Fedot(
-        problem=TaskTypesEnum.ts_forecasting.value,
-        task_params=task.task_params,
-        timeout=runtime_min,
-        metric=scoring_metric,
-        seed=config.seed,
-        max_pipeline_fit_time=runtime_min / 10,
-        **training_params
-    )
-
-    with Timer() as training:
-        fedot.fit(train_input)
+    train_df, test_df = load_timeseries_dataset(dataset)
+    id_column = config.id_column
 
     log.info('Predicting on the test set.')
-    with Timer() as predict:
-        predictions = fedot.predict(test_input)
+    truth_only = test_df[dataset.target].values
+    predictions = []
 
-    save_artifacts(fedot, config)
-    get_reusable_executor().shutdown(wait=True)
+    for label in train_df[id_column].unique():
+        train_sub_df = train_df[train_df[id_column] == label].drop(columns=[id_column], axis=1)
+        train_series = np.array(train_sub_df[dataset.target])
+        train_input = InputData(
+            idx=train_sub_df.index.to_numpy(),
+            features=train_series,
+            target=train_series,
+            task=task,
+            data_type=DataTypesEnum.ts
+        )
+
+        test_sub_df = test_df[test_df[id_column] == label].drop(columns=[id_column], axis=1)
+        test_series = np.array(test_sub_df[dataset.target])
+        test_input = InputData(
+            idx=test_sub_df.index.to_numpy(),
+            features=test_series,
+            target=test_series,
+            task=task,
+            data_type=DataTypesEnum.ts
+        )
+
+        fedot = Fedot(
+            problem=TaskTypesEnum.ts_forecasting.value,
+            task_params=task.task_params,
+            timeout=runtime_min,
+            metric=scoring_metric,
+            seed=config.seed,
+            max_pipeline_fit_time=runtime_min / 10,
+            **training_params
+        )
+
+        with Timer() as training:
+            fedot.fit(train_input)
+
+        with Timer() as predict:
+            prediction = fedot.predict(test_input)
+
+        # gather predictions with current label
+        predictions.append(prediction)
+        save_artifacts(fedot, config)
 
     return result(output_file=config.output_predictions_file,
-                  predictions=predictions,
-                  truth=test_input.target,
+                  predictions=np.hstack(predictions),
+                  truth=truth_only,
                   target_is_encoded=False,
                   models_count=fedot.current_pipeline.length,
                   training_duration=training.duration,
