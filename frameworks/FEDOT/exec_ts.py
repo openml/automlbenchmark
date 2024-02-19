@@ -76,10 +76,9 @@ def run(dataset, config):
         with Timer() as predict:
             prediction = fedot.predict(test_input)
 
-        # gather predictions with current label
         predictions.append(prediction)
-        save_artifacts(fedot, config)
 
+    save_artifacts(fedot, config)
     return result(output_file=config.output_predictions_file,
                   predictions=np.hstack(predictions),
                   truth=truth_only,
