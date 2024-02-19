@@ -34,13 +34,13 @@ def run(dataset, config):
         file_path=dataset.train_path,
         task=task,
         target_column=dataset.target,
-        index_col=dataset.id_column
+        index_col=dataset.timestamp_column
     )
     test_input = InputData.from_csv_time_series(
         file_path=dataset.test_path,
         task=task,
         target_column=dataset.target,
-        index_col=dataset.id_column
+        index_col=dataset.timestamp_column
     )
 
     fedot = Fedot(

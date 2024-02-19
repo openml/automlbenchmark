@@ -11,8 +11,7 @@ def setup(*args, **kwargs):
 def run(dataset: Dataset, config: TaskConfig):
     if dataset.type == DatasetType.timeseries:
         return run_fedot_timeseries(dataset, config)
-    else:
-        return run_fedot_tabular(dataset, config)
+    return run_fedot_tabular(dataset, config)
 
 
 def run_fedot_tabular(dataset: Dataset, config: TaskConfig):
