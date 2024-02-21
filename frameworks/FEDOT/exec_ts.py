@@ -56,7 +56,7 @@ def run(dataset, config):
         test_series = np.array(test_sub_df[dataset.target])
         test_input = InputData(
             idx=test_sub_df.index.to_numpy(),
-            features=test_series,
+            features=train_series,
             target=test_series,
             task=task,
             data_type=DataTypesEnum.ts
