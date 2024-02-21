@@ -33,7 +33,7 @@ def run(dataset, config):
     )
 
     train_df, test_df = load_timeseries_dataset(dataset)
-    id_column = config.id_column
+    id_column = dataset.id_column
 
     log.info('Predicting on the test set.')
     training_duration, predict_duration = 0, 0
