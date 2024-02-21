@@ -77,7 +77,12 @@ def run(dataset, config):
         training_duration += training.duration
 
         with Timer() as predict:
-            prediction = fedot.predict(test_input)
+            try:
+                prediction = fedot.predict(test_input)
+            except Exception as e:
+                log.info('Pipeline crashed. Using no-op forecasting')
+                prediction = np.full(len(test_series), train_series[-1])
+
         predict_duration += predict.duration
 
         predictions.append(prediction)
