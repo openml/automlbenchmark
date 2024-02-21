@@ -36,6 +36,7 @@ def run(dataset, config):
     id_column = config.id_column
 
     log.info('Predicting on the test set.')
+    training_duration, predict_duration = 0, 0
     truth_only = test_df[dataset.target].values
     predictions = []
 
@@ -72,9 +73,11 @@ def run(dataset, config):
 
         with Timer() as training:
             fedot.fit(train_input)
+        training_duration += training.duration
 
         with Timer() as predict:
             prediction = fedot.predict(test_input)
+        predict_duration += predict.duration
 
         predictions.append(prediction)
 
@@ -84,8 +87,8 @@ def run(dataset, config):
                   truth=truth_only,
                   target_is_encoded=False,
                   models_count=fedot.current_pipeline.length,
-                  training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  training_duration=training_duration,
+                  predict_duration=predict_duration)
 
 
 def get_fedot_metrics(config):
