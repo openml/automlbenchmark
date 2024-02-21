@@ -37,6 +37,7 @@ def run(dataset, config):
 
     log.info('Predicting on the test set.')
     training_duration, predict_duration = 0, 0
+    models_count = 0
     truth_only = test_df[dataset.target].values
     predictions = []
 
@@ -80,13 +81,14 @@ def run(dataset, config):
         predict_duration += predict.duration
 
         predictions.append(prediction)
+        models_count += fedot.current_pipeline.length
 
     save_artifacts(fedot, config)
     return result(output_file=config.output_predictions_file,
                   predictions=np.hstack(predictions),
                   truth=truth_only,
                   target_is_encoded=False,
-                  models_count=fedot.current_pipeline.length,
+                  models_count=models_count,
                   training_duration=training_duration,
                   predict_duration=predict_duration)
 
