@@ -7,6 +7,8 @@
 - run the jobs.
 - collect and save results.
 """
+from __future__ import annotations
+
 import time
 from copy import copy
 from enum import Enum
@@ -66,6 +68,7 @@ class Benchmark:
         self.job_runner = None
 
         if rconfig().run_mode == 'script':
+            # Used for recovery script
             self.framework_def, self.framework_name, self.framework_module = None, None, None
             self.benchmark_def, self.benchmark_name, self.benchmark_path = None, None, None
             self.constraint_def, self.constraint_name = None, None
@@ -197,7 +200,7 @@ class Benchmark:
         # anything to do?
         pass
 
-    def run(self, tasks: Union[str, List[str]] = None, folds: Union[int, List[int]] = None):
+    def run(self, tasks: str | list[str] | None = None, folds: int | list[int] | None = None):
         """
         :param tasks: a single task name [str] or a list of task names to run. If None, then the whole benchmark will be used.
         :param folds: a fold [int] or a list of folds to run. If None, then the all folds from each task definition will be used.

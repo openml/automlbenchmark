@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import logging
-from typing import List, Tuple, Optional
+from typing import cast
 
 import openml
+import pandas as pd
 
 from amlb.utils import Namespace, str_sanitize
 
@@ -20,7 +23,7 @@ def is_openml_benchmark(benchmark: str) -> bool:
     return False
 
 
-def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespace]]:
+def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]]:
     """ Loads benchmark defined by openml suite or task, from openml/s/X or openml/t/Y. """
     domain, oml_type, oml_id = benchmark.split('/')
     path = None  # benchmark file does not exist on disk
@@ -50,9 +53,9 @@ def load_oml_benchmark(benchmark: str) -> Tuple[str, Optional[str], List[Namespa
 
         # Here we know the (task, dataset) pairs so only download dataset meta-data is sufficient
         tasks = []
-        datasets = openml.datasets.list_datasets(data_id=suite.data, output_format='dataframe')
+        datasets = cast(pd.DataFrame, openml.datasets.list_datasets(data_id=suite.data, output_format='dataframe'))
         datasets.set_index('did', inplace=True)
-        for tid, did in zip(suite.tasks, suite.data):
+        for tid, did in zip(cast(list[int], suite.tasks), cast(list[int], suite.data)):
             tasks.append(Namespace(name=str_sanitize(datasets.loc[did]['name']),
                                    description=f"{openml.config.server.replace('/api/v1/xml', '')}/d/{did}",
                                    openml_task_id=tid,
