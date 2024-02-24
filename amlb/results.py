@@ -18,6 +18,7 @@ import numpy as np
 from numpy import nan, sort
 import pandas as pd
 import scipy as sci
+import scipy.sparse
 
 from .data import Dataset, DatasetType, Feature
 from .datautils import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, log_loss, \
@@ -295,6 +296,8 @@ class TaskResult:
             predictions = predictions.squeeze()
         if isinstance(predictions, S):
             predictions = predictions.values
+        if scipy.sparse.issparse(truth) and truth.shape[1] == 1:
+            truth = pd.DataFrame(truth.todense())
         if isinstance(truth, DF):
             truth = truth.squeeze()
         if isinstance(truth, S):

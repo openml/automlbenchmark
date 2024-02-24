@@ -17,7 +17,7 @@ from autogluon.timeseries.version import __version__
 from joblib.externals.loky import get_reusable_executor
 
 from frameworks.shared.callee import call_run, result, output_subdir
-from frameworks.shared.utils import Timer, zip_path
+from frameworks.shared.utils import Timer, zip_path, load_timeseries_dataset
 
 log = logging.getLogger(__name__)
 
@@ -25,9 +25,16 @@ log = logging.getLogger(__name__)
 def run(dataset, config):
     log.info(f"\n**** AutoGluon TimeSeries [v{__version__}] ****\n")
     prediction_length = dataset.forecast_horizon_in_steps
+    train_df, test_df = load_timeseries_dataset(dataset)
 
-    train_data = TimeSeriesDataFrame.from_path(
-        dataset.train_path,
+    train_data = TimeSeriesDataFrame.from_data_frame(
+        train_df,
+        id_column=dataset.id_column,
+        timestamp_column=dataset.timestamp_column,
+    )
+
+    test_data = TimeSeriesDataFrame.from_data_frame(
+        test_df,
         id_column=dataset.id_column,
         timestamp_column=dataset.timestamp_column,
     )
@@ -45,6 +52,7 @@ def run(dataset, config):
         predictor.fit(
             train_data=train_data,
             time_limit=config.max_runtime_seconds,
+            random_seed=config.seed,
             **{k: v for k, v in config.framework_params.items() if not k.startswith('_')},
         )
 
@@ -52,7 +60,6 @@ def run(dataset, config):
         predictions = pd.DataFrame(predictor.predict(train_data))
 
     # Add columns necessary for the metric computation + quantile forecast to `optional_columns`
-    test_data_future = pd.read_csv(dataset.test_path, parse_dates=[dataset.timestamp_column])
     optional_columns = dict(
         repeated_item_id=np.load(dataset.repeated_item_id),
         repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
@@ -61,13 +68,12 @@ def run(dataset, config):
         optional_columns[str(q)] = predictions[str(q)].values
 
     predictions_only = get_point_forecast(predictions, config.metric)
-    truth_only = test_data_future[dataset.target].values
+    truth_only = test_df[dataset.target].values
 
     # Sanity check - make sure predictions are ordered correctly
-    future_index = pd.MultiIndex.from_frame(test_data_future[[dataset.id_column, dataset.timestamp_column]])
-    assert predictions.index.equals(future_index), "Predictions and test data index do not match"
+    assert predictions.index.equals(test_data.index), "Predictions and test data index do not match"
 
-    test_data_full = pd.concat([train_data, test_data_future.set_index([dataset.id_column, dataset.timestamp_column])])
+    test_data_full = pd.concat([train_data, test_data])
     leaderboard = predictor.leaderboard(test_data_full, silent=True)
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
