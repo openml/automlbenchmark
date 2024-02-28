@@ -6,6 +6,9 @@
   - SimpleJobRunner runs the jobs sequentially.
   - ParallelJobRunner queues the jobs and run them in a dedicated thread
 """
+from __future__ import annotations
+
+import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from enum import Enum, auto
 import logging
@@ -60,7 +63,7 @@ class Job:
     ]
 
     @classmethod
-    def is_state_transition_ok(cls, old_state: State, new_state: State):
+    def is_state_transition_ok(cls, old_state: State | None, new_state: State | None):
         allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
         return allowed and new_state in allowed
 
@@ -82,7 +85,7 @@ class Job:
         self.name = name
         self.timeout = timeout_secs
         self.priority = priority
-        self.state = None
+        self.state: State | None = None
         self.thread_id = None
         self.raise_on_failure = raise_on_failure
         self.set_state(State.created)
@@ -203,14 +206,14 @@ class JobRunner:
     END_Q = object()
 
     @classmethod
-    def is_state_transition_ok(cls, old_state: State, new_state: State):
+    def is_state_transition_ok(cls, old_state: State | None, new_state: State | None):
         allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
         return allowed and new_state in allowed
 
     def __init__(self, jobs: List, on_new_result: Optional[Callable] = None):
         self.jobs = jobs
-        self.results = []
-        self.state = None
+        self.results: list[Namespace] = []
+        self.state: State | None = None
         self._queue = None
         self._last_priority = 0
         self._on_new_result = on_new_result
@@ -336,7 +339,7 @@ class SimpleJobRunner(JobRunner):
 
 class MultiThreadingJobRunner(JobRunner):
 
-    class QueueingStrategy:
+    class QueueingStrategy(Enum):
         keep_queue_full = 0
         enforce_job_priority = 1
 
@@ -354,8 +357,8 @@ class MultiThreadingJobRunner(JobRunner):
         self._daemons = use_daemons
         self._queueing_strategy = queueing_strategy
         self._interrupt = threading.Event()
-        self._exec = None
-        self.futures = []
+        self._exec: ThreadPoolExecutor | None = None
+        self.futures: list[concurrent.futures.Future] = []
 
     def _safe_call_from_exec(self, fn):
         if self._exec:

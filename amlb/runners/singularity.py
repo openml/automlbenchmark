@@ -85,13 +85,11 @@ class SingularityBenchmark(ContainerBenchmark):
         for d in [in_dir, out_dir, custom_dir]:
             touch(d, as_dir=True)
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
-        inst_name = self.sid
         cmd = (
             "singularity run --pwd /bench {options} "
             "-B {input}:/input -B {output}:/output -B {custom}:/custom "
             "{image} \"{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}\""
         ).format(
-            name=inst_name,
             options=rconfig().singularity.run_extra_options,
             input=in_dir,
             output=self.output_dirs.session,
@@ -232,7 +230,6 @@ exec /bin/bash -c "$PY {script} ""$@"
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
-            user=rconfig().user_dir,
         )
 
         touch(self._script)
