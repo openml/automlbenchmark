@@ -35,9 +35,6 @@ def run(dataset: Dataset, config: TaskConfig):
     train_time_in_seconds = config.max_runtime_seconds
     sub_command = config.type
 
-    # set up MODELBUILDER_AUTOML
-    MODELBUILDER_AUTOML = config.framework_params.get('automl_type', 'NNI')
-    os.environ['MODELBUILDER_AUTOML'] = MODELBUILDER_AUTOML
 
     artifacts = config.framework_params.get('_save_artifacts', [])
     tmpdir = tempfile.mkdtemp()
@@ -50,18 +47,23 @@ def run(dataset: Dataset, config: TaskConfig):
         label = dataset.target.index
         train_dataset_path = dataset.train.data_path('csv')
         test_dataset_path = dataset.test.data_path('csv')
-
         log.info(f'train dataset: {train_dataset_path}')
-        log.info(f'test dataset: {test_dataset_path}')
+        log.info(f'train dataset: {train_dataset_path}')
 
         cmd = (f"{mlnet} {sub_command}"
-               f" --dataset {train_dataset_path} --test-dataset {test_dataset_path} --train-time {train_time_in_seconds}"
+               f" --dataset {train_dataset_path} --train-time {train_time_in_seconds}"
                f" --label-col {label} --output {os.path.dirname(output_dir)} --name {config.fold}"
                f" --verbosity q --log-file-path {log_path}")
 
         with Timer() as training:
-            run_cmd(cmd)
-        log.info(f"Finished fit in {training.duration}s.")
+            try:
+                run_cmd(cmd , _live_output_=True)
+                log.info(f"Finished fit in {training.duration}s.")
+            except:
+                log.info(f"error: please visit {log_path} for more information")
+                with open(log_path, 'r') as f:
+                    for line in f:
+                        log.info(line)
 
         train_result_json = os.path.join(output_dir, '{}.mbconfig'.format(config.fold))
         if not os.path.exists(train_result_json):
@@ -70,7 +72,7 @@ def run(dataset: Dataset, config: TaskConfig):
         with open(train_result_json, 'r') as f:
             json_str = f.read()
             mb_config = json.loads(json_str)
-            model_path = os.path.join(output_dir, f"{config.fold}.zip")
+            model_path = os.path.join(output_dir, f"{config.fold}.mlnet")
             output_prediction_path = os.path.join(log_dir, "prediction.txt")  # keeping this in log dir as it contains useful error when prediction fails
             models_count = len(mb_config['RunHistory']['Trials'])
             # predict
