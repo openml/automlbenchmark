@@ -53,14 +53,7 @@ def run(dataset, config):
         )
 
         test_sub_df = test_df[test_df[id_column] == label].drop(columns=[id_column], axis=1)
-        test_series = test_sub_df[dataset.target].to_numpy()
-        test_input = InputData(
-            idx=np.arange(len(test_series)),
-            features=train_series,
-            target=test_series,
-            task=task,
-            data_type=DataTypesEnum.ts
-        )
+        horizon = len(test_sub_df[dataset.target])
 
         fedot = Fedot(
             problem=TaskTypesEnum.ts_forecasting.value,
@@ -78,10 +71,10 @@ def run(dataset, config):
 
         with Timer() as predict:
             try:
-                prediction = fedot.predict(test_input)
+                prediction = fedot.forecast(train_input, horizon=horizon)
             except Exception as e:
                 log.info('Pipeline crashed. Using no-op forecasting')
-                prediction = np.full(len(test_series), train_series[-1])
+                prediction = np.full(horizon, train_series[-1])
 
         predict_duration += predict.duration
 
