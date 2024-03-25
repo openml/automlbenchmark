@@ -42,14 +42,10 @@ def run(dataset, config):
     predictions = []
 
 
-    for label, ts in train_df.groupby(id_column, sort=False):
-        train_series = ts[dataset.target].to_numpy()
-
-    for label in train_df[id_column].unique():
-        train_sub_df = train_df[train_df[id_column] == label].drop(columns=[id_column], axis=1)
-        train_series = np.array(train_sub_df[dataset.target])
+    for label, train_subdf in train_df.groupby(id_column, sort=False):
+        train_series = train_subdf[dataset.target].to_numpy()
         train_input = InputData(
-            idx=train_sub_df.index.to_numpy(),
+            idx=np.arange(len(train_series)),
             features=train_series,
             target=train_series,
             task=task,
@@ -57,9 +53,9 @@ def run(dataset, config):
         )
 
         test_sub_df = test_df[test_df[id_column] == label].drop(columns=[id_column], axis=1)
-        test_series = np.array(test_sub_df[dataset.target])
+        test_series = test_sub_df[dataset.target].to_numpy()
         test_input = InputData(
-            idx=test_sub_df.index.to_numpy(),
+            idx=np.arange(len(test_series)),
             features=train_series,
             target=test_series,
             task=task,
