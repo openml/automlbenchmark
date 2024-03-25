@@ -23,8 +23,8 @@ def run(dataset, config):
     training_params.update({k: v for k, v in config.framework_params.items() if not k.startswith('_')})
     n_jobs = training_params["n_jobs"]
 
-    log.info('Running FEDOT with a maximum time of %ss on %s cores, optimizing %s.',
-             config.max_runtime_seconds, n_jobs, scoring_metric)
+    log.info(f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
+             optimizing {scoring_metric}")
     runtime_min = config.max_runtime_seconds / 60
 
     task = Task(
@@ -40,6 +40,10 @@ def run(dataset, config):
     models_count = 0
     truth_only = test_df[dataset.target].values
     predictions = []
+
+
+    for label, ts in train_df.groupby(id_column, sort=False):
+        train_series = ts[dataset.target].to_numpy()
 
     for label in train_df[id_column].unique():
         train_sub_df = train_df[train_df[id_column] == label].drop(columns=[id_column], axis=1)
@@ -111,7 +115,7 @@ def get_fedot_metrics(config):
     scoring_metric = metrics_mapping.get(config.metric, None)
 
     if scoring_metric is None:
-        log.warning("Performance metric %s not supported.", config.metric)
+        log.warning(f"Performance metric {config.metric} not supported.")
 
     return scoring_metric
 
