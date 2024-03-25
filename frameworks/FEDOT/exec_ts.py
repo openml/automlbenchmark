@@ -81,6 +81,10 @@ def run(dataset, config):
         predictions.append(prediction)
         models_count += fedot.current_pipeline.length
 
+    optional_columns = dict(
+        repeated_item_id=np.load(dataset.repeated_item_id),
+        repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
+    )
     save_artifacts(fedot, config)
     return result(output_file=config.output_predictions_file,
                   predictions=np.hstack(predictions),
@@ -88,7 +92,8 @@ def run(dataset, config):
                   target_is_encoded=False,
                   models_count=models_count,
                   training_duration=training_duration,
-                  predict_duration=predict_duration)
+                  predict_duration=predict_duration,
+                  optional_columns=optional_columns)
 
 
 def get_fedot_metrics(config):
