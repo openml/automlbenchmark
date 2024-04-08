@@ -42,6 +42,13 @@ h3 {
   padding-bottom: 16px;
 }
 
+p {
+  margin-bottom: 0.5em;
+}
+li {
+  margin-bottom: 0.8em;
+}
+
 footer {
   color: #e7f5ff;
   font-size: 14px;
