@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "AutoML Benchmark"
+version: 2.1.7
+license: "MIT"
+url: "https://github.com/openml/automlbenchmark"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Gijsbers"
+    given-names: "Pieter"
+    orcid: "https://orcid.org/0000-0001-7346-8075"
+  - family-names: "de Paula Bueno"
+    given-names: "Marcos"
+  - family-names: "Coors"
+    given-names: "Stefan"
+    orcid: "https://orcid.org/0000-0001-7346-8075"
+  - family-names: "LeDell"
+    given-names: "Erin"
+  - family-names: "Poirier"
+    given-names: "Sébastien"
+  - family-names: "Thomas"
+    given-names: "Janek"
+    orcid: "https://orcid.org/0000-0003-4511-6245"
+  - family-names: "Bischl"
+    given-names: "Bernd"
+    orcid: "https://orcid.org/0000-0001-6002-6980"
+  - family-names: "Vanschoren"
+    given-names: "Joaquin"
+    orcid: "https://orcid.org/0000-0001-7044-9805"
+  journal: "Journal of Machine Learning Research"
+  start: 1 # First page number
+  end: 65 # Last page number
+  title: "AMLB: an AutoML Benchmark"
+  issue: 101
+  volume: 25
+  year: 2024
+  url: http://jmlr.org/papers/v25/22-0493.html
