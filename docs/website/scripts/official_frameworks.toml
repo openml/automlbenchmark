@@ -1,0 +1,31 @@
+[GAMA]
+icon = "img/logos/GAMA-icon.png"  # URL or relative path
+repository = "https://github.com/openml-labs/gama"
+
+[TPOT]
+icon = "img/logos/tpot.jpeg"
+repository ="https://github.com/EpistasisLab/tpot"
+
+[AutoGluon]
+repository = "https://github.com/awslabs/autogluon"
+icon = "img/logos/autogluon.png"
+
+[auto-sklearn]
+repository = "https://github.com/automl/auto-sklearn"
+icon = "img/logos/auto-sklearn.png"
+
+[mljar-supervised]
+repository = "https://github.com/mljar/mljar-supervised"
+icon ="img/logos/mljar.png"
+
+[h2o]
+repository = "https://github.com/h2oai/h2o-3"
+icon = "img/logos/h2o-automl-logo.jpeg"
+
+[lightautoml]
+repository = "https://github.com/sb-ai-lab/LightAutoML"
+icon = "img/logos/LightAutoML_logo_small.png"
+
+[FLAML]
+repository = "https://github.com/microsoft/FLAML"
+icon = "img/logos/flaml.svg"

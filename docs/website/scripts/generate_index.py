@@ -7,7 +7,21 @@ def load_footer() -> str:
         return f.read()
 
 def generate_framework_gallery():
-    pass
+    template = """
+    <a href=REPOSITORY target="_blank" class="framework-logo">
+    <img src=ICON title=NAME/>
+    </a>
+    """
+    frameworks = [
+        template.replace(
+            "REPOSITORY", repository
+        ).replace(
+            "ICON", icon
+        ).replace("NAME", name)
+        for name, (repository, icon) in frameworks.items()
+    ]
+    return "\n".join(frameworks)
+
 
 def generate_main_page() -> str:
     header = load_header()
