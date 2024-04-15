@@ -4,19 +4,26 @@ from typing import NamedTuple
 
 class NavigationItem(NamedTuple):
     name: str
-    align: str
     url: str
     icon: str | None = None
     icon_only: bool = False
 
 
 def generate_desktop_navigation(items: list[NavigationItem]) -> str:
-    # TODO: consider `icon_only`
-    item_template = "<a href=\"URL\" class=\"nav-link\">NAME</a>"
-    items_html = "\n".join(
-        item_template.replace("URL", item.url).replace("NAME", item.name)
-        for item in items
-    )
+    # TODO: Add outlink icon
+    item_template = "<a href=\"URL\" class=\"nav-link nav-icon\">NAME_OR_ICON</a>"
+    html_items = []
+    for item in items:
+        icon = ""
+        if item.icon and item.icon.endswith(".svg"):
+            with open(item.icon, "r") as fh:
+                icon = fh.read()
+
+        name_or_icon = icon if item.icon_only else item.name
+        nav_html = item_template.replace("URL", item.url).replace("NAME_OR_ICON", name_or_icon)
+        html_items.append(nav_html)
+
+    items_html = "\n".join(html_items)
     return f"""
     <nav class="navigation-bar desktop">
     {items_html}
