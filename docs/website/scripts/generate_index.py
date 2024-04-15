@@ -1,14 +1,16 @@
 import tomllib
 from typing import NamedTuple
 
+from generate_header import generate_navigation
+
+
 class Framework(NamedTuple):
     name: str
     repository: str
     icon: str
 
-def load_header() -> str:
-    with open("templates/headers.html", "r") as f:
-        return f.read()
+def load_navigation() -> str:
+    return generate_navigation()
 
 def load_footer() -> str:
     with open("templates/footer.html", "r") as f:
@@ -37,7 +39,7 @@ def generate_framework_gallery():
 
 
 def generate_main_page() -> str:
-    header = load_header()
+    header = load_navigation()
     footer = load_footer()
 
     with open("templates/index_template.html", "r") as f:
