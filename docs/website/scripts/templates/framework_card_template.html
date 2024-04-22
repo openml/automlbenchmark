@@ -1,24 +1,24 @@
 <div class="accordion acard">
     <div class="framework-header">
-        <img src="ICON" height="32px" />
-        <h3>NAME</h3>
+        <img src="${icon}" height="32px" />
+        <h3>${name}</h3>
         <div class="framework-links">
-            <a href="REPOSITORY" target="_blank"
+            <a href="${repository}" target="_blank"
             ><img src="img/logos/GitHub-Mark-64px.png" height="24px"
             /></a>
-            <a href="DOCUMENTATION" target="_blank"
+            <a href="${repository}" target="_blank"
             >📖</a
             >
         </div>
     </div>
     <div>
-        SUMMARY
+        ${summary}
     </div>
-    <input type="checkbox" id="more-NAME" class="accordion-input" />
+    <input type="checkbox" id="more-${name}" class="accordion-input" />
     <div class="accordion-content">
-        <!--PAPERS-->
+        ${paper_list}
     </div>
-    <label for="more-NAME">
+    <label for="more-${name}">
         <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="accordion-chevron-down accordion-icon"

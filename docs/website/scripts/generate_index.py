@@ -1,4 +1,5 @@
 from pathlib import Path
+from string import Template
 
 import tomllib
 from typing import NamedTuple, Sequence
@@ -47,20 +48,16 @@ def load_footer() -> str:
 
 
 def generate_framework_gallery(frameworks: Sequence[Framework]) -> str:
-    template = """
-    <a href=\"REPOSITORY\" target="_blank" class="framework-logo">
-    <img src=\"ICON\" title=\"NAME\"/>
+    template = Template("""
+    <a href=\"${repository}\" target="_blank" class="framework-logo">
+    <img src=\"${icon}\" title=\"${name}\"/>
     </a>
-    """
-    frameworks = [
-        template.replace(
-            "REPOSITORY", fw.repository
-        ).replace(
-            "ICON", fw.icon
-        ).replace("NAME", fw.name)
+    """)
+    framework_icon_html = [
+        template.substitute(fw._asdict())
         for fw in frameworks
     ]
-    return "\n".join(frameworks)
+    return "\n".join(framework_icon_html)
 
 
 def generate_main_page(frameworks: Sequence[Framework]) -> str:
@@ -68,63 +65,63 @@ def generate_main_page(frameworks: Sequence[Framework]) -> str:
     footer = load_footer()
 
     with open("templates/index_template.html", "r") as f:
-        main_content = f.read()
+        main_content = Template(f.read())
 
     framework_gallery = generate_framework_gallery(frameworks)
-    main_content = main_content.replace(
-        "<!--NAV-->", header
-    ).replace(
-        "<!--FOOTER-->", footer
-    ).replace("<!--FRAMEWORK_GALLERY-->", framework_gallery)
-
-    return main_content
+    return main_content.substitute(
+        **dict(
+            navigation=header,
+            footer=footer,
+            framework_gallery=framework_gallery,
+        )
+    )
 
 
 def generate_framework_list(
         frameworks: Sequence[Framework],
-        framework_card_template: str,
-        framework_paper_template: str,
+        framework_card_template: Template,
+        framework_paper_template: Template,
 ) -> str:
     framework_cards = []
     for framework in frameworks:
-        framework_card = framework_card_template.replace(
-            "NAME", framework.name,
-        ).replace(
-            "ICON", framework.icon,
-        ).replace(
-            "REPOSITORY", framework.repository,
-        ).replace(
-            "DOCUMENTATION", framework.repository,  # TODO
+        paper_list = "\n".join(
+            framework_paper_template.substitute(paper._asdict())
+            for paper in framework.papers
         )
-        framework_card.replace(
-            "<!--PAPERS-->", "\n".join(
-                framework_paper_template.replace(
-                    "TITLE", paper.title,
-                )
-                for paper in framework.papers
+        framework_card = framework_card_template.substitute(
+            framework._asdict() | {"paper_list": paper_list},
         )
-        )
+        framework_cards.append(framework_card)
+
+    return "\n".join(framework_cards)
 
 
-    return "\n".join(
-        framework_card_template
-        for framework in frameworks
-    )
-
-def generate_framework_page() -> str:
-    header = load_navigation()
+def generate_framework_page(frameworks: Sequence[Framework]) -> str:
+    navigation = load_navigation()
     footer = load_footer()
 
-    with open("templates/framework_template.html", "r") as f:
-        main_content = f.read()
+    with open("templates/frameworks_template.html", "r") as f:
+        main_content = Template(f.read())
 
-    framework_cards = generate_framework_list()
+    with open("templates/framework_card_template.html", "r") as f:
+        framework_card_template = Template(f.read())
 
-    main_content = main_content.replace(
-        "<!--NAV-->", header
-    ).replace(
-        "<!--FOOTER-->", footer
-    ).replace("<!--FRAMEWORK_CARDS-->", framework_cards)
+    with open("templates/framework_card_paper_template.html") as f:
+        framework_paper_template = Template(f.read())
+
+    framework_cards = generate_framework_list(
+        frameworks,
+        framework_card_template,
+        framework_paper_template,
+
+    )
+
+    main_content = main_content.substitute(**dict(
+            navigation=navigation,
+            footer=footer,
+            framework_cards=framework_cards,
+        )
+    )
 
     return main_content
 
@@ -134,3 +131,7 @@ if __name__ == "__main__":
     main_html = generate_main_page(frameworks)
     with open("index_new.html", "w") as f:
         f.write(main_html)
+
+    framework_html = generate_framework_page(frameworks)
+    with open("frameworks.html", "w") as f:
+        f.write(framework_html)
