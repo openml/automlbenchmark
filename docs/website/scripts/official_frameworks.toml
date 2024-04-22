@@ -34,13 +34,79 @@ summary = ""
 name = "AutoGluon"
 repository = "https://github.com/awslabs/autogluon"
 icon = "img/logos/autogluon.png"
-summary = ""
+summary = """
+AutoGluon enables easy-to-use and easy-to-extend AutoML with a focus on automated
+stack ensembling, deep learning, and real-world applications spanning image, text,
+and tabular data.
+"""
+documentation = "https://auto.gluon.ai/stable/index.html"
+
+[[frameworks.papers]]
+title="AutoGluon-Tabular: Robust and Accurate AutoML for Structured Data"
+authors="Nick Erickson, Jonas Mueller, Alexander Shirkov, Hang Zhang, Pedro Larroy, Mu Li, Alexander Smola"
+abstract="""
+We introduce AutoGluon-Tabular, an open-source AutoML framework that requires only
+a single line of Python to train highly accurate machine learning models on an
+unprocessed tabular dataset such as a CSV file. Unlike existing AutoML frameworks
+that primarily focus on model/hyperparameter selection, AutoGluon-Tabular succeeds
+by ensembling multiple models and stacking them in multiple layers. Experiments
+reveal that our multi-layer combination of many models offers better use of
+allocated training time than seeking out the best. A second contribution is an
+extensive evaluation of public and commercial AutoML platforms including TPOT, H2O,
+AutoWEKA, auto-sklearn, AutoGluon, and Google AutoML Tables. Tests on a suite of 50
+classification and regression tasks from Kaggle and the OpenML AutoML Benchmark
+reveal that AutoGluon is faster, more robust, and much more accurate. We find that
+AutoGluon often even outperforms the best-in-hindsight combination of all of its
+competitors. In two popular Kaggle competitions, AutoGluon beat 99% of the
+participating data scientists after merely 4h of training on the raw data.
+"""
+year=2020
+venue="ICML 2020 AutoML Workshop"
+pdf="https://arxiv.org/pdf/2003.06505.pdf"
+arxiv="https://arxiv.org/pdf/2003.06505"
 
 [[frameworks]]
 name = "auto-sklearn"
 repository = "https://github.com/automl/auto-sklearn"
 icon = "img/logos/auto-sklearn.png"
-summary = ""
+summary = """
+Auto-sklearn is an automated machine learning toolkit and a drop-in replacement
+for a scikit-learn estimator. Auto-sklearn frees a machine learning user from
+algorithm selection and hyperparameter tuning. It leverages recent advantages in
+Bayesian optimization, meta-learning and ensemble construction.
+"""
+documentation="https://automl.github.io/auto-sklearn/master/#"
+
+[[frameworks.papers]]
+title="Auto-Sklearn 2.0: Hands-free AutoML via Meta-Learning"
+authors="Matthias Feurer, Katharina Eggensperger, Stefan Falkner, Marius Lindauer, Frank Hutter"
+abstract="""
+Automated Machine Learning (AutoML) supports practitioners and
+researchers with the tedious task of designing machine learning
+pipelines and has recently achieved substantial success. In this
+paper we introduce new AutoML approaches motivated by our
+winning submission to the second ChaLearn AutoML challenge. We
+develop PoSH Auto-sklearn, which enables AutoML systems to work
+well on large datasets under rigid time limits using a new,
+simple and meta-feature-free meta-learning technique and employs
+a successful bandit strategy for budget allocation. However,
+PoSH Auto-sklearn introduces even more ways of running AutoML
+and might make it harder for users to set it up correctly.
+Therefore, we also go one step further and study the design
+space of AutoML itself, proposing a solution towards truly
+hands-free AutoML. Together, these changes give rise to the next
+generation of our AutoML system, Auto-sklearn 2.0 . We verify
+the improvements by these additions in a large experimental
+study on 39 AutoML benchmark datasets and conclude the paper by
+comparing to other popular AutoML frameworks and Auto-sklearn
+1.0 , reducing the relative error by up to a factor of 4.5, and
+yielding a performance in 10 minutes that is substantially
+better than what Auto-sklearn 1.0 achieves within an hour.
+"""
+year=2021
+venue="arXiv"
+pdf="https://arxiv.org/pdf/2007.04074.pdf"
+arxiv="https://arxiv.org/abs/2007.04074"
 
 [[frameworks]]
 name = "mljar-supervised"

@@ -23,6 +23,7 @@ class Framework(NamedTuple):
     icon: str
     summary: str
     papers: Sequence[Paper]
+    documentation: str = None
 
 
 def load_framework_definitions(definition_file: Path = Path("official_frameworks.toml")) -> list[Framework]:
