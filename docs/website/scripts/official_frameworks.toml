@@ -1,39 +1,65 @@
+# Please note that order matters: https://toml.io/en/v1.0.0#array-of-tables
+
 [[frameworks]]
 name = "GAMA"
 icon = "img/logos/GAMA-icon.png"  # URL or relative path
 repository = "https://github.com/openml-labs/gama"
+summary = ""
+
+[[frameworks.papers]]
+title = "paper title"
+abstract = "paper abstract"
+year = 2020
+venue = "paper venue"
+pdf = "https://google.com"
+arxiv = "https://arxiv.org"
+
+[[frameworks.papers]]
+title = "paper title 2"
+abstract = "paper abstract 2"
+year = 2021
+venue = "paper venue 2"
+pdf = "https://google.com"
+arxiv = "https://arxiv.org"
 
 [[frameworks]]
 name = "TPOT"
 icon = "img/logos/tpot.jpeg"
 repository ="https://github.com/EpistasisLab/tpot"
+summary = ""
 
 [[frameworks]]
 name = "AutoGluon"
 repository = "https://github.com/awslabs/autogluon"
 icon = "img/logos/autogluon.png"
+summary = ""
 
 [[frameworks]]
 name = "auto-sklearn"
 repository = "https://github.com/automl/auto-sklearn"
 icon = "img/logos/auto-sklearn.png"
+summary = ""
 
 [[frameworks]]
 name = "mljar-supervised"
 repository = "https://github.com/mljar/mljar-supervised"
 icon ="img/logos/mljar.png"
+summary = ""
 
 [[frameworks]]
 name = "h2o"
 repository = "https://github.com/h2oai/h2o-3"
 icon = "img/logos/h2o-automl-logo.jpeg"
+summary = ""
 
 [[frameworks]]
 name = "Light AutoML"
 repository = "https://github.com/sb-ai-lab/LightAutoML"
 icon = "img/logos/LightAutoML_logo_small.png"
+summary = ""
 
 [[frameworks]]
 name = "FLAML"
 repository = "https://github.com/microsoft/FLAML"
 icon = "img/logos/flaml.svg"
+summary = ""

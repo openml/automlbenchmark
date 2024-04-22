@@ -1,13 +1,24 @@
 import tomllib
-from typing import NamedTuple
+from typing import NamedTuple, Sequence
 
 from generate_header import generate_navigation
+
+
+class Paper(NamedTuple):
+    title: str
+    abstract: str
+    pdf: str
+    arxiv: str
+    venue: str
+    year: int
 
 
 class Framework(NamedTuple):
     name: str
     repository: str
     icon: str
+    summary: str
+    papers: Sequence[Paper]
 
 def load_navigation() -> str:
     return generate_navigation()
@@ -19,8 +30,14 @@ def load_footer() -> str:
 def generate_framework_gallery():
     with open("official_frameworks.toml", "rb") as fh:
         frameworks = tomllib.load(fh)["frameworks"]
-    frameworks = [Framework(**fw) for fw in frameworks]
 
+    frameworks = [
+        Framework(
+            **{attr: val for attr, val in fw.items() if attr != "papers"},
+            papers=tuple(Paper(**paper) for paper in fw.get("papers", [])),
+        )
+        for fw in frameworks
+    ]
 
     template = """
     <a href=\"REPOSITORY\" target="_blank" class="framework-logo">
