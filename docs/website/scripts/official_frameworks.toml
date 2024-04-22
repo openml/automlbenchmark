@@ -13,6 +13,7 @@ year = 2020
 venue = "paper venue"
 pdf = "https://google.com"
 arxiv = "https://arxiv.org"
+authors = ""
 
 [[frameworks.papers]]
 title = "paper title 2"
@@ -21,6 +22,7 @@ year = 2021
 venue = "paper venue 2"
 pdf = "https://google.com"
 arxiv = "https://arxiv.org"
+authors = ""
 
 [[frameworks]]
 name = "TPOT"
