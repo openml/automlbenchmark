@@ -4,25 +4,33 @@
 name = "GAMA"
 icon = "img/logos/GAMA-icon.png"  # URL or relative path
 repository = "https://github.com/openml-labs/gama"
-summary = ""
+documentation="https://openml-labs.github.io/gama/master/"
+summary = """
+GAMA is developed for AutoML research and features a flexible AutoML
+pipeline, which makes it easy to develop and evaluate new AutoML
+components. GAMA's benchmarking configuration features evolutionary
+optimization and ensemble construction.
+"""
 
 [[frameworks.papers]]
-title = "paper title"
-abstract = "paper abstract"
-year = 2020
-venue = "paper venue"
-pdf = "https://google.com"
-arxiv = "https://arxiv.org"
-authors = ""
-
-[[frameworks.papers]]
-title = "paper title 2"
-abstract = "paper abstract 2"
+title = "GAMA: A General Automated Machine Learning Assistant"
+abstract = """
+The General Automated Machine learning Assistant (GAMA) is a
+modular AutoML system developed to empower users to track and
+control how AutoML algorithms search for optimal machine
+learning pipelines, and facilitate AutoML research itself. In
+contrast to current, often black-box systems, GAMA allows users
+to plug in different AutoML and post-processing techniques, logs
+and visualizes the search process, and supports easy
+benchmarking. It currently features three AutoML search
+algorithms, two model post-processing steps, and is designed to
+allow for more components to be added.
+"""
 year = 2021
-venue = "paper venue 2"
-pdf = "https://google.com"
-arxiv = "https://arxiv.org"
-authors = ""
+venue = "Joint European Conference on Machine Learning and Knowledge Discovery in Databases. Springer, Cham, 2020."
+pdf ="https://arxiv.org/pdf/2007.04911.pdf"
+arxiv = "https://link.springer.com/chapter/10.1007/978-3-030-67670-4_39"
+authors = "Pieter Gijsbers, Joaquin Vanschoren"
 
 [[frameworks]]
 name = "TPOT"
@@ -95,11 +103,11 @@ and might make it harder for users to set it up correctly.
 Therefore, we also go one step further and study the design
 space of AutoML itself, proposing a solution towards truly
 hands-free AutoML. Together, these changes give rise to the next
-generation of our AutoML system, Auto-sklearn 2.0 . We verify
+generation of our AutoML system, Auto-sklearn 2.0. We verify
 the improvements by these additions in a large experimental
 study on 39 AutoML benchmark datasets and conclude the paper by
 comparing to other popular AutoML frameworks and Auto-sklearn
-1.0 , reducing the relative error by up to a factor of 4.5, and
+1.0, reducing the relative error by up to a factor of 4.5, and
 yielding a performance in 10 minutes that is substantially
 better than what Auto-sklearn 1.0 achieves within an hour.
 """
@@ -107,6 +115,38 @@ year=2021
 venue="arXiv"
 pdf="https://arxiv.org/pdf/2007.04074.pdf"
 arxiv="https://arxiv.org/abs/2007.04074"
+
+[[frameworks.papers]]
+name="Efficient and Robust Automated Machine Learning"
+authors="Matthias Feurer, Aaron Klein, Katharina Eggensperger, Jost Springenberg, Manuel Blum, Frank Hutter"
+year=2015
+venue="Advances in Neural Information Processing Systems 28 (NIPS 2015)"
+pdf="https://papers.neurips.cc/paper/2015/file/11d0e6287202fced83f79975ec59a3a6-Paper.pdf"
+arxiv="https://papers.neurips.cc/paper/2015/hash/11d0e6287202fced83f79975ec59a3a6-Abstract.html"
+abstract="""
+The success of machine learning in a broad range of applications
+has led to an ever-growing demand for machine learning systems
+that can be used off the shelf by non-experts. To be effective
+in practice, such systems need to automatically choose a good
+algorithm and feature preprocessing steps for a new dataset at
+hand, and also set their respective hyperparameters. Recent work
+has started to tackle this automated machine learning (AutoML)
+problem with the help of efficient Bayesian optimization
+methods. In this work we introduce a robust new AutoML system
+based on scikit-learn (using 15 classifiers, 14 feature
+preprocessing methods, and 4 data preprocessing methods, giving
+rise to a structured hypothesis space with 110 hyperparameters).
+This system, which we dub auto-sklearn, improves on existing
+AutoML methods by automatically taking into account past
+performance on similar datasets, and by constructing ensembles
+from the models evaluated during the optimization. Our system
+won the first phase of the ongoing ChaLearn AutoML challenge,
+and our comprehensive analysis on over 100 diverse datasets
+shows that it substantially outperforms the previous state of
+the art in AutoML. We also demonstrate the performance gains due
+to each of our contributions and derive insights into the
+effectiveness of the individual components of auto-sklearn.
+"""
 
 [[frameworks]]
 name = "mljar-supervised"
@@ -117,8 +157,54 @@ summary = ""
 [[frameworks]]
 name = "h2o"
 repository = "https://github.com/h2oai/h2o-3"
+documentation="https://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html"
 icon = "img/logos/h2o-automl-logo.jpeg"
-summary = ""
+summary = """
+H2O's AutoML can be used for automating the machine learning
+workflow, which includes automatic training and tuning of many
+models within a user-specified time-limit. H2O offers a number of
+model explainability methods that apply to AutoML objects (groups of
+models), as well as individual models (e.g. leader model).
+Explanations can be generated automatically with a single function
+call, providing a simple interface to exploring and explaining the
+AutoML models.
+"""
+
+[[frameworks.papers]]
+title="H2O AutoML: Scalable Automatic Machine Learning"
+authors="Erin LeDell and Sébastien Poirier"
+abstract="""
+H2O is an open source, distributed machine learning platform
+designed to scale to very large datasets, with APIs in R,
+Python, Java and Scala. We present H2O AutoML, a highly
+scalable, fully-automated, supervised learning algorithm which
+automates the process of training a large selection of
+candidate models and stacked ensembles within a single function.
+The result of the AutoML run is a “leaderboard”: a ranked list
+of models, all of which can be easily exported for use in a
+production environment. Models in the leader- board can be
+ranked by numerous model performance metrics or other model
+attributes such as training time or average per-row prediction
+speed. The H2O AutoML algorithm relies on the efficient training
+of H2O machine learning algorithms to produce a large number
+of models in a short amount of time. H2O AutoML uses a
+combination of fast random search and stacked ensembles to
+achieve results competitive with, and often better than, other
+frameworks which rely on more complex model tuning techniques
+such as Bayesian optimization or genetic algorithms. H2O AutoML
+trains a variety of algorithms (e.g. GBMs, Random Forests,
+Deep Neural Networks, GLMs), yielding a healthy amount of
+diversity across candidate models, which can be exploited by
+stacked ensembles to produce a powerful final model. The
+effectiveness of this technique is reflected in the OpenML
+AutoML Benchmark, which compares the performance of several of
+the most well known, open source AutoML systems across a number
+of datasets.
+"""
+year=2020
+venue="ICML 2020 AutoML Workshop"
+pdf="https://www.automl.org/wp-content/uploads/2020/07/AutoML_2020_paper_61.pdf"
+
 
 [[frameworks]]
 name = "Light AutoML"
@@ -129,5 +215,35 @@ summary = ""
 [[frameworks]]
 name = "FLAML"
 repository = "https://github.com/microsoft/FLAML"
+documentation="https://microsoft.github.io/FLAML/"
 icon = "img/logos/flaml.svg"
-summary = ""
+summary = """
+FLAML is a lightweight Python library that finds accurate machine
+learning models automatically, efficiently and economically. It
+frees users from selecting learners and hyperparameters for each
+learner.
+"""
+
+[[frameworks.papers]]
+title="FLAML: A Fast and Lightweight AutoML Librar"
+authors="Chi Wang, Qingyun Wu, Markus Weimer, Erkang Zhu"
+abstract="""
+We study the problem of using low computational cost to automate
+the choices of learners and hyperparameters for an ad-hoc
+training dataset and error metric, by conducting trials of
+different configurations on the given training data. We
+investigate the joint impact of multiple factors on both trial
+cost and model error, and propose several design guidelines.
+Following them, we build a fast and lightweight library FLAML
+which optimizes for low computational resource in finding
+accurate models. FLAML integrates several simple but effective
+search strategies into an adaptive system. It significantly
+outperforms top-ranked AutoML libraries on a large open source
+AutoML benchmark under equal, or sometimes orders of magnitude
+smaller budget constraints.
+"""
+year=2021
+venue="MLSys Conference 2021"
+pdf="https://proceedings.mlsys.org/paper/2021/file/92cc227532d17e56e07902b254dfad10-Paper.pdf"
+arxiv=""
+
