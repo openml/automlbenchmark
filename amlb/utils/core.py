@@ -361,7 +361,7 @@ def head(s, lines=10, splitlines=False):
 
 def tail(s, lines=10, from_line=None, include_line=True, splitlines=False):
     if s is None:
-        return None if from_line is None else None, None
+        return None, None
 
     s_lines = s.splitlines()
     start = -lines
@@ -380,7 +380,7 @@ def tail(s, lines=10, from_line=None, include_line=True, splitlines=False):
                      line=s_lines[-1] if len(s_lines) > 0 else None)
     s_lines = s_lines[start:]
     t = s_lines if splitlines else '\n'.join(s_lines)
-    return t if from_line is None else (t, last_line)
+    return (t, None) if from_line is None else (t, last_line)
 
 
 def fn_name(fn):

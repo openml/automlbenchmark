@@ -1,0 +1,231 @@
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8"/>
+    <title>AMLB: Contributing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:ital,wght@0,400;0,700;1,400&display=swap"
+            rel="stylesheet"
+    />
+    <link href="style.css" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navigation-bar desktop">
+    <a href="index.html">
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+            />
+        </svg>
+    </a>
+    <a href="results.html" class="nav-link">Results</a>
+    <a href="frameworks.html" class="nav-link">Frameworks</a>
+    <a href="papers.html" class="nav-link">papers</a>
+    <a href="docs/index.html" class="nav-link">user guide</a>
+    <a href="contributing.html" class="nav-link">contributing</a>
+    <a
+            href="https://github.com/openml/automlbenchmark/discussions/216"
+            target="_blank"
+            class="nav-link"
+    >Discussions
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon-with-text"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+        >
+            <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+        </svg>
+    </a>
+    <a
+            href="https://github.com/openml/automlbenchmark/"
+            target="_blank"
+            class="nav-icon"
+    >
+        <img src="img/logos/GitHub-Mark-Light-64px.png" height="100%"/>
+    </a>
+</nav>
+
+<nav class="navigation-bar mobile nav-mobile">
+    <a href="index.html">
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+            />
+        </svg>
+    </a>
+    <a href="results.html" class="nav-link">
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    fill-rule="evenodd"
+                    d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm9 4a1 1 0 10-2 0v6a1 1 0 102 0V7zm-3 2a1 1 0 10-2 0v4a1 1 0 102 0V9zm-3 3a1 1 0 10-2 0v1a1 1 0 102 0v-1z"
+                    clip-rule="evenodd"
+            />
+        </svg>
+    </a>
+    <a href="frameworks.html" class="nav-link">
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"
+            />
+        </svg>
+    </a>
+    <a href="papers.html" class="nav-link">
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"
+            />
+        </svg>
+    </a>
+    <a
+            href="docs/index.html"
+            target="_blank"
+            class="nav-link"
+    >
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    fill-rule="evenodd"
+                    d="M10.496 2.132a1 1 0 00-.992 0l-7 4A1 1 0 003 8v7a1 1 0 100 2h14a1 1 0 100-2V8a1 1 0 00.496-1.868l-7-4zM6 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm3 1a1 1 0 012 0v3a1 1 0 11-2 0v-3zm5-1a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z"
+                    clip-rule="evenodd"
+            />
+        </svg>
+    </a>
+    <a
+            href="https://github.com/openml/automlbenchmark/discussions/216"
+            target="_blank"
+            class="nav-link"
+    >
+        <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="nav-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+        >
+            <path
+                    d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"
+            />
+            <path
+                    d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"
+            />
+        </svg>
+    </a>
+    <a
+            href="https://github.com/openml/automlbenchmark/"
+            target="_blank"
+            class="nav-icon"
+    >
+        <img src="img/logos/GitHub-Mark-Light-64px.png" height="22px"/>
+    </a>
+</nav>
+<div class="page-content">
+    <section>
+        <h1 class="page-title">Contributing</h1>
+        <h3>Each of us can make a difference ❤️</h3>
+        <p>
+            There are many ways you can contribute to the AutoML benchmark - and many don’t even
+            require any coding! We value contributions equally. No matter which way you contribute,
+            you make using AMLB a better experience for everyone. Here are some ways you can help out:
+        <p>
+        <ul>
+             <li>
+                <strong>Use it, and share it with others!</strong>
+                 We created this benchmark to make it simple for people to provide a high-quality
+                 evaluation of AutoML frameworks, and raise the standards for reproducibility in our field.
+                 Using the AutoML benchmark signals that you support these goals.
+                 By setting a higher standard, even evaluations that do not use AMLB will be required
+                 to justify their experimental setup and evaluation to a higher standard.
+                 When you use AMLB in a publication, please cite us (see below).
+             </li>
+             <li>
+                 <strong>Documentation!</strong>
+                 Write about your experience using the AutoML benchmark independently, or contribute to our documentation pages.
+                 Creating additional resources and improving existing ones makes using AMLB more accessible to everyone.
+                 See <a href="https://openml.github.io/automlbenchmark/docs/CONTRIBUTING/#contributing-changes" target="_blank">"contributing changes"</a>
+                 for information on how to set up your development environment if you want to contribute to the documentation pages.
+             </li>
+             <li>
+                 <strong>Help others use the AutoML benchmark!</strong>
+                 We regularly get people asking questions about how to use the benchmark on our
+                 <a href="https://github.com/openml/automlbenchmark/issues">issue tracker</a> and
+                 <a href="https://github.com/openml/automlbenchmark/discussions">discussion board</a>.
+                 They often only need a little bit of help troubleshooting their local setup, and in
+                 some cases with filing a bug report. It often does not take much more than some familiarity
+                with the benchmark to help people out. So don't be hesitant to help people.
+             </li>
+        <li><strong>Report bugs</strong>. See <a href="https://openml.github.io/automlbenchmark/docs/CONTRIBUTING/#reporting-a-bug" target="_blank">"reporting a bug"</a>
+        in the code contributors guide.</li>
+            <li>
+                <strong>Contributing code</strong>, see <a href="https://openml.github.io/automlbenchmark/docs/CONTRIBUTING/#contributing-changes" target="_blank">"contributing changes"</a>
+                in the code contributors guide. Small incremental changes are preferred, and there are a lot of tasks we could use your help with!
+            </li>
+        <li><strong>And more...</strong> organize an event, suggest new datasets or benchmarks, take part in the design discussions, and many more.
+            If you have an idea and want to discuss it with us, please let us know! The <a href="https://github.com/openml/automlbenchmark/discussions" target="_blank">discussion board</a>
+            is the preferred place.
+        </li>
+        </ul>
+        <h3 id="cite">Citing AMLB</h3>
+        <p>
+            When referring to the benchmark please cite
+        </p>
+        <div class="bibtex">
+            @article{JMLR:v25:22-0493,<br />
+              author  = {Pieter Gijsbers and Marcos L. P. Bueno and Stefan Coors and Erin LeDell and S{{\'e}}bastien Poirier and Janek Thomas and Bernd Bischl and Joaquin Vanschoren},<br />
+              title   = {AMLB: an AutoML Benchmark},<br />
+              journal = {Journal of Machine Learning Research},<br />
+              year    = {2024},<br />
+              volume  = {25},<br />
+              number  = {101},<br />
+              pages   = {1--65},<br />
+              url     = {http://jmlr.org/papers/v25/22-0493.html}<br />
+            }
+          </div>
+    </section>
+</div>
+</body>
+<footer>
+    © 2024 Copyright, the AutoML Benchmark team.<br/>
+    Icons of AutoML frameworks and OpenML by their respective owners. <br/>
+    Spotted an issue?
+    <a href="https://github.com/openml/automlbenchmark" target="_blank"
+    >Tell us on Github or open a pull request</a
+    >!
+</footer>
+</html>
