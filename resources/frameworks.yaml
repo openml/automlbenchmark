@@ -146,7 +146,7 @@ MLNet:
   description: |
     MLNET.CLI is a automated machine learning tool implemented by ml.net.
   params:
-    telemetry_disabled: ‘True'
+    _telemetry_disabled: ‘True'
 
 MLPlan:
   version: 'stable'
