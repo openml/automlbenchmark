@@ -36,7 +36,7 @@ def run(dataset: Dataset, config: TaskConfig):
     sub_command = config.type
 
     # Opt-out of Telemetry via framework parameter
-    MLDOTNET_CLI_TELEMETRY_OPTOUT = config.framework_params.get('telemetry_disabled', 'False')
+    MLDOTNET_CLI_TELEMETRY_OPTOUT = config.framework_params.get('_telemetry_disabled', 'False')
     os.environ['MLDOTNET_CLI_TELEMETRY_OPTOUT'] = MLDOTNET_CLI_TELEMETRY_OPTOUT
 
     # set up MODELBUILDER_AUTOML
