@@ -35,6 +35,10 @@ def run(dataset: Dataset, config: TaskConfig):
     train_time_in_seconds = config.max_runtime_seconds
     sub_command = config.type
 
+    # Opt-out of Telemetry via framework parameter
+    MLDOTNET_CLI_TELEMETRY_OPTOUT = config.framework_params.get('_telemetry_disabled', 'False')
+    os.environ['MLDOTNET_CLI_TELEMETRY_OPTOUT'] = MLDOTNET_CLI_TELEMETRY_OPTOUT
+
     # set up MODELBUILDER_AUTOML
     MODELBUILDER_AUTOML = config.framework_params.get('automl_type', 'NNI')
     os.environ['MODELBUILDER_AUTOML'] = MODELBUILDER_AUTOML
