@@ -87,6 +87,8 @@ parser.add_argument('--profiling', nargs='?', const=True, default=False, help=ar
 parser.add_argument('--resume', nargs='?', const=True, default=False, help=argparse.SUPPRESS)
 parser.add_argument('--session', type=str, default=None, help=argparse.SUPPRESS)
 parser.add_argument('-X', '--extra', default=[], action='append', help=argparse.SUPPRESS)
+parser.add_argument("--wandb_project", type=str, default=None,
+                    help="If set, results will be logged to WandB under the specified project name.")
 # group = parser.add_mutually_exclusive_group()
 # group.add_argument('--keep-scores', dest='keep_scores', action='store_true',
 #                    help="Set to true [default] to save/add scores in output directory")
@@ -187,6 +189,15 @@ try:
     bench.setup(amlb.SetupMode[args.setup])
     if args.setup != 'only':
         res = bench.run(args.task, args.fold)
+
+    if args.wandb_project:
+        import wandb
+        wandb.init(project=args.wandb_project)
+
+        for record in res.to_dict("records"):
+            wandb.log(record)
+        wandb.finish()
+
 except (ValueError, AutoMLError) as e:
     log.error('\nERROR:\n%s', e)
     if extras.get('verbose') is True:
