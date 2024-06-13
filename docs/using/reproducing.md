@@ -5,7 +5,7 @@ We recommend *loose* reproducibility if you simply want to recreate the experime
 The *balanced* steps are the generally recommended way to reproduce a specific versioned experiment, ignoring some details which _most likely_ do not affect the outcomes.
 The *strict* steps provide additional details to pay attention to in order to recreate the exact setup as faithfully as possible.
 
-::: note 
+!!! note 
     
     We are working on making it easier for people to share all relevant information to reproduce an evaluation as faithfully 
     as possible in a way that is directly digestable by the AutoML benchmark tool itself. In the mean time, we do believe
@@ -45,7 +45,7 @@ By default, the AutoML benchmark will provide a different random seed to the fra
 This means that the effect of any one random seed will not be large. As such, we expect to find similar results regardless of whether seeds are set or not.
 As rerunning batches of jobs with different random seeds is not currently supported well, we recommend ignoring this aspect for the _balanced_ setup.
 
-```commandline title="Setting up an version 2.1.7 of the AutoML benchmark by using the repository tags"
+```shell title="Setting up an version 2.1.7 of the AutoML benchmark by using the repository tags"
 git clone https://github.com/openml/automlbenchmark
 cd automlbenchmark
 git checkout v2.1.7
