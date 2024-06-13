@@ -7,25 +7,27 @@ PKG=${3:-"flaml"}
 
 . ${HERE}/../shared/setup.sh ${HERE} true
 
+OPTIONALS="[automl]"
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="main"
-    OPTIONALS=""
 fi
 
 if [[ "$VERSION" == "benchmark" ]]; then
     VERSION="stable"
-    OPTIONALS="[catboost]"
+    OPTIONALS="[automl, catboost]"
 else
     PIP uninstall -y catboost
 fi
 
-
 if [[ "$VERSION" == "stable" ]]; then
-    PIP install --no-cache-dir -U "${PKG}${OPTIONALS}<2"
-elif [[ "$VERSION" =~ ^[0-9] ]]; then
+    PIP install --no-cache-dir -U "${PKG}${OPTIONALS}"
+elif [[ "$VERSION" =~ ^[0-1] ]]; then
+    PIP install --no-cache-dir -U ${PKG}${OPTIONALS}==${VERSION}
+    # FLAML 1.2.4 does not work with newer versions of xgboost
+    PIP install "xgboost<2"
+elif [[ "$VERSION" =~ ^[2-9] ]]; then
     PIP install --no-cache-dir -U ${PKG}${OPTIONALS}==${VERSION}
 else
-#    PIP install --no-cache-dir -e git+${REPO}@${VERSION}#egg=${PKG}
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
     git clone --depth 1 --single-branch --branch ${VERSION} --recurse-submodules ${REPO} ${TARGET_DIR}
