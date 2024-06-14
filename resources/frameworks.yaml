@@ -98,7 +98,7 @@ GAMA:
   description: |
     GAMA tries to find a good machine learning pipeline.
     For the machine learning pipeline GAMA considers data preprocessing steps, various machine learning algorithms, and their possible hyperparameters configurations.
-  project: https://github.com/PGijsbers/gama
+  project: https://github.com/openml-labs/gama
   refs: [https://joss.theoj.org/papers/10.21105/joss.01132]
 
 H2OAutoML:

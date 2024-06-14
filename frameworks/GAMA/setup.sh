@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
-REPO=${2:-"https://github.com/PGijsbers/gama"}
+REPO=${2:-"https://github.com/openml-labs/gama"}
 PKG=${3:-"gama"}
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
