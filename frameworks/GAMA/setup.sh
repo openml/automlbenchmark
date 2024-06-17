@@ -23,4 +23,10 @@ else
     PIP install -U -e ${TARGET_DIR}
 fi
 
+if [[ "$VERSION" == "23.0.0" ]]; then
+    # We include this only because this is the fixed version for the 2023Q2 definition.
+    echo "GAMA/setup.sh: Downgrading scikit-learn to compatible version."
+    PIP install --no-cache-dir -U "scikit-learn<1.3"
+fi
+
 PY -c "from gama import __version__; print(__version__)" >> "${HERE}/.setup/installed"
