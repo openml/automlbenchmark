@@ -1,6 +1,16 @@
+# This workflow periodically runs the automl benchmark for the supported frameworks to report
+# any errors that may arise from updates versions.
+# It can also be invoked manually to call `runbenchmark` for a single framework.
 name: Run `runbenchmark.py`
 
+permissions:
+  contents: read
+  issues: write
+
 on:
+  schedule:
+    - cron: '23/5 0-12 * * 3'
+
   workflow_dispatch:
     inputs:
       python_version:
@@ -13,26 +23,103 @@ on:
         default: ''
 
 jobs:
-  run_benchmark:
-    runs-on: ${{ inputs.os }}
+  set_os:
+    # The matrix of the next job includes an extra job that is defined by the workflow dispatch input
+    # However, on a scheduled job this input is an empty string. Which means that it can not be
+    # directly used in the `runs-on` field. So we set up a variable to use for `runs-on` that
+    # is always populated
+    runs-on: 'ubuntu-latest'
+    outputs:
+      os: ${{ steps.os.outputs.os }}
     steps:
-      - name: Runs on ${{ inputs.os }}
-        run: echo Preparing to benchmark ${{ inputs.framework }} ${{ inputs.options }}
+      - id: os
+        run: |
+          echo "os=${{ inputs.os }}" >> "$GITHUB_OUTPUT"
+          if [[ -z "${{ inputs.os }}" ]]; then
+            echo "os=ubuntu-latest" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Echo Inputs # Just for debugging purposes
+        run: echo "${{ toJSON(github.event.inputs) }}"
+
+  run:
+    needs: [set_os]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest']
+        python: ['3.9']
+        framework: ['autogluon', 'autosklearn', 'flaml', 'gama', 'h2oautoml','lightautoml', 'naiveautoml', 'randomforest', 'tpot']
+        include:
+          - python: ${{ inputs.python_version }}
+            os: ${{ needs.set_os.outputs.os }}
+            framework: ${{ inputs.framework }}
+            options: ${{ inputs.options }}
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Stop Matrix Jobs on Dispatch
+        if: (github.event_name == 'workflow_dispatch') && !(( matrix.framework == inputs.framework ) && ( matrix.os == inputs.os )&& ( matrix.python == inputs.python_version ))
+        run: |
+          echo "Workflow triggered by workflow_dispatch, and current configuration is not the one specified in dispatch."
+          exit 1
+      - name: Runs on ${{ matrix.os }}
+        run: |
+          echo Preparing to benchmark ${{ matrix.framework }} ${{ matrix.options }}
       - name: Checkout ${{ github.ref_name }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-      - name: Install Py${{ inputs.python_version }}
-        uses: actions/setup-python@v4
+      - name: Install Py${{ matrix.python }}
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python_version }}
+          python-version: ${{ matrix.python }}
       - name: Install benchmark dependencies
+        if: matrix.framework != ''
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-      - name: Install ${{ inputs.framework }}
-        run: python runbenchmark.py ${{ inputs.framework }} -s only
+      - uses: ./.github/actions/runbenchmark
+        id: benchmark
+        with:
+          framework: ${{ matrix.framework }}
+      - name: Report Installation Failure
+        if: failure() && steps.benchmark.outputs.failure == 'install' && github.event_name != 'workflow_dispatch'
+        run: |  # https://github.com/orgs/community/discussions/8945 can't link to job in matrix...
+          LOG_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/"
+          TITLE="${{ matrix.framework }} failed to install"
+          NUMBERS=$(gh issue list --json number,title,closed --jq '.[] | select( .title == "'"$TITLE"'") | select( .closed == false ) | {number: .number}')
+          echo "Found " $(echo "$NUMBERS" | wc -l) " issues: $NUMBERS"
+          NUMBER=$(echo "$NUMBERS" | sed -E 's/[^0-9]//g' | head -n1)
+          
+          echo "During a routine test installation of ${{ matrix.framework }} failed."\
+               "For more information, see the logs: $LOG_URL" > error.txt
+          
+          if [[ -z "$NUMBER" ]]; then  
+            gh issue create --title "$TITLE" --label "bot" --body-file error.txt
+          else
+            gh issue comment "$NUMBER" --body-file error.txt
+          fi
         env:
-          GITHUB_PAT: ${{ secrets.PUBLIC_ACCESS_GITHUB_PAT }}
-      - name: Benchmark ${{ inputs.framework }}
-        run: python runbenchmark.py ${{ inputs.framework }} ${{ inputs.options }}
+          GH_TOKEN: ${{ github.token }}
+      - name: Report Running Failure
+        if: failure() && steps.benchmark.outputs.failure == 'run' && github.event_name != 'workflow_dispatch'
+        run: |
+          python -m pip install tabulate
+          
+          LOG_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/"
+          TITLE="${{ matrix.framework }} fails on test"
+          NUMBERS=$(gh issue list --json number,title,closed --jq '.[] | select( .title == "'"$TITLE"'") | select( .closed == false ) | {number: .number}')
+          echo "Found " $(echo "$NUMBERS" | wc -l) " issues: $NUMBERS"
+          NUMBER=$(echo "$NUMBERS" | sed -E 's/[^0-9]//g' | head -n1)
+          
+          echo "During a routine test ${{ matrix.framework }} installed successfully but failed to pass the test benchmark." > error.txt
+          python -c "import pandas as pd; df = pd.read_csv('results/results.csv'); print('\n'+df.to_markdown()+'\n')" >> error.txt
+          echo "For more information, see the logs: $LOG_URL" >> error.txt
+          
+          if [[ -z "$NUMBER" ]]; then  
+            gh issue create --title "$TITLE" --label "bot" --body-file error.txt
+          else
+            gh issue comment "$NUMBER" --body-file error.txt
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
