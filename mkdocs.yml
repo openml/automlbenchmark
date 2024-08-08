@@ -21,6 +21,7 @@ nav:
       - Configuration: using/configuration.md
       - using/aws.md
       - using/result_analysis.md
+      - using/reproducing.md
   - Extending the Benchmark:
       - extending/index.md
       - extending/benchmark.md
