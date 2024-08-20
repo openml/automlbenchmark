@@ -16,7 +16,7 @@ import pandas as pd
 matplotlib.use('agg')  # no need for tk
 
 from autogluon.tabular import TabularPredictor, TabularDataset
-from autogluon.core.utils.savers import save_pd, save_pkl
+from autogluon.core.utils.savers import save_pd, save_pkl, save_json
 import autogluon.core.metrics as metrics
 from autogluon.tabular.version import __version__
 
@@ -67,6 +67,43 @@ def run(dataset, config):
     train_path, test_path = dataset.train.path, dataset.test.path
     label = dataset.target.name
     problem_type = dataset.problem_type
+
+    # whether to generate learning curves (EXTREMELY EXPENSIVE)
+    _generate_curves = config.framework_params.get('_generate_curves', False)
+    if _generate_curves:
+        long_run = 20000
+        short_run = 1000
+        early_stop = long_run + 1
+
+        hyperparameters = {
+            "GBM": {
+                "ag.early_stop": early_stop,
+                "num_boost_round": long_run,
+            },
+            "XGB": {
+                "ag.early_stop": early_stop,
+                "n_estimators": long_run,
+            },
+            "NN_TORCH": {
+                "epochs_wo_improve": early_stop,
+                "num_epochs": short_run,
+            },
+        }
+
+        experiment_metrics = {
+            "binary": ["log_loss", "accuracy", "precision", "recall", "f1", "roc_auc"],
+            "regression": ['root_mean_squared_error', 'mean_squared_error', 'mean_absolute_error', 'median_absolute_error', 'r2'],
+            "multiclass": ["accuracy", "precision_weighted", "recall_weighted", "f1_weighted", "log_loss"],
+        }
+
+        learning_curves_params = {
+            "metrics": experiment_metrics[problem_type],
+            "use_error": True,
+        }
+
+        training_params["hyperparameters"] = hyperparameters
+        training_params["learning_curves"] = learning_curves_params
+        training_params["test_data"] = test_path
 
     models_dir = tempfile.mkdtemp() + os.sep  # passed to AG
 
@@ -119,6 +156,7 @@ def run(dataset, config):
     prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
     log.info(f"Finished predict in {predict.duration}s.")
 
+    learning_curves = predictor.learning_curves() if _generate_curves else []
     _leaderboard_extra_info = config.framework_params.get('_leaderboard_extra_info', False)  # whether to get extra model info (very verbose)
     _leaderboard_test = config.framework_params.get('_leaderboard_test', False)  # whether to compute test scores in leaderboard (expensive)
     leaderboard_kwargs = dict(extra_info=_leaderboard_extra_info)
@@ -136,7 +174,7 @@ def run(dataset, config):
     else:
         num_models_ensemble = 1
 
-    save_artifacts(predictor, leaderboard, config)
+    save_artifacts(predictor, leaderboard, learning_curves, config)
     shutil.rmtree(predictor.path, ignore_errors=True)
 
     return result(output_file=config.output_predictions_file,
@@ -151,7 +189,7 @@ def run(dataset, config):
                   inference_times=inference_times,)
 
 
-def save_artifacts(predictor, leaderboard, config):
+def save_artifacts(predictor, leaderboard, learning_curves, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
         if 'leaderboard' in artifacts:
@@ -167,6 +205,11 @@ def save_artifacts(predictor, leaderboard, config):
             shutil.rmtree(os.path.join(predictor.path, "utils"), ignore_errors=True)
             models_dir = output_subdir("models", config)
             zip_path(predictor.path, os.path.join(models_dir, "models.zip"))
+
+        if 'learning_curves' in artifacts:
+            learning_curves_dir = output_subdir("learning_curves", config)
+            save_json.save(path=os.path.join(learning_curves_dir, "learning_curves.json"), obj=learning_curves)
+
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 
