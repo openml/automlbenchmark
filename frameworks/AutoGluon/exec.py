@@ -69,40 +69,14 @@ def run(dataset, config):
     problem_type = dataset.problem_type
 
     # whether to generate learning curves (EXTREMELY EXPENSIVE)
-    _generate_curves = config.framework_params.get('_generate_curves', False)
-    if _generate_curves:
-        long_run = 20000
-        short_run = 1000
-        early_stop = long_run + 1
+    if "learning_curves" in training_params:
+        _curve_metrics = config.framework_params.get('_curve_metrics', None)
+        if "metrics" not in training_params["learning_curves"] and problem_type in _curve_metrics:
+            training_params["learning_curves"]["metrics"] = _curve_metrics[problem_type]
 
-        hyperparameters = {
-            "GBM": {
-                "ag.early_stop": early_stop,
-                "num_boost_round": long_run,
-            },
-            "XGB": {
-                "ag.early_stop": early_stop,
-                "n_estimators": long_run,
-            },
-            "NN_TORCH": {
-                "epochs_wo_improve": early_stop,
-                "num_epochs": short_run,
-            },
-        }
-
-        experiment_metrics = {
-            "binary": ["log_loss", "accuracy", "precision", "recall", "f1", "roc_auc"],
-            "regression": ['root_mean_squared_error', 'mean_squared_error', 'mean_absolute_error', 'median_absolute_error', 'r2'],
-            "multiclass": ["accuracy", "precision_weighted", "recall_weighted", "f1_weighted", "log_loss"],
-        }
-
-        learning_curves_params = {
-            "metrics": experiment_metrics[problem_type],
-            "use_error": True,
-        }
-
-        training_params["hyperparameters"] = hyperparameters
-        training_params["learning_curves"] = learning_curves_params
+    # TODO: add docs about this field
+    _include_test_during_fit = config.framework_params.get('_include_test_during_fit', False)
+    if _include_test_during_fit:
         training_params["test_data"] = test_path
 
     models_dir = tempfile.mkdtemp() + os.sep  # passed to AG
@@ -156,7 +130,7 @@ def run(dataset, config):
     prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
     log.info(f"Finished predict in {predict.duration}s.")
 
-    learning_curves = predictor.learning_curves() if _generate_curves else []
+    learning_curves = predictor.learning_curves() if training_params.get("learning_curves", None) else None
     _leaderboard_extra_info = config.framework_params.get('_leaderboard_extra_info', False)  # whether to get extra model info (very verbose)
     _leaderboard_test = config.framework_params.get('_leaderboard_test', False)  # whether to compute test scores in leaderboard (expensive)
     leaderboard_kwargs = dict(extra_info=_leaderboard_extra_info)
@@ -207,6 +181,7 @@ def save_artifacts(predictor, leaderboard, learning_curves, config):
             zip_path(predictor.path, os.path.join(models_dir, "models.zip"))
 
         if 'learning_curves' in artifacts:
+            assert learning_curves is not None, "No learning curves were generated!"
             learning_curves_dir = output_subdir("learning_curves", config)
             save_json.save(path=os.path.join(learning_curves_dir, "learning_curves.json"), obj=learning_curves)
 
