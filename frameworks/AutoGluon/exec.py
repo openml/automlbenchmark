@@ -68,16 +68,24 @@ def run(dataset, config):
     label = dataset.target.name
     problem_type = dataset.problem_type
 
-    # whether to generate learning curves (EXTREMELY EXPENSIVE)
-    if "learning_curves" in training_params:
-        _curve_metrics = config.framework_params.get('_curve_metrics', None)
-        if "metrics" not in training_params["learning_curves"] and problem_type in _curve_metrics:
-            training_params["learning_curves"]["metrics"] = _curve_metrics[problem_type]
+    """
+    The _include_test_during_fit flag enables the test_data to be passed into AutoGluon's predictor object
+    during the fit call. If enabled, it is ensured that the test_data is seperated from all training and validation
+    data. It is never seen by the models, nor does it influence the training process in any way.
 
-    # TODO: add docs about this field
+    One might want to use this flag when generating learning curves. If this flag is enabled and learning_curves
+    have been turned on, then your learning curve artifacts will also include curves for your test dataset.
+    """
     _include_test_during_fit = config.framework_params.get('_include_test_during_fit', False)
     if _include_test_during_fit:
         training_params["test_data"] = test_path
+
+    # whether to generate learning curves (EXTREMELY EXPENSIVE)
+    if "learning_curves" in training_params:
+        lc = training_params["learning_curves"]
+        _curve_metrics = config.framework_params.get('_curve_metrics', {})
+        if isinstance(lc, dict) and "metrics" not in lc and problem_type in _curve_metrics:
+            training_params["learning_curves"]["metrics"] = _curve_metrics[problem_type]
 
     models_dir = tempfile.mkdtemp() + os.sep  # passed to AG
 
