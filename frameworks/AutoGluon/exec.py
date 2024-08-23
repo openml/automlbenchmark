@@ -80,7 +80,7 @@ def run(dataset, config):
     if _include_test_during_fit:
         training_params["test_data"] = test_path
 
-    # whether to generate learning curves (EXTREMELY EXPENSIVE)
+    # whether to generate learning curves (VERY EXPENSIVE. Do not enable for benchmark comparisons.)
     if "learning_curves" in training_params:
         lc = training_params["learning_curves"]
         _curve_metrics = config.framework_params.get('_curve_metrics', {})

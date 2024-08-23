@@ -5,9 +5,9 @@ To run v0.8.2: ```python3 ../automlbenchmark/runbenchmark.py autogluon ...```
 To run mainline: ```python3 ../automlbenchmark/runbenchmark.py autogluon:latest ...```
 
 
-## Running with Learning Curves Enabled:
+## Running with Learning Curves Enabled
 
-To run with learning curves enabled, you must define a new framework. Instructions on how to do this are listed here:
+To run with learning curves enabled, you must define a new framework in the frameworks YAML file which enables the appropriate parameters. Instructions on how to do this are listed here:
 https://openml.github.io/automlbenchmark/docs/extending/framework/
 
 To summarize these steps:
@@ -54,14 +54,14 @@ AutoGluon_curves_parameters:
 # adding custom hyperparameters
 Defaults: &defaults
   NN_TORCH:
-    - num_epochs: 5
+    - num_epochs: 1000
       epochs_wo_improve: 999999999
   GBM:
-    - num_boost_round: 10
+    - num_boost_round: 20000
       ag_args_fit:
         early_stop: 999999999
   XGB:
-    - n_estimators: 10
+    - n_estimators: 20000
       ag_args_fit:
         early_stop: 999999999
 
