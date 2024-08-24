@@ -16,7 +16,7 @@ import pandas as pd
 matplotlib.use('agg')  # no need for tk
 
 from autogluon.tabular import TabularPredictor, TabularDataset
-from autogluon.core.utils.savers import save_pd, save_pkl
+from autogluon.core.utils.savers import save_pd, save_pkl, save_json
 import autogluon.core.metrics as metrics
 from autogluon.tabular.version import __version__
 
@@ -67,6 +67,25 @@ def run(dataset, config):
     train_path, test_path = dataset.train.path, dataset.test.path
     label = dataset.target.name
     problem_type = dataset.problem_type
+
+    """
+    The _include_test_during_fit flag enables the test_data to be passed into AutoGluon's predictor object
+    during the fit call. If enabled, it is ensured that the test_data is seperated from all training and validation
+    data. It is never seen by the models, nor does it influence the training process in any way.
+
+    One might want to use this flag when generating learning curves. If this flag is enabled and learning_curves
+    have been turned on, then your learning curve artifacts will also include curves for your test dataset.
+    """
+    _include_test_during_fit = config.framework_params.get('_include_test_during_fit', False)
+    if _include_test_during_fit:
+        training_params["test_data"] = test_path
+
+    # whether to generate learning curves (VERY EXPENSIVE. Do not enable for benchmark comparisons.)
+    if "learning_curves" in training_params:
+        lc = training_params["learning_curves"]
+        _curve_metrics = config.framework_params.get('_curve_metrics', {})
+        if isinstance(lc, dict) and "metrics" not in lc and problem_type in _curve_metrics:
+            training_params["learning_curves"]["metrics"] = _curve_metrics[problem_type]
 
     models_dir = tempfile.mkdtemp() + os.sep  # passed to AG
 
@@ -119,6 +138,7 @@ def run(dataset, config):
     prob_labels = probabilities.columns.values.astype(str).tolist() if probabilities is not None else None
     log.info(f"Finished predict in {predict.duration}s.")
 
+    learning_curves = predictor.learning_curves() if training_params.get("learning_curves", None) else None
     _leaderboard_extra_info = config.framework_params.get('_leaderboard_extra_info', False)  # whether to get extra model info (very verbose)
     _leaderboard_test = config.framework_params.get('_leaderboard_test', False)  # whether to compute test scores in leaderboard (expensive)
     leaderboard_kwargs = dict(extra_info=_leaderboard_extra_info)
@@ -136,7 +156,7 @@ def run(dataset, config):
     else:
         num_models_ensemble = 1
 
-    save_artifacts(predictor, leaderboard, config)
+    save_artifacts(predictor, leaderboard, learning_curves, config)
     shutil.rmtree(predictor.path, ignore_errors=True)
 
     return result(output_file=config.output_predictions_file,
@@ -151,7 +171,7 @@ def run(dataset, config):
                   inference_times=inference_times,)
 
 
-def save_artifacts(predictor, leaderboard, config):
+def save_artifacts(predictor, leaderboard, learning_curves, config):
     artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
     try:
         if 'leaderboard' in artifacts:
@@ -167,6 +187,12 @@ def save_artifacts(predictor, leaderboard, config):
             shutil.rmtree(os.path.join(predictor.path, "utils"), ignore_errors=True)
             models_dir = output_subdir("models", config)
             zip_path(predictor.path, os.path.join(models_dir, "models.zip"))
+
+        if 'learning_curves' in artifacts:
+            assert learning_curves is not None, "No learning curves were generated!"
+            learning_curves_dir = output_subdir("learning_curves", config)
+            save_json.save(path=os.path.join(learning_curves_dir, "learning_curves.json"), obj=learning_curves)
+
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 
