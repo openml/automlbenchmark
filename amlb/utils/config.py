@@ -42,7 +42,7 @@ if find_spec('ruamel') is not None:
             yaml = YAML(typ='safe')
         return yaml.load(file)
 else:
-    def yaml_load(*_, **__):
+    def yaml_load(*_, **__):  # type: ignore[misc]
         raise ImportError("ruamel.yaml package is required to load `yaml` config files.")
 
 

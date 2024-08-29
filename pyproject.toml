@@ -19,35 +19,6 @@ module=[
 ignore_missing_imports=true
 
 [[tool.mypy.overrides]]
-ignore_errors = false
-module = "amlb.utils.*"
-
-
-[[tool.mypy.overrides]]
-ignore_errors = false
-module = "amlb.benchmarks.*"
-
-
-[[tool.mypy.overrides]]
-ignore_errors = false
-module = "amlb.datasets.*"
-
-
-[[tool.mypy.overrides]]
-ignore_errors = false
-module = "amlb.frameworks.*"
-
-
-[[tool.mypy.overrides]]
-ignore_errors = false
-module = "amlb.runners.*"
-
-
-[[tool.mypy.overrides]]
-ignore_errors = false
-module = "amlb.*"
-
-[[tool.mypy.overrides]]
 module = "amlb.benchmark"
 disable_error_code = "union-attr"
 # special run-mode script makes some attributes optional,

@@ -12,7 +12,7 @@ import math
 import os
 import re
 import statistics
-from typing import Union
+from typing import Union, cast
 
 import numpy as np
 from numpy import nan, sort
@@ -297,7 +297,7 @@ class TaskResult:
         if isinstance(predictions, S):
             predictions = predictions.values
         if scipy.sparse.issparse(truth) and truth.shape[1] == 1:
-            truth = pd.DataFrame(truth.todense())
+            truth = pd.DataFrame(cast(scipy.sparse.sparray, truth).todense())
         if isinstance(truth, DF):
             truth = truth.squeeze()
         if isinstance(truth, S):
