@@ -199,10 +199,10 @@ class FileDataset(Dataset):
 
 class FileDatasplit(Datasplit):
 
-    def __init__(self, dataset: FileDataset, format: str, path: str):
-        super().__init__(dataset, format)
+    def __init__(self, dataset: FileDataset, file_format: str, path: str):
+        super().__init__(dataset, file_format)
         self._path = path
-        self._data = {format: path}
+        self._data = {file_format: path}
 
     def data_path(self, format):
         supported_formats = [cls.format for cls in __file_converters__]
@@ -267,7 +267,7 @@ class ArffDataset(FileDataset):
 class ArffDatasplit(FileDatasplit):
 
     def __init__(self, dataset, path):
-        super().__init__(dataset, format='arff', path=path)
+        super().__init__(dataset, file_format='arff', path=path)
         self._ds = None
 
     def _ensure_loaded(self):
@@ -419,7 +419,7 @@ class TimeSeriesDataset(FileDataset):
 class CsvDatasplit(FileDatasplit):
 
     def __init__(self, dataset, path, timestamp_column=None):
-        super().__init__(dataset, format='csv', path=path)
+        super().__init__(dataset, file_format='csv', path=path)
         self._ds = None
         self.timestamp_column = timestamp_column
 
