@@ -1,11 +1,21 @@
-from typing import List
+from __future__ import annotations
+
+from typing import List, Tuple
 
 from .openml import is_openml_benchmark, load_oml_benchmark
 from .file import load_file_benchmark
-from amlb.utils import str_sanitize
+from amlb.utils import str_sanitize, Namespace
 
 
-def benchmark_load(name, benchmark_definition_dirs: List[str]):
+def benchmark_load(
+        name: str,
+        benchmark_definition_dirs: List[str]
+    ) -> Tuple[
+            Namespace | None,
+            List[Namespace],
+            str | None,
+            str
+        ]:
     """ Loads the benchmark definition for the 'benchmark' cli input string.
 
     :param name: the value for 'benchmark'
@@ -17,7 +27,6 @@ def benchmark_load(name, benchmark_definition_dirs: List[str]):
     # which is why it is tried last.
     if is_openml_benchmark(name):
         benchmark_name, benchmark_path, tasks = load_oml_benchmark(name)
-    # elif is_kaggle_benchmark(name):
     else:
         benchmark_name, benchmark_path, tasks = load_file_benchmark(name, benchmark_definition_dirs)
 
