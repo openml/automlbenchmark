@@ -7,12 +7,16 @@ important
     Also, this module is intended to be imported by frameworks integration modules,
     therefore, it should have no dependency to any other **amlb** module outside **utils**.
 """
+from __future__ import annotations
+
 import logging
 import os
+from typing import Iterable, Type, Literal, Any, Callable, Self, Tuple
 
 import arff
 import numpy as np
 import pandas as pd
+import scipy.sparse
 from sklearn.base import TransformerMixin
 from sklearn.impute import SimpleImputer as Imputer
 from sklearn.metrics import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, \
@@ -26,7 +30,7 @@ from .utils import profile, path_from_split, repr_def, split_path, touch
 log = logging.getLogger(__name__)
 
 
-def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None, timestamp_column=None):
+def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None, timestamp_column=None):  # type: ignore  #  Split up to two functions, avoid "aliasing"
     """
     read csv file to DataFrame.
 
@@ -55,7 +59,14 @@ def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dty
     return df if as_data_frame else df.values
 
 
-def write_csv(data, path, header=True, columns=None, index=False, append=False):
+def write_csv(
+        data: pd.DataFrame | dict | list | np.ndarray,
+        path,
+        header: bool = True,
+        columns: Iterable[str] | None = None,
+        index: bool = False,
+        append: bool = False
+) -> None:  # type: ignore  # path required pandas internal types
     if is_data_frame(data):
         data_frame = data
     else:
@@ -69,7 +80,8 @@ def write_csv(data, path, header=True, columns=None, index=False, append=False):
 
 
 @profile(logger=log)
-def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
+def reorder_dataset(path: str, target_src: int=0, target_dest: int=-1, save:bool=True) -> str | np.ndarray:
+    """ Put the `target_src`th column as the `target_dest`th column"""
     if target_src == target_dest and save:  # no reordering needed, not data to load, returning original path
         return path
 
@@ -121,11 +133,11 @@ def reorder_dataset(path, target_src=0, target_dest=-1, save=True):
     return reordered_path
 
 
-def is_data_frame(df):
+def is_data_frame(df: object) -> bool:
     return isinstance(df, pd.DataFrame)
 
 
-def to_data_frame(obj, columns=None):
+def to_data_frame(obj: object, columns: Iterable[str]| None=None):
     if obj is None:
         return pd.DataFrame()
     elif isinstance(obj, dict):
@@ -143,9 +155,15 @@ class Encoder(TransformerMixin):
     Should never have written this, but does the job currently. However, should think about simpler single-purpose approach.
     """
 
-    def __init__(self, type='label', target=True, encoded_type=int,
-                 missing_policy='ignore', missing_values=None, missing_replaced_by='',
-                 normalize_fn=None):
+    def __init__(
+            self,
+            type: Literal['label', 'one-hot','no-op'] ='label',
+            target:bool=True,
+            encoded_type:Type=int,
+            missing_policy:Literal['ignore', 'mask', 'encode']='ignore',
+            missing_values: Any | Iterable[Any]| None=None,
+            missing_replaced_by: Any='',
+            normalize_fn: Callable[[str],str] = None):
         """
         :param type: one of ['label', 'one-hot', 'no-op'].
         :param target: True iff the Encoder is applied to the target feature.
@@ -179,25 +197,25 @@ class Encoder(TransformerMixin):
         else:
             raise ValueError("Encoder `type` should be one of {}.".format(['label', 'one-hot']))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr_def(self)
 
     @property
-    def _ignore_missing(self):
+    def _ignore_missing(self) -> bool:
         return self.for_target or self.missing_policy == 'ignore'
 
     @property
-    def _mask_missing(self):
+    def _mask_missing(self) -> bool:
         return not self.for_target and self.missing_policy == 'mask'
 
     @property
-    def _encode_missing(self):
+    def _encode_missing(self) -> bool:
         return not self.for_target and self.missing_policy == 'encode'
 
-    def _reshape(self, vec):
+    def _reshape(self, vec: np.ndarray) -> np.ndarray:
         return vec if self.for_target else vec.reshape(-1, 1)
 
-    def fit(self, vec):
+    def fit(self, vec: np.ndarray) -> Self:
         """
         :param vec: must be a line vector (array)
         :return:
@@ -216,7 +234,7 @@ class Encoder(TransformerMixin):
             self.delegate.fit(self._reshape(self.classes))
         return self
 
-    def transform(self, vec, **params):
+    def transform(self, vec: str | np.ndarray, **params: Any) -> str | np.ndarray:
         """
         :param vec: must be single value (str) or a line vector (array)
         :param params:
@@ -253,7 +271,7 @@ class Encoder(TransformerMixin):
             vec = self.normalize_fn(vec)
         return return_value(self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False))
 
-    def inverse_transform(self, vec, **params):
+    def inverse_transform(self, vec: str | np.ndarray, **params: Any) -> str | np.ndarray:
         """
         :param vec: must a single value or line vector (array)
         :param params:
@@ -267,7 +285,12 @@ class Encoder(TransformerMixin):
         return self.delegate.inverse_transform(vec, **params)
 
 
-def impute_array(X_fit, *X_s, missing_values=np.NaN, strategy="mean", keep_empty_features: bool = False):
+def impute_array(
+        X_fit,
+        *X_s,
+        missing_values: Any =np.NaN,
+        strategy: Literal['mean', 'mode', 'median'] | Tuple[Literal['constant', Any]]="mean",
+        keep_empty_features: bool = False) -> list[np.ndarray | scipy.sparse.csr_matrix]:
     """
     :param X_fit: {array-like, sparse matrix} used to fit the imputer. This array is also imputed.
     :param X_s: the additional (optional) arrays that are imputed using the same imputer.
