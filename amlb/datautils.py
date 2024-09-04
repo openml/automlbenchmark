@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Iterable, Type, Literal, Any, Callable, Self, Tuple
+from typing import Iterable, Type, Literal, Any, Callable, Self, Tuple, cast
 
 import arff
 import numpy as np
@@ -73,10 +73,12 @@ def write_csv(
         data_frame = to_data_frame(data, columns=columns)
         header = header and columns is not None
     touch(path)
-    data_frame.to_csv(path,
-                      header=header,
-                      index=index,
-                      mode='a' if append else 'w')
+    data_frame.to_csv(
+        path,
+        header=header,
+        index=index,
+        mode=cast(Literal['a','w'], 'a' if append else 'w')
+    )
 
 
 @profile(logger=log)
@@ -141,7 +143,8 @@ def to_data_frame(obj: object, columns: Iterable[str]| None=None):
     if obj is None:
         return pd.DataFrame()
     elif isinstance(obj, dict):
-        return pd.DataFrame.from_dict(obj, columns=columns, orient='columns' if columns is None else 'index')
+        orient = cast(Literal['columns', 'index'], 'columns' if columns is None else 'index')
+        return pd.DataFrame.from_dict(obj, columns=columns, orient=orient)
     elif isinstance(obj, (list, np.ndarray)):
         return pd.DataFrame.from_records(obj, columns=columns)
     else:
@@ -163,7 +166,7 @@ class Encoder(TransformerMixin):
             missing_policy:Literal['ignore', 'mask', 'encode']='ignore',
             missing_values: Any | Iterable[Any]| None=None,
             missing_replaced_by: Any='',
-            normalize_fn: Callable[[str],str] = None):
+            normalize_fn: Callable[[Iterable[str]],Iterable[str]] | None = None):
         """
         :param type: one of ['label', 'one-hot', 'no-op'].
         :param target: True iff the Encoder is applied to the target feature.
@@ -215,16 +218,19 @@ class Encoder(TransformerMixin):
     def _reshape(self, vec: np.ndarray) -> np.ndarray:
         return vec if self.for_target else vec.reshape(-1, 1)
 
-    def fit(self, vec: np.ndarray) -> Self:
+    def fit(self, vector: Iterable[str] | None) -> Self:
         """
-        :param vec: must be a line vector (array)
+        :param vector: must be a line vector (array)
         :return:
         """
         if not self.delegate:
             return self
 
-        vec = np.asarray(vec, dtype=object)
-        if self.normalize_fn:
+        if vector is None:
+            raise ValueError("`vec` can only be `None` if Encoder was initialized with type 'label' or 'one-hot'.")
+
+        vec = np.asarray(vector, dtype=object)
+        if self.normalize_fn is not None:
             vec = self.normalize_fn(vec)
         self.classes = np.unique(vec) if self._ignore_missing else np.unique(np.insert(vec, 0, self.missing_replaced_by))
 
