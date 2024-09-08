@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Iterable, Type, Literal, Any, Callable, Self, Tuple, cast
+from typing import Iterable, Type, Literal, Any, Callable, Self, Tuple, cast, TypeAlias
 
 import arff
 import numpy as np
@@ -29,6 +29,9 @@ from .utils import profile, path_from_split, repr_def, split_path, touch
 
 log = logging.getLogger(__name__)
 
+A: TypeAlias = np.ndarray | scipy.sparse.csr_matrix
+DF = pd.DataFrame
+S = pd.Series
 
 def read_csv(path, nrows=None, header=True, index=False, as_data_frame=True, dtype=None, timestamp_column=None):  # type: ignore  #  Split up to two functions, avoid "aliasing"
     """
@@ -145,7 +148,7 @@ def to_data_frame(obj: object, column_names: Iterable[str]| None=None) -> pd.Dat
     columns = list(column_names) if column_names else None
     if isinstance(obj, dict):
         orient = cast(Literal['columns', 'index'], 'columns' if columns is None else 'index')
-        return pd.DataFrame.from_dict(obj, columns=columns, orient=orient)
+        return pd.DataFrame.from_dict(obj, columns=columns, orient=orient)  # type: ignore[arg-type]
     if isinstance(obj, (list, np.ndarray)):
         return pd.DataFrame.from_records(obj, columns=columns)
     raise ValueError("Object should be a dictionary {col1:values, col2:values, ...} "
@@ -166,7 +169,7 @@ class Encoder(TransformerMixin):
             missing_policy:Literal['ignore', 'mask', 'encode']='ignore',
             missing_values: Any | Iterable[Any]| None=None,
             missing_replaced_by: Any='',
-            normalize_fn: Callable[[Iterable[str]],Iterable[str]] | None = None):
+            normalize_fn: Callable[[np.ndarray],np.ndarray] | None = None):
         """
         :param type: one of ['label', 'one-hot', 'no-op'].
         :param target: True iff the Encoder is applied to the target feature.
@@ -189,7 +192,7 @@ class Encoder(TransformerMixin):
         self.missing_replaced_by = missing_replaced_by
         self.missing_encoded_value = None
         self.normalize_fn = normalize_fn
-        self.classes = None
+        self.classes: np.ndarray | None = None
         self.encoded_type = encoded_type
         if type == 'label':
             self.delegate = LabelEncoder() if target else OrdinalEncoder()
@@ -235,9 +238,9 @@ class Encoder(TransformerMixin):
         self.classes = np.unique(vec) if self._ignore_missing else np.unique(np.insert(vec, 0, self.missing_replaced_by))
 
         if self._mask_missing:
-            self.missing_encoded_value = self.delegate.fit_transform(self._reshape(self.classes))[0]
+            self.missing_encoded_value = self.delegate.fit_transform(self._reshape(cast(np.ndarray, self.classes)))[0]
         else:
-            self.delegate.fit(self._reshape(self.classes))
+            self.delegate.fit(self._reshape(cast(np.ndarray, self.classes)))
         return self
 
     def transform(self, vec: str | np.ndarray, **params: Any) -> str | np.ndarray:
@@ -249,33 +252,33 @@ class Encoder(TransformerMixin):
         if log.isEnabledFor(logging.TRACE):
             log.debug("Transforming %s using %s", vec, self)
 
-        return_value = lambda v: v
-        if isinstance(vec, str):
-            vec = [vec]
-            return_value = lambda v: v[0]
+        vector = [vec] if isinstance(vec, str) else vec
 
-        vec = np.asarray(vec, dtype=object)
+        def return_value(v: np.ndarray) -> np.ndarray | str:
+            return v[0] if isinstance(vec, str) else v
+
+        vector = np.asarray(vector, dtype=object)
 
         if not self.delegate:
-            return return_value(vec.astype(self.encoded_type, copy=False))
+            return return_value(vector.astype(self.encoded_type, copy=False))
 
         if self._mask_missing or self._encode_missing:
-            mask = [v in self.missing_values for v in vec]
+            mask = [v in self.missing_values for v in vector]
             if any(mask):
                 # if self._mask_missing:
-                #     missing = vec[mask]
-                vec[mask] = self.missing_replaced_by
+                #     missing = vector[mask]
+                vector[mask] = self.missing_replaced_by
                 if self.normalize_fn:
-                    vec = self.normalize_fn(vec)
+                    vector = self.normalize_fn(vector)
 
-                res = self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False)
+                res = self.delegate.transform(self._reshape(vector), **params).astype(self.encoded_type, copy=False)
                 if self._mask_missing:
                     res[mask] = np.NaN if self.encoded_type == float else None
                 return return_value(res)
 
         if self.normalize_fn:
-            vec = self.normalize_fn(vec)
-        return return_value(self.delegate.transform(self._reshape(vec), **params).astype(self.encoded_type, copy=False))
+            vector = self.normalize_fn(vector)
+        return return_value(self.delegate.transform(self._reshape(vector), **params).astype(self.encoded_type, copy=False))
 
     def inverse_transform(self, vec: str | np.ndarray, **params: Any) -> str | np.ndarray:
         """
@@ -292,11 +295,11 @@ class Encoder(TransformerMixin):
 
 
 def impute_array(
-        X_fit,
-        *X_s,
+        X_fit: A,
+        *X_s: Iterable[A],
         missing_values: Any =np.NaN,
-        strategy: Literal['mean', 'mode', 'median'] | Tuple[Literal['constant', Any]]="mean",
-        keep_empty_features: bool = False) -> list[np.ndarray | scipy.sparse.csr_matrix]:
+        strategy: Literal['mean', 'mode', 'median', 'most_frequent'] | Tuple[Literal['constant'],  Any]="mean",
+        keep_empty_features: bool = False) -> list[A] | A:
     """
     :param X_fit: {array-like, sparse matrix} used to fit the imputer. This array is also imputed.
     :param X_s: the additional (optional) arrays that are imputed using the same imputer.
@@ -304,6 +307,7 @@ def impute_array(
     :param strategy: 'mean' (default) -> missing values are imputed with the mean value of the corresponding vector.
                      'median' -> missing values are imputed with the median value of the corresponding vector.
                      'mode' -> missing values are imputed with the mode of the corresponding vector.
+                     'most_frequent' -> alias for 'mode'
                      ('constant', value) -> missing values are imputed with the constant value provided as the second term of the tuple.
                      None -> no-op (for internal use).
     :param keep_empty_features: bool (default False), if False remove all columns which only have nan values.
@@ -311,18 +315,17 @@ def impute_array(
     """
     if strategy is None:
         return [X_fit, *X_s]
-    strategy, fill_value = strategy if isinstance(strategy, tuple) and strategy[0] == 'constant' else (strategy, None)
-    strategy = dict(mode='most_frequent').get(strategy, strategy)
+    strategy_name, fill_value = strategy if isinstance(strategy, tuple) and strategy[0] == 'constant' else (strategy, None)
+    strategy_name = dict(mode='most_frequent').get(strategy_name, strategy_name)  # type: ignore
 
-    imputer = Imputer(missing_values=missing_values, strategy=strategy, fill_value=fill_value, keep_empty_features=keep_empty_features)
+    imputer = Imputer(missing_values=missing_values, strategy=strategy_name, fill_value=fill_value, keep_empty_features=keep_empty_features)
     imputed = _restore_dtypes(imputer.fit_transform(X_fit), X_fit)
     if len(X_s) > 0:
         result = [imputed]
         for X in X_s:
-            result.append(_restore_dtypes(imputer.transform(X), X))
+            result.append(_restore_dtypes(imputer.transform(X), X))  #  type: ignore
         return result
-    else:
-        return imputed
+    return imputed
 
 
 def impute_dataframe(X_fit: pd.DataFrame, *X_s: Iterable[pd.DataFrame], missing_values: Any=np.NaN,
