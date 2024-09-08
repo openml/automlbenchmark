@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Iterable, Type, Literal, Any, Callable, Tuple, cast, TypeAlias
+from typing import Iterable, Type, Literal, Any, Callable, Tuple, cast, Union
+from typing_extensions import TypeAlias
 
 import arff
 import numpy as np
@@ -29,7 +30,7 @@ from .utils import profile, path_from_split, repr_def, split_path, touch
 
 log = logging.getLogger(__name__)
 
-A: TypeAlias = np.ndarray | scipy.sparse.csr_matrix
+A: TypeAlias = Union[np.ndarray, scipy.sparse.csr_matrix]
 DF = pd.DataFrame
 S = pd.Series
 
