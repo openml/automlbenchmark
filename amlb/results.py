@@ -309,7 +309,7 @@ class TaskResult:
 
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
-            df = to_data_frame(probabilities, columns=prob_cols)
+            df = to_data_frame(probabilities, column_names=prob_cols)
             if probabilities_labels is not None:
                 df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
                 if any(prob_cols != df.columns.values):

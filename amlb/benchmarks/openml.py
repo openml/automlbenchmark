@@ -26,8 +26,6 @@ def is_openml_benchmark(benchmark: str) -> bool:
 def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]]:
     """ Loads benchmark defined by openml suite or task, from openml/s/X or openml/t/Y. """
     domain, oml_type, oml_id = benchmark.split('/')
-    path = None  # benchmark file does not exist on disk
-    name = benchmark  # name is later passed as cli input again for containers, it needs to remain parsable
 
     if domain == "test.openml":
         log.debug("Setting openml server to the test server.")
@@ -62,4 +60,6 @@ def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]
                                    id="{}.org/t/{}".format(domain, tid)))
     else:
         raise ValueError(f"The oml_type is {oml_type} but must be 's' or 't'")
-    return name, path, tasks
+    # The first argument needs to remain parsable further in the pipeline as is
+    # The second argument is path, the benchmark does not exist on disk
+    return benchmark, None, tasks

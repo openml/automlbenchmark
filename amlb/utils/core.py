@@ -345,7 +345,7 @@ def str_iter(col, sep=", "):
     return sep.join(map(str, col))
 
 
-def str_sanitize(s):
+def str_sanitize(s: str) ->str:
     return re.sub(r"[^\w-]", "_", s)
 
 
