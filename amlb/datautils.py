@@ -149,7 +149,7 @@ def is_data_frame(df: object) -> bool:
 def to_data_frame(obj: object, column_names: Iterable[str]| None=None) -> pd.DataFrame:
     if obj is None:
         return pd.DataFrame()
-    columns = list(column_names) if column_names else None
+    columns = None if column_names is None else list(column_names)
     if isinstance(obj, dict):
         orient = cast(Literal['columns', 'index'], 'columns' if columns is None else 'index')
         return pd.DataFrame.from_dict(obj, columns=columns, orient=orient)  # type: ignore[arg-type]
