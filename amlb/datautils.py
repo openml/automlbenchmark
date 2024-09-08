@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Iterable, Type, Literal, Any, Callable, Self, Tuple, cast, TypeAlias
+from typing import Iterable, Type, Literal, Any, Callable, Tuple, cast, TypeAlias
 
 import arff
 import numpy as np
@@ -221,7 +221,7 @@ class Encoder(TransformerMixin):
     def _reshape(self, vec: np.ndarray) -> np.ndarray:
         return vec if self.for_target else vec.reshape(-1, 1)
 
-    def fit(self, vector: Iterable[str] | None) -> Self:
+    def fit(self, vector: Iterable[str] | None) -> 'Encoder':
         """
         :param vector: must be a line vector (array)
         :return:
