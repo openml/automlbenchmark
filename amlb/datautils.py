@@ -12,7 +12,10 @@ from __future__ import annotations
 import logging
 import os
 from typing import Iterable, Type, Literal, Any, Callable, Tuple, cast, Union
-from typing_extensions import TypeAlias
+try:
+    from typing_extensions import TypeAlias
+except ImportError:
+    pass  # Only available when dev dependencies are installed, only needed for type check
 
 import arff
 import numpy as np
