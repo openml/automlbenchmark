@@ -61,15 +61,12 @@ def generate_framework_gallery(frameworks: Iterable[Framework]) -> str:
     return "\n".join(framework_icon_html)
 
 
-def generate_main_page(frameworks: Iterable[Framework]) -> str:
+def generate_main_page(frameworks: Iterable[Framework], template: Template) -> str:
     header = load_navigation()
     footer = load_footer()
 
-    with open("templates/index_template.html", "r") as f:
-        main_content = Template(f.read())
-
     framework_gallery = generate_framework_gallery(frameworks)
-    return main_content.substitute(
+    return template.substitute(
         **dict(
             navigation=header,
             footer=footer,
@@ -128,11 +125,11 @@ def generate_framework_page(frameworks: Sequence[Framework]) -> str:
 
 
 if __name__ == "__main__":
+    main_page_template = Template(Path("templates/index_template.html").read_text())
     frameworks = load_framework_definitions()
-    main_html = generate_main_page(frameworks)
-    with open("index_new.html", "w") as f:
-        f.write(main_html)
+
+    main_html = generate_main_page(frameworks, main_page_template)
+    Path("index_new.html").write_text(main_html)
 
     framework_html = generate_framework_page(frameworks)
-    with open("frameworks.html", "w") as f:
-        f.write(framework_html)
+    Path("frameworks.html").write_text(framework_html)
