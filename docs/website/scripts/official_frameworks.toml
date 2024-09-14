@@ -117,7 +117,7 @@ pdf="https://arxiv.org/pdf/2007.04074.pdf"
 arxiv="https://arxiv.org/abs/2007.04074"
 
 [[frameworks.papers]]
-name="Efficient and Robust Automated Machine Learning"
+title="Efficient and Robust Automated Machine Learning"
 authors="Matthias Feurer, Aaron Klein, Katharina Eggensperger, Jost Springenberg, Manuel Blum, Frank Hutter"
 year=2015
 venue="Advances in Neural Information Processing Systems 28 (NIPS 2015)"
