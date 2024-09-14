@@ -2,7 +2,7 @@ from pathlib import Path
 from string import Template
 
 import tomllib
-from typing import NamedTuple, Sequence
+from typing import NamedTuple, Sequence, Iterable
 
 from generate_header import generate_navigation
 
@@ -11,10 +11,10 @@ class Paper(NamedTuple):
     title: str
     abstract: str
     pdf: str
-    arxiv: str
     venue: str
     year: int
     authors: str
+    arxiv: str | None = None
 
 
 class Framework(NamedTuple):
@@ -48,7 +48,7 @@ def load_footer() -> str:
         return f.read()
 
 
-def generate_framework_gallery(frameworks: Sequence[Framework]) -> str:
+def generate_framework_gallery(frameworks: Iterable[Framework]) -> str:
     template = Template("""
     <a href=\"${repository}\" target="_blank" class="framework-logo">
     <img src=\"${icon}\" title=\"${name}\"/>
@@ -61,7 +61,7 @@ def generate_framework_gallery(frameworks: Sequence[Framework]) -> str:
     return "\n".join(framework_icon_html)
 
 
-def generate_main_page(frameworks: Sequence[Framework]) -> str:
+def generate_main_page(frameworks: Iterable[Framework]) -> str:
     header = load_navigation()
     footer = load_footer()
 

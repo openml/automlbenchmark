@@ -1,5 +1,6 @@
 import tomllib
-from typing import NamedTuple
+from pathlib import Path
+from typing import NamedTuple, Iterable
 
 
 class NavigationItem(NamedTuple):
@@ -9,16 +10,12 @@ class NavigationItem(NamedTuple):
     icon_only: bool = False
 
 
-def generate_navigation_for(items: list[NavigationItem], mobile: bool = False) -> str:
+def generate_navigation_for(items: Iterable[NavigationItem], mobile: bool = False) -> str:
     # TODO: Add outlink icon
     item_template = "<a href=\"URL\" class=\"nav-link nav-icon\">NAME_OR_ICON</a>"
     html_items = []
     for item in items:
-        with open(item.icon, "r") as fh:
-            icon = fh.read()
-
-        name_or_icon = icon if (mobile or item.icon_only) else item.name
-        nav_html = item_template.replace("URL", item.url).replace("NAME_OR_ICON", name_or_icon)
+        nav_html = generate_nav_item_html(item, item_template, mobile)
         html_items.append(nav_html)
 
     items_html = "\n".join(html_items)
@@ -30,8 +27,18 @@ def generate_navigation_for(items: list[NavigationItem], mobile: bool = False) -
     """
 
 
-def load_navigation_definitions() -> list[NavigationItem]:
-    with open("navigation.toml", "rb") as fh:
+def generate_nav_item_html(item, item_template, mobile):
+    requires_icon = not mobile and not item.icon_only
+    if not requires_icon:
+        return item_template.replace("URL", item.url).replace("NAME_OR_ICON", item.name)
+
+    with open(item.icon, "r") as fh:
+        icon = fh.read()
+    return item_template.replace("URL", item.url).replace("NAME_OR_ICON", icon)
+
+
+def load_navigation_definitions(configuration_file: Path = Path("navigation.toml")) -> list[NavigationItem]:
+    with configuration_file.open("rb") as fh:
         items = tomllib.load(fh)["pages"]
     return [NavigationItem(**item) for item in items]
 
