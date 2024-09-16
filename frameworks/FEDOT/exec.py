@@ -1,10 +1,13 @@
 import logging
 import os
 from pathlib import Path
+from typing import Union
+
+import pandas as pd
 
 from fedot.api.main import Fedot
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, result, output_subdir, measure_inference_times
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)
@@ -14,37 +17,36 @@ def run(dataset, config):
     log.info("\n**** FEDOT ****\n")
 
     is_classification = config.type == 'classification'
-    # Mapping of benchmark metrics to FEDOT metrics
-    metrics_mapping = dict(
-        acc='acc',
-        auc='roc_auc',
-        f1='f1',
-        logloss='logloss',
-        mae='mae',
-        mse='mse',
-        msle='msle',
-        r2='r2',
-        rmse='rmse'
-    )
-    scoring_metric = metrics_mapping.get(config.metric, None)
-
-    if scoring_metric is None:
-        log.warning("Performance metric %s not supported.", config.metric)
+    scoring_metric = get_fedot_metrics(config)
 
     training_params = {"preset": "best_quality", "n_jobs": config.cores}
-    training_params |= {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    training_params.update({k: v for k, v in config.framework_params.items() if not k.startswith('_')})
     n_jobs = training_params["n_jobs"]
 
-    log.info('Running FEDOT with a maximum time of %ss on %s cores, optimizing %s.',
-             config.max_runtime_seconds, n_jobs, scoring_metric)
+    log.info(f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
+             optimizing {scoring_metric}")
     runtime_min = config.max_runtime_seconds / 60
-
     fedot = Fedot(problem=config.type, timeout=runtime_min, metric=scoring_metric, seed=config.seed,
                   max_pipeline_fit_time=runtime_min / 10, **training_params)
 
+
     with Timer() as training:
         fedot.fit(features=dataset.train.X, target=dataset.train.y)
-
+    
+    def infer(data: Union[str, pd.DataFrame]):
+        test_data = pd.read_parquet(data) if isinstance(data, str) else data
+        predict_fn = fedot.predict_proba if is_classification else fedot.predict
+        return predict_fn(test_data)
+    
+    inference_times = {}
+    if config.measure_inference_time:
+        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["df"] = measure_inference_times(
+            infer,
+            [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
+        )
+        log.info(f"Finished inference time measurements.")
+    
     log.info('Predicting on the test set.')
     with Timer() as predict:
         predictions = fedot.predict(features=dataset.test.X)
@@ -61,7 +63,28 @@ def run(dataset, config):
                   target_is_encoded=False,
                   models_count=fedot.current_pipeline.length,
                   training_duration=training.duration,
-                  predict_duration=predict.duration)
+                  predict_duration=predict.duration,
+                  inference_times=inference_times,)
+
+
+def get_fedot_metrics(config):
+    metrics_mapping = dict(
+        acc='accuracy',
+        auc='roc_auc',
+        f1='f1',
+        logloss='neg_log_loss',
+        mae='mae',
+        mse='mse',
+        msle='msle',
+        r2='r2',
+        rmse='rmse',
+    )
+    scoring_metric = metrics_mapping.get(config.metric, None)
+
+    if scoring_metric is None:
+        log.warning(f"Performance metric {config.metric} not supported.")
+
+    return scoring_metric
 
 
 def save_artifacts(automl, config):

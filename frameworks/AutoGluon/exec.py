@@ -17,6 +17,7 @@ matplotlib.use('agg')  # no need for tk
 
 from autogluon.tabular import TabularPredictor, TabularDataset
 from autogluon.core.utils.savers import save_pd, save_pkl, save_json
+from autogluon.core.callbacks import EarlyStoppingEnsembleCallback
 import autogluon.core.metrics as metrics
 from autogluon.tabular.version import __version__
 
