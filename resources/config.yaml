@@ -33,7 +33,7 @@ frameworks:              # configuration namespace for the frameworks definition
     - '{root}/resources/frameworks.yaml'
   root_module: frameworks     # the default python module under which the frameworks modules are defined.
   allow_duplicates: false     # if true, the last definition is used.
-  tags: ['stable', 'latest', '2020Q2', '2021Q3', '2023Q2']  # the list of supported tags when looking up frameworks:
+  tags: ['stable', 'latest', '2020Q2', '2021Q3', '2023Q2', '2024Q1', '2024Q1E']  # the list of supported tags when looking up frameworks:
                               # for example frmwk:latest will look for framework frmwk in a frameworks_latest.yaml file if present.
 
 benchmarks:                     # configuration namespace for the benchmarks definitions.
@@ -47,7 +47,7 @@ benchmarks:                     # configuration namespace for the benchmarks def
                                      #   if 'fail' the benchmark will be immediately interrupted;
   os_mem_size_mb: 2048          # the default amount of memory left to the OS when task assigned memory is computed automatically.
   os_vol_size_mb: 2048          # the default amount of volume left to the OS when task volume memory is verified.
-  overhead_time_multiplier: 2   # multiplier to the time allowed for the job to complete before sending an interruption signal. Default is 2 if unspecified.
+  overhead_time_multiplier: 4   # multiplier to the time allowed for the job to complete before sending an interruption signal. Default is 2 if unspecified.
   overhead_time_seconds: 3600   # amount of additional time allowed for the job to complete before sending an interruption signal.
                                 # the total allowed time is min(value * overhead_time_multiplier, value + overhead_time_seconds)
   metrics:                      # default metrics by dataset type (as listed by amlb.data.DatasetType),
@@ -89,7 +89,7 @@ results:                 # configuration namespace for the results.csv file.
   incremental_save: true # if true save results after each job., otherwise save results only when all jobs are completed.
 
 inference_time_measurements:  # configuration namespace for performing additional inference time measurements on various batch sizes
-  enabled: false
+  enabled: true
   batch_sizes: [1, 10, 100, 1000, 10000]  # the batch sizes for which inference speed should be measured
   repeats: 10                            # the number of times to repeat the inference measurement for each batch size
   additional_job_time: 300  # the time in seconds that will be added to the maximum job time if inference time is measured

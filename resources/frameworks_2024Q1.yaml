@@ -1,0 +1,148 @@
+---
+
+#########################
+### AutoML frameworks ###
+#########################
+
+AutoGluon:
+  abstract: true
+  version: "1.1.2b20240913"
+
+AutoGluon_benchmark:
+  extends: AutoGluon
+  description: "AutoGluon with 'best_quality' preset provides the most accurate overall predictor"
+  params:
+    _save_artifacts: ['leaderboard', 'info']
+    presets: best_quality
+    _leaderboard_test: True
+
+AutoGluon_hq:
+  extends: AutoGluon
+  description: "AutoGluon with 'high_quality' preset provides generally fast inference speed with high accuracy"
+  params:
+    _save_artifacts: ['leaderboard', 'info']
+    presets: ['high_quality', 'optimize_for_deployment']
+    _leaderboard_test: True
+
+AutoGluon_hq_il001:
+  extends: AutoGluon
+  description: "AutoGluon ~3x faster inference at slight performance loss to 'high quality' (self-reported)."
+  params:
+    _save_artifacts: ['leaderboard', 'info']
+    presets: ['high_quality', 'optimize_for_deployment']
+    _leaderboard_test: True
+    infer_limit: 0.0001
+
+AutoGluon_fi_ft:
+  extends: AutoGluon
+  description: "AutoGluon for decent accuracy, fast inference, and extremely fast training."  
+  params:
+    _save_artifacts: ['leaderboard', 'info']
+    presets: 'medium_quality'
+    _leaderboard_test: True
+    infer_limit: 0.0001
+
+autosklearn:
+  version: '0.15.0'
+  params:
+    _save_artifacts: ['models', 'debug_as_zip']
+
+autosklearn2:
+  extends: autosklearn
+  params:
+    _askl2: true
+    _save_artifacts: ['models', 'debug_as_zip']
+
+AutoWEKA:
+  version: '2.6'
+
+FEDOT:
+  version: 'master' # 0.7.3.2#3d49382cd65e181b5ba5ec8f5dd4f844c88e8b9b
+  description: |
+    FEDOT is a AutoML tool that optimizes composite machine learning pipelines using evolutionary optimisation.
+  project: https://github.com/aimclub/FEDOT
+  refs:
+    - https://doi.org/10.1016/j.future.2021.08.022
+#   params:
+#    _save_artifacts: ['leaderboard', 'models', 'info']
+
+flaml:
+  version: '2.1.2'
+
+GAMA:
+  abstract: true
+  version: '23.0.0'
+
+GAMA_benchmark:
+  extends: GAMA
+  params:
+    preset: performance
+
+H2OAutoML:
+  version: '3.46.0.2'
+  params:
+    _save_artifacts: ['leaderboard', 'logs']
+    stopping_rounds: 0 
+
+lightautoml:
+  version: '0.3.8.1'
+
+mljarsupervised:
+  abstract: true
+  version: '1.1.9'
+
+mljarsupervised_benchmark:
+  extends: mljarsupervised
+  description: "MLJar using 'Compete' mode to provide most accurate predictor"
+  params:
+    mode: Compete
+
+mljarsupervised_perform:
+  extends: mljarsupervised
+  description: "MLJar using 'Perform' mode to provide fast inference"
+  params:
+    mode: Perform
+
+MLPlan:
+  abstract: true
+  version: '0.2.5'
+
+MLPlanWEKA:
+  extends: MLPlan
+  params:
+    _backend: weka
+
+mlr3automl:
+  version: '#f667900292e3ded64bb419285c71cd5d1d2c4301'
+  project: https://github.com/a-hanf/mlr3automl
+
+NaiveAutoML:
+  version: '0.1.2'
+
+TPOT:
+  version: '0.12.2'
+  params:
+    _save_artifacts: ['models']
+
+
+#######################################
+### Non AutoML reference frameworks ###
+#######################################
+
+constantpredictor: {}
+
+DecisionTree:
+  version: '1.2.2'
+
+RandomForest:
+  version: '1.5.0'
+  params:
+    n_estimators: 2000
+
+ranger:
+  version: 'stable'
+
+TunedRandomForest:
+  version: '1.1.0'
+  params:
+    n_estimators: 2000
