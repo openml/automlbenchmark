@@ -1,5 +1,26 @@
 ---
 
+5min8c_gp3:
+  folds: 10
+  max_runtime_seconds: 300
+  cores: 8
+  min_vol_size_mb: 100000
+  ec2_volume_type: gp3
+
+10min8c_gp3:
+  folds: 10
+  max_runtime_seconds: 600
+  cores: 8
+  min_vol_size_mb: 100000
+  ec2_volume_type: gp3
+
+30min8c_gp3:
+  folds: 10
+  max_runtime_seconds: 1800
+  cores: 8
+  min_vol_size_mb: 100000
+  ec2_volume_type: gp3
+
 test:
   folds: 2
   max_runtime_seconds: 600
