@@ -49,6 +49,8 @@ def run(dataset, config):
 
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+    if training_params["callbacks"]:
+        training_params["callbacks"] = [EarlyStoppingEnsembleCallback(patience=5)]
     time_limit = config.max_runtime_seconds
     presets = training_params.get("presets", [])
     presets = presets if isinstance(presets, list) else [presets]

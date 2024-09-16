@@ -29,7 +29,6 @@ def run(dataset, config):
     fedot = Fedot(problem=config.type, timeout=runtime_min, metric=scoring_metric, seed=config.seed,
                   max_pipeline_fit_time=runtime_min / 10, **training_params)
 
-
     with Timer() as training:
         fedot.fit(features=dataset.train.X, target=dataset.train.y)
     
