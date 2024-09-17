@@ -48,6 +48,10 @@ def run(dataset, config):
 
     is_classification = config.type == 'classification'
     training_params = {k: v for k, v in config.framework_params.items() if not k.startswith('_')}
+
+    if callback_settings := training_params.get("callbacks", {}):
+        training_params["callbacks"] = initialize_callbacks(callback_settings)
+
     time_limit = config.max_runtime_seconds
     presets = training_params.get("presets", [])
     presets = presets if isinstance(presets, list) else [presets]
@@ -169,6 +173,23 @@ def run(dataset, config):
                   training_duration=training.duration,
                   predict_duration=predict.duration,
                   inference_times=inference_times,)
+
+
+def initialize_callbacks(callback_settings):
+    print(callback_settings)
+    callbacks = []
+    try:
+        import autogluon.core.callbacks
+    except ImportError:
+        raise ValueError("Callbacks are only available for AutoGluon>=1.1.2")
+    print(callbacks)
+    for callback, hyperparameters in callback_settings.items():
+        callback_cls = getattr(autogluon.core.callbacks, callback, None)
+        if not callback_cls:
+            raise ValueError(f"Callback {callback} is not a valid callback")
+        callbacks.append(callback_cls(**hyperparameters))
+    print(callbacks)
+    return callbacks
 
 
 def save_artifacts(predictor, leaderboard, learning_curves, config):
