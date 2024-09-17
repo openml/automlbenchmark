@@ -12,7 +12,7 @@ import math
 import os
 import re
 import statistics
-from typing import Union
+from typing import Union, cast
 
 import numpy as np
 from numpy import nan, sort
@@ -297,7 +297,7 @@ class TaskResult:
         if isinstance(predictions, S):
             predictions = predictions.values
         if scipy.sparse.issparse(truth) and truth.shape[1] == 1:
-            truth = pd.DataFrame(truth.todense())
+            truth = pd.DataFrame(cast(scipy.sparse.sparray, truth).todense())
         if isinstance(truth, DF):
             truth = truth.squeeze()
         if isinstance(truth, S):
@@ -309,7 +309,7 @@ class TaskResult:
 
         if probabilities is not None:
             prob_cols = probabilities_labels if probabilities_labels else dataset.target.label_encoder.classes
-            df = to_data_frame(probabilities, columns=prob_cols)
+            df = to_data_frame(probabilities, column_names=prob_cols)
             if probabilities_labels is not None:
                 df = df[sort(prob_cols)]  # reorder columns alphabetically: necessary to match label encoding
                 if any(prob_cols != df.columns.values):
