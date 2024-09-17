@@ -176,19 +176,16 @@ def run(dataset, config):
 
 
 def initialize_callbacks(callback_settings):
-    print(callback_settings)
     callbacks = []
     try:
         import autogluon.core.callbacks
     except ImportError:
         raise ValueError("Callbacks are only available for AutoGluon>=1.1.2")
-    print(callbacks)
     for callback, hyperparameters in callback_settings.items():
         callback_cls = getattr(autogluon.core.callbacks, callback, None)
         if not callback_cls:
             raise ValueError(f"Callback {callback} is not a valid callback")
         callbacks.append(callback_cls(**hyperparameters))
-    print(callbacks)
     return callbacks
 
 
