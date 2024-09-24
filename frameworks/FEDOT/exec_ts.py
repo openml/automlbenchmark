@@ -7,6 +7,7 @@ from fedot.api.main import Fedot
 from fedot.core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
 from fedot.core.data.data import InputData
 from fedot.core.repository.dataset_types import DataTypesEnum
+from fedot.version import __version__
 
 from frameworks.shared.callee import call_run, result, output_subdir
 from frameworks.shared.utils import Timer, load_timeseries_dataset
@@ -15,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    log.info("\n**** FEDOT ****\n")
+    log.info(f"\n**** FEDOT TimeSeries [v{__version__}] ****\n")
 
     scoring_metric = get_fedot_metrics(config)
 
@@ -25,7 +26,6 @@ def run(dataset, config):
 
     log.info(f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
              optimizing {scoring_metric}")
-    runtime_min = config.max_runtime_seconds / 60
 
     task = Task(
         TaskTypesEnum.ts_forecasting,
@@ -35,12 +35,13 @@ def run(dataset, config):
     train_df, test_df = load_timeseries_dataset(dataset)
     id_column = dataset.id_column
 
-    log.info('Predicting on the test set.')
+    max_runtime_minutes_per_ts = config.max_runtime_seconds / 60 / train_df[id_column].nunique()
+    log.info(f'Fitting FEDOT with a maximum time of {max_runtime_minutes_per_ts}min per series')
+
     training_duration, predict_duration = 0, 0
     models_count = 0
     truth_only = test_df[dataset.target].values
     predictions = []
-
 
     for label, train_subdf in train_df.groupby(id_column, sort=False):
         train_series = train_subdf[dataset.target].to_numpy()
@@ -58,10 +59,10 @@ def run(dataset, config):
         fedot = Fedot(
             problem=TaskTypesEnum.ts_forecasting.value,
             task_params=task.task_params,
-            timeout=runtime_min,
+            timeout=max_runtime_minutes_per_ts,
             metric=scoring_metric,
             seed=config.seed,
-            max_pipeline_fit_time=runtime_min / 10,
+            max_pipeline_fit_time=max_runtime_minutes_per_ts / 5,  # fit at least 5 pipelines
             **training_params
         )
 
@@ -73,7 +74,7 @@ def run(dataset, config):
             try:
                 prediction = fedot.forecast(train_input, horizon=horizon)
             except Exception as e:
-                log.info('Pipeline crashed. Using no-op forecasting')
+                log.info(f'Pipeline crashed due to {e}. Using no-op forecasting')
                 prediction = np.full(horizon, train_series[-1])
 
         predict_duration += predict.duration
