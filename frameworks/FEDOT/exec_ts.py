@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 import numpy as np
+import pandas as pd
 
 from fedot.api.main import Fedot
 from fedot.core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
@@ -82,19 +83,23 @@ def run(dataset, config):
         predictions.append(prediction)
         models_count += fedot.current_pipeline.length
 
+    all_series_predictions = np.hstack(predictions)
     optional_columns = dict(
         repeated_item_id=np.load(dataset.repeated_item_id),
         repeated_abs_seasonal_error=np.load(dataset.repeated_abs_seasonal_error),
     )
+    for quantile in config.quantile_levels:
+        optional_columns[str(quantile)] = all_series_predictions
+
     save_artifacts(fedot, config)
     return result(output_file=config.output_predictions_file,
-                  predictions=np.hstack(predictions),
+                  predictions=all_series_predictions,
                   truth=truth_only,
                   target_is_encoded=False,
                   models_count=models_count,
                   training_duration=training_duration,
                   predict_duration=predict_duration,
-                  optional_columns=optional_columns)
+                  optional_columns=pd.DataFrame(optional_columns))
 
 
 def get_fedot_metrics(config):
