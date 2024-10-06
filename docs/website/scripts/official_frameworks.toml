@@ -36,18 +36,19 @@ authors = "Pieter Gijsbers, Joaquin Vanschoren"
 name = "TPOT"
 icon = "img/logos/tpot.jpeg"
 repository ="https://github.com/EpistasisLab/tpot"
-summary = ""
+documentation="http://epistasislab.github.io/tpot/"
+summary = "TPOT is a Python Automated Machine Learning tool that optimizes machine learning pipelines using genetic programming. It has a focus on optimizing models for biomedical data."
 
 [[frameworks]]
 name = "AutoGluon"
 repository = "https://github.com/awslabs/autogluon"
+documentation = "https://auto.gluon.ai/stable/index.html"
 icon = "img/logos/autogluon.png"
 summary = """
 AutoGluon enables easy-to-use and easy-to-extend AutoML with a focus on automated
 stack ensembling, deep learning, and real-world applications spanning image, text,
 and tabular data.
 """
-documentation = "https://auto.gluon.ai/stable/index.html"
 
 [[frameworks.papers]]
 title="AutoGluon-Tabular: Robust and Accurate AutoML for Structured Data"
@@ -76,6 +77,7 @@ arxiv="https://arxiv.org/pdf/2003.06505"
 [[frameworks]]
 name = "auto-sklearn"
 repository = "https://github.com/automl/auto-sklearn"
+documentation="https://automl.github.io/auto-sklearn/master/#"
 icon = "img/logos/auto-sklearn.png"
 summary = """
 Auto-sklearn is an automated machine learning toolkit and a drop-in replacement
@@ -83,7 +85,6 @@ for a scikit-learn estimator. Auto-sklearn frees a machine learning user from
 algorithm selection and hyperparameter tuning. It leverages recent advantages in
 Bayesian optimization, meta-learning and ensemble construction.
 """
-documentation="https://automl.github.io/auto-sklearn/master/#"
 
 [[frameworks.papers]]
 title="Auto-Sklearn 2.0: Hands-free AutoML via Meta-Learning"
@@ -151,8 +152,9 @@ effectiveness of the individual components of auto-sklearn.
 [[frameworks]]
 name = "mljar-supervised"
 repository = "https://github.com/mljar/mljar-supervised"
+documentation = "https://mljar.com/"
 icon ="img/logos/mljar.png"
-summary = ""
+summary = "The mljar-supervised is an Automated Machine Learning Python package that works with tabular data. It is designed to save time for a data scientist. It abstracts the common way to preprocess the data, construct the machine learning models, and perform hyper-parameters tuning to find the best model 🏆. It is no black-box as you can see exactly how the ML pipeline is constructed (with a detailed Markdown report for each ML model)."
 
 [[frameworks]]
 name = "h2o"
@@ -209,8 +211,9 @@ pdf="https://www.automl.org/wp-content/uploads/2020/07/AutoML_2020_paper_61.pdf"
 [[frameworks]]
 name = "Light AutoML"
 repository = "https://github.com/sb-ai-lab/LightAutoML"
+documentation = "https://developers.sber.ru/portal/products/lightautoml"
 icon = "img/logos/LightAutoML_logo_small.png"
-summary = ""
+summary = "LightAutoML is open-source Python library aimed at automated machine learning. It is designed to be lightweight and efficient for various tasks with tabular, text data."
 
 [[frameworks]]
 name = "FLAML"
