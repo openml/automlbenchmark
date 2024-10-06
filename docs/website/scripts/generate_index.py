@@ -4,7 +4,7 @@ from string import Template
 import tomllib
 from typing import NamedTuple, Sequence, Iterable
 
-from generate_header import generate_navigation
+from generate_navigation import generate_navigation
 
 
 class Paper(NamedTuple):
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     frameworks = load_framework_definitions()
 
     main_html = generate_main_page(frameworks, main_page_template)
-    Path("index_new.html").write_text(main_html)
+    Path("index.html").write_text(main_html)
 
     framework_html = generate_framework_page(frameworks)
     Path("frameworks.html").write_text(framework_html)
