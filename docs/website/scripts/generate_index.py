@@ -29,8 +29,8 @@ class Framework(NamedTuple):
 def load_framework_definitions(definition_file: Path = Path("official_frameworks.toml")) -> list[Framework]:
     with definition_file.open("rb") as fh:
         frameworks = tomllib.load(fh)["frameworks"]
-    return parse_frameworks(frameworks)
-
+    frameworks = parse_frameworks(frameworks)
+    return sorted(frameworks, key=lambda fw: fw.name.lower())
 
 def parse_frameworks(framework_descriptions):
     return [
