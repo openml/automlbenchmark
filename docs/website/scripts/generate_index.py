@@ -29,13 +29,16 @@ class Framework(NamedTuple):
 def load_framework_definitions(definition_file: Path = Path("official_frameworks.toml")) -> list[Framework]:
     with definition_file.open("rb") as fh:
         frameworks = tomllib.load(fh)["frameworks"]
+    return parse_frameworks(frameworks)
 
+
+def parse_frameworks(framework_descriptions):
     return [
         Framework(
             **{attr: val for attr, val in fw.items() if attr != "papers"},
             papers=tuple(Paper(**paper) for paper in fw.get("papers", [])),
         )
-        for fw in frameworks
+        for fw in framework_descriptions
     ]
 
 
