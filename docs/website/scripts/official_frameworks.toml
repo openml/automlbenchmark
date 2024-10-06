@@ -39,6 +39,17 @@ repository ="https://github.com/EpistasisLab/tpot"
 documentation="http://epistasislab.github.io/tpot/"
 summary = "TPOT is a Python Automated Machine Learning tool that optimizes machine learning pipelines using genetic programming. It has a focus on optimizing models for biomedical data."
 
+[[frameworks.papers]]
+title="Automating biomedical data science through tree-based pipeline optimization"
+authors="Randal S. Olson, Ryan J. Urbanowicz, Peter C. Andrews, Nicole A. Lavender, La Creis Kidd, and Jason H. Moore"
+abstract="""
+Automated machine learning (AutoML) systems are helpful data science assistants designed to scan data for novel features, select appropriate supervised learning models and optimize their parameters. For this purpose, Tree-based Pipeline Optimization Tool (TPOT) was developed using strongly typed genetic programing (GP) to recommend an optimized analysis pipeline for the data scientist’s prediction problem. However, like other AutoML systems, TPOT may reach computational resource limits when working on big data such as whole-genome expression data.
+"""
+year=2016
+venue="Applications of Evolutionary Computation, pages 123-137"
+pdf="https://proceedings.mlsys.org/paper/2021/file/92cc227532d17e56e07902b254dfad10-Paper.pdf"
+arxiv="https://arxiv.org/pdf/1601.07925"
+
 [[frameworks]]
 name = "AutoGluon"
 repository = "https://github.com/awslabs/autogluon"
