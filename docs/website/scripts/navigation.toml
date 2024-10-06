@@ -1,0 +1,41 @@
+[[pages]]
+name = "home"  # Text displayed in desktop version of navbar header
+icon = "../img/icons/home.svg"  # relative path to an (.svg) icon that's displayed for the mobile version
+url = "index.html"  # (relative) link to the page it should link to. External links will have a little icon showing it's an out-link.
+icon_only = true  # If set, never show the text of `name` but show the icon even in desktop mode (default: false).
+
+[[pages]]
+name = "results"
+icon = "../img/icons/file-chart-bar.svg"
+url = "results.html"
+
+[[pages]]
+name = "frameworks"
+icon = "../img/icons/swatchbook.svg"
+url = "frameworks.html"
+
+[[pages]]
+name = "papers"
+icon = "../img/icons/file-lines.svg"
+url = "papers.html"
+
+[[pages]]
+name = "user guide"
+icon = "../img/icons/book-open.svg"
+url = "user_guide.html"
+
+[[pages]]
+name = "contributing"
+icon = "../img/icons/heart.svg"
+url = "contributing.html"
+
+[[pages]]
+name = "discussion"
+icon = "../img/icons/messages.svg"
+url = "https://github.com/openml/automlbenchmark/discussions/216"
+
+[[pages]]
+name = "Github"
+icon = "../img/icons/github.svg"
+url = "https://github.com/openml/automlbenchmark/"
+icon_only = true

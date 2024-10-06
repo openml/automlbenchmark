@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AMLB: Frameworks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link href="style.css" rel="stylesheet" />
+  </head>
+  <body>
+    ${navigation}
+    <div class="page-content">
+      <section>
+        <h1 class="page-title">AutoML Frameworks</h1>
+        There is more to an AutoML system than just its performance. This page
+        contains more information about the integrated AutoML frameworks,
+        including links to their papers, repositories
+        <img src="img/logos/GitHub-Mark-64px.png" height="16px" />, and
+        documentation 📖. Summaries taken directly from the respective
+        documentation pages. Want to integrate your own framework?
+        <a
+          href="docs/extending/framework/"
+          target="_blank"
+          >Adding your own framework</a
+        >
+        is relatively simple.
+      </section>
+      <section class="framework-card-list">
+        ${framework_cards}
+      </section>
+    </div>
+  </body>
+  ${footer}
+</html>

@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
+  # TODO: Break up into separate jobs: build website, build docs, deploy
   deploy:
     environment:
       name: github-pages
@@ -49,13 +49,19 @@ jobs:
           sed -i "s@WEBSITE@${WEBSITE_URL}@g" mkdocs.yml
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11' 
+          python-version: '3.12'
       - name: Install MkDocs
         run: |
            python -m pip install mkdocs-material
       - name: Build MkDocs Pages
         run: |
           mkdocs build --site-dir site/docs
+      - name: Build Website Pages
+        run: |
+          cd ./site/scripts
+          python generate_index.py
+          cp index.html ../
+          cp frameworks.html ../
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
