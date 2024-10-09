@@ -1,3 +1,1 @@
-sapientml
-openml
-boto3==1.26.98
+requests
