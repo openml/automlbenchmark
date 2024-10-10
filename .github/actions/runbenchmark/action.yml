@@ -6,21 +6,55 @@ inputs:
     description: 'Framework to run'
     default: 'constantpredictor'
     required: true
-  task:
-    description: 'Task to run the framework on'
-    default: 'openml/t/59'
-    required: true
+
+  benchmark:
+    description: 'benchmark to run'
+    default: 'test'
+    required: false
+
+  store-results:
+    description: "If set (default), store the `results` directory as run artifact."
+    default: true
+    required: false
+
+outputs:
+  failure:
+    description: "Indicates which step failed, if any. One of 'install', 'run', or ''."
+    value: ${{ steps.output-failure.outputs.failure }}
 
 runs:
   using: "composite"
   steps:
-    - name: Install Requirements
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+    - name: Install ${{ inputs.framework }}
+      id: install
+      run: python runbenchmark.py ${{ inputs.framework }} -s only
       shell: bash
-    - name: Run ${{ inputs.framework }} on ${{ inputs.task }}
+    - name: Benchmark ${{ inputs.framework }}
+      id: run
       run: |
-        python runbenchmark.py ${{ inputs.framework }} validation test -f 0 -t ${{ inputs.task }} -e
-        echo "Exit with status $?"
+        python runbenchmark.py ${{ inputs.framework }} ${{ inputs.benchmark }} -f 0
+        if grep -q "Error" "results/results.csv"; then
+          exit 1
+        fi
       shell: bash
+    - name: Save Results
+      if: always() && inputs.store-results
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.framework }}-results
+        path: results
+    - name: Output Failures
+      if: always()
+      id: output-failure
+      shell: bash
+      run: |
+        FAILURE=''
+        if [[ "$INSTALL_FAILURE" = "failure" ]]; then
+          FAILURE='install'
+        elif [[ "$RUN_FAILURE" = "failure" ]]; then
+          FAILURE='run'
+        fi
+        echo "failure=$FAILURE" >> $GITHUB_OUTPUT
+      env:
+        RUN_FAILURE: ${{ steps.run.conclusion }}
+        INSTALL_FAILURE: ${{ steps.install.conclusion }}
