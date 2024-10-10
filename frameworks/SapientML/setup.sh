@@ -10,7 +10,7 @@ fi
 #create local venv
 . ${HERE}/../shared/setup.sh ${HERE} true
 
-PIP install -r ${HERE}/requirements.txt
+# PIP install -r ${HERE}/requirements.txt
 if [[ "$VERSION" == "stable" ]]; then
     PIP install --no-cache-dir -U ${PKG}
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
