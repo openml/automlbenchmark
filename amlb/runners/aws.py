@@ -119,7 +119,7 @@ class AWSBenchmark(Benchmark):
         finally:
             bench.cleanup()
 
-    def __init__(self, framework_name, benchmark_name, constraint_name, region=None):
+    def __init__(self, framework_name, benchmark_name, constraint_name, region=None, job_history: str = None):
         """
 
         :param framework_name:
@@ -127,7 +127,7 @@ class AWSBenchmark(Benchmark):
         :param constraint_name:
         :param region:
         """
-        super().__init__(framework_name, benchmark_name, constraint_name)
+        super().__init__(framework_name, benchmark_name, constraint_name, job_history=job_history)
         self.suid = datetime_iso(micros=True, no_sep=True)  # short sid for AWS entities whose name length is limited
         self.region = (region if region
                        else rconfig().aws.region if rconfig().aws['region']
@@ -1219,12 +1219,12 @@ class AWSRemoteBenchmark(Benchmark):
     # TODO: idea is to handle results progressively on the remote side and push results as soon as they're generated
     #   this would allow to safely run multiple tasks on single AWS instance
 
-    def __init__(self, framework_name, benchmark_name, constraint_name, region=None):
+    def __init__(self, framework_name, benchmark_name, constraint_name, region=None, job_history: str = None):
         self.region = region
         self.s3 = boto3.resource('s3', region_name=self.region)
         self.bucket = self._init_bucket()
         self._download_resources()
-        super().__init__(framework_name, benchmark_name, constraint_name)
+        super().__init__(framework_name, benchmark_name, constraint_name, job_history=job_history)
 
     def run(self, save_scores=False):
         super().run(save_scores)
