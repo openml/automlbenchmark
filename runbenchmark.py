@@ -49,6 +49,9 @@ parser.add_argument('-o', '--outdir', metavar='output_dir', default=None,
 parser.add_argument('-u', '--userdir', metavar='user_dir', default=None,
                     help="Folder where all the customizations are stored."
                          f"(default: '{default_dirs.user_dir}')")
+parser.add_argument('--jobhistory', metavar='job_history', default=None,
+                    help="File where prior job run results are stored. Only used when --resume is specified."
+                         f"(default: 'None')")
 parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, default=1,
                     help="The number of jobs (i.e. tasks or folds) that can run in parallel."
                          "\nA hard limit is defined by property `job_scheduler.max_parallel_jobs`"
@@ -159,24 +162,38 @@ log.debug("Config args: %s.", config_args)
 # merging all configuration files
 amlb_res = amlb.resources.from_configs(config_default, config_default_dirs, config_user, config_args)
 if args.resume:
-    amlb_res.config.job_history = os.path.join(amlb_res.config.output_dir, amlb.results.Scoreboard.results_file)
+    if args.jobhistory is not None:
+        job_history = args.jobhistory
+    else:
+        job_history = os.path.join(amlb_res.config.output_dir, amlb.results.Scoreboard.results_file)
+else:
+    job_history = None
 
 bench = None
 exit_code = 0
 try:
+    bench_kwargs = dict(
+        framework_name=args.framework,
+        benchmark_name=args.benchmark,
+        constraint_name=args.constraint,
+    )
+    if job_history is not None:
+        bench_kwargs['job_history'] = job_history
+
     if args.mode == 'local':
-        bench = amlb.Benchmark(args.framework, args.benchmark, args.constraint)
+        bench_cls = amlb.Benchmark
     elif args.mode == 'docker':
-        bench = amlb.DockerBenchmark(args.framework, args.benchmark, args.constraint)
+        bench_cls = amlb.DockerBenchmark
     elif args.mode == 'singularity':
-        bench = amlb.SingularityBenchmark(args.framework, args.benchmark, args.constraint)
+        bench_cls = amlb.SingularityBenchmark
     elif args.mode == 'aws':
-        bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint)
+        bench_cls = amlb.AWSBenchmark
         # bench = amlb.AWSBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
     # elif args.mode == "aws-remote":
     #     bench = amlb.AWSRemoteBenchmark(args.framework, args.benchmark, args.constraint, region=args.region)
     else:
         raise ValueError("`mode` must be one of 'aws', 'docker', 'singularity' or 'local'.")
+    bench = bench_cls(**bench_kwargs)
 
     if args.setup == 'only':
         log.warning("Setting up %s environment only for %s, no benchmark will be run.", args.mode, args.framework)
