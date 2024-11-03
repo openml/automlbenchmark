@@ -71,7 +71,7 @@ class Benchmark:
     data_loader = None
     framework_install_required = True
 
-    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str, job_history: str | pd.DataFrame = None):
+    def __init__(self, framework_name: str, benchmark_name: str, constraint_name: str, job_history: str | pd.DataFrame | None = None):
         self.job_runner = None
 
         if rconfig().run_mode == 'script':
