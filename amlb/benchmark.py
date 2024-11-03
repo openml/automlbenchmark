@@ -334,12 +334,11 @@ class Benchmark:
 
     @staticmethod
     def _validate_job_history(job_history):
-        required_columns = ['framework', 'constraint', 'id', 'fold']
-        actual_columns = list(job_history.columns)
-        for c in required_columns:
-            if c not in actual_columns:
-                raise AssertionError(f'job_history missing required column "{c}"! '
-                                     f'Columns: {actual_columns}')
+        required_columns = {'framework', 'constraint', 'id', 'fold'}
+        actual_columns = set(job_history.columns)
+        if missing_columns := (required_columns - actual_columns):
+            quoted_columns = ', '.join(repr(c) for c in missing_columns)
+            raise AssertionError(f'job_history missing required column(s) {quoted_columns}! ')
 
     def _skip_job(self, task_def, fold):
         if fold < 0 or fold >= task_def.folds:
