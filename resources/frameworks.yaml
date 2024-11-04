@@ -215,6 +215,11 @@ FEDOT:
 #  params:
 #    _save_artifacts: ['leaderboard', 'models', 'info']
 
+SapientML:
+  description: |
+    SapientML is an AutoML tool that can learn from a corpus of existing datasets and their human-written pipelines, and efficiently generate a high-quality pipeline for a predictive task on a new dataset.
+  project: https://github.com/sapientml/sapientml
+
 #######################################
 ### Non AutoML reference frameworks ###
 #######################################
