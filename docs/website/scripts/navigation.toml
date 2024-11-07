@@ -22,7 +22,7 @@ url = "papers.html"
 [[pages]]
 name = "user guide"
 icon = "../img/icons/book-open.svg"
-url = "user_guide.html"
+url = "docs/index.html"
 
 [[pages]]
 name = "contributing"
