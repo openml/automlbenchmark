@@ -51,7 +51,7 @@ def load_openml_tasks_from_suite(domain: str, oml_id: str) -> list[Namespace]:
     datasets.set_index('did', inplace=True)
     for tid, did in zip(cast(list[int], suite.tasks), cast(list[int], suite.data)):
         tasks.append(Namespace(name=str_sanitize(datasets.loc[did]['name']),
-                               description=f"{openml.config.server.replace('/api/v1/xml', '')}/d/{did}",
+                               description=f"{domain}/d/{did}",
                                openml_task_id=tid,
                                id="{}.org/t/{}".format(domain, tid)))
     return tasks
