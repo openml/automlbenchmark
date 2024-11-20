@@ -15,13 +15,7 @@ log = logging.getLogger(__name__)
 
 def is_openml_benchmark(benchmark: str) -> bool:
     """ Check if 'benchmark' is a valid identifier for an openml task or suite. """
-    if len(benchmark.split('/')) != 3:
-        return False
-
-    valid_domains = ("openml", "test.openml")
-    valid_types = ['s', 't']
-    domain, oml_type, oml_id = benchmark.split('/')
-    return oml_id.isdecimal() and domain in valid_domains and oml_type in valid_types
+    return re.match(r"(openml|test\.openml)/[st]/\d+", benchmark) is not None
 
 
 def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]]:
