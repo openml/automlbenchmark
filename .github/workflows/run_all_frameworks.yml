@@ -165,6 +165,7 @@ jobs:
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate
+        python -m pip list
         coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
         coverage xml
       env:
