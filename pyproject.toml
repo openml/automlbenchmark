@@ -9,6 +9,13 @@ disable_error_code = "attr-defined"
 #  problem with ruamel: https://github.com/python/mypy/issues/12664
 incremental = false
 
+[tool.coverage.run]
+include=[
+    "tests/**",
+    "amlb/**",
+    "frameworks/shared/**"
+]
+
 # 3rd party libraries without type hints or stubs:
 [[tool.mypy.overrides]]
 module=[

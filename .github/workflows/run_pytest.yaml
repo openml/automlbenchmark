@@ -18,7 +18,7 @@ jobs:
       - uses: actions/cache@v3
         id: cache
         with:
-          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
+          path: /home/runner/work/automlbenchmark/automlbenchmark/venv
           key: pip-v3-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/requirements-dev.txt') }}
           restore-keys: |
             pip-v3-
@@ -32,4 +32,9 @@ jobs:
       - name: Run unit tests
         run: |
           source venv/bin/activate
-          python -m pytest -vv -m "not stress and not openml_upload"
+          coverage run -m pytest -vv -m "not stress and not openml_upload"
+          coverage xml
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

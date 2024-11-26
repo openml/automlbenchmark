@@ -33,7 +33,7 @@ jobs:
           ".github/runbenchmark/action.yml "\
           "runbenchmark.py "\
           "requirements.txt"
-          
+
           echo Common files: $common_files
           echo Changed files: $changed_files
 
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/cache@v3
         id: cache
         with:
-          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
+          path: /home/runner/work/automlbenchmark/automlbenchmark/venv
           key: pip-v3-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-v3-
@@ -109,12 +109,18 @@ jobs:
         run: |
           source venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip show openml
+          python -m pip install -r requirements.txt
+          python -m pip install "coverage[toml]"
+          python -m pip show openml
       - name: Run constantpredictor on openml iris
         run: |
           source venv/bin/activate
-          python runbenchmark.py ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
+          coverage run -m runbenchmark ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
+          coverage xml
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   run_frameworks:
     name: ${{ matrix.framework }}/${{ matrix.task }}
@@ -143,7 +149,7 @@ jobs:
     - uses: actions/cache@v3
       id: cache
       with:
-        path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
+        path: /home/runner/work/automlbenchmark/automlbenchmark/venv
         key: pip-v3-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           pip-v3-
@@ -153,9 +159,15 @@ jobs:
         source venv/bin/activate
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
+        python -m pip install "coverage[toml]"
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate
-        python runbenchmark.py ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
+        coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
+        coverage xml
       env:
         GITHUB_PAT: ${{ secrets.PUBLIC_ACCESS_GITHUB_PAT }}
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
