@@ -100,7 +100,7 @@ jobs:
       - uses: actions/cache@v3
         id: cache
         with:
-          path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
+          path: /home/runner/work/automlbenchmark/automlbenchmark/venv
           key: pip-v3-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-v3-
@@ -110,14 +110,13 @@ jobs:
           source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install coverage
           python -m pip install "coverage[toml]"
           python -m pip show openml
       - name: Run constantpredictor on openml iris
         run: |
           source venv/bin/activate
-          python -m coverage run -m runbenchmark ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
-          python -m coverage xml
+          coverage run -m runbenchmark ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
+          coverage xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -150,7 +149,7 @@ jobs:
     - uses: actions/cache@v3
       id: cache
       with:
-        path: /home/runner/work/automlbenchmark/automlbenchmark/venv/lib/python3.9/site-packages
+        path: /home/runner/work/automlbenchmark/automlbenchmark/venv
         key: pip-v3-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           pip-v3-
@@ -164,9 +163,8 @@ jobs:
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate
-        python -m pip list
-        python -m coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
-        python -m coverage xml
+        coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
+        coverage xml
       env:
         GITHUB_PAT: ${{ secrets.PUBLIC_ACCESS_GITHUB_PAT }}
     - name: Upload coverage reports to Codecov
