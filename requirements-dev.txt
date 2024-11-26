@@ -1,6 +1,7 @@
 pytest
 pytest-mock
 pip-tools
+coverage
 
 types-psutil
 types-xmltodict
