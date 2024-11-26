@@ -8,5 +8,7 @@ pandas-stubs
 boto3-stubs
 mypy
 
+pre-commit
+
 # documentation
 mkdocs-material
