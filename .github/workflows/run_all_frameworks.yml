@@ -116,8 +116,8 @@ jobs:
       - name: Run constantpredictor on openml iris
         run: |
           source venv/bin/activate
-          coverage run -m runbenchmark ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
-          coverage xml
+          python -m coverage run -m runbenchmark ${{ matrix.framework }} -t ${{ matrix.task }} -f 0 -e
+          python -m coverage xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -160,14 +160,13 @@ jobs:
         source venv/bin/activate
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
-        python -m pip install coverage
         python -m pip install "coverage[toml]"
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate
         python -m pip list
-        coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
-        coverage xml
+        python -m coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
+        python -m coverage xml
       env:
         GITHUB_PAT: ${{ secrets.PUBLIC_ACCESS_GITHUB_PAT }}
     - name: Upload coverage reports to Codecov

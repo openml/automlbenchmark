@@ -33,8 +33,8 @@ jobs:
         run: |
           source venv/bin/activate
           python -m pip list
-          coverage run -m pytest -vv -m "not stress and not openml_upload"
-          coverage xml
+          python -m coverage run -m pytest -vv -m "not stress and not openml_upload"
+          python -m coverage xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
