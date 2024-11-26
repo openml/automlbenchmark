@@ -1,6 +1,14 @@
+from pathlib import Path
+from typing import Generator
+
 import pytest
 from amlb import Resources
 from amlb.utils import Namespace
+
+
+@pytest.fixture(autouse=True)
+def tmp_output_directory(tmp_path: Path) -> Generator[Path, None, None]:
+    yield tmp_path
 
 
 @pytest.fixture
@@ -22,7 +30,7 @@ def simple_resource():
                 root_module="frameworks",
                 definition_file=[],
                 allow_duplicates=False,
-                tags=[]
-            )
+                tags=[],
+            ),
         )
     )
