@@ -1,6 +1,7 @@
 pytest
 pytest-mock
 pip-tools
+coverage
 coverage[toml]
 
 types-psutil
