@@ -111,7 +111,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install coverage
-          python -m pip install tomli
+          python -m pip install "coverage[toml]"
           python -m pip show openml
       - name: Run constantpredictor on openml iris
         run: |
@@ -161,7 +161,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         python -m pip install coverage
-        python -m pip install tomli
+        python -m pip install "coverage[toml]"
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate
