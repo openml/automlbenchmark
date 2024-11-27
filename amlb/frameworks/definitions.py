@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 import copy
 import itertools
 import logging
 import os
-from typing import List, Optional, Union
+from dataclasses import dataclass, field
+from typing import List, Optional, Union, TYPE_CHECKING
 
 from amlb.utils import Namespace, config_load, str_sanitize
+
+if TYPE_CHECKING:
+    from amlb import Resources
 
 log = logging.getLogger(__name__)
 
@@ -233,3 +239,45 @@ def _remove_frameworks_with_unknown_parent(frameworks: Namespace):
             "Removing framework %s as parent %s doesn't exist.", framework, parent
         )
         del frameworks[framework]
+
+
+@dataclass
+class Image:
+    author: str
+    image: str
+    tag: str
+
+
+@dataclass
+class Framework:
+    name: str
+    abstract: bool
+    module: str
+    version: str
+    # Image
+    image: Image
+    # Setup
+    _setup_cmd: str | None
+    setup_cmd: str | None
+    setup_script: str | None
+    setup_env: dict = field(default_factory=dict)
+    setup_args: list[str] = field(default_factory=list)
+    # more optionals
+    params: dict = field(default_factory=dict)
+    refs: list = field(default_factory=list)
+    description: str | None = None
+    project: str | None = None
+
+    def __post_init__(self):
+        if isinstance(self.image, dict):
+            self.image = Image(**self.image)
+
+
+def load_framework_definition(
+    framework_name: str, configuration: "Resources"
+) -> Framework:
+    tag = None
+    if ":" in framework_name:
+        framework_name, tag = framework_name.split(":", 1)
+    definition_ns, name = configuration.framework_definition(framework_name, tag)
+    return Framework(**Namespace.dict(definition_ns))
