@@ -521,13 +521,11 @@ class TaskResult:
                 predictors_set = set(range(len(predictors)))
 
                 def validate_row(row) -> bool:
-                    breakpoint()
                     return row[:-2].astype(float).values.argmax() == row[-2]
             else:
                 predictors_set = set(predictors)
 
                 def validate_row(row) -> bool:
-                    breakpoint()
                     return row[:-2].astype(float).idxmax() == row[-2]
 
             truth_set = set(truth.unique())
