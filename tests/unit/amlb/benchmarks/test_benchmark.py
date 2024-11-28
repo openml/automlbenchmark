@@ -1,37 +1,10 @@
-from amlb import Benchmark, SetupMode, resources
-import os
+import pytest
 
-from amlb.defaults import default_dirs
-from amlb.utils import config_load
-from amlb.utils import Namespace as ns
-from tests.conftest import tmp_output_directory
+from amlb import Benchmark, SetupMode, resources, DockerBenchmark, SingularityBenchmark
+from amlb.utils import Namespace
 
 
-def test_benchmark(tmp_path) -> None:
-    config_default = config_load(
-        os.path.join(default_dirs.root_dir, "resources", "config.yaml")
-    )
-    config_default_dirs = default_dirs
-    # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
-    config_user = ns()
-    # config listing properties set by command line
-    config_args = ns.parse(
-        {"results.global_save": False},
-        output_dir=str(tmp_output_directory),
-        script=os.path.basename(__file__),
-        run_mode="local",
-        parallel_jobs=1,
-        sid="pytest.session",
-        exit_on_error=True,
-        test_server=False,
-        tag=None,
-        command="pytest invocation",
-    )
-    config_args = ns({k: v for k, v in config_args if v is not None})
-    # merging all configuration files and saving to the global variable
-    resources.from_configs(
-        config_default, config_default_dirs, config_user, config_args
-    )
+def test_benchmark(load_default_resources) -> None:
     benchmark = Benchmark(
         framework_name="constantpredictor",
         benchmark_name="test",
@@ -42,3 +15,97 @@ def test_benchmark(tmp_path) -> None:
     results = benchmark.run()
     assert len(results) == 6
     assert not results["result"].isna().any()
+
+
+@pytest.mark.parametrize(
+    ("framework_name", "tag", "expected"),
+    [
+        ("constantpredictor", "latest", "automlbenchmark/constantpredictor:stable"),
+        ("flaml", "2023Q2", "automlbenchmark/flaml:1.2.4"),
+        ("autosklearn", "stable", "automlbenchmark/autosklearn:stable"),
+    ],
+)
+def test_docker_image_name(
+    framework_name, tag, expected, load_default_resources
+) -> None:
+    framework_def, _ = resources.get().framework_definition(
+        framework_name,
+        tag=tag,
+    )
+    # The docker image name is based entirely on configuration (i.e. configured branch, not checked out branch).
+    # If there is a different branch checked out locally and you run the benchmark,
+    # you will get a prompt to verify you want to build anyway
+    result = DockerBenchmark.image_name(
+        framework_def,
+    )
+    assert result == expected
+
+
+@pytest.mark.parametrize("branch", ["master", "foo"])
+def test_docker_image_name_uses_branch(branch, mocker, load_default_resources) -> None:
+    mocker.patch(
+        "amlb.runners.container.rget",
+        return_value=Namespace(project_info=Namespace(branch=branch)),
+    )
+    framework_def, _ = resources.get().framework_definition("constantpredictor")
+    result = DockerBenchmark.image_name(framework_def)
+    assert result == f"automlbenchmark/constantpredictor:stable-{branch}"
+
+
+@pytest.mark.parametrize("label", [None, "master", "foo"])
+def test_docker_image_name_uses_label(label, mocker, load_default_resources) -> None:
+    branch = "bar-branch"
+    mocker.patch(
+        "amlb.runners.container.rget",
+        return_value=Namespace(project_info=Namespace(branch=branch)),
+    )
+
+    framework_def, _ = resources.get().framework_definition("constantpredictor")
+    result = DockerBenchmark.image_name(framework_def, label=label)
+
+    used_label = label or branch
+    assert result == f"automlbenchmark/constantpredictor:stable-{used_label}"
+
+
+@pytest.mark.parametrize(
+    ("framework_name", "tag", "expected"),
+    [
+        ("constantpredictor", "latest", "constantpredictor_stable"),
+        ("flaml", "2023Q2", "flaml_1.2.4"),
+        ("autosklearn", "stable", "autosklearn_stable"),
+    ],
+)
+def test_singularity_image_name(
+    framework_name, tag, expected, load_default_resources
+) -> None:
+    framework_def, _ = resources.get().framework_definition(
+        framework_name,
+        tag=tag,
+    )
+    result = SingularityBenchmark.image_name(
+        framework_def,
+        as_docker_image=False,
+    )
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    ("framework_name", "tag", "expected"),
+    [
+        ("constantpredictor", "latest", "automlbenchmark/constantpredictor:stable"),
+        ("flaml", "2023Q2", "automlbenchmark/flaml:1.2.4"),
+        ("autosklearn", "stable", "automlbenchmark/autosklearn:stable"),
+    ],
+)
+def test_singularity_image_name_as_docker(
+    framework_name, tag, expected, load_default_resources
+) -> None:
+    framework_def, _ = resources.get().framework_definition(
+        framework_name,
+        tag=tag,
+    )
+    result = SingularityBenchmark.image_name(
+        framework_def,
+        as_docker_image=True,
+    )
+    assert result == expected

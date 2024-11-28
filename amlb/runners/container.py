@@ -30,6 +30,7 @@ class ContainerBenchmark(Benchmark):
 
     @classmethod
     def image_name(cls, framework_def, label=None, **kwargs):
+        """Determines the image name based on configuration data."""
         if label is None:
             label = rget().project_info.branch
 

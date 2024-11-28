@@ -25,7 +25,7 @@ class SingularityBenchmark(ContainerBenchmark):
     """
 
     @classmethod
-    def image_name(cls, framework_def, label=None, as_docker_image=False, **kwargs):
+    def image_name(cls, framework_def, label=None, as_docker_image=False):
         """
         We prefer to pull from docker, so we have to mind the docker tag
         When downloading from Docker, the colon is changed to underscore
