@@ -291,3 +291,14 @@ class TaskConstraint:
     cores: int
     min_vol_size_mb: int | None = None
     ec2_volume_type: str | None = None
+
+
+@dataclass
+class Task(TaskConstraint):
+    dataset: Namespace | None = None  # TODO: Specify file dataset description
+    enabled: bool = True
+    description: str = ""
+    openml_task_id: int | None = None
+    metric: str | list[str] | None = None
+    # Specific to time series
+    quantile_levels: list[float] | None = None
