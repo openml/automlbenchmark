@@ -209,13 +209,18 @@ class Resources:
         return constraints_lookup
 
     def benchmark_definition(self, name: str, defaults: TaskConstraint | None = None):
+        return self._benchmark_definition(name, self.config, defaults)
+
+    def _benchmark_definition(
+        self, name: str, config_: Namespace, defaults: TaskConstraint | None = None
+    ):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
         file_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
-            name, self.config.benchmarks.definition_dir
+            name, config_.benchmarks.definition_dir
         )
         if defaults is not None:
             defaults = Namespace(**dataclasses.asdict(defaults))
@@ -224,15 +229,16 @@ class Resources:
         )
         for task in tasks:
             task |= defaults  # add missing keys from hard defaults + defaults
-            self._validate_task(task)
+            Resources._validate_task(task, config_)
 
-        self._validate_task(defaults, lenient=True)
+        Resources._validate_task(defaults, config_, lenient=True)
         defaults.enabled = False
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_path
 
-    def _validate_task(self, task, lenient=False):
+    @staticmethod
+    def _validate_task(task: Namespace, config_: Namespace, lenient: bool = False):
         missing = []
         for conf in ["name"]:
             if task[conf] is None:
@@ -253,12 +259,15 @@ class Resources:
             "quantile_levels",
         ]:
             if task[conf] is None:
-                task[conf] = self.config.benchmarks.defaults[conf]
+                task[conf] = config_.benchmarks.defaults[conf]
                 log.debug(
                     "Config `{config}` not set for task {name}, using default `{value}`.".format(
                         config=conf, name=task.name, value=task[conf]
                     )
                 )
+
+        if task["metric"] is None:
+            task["metric"] = None
 
         conf = "id"
         if task[conf] is None:
@@ -287,14 +296,10 @@ class Resources:
                     "but task definition is {task}".format(task=str(task))
                 )
 
-        conf = "metric"
-        if task[conf] is None:
-            task[conf] = None
-
         conf = "ec2_instance_type"
         if task[conf] is None:
-            i_series = self.config.aws.ec2.instance_type.series
-            i_map = self.config.aws.ec2.instance_type.map
+            i_series = config_.aws.ec2.instance_type.series
+            i_map = config_.aws.ec2.instance_type.map
             if str(task.cores) in i_map:
                 i_size = i_map[str(task.cores)]
             elif task.cores > 0:
@@ -315,7 +320,7 @@ class Resources:
 
         conf = "ec2_volume_type"
         if task[conf] is None:
-            task[conf] = self.config.aws.ec2.volume_type
+            task[conf] = config_.aws.ec2.volume_type
             log.debug(
                 "Config `{config}` not set for task {name}, using default `{value}`.".format(
                     config=conf, name=task.name, value=task[conf]
