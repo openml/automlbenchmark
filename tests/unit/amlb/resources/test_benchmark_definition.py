@@ -39,7 +39,7 @@ def test_validate_task_strict_requires_name():
             config_=Namespace(),
             lenient=False,
         )
-    assert "mandatory properties as missing" in excinfo.value.args[0]
+    assert "mandatory but missing" in excinfo.value.args[0]
 
 
 def test_validate_task_strict_requires_id(amlb_dummy_configuration: Namespace):
