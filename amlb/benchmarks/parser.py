@@ -26,8 +26,8 @@ def benchmark_load(
             name, benchmark_definition_dirs
         )
 
-    hard_defaults = next((task for task in tasks if task.name == "__defaults__"), None)
-    tasks = [task for task in tasks if task is not hard_defaults]
+    file_defaults = next((task for task in tasks if task.name == "__defaults__"), None)
+    tasks = [task for task in tasks if task is not file_defaults]
     for t in tasks:
         t.name = str_sanitize(t.name)
-    return hard_defaults, tasks, benchmark_path, str_sanitize(benchmark_name)
+    return file_defaults, tasks, benchmark_path, str_sanitize(benchmark_name)

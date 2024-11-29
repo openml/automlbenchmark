@@ -214,13 +214,13 @@ class Resources:
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
-        hard_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
+        file_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
             name, self.config.benchmarks.definition_dir
         )
         if defaults is not None:
             defaults = Namespace(**dataclasses.asdict(defaults))
         defaults = Namespace.merge(
-            defaults, hard_defaults, Namespace(name="__defaults__")
+            defaults, file_defaults, Namespace(name="__defaults__")
         )
         for task in tasks:
             task |= defaults  # add missing keys from hard defaults + defaults
