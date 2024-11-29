@@ -244,6 +244,15 @@ class Resources:
                 f"`name` is mandatory but missing in task definition {task}."
             )
 
+        if task["id"] is None:
+            task["id"] = Resources.generate_task_identifier(task)
+        if not lenient and task["id"] is None:
+            raise ValueError(
+                "task definition must contain an ID or one property "
+                "among ['openml_task_id', 'dataset'] to create an ID, "
+                "but task definition is {task}".format(task=str(task))
+            )
+
         for conf in [
             "max_runtime_seconds",
             "cores",
@@ -259,37 +268,8 @@ class Resources:
                         config=conf, name=task.name, value=task[conf]
                     )
                 )
-
         if task["metric"] is None:
             task["metric"] = None
-
-        conf = "id"
-        if task[conf] is None:
-            task[conf] = (
-                "openml.org/t/{}".format(task.openml_task_id)
-                if task["openml_task_id"] is not None
-                else "openml.org/d/{}".format(task.openml_dataset_id)
-                if task["openml_dataset_id"] is not None
-                else (
-                    (
-                        task.dataset["id"]
-                        if isinstance(task.dataset, (dict, Namespace))
-                        else task.dataset
-                        if isinstance(task.dataset, str)
-                        else None
-                    )
-                    or task.name
-                )
-                if task["dataset"] is not None
-                else None
-            )
-            if not lenient and task[conf] is None:
-                raise ValueError(
-                    "task definition must contain an ID or one property "
-                    "among ['openml_task_id', 'dataset'] to create an ID, "
-                    "but task definition is {task}".format(task=str(task))
-                )
-
         conf = "ec2_instance_type"
         if task[conf] is None:
             i_series = config_.aws.ec2.instance_type.series
@@ -320,6 +300,20 @@ class Resources:
                     config=conf, name=task.name, value=task[conf]
                 )
             )
+
+    @staticmethod
+    def generate_task_identifier(task: Namespace) -> str | None:
+        if task["openml_task_id"] is not None:
+            return f"openml.org/t/{task.openml_task_id}"
+        if task["openml_dataset_id"] is not None:
+            return f"openml.org/d/{task.openml_dataset_id}"
+        if task["dataset"] is None:
+            return None
+        if isinstance(task.dataset, (dict, Namespace)):
+            return task.dataset["id"]
+        if isinstance(task.dataset, str):
+            return task.dataset
+        return task.name
 
 
 __INSTANCE__: Resources | None = None
