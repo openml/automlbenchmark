@@ -6,6 +6,7 @@ as well as handy methods to access other resources like *automl frameworks* and 
 from __future__ import annotations
 
 import copy
+import dataclasses
 import logging
 import os
 import random
@@ -14,6 +15,7 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
+from .frameworks.definitions import TaskConstraint
 from .utils import (
     Namespace,
     lazy_property,
@@ -172,7 +174,7 @@ class Resources:
         return load_framework_definitions(frameworks_file, self.config)
 
     @memoize
-    def constraint_definition(self, name):
+    def constraint_definition(self, name: str) -> TaskConstraint:
         """
         :param name: name of the benchmark constraint definition as defined in the constraints file
         :return: a Namespace object with the constraint config (folds, cores, max_runtime_seconds, ...) for the current benchmamk run.
@@ -184,7 +186,7 @@ class Resources:
                     name, self.config.benchmarks.constraints_file
                 )
             )
-        return constraint, constraint.name
+        return TaskConstraint(**Namespace.dict(constraint))
 
     @lazy_property
     def _constraints(self):
@@ -206,8 +208,7 @@ class Resources:
             constraints_lookup[name.lower()] = c
         return constraints_lookup
 
-    # @memoize
-    def benchmark_definition(self, name, defaults=None):
+    def benchmark_definition(self, name: str, defaults: TaskConstraint | None = None):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
         :param defaults: defaults used as a base config for each task in the benchmark definition
@@ -216,7 +217,8 @@ class Resources:
         hard_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
             name, self.config.benchmarks.definition_dir
         )
-
+        if defaults is not None:
+            defaults = Namespace(**dataclasses.asdict(defaults))
         defaults = Namespace.merge(
             defaults, hard_defaults, Namespace(name="__defaults__")
         )
