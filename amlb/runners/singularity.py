@@ -6,12 +6,15 @@ providing the same parameters and features allowing to import config and export 
 The image is pulled form an existing docker, yet executed in singularity framework
 """
 
+from __future__ import annotations
+
 import logging
 import os
-import re
+from typing import cast
 
 from ..benchmark import _setup_dir_
-from ..resources import config as rconfig, get as rget
+from ..frameworks.definitions import Framework
+from ..resources import config as rconfig
 from ..utils import dir_of, run_cmd, touch
 from .container import ContainerBenchmark
 
@@ -23,27 +26,6 @@ class SingularityBenchmark(ContainerBenchmark):
     """SingularityBenchmark
     an extension of ContainerBenchmark to run benchmarks inside Singularity.
     """
-
-    @classmethod
-    def image_name(cls, framework_def, label=None, as_docker_image=False):
-        """
-        We prefer to pull from docker, so we have to mind the docker tag
-        When downloading from Docker, the colon is changed to underscore
-        """
-        if label is None:
-            label = rget().project_info.branch
-        di = framework_def.image
-
-        # If we want to pull from docker, the separator is a colon for tag
-        separator = "_" if not as_docker_image else ":"
-        # Also, no need for author in image name
-        author = "" if not as_docker_image else f"{di.author}/"
-        image = di.image if di.image else framework_def.name.lower()
-        tags = [di.tag if di.tag else framework_def.version.lower()]
-        if label not in rconfig().container.ignore_labels:
-            tags.append(label)
-        tag = re.sub(r"([^\w.-])", ".", "-".join(tags))
-        return f"{author}{image}{separator}{tag}"
 
     def __init__(self, framework_name, benchmark_name, constraint_name):
         """
@@ -65,19 +47,21 @@ class SingularityBenchmark(ContainerBenchmark):
             else ""
         )
 
-    def _container_image_name(self, label=None, as_docker_image=False):
+    def _container_image_name(
+        self, label: str | None = None, as_docker_image: bool = False
+    ) -> str:
         """
         Singularity Images would be located on the framework directory
         """
         image_name = self.image_name(
-            self.framework_def, label=label, as_docker_image=as_docker_image
-        )
-
-        # Make sure image is in the framework directory
+            cast(Framework, self.framework_def), label=label
+        )  # Framework only none in AWSBench
         if as_docker_image:
             return image_name
-        else:
-            return os.path.join(self._framework_dir, _setup_dir_, image_name + ".sif")
+
+        author, image_name = image_name.split("/", maxsplit=1)
+        image_name = image_name.replace(":", "_")
+        return os.path.join(self._framework_dir, _setup_dir_, image_name + ".sif")
 
     @property
     def _script(self):

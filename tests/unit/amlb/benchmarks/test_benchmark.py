@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from amlb import Benchmark, SetupMode, resources, DockerBenchmark, SingularityBenchmark
@@ -78,15 +80,16 @@ def test_docker_image_name_uses_label(label, mocker, load_default_resources) -> 
 def test_singularity_image_name(
     framework_name, tag, expected, load_default_resources
 ) -> None:
-    framework_def, _ = resources.get().framework_definition(
-        framework_name,
-        tag=tag,
+    benchmark = SingularityBenchmark(
+        framework_name=f"{framework_name}:{tag}",
+        benchmark_name="test",
+        constraint_name="test",
     )
-    result = SingularityBenchmark.image_name(
-        framework_def,
+    image_path = benchmark._container_image_name(
         as_docker_image=False,
     )
-    assert result == expected
+    image_name = Path(image_path).stem
+    assert image_name == expected
 
 
 @pytest.mark.parametrize(
@@ -100,12 +103,12 @@ def test_singularity_image_name(
 def test_singularity_image_name_as_docker(
     framework_name, tag, expected, load_default_resources
 ) -> None:
-    framework_def, _ = resources.get().framework_definition(
-        framework_name,
-        tag=tag,
+    benchmark = SingularityBenchmark(
+        framework_name=f"{framework_name}:{tag}",
+        benchmark_name="test",
+        constraint_name="test",
     )
-    result = SingularityBenchmark.image_name(
-        framework_def,
+    result = benchmark._container_image_name(
         as_docker_image=True,
     )
     assert result == expected
