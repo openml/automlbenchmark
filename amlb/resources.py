@@ -239,15 +239,9 @@ class Resources:
 
     @staticmethod
     def _validate_task(task: Namespace, config_: Namespace, lenient: bool = False):
-        missing = []
-        for conf in ["name"]:
-            if task[conf] is None:
-                missing.append(conf)
-        if not lenient and len(missing) > 0:
+        if not lenient and task["name"] is None:
             raise ValueError(
-                "{missing} mandatory properties as missing in task definition {taskdef}.".format(
-                    missing=missing, taskdef=task
-                )
+                f"`name` is mandatory but missing in task definition {task}."
             )
 
         for conf in [
