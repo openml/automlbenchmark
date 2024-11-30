@@ -1,5 +1,3 @@
-from functools import partial
-
 import pytest
 
 from amlb import Resources
@@ -34,20 +32,13 @@ def amlb_dummy_configuration() -> Namespace:
 
 def test_validate_task_strict_requires_name():
     with pytest.raises(ValueError) as excinfo:
-        Resources._validate_task(
-            task=Namespace(),
-            config_=Namespace(),
-            lenient=False,
-        )
+        Resources._validate_task(task=Namespace())
     assert "mandatory but missing" in excinfo.value.args[0]
 
 
 def test_validate_task_strict_requires_id(amlb_dummy_configuration: Namespace):
-    strict_validate = partial(
-        Resources._validate_task, config_=amlb_dummy_configuration, lenient=False
-    )
     with pytest.raises(ValueError) as excinfo:
-        strict_validate(task=Namespace(name="foo"))
+        Resources._validate_task(task=Namespace(name="foo"))
     assert "must contain an ID or one property" in excinfo.value.args[0]
 
 
@@ -61,17 +52,17 @@ def test_validate_task_strict_requires_id(amlb_dummy_configuration: Namespace):
         (Namespace(dataset=Namespace(id="bar")), "bar"),
     ],
 )
-def test_validate_task_id_formatting(
+def test_add_task_defaults_formatting(
     properties: Namespace, expected: str, amlb_dummy_configuration: Namespace
 ):
     task = Namespace(name="foo") | properties
-    Resources._validate_task(task=task, config_=amlb_dummy_configuration)
+    Resources._add_task_defaults(task=task, config_=amlb_dummy_configuration)
     assert task["id"] == expected
 
 
-def test_validate_task_adds_benchmark_defaults(amlb_dummy_configuration: Namespace):
-    task = Namespace(name=None)
-    Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
+def test_add_task_defaults_sets_benchmark_defaults(amlb_dummy_configuration: Namespace):
+    task = Namespace()
+    Resources._add_task_defaults(task, amlb_dummy_configuration)
 
     config = Namespace.dict(amlb_dummy_configuration, deep=True)
     for setting, default in config["benchmarks"]["defaults"].items():
@@ -79,9 +70,9 @@ def test_validate_task_adds_benchmark_defaults(amlb_dummy_configuration: Namespa
     assert task["ec2_volume_type"] == amlb_dummy_configuration.aws.ec2.volume_type
 
 
-def test_validate_task_does_not_overwrite(amlb_dummy_configuration: Namespace):
-    task = Namespace(name=None, cores=42)
-    Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
+def test_add_task_defaults_does_not_overwrite(amlb_dummy_configuration: Namespace):
+    task = Namespace(cores=42)
+    Resources._add_task_defaults(task, amlb_dummy_configuration)
 
     config = Namespace.dict(amlb_dummy_configuration, deep=True)
     assert task.cores == 42
@@ -90,31 +81,31 @@ def test_validate_task_does_not_overwrite(amlb_dummy_configuration: Namespace):
             assert task[setting] == default
 
 
-def test_validate_task_looks_up_instance_type(amlb_dummy_configuration: Namespace):
+def test_add_task_defaults_looks_up_instance_type(amlb_dummy_configuration: Namespace):
     instance_type = amlb_dummy_configuration.aws.ec2.instance_type
     reverse_size_map = {v: k for k, v in Namespace.dict(instance_type.map).items()}
     n_cores_for_small = int(reverse_size_map["small"])
 
     task = Namespace(name="foo", cores=n_cores_for_small)
-    Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
+    Resources._add_task_defaults(task, amlb_dummy_configuration)
     assert (
         task["ec2_instance_type"] == "m5.small"
     ), "Should resolve to the instance type with the exact amount of cores"
 
     task = Namespace(name="foo", cores=n_cores_for_small - 1)
-    Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
+    Resources._add_task_defaults(task, amlb_dummy_configuration)
     assert (
         task["ec2_instance_type"] == "m5.small"
     ), "If exact amount of cores are not available, should resolve to next biggest"
 
     task = Namespace(name="foo", cores=n_cores_for_small + 1)
-    Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
+    Resources._add_task_defaults(task, amlb_dummy_configuration)
     assert (
         task["ec2_instance_type"] == "m5.large"
     ), "If bigger than largest in map, should revert to default"
 
     task = Namespace(name="foo", ec2_instance_type="bar")
-    Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
+    Resources._add_task_defaults(task, amlb_dummy_configuration)
     assert (
         task["ec2_instance_type"] == "bar"
     ), "Should not overwrite explicit configuration"
