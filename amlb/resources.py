@@ -229,30 +229,19 @@ class Resources:
         )
         for task in tasks:
             task |= defaults  # add missing keys from hard defaults + defaults
-            Resources._validate_task(task, config_)
+            Resources._validate_task(task)
+            Resources._add_task_defaults(task, config_)
 
-        Resources._validate_task(defaults, config_, lenient=True)
+        Resources._add_task_defaults(defaults, config_)
         defaults.enabled = False
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_path
 
     @staticmethod
-    def _validate_task(task: Namespace, config_: Namespace, lenient: bool = False):
-        if not lenient and task["name"] is None:
-            raise ValueError(
-                f"`name` is mandatory but missing in task definition {task}."
-            )
-
+    def _add_task_defaults(task: Namespace, config_: Namespace):
         if task["id"] is None:
             task["id"] = Resources.generate_task_identifier(task)
-        if not lenient and task["id"] is None:
-            raise ValueError(
-                "task definition must contain an ID or one property "
-                "among ['openml_task_id', 'dataset'] to create an ID, "
-                "but task definition is {task}".format(task=str(task))
-            )
-
         for conf in [
             "max_runtime_seconds",
             "cores",
@@ -265,41 +254,65 @@ class Resources:
                 task[conf] = config_.benchmarks.defaults[conf]
                 log.debug(
                     "Config `{config}` not set for task {name}, using default `{value}`.".format(
-                        config=conf, name=task.name, value=task[conf]
+                        config=conf, name=task["name"], value=task[conf]
                     )
                 )
+
         if task["metric"] is None:
             task["metric"] = None
-        conf = "ec2_instance_type"
-        if task[conf] is None:
-            i_series = config_.aws.ec2.instance_type.series
-            i_map = config_.aws.ec2.instance_type.map
-            if str(task.cores) in i_map:
-                i_size = i_map[str(task.cores)]
-            elif task.cores > 0:
-                supported_cores = list(
-                    map(int, Namespace.dict(i_map).keys() - {"default"})
-                )
-                supported_cores.sort()
-                cores = next((c for c in supported_cores if c >= task.cores), "default")
-                i_size = i_map[str(cores)]
-            else:
-                i_size = i_map.default
-            task[conf] = ".".join([i_series, i_size])
+
+
+        if task["ec2_instance_type"] is None:
+            task["ec2_instance_type"] = Resources.lookup_ec2_instance_type(
+                config_, task.cores
+            )
             log.debug(
                 "Config `{config}` not set for task {name}, using default selection `{value}`.".format(
-                    config=conf, name=task.name, value=task[conf]
+                    config=conf, name=task["name"], value=task["ec2_instance_type"]
                 )
             )
 
-        conf = "ec2_volume_type"
-        if task[conf] is None:
-            task[conf] = config_.aws.ec2.volume_type
+        if task["ec2_volume_type"] is None:
+            task["ec2_volume_type"] = config_.aws.ec2.volume_type
             log.debug(
                 "Config `{config}` not set for task {name}, using default `{value}`.".format(
-                    config=conf, name=task.name, value=task[conf]
+                    config=conf, name=task["name"], value=task["ec2_volume_type"]
                 )
             )
+
+    @staticmethod
+    def _validate_task(task: Namespace) -> None:
+        """Raises ValueError if task does not have a name and a way to generate an identifier."""
+        if task["name"] is None:
+            raise ValueError(
+                f"`name` is mandatory but missing in task definition {task}."
+            )
+        task_id = Namespace.get(task, "id", Resources.generate_task_identifier(task))
+        if task_id is None:
+            raise ValueError(
+                "task definition must contain an ID or one property "
+                "among ['openml_task_id', 'dataset'] to create an ID, "
+                "but task definition is {task}".format(task=str(task))
+            )
+
+    @staticmethod
+    def lookup_ec2_instance_type(config_: Namespace, cores: int) -> str:
+        i_series = config_.aws.ec2.instance_type.series
+        i_map = config_.aws.ec2.instance_type.map
+        i_size = Resources.lookup_suitable_instance_size(i_map, cores)
+        return f"{i_series}.{i_size}"
+
+    @staticmethod
+    def lookup_suitable_instance_size(cores_to_size: Namespace, cores: int) -> str:
+        if str(cores) in cores_to_size:
+            return cores_to_size[str(cores)]
+
+        supported_cores = list(map(int, set(dir(cores_to_size)) - {"default"}))
+        if cores <= 0 or cores > max(supported_cores):
+            return cores_to_size.default
+
+        cores = next((c for c in sorted(supported_cores) if c >= cores), "default")
+        return cores_to_size[str(cores)]
 
     @staticmethod
     def generate_task_identifier(task: Namespace) -> str | None:
