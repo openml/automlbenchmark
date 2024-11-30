@@ -29,7 +29,7 @@ def load_default_resources(tmp_path):
     )
     config_args = Namespace({k: v for k, v in config_args if v is not None})
     # merging all configuration files and saving to the global variable
-    resources.from_configs(
+    return resources.from_configs(
         config_default, config_default_dirs, config_user, config_args
     )
 

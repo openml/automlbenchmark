@@ -1,6 +1,7 @@
 import pytest
 
-from amlb import Resources
+from amlb import Resources, Benchmark
+from amlb.benchmark import BenchmarkTask
 from amlb.utils import Namespace
 
 
@@ -109,3 +110,19 @@ def test_add_task_defaults_looks_up_instance_type(amlb_dummy_configuration: Name
     assert (
         task["ec2_instance_type"] == "bar"
     ), "Should not overwrite explicit configuration"
+
+
+def test_benchmark_task(load_default_resources: Resources):
+    benchmark = Benchmark(
+        framework_name="constantpredictor",
+        benchmark_name="test",
+        constraint_name="test",
+        job_history=None,
+    )
+    task = Namespace(name="foo")
+    Resources._add_task_defaults(task, load_default_resources.config)
+    benchmark_task = BenchmarkTask(
+        benchmark=benchmark,
+        task_def=task,
+        fold=0,
+    )
