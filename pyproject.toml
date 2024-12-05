@@ -1,3 +1,7 @@
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
 [tool.mypy]
 files=[
     "amlb/**/*.py"
