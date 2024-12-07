@@ -13,36 +13,16 @@ log = logging.getLogger(__name__)
 def run(dataset, config):
     log.info("\n**** FEDOT ****\n")
 
-    is_classification = config.type == "classification"
-    # Mapping of benchmark metrics to FEDOT metrics
-    metrics_mapping = dict(
-        acc="acc",
-        auc="roc_auc",
-        f1="f1",
-        logloss="logloss",
-        mae="mae",
-        mse="mse",
-        msle="msle",
-        r2="r2",
-        rmse="rmse",
-    )
-    scoring_metric = metrics_mapping.get(config.metric, None)
-
-    if scoring_metric is None:
-        log.warning("Performance metric %s not supported.", config.metric)
+    is_classification = config.type == 'classification'
+    scoring_metric = get_fedot_metrics(config)
 
     training_params = {"preset": "best_quality", "n_jobs": config.cores}
-    training_params |= {
-        k: v for k, v in config.framework_params.items() if not k.startswith("_")
-    }
+    training_params.update({k: v for k, v in config.framework_params.items() if not k.startswith('_')})
     n_jobs = training_params["n_jobs"]
 
-    log.info(
-        "Running FEDOT with a maximum time of %ss on %s cores, optimizing %s.",
-        config.max_runtime_seconds,
-        n_jobs,
-        scoring_metric,
-    )
+    log.info(f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
+             optimizing {scoring_metric}")
+
     runtime_min = config.max_runtime_seconds / 60
 
     fedot = Fedot(
@@ -78,6 +58,26 @@ def run(dataset, config):
         training_duration=training.duration,
         predict_duration=predict.duration,
     )
+
+
+def get_fedot_metrics(config):
+    metrics_mapping = dict(
+        acc='accuracy',
+        auc='roc_auc',
+        f1='f1',
+        logloss='neg_log_loss',
+        mae='mae',
+        mse='mse',
+        msle='msle',
+        r2='r2',
+        rmse='rmse',
+    )
+    scoring_metric = metrics_mapping.get(config.metric, None)
+
+    if scoring_metric is None:
+        log.warning(f"Performance metric {config.metric} not supported.")
+
+    return scoring_metric
 
 
 def save_artifacts(automl, config):
