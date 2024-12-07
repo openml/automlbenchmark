@@ -29,11 +29,13 @@ def run(dataset, config):
 
     is_classification = config.type == "classification"
 
-    default = lambda: 0
+    def default():
+        return 0
+
     metrics_to_loss_mapping = dict(
         acc=(default, False),  # lambda y, pred: 1.0 - accuracy_score(y, pred)
-        auc=(lambda y, pred: 1.0 - roc_auc_score(y, pred), False),
-        f1=(lambda y, pred: 1.0 - f1_score(y, pred), False),
+        auc=(lambda y, pred: 1.0 - roc_auc_score(y, pred), False),  # noqa: E731
+        f1=(lambda y, pred: 1.0 - f1_score(y, pred), False),  # noqa: E731
         # logloss=(log_loss, True),
         mae=(mean_absolute_error, False),
         mse=(mean_squared_error, False),

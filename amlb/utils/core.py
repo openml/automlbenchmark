@@ -299,14 +299,14 @@ def as_list(*args):
 
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):
     return reduce(
-        lambda l, r: (
-            l.extend(r)
-            if isinstance(r, (list, tuple) if flatten_tuple else list)
-            else l.extend(r.items())
-            if flatten_dict and isinstance(r, dict)
-            else l.append(r)
+        lambda left, right: (
+            left.extend(right)
+            if isinstance(right, (list, tuple) if flatten_tuple else list)
+            else left.extend(right.items())
+            if flatten_dict and isinstance(right, dict)
+            else left.append(right)
         )
-        or l,
+        or left,
         iterable,
         [],
     )

@@ -467,7 +467,7 @@ class MultiThreadingJobRunner(JobRunner):
             for _ in range(self.parallel_jobs):
                 try:
                     q.put_nowait(JobRunner.END_Q)  # stopping workers
-                except:
+                except BaseException:
                     pass
             for thread in threads:
                 thread.join()
@@ -485,7 +485,7 @@ class MultiThreadingJobRunner(JobRunner):
             if self._exec is not None:
                 try:
                     self._exec.shutdown(wait=True)
-                except:
+                except BaseException:
                     pass
                 finally:
                     self._exec = None

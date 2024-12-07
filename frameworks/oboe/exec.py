@@ -89,11 +89,14 @@ def run(dataset, config):
     )
     aml.error_matrix = aml.error_matrix.to_numpy()
 
-    aml_models = (
-        lambda: [aml.ensemble, *aml.ensemble.base_learners]
-        if len(aml.ensemble.base_learners) > 0
-        else []
-    )
+    if len(aml.ensemble.base_learners) > 0:
+
+        def aml_models():
+            return [aml.ensemble, *aml.ensemble.base_learners]
+    else:
+
+        def aml_models():
+            return []
 
     with Timer() as training:
         try:

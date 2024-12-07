@@ -68,7 +68,7 @@ def run(dataset, config):
 
     log.info("Predicting on the test set...")
     with Timer() as predict:
-        X_test, y_test = dataset.test.X, dataset.test.y
+        X_test = dataset.test.X
         preds = automl.predict(X_test).data
 
     probabilities_labels = None

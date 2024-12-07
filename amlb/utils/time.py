@@ -103,20 +103,20 @@ def retry_after(start=0, fn=identity, max_retries=math.inf):
 def retry_policy(policy: str):
     tokens = policy.split(":", 3)
     type = tokens[0]
-    l = len(tokens)
+    n_args = len(tokens)
     if type == "constant":
-        interval = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
-        start = float(tokens[1] if l > 2 else interval)
+        interval = float(tokens[2] if n_args > 2 else tokens[1] if n_args > 1 else 60)
+        start = float(tokens[1] if n_args > 2 else interval)
         return start, (lambda _: interval)
     elif type == "linear":
-        max_delay = float(tokens[3] if l > 3 else math.inf)
-        increment = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
-        start = float(tokens[1] if l > 2 else increment)
+        max_delay = float(tokens[3] if n_args > 3 else math.inf)
+        increment = float(tokens[2] if n_args > 2 else tokens[1] if n_args > 1 else 60)
+        start = float(tokens[1] if n_args > 2 else increment)
         return start, (lambda d: min(d + increment, max_delay))
     elif type == "exponential":
-        max_delay = float(tokens[3] if l > 3 else math.inf)
-        factor = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 2)
-        start = float(tokens[1] if l > 2 else 60)
+        max_delay = float(tokens[3] if n_args > 3 else math.inf)
+        factor = float(tokens[2] if n_args > 2 else tokens[1] if n_args > 1 else 2)
+        start = float(tokens[1] if n_args > 2 else 60)
         return start, (lambda d: min(d * factor, max_delay))
     else:
         raise ValueError(

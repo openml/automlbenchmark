@@ -111,14 +111,14 @@ class SingularityBenchmark(ContainerBenchmark):
             run_cmd(
                 cmd, _capture_error_=False
             )  # console logs are written on stderr by default: not capturing allows live display
-        except:
+        except BaseException as e:
             # also want to handle KeyboardInterrupt
             # In the foreground run mode, the user has to kill the process
             # There is yet no docker kill command. User has to kill PID manually
             log.warning(
-                f"Container {inst_name} may still be running, please verify and kill it manually."
+                "Container may still be running, please verify and kill it manually."
             )
-            raise Exception
+            raise e
 
     def _image_exists(self, image):
         """Implements a method to see if the container image is available"""

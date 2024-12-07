@@ -165,4 +165,4 @@ def test__upload_results_h2o(with_oml_test_server):
 )
 def test__get_flow(with_oml_test_server):
     metadata = _load_task_data(iris_constant)
-    flow = _get_flow(metadata)
+    _get_flow(metadata)

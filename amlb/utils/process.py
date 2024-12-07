@@ -402,7 +402,7 @@ def call_in_subprocess(target, *args, **kwargs):
     except BaseException:
         try:
             kill_proc_tree(p.pid)
-        except:
+        except Exception:
             pass
         raise
 

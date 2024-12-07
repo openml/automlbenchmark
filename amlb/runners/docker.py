@@ -80,7 +80,7 @@ class DockerBenchmark(ContainerBenchmark):
             run_cmd(
                 cmd, _capture_error_=False
             )  # console logs are written on stderr by default: not capturing allows live display
-        except:  # also want to handle KeyboardInterrupt
+        except BaseException:  # also want to handle KeyboardInterrupt
             try:
                 run_cmd(f"docker kill {inst_name}")
             except Exception:

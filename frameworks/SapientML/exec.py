@@ -24,10 +24,6 @@ def run(dataset, config):
     log.info("\n**** Sapientml ****\n")
 
     is_classification = config.type == "classification"
-    is_multiclass = dataset.problem_type = "multiclass"
-    training_params = {
-        k: v for k, v in config.framework_params.items() if not k.startswith("_")
-    }
 
     train_path, test_path = dataset.train.path, dataset.test.path
     target_col = dataset.target.name
@@ -42,7 +38,6 @@ def run(dataset, config):
     target_col = re.sub("[^A-Za-z0-9_.]+", "", target_col)
 
     # y_train and y_test
-    y_train = X_train[target_col].reset_index(drop=True)
     y_test = X_test[target_col].reset_index(drop=True)
 
     # Drop target col from X_test

@@ -347,7 +347,7 @@ class Encoder(TransformerMixin):
                     self.encoded_type, copy=False
                 )
                 if self._mask_missing:
-                    res[mask] = np.NaN if self.encoded_type == float else None
+                    res[mask] = np.NaN if self.encoded_type is float else None
                 return return_value(res)
 
         if self.normalize_fn:

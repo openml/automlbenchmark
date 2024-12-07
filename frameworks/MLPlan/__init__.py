@@ -13,7 +13,6 @@ def run(dataset: Dataset, config: TaskConfig):
 
     train_path = dataset.train.path
     test_path = dataset.test.path
-    backend = config.framework_params.get("_backend")
     # ML-Plan requires the target attribute to be the last column
     if dataset.target.index != len(dataset.predictors):
         train_path = reorder_dataset(

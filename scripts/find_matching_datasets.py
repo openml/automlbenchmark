@@ -45,7 +45,7 @@ print("retrieving and comparing dids")
 def try_get_did_for_task(tid):
     try:
         return openml.tasks.get_task(tid, download_data=False).dataset_id
-    except:
+    except Exception:
         print("Failed to get task", tid)
 
 

@@ -74,10 +74,9 @@ def test_interruption_with_sig_as_signal():
 
 def test_before_interrupt_hook():
     before = Mock()
-    with Timer() as t:
-        with InterruptTimeout(timeout_secs=1, sig=None, before_interrupt=before):
-            for i in range(100):
-                time.sleep(0.1)
+    with InterruptTimeout(timeout_secs=1, sig=None, before_interrupt=before):
+        for i in range(100):
+            time.sleep(0.1)
     assert before.called
 
 

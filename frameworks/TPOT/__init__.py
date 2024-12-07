@@ -1,6 +1,6 @@
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
-from amlb.datautils import Encoder, impute_array
+from amlb.datautils import Encoder
 from amlb.utils import call_script_in_same_dir, unsparsify
 
 

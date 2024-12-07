@@ -123,8 +123,8 @@ def test_setup_script_interpolates_directory(simple_resource, alias, actual):
 def test_setup_cmd_set_to_none_if_undefined(simple_resource):
     framework = Namespace()
     _add_default_setup_cmd(framework, simple_resource.config)
-    assert framework.setup_cmd == None
-    assert framework._setup_cmd == None
+    assert framework.setup_cmd is None
+    assert framework._setup_cmd is None
 
 
 @pytest.mark.parametrize("commands", ["original", ["one", "two"]])

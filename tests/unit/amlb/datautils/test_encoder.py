@@ -44,7 +44,9 @@ def test_encoder_does_not_modify_categorical_values_by_default(
     ],
 )
 def test_encoder_can_trim_categorical_values(labels, to_encode, encoded):
-    normalize = lambda v: np.char.strip(np.asarray(v).astype(str))
+    def normalize(v):
+        return np.char.strip(np.asarray(v).astype(str))
+
     e = Encoder(normalize_fn=normalize).fit(labels)
     transformed = e.transform(to_encode)
     assert (encoded == transformed).all()
@@ -60,7 +62,9 @@ def test_encoder_can_trim_categorical_values(labels, to_encode, encoded):
 def test_encoder_can_make_categorical_values_case_insensitive(
     labels, to_encode, encoded
 ):
-    normalize = lambda v: np.char.lower(np.asarray(v).astype(str))
+    def normalize(v):
+        return np.char.lower(np.asarray(v).astype(str))
+
     e = Encoder(normalize_fn=normalize).fit(labels)
     transformed = e.transform(to_encode)
     assert (encoded == transformed).all()

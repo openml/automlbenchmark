@@ -366,20 +366,21 @@ class ArffDatasplit(FileDatasplit):
     def load_metadata(self):
         self._ensure_loaded()
         attrs = self._ds["attributes"]
+
         # arff loader types = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']
-        to_feature_type = lambda arff_type: (
-            "category"
-            if isinstance(arff_type, (list, set))
-            else "string"
-            if arff_type.lower() == "string"
-            else "int"
-            if arff_type.lower() == "integer"
-            else "float"
-            if arff_type.lower() == "real"
-            else "number"
-            if arff_type.lower() == "numeric"
-            else "object"
-        )
+        def to_feature_type(arff_type) -> str:
+            if isinstance(arff_type, (list, set)):
+                return "category"
+            if arff_type.lower() == "string":
+                return "string"
+            if arff_type.lower() == "integer":
+                return "int"
+            if arff_type.lower() == "real":
+                return "float"
+            if arff_type.lower() == "numeric":
+                return "number"
+            return "object"
+
         features = [
             Feature(i, attr[0], to_feature_type(attr[1]))
             for i, attr in enumerate(attrs)
@@ -585,21 +586,22 @@ class CsvDatasplit(FileDatasplit):
     def load_metadata(self):
         self._ensure_loaded()
         dtypes = self.dataset._dtypes
-        to_feature_type = lambda dt: (
-            "int"
-            if pat.is_integer_dtype(dt)
-            else "float"
-            if pat.is_float_dtype(dt)
-            else "number"
-            if pat.is_numeric_dtype(dt)
-            else "category"
-            if pat.is_categorical_dtype(dt)
-            else "string"
-            if pat.is_string_dtype(dt)
-            else "datetime"
-            if pat.is_datetime64_dtype(dt)
-            else "object"
-        )
+
+        def to_feature_type(dt) -> str:
+            if pat.is_integer_dtype(dt):
+                "int"
+            if pat.is_float_dtype(dt):
+                return "float"
+            if pat.is_numeric_dtype(dt):
+                return "number"
+            if pat.is_categorical_dtype(dt):
+                return "category"
+            if pat.is_string_dtype(dt):
+                return "string"
+            if pat.is_datetime64_dtype(dt):
+                return "datetime"
+            return "object"
+
         features = [
             Feature(i, col, to_feature_type(dtypes[i]))
             for i, col in enumerate(self._ds.columns)

@@ -267,19 +267,23 @@ class OpenmlDataset(Dataset):
     @lazy_property
     @profile(logger=log)
     def features(self):
-        has_missing_values = lambda f: f.number_missing_values > 0
-        is_target = lambda f: f.name == self._oml_task.target_name
-        to_feature_type = lambda dt: (
-            "number"
-            if dt == "numeric"
-            else "category"
-            if dt == "nominal"
-            else "string"
-            if dt == "string"
-            else "datetime"
-            if dt == "date"
-            else "object"
-        )
+        def has_missing_values(f) -> bool:
+            return f.number_missing_values > 0
+
+        def is_target(f) -> bool:
+            return f.name == self._oml_task.target_name
+
+        def to_feature_type(dt):
+            if dt == "numeric":
+                return "number"
+            if dt == "nominal":
+                return "category"
+            if dt == "string":
+                return "string"
+            if dt == "date":
+                return "datetime"
+            return "object"
+
         return [
             Feature(
                 new_idx,
