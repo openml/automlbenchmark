@@ -6,7 +6,6 @@ import amlb.logger
 
 
 import amlb
-from amlb import log
 from amlb.utils import Namespace as ns, config_load
 
 

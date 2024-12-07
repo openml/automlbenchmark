@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import tempfile
-from typing import List, Union
+from typing import List
 
 import arff
 import numpy as np
@@ -18,7 +18,6 @@ from ..resources import config as rconfig
 from ..utils import Namespace as ns, as_list, lazy_property, list_all_files, memoize, path_from_split, profile, repr_def, split_path
 
 from .fileutils import is_archive, is_valid_url, unarchive_file, get_file_handler
-from copy import deepcopy
 
 log = logging.getLogger(__name__)
 

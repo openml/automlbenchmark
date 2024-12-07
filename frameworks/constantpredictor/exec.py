@@ -46,7 +46,7 @@ def run(dataset: Dataset, config: TaskConfig):
             infer,
             [(1, test_data.sample(1, random_state=i)) for i in range(100)],
         )
-        log.info(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
 
     save_predictions(dataset=dataset,
                      output_file=config.output_predictions_file,

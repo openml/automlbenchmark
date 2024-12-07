@@ -1,7 +1,7 @@
 import functools as ft
 import random
 import time
-from unittest.mock import patch, DEFAULT
+from unittest.mock import patch
 
 import pytest
 

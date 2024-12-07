@@ -87,7 +87,7 @@ def run(dataset, config):
                 for i in range(100)
             ],
         )
-        log.info(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
 
     log.info('Predicting on the test set.')
     y_test = dataset.test.y

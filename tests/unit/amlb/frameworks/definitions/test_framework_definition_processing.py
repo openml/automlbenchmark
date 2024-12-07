@@ -31,7 +31,7 @@ def test_remove_self_reference_extensions_removes_self_reference():
 def test_remove_self_reference_extensions_does_not_remove_reference_to_other():
     f = Namespace(dummy=Namespace(name="dummy", extends="some_other_framework"))
     _remove_self_reference_extensions(f)
-    assert f.dummy.extends is "some_other_framework"
+    assert f.dummy.extends == "some_other_framework"
 
 
 def test_add_framework_name_adds_name_attribute_to_framework_definition():

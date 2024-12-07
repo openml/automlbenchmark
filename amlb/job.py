@@ -20,7 +20,7 @@ import threading
 from functools import partial
 from typing import Callable, List, Optional
 
-from .utils import Namespace, Timer, ThreadSafeCounter, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
+from .utils import Namespace, Timer, ThreadSafeCounter, InterruptTimeout, is_main_thread, raise_in_thread
 
 log = logging.getLogger(__name__)
 

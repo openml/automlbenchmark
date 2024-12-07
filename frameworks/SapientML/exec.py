@@ -5,7 +5,6 @@ import tempfile as tmp
 from frameworks.shared.callee import call_run, result
 from frameworks.shared.utils import Timer
 from sapientml import SapientML
-from sapientml.util.logging import setup_logger
 from sklearn.preprocessing import OneHotEncoder
 
 os.environ["JOBLIB_TEMP_FOLDER"] = tmp.gettempdir()
@@ -22,7 +21,7 @@ def run(dataset, config):
 
     import pandas as pd
 
-    log.info(f"\n**** Sapientml ****\n")
+    log.info("\n**** Sapientml ****\n")
 
     is_classification = config.type == "classification"
     is_multiclass = dataset.problem_type = "multiclass"

@@ -128,7 +128,7 @@ def run(dataset, config):
             infer,
             [(1, test_data.sample(1, random_state=i)) for i in range(100)],
         )
-        log.info(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
 
     test_data = TabularDataset(test_path)
     with Timer() as predict:

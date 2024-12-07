@@ -2,7 +2,6 @@
 import logging
 import json
 import os
-import psutil
 import shutil
 import tempfile
 

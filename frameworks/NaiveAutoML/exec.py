@@ -19,7 +19,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 from frameworks.shared.callee import call_run, result, output_subdir, \
     measure_inference_times
-from frameworks.shared.utils import Timer, touch
+from frameworks.shared.utils import Timer
 
 from naiveautoml import NaiveAutoML
 
@@ -83,7 +83,7 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-        log.info(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
 
     with Timer() as predict:
         predictions = automl.predict(dataset.test.X)

@@ -65,7 +65,7 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-        log.info(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
 
     with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y.squeeze()

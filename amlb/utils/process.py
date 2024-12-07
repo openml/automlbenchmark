@@ -3,7 +3,7 @@ from __future__ import annotations
 import gc
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from functools import partial, reduce, wraps
+from functools import partial, wraps
 import inspect
 import io
 import logging
@@ -18,8 +18,6 @@ import stat
 import subprocess
 import sys
 import threading
-import _thread
-import traceback
 from typing import Dict, List, Union, Tuple, cast
 
 import psutil

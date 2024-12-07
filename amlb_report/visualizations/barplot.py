@@ -1,5 +1,4 @@
 import matplotlib as mp
-import numpy as np
 import seaborn as sb
 
 import amlb_report.config as config

@@ -81,7 +81,7 @@ def save_artifacts(automl, config):
             if automl.history:
                 automl.history.save(os.path.join(info_dir, 'history.json'))
             else:
-                log.info(f"There is no optimization history info to save.")
+                log.info("There is no optimization history info to save.")
         except Exception as e:
             log.info(f"Error when saving info about optimisation history: {e}.", exc_info=True)
 

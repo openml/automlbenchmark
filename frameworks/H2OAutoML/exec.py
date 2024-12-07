@@ -130,7 +130,7 @@ def run(dataset, config):
         inference_times = {}
         if config.measure_inference_time:
             inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
-            log.info(f"Finished inference time measurements.")
+            log.info("Finished inference time measurements.")
 
         with Timer() as predict:
             preds = aml.predict(test)

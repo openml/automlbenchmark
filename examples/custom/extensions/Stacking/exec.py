@@ -12,7 +12,7 @@ from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegress
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.ensemble import StackingClassifier, StackingRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression, SGDClassifier, SGDRegressor
-from sklearn.svm import LinearSVC, LinearSVR
+from sklearn.svm import LinearSVR
 
 from frameworks.shared.callee import call_run, result
 from frameworks.shared.utils import Timer

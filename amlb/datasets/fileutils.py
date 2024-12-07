@@ -26,7 +26,7 @@ class HttpHandler(FileHandler):
             with urlopen(head_req) as test:
                 return test.status == 200
         except URLError as e:
-            log.error(f"Cannot access url %s: %s", url, e)
+            log.error("Cannot access url %s: %s", url, e)
             return False
 
     def download(self, url, dest_path):
@@ -43,7 +43,7 @@ class S3Handler(FileHandler):
             s3.head_object(Bucket=bucket, Key=key)
             return True
         except ClientError as e:
-            log.error(f"Cannot access url %s: %s", url, e)
+            log.error("Cannot access url %s: %s", url, e)
             return False
 
     def download(self, url, dest_path):

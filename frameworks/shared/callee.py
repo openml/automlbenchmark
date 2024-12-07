@@ -5,7 +5,7 @@ import re
 import signal
 import sys
 from collections import defaultdict
-from typing import Callable, Any, Tuple, Union, TypeVar, TYPE_CHECKING
+from typing import Callable, Any, Tuple, Union, TypeVar
 
 from .utils import InterruptTimeout, Namespace as ns, json_dump, json_loads, kill_proc_tree, touch
 from .utils import deserialize_data, serialize_data, Timer

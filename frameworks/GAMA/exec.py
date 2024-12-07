@@ -18,7 +18,6 @@ import category_encoders
 from packaging import version
 import sklearn
 
-from gama.data_loading import file_to_pandas
 from gama import GamaClassifier, GamaRegressor, __version__
 
 from frameworks.shared.callee import call_run, result, output_subdir, \
@@ -94,7 +93,7 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-        log.info(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
 
     with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y

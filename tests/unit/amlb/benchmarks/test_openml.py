@@ -1,4 +1,3 @@
-import openml
 import pandas as pd
 import pytest
 

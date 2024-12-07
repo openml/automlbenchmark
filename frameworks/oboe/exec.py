@@ -49,7 +49,7 @@ def kfold_fit_validate(self, x_train, y_train, n_folds, random_state=None):
 
 
 def run(dataset, config):
-    log.info(f"\n**** Applying monkey patch ****\n")
+    log.info("\n**** Applying monkey patch ****\n")
     from oboe.model import Model
     Model.kfold_fit_validate = kfold_fit_validate
 

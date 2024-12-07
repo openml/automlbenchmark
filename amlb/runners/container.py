@@ -9,7 +9,6 @@ from __future__ import annotations
 from abc import abstractmethod
 import logging
 import re
-from typing import List, Union
 
 from ..benchmark import Benchmark, SetupMode
 from ..errors import InvalidStateError

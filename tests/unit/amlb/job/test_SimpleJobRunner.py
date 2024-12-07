@@ -1,5 +1,5 @@
 import functools as ft
-from unittest.mock import patch, DEFAULT
+from unittest.mock import patch
 
 import pytest
 

@@ -25,7 +25,7 @@ from sklearn.base import TransformerMixin
 from sklearn.impute import SimpleImputer as Imputer
 from sklearn.metrics import accuracy_score, auc, average_precision_score, balanced_accuracy_score, confusion_matrix, fbeta_score, \
     log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, precision_recall_curve, \
-    r2_score, roc_auc_score  # just aliasing
+    r2_score, roc_auc_score  # noqa: F401  # just aliasing
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, OneHotEncoder, OrdinalEncoder
 
 from .utils import profile, path_from_split, repr_def, split_path, touch

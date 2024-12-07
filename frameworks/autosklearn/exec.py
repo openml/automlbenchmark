@@ -162,8 +162,8 @@ def run(dataset, config):
         inference_times["df"] = measure_inference_times(
             infer, [(1, sample_one_test_row(seed=i)) for i in range(100)],
         )
-        log.info(f"Finished inference time measurements.")
-        print(f"Finished inference time measurements.")
+        log.info("Finished inference time measurements.")
+        print("Finished inference time measurements.")
 
     # Convert output to strings for classification
     log.info("Predicting on the test set.")

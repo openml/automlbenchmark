@@ -11,7 +11,7 @@ import pandas as pd
 matplotlib.use("agg")  # no need for tk
 
 from lightautoml.tasks import Task
-from lightautoml.automl.presets.tabular_presets import TabularAutoML, TabularUtilizedAutoML
+from lightautoml.automl.presets.tabular_presets import TabularUtilizedAutoML
 from lightautoml import __version__
 
 from frameworks.shared.callee import call_run, result, output_subdir, \
@@ -53,7 +53,7 @@ def run(dataset, config):
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-    log.info(f"Finished inference time measurements.")
+    log.info("Finished inference time measurements.")
 
 
     log.info("Predicting on the test set...")

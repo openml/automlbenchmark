@@ -10,11 +10,10 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
-import hyperopt
-from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss, mean_absolute_error, mean_squared_error, mean_squared_log_error, r2_score
+from sklearn.metrics import roc_auc_score, f1_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
 
 from frameworks.shared.callee import call_run, result
-from frameworks.shared.utils import InterruptTimeout, Timer, dir_of, kill_proc_tree
+from frameworks.shared.utils import InterruptTimeout, Timer, kill_proc_tree
 
 log = logging.getLogger(__name__)
 

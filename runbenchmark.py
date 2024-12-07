@@ -51,7 +51,7 @@ parser.add_argument('-u', '--userdir', metavar='user_dir', default=None,
                          f"(default: '{default_dirs.user_dir}')")
 parser.add_argument('--jobhistory', metavar='job_history', default=None,
                     help="File where prior job run results are stored. Only used when --resume is specified."
-                         f"(default: 'None')")
+                         "(default: 'None')")
 parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, default=1,
                     help="The number of jobs (i.e. tasks or folds) that can run in parallel."
                          "\nA hard limit is defined by property `job_scheduler.max_parallel_jobs`"

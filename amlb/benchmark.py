@@ -9,7 +9,6 @@
 """
 from __future__ import annotations
 
-import time
 from copy import copy
 from enum import Enum
 from importlib import import_module, invalidate_caches
@@ -19,7 +18,6 @@ import os
 import re
 import signal
 import sys
-from typing import List, Union
 
 import pandas as pd
 
