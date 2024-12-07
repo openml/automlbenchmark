@@ -86,6 +86,8 @@ six==1.16.0
     # via python-dateutil
 threadpoolctl==3.1.0
     # via scikit-learn
+typing-extensions==4.12.2
+    # via -r requirements.in
 urllib3==1.26.15
     # via
     #   botocore
