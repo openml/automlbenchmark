@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from string import Template
 
@@ -23,7 +25,7 @@ class Framework(NamedTuple):
     icon: str
     summary: str
     papers: Sequence[Paper]
-    documentation: str = None
+    documentation: str | None = None
 
 
 def load_framework_definitions(
@@ -116,15 +118,13 @@ def generate_framework_page(frameworks: Sequence[Framework]) -> str:
         framework_paper_template,
     )
 
-    main_content = main_content.substitute(
+    return main_content.substitute(
         **dict(
             navigation=navigation,
             footer=footer,
             framework_cards=framework_cards,
         )
     )
-
-    return main_content
 
 
 if __name__ == "__main__":

@@ -5,7 +5,8 @@ import re
 import signal
 import sys
 from collections import defaultdict
-from typing import Callable, Any, Tuple, Union, TypeVar
+from typing import Callable, Any, Tuple, TypeVar
+
 
 from .utils import (
     InterruptTimeout,
@@ -109,14 +110,9 @@ def call_run(run_fn):
     json_dump(res, config.result_file, style="compact")
 
 
-try:
-    import pandas as pd
-
-    DATA_TYPES = Union[str, pd.DataFrame]
-except ImportError:
-    DATA_TYPES = str
-
-DATA_INPUT = TypeVar("DATA_INPUT", bound=DATA_TYPES)
+DATA_INPUT = TypeVar(
+    "DATA_INPUT"
+)  #   (str | pd.DataFrame) but pandas isn't always installed. not sure its correct
 
 
 def measure_inference_times(

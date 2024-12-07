@@ -21,6 +21,7 @@ from typing import List, Union, Iterable
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+from typing_extensions import TypeAlias
 
 from .datautils import Encoder
 from .utils import clear_cache, lazy_property, profile, repr_def
@@ -28,8 +29,8 @@ from .utils import clear_cache, lazy_property, profile, repr_def
 log = logging.getLogger(__name__)
 
 
-AM = Union[np.ndarray, sp.spmatrix]
-DF = pd.DataFrame
+AM: TypeAlias = Union[np.ndarray, sp.spmatrix]
+DF: TypeAlias = pd.DataFrame
 
 
 class Feature:

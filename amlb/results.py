@@ -19,6 +19,7 @@ from numpy import nan, sort
 import pandas as pd
 import scipy as sci
 import scipy.sparse
+from typing_extensions import TypeAlias
 
 from .data import Dataset, DatasetType, Feature
 from .datautils import (
@@ -54,9 +55,9 @@ from .utils import (
 log = logging.getLogger(__name__)
 
 
-A = Union[np.ndarray, sci.sparse.csr_matrix]
-DF = pd.DataFrame
-S = pd.Series
+A: TypeAlias = Union[np.ndarray, sci.sparse.csr_matrix]
+DF: TypeAlias = pd.DataFrame
+S: TypeAlias = pd.Series
 
 _supported_metrics_ = {}
 
@@ -417,9 +418,9 @@ class TaskResult:
         """
         log.debug("Saving predictions to `%s`.", output_file)
         remap = None
-        if isinstance(predictions, DF):
+        if isinstance(predictions, pd.DataFrame):
             predictions = predictions.squeeze()
-        if isinstance(predictions, S):
+        if isinstance(predictions, pd.Series):
             predictions = predictions.values
         if (
             scipy.sparse.issparse(truth)
@@ -427,11 +428,11 @@ class TaskResult:
             and truth.shape[1] == 1
         ):
             truth = pd.DataFrame(truth.todense())
-        if isinstance(truth, DF):
+        if isinstance(truth, pd.DataFrame):
             truth = truth.squeeze()
-        if isinstance(truth, S):
+        if isinstance(truth, pd.Series):
             truth = truth.values
-        if isinstance(probabilities, DF):
+        if isinstance(probabilities, pd.DataFrame):
             probabilities = probabilities.values
         if probabilities_labels is not None:
             probabilities_labels = [str(label) for label in probabilities_labels]

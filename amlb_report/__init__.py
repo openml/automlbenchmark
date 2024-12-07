@@ -15,4 +15,4 @@ from .visualizations import (
 
 warnings.filterwarnings("ignore")
 
-__all__ = [display]
+__all__ = ["display"]
