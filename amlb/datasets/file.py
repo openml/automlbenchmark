@@ -589,7 +589,7 @@ class CsvDatasplit(FileDatasplit):
 
         def to_feature_type(dt) -> str:
             if pat.is_integer_dtype(dt):
-                "int"
+                return "int"
             if pat.is_float_dtype(dt):
                 return "float"
             if pat.is_numeric_dtype(dt):
