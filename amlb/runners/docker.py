@@ -4,6 +4,7 @@ that are preconfigured with a given automl framework, and that can be used to ru
 The docker image embeds a version of the automlbenchmark app so that tasks are later run in local mode inside docker,
 providing the same parameters and features allowing to import config and export results through mounted folders.
 """
+
 import logging
 import os
 import re
@@ -32,16 +33,19 @@ class DockerBenchmark(ContainerBenchmark):
         super().__init__(framework_name, benchmark_name, constraint_name)
         self._custom_image_name = rconfig().docker.image
         self.minimize_instances = rconfig().docker.minimize_instances
-        self.container_name = 'docker'
+        self.container_name = "docker"
         self.force_branch = rconfig().docker.force_branch
-        self.custom_commands = self.framework_module.docker_commands(
-            self.framework_def.setup_args,
-            setup_cmd=self.framework_def._setup_cmd
-        ) if hasattr(self.framework_module, 'docker_commands') else ""
+        self.custom_commands = (
+            self.framework_module.docker_commands(
+                self.framework_def.setup_args, setup_cmd=self.framework_def._setup_cmd
+            )
+            if hasattr(self.framework_module, "docker_commands")
+            else ""
+        )
 
     @property
     def _script(self):
-        return os.path.join(self._framework_dir, _setup_dir_, 'Dockerfile')
+        return os.path.join(self._framework_dir, _setup_dir_, "Dockerfile")
 
     def _start_container(self, script_params=""):
         """Implementes the container run method"""
@@ -73,7 +77,9 @@ class DockerBenchmark(ContainerBenchmark):
         log.info("Datasets are loaded by default from folder %s.", in_dir)
         log.info("Generated files will be available in folder %s.", out_dir)
         try:
-            run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
+            run_cmd(
+                cmd, _capture_error_=False
+            )  # console logs are written on stderr by default: not capturing allows live display
         except:  # also want to handle KeyboardInterrupt
             try:
                 run_cmd(f"docker kill {inst_name}")
@@ -86,7 +92,7 @@ class DockerBenchmark(ContainerBenchmark):
         """Implements a method to see if the container image is available"""
         output, _ = run_cmd(f"docker images -q {image}")
         log.debug("docker image id: %s", output)
-        if re.match(r'^[0-9a-f]+$', output.strip()):
+        if re.match(r"^[0-9a-f]+$", output.strip()):
             return True
         try:
             run_cmd(f"docker pull {image}", _live_output_=True)
@@ -97,12 +103,13 @@ class DockerBenchmark(ContainerBenchmark):
 
     def _run_container_build_command(self, image, cache):
         log.info(f"Building docker image {image}.")
-        run_cmd("docker build {options} {build_extra_options} -t {container} -f {script} .".format(
-            options="" if cache else "--no-cache",
-            container=image,
-            script=self._script,
-            build_extra_options=rconfig().docker.build_extra_options,
-        ),
+        run_cmd(
+            "docker build {options} {build_extra_options} -t {container} -f {script} .".format(
+                options="" if cache else "--no-cache",
+                container=image,
+                script=self._script,
+                build_extra_options=rconfig().docker.build_extra_options,
+            ),
             _live_output_=rconfig().setup.live_output,
             _activity_timeout_=rconfig().setup.activity_timeout,
         )
@@ -172,24 +179,26 @@ CMD ["{framework}", "test"]
 
 """.format(
             custom_commands=custom_commands.format(
-                setup=dir_of(os.path.join(self._framework_dir, "setup", ""),
-                             rel_to_project_root=True),
+                setup=dir_of(
+                    os.path.join(self._framework_dir, "setup", ""),
+                    rel_to_project_root=True,
+                ),
                 pip="$PIP",
-                py="$PY"
+                py="$PY",
             ),
-            framework=self._forward_params['framework_name'],
+            framework=self._forward_params["framework_name"],
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
         )
 
         touch(self._script)
-        with open(self._script, 'w') as file:
+        with open(self._script, "w") as file:
             file.write(docker_content)
 
 
 def resolve_docker_run_as_option(option: str) -> str:
-    """ Resolve `docker.run_as` option into the correct `-u` option for `docker run`.
+    """Resolve `docker.run_as` option into the correct `-u` option for `docker run`.
 
     option, str: one of 'user' (unix only), 'root', 'default', or a valid `-u` option.
                * 'user': set as `-u $(id -u):$(id -g)`, only on unix systems.
@@ -202,11 +211,11 @@ def resolve_docker_run_as_option(option: str) -> str:
     We had reports of different behavior even for people running the same OS and Docker.
     """
     if option == "default":
-        return ''
+        return ""
     if option == "root":
-        return '-u 0:0'
+        return "-u 0:0"
     if option == "user":
-        if os.name == 'nt':
+        if os.name == "nt":
             raise ValueError("docker.run_as: 'user' is not supported on Windows.")
         return f'-u "{os.getuid()}:{os.getgid()}"'
     if option.startswith("-u"):

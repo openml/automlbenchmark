@@ -13,16 +13,16 @@ log = logging.getLogger(__name__)
 
 __no_export = set(dir())  # all variables defined above this are not exported
 
-if find_spec('ruamel') is not None:
+if find_spec("ruamel") is not None:
     from ruamel.yaml.constructor import SafeConstructor
     from ruamel.yaml.main import YAML
+
     __no_export |= set(dir())
 
     class _YAMLNamespaceConstructor(SafeConstructor):
-
         @classmethod
         def init(cls):
-            cls.add_constructor(u'tag:yaml.org,2002:map', cls.construct_yaml_map)
+            cls.add_constructor("tag:yaml.org,2002:map", cls.construct_yaml_map)
 
         def construct_yaml_map(self, node):
             data = Namespace()
@@ -30,32 +30,39 @@ if find_spec('ruamel') is not None:
             value = self.construct_mapping(node)
             data += value
 
-
     _YAMLNamespaceConstructor.init()
-
 
     def yaml_load(file, as_namespace=False):
         if as_namespace:
-            yaml = YAML(typ='safe', pure=True)
+            yaml = YAML(typ="safe", pure=True)
             yaml.Constructor = _YAMLNamespaceConstructor
         else:
-            yaml = YAML(typ='safe')
+            yaml = YAML(typ="safe")
         return yaml.load(file)
 else:
+
     def yaml_load(*_, **__):  # type: ignore[misc]
-        raise ImportError("ruamel.yaml package is required to load `yaml` config files.")
+        raise ImportError(
+            "ruamel.yaml package is required to load `yaml` config files."
+        )
 
 
 def config_load(path, verbose=False):
     path = normalize_path(path)
     if not os.path.isfile(path):
-        log.log(logging.WARNING if verbose else logging.DEBUG, "No config file at `%s`, ignoring it.", path)
+        log.log(
+            logging.WARNING if verbose else logging.DEBUG,
+            "No config file at `%s`, ignoring it.",
+            path,
+        )
         return Namespace()
 
     _, ext = os.path.splitext(path.lower())
-    loader = json_load if ext == 'json' else yaml_load
-    log.log(logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path)
-    with open(path, 'r') as file:
+    loader = json_load if ext == "json" else yaml_load
+    log.log(
+        logging.INFO if verbose else logging.DEBUG, "Loading config file `%s`.", path
+    )
+    with open(path, "r") as file:
         return loader(file, as_namespace=True)
 
 
@@ -67,7 +74,9 @@ class TransformRule:
     keep_from: bool = False
 
 
-def transform_config(config: Namespace, transform_rules: list[TransformRule], inplace=True) -> Namespace:
+def transform_config(
+    config: Namespace, transform_rules: list[TransformRule], inplace=True
+) -> Namespace:
     """
     Allows to modify a configuration namespace (for example if the configuration format is modified)
     by applying a list of transformation rules.
@@ -91,4 +100,4 @@ def transform_config(config: Namespace, transform_rules: list[TransformRule], in
     return config
 
 
-__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
+__all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

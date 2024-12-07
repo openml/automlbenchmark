@@ -4,6 +4,7 @@ that are preconfigured with a given automl framework, and that can be used to ru
 The image embeds a version of the automlbenchmark app so that tasks are later run in local mode inside the container,
 providing the same parameters and features allowing to import config and export results through mounted folders.
 """
+
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -24,6 +25,7 @@ class ContainerBenchmark(Benchmark):
     """ContainerBenchmark
     an extension of Benchmark to run benchmarks inside a container.
     """
+
     framework_install_required = False
 
     @classmethod
@@ -37,10 +39,10 @@ class ContainerBenchmark(Benchmark):
         tags = [di.tag if di.tag else framework_def.version.lower()]
         if label not in rconfig().container.ignore_labels:
             tags.append(label)
-        tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
+        tag = re.sub(r"([^\w.-])", ".", "-".join(tags))
         # Some frameworks allow specifying a version by #HASH which would lead to
         # the tag starting with a '.' which is invalid.
-        tag = tag.lstrip('.')
+        tag = tag.lstrip(".")
         return f"{author}/{image}:{tag}"
 
     @abstractmethod
@@ -65,7 +67,9 @@ class ContainerBenchmark(Benchmark):
     def _validate(self):
         max_parallel_jobs = rconfig().job_scheduler.max_parallel_jobs
         if self.parallel_jobs == 0 or self.parallel_jobs > max_parallel_jobs:
-            log.warning("Forcing parallelization to its upper limit: %s.", max_parallel_jobs)
+            log.warning(
+                "Forcing parallelization to its upper limit: %s.", max_parallel_jobs
+            )
             self.parallel_jobs = max_parallel_jobs
 
     def setup(self, mode, upload=False):
@@ -86,7 +90,9 @@ class ContainerBenchmark(Benchmark):
         # TODO: remove generated script? anything else?
         pass
 
-    def run(self, tasks: str | list[str] | None = None, folds: int | list[int] | None = None):
+    def run(
+        self, tasks: str | list[str] | None = None, folds: int | list[int] | None = None
+    ):
         self._get_task_defs(tasks)  # validates tasks
         if self.parallel_jobs > 1 or not self.minimize_instances:
             return super().run(tasks, folds)
@@ -100,32 +106,45 @@ class ContainerBenchmark(Benchmark):
                 self.cleanup()
 
     def _make_job(self, task_def, fold=int):
-        return self._make_container_job([task_def.name], [fold]) if not self._skip_job(task_def, fold) else None
+        return (
+            self._make_container_job([task_def.name], [fold])
+            if not self._skip_job(task_def, fold)
+            else None
+        )
 
     def _make_container_job(self, task_names=None, folds=None):
         task_names = [] if task_names is None else task_names
         folds = [] if folds is None else [str(f) for f in folds]
 
         def _run():
-            self._start_container("{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
-                framework=self._forward_params['framework_name'],
-                benchmark=self._forward_params['benchmark_name'],
-                constraint=self._forward_params['constraint_name'],
-                task_param='' if len(task_names) == 0 else ' '.join(['-t']+task_names),
-                folds_param='' if len(folds) == 0 else ' '.join(['-f']+folds),
-                seed=rget().seed(int(folds[0])) if len(folds) == 1 else rconfig().seed,
-            ))
+            self._start_container(
+                "{framework} {benchmark} {constraint} {task_param} {folds_param} -Xseed={seed}".format(
+                    framework=self._forward_params["framework_name"],
+                    benchmark=self._forward_params["benchmark_name"],
+                    constraint=self._forward_params["constraint_name"],
+                    task_param=""
+                    if len(task_names) == 0
+                    else " ".join(["-t"] + task_names),
+                    folds_param="" if len(folds) == 0 else " ".join(["-f"] + folds),
+                    seed=rget().seed(int(folds[0]))
+                    if len(folds) == 1
+                    else rconfig().seed,
+                )
+            )
             # TODO: would be nice to reload generated scores and return them
 
-        job = Job(rconfig().token_separator.join([
-                self.container_name,
-                self.benchmark_name,
-                self.constraint_name,
-                ','.join(task_names) if len(task_names) > 0 else 'all_tasks',
-                ','.join(folds) if len(folds) > 0 else 'all_folds',
-                self.framework_name
-            ]),
-            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure
+        job = Job(
+            rconfig().token_separator.join(
+                [
+                    self.container_name,
+                    self.benchmark_name,
+                    self.constraint_name,
+                    ",".join(task_names) if len(task_names) > 0 else "all_tasks",
+                    ",".join(folds) if len(folds) > 0 else "all_folds",
+                    self.framework_name,
+                ]
+            ),
+            raise_on_failure=rconfig().job_scheduler.exit_on_job_failure,
         )
         job._run = _run
         return job
@@ -135,9 +154,13 @@ class ContainerBenchmark(Benchmark):
         raise NotImplementedError
 
     def _find_image(self):
-        images_lookup = ([self._custom_image_name] if self._custom_image_name
-                         else [self._container_image_name(dev), self._container_image_name()] if __version__ == dev
-                         else [self._container_image_name()])
+        images_lookup = (
+            [self._custom_image_name]
+            if self._custom_image_name
+            else [self._container_image_name(dev), self._container_image_name()]
+            if __version__ == dev
+            else [self._container_image_name()]
+        )
 
         for image in images_lookup:
             if self._image_exists(image):
@@ -154,30 +177,40 @@ class ContainerBenchmark(Benchmark):
             current_branch = rget().git_info.branch
             create_dev_image = False
             status = rget().git_info.status
-            if len(status) > 1 or re.search(r'\[(ahead|behind) \d+\]', status[0]):
-                print("Branch status:\n%s", '\n'.join(status))
+            if len(status) > 1 or re.search(r"\[(ahead|behind) \d+\]", status[0]):
+                print("Branch status:\n%s", "\n".join(status))
                 force = None
-                while force not in ['y', 'n']:
-                    force = input(f"""Branch `{current_branch}` is not clean or up-to-date.
-Do you still want to build the container image? (y/[n]) """).lower() or 'n'
-                if force == 'n':
+                while force not in ["y", "n"]:
+                    force = (
+                        input(f"""Branch `{current_branch}` is not clean or up-to-date.
+Do you still want to build the container image? (y/[n]) """).lower()
+                        or "n"
+                    )
+                if force == "n":
                     raise InvalidStateError(
                         "The image can't be built as the current branch is not clean or up-to-date. "
-                        "Please switch to the expected `{}` branch, and ensure that it is clean before building the container image.".format(rget().project_info.branch)
+                        "Please switch to the expected `{}` branch, and ensure that it is clean before building the container image.".format(
+                            rget().project_info.branch
+                        )
                     )
                 create_dev_image = True
 
             expected_branch = rget().project_info.branch
             tags = rget().git_info.tags
-            if expected_branch and expected_branch not in tags+[current_branch]:
+            if expected_branch and expected_branch not in tags + [current_branch]:
                 force = None
-                while force not in ['y', 'n']:
-                    force = input(f"""Branch `{current_branch}` doesn't match `{expected_branch}` (as required by config.project_repository).
-Do you still want to build the container image? (y/[n]) """).lower() or 'n'
-                if force == 'n':
+                while force not in ["y", "n"]:
+                    force = (
+                        input(f"""Branch `{current_branch}` doesn't match `{expected_branch}` (as required by config.project_repository).
+Do you still want to build the container image? (y/[n]) """).lower()
+                        or "n"
+                    )
+                if force == "n":
                     raise InvalidStateError(
                         "The image can't be built as current branch is not tagged as required `{}`. "
-                        "Please switch to the expected tagged branch before building the container image.".format(expected_branch)
+                        "Please switch to the expected tagged branch before building the container image.".format(
+                            expected_branch
+                        )
                     )
                 create_dev_image = True
             if create_dev_image and not image:

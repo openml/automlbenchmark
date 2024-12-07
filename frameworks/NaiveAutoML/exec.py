@@ -10,15 +10,19 @@ from typing import Union
 
 import pandas as pd
 
-if sys.platform == 'darwin':
-    os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
-os.environ['JOBLIB_TEMP_FOLDER'] = tmp.gettempdir()
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
+if sys.platform == "darwin":
+    os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
+os.environ["JOBLIB_TEMP_FOLDER"] = tmp.gettempdir()
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 
-from frameworks.shared.callee import call_run, result, output_subdir, \
-    measure_inference_times
+from frameworks.shared.callee import (
+    call_run,
+    result,
+    output_subdir,
+    measure_inference_times,
+)
 from frameworks.shared.utils import Timer
 
 from naiveautoml import NaiveAutoML
@@ -28,18 +32,20 @@ log = logging.getLogger(__name__)
 
 def run(dataset, config):
     pip_list = subprocess.run("python -m pip list".split(), capture_output=True)
-    match = re.search(r"naiveautoml\s+([^\n]+)", pip_list.stdout.decode(), flags=re.IGNORECASE)
-    version, = match.groups()
+    match = re.search(
+        r"naiveautoml\s+([^\n]+)", pip_list.stdout.decode(), flags=re.IGNORECASE
+    )
+    (version,) = match.groups()
     log.info("\n**** NaiveAutoML [v%s] ****", version)
 
     metrics_mapping = dict(
-        acc='accuracy',
-        balacc='balanced_accuracy',
-        auc='roc_auc',
-        logloss='neg_log_loss',
-        mae='neg_mean_absolute_error',
-        r2='r2',
-        rmse='neg_mean_squared_error',
+        acc="accuracy",
+        balacc="balanced_accuracy",
+        auc="roc_auc",
+        logloss="neg_log_loss",
+        mae="neg_mean_absolute_error",
+        r2="r2",
+        rmse="neg_mean_squared_error",
     )
     scoring_metric = metrics_mapping.get(config.metric)
     if scoring_metric is None:
@@ -62,14 +68,16 @@ def run(dataset, config):
     else:
         log.info("`_use_default_time_and_iterations` is set, ignoring time constraint.")
 
-    kwargs |= {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
+    kwargs |= {
+        k: v for k, v in config.framework_params.items() if not k.startswith("_")
+    }
     automl = NaiveAutoML(**kwargs)
 
     with Timer() as training:
         automl.fit(dataset.train.X, dataset.train.y)
     log.info(f"Finished fit in {training.duration}s.")
 
-    is_classification = (config.type == 'classification')
+    is_classification = config.type == "classification"
 
     def infer(data: Union[str, pd.DataFrame]):
         test_data = pd.read_parquet(data) if isinstance(data, str) else data
@@ -78,7 +86,9 @@ def run(dataset, config):
 
     inference_times = {}
     if config.measure_inference_time:
-        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(
+            infer, dataset.inference_subsample_files
+        )
         inference_times["df"] = measure_inference_times(
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
@@ -87,7 +97,9 @@ def run(dataset, config):
 
     with Timer() as predict:
         predictions = automl.predict(dataset.test.X)
-        probabilities = automl.predict_proba(dataset.test.X) if is_classification else None
+        probabilities = (
+            automl.predict_proba(dataset.test.X) if is_classification else None
+        )
     log.info(f"Finished predict in {predict.duration}s.")
 
     save_artifacts(automl, config)
@@ -106,20 +118,19 @@ def run(dataset, config):
 
 
 def save_artifacts(naive_automl, config):
-    artifacts = config.framework_params.get('_save_artifacts', ['history'])
+    artifacts = config.framework_params.get("_save_artifacts", ["history"])
     try:
         artifacts_dir = Path(output_subdir("artifacts", config))
-        if 'history' in artifacts:
+        if "history" in artifacts:
             naive_automl.history.to_csv(artifacts_dir / "history.csv", index=False)
 
-        if 'model' in artifacts:
+        if "model" in artifacts:
             (artifacts_dir / "model_str.txt").write_text(str(naive_automl.chosen_model))
-            with open(artifacts_dir / "model.pkl", 'wb') as fh:
+            with open(artifacts_dir / "model.pkl", "wb") as fh:
                 pickle.dump(naive_automl.chosen_model, fh)
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     call_run(run)

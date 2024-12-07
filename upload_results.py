@@ -1,6 +1,7 @@
-""" Script to upload results from the benchmark to OpenML.
+"""Script to upload results from the benchmark to OpenML.
 The benchmark run needs to be executed on OpenML datasets to be eligible for upload.
 """
+
 import argparse
 import contextlib
 from contextlib import contextmanager
@@ -25,41 +26,61 @@ def parse_args():
     description = "Script to upload results from the benchmark to OpenML."
     parser = argparse.ArgumentParser(description)
     parser.add_argument(
-        '-i', '--input-directory', type=pathlib.Path, default=None, dest='input_directory',
+        "-i",
+        "--input-directory",
+        type=pathlib.Path,
+        default=None,
+        dest="input_directory",
         help="Directory that stores results from the runbenchmark.py invocation. "
-             "By default use the most recent folder in the results "
-             "folder as specified in the configuration."
+        "By default use the most recent folder in the results "
+        "folder as specified in the configuration.",
     )
     parser.add_argument(
-        '-a', '--api-key', dest='apikey', default=None,
+        "-a",
+        "--api-key",
+        dest="apikey",
+        default=None,
         help="By default, the api key configured in your OpenML configuration file is"
-             "used. Specify this parameter if you want to overwrite this value or"
-             "you do not have an OpenML configuration file. A valid key is "
-             "*required* to upload to the OpenML server."
-             "This argument is ignored when uploading to the test server, as "
-             "the default openml-python test server api key will be used instead."
+        "used. Specify this parameter if you want to overwrite this value or"
+        "you do not have an OpenML configuration file. A valid key is "
+        "*required* to upload to the OpenML server."
+        "This argument is ignored when uploading to the test server, as "
+        "the default openml-python test server api key will be used instead.",
     )
     parser.add_argument(
-        '-m', '--mode', dest='mode', default='check',
+        "-m",
+        "--mode",
+        dest="mode",
+        default="check",
         help="Run mode (default=%(default)s)."
-             "• check: only report whether results can be uploaded."
-             "• upload: upload all complete results."
+        "• check: only report whether results can be uploaded."
+        "• upload: upload all complete results.",
     )
     parser.add_argument(
-        '-x', '--fail-fast', dest='fail_fast', action='store_true',
-        help="Stop as soon as a task fails to upload due to an error during uploading."
+        "-x",
+        "--fail-fast",
+        dest="fail_fast",
+        action="store_true",
+        help="Stop as soon as a task fails to upload due to an error during uploading.",
     )
     parser.add_argument(
-        '-v', '--verbose', action='store_true', dest='verbose',
-        help="Output progress to console."
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        help="Output progress to console.",
     )
     parser.add_argument(
-        '-t', '--task', type=str, dest='task', default=None,
-        help="Only upload results for this specific task."
+        "-t",
+        "--task",
+        type=str,
+        dest="task",
+        default=None,
+        help="Only upload results for this specific task.",
     )
     args = parser.parse_args()
 
-    if args.mode not in ['check', 'upload']:
+    if args.mode not in ["check", "upload"]:
         raise ValueError(f"Invalid value for argument 'mode': '{args.mode}'.")
 
     return args
@@ -71,7 +92,7 @@ def find_most_recent_result_folder() -> pathlib.Path:
     output_dir = pathlib.Path(config.output_dir or default_dirs.output_dir)
 
     def dirname_to_datetime(dirname: str) -> datetime:
-        _, timestamp = dirname.rsplit('.', 1)
+        _, timestamp = dirname.rsplit(".", 1)
         return datetime.strptime(timestamp, "%Y%m%dT%H%M%S")
 
     run_directories = output_dir.glob("*.*.*.*")
@@ -89,8 +110,8 @@ def resolve_input_directory(path: Optional[pathlib.Path]) -> pathlib.Path:
 
 def configure_logging(verbose: bool):
     formatter = logging.Formatter(
-        '[%(asctime)s] %(levelname)s: %(message)s',
-        '%H:%M:%S',
+        "[%(asctime)s] %(levelname)s: %(message)s",
+        "%H:%M:%S",
     )
     log_level = logging.DEBUG if verbose else logging.INFO
 
@@ -123,8 +144,10 @@ def upload_task(task_directory: pathlib.Path) -> Optional[OpenMLRun]:
         with server_for_task(task_directory):
             log.debug("Starting upload for '%s'." % task_name)
             run = process_task_folder(task_directory)
-            log.info("%s result stored at %s/r/%d"
-                     % (task_name, openml.config.server[:-11], run.id))
+            log.info(
+                "%s result stored at %s/r/%d"
+                % (task_name, openml.config.server[:-11], run.id)
+            )
             return run
     except Exception as e:
         message = e.message if hasattr(e, "message") else e.args[0]
@@ -133,7 +156,7 @@ def upload_task(task_directory: pathlib.Path) -> Optional[OpenMLRun]:
             raise
 
 
-def process_results(result_dir: pathlib.Path, mode: str = 'check'):
+def process_results(result_dir: pathlib.Path, mode: str = "check"):
     prediction_directory = result_dir / "predictions"
     if not prediction_directory.exists():
         raise ValueError(f"result_dir '{result_dir!s}' has no predictions.")
@@ -150,7 +173,7 @@ def process_results(result_dir: pathlib.Path, mode: str = 'check'):
 
         folds = missing_folds(full_task_directory)
         if len(folds) > 0:
-            log.info("%s has missing folds: %s" % (task_name, ', '.join(sorted(folds))))
+            log.info("%s has missing folds: %s" % (task_name, ", ".join(sorted(folds))))
             continue
 
         metadata = _load_task_data(full_task_directory)
@@ -158,9 +181,9 @@ def process_results(result_dir: pathlib.Path, mode: str = 'check'):
             log.info("%s has openml task metadata" % task_name)
             continue
 
-        if mode == 'check':
+        if mode == "check":
             log.info("%s is ready for upload." % task_name)
-        elif mode == 'upload':
+        elif mode == "upload":
             upload_task(full_task_directory)
 
 
@@ -172,17 +195,17 @@ def configure_apikey(key: Optional[str]) -> bool:
     return openml.config.apikey is not None and is_valid
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
     configure_logging(args.verbose)
     valid_key = configure_apikey(args.apikey)
-    if not valid_key and args.mode == 'upload':
+    if not valid_key and args.mode == "upload":
         raise ValueError(
             "No valid OpenML API key configured, use the '--api-key' argument "
             "or follow instructions: https://openml.github.io/openml-python/master/usage.html#configuration"
         )
     input_directory = resolve_input_directory(args.input_directory)
-    mode_verb = 'Uploading' if args.mode == 'upload' else 'Checking'
+    mode_verb = "Uploading" if args.mode == "upload" else "Checking"
     log.info("%s results from '%s'." % (mode_verb, input_directory))
 
     process_results(input_directory, args.mode)

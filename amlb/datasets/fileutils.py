@@ -15,13 +15,16 @@ log = logging.getLogger(__name__)
 
 
 class FileHandler:
-    def exists(self, url): pass
-    def download(self, url, dest_path): pass
+    def exists(self, url):
+        pass
+
+    def download(self, url, dest_path):
+        pass
 
 
 class HttpHandler(FileHandler):
     def exists(self, url):
-        head_req = Request(url, method='HEAD')
+        head_req = Request(url, method="HEAD")
         try:
             with urlopen(head_req) as test:
                 return test.status == 200
@@ -31,13 +34,13 @@ class HttpHandler(FileHandler):
 
     def download(self, url, dest_path):
         touch(dest_path)
-        with urlopen(url) as resp, open(dest_path, 'wb') as dest:
+        with urlopen(url) as resp, open(dest_path, "wb") as dest:
             shutil.copyfileobj(resp, dest)
 
 
 class S3Handler(FileHandler):
     def exists(self, url):
-        s3 = boto3.client('s3')
+        s3 = boto3.client("s3")
         bucket, key = self._s3_path_to_bucket_prefix(url)
         try:
             s3.head_object(Bucket=bucket, Key=key)
@@ -48,19 +51,19 @@ class S3Handler(FileHandler):
 
     def download(self, url, dest_path):
         touch(dest_path)
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource("s3")
         bucket, key = self._s3_path_to_bucket_prefix(url)
         try:
             s3.Bucket(bucket).download_file(key, dest_path)
         except ClientError as e:
-            if e.response['Error']['Code'] == "404":
+            if e.response["Error"]["Code"] == "404":
                 log.error("The object does not exist.")
             else:
                 raise
 
     def _s3_path_to_bucket_prefix(self, s3_path):
-        s3_path_cleaned = s3_path.split('://', 1)[1]
-        bucket, prefix = s3_path_cleaned.split('/', 1)
+        s3_path_cleaned = s3_path.split("://", 1)[1]
+        bucket, prefix = s3_path_cleaned.split("/", 1)
         return bucket, prefix
 
 
@@ -96,8 +99,8 @@ def unarchive_file(path, dest_folder=None):
             zf.extractall(path=dest_folder)
     elif tarfile.is_tarfile(path):
         with tarfile.open(path) as tf:
-            def is_within_directory(directory, target):
 
+            def is_within_directory(directory, target):
                 abs_directory = os.path.abspath(directory)
                 abs_target = os.path.abspath(target)
 
@@ -106,14 +109,12 @@ def unarchive_file(path, dest_folder=None):
                 return prefix == abs_directory
 
             def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
-
                 for member in tar.getmembers():
                     member_path = os.path.join(path, member.name)
                     if not is_within_directory(path, member_path):
                         raise Exception("Attempted Path Traversal in Tar File")
 
                 tar.extractall(path, members, numeric_owner=numeric_owner)
-
 
             safe_extract(tf, path=dest_folder)
     return dest

@@ -12,22 +12,20 @@ def run(dataset: Dataset, config: TaskConfig):
 
     data = dict(
         target=dataset.target.name,
-        train=dict(
-            path=dataset.train.path,
-            X=dataset.train.X,
-            y=dataset.train.y
-        ),
-        test=dict(
-            path=dataset.test.path,
-            X=dataset.test.X,
-            y=dataset.test.y
-        ),
+        train=dict(path=dataset.train.path, X=dataset.train.X, y=dataset.train.y),
+        test=dict(path=dataset.test.path, X=dataset.test.X, y=dataset.test.y),
     )
     if config.measure_inference_time:
-        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet")
-    options = dict(
-        serialization=dict(sparse_dataframe_deserialized_format='dense')
-    )
+        data["inference_subsample_files"] = dataset.inference_subsample_files(
+            fmt="parquet"
+        )
+    options = dict(serialization=dict(sparse_dataframe_deserialized_format="dense"))
 
-    return run_in_venv(__file__, "exec.py",
-                       input_data=data, dataset=dataset, config=config, options=options)
+    return run_in_venv(
+        __file__,
+        "exec.py",
+        input_data=data,
+        dataset=dataset,
+        config=config,
+        options=options,
+    )

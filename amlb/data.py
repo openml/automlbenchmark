@@ -10,6 +10,7 @@
   which can also be encoded (``y_enc``, ``X_enc``)
 - **Feature** provides metadata for a given feature/column as well as encoding functions.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -32,8 +33,15 @@ DF = pd.DataFrame
 
 
 class Feature:
-
-    def __init__(self, index: int, name: str, data_type: str | None, values: Iterable[str] | None = None, has_missing_values: bool = False, is_target: bool = False):
+    def __init__(
+        self,
+        index: int,
+        name: str,
+        data_type: str | None,
+        values: Iterable[str] | None = None,
+        has_missing_values: bool = False,
+        is_target: bool = False,
+    ):
         """
         :param index: index of the feature in the full data frame.
         :param name: name of the feature.
@@ -51,31 +59,33 @@ class Feature:
 
     def is_categorical(self, strict: bool = True) -> bool:
         if strict:
-            return self.data_type == 'category'
+            return self.data_type == "category"
         return self.data_type is not None and not self.is_numerical()
 
     def is_numerical(self) -> bool:
-        return self.data_type in ['int', 'float', 'number']
+        return self.data_type in ["int", "float", "number"]
 
     @lazy_property
     def label_encoder(self) -> Encoder:
-        return Encoder('label' if self.values is not None else 'no-op',
-                       target=self.is_target,
-                       encoded_type=int if self.is_target and not self.is_numerical() else float,
-                       missing_values=[None, np.nan, pd.NA],
-                       missing_policy='mask' if self.has_missing_values else 'ignore',
-                       normalize_fn=Feature.normalize
-                       ).fit(self.values)
+        return Encoder(
+            "label" if self.values is not None else "no-op",
+            target=self.is_target,
+            encoded_type=int if self.is_target and not self.is_numerical() else float,
+            missing_values=[None, np.nan, pd.NA],
+            missing_policy="mask" if self.has_missing_values else "ignore",
+            normalize_fn=Feature.normalize,
+        ).fit(self.values)
 
     @lazy_property
     def one_hot_encoder(self) -> Encoder:
-        return Encoder('one-hot' if self.values is not None else 'no-op',
-                       target=self.is_target,
-                       encoded_type=int if self.is_target and not self.is_numerical() else float,
-                       missing_values=[None, np.nan, pd.NA],
-                       missing_policy='mask' if self.has_missing_values else 'ignore',
-                       normalize_fn=Feature.normalize
-                       ).fit(self.values)
+        return Encoder(
+            "one-hot" if self.values is not None else "no-op",
+            target=self.is_target,
+            encoded_type=int if self.is_target and not self.is_numerical() else float,
+            missing_values=[None, np.nan, pd.NA],
+            missing_policy="mask" if self.has_missing_values else "ignore",
+            normalize_fn=Feature.normalize,
+        ).fit(self.values)
 
     @staticmethod
     def normalize(arr: Iterable[str]) -> np.ndarray:
@@ -87,14 +97,15 @@ class Feature:
 
     @values.setter
     def values(self, values: Iterable[str]) -> None:
-        self._values = Feature.normalize(values).tolist() if values is not None else None
+        self._values = (
+            Feature.normalize(values).tolist() if values is not None else None
+        )
 
     def __repr__(self) -> str:
-        return repr_def(self, 'all')
+        return repr_def(self, "all")
 
 
 class Datasplit(ABC):
-
     def __init__(self, dataset: Dataset, file_format: str):
         """
         :param file_format: the default format of the data file, obtained through the 'path' property.
@@ -143,10 +154,13 @@ class Datasplit(ABC):
     @lazy_property
     @profile(logger=log)
     def data_enc(self) -> AM:
-        encoded_cols = [f.label_encoder.transform(self.data.iloc[:, f.index]) for f in self.dataset.features]
+        encoded_cols = [
+            f.label_encoder.transform(self.data.iloc[:, f.index])
+            for f in self.dataset.features
+        ]
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
-        self.release(['data', 'X', 'y'])
+        self.release(["data", "X", "y"])
         return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
 
     @lazy_property
@@ -177,7 +191,6 @@ class DatasetType(Enum):
 
 
 class Dataset(ABC):
-
     def __init__(self) -> None:
         super().__init__()
 

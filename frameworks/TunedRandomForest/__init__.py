@@ -14,17 +14,14 @@ def run(dataset: Dataset, config: TaskConfig):
     X_train, X_test = impute_array(dataset.train.X_enc, dataset.test.X_enc)
     y_train, y_test = unsparsify(dataset.train.y_enc, dataset.test.y_enc)
     data = dict(
-        train=dict(
-            X=X_train,
-            y=y_train
-        ),
-        test=dict(
-            X=X_test,
-            y=y_test
-        ),
+        train=dict(X=X_train, y=y_train),
+        test=dict(X=X_test, y=y_test),
     )
     if config.measure_inference_time:
-        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet", scikit_safe=True)
+        data["inference_subsample_files"] = dataset.inference_subsample_files(
+            fmt="parquet", scikit_safe=True
+        )
 
-    return run_in_venv(__file__, "exec.py",
-                       input_data=data, dataset=dataset, config=config)
+    return run_in_venv(
+        __file__, "exec.py", input_data=data, dataset=dataset, config=config
+    )

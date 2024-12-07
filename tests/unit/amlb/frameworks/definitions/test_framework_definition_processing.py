@@ -1,9 +1,13 @@
 import pytest
 from amlb.utils import Namespace
-from amlb.frameworks.definitions import _sanitize_and_add_defaults, \
-    _add_framework_name, _find_all_parents, \
-    _update_frameworks_with_parent_definitions, _remove_self_reference_extensions, \
-    _remove_frameworks_with_unknown_parent
+from amlb.frameworks.definitions import (
+    _sanitize_and_add_defaults,
+    _add_framework_name,
+    _find_all_parents,
+    _update_frameworks_with_parent_definitions,
+    _remove_self_reference_extensions,
+    _remove_frameworks_with_unknown_parent,
+)
 
 
 def test_remove_frameworks_with_unknown_parent_removes_framework_with_unknown_parent():
@@ -67,7 +71,6 @@ def test_find_all_parents_ignores_when_extends_is_none():
     """
 
 
-
 @pytest.mark.parametrize("framework", ["gama", "h2o_automl"])
 def test_find_all_parents_returns_parent_of_framework_with_single_parent(framework):
     frameworks = Namespace(
@@ -88,7 +91,9 @@ def test_find_all_parents_returns_frameworks_closest_first_if_two_parents(framew
         gama_older=Namespace(name="gama_20.0.0", version="20.0.0", extends="gama_old"),
         h2o_automl=Namespace(name="h2o", version="latest"),
         h2o_automl_old=Namespace(name="h2o_1.2", version="1.2", extends="h2o_automl"),
-        h2o_automl_older=Namespace(name="h2o_1.1", version="1.1", extends="h2o_automl_old"),
+        h2o_automl_older=Namespace(
+            name="h2o_1.1", version="1.1", extends="h2o_automl_old"
+        ),
     )
     parents = _find_all_parents(frameworks[f"{framework}_older"], frameworks)
     assert parents == [frameworks[f"{framework}_old"], frameworks[framework]]
@@ -101,9 +106,11 @@ def test_find_all_parents_returns_frameworks_closest_first_if_two_parents(framew
         ("params", dict(foo="bar")),
         ("version", "20.1.0"),
         ("setup_args", "zahradnik"),
-    ]
+    ],
 )
-def test_update_frameworks_with_parent_definitions_add_missing_field_from_parent(field, value):
+def test_update_frameworks_with_parent_definitions_add_missing_field_from_parent(
+    field, value
+):
     frameworks = Namespace(
         gama=Namespace(name="gama", **{field: value}),
         gama_old=Namespace(name="gama_20.1.0", extends="gama"),
@@ -120,9 +127,11 @@ def test_update_frameworks_with_parent_definitions_add_missing_field_from_parent
         ("params", dict(foo="bar"), dict(bar="baz")),
         ("version", "20.1.0", "20.1"),
         ("setup_args", "zahradnik", "smith"),
-    ]
+    ],
 )
-def test_update_frameworks_with_parent_definitions_does_not_overwrite_child(field, p_value, c_value):
+def test_update_frameworks_with_parent_definitions_does_not_overwrite_child(
+    field, p_value, c_value
+):
     frameworks = Namespace(
         gama=Namespace(name="gama", **{field: p_value}),
         gama_old=Namespace(name="gama_20.1", **{field: c_value}, extends="gama"),
@@ -139,9 +148,11 @@ def test_update_frameworks_with_parent_definitions_does_not_overwrite_child(fiel
         ("params", dict(foo="bar"), dict(bar="baz")),
         ("version", "20.1.0", "20.1"),
         ("setup_args", "zahradnik", "smith"),
-    ]
+    ],
 )
-def test_update_frameworks_with_parent_definitions_parent_overwrites_grandparent_yaml(field, g_value, p_value):
+def test_update_frameworks_with_parent_definitions_parent_overwrites_grandparent_yaml(
+    field, g_value, p_value
+):
     frameworks = Namespace(
         gama=Namespace(name="gama", **{field: g_value}),
         gama_old=Namespace(name="gama_2", **{field: p_value}, extends="gama"),
@@ -159,8 +170,7 @@ def test_sanitize_and_add_defaults_root_definition_get_module(simple_resource):
 
 def test_sanitize_and_add_defaults_child_inherits_module(simple_resource):
     frameworks = Namespace(
-        auto_sklearn=Namespace(),
-        auto_sklearn_old=Namespace(extends="auto_sklearn")
+        auto_sklearn=Namespace(), auto_sklearn_old=Namespace(extends="auto_sklearn")
     )
     _sanitize_and_add_defaults(frameworks, simple_resource.config)
     assert frameworks.auto_sklearn_old.module == "frameworks.auto_sklearn"

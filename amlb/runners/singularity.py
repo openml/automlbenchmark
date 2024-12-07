@@ -5,6 +5,7 @@ The Singularity image embeds a version of the automlbenchmark app so that tasks 
 providing the same parameters and features allowing to import config and export results through mounted folders.
 The image is pulled form an existing docker, yet executed in singularity framework
 """
+
 import logging
 import os
 import re
@@ -34,14 +35,14 @@ class SingularityBenchmark(ContainerBenchmark):
         di = framework_def.image
 
         # If we want to pull from docker, the separator is a colon for tag
-        separator = '_' if not as_docker_image else ':'
+        separator = "_" if not as_docker_image else ":"
         # Also, no need for author in image name
-        author = '' if not as_docker_image else f"{di.author}/"
+        author = "" if not as_docker_image else f"{di.author}/"
         image = di.image if di.image else framework_def.name.lower()
         tags = [di.tag if di.tag else framework_def.version.lower()]
         if label not in rconfig().container.ignore_labels:
             tags.append(label)
-        tag = re.sub(r"([^\w.-])", '.', '-'.join(tags))
+        tag = re.sub(r"([^\w.-])", ".", "-".join(tags))
         return f"{author}{image}{separator}{tag}"
 
     def __init__(self, framework_name, benchmark_name, constraint_name):
@@ -54,28 +55,33 @@ class SingularityBenchmark(ContainerBenchmark):
         super().__init__(framework_name, benchmark_name, constraint_name)
         self._custom_image_name = rconfig().singularity.image
         self.minimize_instances = rconfig().singularity.minimize_instances
-        self.container_name = 'singularity'
+        self.container_name = "singularity"
         self.force_branch = rconfig().singularity.force_branch
-        self.custom_commands = self.framework_module.singularity_commands(
-            self.framework_def.setup_args,
-            setup_cmd=self.framework_def._setup_cmd
-        ) if hasattr(self.framework_module, 'singularity_commands') else ""
+        self.custom_commands = (
+            self.framework_module.singularity_commands(
+                self.framework_def.setup_args, setup_cmd=self.framework_def._setup_cmd
+            )
+            if hasattr(self.framework_module, "singularity_commands")
+            else ""
+        )
 
     def _container_image_name(self, label=None, as_docker_image=False):
         """
         Singularity Images would be located on the framework directory
         """
-        image_name = self.image_name(self.framework_def, label=label, as_docker_image=as_docker_image)
+        image_name = self.image_name(
+            self.framework_def, label=label, as_docker_image=as_docker_image
+        )
 
         # Make sure image is in the framework directory
         if as_docker_image:
             return image_name
         else:
-            return os.path.join(self._framework_dir, _setup_dir_, image_name + '.sif')
+            return os.path.join(self._framework_dir, _setup_dir_, image_name + ".sif")
 
     @property
     def _script(self):
-        return os.path.join(self._framework_dir, _setup_dir_, 'Singularityfile')
+        return os.path.join(self._framework_dir, _setup_dir_, "Singularityfile")
 
     def _start_container(self, script_params=""):
         """Implementes the container run method"""
@@ -88,7 +94,7 @@ class SingularityBenchmark(ContainerBenchmark):
         cmd = (
             "singularity run --pwd /bench {options} "
             "-B {input}:/input -B {output}:/output -B {custom}:/custom "
-            "{image} \"{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}\""
+            '{image} "{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}"'
         ).format(
             options=rconfig().singularity.run_extra_options,
             input=in_dir,
@@ -102,12 +108,16 @@ class SingularityBenchmark(ContainerBenchmark):
         log.info("Datasets are loaded by default from folder %s.", in_dir)
         log.info("Generated files will be available in folder %s.", out_dir)
         try:
-            run_cmd(cmd, _capture_error_=False)  # console logs are written on stderr by default: not capturing allows live display
+            run_cmd(
+                cmd, _capture_error_=False
+            )  # console logs are written on stderr by default: not capturing allows live display
         except:
             # also want to handle KeyboardInterrupt
             # In the foreground run mode, the user has to kill the process
             # There is yet no docker kill command. User has to kill PID manually
-            log.warning(f"Container {inst_name} may still be running, please verify and kill it manually.")
+            log.warning(
+                f"Container {inst_name} may still be running, please verify and kill it manually."
+            )
             raise Exception
 
     def _image_exists(self, image):
@@ -117,19 +127,25 @@ class SingularityBenchmark(ContainerBenchmark):
             return True
         try:
             # We pull from docker as there are not yet singularity org accounts
-            run_cmd("singularity pull {output_file} docker://{image}".format(
-                image=self._container_image_name(as_docker_image=True),
-                output_file=image,
-            ), _live_output_=True)
+            run_cmd(
+                "singularity pull {output_file} docker://{image}".format(
+                    image=self._container_image_name(as_docker_image=True),
+                    output_file=image,
+                ),
+                _live_output_=True,
+            )
             return True
         except Exception:
             try:
                 # If no docker image, pull from singularity hub
-                run_cmd("singularity pull {output_file} library://{library}/{image}".format(
-                    image=self._container_image_name(as_docker_image=True),
-                    output_file=image,
-                    library=rconfig().singularity.library
-                ), _live_output_=True)
+                run_cmd(
+                    "singularity pull {output_file} library://{library}/{image}".format(
+                        image=self._container_image_name(as_docker_image=True),
+                        output_file=image,
+                        library=rconfig().singularity.library,
+                    ),
+                    _live_output_=True,
+                )
                 return True
             except Exception:
                 pass
@@ -137,18 +153,23 @@ class SingularityBenchmark(ContainerBenchmark):
 
     def _run_container_build_command(self, image, cache):
         log.info(f"Building singularity image {image}.")
-        run_cmd("sudo singularity build {options} {container} {script}".format(
-            options="" if cache else "--disable-cache",
-            container=image,
-            script=self._script,
-        ), _live_output_=True)
+        run_cmd(
+            "sudo singularity build {options} {container} {script}".format(
+                options="" if cache else "--disable-cache",
+                container=image,
+                script=self._script,
+            ),
+            _live_output_=True,
+        )
         log.info(f"Successfully built singularity image {image}.")
 
     def _upload_image(self, image):
         library = rconfig().singularity.library
         name = self._container_image_name(as_docker_image=True)
         log.info(f"Publishing Singularity image {image}.")
-        run_cmd(f"singularity login && singularity push -U {image} library://{library}/{name}")
+        run_cmd(
+            f"singularity login && singularity push -U {image} library://{library}/{name}"
+        )
         log.info(f"Successfully published singularity image {image}.")
 
     def _generate_script(self, custom_commands):
@@ -221,17 +242,17 @@ exec /bin/bash -c "$PY {script} ""$@"
             custom_commands=custom_commands.format(
                 setup=dir_of(
                     os.path.join(self._framework_dir, "setup/"),
-                    rel_to_project_root=True
+                    rel_to_project_root=True,
                 ),
                 pip="$PIP",
-                py="$PY"
+                py="$PY",
             ),
-            framework=self._forward_params['framework_name'],
+            framework=self._forward_params["framework_name"],
             pyv=rconfig().versions.python,
             pipv=rconfig().versions.pip,
             script=rconfig().script,
         )
 
         touch(self._script)
-        with open(self._script, 'w') as file:
+        with open(self._script, "w") as file:
             file.write(singularity_content)

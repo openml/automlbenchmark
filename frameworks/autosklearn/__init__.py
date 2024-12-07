@@ -23,10 +23,16 @@ def run(dataset: Dataset, config: TaskConfig):
             X_enc=dataset.test.X_enc,
             y_enc=unsparsify(dataset.test.y_enc),
         ),
-        predictors_type=['Numerical' if p.is_numerical() else 'Categorical' for p in dataset.predictors],
+        predictors_type=[
+            "Numerical" if p.is_numerical() else "Categorical"
+            for p in dataset.predictors
+        ],
     )
     if config.measure_inference_time:
-        data["inference_subsample_files"] = dataset.inference_subsample_files(fmt="parquet")
+        data["inference_subsample_files"] = dataset.inference_subsample_files(
+            fmt="parquet"
+        )
 
-    return run_in_venv(__file__, "exec.py",
-                       input_data=data, dataset=dataset, config=config)
+    return run_in_venv(
+        __file__, "exec.py", input_data=data, dataset=dataset, config=config
+    )

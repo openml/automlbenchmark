@@ -13,15 +13,10 @@ def run(dataset: Dataset, config: TaskConfig):
 
     X_train_enc, X_test_enc = impute_array(dataset.train.X_enc, dataset.test.X_enc)
     data = dict(
-        train=dict(
-            X_enc=X_train_enc,
-            y_enc=dataset.train.y_enc
-        ),
-        test=dict(
-            X_enc=X_test_enc,
-            y_enc=dataset.test.y_enc
-        )
+        train=dict(X_enc=X_train_enc, y_enc=dataset.train.y_enc),
+        test=dict(X_enc=X_test_enc, y_enc=dataset.test.y_enc),
     )
 
-    return run_in_venv(__file__, "exec.py",
-                       input_data=data, dataset=dataset, config=config)
+    return run_in_venv(
+        __file__, "exec.py", input_data=data, dataset=dataset, config=config
+    )

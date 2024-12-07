@@ -14,5 +14,5 @@ default_dirs = ns(
     input_dir=cache_directory,
     output_dir=str(pathlib.Path(__file__).parent.parent / "results"),
     user_dir="~/.config/automlbenchmark",
-    root_dir=str(pathlib.Path(__file__).parent.parent)
+    root_dir=str(pathlib.Path(__file__).parent.parent),
 )

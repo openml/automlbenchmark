@@ -25,7 +25,9 @@ def run(dataset, config):
 
     is_classification = config.type == "classification"
     is_multiclass = dataset.problem_type = "multiclass"
-    training_params = {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
+    training_params = {
+        k: v for k, v in config.framework_params.items() if not k.startswith("_")
+    }
 
     train_path, test_path = dataset.train.path, dataset.test.path
     target_col = dataset.target.name
@@ -47,8 +49,12 @@ def run(dataset, config):
     X_test.drop([target_col], axis=1, inplace=True)
 
     # Sapientml
-    output_dir = config.output_dir + "/" + "outputs" + "/" + config.name + "/" + str(config.fold)
-    predictor = SapientML([target_col], task_type="classification" if is_classification else "regression")
+    output_dir = (
+        config.output_dir + "/" + "outputs" + "/" + config.name + "/" + str(config.fold)
+    )
+    predictor = SapientML(
+        [target_col], task_type="classification" if is_classification else "regression"
+    )
 
     # Fit the model
     with Timer() as training:
@@ -61,7 +67,6 @@ def run(dataset, config):
     log.info(f"Finished predict in {predict.duration}s.")
 
     if is_classification:
-
         predictions[target_col] = predictions[target_col].astype(str)
         predictions[target_col] = predictions[target_col].str.lower()
         predictions[target_col] = predictions[target_col].str.strip()
@@ -71,8 +76,12 @@ def run(dataset, config):
         y_test[target_col] = y_test[target_col].str.strip()
 
     if is_classification:
-        probabilities = OneHotEncoder(handle_unknown="ignore").fit_transform(predictions.to_numpy())
-        probabilities = pd.DataFrame(probabilities.toarray(), columns=dataset.target.classes)
+        probabilities = OneHotEncoder(handle_unknown="ignore").fit_transform(
+            predictions.to_numpy()
+        )
+        probabilities = pd.DataFrame(
+            probabilities.toarray(), columns=dataset.target.classes
+        )
 
         return result(
             output_file=config.output_predictions_file,

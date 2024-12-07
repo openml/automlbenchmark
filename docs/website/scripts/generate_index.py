@@ -26,11 +26,14 @@ class Framework(NamedTuple):
     documentation: str = None
 
 
-def load_framework_definitions(definition_file: Path = Path("official_frameworks.toml")) -> list[Framework]:
+def load_framework_definitions(
+    definition_file: Path = Path("official_frameworks.toml"),
+) -> list[Framework]:
     with definition_file.open("rb") as fh:
         frameworks = tomllib.load(fh)["frameworks"]
     frameworks = parse_frameworks(frameworks)
     return sorted(frameworks, key=lambda fw: fw.name.lower())
+
 
 def parse_frameworks(framework_descriptions):
     return [
@@ -57,10 +60,7 @@ def generate_framework_gallery(frameworks: Iterable[Framework]) -> str:
     <img src=\"${icon}\" title=\"${name}\"/>
     </a>
     """)
-    framework_icon_html = [
-        template.substitute(fw._asdict())
-        for fw in frameworks
-    ]
+    framework_icon_html = [template.substitute(fw._asdict()) for fw in frameworks]
     return "\n".join(framework_icon_html)
 
 
@@ -79,9 +79,9 @@ def generate_main_page(frameworks: Iterable[Framework], template: Template) -> s
 
 
 def generate_framework_list(
-        frameworks: Sequence[Framework],
-        framework_card_template: Template,
-        framework_paper_template: Template,
+    frameworks: Sequence[Framework],
+    framework_card_template: Template,
+    framework_paper_template: Template,
 ) -> str:
     framework_cards = []
     for framework in frameworks:
@@ -114,10 +114,10 @@ def generate_framework_page(frameworks: Sequence[Framework]) -> str:
         frameworks,
         framework_card_template,
         framework_paper_template,
-
     )
 
-    main_content = main_content.substitute(**dict(
+    main_content = main_content.substitute(
+        **dict(
             navigation=navigation,
             footer=footer,
             framework_cards=framework_cards,
