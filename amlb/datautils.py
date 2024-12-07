@@ -25,7 +25,7 @@ import pandas as pd
 import scipy.sparse
 from sklearn.base import TransformerMixin
 from sklearn.impute import SimpleImputer as Imputer
-from sklearn.metrics import (
+from sklearn.metrics import (  # noqa: F401  # just aliasing
     accuracy_score,
     auc,
     average_precision_score,
@@ -39,7 +39,7 @@ from sklearn.metrics import (
     precision_recall_curve,
     r2_score,
     roc_auc_score,
-)  # noqa: F401  # just aliasing
+)
 from sklearn.preprocessing import (
     LabelEncoder,
     LabelBinarizer,
