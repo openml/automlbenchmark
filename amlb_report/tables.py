@@ -66,4 +66,3 @@ def render_leaderboard(col, results, aggregate=False, show_imputations=True, fil
     if filename:
         df.to_csv(create_file("tables", config.results_group, filename), float_format='%.f')
     return df
-

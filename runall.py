@@ -11,4 +11,3 @@ parser.add_argument('-p', '--parallel', metavar='parallel_jobs', type=int, defau
                     help="The number of jobs (i.e. tasks or folds) that can run in parallel. Defaults to %(default)s. "
                          "Currently supported only in docker and aws mode.")
 args = parser.parse_args()
-

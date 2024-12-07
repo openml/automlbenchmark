@@ -491,4 +491,3 @@ class ThreadPoolExecutorJobRunner(ExecutorJobRunner):
 class ProcessPoolExecutorJobRunner(ExecutorJobRunner):
     def __init__(self, jobs, parallel_jobs):
         super().__init__(ProcessPoolExecutor, jobs, parallel_jobs)
-

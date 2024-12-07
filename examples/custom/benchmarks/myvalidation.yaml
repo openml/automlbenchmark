@@ -22,4 +22,3 @@
 
 - name: fashion-mnist
   openml_task_id: 146825
-

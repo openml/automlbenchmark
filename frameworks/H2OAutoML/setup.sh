@@ -32,4 +32,3 @@ else
 fi
 
 PY -c "from h2o import __version__; print(__version__)" | grep "^[[:digit:]]\." >> "${HERE}/.setup/installed"
-

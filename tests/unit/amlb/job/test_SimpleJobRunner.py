@@ -105,4 +105,3 @@ def test_reschedule_job():
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1
 
     assert seq_steps.index(('job_4', 'completing')) < seq_steps.index(('job_5', 'completing'))
-

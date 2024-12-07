@@ -30,5 +30,3 @@ if __name__ == '__main__':
         task_ids=all_task_ids,
         alias="AutoML-Benchmark"
     )
-
-

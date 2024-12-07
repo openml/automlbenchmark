@@ -50,6 +50,3 @@ def generate_navigation() -> str:
     desktop_navigation = generate_navigation_for(items)
     mobile_navigation = generate_navigation_for(items, mobile=True)
     return desktop_navigation + mobile_navigation
-
-
-

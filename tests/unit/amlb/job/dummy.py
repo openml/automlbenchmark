@@ -27,4 +27,3 @@ class DummyJob(Job):
 
     def _on_state(self, state: JobState):
         self._add_step(state.name)
-

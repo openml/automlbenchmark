@@ -65,6 +65,3 @@
       - 'https://github.com/openml/automlbenchmark/raw/master/examples/custom/data/iris/multi_folds/iris_test_2.csv'
     target: species
   folds: 3
-
-
-

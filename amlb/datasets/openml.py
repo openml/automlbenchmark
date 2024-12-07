@@ -431,4 +431,3 @@ def _get_data_splitter_cls(split_format='array'):
         supported = [ds.format for ds in __data_splitters__]
         raise ValueError(f"`{split_format}` is not among supported formats: {supported}.")
     return ds_cls
-

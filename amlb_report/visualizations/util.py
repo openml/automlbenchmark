@@ -84,4 +84,3 @@ def set_limits(axes, xlim=None, ylim=None):
         axes.set_ylim(ylim)
     if isinstance(ylim, dict):
         axes.set_ylim(**ylim)
-

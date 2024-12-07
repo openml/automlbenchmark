@@ -254,5 +254,3 @@ def test_serialize_mixed_dataframe_to_parquet(tmpdir):
     assert isinstance(reloaded, pd.DataFrame)
     assert is_sparse(reloaded)
     assert dfm.compare(reloaded).empty
-
-

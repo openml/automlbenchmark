@@ -101,4 +101,3 @@ def run(dataset: Dataset, config: TaskConfig):
     return dict(
         training_duration=training.duration
     )
-

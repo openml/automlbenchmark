@@ -127,4 +127,3 @@ The main landing page with information about the project is written in pure `htm
 ### Open a Pull Request
 When opening a pull request, reference the issue that it closes.
 Please also provide any additional context that helps review the pull request that may not have been appropriate as code comments.
-

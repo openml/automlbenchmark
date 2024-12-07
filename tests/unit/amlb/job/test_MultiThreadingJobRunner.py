@@ -254,4 +254,3 @@ def test_reschedule_does_not_lead_to_runner_cancellation_on_high_parallelism():
     assert len(list(filter(lambda s: s == 'completing', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'stopping', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
     assert len(list(filter(lambda s: s == 'stopped', rescheduled_job_steps))) == 1 * len(rescheduled_job_names)
-

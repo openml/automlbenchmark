@@ -37,4 +37,3 @@ if args.reconnect:
     amlb.AWSBenchmark.reconnect(args.instances)
 else:
     amlb.AWSBenchmark.fetch_results(args.instances)
-

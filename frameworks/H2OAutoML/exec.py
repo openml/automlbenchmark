@@ -289,4 +289,3 @@ def write_csv(df, path):
 
 if __name__ == '__main__':
     call_run(run)
-

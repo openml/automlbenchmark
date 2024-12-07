@@ -37,4 +37,3 @@ try the following steps before opening an issue:
 
   - manually clean the installation files by deleting the `lib`, `venv` and `.setup` folders
     in the given framework folder (e.g. `frameworks/MyFramework`), and try again.
-

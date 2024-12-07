@@ -40,4 +40,3 @@ def run(dataset: Dataset, config: TaskConfig):
 
 def meta_result(df, key):
     return df.loc[df['key'] == key, 'value'].squeeze()
-

@@ -103,4 +103,3 @@ def sort_dataframe(df, by=None, axis=0):
         tmp_df.set_index(tmp_df.index.droplevel(tmp_sort), inplace=True)
         return tmp_df
     return df.sort_index()
-

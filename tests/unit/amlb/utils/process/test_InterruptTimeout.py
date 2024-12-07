@@ -117,4 +117,3 @@ def test_wait_retry_in_interruptions_escalation():
                         time.sleep(.1)
         assert t.duration - timeout < 1
         assert 10 < i < 15
-

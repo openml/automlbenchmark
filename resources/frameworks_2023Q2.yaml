@@ -126,4 +126,3 @@ TunedRandomForest:
   version: '1.2.2'
   params:
     n_estimators: 2000
-

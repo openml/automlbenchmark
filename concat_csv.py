@@ -19,4 +19,3 @@ print(f"concatenating following files to `{args.target}`:\n{args.sources}")
 (pd.concat([pd.read_csv(file) for file in args.sources], ignore_index=True)
    .drop_duplicates()
    .to_csv(args.target, index=False))
-

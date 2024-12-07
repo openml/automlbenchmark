@@ -38,4 +38,3 @@ def run(dataset: Dataset, config: TaskConfig):
     return run_in_venv(__file__, "exec.py",
                        input_data=data, dataset=dataset, config=config,
                        process_results=process_results)
-
