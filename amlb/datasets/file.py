@@ -139,7 +139,7 @@ class FileDataset(Dataset):
     def __init__(self, train: Datasplit, test: Datasplit,
                  target: int | str | None = None, features: list[ns | str] | None = None, type: str | None = None):
         """
-        
+
         Parameters
         ----------
         train: Datasplit

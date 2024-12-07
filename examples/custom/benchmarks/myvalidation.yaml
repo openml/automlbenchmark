@@ -9,7 +9,7 @@
   openml_data_id: 41147
   enabled: false
 
-- name: bioresponse 
+- name: bioresponse
   openml_task_id: 14966
 
 - name: satellite
@@ -20,6 +20,6 @@
   openml_data_id: 41167
   enabled: false
 
-- name: fashion-mnist 
+- name: fashion-mnist
   openml_task_id: 146825
 

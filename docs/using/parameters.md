@@ -14,7 +14,7 @@ positional arguments:
   benchmark             The benchmark type to run as defined by default in resources/benchmarks/{benchmark}.yaml,
                         a path to a benchmark description file, or an openml suite or task.
                         OpenML references should be formatted as 'openml/s/X' and 'openml/t/Y',
-                        for studies and tasks respectively. Use 'test.openml/s/X' for the 
+                        for studies and tasks respectively. Use 'test.openml/s/X' for the
                         OpenML test server.
                         (default: 'test')
   constraint            The constraint definition to use as defined by default in resources/constraints.yaml.
@@ -73,14 +73,14 @@ optional arguments:
 
 ## Profiling the application
 
-Currently, the application provides a global flag `--profiling` to activate profiling 
+Currently, the application provides a global flag `--profiling` to activate profiling
 for some specific methods that can be slow or memory intensive:
 
 ```bash
 python runbenchmark.py randomforest --profiling
 ```
 
-Not all methods and functions are not profiled, but if you need to profile more, 
+Not all methods and functions are not profiled, but if you need to profile more,
 you just need to decorate the function with the `@profile()` decorator (from `amlb.utils`).
 Profiling reports on memory usage and function durations:
 

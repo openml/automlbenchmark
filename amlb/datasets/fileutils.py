@@ -28,7 +28,7 @@ class HttpHandler(FileHandler):
         except URLError as e:
             log.error(f"Cannot access url %s: %s", url, e)
             return False
-    
+
     def download(self, url, dest_path):
         touch(dest_path)
         with urlopen(url) as resp, open(dest_path, 'wb') as dest:
@@ -45,7 +45,7 @@ class S3Handler(FileHandler):
         except ClientError as e:
             log.error(f"Cannot access url %s: %s", url, e)
             return False
-        
+
     def download(self, url, dest_path):
         touch(dest_path)
         s3 = boto3.resource('s3')
@@ -57,7 +57,7 @@ class S3Handler(FileHandler):
                 log.error("The object does not exist.")
             else:
                 raise
-        
+
     def _s3_path_to_bucket_prefix(self, s3_path):
         s3_path_cleaned = s3_path.split('://', 1)[1]
         bucket, prefix = s3_path_cleaned.split('/', 1)
@@ -97,23 +97,23 @@ def unarchive_file(path, dest_folder=None):
     elif tarfile.is_tarfile(path):
         with tarfile.open(path) as tf:
             def is_within_directory(directory, target):
-                
+
                 abs_directory = os.path.abspath(directory)
                 abs_target = os.path.abspath(target)
-            
+
                 prefix = os.path.commonprefix([abs_directory, abs_target])
-                
+
                 return prefix == abs_directory
-            
+
             def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
-            
+
                 for member in tar.getmembers():
                     member_path = os.path.join(path, member.name)
                     if not is_within_directory(path, member_path):
                         raise Exception("Attempted Path Traversal in Tar File")
-            
-                tar.extractall(path, members, numeric_owner=numeric_owner) 
-                
-            
+
+                tar.extractall(path, members, numeric_owner=numeric_owner)
+
+
             safe_extract(tf, path=dest_folder)
     return dest

@@ -88,8 +88,8 @@ def load_dataset_metadata(results):
 
 
 def render_metadata(metadata, filename='metadata.csv'):
-    df = pd.DataFrame([m.__dict__ for m in metadata.values()], 
-                      columns=['task', 'name', 'type', 'dataset', 
+    df = pd.DataFrame([m.__dict__ for m in metadata.values()],
+                      columns=['task', 'name', 'type', 'dataset',
                                'nrows', 'nfeatures', 'nclasses',
                                'class_imbalance'])
     df.sort_values(by='name', inplace=True)

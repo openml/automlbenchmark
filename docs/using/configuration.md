@@ -6,7 +6,7 @@ in a flexible manner.
 
 ## Configuration Options
 
-The default configuration options can be found in the 
+The default configuration options can be found in the
 [`resources/config.yaml`](GITHUB/resources/config.yaml) file.
 
 ```{ .yaml title="resources/config.yaml" .limit_max_height }
@@ -28,7 +28,7 @@ When specifying filepaths, configurations support the following placeholders:
 | `{root}`    | `root_dir`           | Detected at runtime         | The root folder of the `automlbenchmark` application.                  |
 
 For example, including the following snippet in your custom configuration when
-`user_dir` is `~/.config/automlbenchmark` (which it is by default) changes your 
+`user_dir` is `~/.config/automlbenchmark` (which it is by default) changes your
 input directory to `~/.config/automlbenchmark/data` :
 
 ```yaml title="examples/custom/config.yaml"
@@ -36,14 +36,14 @@ input directory to `~/.config/automlbenchmark/data` :
 ```
 
 !!! tip "Multiple Configuration Files"
-    It is possible to have multiple configuration files: 
-    just create a folder for each `config.yaml` file and use that folder as your 
+    It is possible to have multiple configuration files:
+    just create a folder for each `config.yaml` file and use that folder as your
     `user_dir` using `--userdir /path/to/config/folder` when invoking `runbenchmark.py`.
 
 
-Below is an example of a configuration file which **1.** changes the directory the 
+Below is an example of a configuration file which **1.** changes the directory the
 datasets are loaded from, **2.** specifies additional paths to look up framework,
-benchmark, and constraint definitions, **3.** also makes those available in an S3 bucket 
+benchmark, and constraint definitions, **3.** also makes those available in an S3 bucket
 when running in AWS mode, and **4.** changes the default EC2 instance type for AWS mode.
 
 ```yaml title="examples/custom/config.yaml"

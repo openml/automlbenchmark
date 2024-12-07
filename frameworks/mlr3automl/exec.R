@@ -10,14 +10,14 @@ run <- function(train_file, test_file, target.index, type, output_predictions_fi
   future::plan(future::multicore)
   start_time <- Sys.time()
   set.seed(seed)
-  
+
   train <- mlr3oml::read_arff(train_file)
   colnames(train) <- make.names(colnames(train))
   target <- colnames(train)[target.index]
 
   test <- mlr3oml::read_arff(test_file)
   colnames(test) <- make.names(colnames(test))
-  
+
   print(paste("Finished loading data after ", Sys.time() - start_time, " seconds"))
   remaining_budget <- as.integer(start_time - Sys.time() + time.budget)
   print(paste("remaining budget: ", remaining_budget, " seconds"))

@@ -17,7 +17,7 @@ def run(dataset, config):
     log.info(f"\n**** ML-Plan [v{version}] ****\n")
 
     is_classification = config.type == 'classification'
-    
+
     # Mapping of benchmark metrics to Weka metrics
     metrics_mapping = dict(
         acc='ERRORRATE',
@@ -34,7 +34,7 @@ def run(dataset, config):
     metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     if metric is None:
         raise ValueError('Performance metric {} is not supported.'.format(config.metric))
-    
+
     train_file = dataset.train.path
     test_file = dataset.test.path
 

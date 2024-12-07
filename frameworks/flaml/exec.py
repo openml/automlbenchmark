@@ -76,7 +76,7 @@ def run(dataset, config):
         labels = aml.classes_ if isinstance(aml.classes_, list) else aml.classes_.tolist()
     log.info(f"Finished predict in {predict.duration}s.")
 
-    return result(  
+    return result(
                     output_file=config.output_predictions_file,
                     probabilities=probabilities,
                     predictions=predictions,

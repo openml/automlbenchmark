@@ -5,9 +5,9 @@ We recommend *loose* reproducibility if you simply want to recreate the experime
 The *balanced* steps are the generally recommended way to reproduce a specific versioned experiment, ignoring some details which _most likely_ do not affect the outcomes.
 The *strict* steps provide additional details to pay attention to in order to recreate the exact setup as faithfully as possible.
 
-!!! note 
-    
-    We are working on making it easier for people to share all relevant information to reproduce an evaluation as faithfully 
+!!! note
+
+    We are working on making it easier for people to share all relevant information to reproduce an evaluation as faithfully
     as possible in a way that is directly digestable by the AutoML benchmark tool itself. In the mean time, we do believe
     that using the _balanced_ steps below produce qualitatively similar results.
 
@@ -27,9 +27,9 @@ python runbenchmark.py autogluon openml/s/271 1h8c_gp3 -m docker
 !!! note "Example commands on this page may take a long time"
 
     Example commands provided on this page are designed to reproduce (parts of) benchmarks.
-    These can incur a lot of compute time. For example, the command above will evaluate 
+    These can incur a lot of compute time. For example, the command above will evaluate
     AutoGluon on the entire classification suite and will take roughly 700 hours to complete.
-    Typically, large scale benchmarks should be run through some parallelization by splitting the 
+    Typically, large scale benchmarks should be run through some parallelization by splitting the
     commands by task (`--task=`) and/or fold (`-fold=`).
 
 ## Balanced Reproducibility
@@ -57,7 +57,7 @@ source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-1.  Older versions of the AutoML benchmark may require different versions of Python. 
+1.  Older versions of the AutoML benchmark may require different versions of Python.
     Here, we use [pyenv](https://github.com/pyenv/pyenv) to make sure we use Python 3.9, which is the required version for the v2.1.7 release.
     Using the wrong version of Python _may_ work, but in many cases will lead to problems.
     Version 2.0 requires Python 3.6.
@@ -83,9 +83,9 @@ Using the same configuration file and the same AMLB version installed, you can t
 python runbenchmark.py FRAMEWORK:VERSION STUDY CONSTRAINT --task=TASK_NAME --fold=FOLD_NO --seed=SEED -m aws
 ```
 
-??? note "In the future..." 
+??? note "In the future..."
 
-    We do want to improve support for rerunning experiments defined in a `results.csv` file format. 
+    We do want to improve support for rerunning experiments defined in a `results.csv` file format.
     This is useful not just for reproducibility, but also for running failed jobs, or scheduling a job matrix.
     However, we currently do not have the resources to add this feature. We welcome contributions.
 

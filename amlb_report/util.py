@@ -24,7 +24,7 @@ class Namespace:
         clone.__dict__.update(**kwargs)
         return clone
 
-    
+
 def list_all_files(paths, include=None, exclude=None):
     """
     :param paths: the directories to look into.

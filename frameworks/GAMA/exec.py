@@ -72,7 +72,7 @@ def run(dataset, config):
     else:
         kwargs['max_memory_mb'] = config.max_mem_size_mb
         kwargs['output_directory'] = output_subdir('logs', config)
-    
+
     gama_automl = estimator(**kwargs)
 
     X_train, y_train = dataset.train.X, dataset.train.y

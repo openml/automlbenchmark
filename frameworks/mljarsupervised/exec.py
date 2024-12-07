@@ -29,7 +29,7 @@ def run(dataset, config):
         rmse='rmse'
     )
     eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else "auto"
-    
+
     # Mapping of benchmark task to MLJAR ML task
     problem_mapping = dict(
         binary="binary_classification",

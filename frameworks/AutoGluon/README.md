@@ -29,7 +29,7 @@ To summarize these steps:
 5. For example, if running the most basic framework listed below in the example user_dir, the command would look like: \
     `python3 runbenchmark.py AutoGluon_curves_true -u examples/custom ...`
 
-	
+
 ### Sample Framework Definitions
 ```yaml
 # simplest usage

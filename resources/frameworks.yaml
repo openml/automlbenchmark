@@ -175,7 +175,7 @@ NaiveAutoML:
   project: https://github.com/fmohr/naiveautoml
   description: |
     NaiveAutoML is an AutoML framework that aims to mimic a simple ML workflow,
-    where in-isolation optimization of the different components of a pre-defined 
+    where in-isolation optimization of the different components of a pre-defined
     pipeline scheme is applied.
   refs: [https://link.springer.com/article/10.1007/s10994-022-06200-0#article-info]
 #  params:
