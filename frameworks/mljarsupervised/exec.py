@@ -3,7 +3,6 @@ import shutil
 import logging
 from typing import Union
 
-import numpy as np
 import matplotlib
 import pandas as pd
 
@@ -12,8 +11,12 @@ matplotlib.use("agg")  # no need for tk
 import supervised
 from supervised.automl import AutoML
 
-from frameworks.shared.callee import call_run, result, output_subdir, \
-    measure_inference_times
+from frameworks.shared.callee import (
+    call_run,
+    result,
+    output_subdir,
+    measure_inference_times,
+)
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(os.path.basename(__file__))
@@ -23,13 +26,11 @@ def run(dataset, config):
     log.info(f"\n**** mljar-supervised [v{supervised.__version__}] ****\n")
 
     # Mapping of benchmark metrics to MLJAR metrics
-    metrics_mapping = dict(
-        auc='auc',
-        logloss='logloss',
-        rmse='rmse'
+    metrics_mapping = dict(auc="auc", logloss="logloss", rmse="rmse")
+    eval_metric = (
+        metrics_mapping[config.metric] if config.metric in metrics_mapping else "auto"
     )
-    eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else "auto"
-    
+
     # Mapping of benchmark task to MLJAR ML task
     problem_mapping = dict(
         binary="binary_classification",
@@ -53,13 +54,12 @@ def run(dataset, config):
         random_state=config.seed,
         ml_task=ml_task,
         eval_metric=eval_metric,
-        **training_params
+        **training_params,
     )
 
     with Timer() as training:
         automl.fit(X_train, y_train)
     log.info(f"Finished fit in {training.duration}s.")
-
 
     def infer(data: Union[str, pd.DataFrame]):
         batch = pd.read_parquet(data) if isinstance(data, str) else data
@@ -67,12 +67,14 @@ def run(dataset, config):
 
     inference_times = {}
     if config.measure_inference_time:
-        inference_times["file"] = measure_inference_times(infer, dataset.inference_subsample_files)
+        inference_times["file"] = measure_inference_times(
+            infer, dataset.inference_subsample_files
+        )
         inference_times["df"] = measure_inference_times(
             infer,
             [(1, dataset.test.X.sample(1, random_state=i)) for i in range(100)],
         )
-    log.info(f"Finished inference time measurements.")
+    log.info("Finished inference time measurements.")
 
     with Timer() as predict:
         X_test, y_test = dataset.test.X, dataset.test.y.squeeze()
@@ -84,7 +86,9 @@ def run(dataset, config):
         if y_train.dtype == bool and preds["label"].dtype == int:
             # boolean target produces integer predictions for mljar-supervised <= 0.10.6
             # https://github.com/mljar/mljar-supervised/issues/442
-            preds = preds.rename({"prediction_0": "False", "prediction_1": "True"}, axis=1)
+            preds = preds.rename(
+                {"prediction_0": "False", "prediction_1": "True"}, axis=1
+            )
             preds["label"] = preds["label"].astype(bool)
         else:
             preds.columns = [c.replace("prediction_", "", 1) for c in preds.columns]

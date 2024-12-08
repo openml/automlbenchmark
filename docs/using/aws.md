@@ -15,7 +15,7 @@ The AutoML benchmark supports running experiments on [AWS EC2](https://aws.amazo
         overhead. Even when using spot instance pricing on `m5.2xlarge` instances (default)
         probably costs at least $100 US (prices depend on overhead and fluctating prices).
         A full evaluation with multiple frameworks and/or time budgets can cost
-        thousands of dollars. 
+        thousands of dollars.
 
 
 ## Setup
@@ -24,19 +24,19 @@ To run a benchmark on AWS you additionally need to have a configured AWS account
 The application is using the [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
 Python package to exchange files through S3 and create EC2 instances.
 
-If this is your first time setting up your AWS account on the machine that will run the 
+If this is your first time setting up your AWS account on the machine that will run the
 `automlbenchmark` app, you can use the [AWS CLI](http://aws.amazon.com/cli/) tool and run:
  ```bash
  aws configure
  ```
 You will need your AWS Access Key ID, AWS Secret Access Key, and pick a default [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions).
 
-!!! note "Selecting a Region" 
+!!! note "Selecting a Region"
     To use a region, an AMI must be configured in the automl benchmark configuration file
-    under `aws.ec2.regions`. The default configuration has AMIs for `us-east-1`, 
+    under `aws.ec2.regions`. The default configuration has AMIs for `us-east-1`,
     `us-east-2`, `us-west-1`, `eu-west-1`, and `eu-central-1`. If you default EC2
     region is different from these, you will need to add the AMI to your [custom configuration](configuration.md#custom-configurations).
-  
+
 On first use, it is recommended to use the following configuration file, or to extend
 your custom configuration file with these options. Follow the instructions in the file
 and make any necessary adjustments before running the benchmark.
@@ -51,12 +51,12 @@ To run a test to see if the benchmark framework is working on AWS, do the follow
 python3 runbenchmark.py constantpredictor test -m aws
 ```
 
-This will create and start an EC2 instance for each benchmark job and run the 6 jobs 
+This will create and start an EC2 instance for each benchmark job and run the 6 jobs
 (3 OpenML tasks * 2 folds) from the `test` benchmark sequentially.
-Each job will run is constrained to a one-minute limit in this case, excluding setup 
+Each job will run is constrained to a one-minute limit in this case, excluding setup
 time for the EC2 instances (though `constantpredictor` will likely only take seconds).
 
-For longer benchmarks, you'll probably want to run multiple jobs in parallel and 
+For longer benchmarks, you'll probably want to run multiple jobs in parallel and
 distribute the work to several EC2 instances, for example:
 ```bash
 python3 runbenchmark.py autosklearn validation 1h4c -m aws -p 4
@@ -65,13 +65,13 @@ will keep 4 EC2 instances running, monitor them in a dedicated thread, and final
 
 ??? info "EC2 Instances always stopped eventually (by default)"
 
-    Each EC2 instance is provided with a time limit at startup to ensure that in any case, 
-    the instance is stopped even if there is an issue when running the benchmark task. 
-    In this case the instance is stopped, not terminated, and we can therefore inspect 
-    the machine manually (ideally after resetting its UserData field to avoid 
+    Each EC2 instance is provided with a time limit at startup to ensure that in any case,
+    the instance is stopped even if there is an issue when running the benchmark task.
+    In this case the instance is stopped, not terminated, and we can therefore inspect
+    the machine manually (ideally after resetting its UserData field to avoid
     re-triggering the benchmark on the next startup).
 
-The console output is still showing the instances starting, outputs the progress and 
+The console output is still showing the instances starting, outputs the progress and
 then the results for each dataset/fold combination (log excerpt from different command):
 
 ```{.text .limit_max_height title="Example output benchmarking H2O on AWS"}
@@ -81,10 +81,10 @@ Loading benchmark definitions from /Users/me/repos/automlbenchmark/resources/ben
 Uploading `/Users/me/repos/automlbenchmark/resources/benchmarks/validation.yaml` to `ec2/input/validation.yaml` on s3 bucket automl-benchmark.
 ...
 Starting new EC2 instance with params: H2OAutoML_nightly /s3bucket/input/validation.yaml -t micro-mass -f 0
-Started EC2 instance i-0cd081efc97c3bf6f 
-[2019-01-22T11:51:32] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: pending 
+Started EC2 instance i-0cd081efc97c3bf6f
+[2019-01-22T11:51:32] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: pending
 Starting new EC2 instance with params: H2OAutoML_nightly /s3bucket/input/validation.yaml -t micro-mass -f 1
-Started EC2 instance i-0251c1655e286897c 
+Started EC2 instance i-0251c1655e286897c
 ...
 [2019-01-22T12:00:32] checking job aws_validation_micro-mass_1_H2OAutoML_nightly on instance i-0251c1655e286897c: running
 [2019-01-22T12:00:33] checking job aws_validation_micro-mass_0_H2OAutoML_nightly on instance i-0cd081efc97c3bf6f: running
@@ -122,12 +122,12 @@ Deleting uploaded resources `['ec2/input/validation.yaml', 'ec2/input/config.yam
 
 ## Configurable AWS Options
 
-When using AWS mode, the application will use `on-demand` EC2 instances from the `m5` 
-series by default. However, it is also possible to use `Spot` instances, specify a 
+When using AWS mode, the application will use `on-demand` EC2 instances from the `m5`
+series by default. However, it is also possible to use `Spot` instances, specify a
 `max_hourly_price`, or customize your experience when using this mode in general.
-All configuration points are grouped and documented under the `aws` yaml namespace in 
+All configuration points are grouped and documented under the `aws` yaml namespace in
 the main [config](GITHUB/resources/config.yaml) file.
-When setting  your own configuration, it is strongly recommended to first create your 
+When setting  your own configuration, it is strongly recommended to first create your
 own `config.yaml` file as described in [Custom configuration](configuration.md#custom-configurations).
 Here is an example of a config file using Spot instances on a non-default region:
 ```yaml
@@ -151,9 +151,9 @@ The most important thing you can do to reduce costs is to critically evaluate wh
 experimental results can be re-used from previous publications. That said, when
 conducting new experiments on AWS we have the following recommendations to reduce costs:
 
- - Use spot instances with a fixed maximum price: set `aws.ec2.spot.enabled: true` and `aws.ec2.spot.max_hourly_price`. 
+ - Use spot instances with a fixed maximum price: set `aws.ec2.spot.enabled: true` and `aws.ec2.spot.max_hourly_price`.
    Check which region has [the lowest spot instance prices](https://aws.amazon.com/ec2/spot/)
-   and configure `aws.region` accordingly. 
+   and configure `aws.region` accordingly.
  - Skip the framework installation process by providing a docker image and setting `aws.docker_enabled: true`.
  - Set up [AWS Budgets](https://aws.amazon.com/aws-cost-management/aws-budgets/)
    to get alerts early if forecasted usage exceeds the budget. It should also be

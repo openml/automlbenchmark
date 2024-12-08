@@ -53,12 +53,12 @@ Please motivate why we should consider changing (or adding to) the benchmark des
 
 
 ## Contributing Changes
-We welcome all contributions by the community. To contribute changes to the 
+We welcome all contributions by the community. To contribute changes to the
 code or documentation, we follow a default git workflow which is also outlined below.
 
 !!! note "For text changes"
 
-    If you only want to contribute minor text changes, it is possible to do so 
+    If you only want to contribute minor text changes, it is possible to do so
     directly on Github. Click the pencil icon on the relevant file(s) to edit the documents,
     and Github should allow you to automatically commit to your own fork.
     After that, set up a pull request as specified below under 'Opening a Pull Request'.
@@ -83,7 +83,7 @@ git clone https://github.com/GITHUB_USERNAME/automlbenchmark.git
 !!! warning "Use Python 3.9"
 
     AutoML benchmark currently only officially supports Python 3.9.
-    We advise you use that version when developing locally. 
+    We advise you use that version when developing locally.
 
 then set up your local virtual environment:
 
@@ -100,14 +100,14 @@ The following commands should now both successfully:
 
 ```text
 python runbenchmark.py constantpredictor -f 0
-python -m pytest 
+python -m pytest
 python -m mkdocs serve
 ```
 
-When `python -m mkdocs serve` is running, you should be able to navigate to the 
+When `python -m mkdocs serve` is running, you should be able to navigate to the
 local documentation server (by default at `127.0.0.1:8000`) and see the documentation.
 
-### Make Code Changes 
+### Make Code Changes
 Please make sure that:
 
  * All added code has annotated type hints and functions have docstrings.
@@ -115,9 +115,9 @@ Please make sure that:
  * The pull request does not add/change more than it has to in order to fix the bug/add the feature and meet the above criteria.
  * The tests and `runbenchmark.py` script still work the same as above.
 
-In case the PR is a bug fix, please try to convert the minimal reproducing example of 
+In case the PR is a bug fix, please try to convert the minimal reproducing example of
 the original issue to a unit test and include it in the test suite to help avoid future regressions.
-Finally, commit the changes with a meaningful commit message about what was changed and why. 
+Finally, commit the changes with a meaningful commit message about what was changed and why.
 
 ### Make Documentation Changes
 The software documentation pages are written on `mkdocs` using [`mkdocs-material`](https://squidfunk.github.io/mkdocs-material/getting-started/),
@@ -127,4 +127,3 @@ The main landing page with information about the project is written in pure `htm
 ### Open a Pull Request
 When opening a pull request, reference the issue that it closes.
 Please also provide any additional context that helps review the pull request that may not have been appropriate as code comments.
-

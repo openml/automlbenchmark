@@ -34,16 +34,23 @@ def split_path(path):
 
 
 def path_from_split(split, real_path=True):
-    return os.path.join(os.path.realpath(split.dirname) if real_path else split.dirname,
-                        split.basename)+('' if split.extension in [None, '']
-                                         else split.extension if split.extension[0] == '.'
-                                         else f".{split.extension}")
+    return os.path.join(
+        os.path.realpath(split.dirname) if real_path else split.dirname, split.basename
+    ) + (
+        ""
+        if split.extension in [None, ""]
+        else split.extension
+        if split.extension[0] == "."
+        else f".{split.extension}"
+    )
 
 
 def dir_of(caller_file, rel_to_project_root=False):
     abs_path = os.path.realpath(os.path.dirname(caller_file))
     if rel_to_project_root:
-        project_root = os.path.normpath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..', '..'))
+        project_root = os.path.normpath(
+            os.path.join(os.path.realpath(os.path.dirname(__file__)), "..", "..")
+        )
         return os.path.relpath(abs_path, start=project_root)
     else:
         return abs_path
@@ -77,11 +84,11 @@ def list_all_files(paths, filter_=None):
 def touch(path, as_dir=False):
     path = normalize_path(path)
     if not os.path.exists(path):
-        dirname, basename = (path, '') if as_dir else os.path.split(path)
+        dirname, basename = (path, "") if as_dir else os.path.split(path)
         if not os.path.exists(dirname):
             os.makedirs(dirname, exist_ok=True)
         if basename:
-            open(path, 'a').close()
+            open(path, "a").close()
     os.utime(path, times=None)
     return path
 
@@ -92,22 +99,32 @@ def backup_file(file_path):
         return
     p = split_path(src_path)
     mod_time = dt.datetime.utcfromtimestamp(os.path.getmtime(src_path))
-    dest_name = ''.join([p.basename, '.', datetime_iso(mod_time, date_sep='', time_sep=''), p.extension])
-    dest_dir = os.path.join(p.dirname, 'backup')
+    dest_name = "".join(
+        [p.basename, ".", datetime_iso(mod_time, date_sep="", time_sep=""), p.extension]
+    )
+    dest_dir = os.path.join(p.dirname, "backup")
     touch(dest_dir, as_dir=True)
     dest_path = os.path.join(dest_dir, dest_name)
     shutil.copyfile(src_path, dest_path)
-    log.debug('File `%s` was backed up to `%s`.', src_path, dest_path)
+    log.debug("File `%s` was backed up to `%s`.", src_path, dest_path)
 
 
 def _create_file_filter(filter_, default_value=True):
-    matches = ((lambda _: default_value) if filter_ is None
-               else filter_ if callable(filter_)
-               else (lambda p: fnmatch.fnmatch(p, filter_)) if isinstance(filter_, str)
-               else (lambda p: any(fnmatch.fnmatch(p, pat) for pat in filter_)) if isinstance(filter_, (list, tuple))
-               else None)
+    matches = (
+        (lambda _: default_value)
+        if filter_ is None
+        else filter_
+        if callable(filter_)
+        else (lambda p: fnmatch.fnmatch(p, filter_))
+        if isinstance(filter_, str)
+        else (lambda p: any(fnmatch.fnmatch(p, pat) for pat in filter_))
+        if isinstance(filter_, (list, tuple))
+        else None
+    )
     if matches is None:
-        raise ValueError("filter should be None, a predicate function, a wildcard pattern or a list of those.")
+        raise ValueError(
+            "filter should be None, a predicate function, a wildcard pattern or a list of those."
+        )
     return matches
 
 
@@ -121,7 +138,11 @@ def walk_apply(dir_path, apply, topdown=True, max_depth=-1, filter_=None):
     dir_path = normalize_path(dir_path)
     for dir, subdirs, files in os.walk(dir_path, topdown=topdown):
         if max_depth >= 0:
-            depth = 0 if dir == dir_path else len(str.split(os.path.relpath(dir, dir_path), os.sep))
+            depth = (
+                0
+                if dir == dir_path
+                else len(str.split(os.path.relpath(dir, dir_path), os.sep))
+            )
             if depth > max_depth:
                 continue
         for p in itertools.chain(files, subdirs):
@@ -143,27 +164,43 @@ def clean_dir(dir_path, filter_=None):
     walk_apply(dir_path, delete, max_depth=0)
 
 
-def zip_path(path, dest_archive, compression=zipfile.ZIP_DEFLATED, arc_path_format='short', filter_=None):
+def zip_path(
+    path,
+    dest_archive,
+    compression=zipfile.ZIP_DEFLATED,
+    arc_path_format="short",
+    filter_=None,
+):
     path = normalize_path(path)
-    if not os.path.exists(path): return
-    with zipfile.ZipFile(dest_archive, 'w', compression) as zf:
+    if not os.path.exists(path):
+        return
+    with zipfile.ZipFile(dest_archive, "w", compression) as zf:
         if os.path.isfile(path):
             in_archive = os.path.basename(path)
             zf.write(path, in_archive)
         elif os.path.isdir(path):
+
             def add_to_archive(file, isdir):
-                if isdir: return
-                in_archive = (os.path.relpath(file, path) if arc_path_format == 'short'
-                              else os.path.relpath(file, os.path.dirname(path)) if arc_path_format == 'long'
-                              else os.path.basename(file) is arc_path_format == 'flat'
-                              )
+                if isdir:
+                    return
+                in_archive = (
+                    os.path.relpath(file, path)
+                    if arc_path_format == "short"
+                    else os.path.relpath(file, os.path.dirname(path))
+                    if arc_path_format == "long"
+                    else os.path.basename(file) is arc_path_format == "flat"
+                )
                 zf.write(file, in_archive)
-            walk_apply(path, add_to_archive,
-                       filter_=lambda p: (filter_ is None or filter_(p)) and not os.path.samefile(dest_archive, p))
+
+            walk_apply(
+                path,
+                add_to_archive,
+                filter_=lambda p: (filter_ is None or filter_(p))
+                and not os.path.samefile(dest_archive, p),
+            )
 
 
 class TmpDir:
-
     def __init__(self):
         self.tmp_dir = None
 
@@ -176,4 +213,4 @@ class TmpDir:
         # pass
 
 
-__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
+__all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

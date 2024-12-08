@@ -7,7 +7,9 @@ from amlb.utils import config_load, Namespace
 log = logging.getLogger(__name__)
 
 
-def _find_local_benchmark_definition(name: str, benchmark_definition_dirs: List[str]) -> str:
+def _find_local_benchmark_definition(
+    name: str, benchmark_definition_dirs: List[str]
+) -> str:
     # 'name' should be either a full path to the benchmark,
     # or a filename (without extension) in the benchmark directory.
     if os.path.exists(name):
@@ -20,11 +22,15 @@ def _find_local_benchmark_definition(name: str, benchmark_definition_dirs: List[
             return bf
 
     # should we support s3 and check for s3 path before raising error?
-    raise ValueError(f"Incorrect benchmark name or path `{name}`, name not available in {benchmark_definition_dirs}.")
+    raise ValueError(
+        f"Incorrect benchmark name or path `{name}`, name not available in {benchmark_definition_dirs}."
+    )
 
 
-def load_file_benchmark(name: str, benchmark_definition_dirs: List[str]) -> Tuple[str, Optional[str], List[Namespace]]:
-    """ Loads benchmark from a local file. """
+def load_file_benchmark(
+    name: str, benchmark_definition_dirs: List[str]
+) -> Tuple[str, Optional[str], List[Namespace]]:
+    """Loads benchmark from a local file."""
     benchmark_file = _find_local_benchmark_definition(name, benchmark_definition_dirs)
     log.info("Loading benchmark definitions from %s.", benchmark_file)
     tasks = config_load(benchmark_file)

@@ -21,7 +21,7 @@ def register_module(module_name):
 
 
 def register_submodule(mod, name):
-    fullname = '.'.join([mod.__name__, name])
+    fullname = ".".join([mod.__name__, name])
     module = register_module(fullname)
     setattr(mod, name, module)
 
@@ -29,12 +29,14 @@ def register_submodule(mod, name):
 def pip_install(module_or_requirements, is_requirements=False):
     try:
         if is_requirements:
-            pip_main(['install', '--no-cache-dir', '-r', module_or_requirements])
+            pip_main(["install", "--no-cache-dir", "-r", module_or_requirements])
         else:
-            pip_main(['install', '--no-cache-dir', module_or_requirements])
+            pip_main(["install", "--no-cache-dir", module_or_requirements])
     except SystemExit as se:
-        log.error("Error when trying to install python modules %s.", module_or_requirements)
+        log.error(
+            "Error when trying to install python modules %s.", module_or_requirements
+        )
         log.exception(se)
 
 
-__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
+__all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

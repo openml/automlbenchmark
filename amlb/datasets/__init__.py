@@ -11,9 +11,10 @@ class DataSourceType(Enum):
 
 
 class DataLoader:
-
     def __init__(self, config):
-        self.openml_loader = OpenmlLoader(api_key=config.openml.apikey, cache_dir=config.input_dir)
+        self.openml_loader = OpenmlLoader(
+            api_key=config.openml.apikey, cache_dir=config.input_dir
+        )
         self.file_loader = FileLoader(cache_dir=config.input_dir)
 
     def load(self, source: DataSourceType, *args, **kwargs):

@@ -8,15 +8,9 @@ from amlb.utils import str_sanitize, Namespace
 
 
 def benchmark_load(
-        name: str,
-        benchmark_definition_dirs: List[str]
-    ) -> Tuple[
-            Namespace | None,
-            List[Namespace],
-            str | None,
-            str
-        ]:
-    """ Loads the benchmark definition for the 'benchmark' cli input string.
+    name: str, benchmark_definition_dirs: List[str]
+) -> Tuple[Namespace | None, List[Namespace], str | None, str]:
+    """Loads the benchmark definition for the 'benchmark' cli input string.
 
     :param name: the value for 'benchmark'
     :param benchmark_definition_dirs: directories in which benchmark definitions can be found
@@ -28,9 +22,11 @@ def benchmark_load(
     if is_openml_benchmark(name):
         benchmark_name, benchmark_path, tasks = load_oml_benchmark(name)
     else:
-        benchmark_name, benchmark_path, tasks = load_file_benchmark(name, benchmark_definition_dirs)
+        benchmark_name, benchmark_path, tasks = load_file_benchmark(
+            name, benchmark_definition_dirs
+        )
 
-    hard_defaults = next((task for task in tasks if task.name == '__defaults__'), None)
+    hard_defaults = next((task for task in tasks if task.name == "__defaults__"), None)
     tasks = [task for task in tasks if task is not hard_defaults]
     for t in tasks:
         t.name = str_sanitize(t.name)

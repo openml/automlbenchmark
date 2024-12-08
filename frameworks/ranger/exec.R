@@ -46,4 +46,3 @@ run <- function(train_file, test_file, output_predictions_file, cores=1, meta_re
                              value=c(train_duration, predict_duration))
   write.csv(meta_results, file = meta_results_file, row.names = FALSE)
 }
-

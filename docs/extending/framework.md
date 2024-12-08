@@ -15,7 +15,7 @@ Adding an AutoML framework consist in several steps:
  1. write some integration code
    - to download/setup the framework dynamically: by convention, this is done by a `setup.sh` script defined in the module.
    - to run the framework using the data and constraints/parameters provided by the benchmark application: by convention, this is done by an `exec.py` script in the module, but it may require more files depending on the framework, for example if it runs on Python or R, Java...
-   
+
 
 ### Framework definition
 
@@ -24,17 +24,17 @@ The framework definition consists in an entry in a `yaml` file with the framewor
  1. to describe the framework and define which version will be used: `project`, `version`.
  1. to indicate the Python module with the integration code: `module` or `extends`.
  1. to pass optional parameters to the framework and/or the integration code: `params`.
- 
-Default framework definitions are defined in file `resources/frameworks.yaml` in lexicographic order, 
+
+Default framework definitions are defined in file `resources/frameworks.yaml` in lexicographic order,
 where `version` should be set to `stable`, which will point dynamically to the most recent official release available.
 
-Frameworks that offer the possibility to test cutting edge version (e.g. nightly builds, 
+Frameworks that offer the possibility to test cutting edge version (e.g. nightly builds,
 `dev`/`master` repo, ...) can add an entry to `resources/frameworks_latest.yaml`, where `version` should be set to `latest`.
 
-Maintainers of this repository try to regularly — ideally, every quarter — create a 
+Maintainers of this repository try to regularly — ideally, every quarter — create a
 framework definition using frozen framework versions in order to favour the reproducibility of the published benchmarks.
 
-Following the [custom configuration](../using/configuration.md#custom-configurations), 
+Following the [custom configuration](../using/configuration.md#custom-configurations),
 it is possible to override and/or add a framework definitions by creating a `frameworks.yaml` file in your `user_dir`.
 
 See for example the `examples/custom/frameworks.yaml`:
@@ -88,19 +88,19 @@ H2OAutoML_custom:
 
 This example shows
 
-- the definitions for 2 new frameworks: `GradientBoosting` and `Stacking`. 
+- the definitions for 2 new frameworks: `GradientBoosting` and `Stacking`.
   - Those definitions (optionally) externalize some parameters (e.g. `n_estimators`): the `params` property always appears in json format in the results, so that we can clearly see what has been tuned when analyzing the results later.
   - Note that the module is case sensitive and should point to the module containing the integration code.
-  - The application will search for modules from the sys path, which includes the application `root_dir` and the `user_dir`: 
-    - that's why the default frameworks use `module: frameworks.autosklearn` for example, 
-    - and the example above can use `module: extensions.GradientBoosting` because those examples must be run by setting the `user_dir` to `examples/config`, e.g. 
+  - The application will search for modules from the sys path, which includes the application `root_dir` and the `user_dir`:
+    - that's why the default frameworks use `module: frameworks.autosklearn` for example,
+    - and the example above can use `module: extensions.GradientBoosting` because those examples must be run by setting the `user_dir` to `examples/config`, e.g.
       > `python runbenchmark.py gradientboosting -u examples/custom`.
 - a custom definition (`H2OAutoML_nightly`) for the existing `frameworks.H2OAutoML` module, allowing to reuse the module for a dynamic version of the module:
     - the `setup_cmd` is executed after the default setup of the module, so it can be used to make additional setup. To customize the setup, it is possible to use:
       - `setup_args: my_version` (only if the `setup.sh` in the framework module supports new arguments).
-      - `setup_cmd` (as shown in this example). 
+      - `setup_cmd` (as shown in this example).
       - `setup_script: my_additional_setup.sh`.
-- 2 custom definitions (`H2OAutoML_blending` and `H2OAutoML_custom`) simply extending the existing `H2OAutoML` definition (therefore inheriting from all its properties, including the `module` one), but overriding the `params` property, thus allowing to provide multiple "flavours" of the same framework.  
+- 2 custom definitions (`H2OAutoML_blending` and `H2OAutoML_custom`) simply extending the existing `H2OAutoML` definition (therefore inheriting from all its properties, including the `module` one), but overriding the `params` property, thus allowing to provide multiple "flavours" of the same framework.
 
 The frameworks defined in this example can then be used like any other framework as soon as both the framework module and the definition file are made available to the application: in our case, this is done by the creation of the integration modules under `examples/custom/extensions` and by exposing the definitions in `examples/custom/frameworks.yaml` thanks to the entry in `examples/custom/config.yaml`:
 ```yaml
@@ -179,8 +179,8 @@ def run(*args, **kwargs):
 
 where we see that the module should expose (only `run` is actually required) the following functions:
 
-- `setup` (optional): called by the application to setup the given framework, usually by simply running a `setup.sh` script that will be responsible for potentially creating a local virtual env, downloading and installing the dependencies. 
-   The `setup` function can also receive the optional `setup_args` param from the [framework definition](#framework-definition) as an argument. 
+- `setup` (optional): called by the application to setup the given framework, usually by simply running a `setup.sh` script that will be responsible for potentially creating a local virtual env, downloading and installing the dependencies.
+   The `setup` function can also receive the optional `setup_args` param from the [framework definition](#framework-definition) as an argument.
 - `run`: called by the benchmark application to execute a task against the framework, using the selected dataset and constraints. We will describe the parameters in detail below, for now, just note that by convention, we just load the `exec.py` file from the module and delegate the execution to its `run` function.
 - `docker_commands` (optional): called by the application to collect docker instructions that are specific to the framework. If the framework requires a `setup` phase, then the string returned by this function should at least ensure that the setup is also executed during the docker image creation, that's one reason why it is preferable to do all the setup in a `setup.sh` script, to allow the docker support above.
 
@@ -211,7 +211,7 @@ Noticeable differences with a basic integration:
 
 *Note A*:
 
-As the serialization/deserialization of `numpy` arrays can be costly for very large datasets, it is recommended to use dataset serialization only if the framework itself doesn't support loading datasets from files. 
+As the serialization/deserialization of `numpy` arrays can be costly for very large datasets, it is recommended to use dataset serialization only if the framework itself doesn't support loading datasets from files.
 
 This means that, in the `__init__.py` instead of implementing `run` as:
 ```python
@@ -313,7 +313,7 @@ Here are the main differences:
 
 #### Add a default framework
 
-Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.  
+Is called "default framework" an AutoML framework whose integration is available on `master` branch under the `frameworks` folder, and with a simple definition in `resources/frameworks.yaml`.
 
 *NOTE:*
 There are a few requirements when integrating a new default framework:
@@ -321,9 +321,9 @@ There are a few requirements when integrating a new default framework:
 - The code snippet triggering the training should use only defaults (no AutoML hyper parameters), plus possibly a generic `**kwargs` in order to support `params` section in custom framework definitions.  In other words, one of the requirements for being included in the benchmark is that the framework is submitted without any tweaks to default settings.  This is to prevent submissions (systems) from overfitting or tuning to the benchmark.
 - There must be a way to limit the runtime of the algorithm (a maximum runtime parameter).
 - Exceptions:
-  - the problem type ("classification", "regression", "binary", "multiclass"): this is available through `config.type` or `dataset.type`. 
+  - the problem type ("classification", "regression", "binary", "multiclass"): this is available through `config.type` or `dataset.type`.
   - information about data, for example the column types: available through the `dataset` object.
-  - time, cpu and memory constraints: those must be provided by the benchmark application through the `config` object.  
+  - time, cpu and memory constraints: those must be provided by the benchmark application through the `config` object.
   - the objective function: provided by `config.metric` (usually requires a translation for a given framework).
   - seed: provided by `config.seed`
   - paths to folders (output, temporary...): if possible, use `config.output_dir` or a subfolder (see existing integrations).
@@ -336,7 +336,7 @@ good_framework:
 bad_framework:
    version: "0.0.1"
    project: "http://go.to/bad_framework"
-   params: 
+   params:
      enable_this: true
      use: ['this', 'that']
 ```
@@ -347,7 +347,7 @@ Using the instructions above:
  1. create a private branch for your integration changes.
  1. create the framework module (e.g. `MyFramework`) under `frameworks` folder.
  1. define the module (if possible without any `params`) in `resources/frameworks.yaml`.
- 1. try to setup the framework: 
+ 1. try to setup the framework:
     > python runbenchmark.py myframework -s only
  1. fixes the framework setup until it works: the setup being usually a simple `setup.sh` script, you should be able to test it directly without using the application.
  1. try to run simple test against one fold using defaults (`test` benchmark and `test` constraints) with the `-Xtest_mode` that will trigger additional validations:
@@ -355,9 +355,9 @@ Using the instructions above:
  1. fix the module integration code until the test produce all results with no error (if the integration generated an error, it is visible in the results).
  1. if this works, validate it against the `validation` dataset using one fold:
     > python runbenchmark.py myframework validation 1h4c -f 0 -Xtest_mode
- 1. if this works, try to run it in docker to validate the docker image setup: 
+ 1. if this works, try to run it in docker to validate the docker image setup:
     > python runbenchmark.py myframework -m docker
- 1. if this works, try to run it in aws: 
+ 1. if this works, try to run it in aws:
     > python runbenchmark.py myframework -m aws
  1. add a brief description of the framework to the documentation in [docs/website/framework.html](GITHUB/docs/website/frameworks.html) following the same formatting as the other entries.
  1. create a pull request, and ask a review from authors of `automlbenchmark`: they'll also be happy to help you during this integration.
@@ -384,14 +384,14 @@ Using the instructions above:
 
 When you want to use an existing framework integration with a different hyperparameter
 configuration, it is often enough to write only a custom framework definition without
-further changes. 
+further changes.
 
-Framework definitions accept a `params` dictionary for pass-through parameters, 
-i.e., parameters that are directly accessible from the `exec.py` file in the framework 
+Framework definitions accept a `params` dictionary for pass-through parameters,
+i.e., parameters that are directly accessible from the `exec.py` file in the framework
 integration executing the AutoML training. *Most* integration scripts use this to
 overwrite any (default) hyperparameter value. Use the `extends` field to indicate
 which framework definition to copy default values from, and then add any fields to
-overwrite. In the example below the `n_estimators` and `verbose` params are passed 
+overwrite. In the example below the `n_estimators` and `verbose` params are passed
 directly to the `RandomForestClassifier`, which will now train only 200 trees
 (default is 2000):
 
@@ -403,13 +403,13 @@ RandomForest_custom:
     verbose: true
 ```
 
-This new definition can be used as normal: 
+This new definition can be used as normal:
 ```
 python runbenchmark.py randomforest_custom ...
 ```
 
 !!! note
-    By convention, param names starting with `_` are filtered out (they are not passed 
+    By convention, param names starting with `_` are filtered out (they are not passed
     to the framework) but are used for custom logic in the `exec.py`. For example, the
     `_save_artifact` field is often used to allow additional artifacts, such as logs or
     models, to be saved.

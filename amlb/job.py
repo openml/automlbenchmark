@@ -6,6 +6,7 @@
   - SimpleJobRunner runs the jobs sequentially.
   - ParallelJobRunner queues the jobs and run them in a dedicated thread
 """
+
 from __future__ import annotations
 
 import concurrent.futures
@@ -20,7 +21,14 @@ import threading
 from functools import partial
 from typing import Callable, List, Optional
 
-from .utils import Namespace, Timer, ThreadSafeCounter, InterruptTimeout, is_main_thread, raise_in_thread, signal_handler
+from .utils import (
+    Namespace,
+    Timer,
+    ThreadSafeCounter,
+    InterruptTimeout,
+    is_main_thread,
+    raise_in_thread,
+)
 
 log = logging.getLogger(__name__)
 
@@ -49,30 +57,34 @@ class CancelledError(JobError):
 
 
 class Job:
-
     state_machine = [
-        (None,                  [State.created]),
-        (State.created,         [State.starting, State.cancelling]),
-        (State.starting,        [State.running, State.rescheduling, State.cancelling]),
-        (State.running,         [State.completing, State.rescheduling, State.cancelling]),
-        (State.completing,      [State.stopping]),
-        (State.rescheduling,    [State.starting, State.stopping]),
-        (State.cancelling,      [State.stopping, State.stopped]),
-        (State.stopping,        [State.stopped]),
-        (State.stopped,         None)
+        (None, [State.created]),
+        (State.created, [State.starting, State.cancelling]),
+        (State.starting, [State.running, State.rescheduling, State.cancelling]),
+        (State.running, [State.completing, State.rescheduling, State.cancelling]),
+        (State.completing, [State.stopping]),
+        (State.rescheduling, [State.starting, State.stopping]),
+        (State.cancelling, [State.stopping, State.stopped]),
+        (State.stopping, [State.stopped]),
+        (State.stopped, None),
     ]
 
     @classmethod
     def is_state_transition_ok(cls, old_state: State | None, new_state: State | None):
-        allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
+        allowed = next(
+            (head for tail, head in cls.state_machine if tail == old_state), None
+        )
         return allowed and new_state in allowed
 
     printer = pprint.PrettyPrinter(indent=2, compact=True)
 
-    def __init__(self, name: str = "",
-                 timeout_secs: int = -1,
-                 priority: Optional[int] = None,
-                 raise_on_failure: bool = False):
+    def __init__(
+        self,
+        name: str = "",
+        timeout_secs: int = -1,
+        priority: Optional[int] = None,
+        raise_on_failure: bool = False,
+    ):
         """
 
         :param name:
@@ -96,7 +108,7 @@ class Job:
             self.thread_id = threading.current_thread().ident
             if self.set_state(State.starting):
                 start_msg = f"Starting job {self.name}."
-                log.info("\n%s\n%s", '-'*len(start_msg), start_msg)
+                log.info("\n%s\n%s", "-" * len(start_msg), start_msg)
                 self._setup()
 
             if not self.is_state_transition_ok(self.state, State.running):
@@ -115,9 +127,9 @@ class Job:
 
             with Timer() as t:
                 with InterruptTimeout(
-                        self.timeout,
-                        interruptions=interruption_sequence,
-                        wait_retry_secs=60
+                    self.timeout,
+                    interruptions=interruption_sequence,
+                    wait_retry_secs=60,
                 ):  # escalates every minute if the previous interruption was ineffective
                     if self.set_state(State.running):
                         result = self._run()
@@ -128,7 +140,9 @@ class Job:
             log.exception("Job `%s` failed with error: %s", self.name, str(e))
             if self.raise_on_failure:
                 raise
-            return Namespace(name=self.name, result=None, duration=t.duration if t else -1)
+            return Namespace(
+                name=self.name, result=None, duration=t.duration if t else -1
+            )
 
     def reschedule(self):
         """Called  when the runner plans to restart the job at a later time."""
@@ -157,7 +171,9 @@ class Job:
                 self.reset(State.stopped)
 
     def set_state(self, state: State):
-        assert self.is_state_transition_ok(self.state, state), f"Illegal job transition from state {self.state} to {state}"
+        assert self.is_state_transition_ok(
+            self.state, state
+        ), f"Illegal job transition from state {self.state} to {state}"
         old_state = self.state
         self.state = state
         log.debug("Changing job `%s` from state %s to %s.", self.name, old_state, state)
@@ -165,7 +181,12 @@ class Job:
         try:
             skip_default = bool(self._on_state(state))
         except Exception as e:
-            log.exception("Error when handling state change to %s for job `%s`: %s", state, self.name, str(e))
+            log.exception(
+                "Error when handling state change to %s for job `%s`: %s",
+                state,
+                self.name,
+                str(e),
+            )
         return not skip_default
 
     def reset(self, state=State.created):
@@ -184,7 +205,9 @@ class Job:
         """hook executed on the job once it's being cancelled by the runner:
         this is called only once on the job, and only if it didn't complete"""
         if self.thread_id is not None:
-            raise_in_thread(self.thread_id, CancelledError(f"Job `{self.name}` was interrupted."))
+            raise_in_thread(
+                self.thread_id, CancelledError(f"Job `{self.name}` was interrupted.")
+            )
 
     def _on_state(self, state: State):
         pass
@@ -194,20 +217,21 @@ class Job:
 
 
 class JobRunner:
-
     state_machine = [
-        (None,              [State.created]),
-        (State.created,     [State.starting, State.stopping]),
-        (State.starting,    [State.running, State.stopping]),
-        (State.running,     [State.stopping]),
-        (State.stopping,    [State.stopped]),
-        (State.stopped,     None)
+        (None, [State.created]),
+        (State.created, [State.starting, State.stopping]),
+        (State.starting, [State.running, State.stopping]),
+        (State.running, [State.stopping]),
+        (State.stopping, [State.stopped]),
+        (State.stopped, None),
     ]
     END_Q = object()
 
     @classmethod
     def is_state_transition_ok(cls, old_state: State | None, new_state: State | None):
-        allowed = next((head for tail, head in cls.state_machine if tail == old_state), None)
+        allowed = next(
+            (head for tail, head in cls.state_machine if tail == old_state), None
+        )
         return allowed and new_state in allowed
 
     def __init__(self, jobs: List, on_new_result: Optional[Callable] = None):
@@ -250,7 +274,7 @@ class JobRunner:
             return
         if priority is None:
             if job.priority is None:
-                job.priority = self._last_priority = self._last_priority+1
+                job.priority = self._last_priority = self._last_priority + 1
         else:
             job.priority = priority
         if self._queue:
@@ -266,7 +290,9 @@ class JobRunner:
             self.put(job, priority)
 
     def set_state(self, state: State):
-        assert self.is_state_transition_ok(self.state, state), f"Illegal job runner transition from state {self.state} to {state}"
+        assert self.is_state_transition_ok(
+            self.state, state
+        ), f"Illegal job runner transition from state {self.state} to {state}"
         old_state = self.state
         self.state = state
         log.debug("Changing job runner from state %s to %s.", old_state, state)
@@ -274,7 +300,11 @@ class JobRunner:
         try:
             skip_default = bool(self._on_state(state))
         except Exception as e:
-            log.exception("Error when handling state change to %s for job runner: %s", state, str(e))
+            log.exception(
+                "Error when handling state change to %s for job runner: %s",
+                state,
+                str(e),
+            )
         return not skip_default
 
     def _add_result(self, result):
@@ -315,7 +345,6 @@ class JobRunner:
 
 
 class SimpleJobRunner(JobRunner):
-
     def __init__(self, jobs: List, on_new_result: Optional[Callable] = None):
         super().__init__(jobs, on_new_result=on_new_result)
         self._interrupt = threading.Event()
@@ -338,18 +367,20 @@ class SimpleJobRunner(JobRunner):
 
 
 class MultiThreadingJobRunner(JobRunner):
-
     class QueueingStrategy(Enum):
         keep_queue_full = 0
         enforce_job_priority = 1
 
-    def __init__(self, jobs: List,
-                 on_new_result: Optional[Callable] = None,
-                 parallel_jobs: int = 1,
-                 done_async: bool = True,
-                 delay_secs: int = 0,
-                 queueing_strategy: QueueingStrategy = QueueingStrategy.keep_queue_full,
-                 use_daemons: bool = False):
+    def __init__(
+        self,
+        jobs: List,
+        on_new_result: Optional[Callable] = None,
+        parallel_jobs: int = 1,
+        done_async: bool = True,
+        delay_secs: int = 0,
+        queueing_strategy: QueueingStrategy = QueueingStrategy.keep_queue_full,
+        use_daemons: bool = False,
+    ):
         super().__init__(jobs, on_new_result=on_new_result)
         self.parallel_jobs = parallel_jobs
         self._done_async = done_async
@@ -366,7 +397,8 @@ class MultiThreadingJobRunner(JobRunner):
             self.futures.append(future)
         else:
             log.warning(
-                "Application is submitting a function while the thread executor is not running: executing the function in the calling thread.")
+                "Application is submitting a function while the thread executor is not running: executing the function in the calling thread."
+            )
             try:
                 fn()
             except Exception as e:
@@ -415,7 +447,10 @@ class MultiThreadingJobRunner(JobRunner):
 
         try:
             while not self._interrupt.is_set():
-                if self._queueing_strategy == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority:
+                if (
+                    self._queueing_strategy
+                    == MultiThreadingJobRunner.QueueingStrategy.enforce_job_priority
+                ):
                     with wc:
                         wc.wait_for(lambda: available_workers.value > 0)
                 job = next(self, None)
@@ -426,11 +461,13 @@ class MultiThreadingJobRunner(JobRunner):
                     self._interrupt.wait(self._delay)
             q.join()
         finally:
-            q.maxsize = self.parallel_jobs  # resize to ensure that all workers can get a None job
+            q.maxsize = (
+                self.parallel_jobs
+            )  # resize to ensure that all workers can get a None job
             for _ in range(self.parallel_jobs):
                 try:
-                    q.put_nowait(JobRunner.END_Q)     # stopping workers
-                except:
+                    q.put_nowait(JobRunner.END_Q)  # stopping workers
+                except BaseException:
                     pass
             for thread in threads:
                 thread.join()
@@ -440,13 +477,15 @@ class MultiThreadingJobRunner(JobRunner):
 
     def _on_state(self, state: State):
         if state is State.starting:
-            self._exec = ThreadPoolExecutor(max_workers=1, thread_name_prefix="job_runner_exec_")
+            self._exec = ThreadPoolExecutor(
+                max_workers=1, thread_name_prefix="job_runner_exec_"
+            )
         if state is State.stopping:
             self._interrupt.set()
             if self._exec is not None:
                 try:
                     self._exec.shutdown(wait=True)
-                except:
+                except BaseException:
                     pass
                 finally:
                     self._exec = None
@@ -460,7 +499,6 @@ class MultiProcessingJobRunner(JobRunner):
 
 
 class ExecutorJobRunner(JobRunner):
-
     def __init__(self, pool_executor_class, jobs, parallel_jobs):
         super().__init__(jobs)
         self.pool_executor_class = pool_executor_class
@@ -491,4 +529,3 @@ class ThreadPoolExecutorJobRunner(ExecutorJobRunner):
 class ProcessPoolExecutorJobRunner(ExecutorJobRunner):
     def __init__(self, jobs, parallel_jobs):
         super().__init__(ProcessPoolExecutor, jobs, parallel_jobs)
-

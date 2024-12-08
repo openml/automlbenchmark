@@ -30,4 +30,3 @@ aws:
     instance_type:
       series: t3
   use_docker: false  # you can decide to always use the prebuilt docker images on AWS.
-

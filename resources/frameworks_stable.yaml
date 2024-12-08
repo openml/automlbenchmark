@@ -115,4 +115,3 @@ TunedRandomForest:
   version: 'stable'
   params:
     n_estimators: 2000
-

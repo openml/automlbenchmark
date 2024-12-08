@@ -14,7 +14,17 @@ log = logging.getLogger(__name__)
 __no_export = set(dir())  # all variables defined above this are not exported
 
 
-def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-', datetime_sep='T', time_sep=':', micros_sep='.', no_sep=False):
+def datetime_iso(
+    datetime=None,
+    date=True,
+    time=True,
+    micros=False,
+    date_sep="-",
+    datetime_sep="T",
+    time_sep=":",
+    micros_sep=".",
+    no_sep=False,
+):
     """
 
     :param date:
@@ -29,7 +39,7 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     """
     # strf = "%Y{ds}%m{ds}%d{dts}%H{ts}%M{ts}%S{ms}%f".format(ds=date_sep, ts=time_sep, dts=datetime_sep, ms=micros_sep)
     if no_sep:
-        date_sep = time_sep = datetime_sep = micros_sep = ''
+        date_sep = time_sep = datetime_sep = micros_sep = ""
     strf = ""
     if date:
         strf += "%Y{_}%m{_}%d".format(_=date_sep)
@@ -43,8 +53,15 @@ def datetime_iso(datetime=None, date=True, time=True, micros=False, date_sep='-'
     return datetime.strftime(strf)
 
 
-def countdown(timeout_secs, on_timeout: Callable | None = None, message: str = "", interval=1, log_level=logging.INFO,
-              interrupt_event: threading.Event | None = None, interrupt_cond: Callable | None = None):
+def countdown(
+    timeout_secs,
+    on_timeout: Callable | None = None,
+    message: str = "",
+    interval=1,
+    log_level=logging.INFO,
+    interrupt_event: threading.Event | None = None,
+    interrupt_cond: Callable | None = None,
+):
     timeout_epoch = time.time() + timeout_secs
     remaining = timeout_secs
     interrupt = interrupt_event or threading.Event()
@@ -79,34 +96,35 @@ def retry_after(start=0, fn=identity, max_retries=math.inf):
         if 0 <= max_retries < retries:
             return
         yield delay
-        retries = retries+1
+        retries = retries + 1
         delay = fn(delay)
 
 
 def retry_policy(policy: str):
-    tokens = policy.split(':', 3)
+    tokens = policy.split(":", 3)
     type = tokens[0]
-    l = len(tokens)
-    if type == 'constant':
-        interval = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
-        start = float(tokens[1] if l > 2 else interval)
+    n_args = len(tokens)
+    if type == "constant":
+        interval = float(tokens[2] if n_args > 2 else tokens[1] if n_args > 1 else 60)
+        start = float(tokens[1] if n_args > 2 else interval)
         return start, (lambda _: interval)
-    elif type == 'linear':
-        max_delay = float(tokens[3] if l > 3 else math.inf)
-        increment = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 60)
-        start = float(tokens[1] if l > 2 else increment)
+    elif type == "linear":
+        max_delay = float(tokens[3] if n_args > 3 else math.inf)
+        increment = float(tokens[2] if n_args > 2 else tokens[1] if n_args > 1 else 60)
+        start = float(tokens[1] if n_args > 2 else increment)
         return start, (lambda d: min(d + increment, max_delay))
-    elif type == 'exponential':
-        max_delay = float(tokens[3] if l > 3 else math.inf)
-        factor = float(tokens[2] if l > 2 else tokens[1] if l > 1 else 2)
-        start = float(tokens[1] if l > 2 else 60)
+    elif type == "exponential":
+        max_delay = float(tokens[3] if n_args > 3 else math.inf)
+        factor = float(tokens[2] if n_args > 2 else tokens[1] if n_args > 1 else 2)
+        start = float(tokens[1] if n_args > 2 else 60)
         return start, (lambda d: min(d * factor, max_delay))
     else:
-        raise ValueError(f"Unsupported policy {type} in '{policy}': supported policies are [constant, linear, exponential].")
+        raise ValueError(
+            f"Unsupported policy {type} in '{policy}': supported policies are [constant, linear, exponential]."
+        )
 
 
 class Timer:
-
     @staticmethod
     def _zero():
         return 0
@@ -141,7 +159,6 @@ class Timer:
 
 
 class Timeout:
-
     def __init__(self, timeout_secs, on_timeout=None):
         def timeout_handler():
             self.timed_out = True
@@ -165,4 +182,4 @@ class Timeout:
             self.timer.cancel()
 
 
-__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
+__all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

@@ -1,7 +1,13 @@
 import pytest
-from amlb.frameworks.definitions import _add_default_module, _add_default_version, \
-    _add_default_setup_args, _add_default_setup_script, _add_default_setup_cmd, \
-    _add_default_params, _add_default_image
+from amlb.frameworks.definitions import (
+    _add_default_module,
+    _add_default_version,
+    _add_default_setup_args,
+    _add_default_setup_script,
+    _add_default_setup_cmd,
+    _add_default_params,
+    _add_default_image,
+)
 from amlb.utils import Namespace
 
 
@@ -66,7 +72,9 @@ def test_setup_args_set_to_version_if_undefined():
     assert f_my_other_version.setup_args == ["my_other_version"]
 
 
-@pytest.mark.parametrize("version, repo", [("my_version", "my_repo"), ("my_other_version", "my_other_repo")])
+@pytest.mark.parametrize(
+    "version, repo", [("my_version", "my_repo"), ("my_other_version", "my_other_repo")]
+)
 def test_setup_args_also_includes_repo_if_repo_is_defined(version, repo):
     f_my_version = Namespace(version=version, repo=repo)
     _add_default_setup_args(f_my_version)
@@ -100,11 +108,11 @@ def test_setup_script_interpolates_module(simple_resource):
 @pytest.mark.parametrize(
     "alias, actual",
     [
-     ("input", "my_input"),
-     ("output", "my_output"),
-     ("user", "my_user_dir"),
-     ("root", "my_root_dir"),
-    ]
+        ("input", "my_input"),
+        ("output", "my_output"),
+        ("user", "my_user_dir"),
+        ("root", "my_root_dir"),
+    ],
 )
 def test_setup_script_interpolates_directory(simple_resource, alias, actual):
     framework = Namespace(setup_script=f"{{{alias}}}/t.sh", module="")
@@ -115,8 +123,8 @@ def test_setup_script_interpolates_directory(simple_resource, alias, actual):
 def test_setup_cmd_set_to_none_if_undefined(simple_resource):
     framework = Namespace()
     _add_default_setup_cmd(framework, simple_resource.config)
-    assert framework.setup_cmd == None
-    assert framework._setup_cmd == None
+    assert framework.setup_cmd is None
+    assert framework._setup_cmd is None
 
 
 @pytest.mark.parametrize("commands", ["original", ["one", "two"]])
@@ -141,11 +149,11 @@ def test_setup_cmd_does_not_convert_list_definition(simple_resource):
 @pytest.mark.parametrize(
     "alias, actual",
     [
-     ("input", "my_input"),
-     ("output", "my_output"),
-     ("user", "my_user_dir"),
-     ("root", "my_root_dir"),
-    ]
+        ("input", "my_input"),
+        ("output", "my_output"),
+        ("user", "my_user_dir"),
+        ("root", "my_root_dir"),
+    ],
 )
 def test_setup_cmd_interpolates_directory(simple_resource, alias, actual):
     framework = Namespace(setup_cmd=[f"{{{alias}}}"])

@@ -6,10 +6,11 @@ import shutil
 import sys
 import tempfile
 import warnings
+
 warnings.simplefilter("ignore")
 
-if sys.platform == 'darwin':
-    os.environ['OMP_NUM_THREADS'] = '1'
+if sys.platform == "darwin":
+    os.environ["OMP_NUM_THREADS"] = "1"
 
 from autogluon.core.utils.savers import save_pd, save_pkl
 from autogluon.timeseries import TimeSeriesPredictor, TimeSeriesDataFrame
@@ -53,7 +54,11 @@ def run(dataset, config):
             train_data=train_data,
             time_limit=config.max_runtime_seconds,
             random_seed=config.seed,
-            **{k: v for k, v in config.framework_params.items() if not k.startswith('_')},
+            **{
+                k: v
+                for k, v in config.framework_params.items()
+                if not k.startswith("_")
+            },
         )
 
     with Timer() as predict:
@@ -71,12 +76,16 @@ def run(dataset, config):
     truth_only = test_df[dataset.target].values
 
     # Sanity check - make sure predictions are ordered correctly
-    assert predictions.index.equals(test_data.index), "Predictions and test data index do not match"
+    assert predictions.index.equals(
+        test_data.index
+    ), "Predictions and test data index do not match"
 
     test_data_full = pd.concat([train_data, test_data])
     leaderboard = predictor.leaderboard(test_data_full, silent=True)
 
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
+    with pd.option_context(
+        "display.max_rows", None, "display.max_columns", None, "display.width", 1000
+    ):
         log.info(leaderboard)
 
     save_artifacts(predictor=predictor, leaderboard=leaderboard, config=config)
@@ -85,14 +94,16 @@ def run(dataset, config):
     # Kill child processes spawned by Joblib to avoid spam in the AMLB log
     get_reusable_executor().shutdown(wait=True)
 
-    return result(output_file=config.output_predictions_file,
-                  predictions=predictions_only,
-                  truth=truth_only,
-                  target_is_encoded=False,
-                  models_count=len(leaderboard),
-                  training_duration=training.duration,
-                  predict_duration=predict.duration,
-                  optional_columns=pd.DataFrame(optional_columns))
+    return result(
+        output_file=config.output_predictions_file,
+        predictions=predictions_only,
+        truth=truth_only,
+        target_is_encoded=False,
+        models_count=len(leaderboard),
+        training_duration=training.duration,
+        predict_duration=predict.duration,
+        optional_columns=pd.DataFrame(optional_columns),
+    )
 
 
 def get_eval_metric(config):
@@ -105,7 +116,9 @@ def get_eval_metric(config):
         rmse="RMSE",
     )
 
-    eval_metric = metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    eval_metric = (
+        metrics_mapping[config.metric] if config.metric in metrics_mapping else None
+    )
     if eval_metric is None:
         log.warning("Performance metric %s not supported.", config.metric)
     return eval_metric
@@ -122,18 +135,20 @@ def get_point_forecast(predictions, metric):
 
 
 def save_artifacts(predictor, leaderboard, config):
-    artifacts = config.framework_params.get('_save_artifacts', ['leaderboard'])
+    artifacts = config.framework_params.get("_save_artifacts", ["leaderboard"])
     try:
-        if 'leaderboard' in artifacts:
+        if "leaderboard" in artifacts:
             leaderboard_dir = output_subdir("leaderboard", config)
-            save_pd.save(path=os.path.join(leaderboard_dir, "leaderboard.csv"), df=leaderboard)
+            save_pd.save(
+                path=os.path.join(leaderboard_dir, "leaderboard.csv"), df=leaderboard
+            )
 
-        if 'info' in artifacts:
+        if "info" in artifacts:
             ag_info = predictor.info()
             info_dir = output_subdir("info", config)
             save_pkl.save(path=os.path.join(info_dir, "info.pkl"), object=ag_info)
 
-        if 'models' in artifacts:
+        if "models" in artifacts:
             shutil.rmtree(os.path.join(predictor.path, "utils"), ignore_errors=True)
             models_dir = output_subdir("models", config)
             zip_path(predictor.path, os.path.join(models_dir, "models.zip"))
@@ -141,5 +156,5 @@ def save_artifacts(predictor, leaderboard, config):
         log.warning("Error when saving artifacts.", exc_info=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     call_run(run)

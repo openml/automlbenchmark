@@ -9,7 +9,7 @@ _gradient = np.vstack((_gradient, _gradient))
 
 
 def savefig(fig, path):
-    fig.savefig(path, bbox_inches='tight')
+    fig.savefig(path, bbox_inches="tight")
 
 
 def register_colormap(name, colors=None):
@@ -31,27 +31,33 @@ def render_colormap(name):
 
 def task_labels(index):
     max_length = 16
-    return (index.droplevel('type')
-            .map(lambda x: x if len(x) <= max_length else u'{}…'.format(x[:max_length-1]))
-            .values)
+    return (
+        index.droplevel("type")
+        .map(lambda x: x if len(x) <= max_length else "{}…".format(x[: max_length - 1]))
+        .values
+    )
 
 
-def set_labels(axes,
-               title=None,
-               xlabel=None, ylabel=None,
-               x_labels=None, y_labels=None,
-               x_tick_params=None, y_tick_params=None,
-               legend_title=None):
-
-    axes.set_title('' if not title else title, fontsize='xx-large')
-    axes.set_xlabel('' if not xlabel else xlabel, fontsize='x-large')
-    axes.set_ylabel('' if not ylabel else ylabel, fontsize='x-large')
+def set_labels(
+    axes,
+    title=None,
+    xlabel=None,
+    ylabel=None,
+    x_labels=None,
+    y_labels=None,
+    x_tick_params=None,
+    y_tick_params=None,
+    legend_title=None,
+):
+    axes.set_title("" if not title else title, fontsize="xx-large")
+    axes.set_xlabel("" if not xlabel else xlabel, fontsize="x-large")
+    axes.set_ylabel("" if not ylabel else ylabel, fontsize="x-large")
     if not x_tick_params:
         x_tick_params = {}
     if not y_tick_params:
         y_tick_params = {}
-    axes.tick_params(axis='x', labelsize='x-large', **x_tick_params)
-    axes.tick_params(axis='y', labelsize='x-large', **y_tick_params)
+    axes.tick_params(axis="x", labelsize="x-large", **x_tick_params)
+    axes.tick_params(axis="y", labelsize="x-large", **y_tick_params)
     if x_labels is not None:
         axes.set_xticklabels(x_labels)
     if y_labels is not None:
@@ -59,9 +65,9 @@ def set_labels(axes,
     legend = axes.get_legend()
     if legend:
         legend_title = legend_title or legend.get_title().get_text()
-        legend.set_title(legend_title, prop=dict(size='x-large'))
+        legend.set_title(legend_title, prop=dict(size="x-large"))
         for text in legend.get_texts():
-            text.set_fontsize('x-large')
+            text.set_fontsize("x-large")
 
 
 def set_scales(axes, xscale=None, yscale=None):
@@ -84,4 +90,3 @@ def set_limits(axes, xlim=None, ylim=None):
         axes.set_ylim(ylim)
     if isinstance(ylim, dict):
         axes.set_ylim(**ylim)
-

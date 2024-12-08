@@ -3,13 +3,12 @@ import base64
 from collections import defaultdict
 from collections.abc import Iterable, Sized
 from copy import deepcopy
-from functools import reduce, wraps
+from functools import reduce
 import hashlib
 import json
 import logging
 import pprint
 import re
-import sys
 import threading
 
 log = logging.getLogger(__name__)
@@ -18,14 +17,13 @@ __no_export = set(dir())  # all variables defined above this are not exported
 
 
 class Namespace:
-
     printer = pprint.PrettyPrinter(indent=2, compact=True)
 
     @staticmethod
     def parse(*args, **kwargs):
         raw = dict(*args, **kwargs)
         parsed = Namespace()
-        dots, nodots = partition(raw.keys(), lambda s: '.' in s)
+        dots, nodots = partition(raw.keys(), lambda s: "." in s)
         for k in nodots:
             v = raw[k]
             try:
@@ -36,7 +34,7 @@ class Namespace:
             parsed[k] = v
         sublevel = {}
         for k in dots:
-            k1, k2 = k.split('.', 1)
+            k1, k2 = k.split(".", 1)
             entry = [(k2, raw[k])]
             if k1 in sublevel:
                 sublevel[k1].update(entry)
@@ -91,7 +89,7 @@ class Namespace:
                 nk, nv = fn(k, v, parents=parents)
                 if nk is not None:
                     if v is nv and isinstance(v, Namespace):
-                        nv = _walk(nv, fn, parents=parents+[k], inplace=inplace)
+                        nv = _walk(nv, fn, parents=parents + [k], inplace=inplace)
                     ns[nk] = nv
             return ns
 
@@ -103,7 +101,7 @@ class Namespace:
         Allows access to a nested key using dot syntax.
         Doesn't raise if key doesn't exist.
         """
-        ks = key.split('.', 1)
+        ks = key.split(".", 1)
         if len(ks) > 1:
             n1 = getattr(namespace, ks[0], None)
             return default if n1 is None else Namespace.get(n1, ks[1], default)
@@ -115,7 +113,7 @@ class Namespace:
         """
         Allows setting a nested key using dot syntax.
         """
-        ks = key.split('.', 1)
+        ks = key.split(".", 1)
         if len(ks) > 1:
             n1 = getattr(namespace, ks[0], None)
             if n1 is None:
@@ -131,7 +129,7 @@ class Namespace:
         Allows deleting a nested key using dot syntax.
         Doesn't raise if key doesn't exist.
         """
-        ks = key.split('.', 1)
+        ks = key.split(".", 1)
         if len(ks) > 1:
             n1 = getattr(namespace, ks[0], None)
             if n1 is not None:
@@ -222,14 +220,14 @@ class Namespace:
         return Namespace.dict(self)
 
 
-def _attributes(obj, filtr='all'):
+def _attributes(obj, filtr="all"):
     attrs = vars(obj)
-    if filtr is None or filtr == 'all':
+    if filtr is None or filtr == "all":
         return attrs
-    elif filtr == 'public':
-        return {k: v for k, v in attrs.items() if not k.startswith('_')}
-    elif filtr == 'private':
-        return {k: v for k, v in attrs.items() if k.startswith('_')}
+    elif filtr == "public":
+        return {k: v for k, v in attrs.items() if not k.startswith("_")}
+    elif filtr == "private":
+        return {k: v for k, v in attrs.items() if k.startswith("_")}
     elif isinstance(filtr, list):
         return {k: v for k, v in attrs.items() if k in filtr}
     else:
@@ -241,10 +239,9 @@ def _classname(obj):
     return type(obj).__name__
 
 
-def repr_def(obj, attributes='public'):
+def repr_def(obj, attributes="public"):
     return "{cls}({attrs!r})".format(
-        cls=_classname(obj),
-        attrs=_attributes(obj, attributes)
+        cls=_classname(obj), attrs=_attributes(obj, attributes)
     )
 
 
@@ -256,7 +253,7 @@ def identity(x, *args):
     return (x,) + args if args else x
 
 
-_metadata_attr_ = '_metadata_'
+_metadata_attr_ = "_metadata_"
 
 
 def get_metadata(fn, key, default=None):
@@ -284,21 +281,35 @@ def metadata(**kwargs):
     def decorator(fn):
         set_metadata(fn, **kwargs)
         return fn
+
     return decorator
 
 
 def as_list(*args):
     if len(args) == 0:
         return list()
-    elif len(args) == 1 and isinstance(args[0], Iterable) and not isinstance(args[0], str):
+    elif (
+        len(args) == 1
+        and isinstance(args[0], Iterable)
+        and not isinstance(args[0], str)
+    ):
         return list(args[0])
     return list(args)
 
 
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):
-    return reduce(lambda l, r: (l.extend(r) if isinstance(r, (list, tuple) if flatten_tuple else list)
-                                else l.extend(r.items()) if flatten_dict and isinstance(r, dict)
-                                else l.append(r)) or l, iterable, [])
+    return reduce(
+        lambda left, right: (
+            left.extend(right)
+            if isinstance(right, (list, tuple) if flatten_tuple else list)
+            else left.extend(right.items())
+            if flatten_dict and isinstance(right, dict)
+            else left.append(right)
+        )
+        or left,
+        iterable,
+        [],
+    )
 
 
 def partition(iterable, predicate=id):
@@ -322,18 +333,18 @@ def translate_dict(dic, translation_dict):
 
 
 def str2bool(s):
-    if s.lower() in ('true', 't', 'yes', 'y', 'on', '1'):
+    if s.lower() in ("true", "t", "yes", "y", "on", "1"):
         return True
-    elif s.lower() in ('false', 'f', 'no', 'n', 'off', '0'):
+    elif s.lower() in ("false", "f", "no", "n", "off", "0"):
         return False
     else:
-        raise ValueError(s+" can't be interpreted as a boolean.")
+        raise ValueError(s + " can't be interpreted as a boolean.")
 
 
 _empty_ = "__empty__"
 
 
-def str_def(o, if_none='', if_empty=_empty_):
+def str_def(o, if_none="", if_empty=_empty_):
     if o is None:
         return if_none
     if if_empty != _empty_ and isinstance(o, Sized) and len(o) == 0:
@@ -345,7 +356,7 @@ def str_iter(col, sep=", "):
     return sep.join(map(str, col))
 
 
-def str_sanitize(s: str) ->str:
+def str_sanitize(s: str) -> str:
     return re.sub(r"[^\w-]", "_", s)
 
 
@@ -356,7 +367,7 @@ def str_digest(s):
 def head(s, lines=10, splitlines=False):
     s_lines = s.splitlines() if s else []
     s_lines = s_lines[:lines]
-    return s_lines if splitlines else '\n'.join(s_lines)
+    return s_lines if splitlines else "\n".join(s_lines)
 
 
 def tail(s, lines=10, from_line=None, include_line=True, splitlines=False):
@@ -376,10 +387,11 @@ def tail(s, lines=10, from_line=None, include_line=True, splitlines=False):
                 start += 1
         except ValueError:
             start = 0
-    last_line = dict(index=len(s_lines) - 1,
-                     line=s_lines[-1] if len(s_lines) > 0 else None)
+    last_line = dict(
+        index=len(s_lines) - 1, line=s_lines[-1] if len(s_lines) > 0 else None
+    )
     s_lines = s_lines[start:]
-    t = s_lines if splitlines else '\n'.join(s_lines)
+    t = s_lines if splitlines else "\n".join(s_lines)
     return (t, None) if from_line is None else (t, last_line)
 
 
@@ -388,7 +400,7 @@ def fn_name(fn):
 
 
 def json_load(file, as_namespace=False):
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         return json_loads(f.read(), as_namespace=as_namespace)
 
 
@@ -399,12 +411,12 @@ def json_loads(s, as_namespace=False):
         return json.loads(s)
 
 
-def json_dump(o, file, style='default'):
-    with open(file, 'w') as f:
+def json_dump(o, file, style="default"):
+    with open(file, "w") as f:
         f.write(json_dumps(o, style=style))
 
 
-def json_dumps(o, style='default'):
+def json_dumps(o, style="default"):
     """
 
     :param o:
@@ -414,11 +426,11 @@ def json_dumps(o, style='default'):
                 - `pretty` adds a space after each separator and indents after opening brackets.
     :return:
     """
-    separators = (',', ':') if style == 'compact' else None
-    indent = 4 if style == 'pretty' else None
+    separators = (",", ":") if style == "compact" else None
+    indent = 4 if style == "pretty" else None
 
     def default_encode(o):
-        if hasattr(o, '__json__') and callable(o.__json__):
+        if hasattr(o, "__json__") and callable(o.__json__):
             return o.__json__()
         return json.encoder.JSONEncoder.default(None, o)
 
@@ -429,8 +441,8 @@ def json_dumps(o, style='default'):
 # Thread-safe utility functions #
 #################################
 
-class ThreadSafeCounter:
 
+class ThreadSafeCounter:
     def __init__(self, value=0):
         self.value = value
         self._lock = threading.Lock()
@@ -462,9 +474,11 @@ def threadsafe_generator(fn):
     """
     Decorator making a generator thread-safe.
     """
+
     def gen(*args, **kwargs):
         return threadsafe_iterator(fn(*args, **kwargs))
+
     return gen
 
 
-__all__ = [s for s in dir() if not s.startswith('_') and s not in __no_export]
+__all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

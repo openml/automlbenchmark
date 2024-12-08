@@ -20,5 +20,5 @@ __all__ = [
     "AWSBenchmark",
     "SetupMode",
     "TaskResult",
-    "__version__"
+    "__version__",
 ]

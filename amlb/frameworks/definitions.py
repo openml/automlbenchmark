@@ -8,11 +8,13 @@ from amlb.utils import Namespace, config_load, str_sanitize
 
 log = logging.getLogger(__name__)
 
-default_tag = '_'
+default_tag = "_"
 
 
-def load_framework_definitions(frameworks_file: Union[str, List[str]], config: Namespace) -> Namespace:
-    """ Load the framework definition listed in the framework file(s).
+def load_framework_definitions(
+    frameworks_file: Union[str, List[str]], config: Namespace
+) -> Namespace:
+    """Load the framework definition listed in the framework file(s).
 
     Loads the definition(s) from the file(s),
     :param frameworks_file:
@@ -25,19 +27,27 @@ def load_framework_definitions(frameworks_file: Union[str, List[str]], config: N
     return frameworks
 
 
-def _load_and_merge_framework_definitions(frameworks_file: Union[str, List[str]], config) -> Namespace:
-    """ Load and merge the framework file(s), does not allow duplicate definitions. """
+def _load_and_merge_framework_definitions(
+    frameworks_file: Union[str, List[str]], config
+) -> Namespace:
+    """Load and merge the framework file(s), does not allow duplicate definitions."""
     log.info("Loading frameworks definitions from %s.", frameworks_file)
     if not isinstance(frameworks_file, list):
         frameworks_file = [frameworks_file]
 
     definitions_by_tag = Namespace()
-    for tag in [default_tag]+config.frameworks.tags:
-        definitions_by_file = [config_load(_definition_file(file, tag)) for file in frameworks_file]
+    for tag in [default_tag] + config.frameworks.tags:
+        definitions_by_file = [
+            config_load(_definition_file(file, tag)) for file in frameworks_file
+        ]
         if not config.frameworks.allow_duplicates:
-            for d1, d2 in itertools.combinations([set(dir(d)) for d in definitions_by_file], 2):
+            for d1, d2 in itertools.combinations(
+                [set(dir(d)) for d in definitions_by_file], 2
+            ):
                 if d1.intersection(d2) != set():
-                    raise ValueError(f"Duplicate entry '{d1.intersection(d2).pop()}' found.")
+                    raise ValueError(
+                        f"Duplicate entry '{d1.intersection(d2).pop()}' found."
+                    )
         definitions_by_tag[tag] = Namespace.merge(*definitions_by_file)
 
     return definitions_by_tag
@@ -61,21 +71,21 @@ def _sanitize_and_add_defaults(frameworks, config):
         _add_default_abstract(framework, config)
         if "extends" not in framework:
             _add_default_module(framework, config)
-            _add_default_image(framework, config, props=['image'])
+            _add_default_image(framework, config, props=["image"])
     _update_frameworks_with_parent_definitions(frameworks)
 
     _add_defaults_to_frameworks(frameworks, config)
 
 
 def _sanitize_definitions(frameworks: Namespace):
-    """ Normalize names, add name field, remove invalid extensions. """
+    """Normalize names, add name field, remove invalid extensions."""
     _add_framework_name(frameworks)
     _remove_frameworks_with_unknown_parent(frameworks)
     _remove_self_reference_extensions(frameworks)
 
 
 def _add_framework_name(frameworks: Namespace):
-    """ Adds a 'name' attribute to each framework. """
+    """Adds a 'name' attribute to each framework."""
     for name, framework in frameworks:
         framework.name = str_sanitize(name)
 
@@ -86,7 +96,7 @@ def _add_default_module(framework, config):
 
 
 def _add_default_abstract(framework, config):
-    if 'abstract' not in framework:
+    if "abstract" not in framework:
         framework.abstract = False
 
 
@@ -123,7 +133,7 @@ def _add_default_setup_script(framework, config):
 
 
 def _add_default_setup_cmd(framework, config):
-    """ Defines default setup_cmd and _setup_cmd, interpolate commands if necessary.
+    """Defines default setup_cmd and _setup_cmd, interpolate commands if necessary.
 
     The default values are `None`.
     In case a setup_cmd is defined, the original definition is saved to `_setup_cmd`.
@@ -152,24 +162,26 @@ def _add_default_params(framework):
         framework.params = Namespace.dict(framework.params)
 
 
-def _add_default_image(framework: Namespace, config: Namespace, props: Optional[List[str]] = None):
+def _add_default_image(
+    framework: Namespace, config: Namespace, props: Optional[List[str]] = None
+):
     if "image" not in framework:
         framework.image = copy.deepcopy(config.docker.image_defaults)
     else:
         framework.image = Namespace.merge(config.docker.image_defaults, framework.image)
 
-    if framework.image.tag is None and (not props or 'tag' in props):
+    if framework.image.tag is None and (not props or "tag" in props):
         framework.image.tag = framework.version.lower()
 
-    if framework.image.image is None and (not props or 'image' in props):
+    if framework.image.image is None and (not props or "image" in props):
         framework.image.image = framework.name.lower()
 
-    if framework.image.author is None and (not props or 'author' in props):
+    if framework.image.author is None and (not props or "author" in props):
         framework.image.author = ""
 
 
 def _find_all_parents(framework, frameworks):
-    """ Return all definitions framework extends, from direct parent to furthest. """
+    """Return all definitions framework extends, from direct parent to furthest."""
     parents = []
     while "extends" in framework and framework.extends is not None:
         framework = frameworks[framework.extends]
@@ -178,7 +190,7 @@ def _find_all_parents(framework, frameworks):
 
 
 def _update_frameworks_with_parent_definitions(frameworks: Namespace):
-    """ Add fields defined by ancestors
+    """Add fields defined by ancestors
 
     Extensions do not overwrite fields defined on the framework itself.
     If multiple parents define the same field, the parent that is 'closer'
@@ -204,16 +216,20 @@ def _add_defaults_to_frameworks(frameworks: Namespace, config):
 def _remove_self_reference_extensions(frameworks: Namespace):
     for name, framework in frameworks:
         if "extends" in framework and framework.extends == framework.name:
-            log.warning("Framework %s extends itself: removing extension.",
-                        framework.name)
+            log.warning(
+                "Framework %s extends itself: removing extension.", framework.name
+            )
             framework.extends = None
 
 
 def _remove_frameworks_with_unknown_parent(frameworks: Namespace):
     frameworks_with_unknown_parent = [
-        (name, framework.extends) for name, framework in frameworks
+        (name, framework.extends)
+        for name, framework in frameworks
         if "extends" in framework and framework.extends not in frameworks
     ]
     for framework, parent in frameworks_with_unknown_parent:
-        log.warning("Removing framework %s as parent %s doesn't exist.", framework, parent)
+        log.warning(
+            "Removing framework %s as parent %s doesn't exist.", framework, parent
+        )
         del frameworks[framework]

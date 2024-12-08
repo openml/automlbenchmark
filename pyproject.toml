@@ -1,3 +1,18 @@
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+exclude=["frameworks/TunedRandomForest/custom_validate.py"]
+
+[tool.ruff.lint]
+ignore = [
+    "E402",  # import on top of file: several modules need to set BLAS env before imports
+    "F403",  # forbids *-imports, sort out later
+]
+exclude = [
+    "amlb_report/**.py",
+]
+
+
 [tool.mypy]
 files=[
     "amlb/**/*.py"

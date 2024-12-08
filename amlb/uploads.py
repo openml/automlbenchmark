@@ -16,19 +16,21 @@ log = logging.getLogger(__name__)
 
 
 def _load_task_data(task_folder: pathlib.Path, fold: int = 0) -> Namespace:
-    """ Loads the metadata of the given fold of a task as a namespace. """
-    with open(task_folder / str(fold) / 'metadata.json', 'r') as fh:
+    """Loads the metadata of the given fold of a task as a namespace."""
+    with open(task_folder / str(fold) / "metadata.json", "r") as fh:
         metadata = json.load(fh)
     metadata = Namespace.from_dict(metadata)
     return metadata
 
 
 def _load_fold(task_folder: pathlib.Path, fold: int, task: OpenMLTask) -> pd.DataFrame:
-    """ Load the predictions and add openml repeat/fold/index information. """
+    """Load the predictions and add openml repeat/fold/index information."""
     prediction_file = task_folder / f"{fold}/predictions.csv"
-    predictions = pd.read_csv(prediction_file, sep=',', header=0)
+    predictions = pd.read_csv(prediction_file, sep=",", header=0)
 
-    train_indices, test_indices = task.get_train_test_split_indices(fold, repeat=0, sample=0)
+    train_indices, test_indices = task.get_train_test_split_indices(
+        fold, repeat=0, sample=0
+    )
     predictions["index"] = test_indices
     predictions["fold"] = fold
     predictions["repeat"] = 0
@@ -36,7 +38,7 @@ def _load_fold(task_folder: pathlib.Path, fold: int, task: OpenMLTask) -> pd.Dat
 
 
 def _load_predictions(task_folder: pathlib.Path) -> pd.DataFrame:
-    """ Loads predictions of all folds for a task with index information required for upload. """
+    """Loads predictions of all folds for a task with index information required for upload."""
     metadata = _load_task_data(task_folder)
     task = openml.tasks.get_task(metadata.openml_task_id)
     results = [_load_fold(task_folder, fold, task) for fold in range(10)]
@@ -51,16 +53,18 @@ def _list_completed_folds(task_folder: pathlib.Path) -> Set[str]:
     return completed_folds
 
 
-def _get_flow(metadata: Namespace, sync_with_server: bool = True) -> openml.flows.OpenMLFlow:
-    """ Creates or retrieves an OpenML flow for the given run metadata. """
+def _get_flow(
+    metadata: Namespace, sync_with_server: bool = True
+) -> openml.flows.OpenMLFlow:
+    """Creates or retrieves an OpenML flow for the given run metadata."""
     if metadata.git_info.repo == "NA":
         msg = "Can't generate flow for results since repository information is unknown."
         raise ValueError(msg)
 
     amlb_version = next(iter(metadata.git_info.tags), metadata.git_info.commit[:8])
 
-    *_, owner, _ = metadata.git_info.repo.rsplit('/')
-    if owner != 'openml':
+    *_, owner, _ = metadata.git_info.repo.rsplit("/")
+    if owner != "openml":
         amlb_version = f"{owner}#{amlb_version}"
 
     flow_description = """
@@ -68,7 +72,7 @@ def _get_flow(metadata: Namespace, sync_with_server: bool = True) -> openml.flow
         Repository commit: {commit}
         {framework_name} version: {framework_version}
     """.format(
-        fork="a fork of " if owner != 'openml' else '',
+        fork="a fork of " if owner != "openml" else "",
         repo=metadata.git_info.repo,
         commit=metadata.git_info.commit,
         framework_name=metadata.framework,
@@ -78,27 +82,31 @@ def _get_flow(metadata: Namespace, sync_with_server: bool = True) -> openml.flow
     amlb_flow = openml.flows.OpenMLFlow(
         name=f"amlb_{metadata.framework}",
         description=textwrap.dedent(flow_description),
-        external_version=f'amlb=={amlb_version},{metadata.framework}=={metadata.framework_version}',
+        external_version=f"amlb=={amlb_version},{metadata.framework}=={metadata.framework_version}",
         # The values below are default values for a flow, the run will record used values.
         parameters=OrderedDict(
-            max_runtime_seconds='14400',
-            max_mem_size_mb='32768',
-            cores='8',
-            seed='42',
+            max_runtime_seconds="14400",
+            max_mem_size_mb="32768",
+            cores="8",
+            seed="42",
         ),
         parameters_meta_info=OrderedDict(
-            max_runtime_seconds=dict(data_type='int', description='Maximum runtime in seconds.'),
-            max_mem_size_mb=dict(data_type='int', description='Memory constraint in megabytes.'),
-            cores=dict(data_type='int', description='Number of available cores.'),
-            seed=dict(data_type='int', description='The random seed.')
+            max_runtime_seconds=dict(
+                data_type="int", description="Maximum runtime in seconds."
+            ),
+            max_mem_size_mb=dict(
+                data_type="int", description="Memory constraint in megabytes."
+            ),
+            cores=dict(data_type="int", description="Number of available cores."),
+            seed=dict(data_type="int", description="The random seed."),
         ),
-        language='English',
+        language="English",
         # We can use components to describe subflows, e.g. the automl framework with its hyperparameters.
         # For now we don't.
         components=OrderedDict(),
         model=None,
         tags=["amlb"],
-        dependencies=f'amlb=={amlb_version},{metadata.framework}=={metadata.framework_version}',
+        dependencies=f"amlb=={amlb_version},{metadata.framework}=={metadata.framework_version}",
     )
     if sync_with_server:
         # Publish will check if the flow exists on the server.
@@ -109,13 +117,17 @@ def _get_flow(metadata: Namespace, sync_with_server: bool = True) -> openml.flow
         return amlb_flow
 
 
-def _extract_and_format_hyperparameter_configuration(metadata: Namespace, flow: OpenMLFlow) -> List[OrderedDict]:
+def _extract_and_format_hyperparameter_configuration(
+    metadata: Namespace, flow: OpenMLFlow
+) -> List[OrderedDict]:
     return [
-        OrderedDict([
-            ("oml:name", name),
-            ("oml:value", metadata.__dict__.get(name, default)),
-            ("oml:component", flow.id)
-        ])
+        OrderedDict(
+            [
+                ("oml:name", name),
+                ("oml:value", metadata.__dict__.get(name, default)),
+                ("oml:component", flow.id),
+            ]
+        )
         for name, default in flow.parameters.items()
     ]
 
@@ -128,7 +140,10 @@ def _upload_results(task_folder: pathlib.Path) -> openml.runs.OpenMLRun:
     oml_task = openml.tasks.get_task(metadata.openml_task_id)
 
     denormalize_map = {label.strip().lower(): label for label in oml_task.class_labels}
-    predictions.columns = pd.Index(col if col not in denormalize_map else denormalize_map[col] for col in predictions)
+    predictions.columns = pd.Index(
+        col if col not in denormalize_map else denormalize_map[col]
+        for col in predictions
+    )
     predictions["truth"] = predictions["truth"].apply(denormalize_map.get)
     predictions["predictions"] = predictions["predictions"].apply(denormalize_map.get)
 
@@ -139,24 +154,27 @@ def _upload_results(task_folder: pathlib.Path) -> openml.runs.OpenMLRun:
         else:
             class_probabilities = {c: row[c] for c in oml_task.class_labels}
         prediction = format_prediction(
-               task=oml_task,
-               repeat=row["repeat"],
-               fold=row["fold"],
-               index=row["index"],
-               prediction=row["predictions"],
-               truth=row["truth"],
-               proba=class_probabilities,
-           )
+            task=oml_task,
+            repeat=row["repeat"],
+            fold=row["fold"],
+            index=row["index"],
+            prediction=row["predictions"],
+            truth=row["truth"],
+            proba=class_probabilities,
+        )
         formatted_predictions.append(prediction)
 
     parameters = _extract_and_format_hyperparameter_configuration(metadata, oml_flow)
-    tags = ['amlb']
-    if 'tag' in metadata and metadata.tag not in [None, 'amlb']:
+    tags = ["amlb"]
+    if "tag" in metadata and metadata.tag not in [None, "amlb"]:
         tags.extend([metadata.tag])
 
     if len(metadata.framework_params) > 0:
         description = "Framework_Hyperparameters-"
-        description += '-'.join(f"{hp}:{value}" for hp, value in Namespace.dict(metadata.framework_params).items())
+        description += "-".join(
+            f"{hp}:{value}"
+            for hp, value in Namespace.dict(metadata.framework_params).items()
+        )
     else:
         description = None
 
@@ -181,12 +199,12 @@ def missing_folds(task_folder: pathlib.Path) -> Set[str]:
 
 
 def process_task_folder(task_folder: pathlib.Path) -> Optional[openml.runs.OpenMLRun]:
-    """ Uploads the task folder iff predictions for all 10 folds are present. """
+    """Uploads the task folder iff predictions for all 10 folds are present."""
     if len(missing_folds(task_folder)) > 0:
         log.warning(
             "Task %s is missing predictions for folds %s.",
             task_folder,
-            ', '.join(missing_folds(task_folder))
+            ", ".join(missing_folds(task_folder)),
         )
         return None
 
