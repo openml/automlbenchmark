@@ -10,9 +10,11 @@ from __future__ import annotations
 from abc import abstractmethod
 import logging
 import re
+from typing import cast
 
 from ..benchmark import Benchmark, SetupMode
 from ..errors import InvalidStateError
+from ..frameworks.definitions import Framework
 from ..job import Job
 from ..resources import config as rconfig, get as rget
 from ..__version__ import __version__, _dev_version as dev
@@ -29,7 +31,8 @@ class ContainerBenchmark(Benchmark):
     framework_install_required = False
 
     @classmethod
-    def image_name(cls, framework_def, label=None, **kwargs):
+    def image_name(cls, framework_def: Framework, label: str | None = None) -> str:
+        """Determines the image name based on configuration data."""
         if label is None:
             label = rget().project_info.branch
 
@@ -61,8 +64,10 @@ class ContainerBenchmark(Benchmark):
         self.custom_commands = ""
         self.image = None
 
-    def _container_image_name(self, label=None):
-        return self.image_name(self.framework_def, label)
+    def _container_image_name(self, label: str | None = None) -> str:
+        return self.image_name(
+            cast(Framework, self.framework_def), label
+        )  # framework only None in AWSBenchmark
 
     def _validate(self):
         max_parallel_jobs = rconfig().job_scheduler.max_parallel_jobs
