@@ -26,8 +26,10 @@ def run_fedot_tabular(dataset: Dataset, config: TaskConfig):
         __file__, "exec.py", input_data=data, dataset=dataset, config=config
     )
 
+
 def run_fedot_timeseries(dataset: Dataset, config: TaskConfig):
     from frameworks.shared.caller import run_in_venv
+
     dataset = deepcopy(dataset)
 
     data = dict(
@@ -43,6 +45,6 @@ def run_fedot_timeseries(dataset: Dataset, config: TaskConfig):
         repeated_item_id=dataset.repeated_item_id,
     )
 
-    return run_in_venv(__file__, "exec_ts.py",
-                       input_data=data, dataset=dataset, config=config)
-
+    return run_in_venv(
+        __file__, "exec_ts.py", input_data=data, dataset=dataset, config=config
+    )

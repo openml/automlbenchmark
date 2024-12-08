@@ -212,7 +212,10 @@ class Resources:
         return self._benchmark_definition(name, self.config, defaults)
 
     def _benchmark_definition(
-        self, name: str, config_: Namespace, defaults: TaskConstraint | None = None
+        self,
+        name: str,
+        config_: Namespace,
+        defaults_for_task: TaskConstraint | None = None,
     ):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
@@ -222,8 +225,9 @@ class Resources:
         file_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
             name, config_.benchmarks.definition_dir
         )
-        if defaults is not None:
-            defaults = Namespace(**dataclasses.asdict(defaults))
+        defaults = None
+        if defaults_for_task is not None:
+            defaults = Namespace(**dataclasses.asdict(defaults_for_task))
         defaults = Namespace.merge(
             defaults, file_defaults, Namespace(name="__defaults__")
         )
@@ -260,7 +264,6 @@ class Resources:
 
         if task["metric"] is None:
             task["metric"] = None
-
 
         if task["ec2_instance_type"] is None:
             task["ec2_instance_type"] = Resources.lookup_ec2_instance_type(
@@ -311,8 +314,10 @@ class Resources:
         if cores <= 0 or cores > max(supported_cores):
             return cores_to_size.default
 
-        cores = next((c for c in sorted(supported_cores) if c >= cores), "default")
-        return cores_to_size[str(cores)]
+        best_match = next(
+            (str(c) for c in sorted(supported_cores) if c >= cores), "default"
+        )
+        return cores_to_size[best_match]
 
     @staticmethod
     def generate_task_identifier(task: Namespace) -> str | None:

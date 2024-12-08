@@ -656,7 +656,6 @@ class TaskConfig:
 
 
 class BenchmarkTask:
-
     def __init__(self, benchmark: Benchmark, task_def, fold):
         """
 
