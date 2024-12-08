@@ -22,6 +22,7 @@ import sys
 
 import pandas as pd
 
+from .frameworks.definitions import load_framework_definition
 from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
 from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
@@ -119,13 +120,8 @@ class Benchmark:
             Benchmark.data_loader = DataLoader(rconfig())
 
         self._job_history = self._load_job_history(job_history=job_history)
-
-        fsplits = framework_name.split(":", 1)
-        framework_name = fsplits[0]
-        tag = fsplits[1] if len(fsplits) > 1 else None
-        self.framework_def, self.framework_name = rget().framework_definition(
-            framework_name, tag
-        )
+        framework = load_framework_definition(framework_name, rget())
+        self.framework_def, self.framework_name = framework, framework.name
         log.debug("Using framework definition: %s.", self.framework_def)
 
         self.constraint_def, self.constraint_name = rget().constraint_definition(
@@ -658,6 +654,7 @@ class TaskConfig:
 
 
 class BenchmarkTask:
+
     def __init__(self, benchmark: Benchmark, task_def, fold):
         """
 
