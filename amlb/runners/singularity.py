@@ -68,7 +68,7 @@ class SingularityBenchmark(ContainerBenchmark):
         return os.path.join(self._framework_dir, _setup_dir_, "Singularityfile")
 
     def _start_container(self, script_params=""):
-        """Implementes the container run method"""
+        """Invokes the container run method"""
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
@@ -77,7 +77,7 @@ class SingularityBenchmark(ContainerBenchmark):
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         cmd = (
             "singularity run --pwd /bench {options} "
-            "-B {input}:/input -B {output}:/output -B {custom}:/custom "
+            "-B '{input}':/input -B '{output}':/output -B '{custom}':/custom "
             '{image} "{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}"'
         ).format(
             options=rconfig().singularity.run_extra_options,
