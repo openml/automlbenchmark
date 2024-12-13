@@ -103,7 +103,7 @@ def setup(
             nonlocal buffer
             buf_type = "err" if file is sys.stderr else "out"
             buf = buffer[buf_type]
-            if buf is None:
+            if buf is None or buf.closed:
                 buf = buffer[buf_type] = io.StringIO()
             line = sep.join(map(str, [*args]))
             buf.write(line)  # "end" newline always added by logger
