@@ -142,3 +142,11 @@ def test_benchmark_task_load_data(load_default_resources, mocker):
 
     mocker.patch("amlb.benchmark.Benchmark.data_loader.load", return_value={})
     benchmark_task.load_data()
+
+
+# def test_task_config_estimate_params
+# then can separate into methods
+# dont know if taskconfig is really needed.. except it is passed to integration scripts
+# benchmarkingtask overrides taskconfig can be moved to task config
+# creating a job doesn't need to live on the task.. probably. It binds `setup` though..
+# and used extensively in Run.. would it make sense for a job to run multiple task config?
