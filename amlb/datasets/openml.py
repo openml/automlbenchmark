@@ -339,7 +339,7 @@ class OpenmlDataset(Dataset):
 
 class OpenmlDatasplit(Datasplit):
     def __init__(self, dataset: OpenmlDataset):
-        super().__init__(dataset, "arff")  # TODO: fix format
+        super().__init__(dataset, "arff")
         self._data: dict[str, AM | DF | str] = {}
 
     def data_path(self, format):

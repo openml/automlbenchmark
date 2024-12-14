@@ -92,7 +92,6 @@ class ContainerBenchmark(Benchmark):
             self._upload_image(self.image)
 
     def cleanup(self):
-        # TODO: remove generated script? anything else?
         pass
 
     def run(
@@ -136,7 +135,6 @@ class ContainerBenchmark(Benchmark):
                     else rconfig().seed,
                 )
             )
-            # TODO: would be nice to reload generated scores and return them
 
         job = Job(
             rconfig().token_separator.join(

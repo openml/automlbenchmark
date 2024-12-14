@@ -799,9 +799,6 @@ class AWSBenchmark(Benchmark):
                 datetime_iso(micros=True, time_sep="."),
             ).lower()
         )
-        # TODO: don't know if it would be considerably faster to reuse previously stopped instances sometimes
-        #   instead of always creating a new one:
-        #   would still need to set a new UserData though before restarting the instance.
         ec2_config = rconfig().aws.ec2
         try:
             if ec2_config.subnet_id:
@@ -1621,52 +1618,3 @@ power_state:
             if timeout_secs > 0
             else rconfig().aws.max_timeout_seconds,
         )
-
-
-class AWSRemoteBenchmark(Benchmark):
-    # TODO: idea is to handle results progressively on the remote side and push results as soon as they're generated
-    #   this would allow to safely run multiple tasks on single AWS instance
-
-    def __init__(
-        self,
-        framework_name,
-        benchmark_name,
-        constraint_name,
-        region=None,
-        job_history: str | None = None,
-    ):
-        self.region = region
-        self.s3 = boto3.resource("s3", region_name=self.region)
-        self.bucket = self._init_bucket()
-        self._download_resources()
-        super().__init__(
-            framework_name, benchmark_name, constraint_name, job_history=job_history
-        )
-
-    def run(self, save_scores=False):
-        super().run(save_scores)
-        self._upload_results()
-
-    def _make_job(self, task_name=None, folds=None):
-        job = super()._make_job(task_name, folds)
-        super_run = job._run
-
-        def new_run():
-            super_run()
-            # self._upload_result()
-
-        job._run = new_run
-        return job
-
-    def _init_bucket(self):
-        pass
-
-    def _download_resources(self):
-        root_key = str_def(rconfig().aws.s3.root_key)
-        benchmark_basename = os.path.basename(self.benchmark_path)
-        self.bucket.upload_file(
-            self.benchmark_path, root_key + ("/".join(["input", benchmark_basename]))
-        )
-
-    def _upload_results(self):
-        pass

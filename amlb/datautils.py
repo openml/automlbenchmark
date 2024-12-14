@@ -141,8 +141,7 @@ def reorder_dataset(
     if os.path.isfile(reordered_path):
         if save:  # reordered file already exists, returning it as there's no data to load here
             return reordered_path
-        else:  # reordered file already exists, use it to load reordered data
-            path = reordered_path
+        path = reordered_path
 
     with open(path) as file:
         df = arff.load(file)
@@ -181,9 +180,6 @@ def reorder_dataset(
             },
             file,
         )
-    # TODO: provide the possibility to return data even if save is set to false,
-    #  as the client code doesn't want to have to load the data again,
-    #  and may want to benefit from the caching of reordered data for future runs.
     return reordered_path
 
 
@@ -337,8 +333,6 @@ class Encoder(TransformerMixin):
         if self._mask_missing or self._encode_missing:
             mask = [v in self.missing_values for v in vector]
             if any(mask):
-                # if self._mask_missing:
-                #     missing = vector[mask]
                 vector[mask] = self.missing_replaced_by
                 if self.normalize_fn:
                     vector = self.normalize_fn(vector)
@@ -369,7 +363,6 @@ class Encoder(TransformerMixin):
         if not self.delegate:
             return vec
 
-        # TODO: handle mask
         vec = np.asarray(vec).astype(self.encoded_type, copy=False)
         return self.delegate.inverse_transform(vec, **params)
 

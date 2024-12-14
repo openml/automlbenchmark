@@ -654,7 +654,6 @@ class TaskConfig:
 
 
 class BenchmarkTask:
-
     def __init__(self, benchmark: Benchmark, task_def, fold):
         """
 
@@ -705,7 +704,6 @@ class BenchmarkTask:
                 "Loaded OpenML dataset for task_id %s.", self._task_def.openml_task_id
             )
         elif hasattr(self._task_def, "openml_dataset_id"):
-            # TODO
             raise NotImplementedError(
                 "OpenML datasets without task_id are not supported yet."
             )
