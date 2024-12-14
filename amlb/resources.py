@@ -144,7 +144,6 @@ class Resources:
         frameworks = self._frameworks[tag]
         log.debug("Available framework definitions:\n%s", frameworks)
         framework = next((f for n, f in frameworks if n.lower() == lname), None)
-        # TODO: Clean up this workflow and error messaging as part of #518
         base_framework = next(
             (f for n, f in self._frameworks[default_tag] if n.lower() == lname), None
         )
@@ -334,12 +333,13 @@ def from_configs(*configs: Namespace):
 
 def get() -> Resources:
     if __INSTANCE__ is None:
-        # TODO: Instead why not do normal lazy loading pattern?
         raise RuntimeError("No configuration has been loaded yet.")
     return __INSTANCE__
 
 
 def config():
+    if __INSTANCE__ is None:
+        raise RuntimeError("No configuration has been loaded yet.")
     return __INSTANCE__.config
 
 
