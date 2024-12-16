@@ -124,8 +124,10 @@ class Benchmark:
         self.framework_def, self.framework_name = framework, framework.name
         log.debug("Using framework definition: %s.", self.framework_def)
 
-        self.constraint_def, self.constraint_name = rget().constraint_definition(
-            constraint_name
+        task_constraint = rget().constraint_definition(constraint_name)
+        self.constraint_def, self.constraint_name = (
+            task_constraint,
+            task_constraint.name,
         )
         log.debug("Using constraint definition: %s.", self.constraint_def)
 
