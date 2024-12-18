@@ -123,7 +123,7 @@ class DockerBenchmark(ContainerBenchmark):
     def _generate_script(self, custom_commands):
         docker_content = """FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get -y install apt-utils dialog locales tzdata sudo
 RUN apt-get -y install curl wget unzip git
@@ -132,23 +132,21 @@ RUN add-apt-repository -y ppa:deadsnakes/ppa
 RUN apt-get update
 RUN apt-get -y install python{pyv} python{pyv}-venv python{pyv}-dev python3-pip
 RUN apt-get -y install libhdf5-serial-dev
-#RUN update-alternatives --install /usr/bin/python3 python3 $(which python{pyv}) 1
 
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # aliases for the python system
-ENV SPIP python{pyv} -m pip
-ENV SPY python{pyv}
+ENV SPIP='python{pyv} -m pip'
+ENV SPY='python{pyv}'
 
 # Enforce UTF-8 encoding
-ENV PYTHONUTF8 1
-ENV PYTHONIOENCODING utf-8
-# RUN locale-gen en-US.UTF-8
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV PYTHONUTF8=1
+ENV PYTHONIOENCODING=utf-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Setup HDF5 for installing `tables`
-ENV HDF5_DIR /usr/lib/aarch64-linux-gnu/hdf5/serial
+ENV HDF5_DIR='/usr/lib/aarch64-linux-gnu/hdf5/serial'
 
 WORKDIR /bench
 
@@ -156,9 +154,8 @@ WORKDIR /bench
 # packages that we need to data pre- and postprocessing without breaking it.
 RUN $SPIP install -U pip wheel
 RUN $SPY -m venv venv
-ENV PIP /bench/venv/bin/python{pyv} -m pip
-ENV PY /bench/venv/bin/python{pyv} -W ignore
-#RUN $PIP install -U pip=={pipv} wheel
+ENV PIP='/bench/venv/bin/python{pyv} -m pip'
+ENV PY='/bench/venv/bin/python{pyv} -W ignore'
 RUN $PIP install -U pip wheel
 
 VOLUME /input
@@ -188,7 +185,6 @@ CMD ["{framework}", "test"]
             ),
             framework=self._forward_params["framework_name"],
             pyv=rconfig().versions.python,
-            pipv=rconfig().versions.pip,
             script=rconfig().script,
         )
 
