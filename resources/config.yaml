@@ -27,6 +27,7 @@ archive: ['logs']       # list of output folders that should be archived by defa
 setup:                   # configuration namespace for the framework setup phase.
   live_output: true      # set to true to stream the output of setup commands, if false they are only printed when setup is complete.
   activity_timeout: 600  # when using live output, subprocess will be considered as hanging if nothing was printed during this activity time.
+                         # No effect is live_output is set to 'False'.
 
 frameworks:              # configuration namespace for the frameworks definitions.
   definition_file:       # list of yaml files describing the frameworks base definitions.

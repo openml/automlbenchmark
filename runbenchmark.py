@@ -18,6 +18,8 @@ from amlb.utils import (
     str2bool,
     str_sanitize,
     zip_path,
+    StaleProcessError,
+    Namespace,
 )
 from amlb import log, AutoMLError
 from amlb.defaults import default_dirs
@@ -358,9 +360,19 @@ try:
             args.mode,
         )
 
-    bench.setup(amlb.SetupMode[args.setup])
-    if args.setup != "only":
-        res = bench.run(args.task, args.fold)
+    try:
+        bench.setup(amlb.SetupMode[args.setup])
+    except StaleProcessError as e:
+        setting = "setup.activity_timeout"
+        timeout = Namespace.get(amlb_res.config, setting)
+        log.error(
+            f"Process '{e.cmd}' was aborted after producing no output for {timeout} seconds. "
+            f"If the process is expected to take more time, please raise the '{setting}' limit."
+        )
+        exit_code = 1
+    else:
+        if args.setup != "only":
+            res = bench.run(args.task, args.fold)
 except (ValueError, AutoMLError) as e:
     log.error("\nERROR:\n%s", e)
     if extras.get("verbose") is True:
