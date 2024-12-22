@@ -48,7 +48,7 @@ class DockerBenchmark(ContainerBenchmark):
         return os.path.join(self._framework_dir, _setup_dir_, "Dockerfile")
 
     def _start_container(self, script_params=""):
-        """Implementes the container run method"""
+        """Invokes the container run method"""
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
@@ -60,7 +60,7 @@ class DockerBenchmark(ContainerBenchmark):
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
             "docker run --name {name} {options} {run_as} "
-            "-v {input}:/input -v {output}:/output -v {custom}:/custom "
+            "-v '{input}':/input -v '{output}':/output -v '{custom}':/custom "
             "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
         ).format(
             name=inst_name,
