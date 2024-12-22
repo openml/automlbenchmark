@@ -18,6 +18,7 @@ from amlb.utils import (
     str2bool,
     str_sanitize,
     zip_path,
+    StaleProcessError,
 )
 from amlb import log, AutoMLError
 from amlb.defaults import default_dirs
@@ -358,7 +359,12 @@ try:
             args.mode,
         )
 
-    bench.setup(amlb.SetupMode[args.setup])
+    try:
+        bench.setup(amlb.SetupMode[args.setup])
+    except StaleProcessError as e:
+        e.timeout = amlb_res.config.setup.activity_timeout
+        e.setting = "setup.activity_timeout"
+        raise
     if args.setup != "only":
         res = bench.run(args.task, args.fold)
 except (ValueError, AutoMLError) as e:

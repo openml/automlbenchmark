@@ -49,6 +49,18 @@ def file_lock(path, timeout=-1):
         yield
 
 
+class StaleProcessError(subprocess.TimeoutExpired):
+    def __init__(self, cmd, timeout, output=None, stderr=None, setting=None):
+        super().__init__(cmd, timeout, output, stderr)
+        self.setting = setting
+
+    def __str__(self):
+        return (
+            f"Process '{self.cmd}' was aborted after producing no output for {self.timeout} seconds. "
+            f"If the process is expected to take more time, please raise the '{self.setting}' limit."
+        )
+
+
 def run_subprocess(
     *popenargs,
     input=None,
@@ -104,7 +116,19 @@ def run_subprocess(
         except:  # also handles kb interrupts
             process.kill()
             raise
+
         retcode = process.poll()
+        if retcode is None:
+            # Process still lives: communication stopped because of activity timeout
+            process.kill()
+            process.wait()
+            raise StaleProcessError(
+                process.args,
+                float("nan"),
+                output=stdout,
+                stderr=stderr,
+            )
+
         if check and retcode:
             raise subprocess.CalledProcessError(
                 retcode, process.args, output=stdout, stderr=stderr
@@ -186,6 +210,9 @@ def live_output_unix(
         pipes = as_list(pipe)
         # wait until a pipe is ready for reading, non-Windows only.
         ready, *_ = select.select(pipes, [], [], timeout)
+        # if a pipe is not ready it could be timeout or it could be end of process
+        # so at this point we do not know. Only after the communicate function is over do we know.
+        # i.e., if the process is still running it does not have a retcode.
         reads = [""] * len(pipes)
         # print update for each pipe that is ready for reading
         for i, p in enumerate(pipes):
@@ -315,8 +342,6 @@ def run_cmd(cmd, *args, **kwargs):
             log.log(params.output_level, e.stdout)
         if e.stderr:
             log.log(params.error_level, e.stderr)
-        # error_tail = tail(e.stderr, 25) if e.stderr else 'Unknown Error'
-        # raise subprocess.SubprocessError("Error when running command `{cmd}`: {error}".format(cmd=full_cmd, error=error_tail))
         raise e
 
 
