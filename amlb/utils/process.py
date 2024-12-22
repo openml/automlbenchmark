@@ -50,15 +50,7 @@ def file_lock(path, timeout=-1):
 
 
 class StaleProcessError(subprocess.TimeoutExpired):
-    def __init__(self, cmd, timeout, output=None, stderr=None, setting=None):
-        super().__init__(cmd, timeout, output, stderr)
-        self.setting = setting
-
-    def __str__(self):
-        return (
-            f"Process '{self.cmd}' was aborted after producing no output for {self.timeout} seconds. "
-            f"If the process is expected to take more time, please raise the '{self.setting}' limit."
-        )
+    pass
 
 
 def run_subprocess(
@@ -119,14 +111,11 @@ def run_subprocess(
 
         retcode = process.poll()
         if retcode is None:
-            # Process still lives: communication stopped because of activity timeout
+            # Process still lives => communication stopped because of activity timeout
             process.kill()
             process.wait()
             raise StaleProcessError(
-                process.args,
-                float("nan"),
-                output=stdout,
-                stderr=stderr,
+                process.args, float("nan"), output=stdout, stderr=stderr
             )
 
         if check and retcode:
