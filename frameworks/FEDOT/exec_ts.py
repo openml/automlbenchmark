@@ -22,7 +22,9 @@ def run(dataset, config):
     scoring_metric = get_fedot_metrics(config)
 
     training_params = {"preset": "best_quality", "n_jobs": config.cores}
-    training_params.update({k: v for k, v in config.framework_params.items() if not k.startswith('_')})
+    training_params.update(
+        {k: v for k, v in config.framework_params.items() if not k.startswith("_")}
+    )
     n_jobs = training_params["n_jobs"]
 
     log.info(f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
@@ -30,14 +32,18 @@ def run(dataset, config):
 
     task = Task(
         TaskTypesEnum.ts_forecasting,
-        TsForecastingParams(forecast_length=dataset.forecast_horizon_in_steps)
+        TsForecastingParams(forecast_length=dataset.forecast_horizon_in_steps),
     )
 
     train_df, test_df = load_timeseries_dataset(dataset)
     id_column = dataset.id_column
 
-    max_runtime_minutes_per_ts = config.max_runtime_seconds / 60 / train_df[id_column].nunique()
-    log.info(f'Fitting FEDOT with a maximum time of {max_runtime_minutes_per_ts}min per series')
+    max_runtime_minutes_per_ts = (
+        config.max_runtime_seconds / 60 / train_df[id_column].nunique()
+    )
+    log.info(
+        f"Fitting FEDOT with a maximum time of {max_runtime_minutes_per_ts}min per series"
+    )
 
     training_duration, predict_duration = 0, 0
     models_count = 0
@@ -51,10 +57,12 @@ def run(dataset, config):
             features=train_series,
             target=train_series,
             task=task,
-            data_type=DataTypesEnum.ts
+            data_type=DataTypesEnum.ts,
         )
 
-        test_sub_df = test_df[test_df[id_column] == label].drop(columns=[id_column], axis=1)
+        test_sub_df = test_df[test_df[id_column] == label].drop(
+            columns=[id_column], axis=1
+        )
         horizon = len(test_sub_df[dataset.target])
 
         fedot = Fedot(
@@ -63,8 +71,9 @@ def run(dataset, config):
             timeout=max_runtime_minutes_per_ts,
             metric=scoring_metric,
             seed=config.seed,
-            max_pipeline_fit_time=max_runtime_minutes_per_ts / 5,  # fit at least 5 pipelines
-            **training_params
+            max_pipeline_fit_time=max_runtime_minutes_per_ts
+            / 5,  # fit at least 5 pipelines
+            **training_params,
         )
 
         with Timer() as training:
@@ -75,7 +84,7 @@ def run(dataset, config):
             try:
                 prediction = fedot.forecast(train_input, horizon=horizon)
             except Exception as e:
-                log.info(f'Pipeline crashed due to {e}. Using no-op forecasting')
+                log.info(f"Pipeline crashed due to {e}. Using no-op forecasting")
                 prediction = np.full(horizon, train_series[-1])
 
         predict_duration += predict.duration
@@ -92,25 +101,27 @@ def run(dataset, config):
         optional_columns[str(quantile)] = all_series_predictions
 
     save_artifacts(fedot, config)
-    return result(output_file=config.output_predictions_file,
-                  predictions=all_series_predictions,
-                  truth=truth_only,
-                  target_is_encoded=False,
-                  models_count=models_count,
-                  training_duration=training_duration,
-                  predict_duration=predict_duration,
-                  optional_columns=pd.DataFrame(optional_columns))
+    return result(
+        output_file=config.output_predictions_file,
+        predictions=all_series_predictions,
+        truth=truth_only,
+        target_is_encoded=False,
+        models_count=models_count,
+        training_duration=training_duration,
+        predict_duration=predict_duration,
+        optional_columns=pd.DataFrame(optional_columns),
+    )
 
 
 def get_fedot_metrics(config):
     metrics_mapping = dict(
-        mape='mape',
-        smape='smape',
-        mase='mase',
-        mse='mse',
-        rmse='rmse',
-        mae='mae',
-        r2='r2',
+        mape="mape",
+        smape="smape",
+        mase="mase",
+        mse="mse",
+        rmse="rmse",
+        mae="mae",
+        r2="r2",
     )
     scoring_metric = metrics_mapping.get(config.metric, None)
 
@@ -121,27 +132,29 @@ def get_fedot_metrics(config):
 
 
 def save_artifacts(automl, config):
-
-    artifacts = config.framework_params.get('_save_artifacts', [])
-    if 'models' in artifacts:
+    artifacts = config.framework_params.get("_save_artifacts", [])
+    if "models" in artifacts:
         try:
-            models_dir = output_subdir('models', config)
-            models_file = os.path.join(models_dir, 'model.json')
+            models_dir = output_subdir("models", config)
+            models_file = os.path.join(models_dir, "model.json")
             automl.current_pipeline.save(models_file)
         except Exception as e:
             log.info(f"Error when saving 'models': {e}.", exc_info=True)
 
-    if 'info' in artifacts:
+    if "info" in artifacts:
         try:
             info_dir = output_subdir("info", config)
             if automl.history:
-                automl.history.save(os.path.join(info_dir, 'history.json'))
+                automl.history.save(os.path.join(info_dir, "history.json"))
             else:
-                log.info(f"There is no optimization history info to save.")
+                log.info("There is no optimization history info to save.")
         except Exception as e:
-            log.info(f"Error when saving info about optimisation history: {e}.", exc_info=True)
+            log.info(
+                f"Error when saving info about optimisation history: {e}.",
+                exc_info=True,
+            )
 
-    if 'leaderboard' in artifacts:
+    if "leaderboard" in artifacts:
         try:
             leaderboard_dir = output_subdir("leaderboard", config)
             if automl.history:
@@ -151,5 +164,5 @@ def save_artifacts(automl, config):
             log.info(f"Error when saving 'leaderboard': {e}.", exc_info=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     call_run(run)
