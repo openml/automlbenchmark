@@ -616,33 +616,32 @@ class TaskConfig:
         os_recommended_mem = ns.get(
             rconfig(), f"{mode}.os_mem_size_mb", rconfig().benchmarks.os_mem_size_mb
         )
-        left_for_app_mem = int(sys_mem.available - os_recommended_mem)
-        assigned_mem = round(
-            self.max_mem_size_mb
-            if self.max_mem_size_mb > 0
-            else left_for_app_mem
-            if left_for_app_mem > 0
-            else sys_mem.available
-        )
+
+        if self.max_mem_size_mb <= 0:
+            left_for_app_mem = int(sys_mem.available - os_recommended_mem)
+            self.max_mem_size_mb = (
+                left_for_app_mem if left_for_app_mem > 0 else sys_mem.available
+            )
+            self.max_mem_size_mb = round(self.max_mem_size_mb)
+
+        if self.max_mem_size_mb > sys_mem.total:
+            raise JobError(
+                f"Total system memory {sys_mem.total} MB does not meet requirements (max_mem_size_mb={self.max_mem_size_mb} MB)!.",
+            )
+
         log.info(
             "Assigning %.f MB (total=%.f MB) for new %s task.",
-            assigned_mem,
+            self.max_mem_size_mb,
             sys_mem.total,
             self.name,
         )
-        self.max_mem_size_mb = assigned_mem
-        if assigned_mem > sys_mem.total:
+        if self.max_mem_size_mb > sys_mem.available:
             handle_unfulfilled(
-                f"Total system memory {sys_mem.total} MB does not meet requirements ({assigned_mem} MB)!.",
-                on_auto="fail",
+                f"Assigned memory ({self.max_mem_size_mb} MB) exceeds system available memory ({sys_mem.available} MB / total={sys_mem.total} MB)!"
             )
-        elif assigned_mem > sys_mem.available:
+        elif self.max_mem_size_mb > sys_mem.total - os_recommended_mem:
             handle_unfulfilled(
-                f"Assigned memory ({assigned_mem} MB) exceeds system available memory ({sys_mem.available} MB / total={sys_mem.total} MB)!"
-            )
-        elif assigned_mem > sys_mem.total - os_recommended_mem:
-            handle_unfulfilled(
-                f"Assigned memory ({assigned_mem} MB) is within {sys_mem.available} MB of system total memory {sys_mem.total} MB): "
+                f"Assigned memory ({self.max_mem_size_mb} MB) is within {sys_mem.available} MB of system total memory {sys_mem.total} MB): "
                 f"We recommend a {os_recommended_mem} MB buffer, otherwise OS memory usage might interfere with the benchmark task."
             )
 
@@ -651,7 +650,11 @@ class TaskConfig:
             os_recommended_vol = rconfig().benchmarks.os_vol_size_mb
             if self.min_vol_size_mb > sys_vol.free:
                 handle_unfulfilled(
-                    f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements ({self.min_vol_size_mb+os_recommended_vol} MB)!"
+                    f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements (min_vol_size_mb={self.min_vol_size_mb} MB)!"
+                )
+            elif self.min_vol_size_mb > sys_vol.free + os_recommended_vol:
+                handle_unfulfilled(
+                    f"Required storage min_vol_size_mb ({self.min_vol_size_mb}MB) together with recommended storage for OS ({os_recommended_vol} MB exceeds available storage ({sys_vol.free} MB)."
                 )
 
 

@@ -2,6 +2,7 @@ import pytest
 
 from amlb import Resources, Benchmark
 from amlb.benchmark import BenchmarkTask
+from amlb.job import JobError
 from amlb.utils import Namespace
 
 
@@ -144,9 +145,33 @@ def test_benchmark_task_load_data(load_default_resources, mocker):
     benchmark_task.load_data()
 
 
-# def test_task_config_estimate_params
-# then can separate into methods
-# dont know if taskconfig is really needed.. except it is passed to integration scripts
-# benchmarkingtask overrides taskconfig can be moved to task config
-# creating a job doesn't need to live on the task.. probably. It binds `setup` though..
-# and used extensively in Run.. would it make sense for a job to run multiple task config?
+def test_task_config_estimate_params(load_default_resources):
+    task = Namespace(name="foo", openml_task_id=42)
+    benchmark_task = create_benchmark_task(load_default_resources, task)
+    task_config = benchmark_task.task_config
+
+    task_config.estimate_system_params()
+
+
+@pytest.mark.parametrize(
+    "resource",
+    ["cores", "min_vol_size_mb", "max_mem_size_mb"],
+)
+def test_task_config_estimate_params_errors_on_insufficient_resources(
+    load_default_resources, resource
+):
+    task = Namespace(name="foo", openml_task_id=42)
+    load_default_resources.config.benchmarks.defaults[resource] = 2**40
+    load_default_resources.config.benchmarks.on_unfulfilled_constraint = "fail"
+    benchmark_task = create_benchmark_task(load_default_resources, task)
+
+    with pytest.raises(JobError) as excinfo:
+        benchmark_task.task_config.estimate_system_params()
+
+    (reason,) = excinfo.value.args
+    assert resource in reason
+    assert "does not meet requirement" in reason
+    # dont know if taskconfig is really needed.. except it is passed to integration scripts
+    # benchmarkingtask overrides taskconfig can be moved to task config
+    # creating a job doesn't need to live on the task.. probably. It binds `setup` though..
+    # and used extensively in Run.. would it make sense for a job to run multiple task config?
