@@ -6,6 +6,7 @@ from typing import cast
 
 import openml
 import pandas as pd
+from openml import OpenMLTask, OpenMLDataset
 
 from amlb.utils import Namespace, str_sanitize
 
@@ -20,7 +21,13 @@ def is_openml_benchmark(benchmark: str) -> bool:
 
 def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]]:
     """Loads benchmark defined by openml suite or task, from openml/s/X or openml/t/Y."""
-    domain, oml_type, oml_id = benchmark.split("/")
+    domain, oml_type, oml_id_str = benchmark.split("/")
+    try:
+        oml_id = int(oml_id_str)
+    except ValueError:
+        raise ValueError(
+            f"Could not convert OpenML id {oml_id_str!r} in {benchmark!r} to integer."
+        )
 
     if domain == "test.openml":
         log.debug("Setting openml server to the test server.")
@@ -34,7 +41,7 @@ def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]
         openml.config.set_retry_policy("robot")
 
     if oml_type == "t":
-        tasks = load_openml_task(domain, oml_id)
+        tasks = load_openml_task_as_definition(domain, oml_id)
     elif oml_type == "s":
         tasks = load_openml_tasks_from_suite(domain, oml_id)
     else:
@@ -44,7 +51,7 @@ def load_oml_benchmark(benchmark: str) -> tuple[str, str | None, list[Namespace]
     return benchmark, None, tasks
 
 
-def load_openml_tasks_from_suite(domain: str, oml_id: str) -> list[Namespace]:
+def load_openml_tasks_from_suite(domain: str, oml_id: int) -> list[Namespace]:
     log.info("Loading openml suite %s.", oml_id)
     suite = openml.study.get_suite(oml_id)
     # Here we know the (task, dataset) pairs so only download dataset meta-data is sufficient
@@ -66,23 +73,22 @@ def load_openml_tasks_from_suite(domain: str, oml_id: str) -> list[Namespace]:
     return tasks
 
 
-def load_openml_task(domain: str, oml_id: int) -> list[Namespace]:
-    # check if oml_id is a valid integer before trying to load the task. This sometimes does not happen by default. Only get_suite supports string ids.
-    try:
-        int(oml_id)
-    except ValueError:
-        raise ValueError(f"OpenML task id must be an integer, but got {type(oml_id)}")
+def load_openml_task_as_definition(domain: str, oml_id: int) -> list[Namespace]:
     log.info("Loading openml task %s.", oml_id)
-    # We first have the retrieve the task because we don't know the dataset id
-    t = openml.tasks.get_task(int(oml_id), download_data=False, download_qualities=False)
-    data = openml.datasets.get_dataset(
-        t.dataset_id, download_data=False, download_qualities=False
-    )
+    task, data = load_openml_task_and_data(oml_id)
     return [
         Namespace(
             name=str_sanitize(data.name),
             description=data.description,
-            openml_task_id=t.id,
-            id="{}.org/t/{}".format(domain, t.id),
+            openml_task_id=task.id,
+            id="{}.org/t/{}".format(domain, task.id),
         )
     ]
+
+
+def load_openml_task_and_data(task_id: int) -> tuple[OpenMLTask, OpenMLDataset]:
+    task = openml.tasks.get_task(task_id, download_data=False, download_qualities=False)
+    data = openml.datasets.get_dataset(
+        task.dataset_id, download_data=False, download_qualities=False
+    )
+    return task, data

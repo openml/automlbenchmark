@@ -21,6 +21,7 @@ import pandas.api.types as pat
 import openml as oml
 import xmltodict
 
+from ..benchmarks.openml import load_openml_task_and_data
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
 from ..datautils import impute_array
 from ..resources import config as rconfig, get as rget
@@ -71,10 +72,7 @@ class OpenmlLoader:
                         dataset_id, task_id
                     )
                 )
-            task = oml.tasks.get_task(task_id, download_qualities=False)
-            dataset = oml.datasets.get_dataset(
-                task.dataset_id, download_qualities=False
-            )
+            task, dataset = load_openml_task_and_data(task_id)
             _, nfolds, _ = task.get_split_dimensions()
             if fold >= nfolds:
                 raise ValueError(
