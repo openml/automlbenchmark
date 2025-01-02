@@ -3,7 +3,7 @@ import pytest
 
 from amlb.benchmarks.openml import (
     is_openml_benchmark,
-    load_openml_task,
+    load_openml_task_as_definition,
     load_oml_benchmark,
 )
 from amlb.utils import Namespace
@@ -35,7 +35,7 @@ def test_load_openml_task(mocker, oml_task, oml_dataset):
     mocker.patch(
         "openml.datasets.get_dataset", new=mocker.Mock(return_value=oml_dataset)
     )
-    [task] = load_openml_task("openml", oml_task.id)
+    [task] = load_openml_task_as_definition("openml", oml_task.id)
     assert task.name == oml_dataset.name
     assert task.description == oml_dataset.description
     assert task.openml_task_id == oml_task.id
