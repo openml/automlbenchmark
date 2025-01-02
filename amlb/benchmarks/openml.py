@@ -66,10 +66,15 @@ def load_openml_tasks_from_suite(domain: str, oml_id: str) -> list[Namespace]:
     return tasks
 
 
-def load_openml_task(domain: str, oml_id: str) -> list[Namespace]:
+def load_openml_task(domain: str, oml_id: int) -> list[Namespace]:
+    # check if oml_id is a valid integer before trying to load the task. This sometimes does not happen by default. Only get_suite supports string ids.
+    try:
+        int(oml_id)
+    except ValueError:
+        raise ValueError(f"OpenML task id must be an integer, but got {type(oml_id)}")
     log.info("Loading openml task %s.", oml_id)
     # We first have the retrieve the task because we don't know the dataset id
-    t = openml.tasks.get_task(oml_id, download_data=False, download_qualities=False)
+    t = openml.tasks.get_task(int(oml_id), download_data=False, download_qualities=False)
     data = openml.datasets.get_dataset(
         t.dataset_id, download_data=False, download_qualities=False
     )
