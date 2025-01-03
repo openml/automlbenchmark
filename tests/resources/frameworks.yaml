@@ -1,0 +1,3 @@
+setup_fail:
+  description: "used for tests"
+  module: tests.resources.frameworks.setup_fail

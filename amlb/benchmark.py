@@ -193,12 +193,18 @@ class Benchmark:
         self._mark_setup_start()
 
         if hasattr(self.framework_module, "setup"):
-            self.framework_module.setup(
-                *self.framework_def.setup_args,
-                _shell_=False,  # prevents #arg from being interpreted as comment
-                _live_output_=rconfig().setup.live_output,
-                _activity_timeout_=rconfig().setup.activity_timeout,
-            )
+            try:
+                self.framework_module.setup(
+                    *self.framework_def.setup_args,
+                    _shell_=False,  # prevents #arg from being interpreted as comment
+                    _exit_immediately_=True,
+                    _live_output_=rconfig().setup.live_output,
+                    _activity_timeout_=rconfig().setup.activity_timeout,
+                )
+            except Exception as e:
+                raise JobError(
+                    f"Setup of framework {self.framework_name} failed."
+                ) from e
 
         if self.framework_def.setup_script is not None:
             run_script(
