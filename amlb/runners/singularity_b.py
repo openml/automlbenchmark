@@ -138,7 +138,7 @@ class SingularityBenchmark(ContainerBenchmark):
     def _run_container_build_command(self, image, cache):
         log.info(f"Building singularity image {image}.")
         run_cmd(
-            "singularity build {options} {container} {script}".format(
+            "sudo singularity build {options} {container} {script}".format(
                 options="" if cache else "--disable-cache",
                 container=image,
                 script=self._script,
@@ -163,7 +163,7 @@ From: ubuntu:22.04
 . /bench/
 %post
 
-export DEBIAN_FRONTEND=noninteractive
+DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -y install apt-utils dialog locales
 apt-get -y install curl wget unzip git
@@ -206,6 +206,7 @@ $PY {script} {framework} -s only
 {custom_commands}
 
 %environment
+export DEBIAN_FRONTEND=noninteractive
 export SPIP=python{pyv} -m pip
 export SPY=python{pyv}
 export PYTHONUTF8=1
