@@ -15,7 +15,7 @@ sid:        # session id: set by caller (runbenchmark.py)
 job_history:    # file containing the list of jobs already executed: set by caller (runbenchmark.py)
 
 test_mode: false        # if set to true, some additional checks are executed at runtime.
-seed: auto              # default global seed (used if not set in task definition), can be one of:
+seed: 42              # default global seed (used if not set in task definition), can be one of:
                         #  `auto`: a global seed will be generated and passed to all jobs.
                         #  `none`: no seed will be provided (seed left to framework's responsibility).
                         #   any int32 to pass a fixed seed to the jobs.
