@@ -13,7 +13,12 @@ def load_default_resources(tmp_path):
     )
     config_default_dirs = default_dirs
     config_test = Namespace(
-        frameworks=Namespace(definition_file=["{root}/tests/resources/frameworks.yaml"])
+        frameworks=Namespace(
+            definition_file=[
+                "{root}/resources/frameworks.yaml",
+                "{root}/tests/resources/frameworks.yaml",
+            ]
+        )
     )
     # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
     config_user = Namespace()
