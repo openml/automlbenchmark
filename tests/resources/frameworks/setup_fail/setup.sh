@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 command_that_fails
 

@@ -245,7 +245,6 @@ def run_cmd(cmd, *args, **kwargs):
         activity_timeout=None,
         log_level=logging.INFO,
         monitor=None,
-        exit_immediately=False,
     )
     for k, v in params:
         kk = "_" + k + "_"
@@ -254,8 +253,6 @@ def run_cmd(cmd, *args, **kwargs):
             del kwargs[kk]
     cmd_args = as_cmd_args(*args, **kwargs)
     full_cmd = flatten([cmd]) + cmd_args
-    if params.exit_immediately and platform.system() != "Windows":
-        full_cmd = [os.environ["SHELL"], "-e"] + full_cmd
     str_cmd = " ".join(full_cmd)
     log.log(params.log_level, "Running cmd `%s`", str_cmd)
     log.debug("Running cmd `%s` with input: %s", str_cmd, params.input_str)
