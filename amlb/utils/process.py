@@ -49,6 +49,10 @@ def file_lock(path, timeout=-1):
         yield
 
 
+class StaleProcessError(subprocess.TimeoutExpired):
+    pass
+
+
 def run_subprocess(
     *popenargs,
     input=None,
@@ -104,7 +108,20 @@ def run_subprocess(
         except:  # also handles kb interrupts
             process.kill()
             raise
+
+        # Communication is aborted if either
+        #  - the process has completed, or
+        #  - the process does not produce any output in the specified timeout
+        # `communicate` can't distinguish those cases. If the process has a
+        # return code then it stopped already, otherwise we stop it now.
         retcode = process.poll()
+        if retcode is None:
+            process.kill()
+            process.wait()
+            raise StaleProcessError(
+                process.args, float("nan"), output=stdout, stderr=stderr
+            )
+
         if check and retcode:
             raise subprocess.CalledProcessError(
                 retcode, process.args, output=stdout, stderr=stderr
@@ -186,6 +203,9 @@ def live_output_unix(
         pipes = as_list(pipe)
         # wait until a pipe is ready for reading, non-Windows only.
         ready, *_ = select.select(pipes, [], [], timeout)
+        # if a pipe is not ready it could be timeout or it could be end of process
+        # so at this point we do not know. Only after the communicate function is over do we know.
+        # i.e., if the process is still running it does not have a retcode.
         reads = [""] * len(pipes)
         # print update for each pipe that is ready for reading
         for i, p in enumerate(pipes):
@@ -315,8 +335,6 @@ def run_cmd(cmd, *args, **kwargs):
             log.log(params.output_level, e.stdout)
         if e.stderr:
             log.log(params.error_level, e.stderr)
-        # error_tail = tail(e.stderr, 25) if e.stderr else 'Unknown Error'
-        # raise subprocess.SubprocessError("Error when running command `{cmd}`: {error}".format(cmd=full_cmd, error=error_tail))
         raise e
 
 
