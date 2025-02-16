@@ -109,9 +109,13 @@ def run_subprocess(
             process.kill()
             raise
 
+        # Communication is aborted if either
+        #  - the process has completed, or
+        #  - the process does not produce any output in the specified timeout
+        # `communicate` can't distinguish those cases. If the process has a
+        # return code then it stopped already, otherwise we stop it now.
         retcode = process.poll()
         if retcode is None:
-            # Process still lives => communication stopped because of activity timeout
             process.kill()
             process.wait()
             raise StaleProcessError(
