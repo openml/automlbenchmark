@@ -224,16 +224,16 @@ class Resources:
         )
         if defaults is not None:
             defaults = Namespace(**dataclasses.asdict(defaults))
-        defaults = Namespace.merge(
+        defaults_ = Namespace.merge(
             defaults, file_defaults, Namespace(name="__defaults__")
         )
         for task in tasks:
-            task |= defaults  # add missing keys from hard defaults + defaults
+            task |= defaults_  # add missing keys from hard defaults + defaults
             Resources._validate_task(task, config_)
 
         Resources._validate_task(defaults, config_, lenient=True)
-        defaults.enabled = False
-        tasks.append(defaults)
+        defaults_.enabled = False
+        tasks.append(defaults_)
         log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_path
 

@@ -295,7 +295,7 @@ class TaskConstraint:
 
 @dataclass
 class Task(TaskConstraint):
-    dataset: Namespace | None = None  # TODO: Specify file dataset description
+    dataset: Namespace | None = None
     enabled: bool = True
     description: str = ""
     openml_task_id: int | None = None
