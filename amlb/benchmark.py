@@ -195,12 +195,17 @@ class Benchmark:
         self._mark_setup_start()
 
         if hasattr(self.framework_module, "setup"):
-            self.framework_module.setup(
-                *self.framework_def.setup_args,
-                _shell_=False,  # prevents #arg from being interpreted as comment
-                _live_output_=rconfig().setup.live_output,
-                _activity_timeout_=rconfig().setup.activity_timeout,
-            )
+            try:
+                self.framework_module.setup(
+                    *self.framework_def.setup_args,
+                    _shell_=False,  # prevents #arg from being interpreted as comment
+                    _live_output_=rconfig().setup.live_output,
+                    _activity_timeout_=rconfig().setup.activity_timeout,
+                )
+            except Exception as e:
+                raise JobError(
+                    f"Setup of framework {self.framework_name} failed."
+                ) from e
 
         if self.framework_def.setup_script is not None:
             run_script(
@@ -709,7 +714,6 @@ class BenchmarkTask:
                 "Loaded OpenML dataset for task_id %s.", self._task_def.openml_task_id
             )
         elif hasattr(self._task_def, "openml_dataset_id"):
-            # TODO
             raise NotImplementedError(
                 "OpenML datasets without task_id are not supported yet."
             )

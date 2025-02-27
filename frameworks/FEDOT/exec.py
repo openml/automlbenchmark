@@ -42,11 +42,11 @@ def run(dataset, config):
     log.info("Predicting on the test set.")
     with Timer() as predict:
         predictions = fedot.predict(features=dataset.test.X)
-        probabilities = None
-        if is_classification:
-            probabilities = fedot.predict_proba(
-                features=dataset.test.X, probs_for_all_classes=True
-            )
+    probabilities = None
+    if is_classification:
+        probabilities = fedot.predict_proba(
+            features=dataset.test.X, probs_for_all_classes=True
+        )
 
     save_artifacts(fedot, config)
 

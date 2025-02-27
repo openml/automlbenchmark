@@ -1,8 +1,10 @@
 from pathlib import Path
+from subprocess import SubprocessError
 
 import pytest
 
 from amlb import Benchmark, SetupMode, resources, DockerBenchmark, SingularityBenchmark
+from amlb.job import JobError
 from amlb.utils import Namespace
 
 
@@ -112,3 +114,20 @@ def test_singularity_image_name_as_docker(
         as_docker_image=True,
     )
     assert result == expected
+
+
+def test_benchmark_setup_errors_if_framework_does_not_install(
+    load_default_resources,
+) -> None:
+    benchmark = Benchmark(
+        framework_name="setup_fail",
+        benchmark_name="test",
+        constraint_name="test",
+        job_history=None,
+    )
+
+    with pytest.raises(JobError) as exc_info:
+        benchmark.setup(SetupMode.force)
+    assert "setup" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, SubprocessError)
+    assert "command_that_fails" in exc_info.value.__cause__.stderr

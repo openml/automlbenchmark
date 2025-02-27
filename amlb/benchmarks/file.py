@@ -35,4 +35,9 @@ def load_file_benchmark(
     log.info("Loading benchmark definitions from %s.", benchmark_file)
     tasks = config_load(benchmark_file)
     benchmark_name, _ = os.path.splitext(os.path.basename(benchmark_file))
+    for task in tasks:
+        if task["openml_task_id"] is not None and not isinstance(
+            task["openml_task_id"], int
+        ):
+            raise TypeError("OpenML task id for task {task.name!r} must be integer.")
     return benchmark_name, benchmark_file, tasks

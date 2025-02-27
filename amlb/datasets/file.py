@@ -217,9 +217,6 @@ class FileDataset(Dataset):
             If None, defaults to a feature with name "class" or "target", or the last
             feature otherwise.
         features: list[ns | str]
-            #TODO: DEADCODE?
-            I don't see this accessed anywhere, and `features` property is retrieved
-            from split metadata, which also do not reference this.
         type: str, optional
           A valid DatasetType. If not specified, it is inferred by the properties of the
           target column.
@@ -342,7 +339,6 @@ class FileDatasplit(Datasplit):
 
 class ArffDataset(FileDataset):
     def __init__(self, train_path, test_path, target=None, features=None, type=None):
-        # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
         super().__init__(
             ArffDatasplit(self, train_path),
             ArffDatasplit(self, test_path),
@@ -422,7 +418,6 @@ class ArffDatasplit(FileDatasplit):
 
 class CsvDataset(FileDataset):
     def __init__(self, train_path, test_path, target=None, features=None, type=None):
-        # todo: handle auto-split (if test_path is None): requires loading the training set, split, save
         super().__init__(None, None, target=target, features=features, type=type)
         self._train = CsvDatasplit(self, train_path)
         self._test = CsvDatasplit(self, test_path)

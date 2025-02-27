@@ -68,7 +68,7 @@ class SingularityBenchmark(ContainerBenchmark):
         return os.path.join(self._framework_dir, _setup_dir_, "Singularityfile")
 
     def _start_container(self, script_params=""):
-        """Implementes the container run method"""
+        """Invokes the container run method"""
         in_dir = rconfig().input_dir
         out_dir = rconfig().output_dir
         custom_dir = rconfig().user_dir
@@ -77,7 +77,7 @@ class SingularityBenchmark(ContainerBenchmark):
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         cmd = (
             "singularity run --pwd /bench {options} "
-            "-B {input}:/input -B {output}:/output -B {custom}:/custom "
+            "-B '{input}':/input -B '{output}':/output -B '{custom}':/custom "
             '{image} "{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}"'
         ).format(
             options=rconfig().singularity.run_extra_options,
@@ -138,7 +138,7 @@ class SingularityBenchmark(ContainerBenchmark):
     def _run_container_build_command(self, image, cache):
         log.info(f"Building singularity image {image}.")
         run_cmd(
-            "sudo singularity build {options} {container} {script}".format(
+            "singularity build {options} {container} {script}".format(
                 options="" if cache else "--disable-cache",
                 container=image,
                 script=self._script,
@@ -163,7 +163,7 @@ From: ubuntu:22.04
 . /bench/
 %post
 
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -y install apt-utils dialog locales
 apt-get -y install curl wget unzip git
@@ -206,7 +206,6 @@ $PY {script} {framework} -s only
 {custom_commands}
 
 %environment
-export DEBIAN_FRONTEND=noninteractive
 export SPIP=python{pyv} -m pip
 export SPY=python{pyv}
 export PYTHONUTF8=1

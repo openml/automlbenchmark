@@ -22,11 +22,14 @@ seed: auto              # default global seed (used if not set in task definitio
 token_separator: '.'    # set to '_' for backwards compatibility.
                         # This separator is used to generate directory structure and files,
                         # however the '_' separator makes the parsing of those names more difficult as it's also used in framework names, task names...
-archive: ['logs']       # list of output folders that should be archived by default.
+archive: []       # list of output folders that should be archived by default.
+                  # Note that when used in a parallel setting where the same framework is invoked multiple times in
+                  # the same second, archiving directories may lead to errors due to race conditions (#672).
 
 setup:                   # configuration namespace for the framework setup phase.
   live_output: true      # set to true to stream the output of setup commands, if false they are only printed when setup is complete.
   activity_timeout: 600  # when using live output, subprocess will be considered as hanging if nothing was printed during this activity time.
+                         # No effect is live_output is set to 'False'.
 
 frameworks:              # configuration namespace for the frameworks definitions.
   definition_file:       # list of yaml files describing the frameworks base definitions.
