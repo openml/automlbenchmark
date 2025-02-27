@@ -6,6 +6,7 @@ as well as handy methods to access other resources like *automl frameworks* and 
 from __future__ import annotations
 
 import copy
+import dataclasses
 import logging
 import os
 import random
@@ -14,6 +15,7 @@ import sys
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
+from .frameworks.definitions import TaskConstraint
 from .utils import (
     Namespace,
     lazy_property,
@@ -171,7 +173,7 @@ class Resources:
         return load_framework_definitions(frameworks_file, self.config)
 
     @memoize
-    def constraint_definition(self, name):
+    def constraint_definition(self, name: str) -> TaskConstraint:
         """
         :param name: name of the benchmark constraint definition as defined in the constraints file
         :return: a Namespace object with the constraint config (folds, cores, max_runtime_seconds, ...) for the current benchmamk run.
@@ -183,7 +185,7 @@ class Resources:
                     name, self.config.benchmarks.constraints_file
                 )
             )
-        return constraint, constraint.name
+        return TaskConstraint(**Namespace.dict(constraint))
 
     @lazy_property
     def _constraints(self):
@@ -205,42 +207,44 @@ class Resources:
             constraints_lookup[name.lower()] = c
         return constraints_lookup
 
-    # @memoize
-    def benchmark_definition(self, name, defaults=None):
+    def benchmark_definition(self, name: str, defaults: TaskConstraint | None = None):
+        return self._benchmark_definition(name, self.config, defaults)
+
+    def _benchmark_definition(
+        self,
+        name: str,
+        config_: Namespace,
+        defaults_for_task: TaskConstraint | None = None,
+    ):
         """
         :param name: name of the benchmark as defined by resources/benchmarks/{name}.yaml, the path to a user-defined benchmark description file or a study id.
         :param defaults: defaults used as a base config for each task in the benchmark definition
         :return:
         """
-        hard_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
-            name, self.config.benchmarks.definition_dir
+        file_defaults, tasks, benchmark_path, benchmark_name = benchmark_load(
+            name, config_.benchmarks.definition_dir
         )
-
+        defaults = None
+        if defaults_for_task is not None:
+            defaults = Namespace(**dataclasses.asdict(defaults_for_task))
         defaults = Namespace.merge(
-            defaults, hard_defaults, Namespace(name="__defaults__")
+            defaults, file_defaults, Namespace(name="__defaults__")
         )
         for task in tasks:
             task |= defaults  # add missing keys from hard defaults + defaults
-            self._validate_task(task)
+            Resources._validate_task(task)
+            Resources._add_task_defaults(task, config_)
 
-        self._validate_task(defaults, lenient=True)
+        Resources._add_task_defaults(defaults, config_)
         defaults.enabled = False
         tasks.append(defaults)
         log.debug("Available task definitions:\n%s", tasks)
         return tasks, benchmark_name, benchmark_path
 
-    def _validate_task(self, task, lenient=False):
-        missing = []
-        for conf in ["name"]:
-            if task[conf] is None:
-                missing.append(conf)
-        if not lenient and len(missing) > 0:
-            raise ValueError(
-                "{missing} mandatory properties as missing in task definition {taskdef}.".format(
-                    missing=missing, taskdef=task
-                )
-            )
-
+    @staticmethod
+    def _add_task_defaults(task: Namespace, config_: Namespace):
+        if task["id"] is None:
+            task["id"] = Resources.generate_task_identifier(task)
         for conf in [
             "max_runtime_seconds",
             "cores",
@@ -250,74 +254,83 @@ class Resources:
             "quantile_levels",
         ]:
             if task[conf] is None:
-                task[conf] = self.config.benchmarks.defaults[conf]
+                task[conf] = config_.benchmarks.defaults[conf]
                 log.debug(
                     "Config `{config}` not set for task {name}, using default `{value}`.".format(
-                        config=conf, name=task.name, value=task[conf]
+                        config=conf, name=task["name"], value=task[conf]
                     )
                 )
 
-        conf = "id"
-        if task[conf] is None:
-            task[conf] = (
-                "openml.org/t/{}".format(task.openml_task_id)
-                if task["openml_task_id"] is not None
-                else "openml.org/d/{}".format(task.openml_dataset_id)
-                if task["openml_dataset_id"] is not None
-                else (
-                    (
-                        task.dataset["id"]
-                        if isinstance(task.dataset, (dict, Namespace))
-                        else task.dataset
-                        if isinstance(task.dataset, str)
-                        else None
-                    )
-                    or task.name
-                )
-                if task["dataset"] is not None
-                else None
+        if task["metric"] is None:
+            task["metric"] = None
+
+        if task["ec2_instance_type"] is None:
+            task["ec2_instance_type"] = Resources.lookup_ec2_instance_type(
+                config_, task.cores
             )
-            if not lenient and task[conf] is None:
-                raise ValueError(
-                    "task definition must contain an ID or one property "
-                    "among ['openml_task_id', 'dataset'] to create an ID, "
-                    "but task definition is {task}".format(task=str(task))
-                )
-
-        conf = "metric"
-        if task[conf] is None:
-            task[conf] = None
-
-        conf = "ec2_instance_type"
-        if task[conf] is None:
-            i_series = self.config.aws.ec2.instance_type.series
-            i_map = self.config.aws.ec2.instance_type.map
-            if str(task.cores) in i_map:
-                i_size = i_map[str(task.cores)]
-            elif task.cores > 0:
-                supported_cores = list(
-                    map(int, Namespace.dict(i_map).keys() - {"default"})
-                )
-                supported_cores.sort()
-                cores = next((c for c in supported_cores if c >= task.cores), "default")
-                i_size = i_map[str(cores)]
-            else:
-                i_size = i_map.default
-            task[conf] = ".".join([i_series, i_size])
             log.debug(
                 "Config `{config}` not set for task {name}, using default selection `{value}`.".format(
-                    config=conf, name=task.name, value=task[conf]
+                    config=conf, name=task["name"], value=task["ec2_instance_type"]
                 )
             )
 
-        conf = "ec2_volume_type"
-        if task[conf] is None:
-            task[conf] = self.config.aws.ec2.volume_type
+        if task["ec2_volume_type"] is None:
+            task["ec2_volume_type"] = config_.aws.ec2.volume_type
             log.debug(
                 "Config `{config}` not set for task {name}, using default `{value}`.".format(
-                    config=conf, name=task.name, value=task[conf]
+                    config=conf, name=task["name"], value=task["ec2_volume_type"]
                 )
             )
+
+    @staticmethod
+    def _validate_task(task: Namespace) -> None:
+        """Raises ValueError if task does not have a name and a way to generate an identifier."""
+        if task["name"] is None:
+            raise ValueError(
+                f"`name` is mandatory but missing in task definition {task}."
+            )
+        task_id = Namespace.get(task, "id", Resources.generate_task_identifier(task))
+        if task_id is None:
+            raise ValueError(
+                "task definition must contain an ID or one property "
+                "among ['openml_task_id', 'dataset'] to create an ID, "
+                "but task definition is {task}".format(task=str(task))
+            )
+
+    @staticmethod
+    def lookup_ec2_instance_type(config_: Namespace, cores: int) -> str:
+        i_series = config_.aws.ec2.instance_type.series
+        i_map = config_.aws.ec2.instance_type.map
+        i_size = Resources.lookup_suitable_instance_size(i_map, cores)
+        return f"{i_series}.{i_size}"
+
+    @staticmethod
+    def lookup_suitable_instance_size(cores_to_size: Namespace, cores: int) -> str:
+        if str(cores) in cores_to_size:
+            return cores_to_size[str(cores)]
+
+        supported_cores = list(map(int, set(dir(cores_to_size)) - {"default"}))
+        if cores <= 0 or cores > max(supported_cores):
+            return cores_to_size.default
+
+        best_match = next(
+            (str(c) for c in sorted(supported_cores) if c >= cores), "default"
+        )
+        return cores_to_size[best_match]
+
+    @staticmethod
+    def generate_task_identifier(task: Namespace) -> str | None:
+        if task["openml_task_id"] is not None:
+            return f"openml.org/t/{task.openml_task_id}"
+        if task["openml_dataset_id"] is not None:
+            return f"openml.org/d/{task.openml_dataset_id}"
+        if task["dataset"] is None:
+            return None
+        if isinstance(task.dataset, (dict, Namespace)):
+            return task.dataset["id"]
+        if isinstance(task.dataset, str):
+            return task.dataset
+        return task.name
 
 
 __INSTANCE__: Resources | None = None
