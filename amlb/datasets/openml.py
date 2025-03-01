@@ -72,7 +72,7 @@ class OpenmlLoader:
                         dataset_id, task_id
                     )
                 )
-            task, dataset = load_openml_task_and_data(task_id)
+            task, dataset = load_openml_task_and_data(task_id, with_data=True)
             _, nfolds, _ = task.get_split_dimensions()
             if fold >= nfolds:
                 raise ValueError(

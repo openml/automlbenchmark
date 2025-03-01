@@ -86,9 +86,9 @@ def load_openml_task_as_definition(domain: str, oml_id: int) -> list[Namespace]:
     ]
 
 
-def load_openml_task_and_data(task_id: int) -> tuple[OpenMLTask, OpenMLDataset]:
+def load_openml_task_and_data(task_id: int, with_data: bool = False) -> tuple[OpenMLTask, OpenMLDataset]:
     task = openml.tasks.get_task(task_id, download_data=False, download_qualities=False)
     data = openml.datasets.get_dataset(
-        task.dataset_id, download_data=False, download_qualities=False
+        task.dataset_id, download_data=with_data, download_qualities=False
     )
     return task, data
