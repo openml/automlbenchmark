@@ -90,7 +90,7 @@ jobs:
     if: needs.detect_changes.outputs.skip_baseline == 0
     strategy:
       matrix:
-        framework: [constantpredictor, randomforest, autogluon]
+        framework: [constantpredictor, randomforest]
         task: [iris, kc2, cholesterol]
       fail-fast:  false
     steps:
