@@ -281,3 +281,24 @@ def load_framework_definition(
         framework_name, tag = framework_name.split(":", 1)
     definition_ns, name = configuration.framework_definition(framework_name, tag)
     return Framework(**Namespace.dict(definition_ns))
+
+
+@dataclass
+class TaskConstraint:
+    name: str
+    folds: int
+    max_runtime_seconds: int
+    cores: int
+    min_vol_size_mb: int | None = None
+    ec2_volume_type: str | None = None
+
+
+@dataclass
+class Task(TaskConstraint):
+    dataset: Namespace | None = None
+    enabled: bool = True
+    description: str = ""
+    openml_task_id: int | None = None
+    metric: str | list[str] | None = None
+    # Specific to time series
+    quantile_levels: list[float] | None = None
