@@ -33,10 +33,10 @@ UV="${PY_EXEC_NO_ARGS} -m uv"
 
 if [[ "$VERSION" == "stable" ]]; then
     $UV pip install --no-cache-dir -U "${PKG}"
-    $UV pip install --no-cache-dir -U "${PKG}.tabular[skex]"
+    $UV pip install --no-cache-dir -U "${PKG}.tabular[all,skex]"
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
     $UV pip install --no-cache-dir -U "${PKG}==${VERSION}"
-    $UV pip install --no-cache-dir -U "${PKG}.tabular[skex]==${VERSION}"
+    $UV pip install --no-cache-dir -U "${PKG}.tabular[all,skex]==${VERSION}"
 else
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
