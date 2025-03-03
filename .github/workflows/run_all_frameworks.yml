@@ -2,7 +2,7 @@ name: Run All Frameworks
 
 on:
   push:
-    - branches:
+    branches:
       - master
   pull_request:
 
@@ -56,7 +56,7 @@ jobs:
           skip_evaluation=0
           if [[ $is_common -eq 0 ]];
           then
-            FRAMEWORKS='["autogluon", "autosklearn", "gama", "h2oautoml", "mlplanweka", "mlr3automl", "naiveautoml", "tpot", "tunedrandomforest"]'
+            FRAMEWORKS='["autogluon", "autosklearn", "flaml"]'
             TASKS='["iris", "kc2", "cholesterol"]'
             BENCHMARK='["test"]'
           else
@@ -90,7 +90,7 @@ jobs:
     if: needs.detect_changes.outputs.skip_baseline == 0
     strategy:
       matrix:
-        framework: [constantpredictor, randomforest, autogluon]
+        framework: [constantpredictor, randomforest]
         task: [iris, kc2, cholesterol]
       fail-fast:  false
     steps:
