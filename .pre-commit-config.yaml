@@ -7,7 +7,7 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.0
+  rev: v0.9.9
   hooks:
     - id: ruff
       args: [ --fix ]
@@ -16,7 +16,7 @@ repos:
       types_or: ["python"]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.13.0'
+    rev: 'v1.15.0'
     hooks:
     -   id: mypy
         additional_dependencies: ["types-tabulate", "types-requests"]
