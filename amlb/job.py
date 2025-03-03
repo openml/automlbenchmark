@@ -171,9 +171,9 @@ class Job:
                 self.reset(State.stopped)
 
     def set_state(self, state: State):
-        assert self.is_state_transition_ok(
-            self.state, state
-        ), f"Illegal job transition from state {self.state} to {state}"
+        assert self.is_state_transition_ok(self.state, state), (
+            f"Illegal job transition from state {self.state} to {state}"
+        )
         old_state = self.state
         self.state = state
         log.debug("Changing job `%s` from state %s to %s.", self.name, old_state, state)
@@ -290,9 +290,9 @@ class JobRunner:
             self.put(job, priority)
 
     def set_state(self, state: State):
-        assert self.is_state_transition_ok(
-            self.state, state
-        ), f"Illegal job runner transition from state {self.state} to {state}"
+        assert self.is_state_transition_ok(self.state, state), (
+            f"Illegal job runner transition from state {self.state} to {state}"
+        )
         old_state = self.state
         self.state = state
         log.debug("Changing job runner from state %s to %s.", old_state, state)

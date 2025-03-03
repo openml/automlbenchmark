@@ -64,12 +64,12 @@ class FileLoader:
             fold=fold,
             name=dataset["name"] if "name" in dataset else None,
         )
-        assert (
-            fold < len(paths["train"])
-        ), f"No training dataset available for fold {fold} among dataset files {paths['train']}"
-        assert (
-            fold < len(paths["test"])
-        ), f"No test dataset available for fold {fold} among dataset files {paths['test']}"
+        assert fold < len(paths["train"]), (
+            f"No training dataset available for fold {fold} among dataset files {paths['train']}"
+        )
+        assert fold < len(paths["test"]), (
+            f"No test dataset available for fold {fold} among dataset files {paths['test']}"
+        )
 
         ext = os.path.splitext(paths["train"][fold])[1].lower()
         train_path = paths["train"][fold]
@@ -88,9 +88,9 @@ class FileLoader:
 
     def _extract_train_test_paths(self, dataset, fold=None, name=None):
         if isinstance(dataset, (tuple, list)):
-            assert (
-                len(dataset) % 2 == 0
-            ), "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
+            assert len(dataset) % 2 == 0, (
+                "dataset list must contain an even number of paths: [train_0, test_0, train_1, test_1, ...]."
+            )
             return self._extract_train_test_paths(
                 ns(
                     train=[p for i, p in enumerate(dataset) if i % 2 == 0],
@@ -145,13 +145,13 @@ class FileLoader:
                     m for m in [test_search_pat.search(f) for f in files] if m
                 ]
                 # verify they're for the same dataset (just based on name)
-                assert (
-                    train_matches and test_matches
-                ), f"Folder {dataset} must contain at least one training and one test dataset."
+                assert train_matches and test_matches, (
+                    f"Folder {dataset} must contain at least one training and one test dataset."
+                )
                 root_names = {m[1] for m in (train_matches + test_matches)}
-                assert (
-                    len(root_names) == 1
-                ), f"All dataset files in {dataset} should follow the same naming: xxxxx_train_N.ext or xxxxx_test_N.ext with N starting from 0."
+                assert len(root_names) == 1, (
+                    f"All dataset files in {dataset} should follow the same naming: xxxxx_train_N.ext or xxxxx_test_N.ext with N starting from 0."
+                )
 
                 train_no_fold = next(
                     (m[0] for m in train_matches if m[2] is None), None
@@ -173,9 +173,9 @@ class FileLoader:
                         fold += 1
                     else:
                         fold = -1
-                assert (
-                    len(paths) > 0
-                ), f"No dataset file found in {dataset}: they should follow the naming xxxx_train.ext, xxxx_test.ext or xxxx_train_0.ext, xxxx_test_0.ext, xxxx_train_1.ext, ..."
+                assert len(paths) > 0, (
+                    f"No dataset file found in {dataset}: they should follow the naming xxxx_train.ext, xxxx_test.ext or xxxx_train_0.ext, xxxx_test_0.ext, xxxx_train_1.ext, ..."
+                )
                 return paths
         elif is_valid_url(dataset):
             if name is None:
@@ -448,7 +448,7 @@ class TimeSeriesDataset(FileDataset):
             config["id_column"] = "item_id"
         if config["id_column"] not in full_data.columns:
             raise ValueError(
-                f'The id_column with name {config["id_column"]} is missing from the dataset'
+                f"The id_column with name {config['id_column']} is missing from the dataset"
             )
         if config["timestamp_column"] is None:
             log.warning(
@@ -457,7 +457,7 @@ class TimeSeriesDataset(FileDataset):
             config["timestamp_column"] = "timestamp"
         if config["timestamp_column"] not in full_data.columns:
             raise ValueError(
-                f'The timestamp_column with name {config["timestamp_column"]} is missing from the dataset'
+                f"The timestamp_column with name {config['timestamp_column']} is missing from the dataset"
             )
 
         self.forecast_horizon_in_steps = int(config["forecast_horizon_in_steps"])

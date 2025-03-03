@@ -289,9 +289,9 @@ class Benchmark:
         :param folds: a fold [int] or a list of folds to run. If None, then the all folds from each task definition will be used.
         """
         try:
-            assert (
-                not self.framework_install_required or self._is_setup_done()
-            ), f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
+            assert not self.framework_install_required or self._is_setup_done(), (
+                f"Framework {self.framework_name} [{self.framework_def.version}] is not installed."
+            )
 
             task_defs = self._get_task_defs(tasks)
             jobs = flatten([self._task_jobs(task_def, folds) for task_def in task_defs])
@@ -656,7 +656,7 @@ class TaskConfig:
             os_recommended_vol = rconfig().benchmarks.os_vol_size_mb
             if self.min_vol_size_mb > sys_vol.free:
                 handle_unfulfilled(
-                    f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements ({self.min_vol_size_mb+os_recommended_vol} MB)!"
+                    f"Available storage ({sys_vol.free} MB / total={sys_vol.total} MB) does not meet requirements ({self.min_vol_size_mb + os_recommended_vol} MB)!"
                 )
 
 

@@ -484,15 +484,15 @@ class TaskResult:
     @staticmethod
     def validate_predictions(predictions: pd.DataFrame):
         names = predictions.columns.values
-        assert (
-            len(names) >= 2
-        ), "predictions frame should have 2 columns (regression) or more (classification)"
-        assert (
-            names[-1] == "truth"
-        ), "last column of predictions frame must be named `truth`"
-        assert (
-            names[-2] == "predictions"
-        ), "last column of predictions frame must be named `predictions`"
+        assert len(names) >= 2, (
+            "predictions frame should have 2 columns (regression) or more (classification)"
+        )
+        assert names[-1] == "truth", (
+            "last column of predictions frame must be named `truth`"
+        )
+        assert names[-2] == "predictions", (
+            "last column of predictions frame must be named `predictions`"
+        )
         if len(names) == 2:  # regression
             for name, col in predictions.items():
                 pd.to_numeric(col)  # pandas will raise if we have non-numerical values
@@ -503,22 +503,22 @@ class TaskResult:
                 predictions.iloc[:, -2],
                 predictions.iloc[:, -1],
             )
-            assert np.array_equal(
-                predictors, np.sort(predictors)
-            ), "Predictors columns are not sorted in lexicographic order."
-            assert set(np.unique(predictors)) == set(
-                predictors
-            ), "Predictions contain multiple columns with the same label."
+            assert np.array_equal(predictors, np.sort(predictors)), (
+                "Predictors columns are not sorted in lexicographic order."
+            )
+            assert set(np.unique(predictors)) == set(predictors), (
+                "Predictions contain multiple columns with the same label."
+            )
             for name, col in probabilities.items():
                 pd.to_numeric(col)  # pandas will raise if we have non-numerical values
 
             if _encode_predictions_and_truth_:
-                assert np.array_equal(
-                    truth, truth.astype(int)
-                ), "Values in truth column are not encoded."
-                assert np.array_equal(
-                    preds, preds.astype(int)
-                ), "Values in predictions column are not encoded."
+                assert np.array_equal(truth, truth.astype(int)), (
+                    "Values in truth column are not encoded."
+                )
+                assert np.array_equal(preds, preds.astype(int)), (
+                    "Values in predictions column are not encoded."
+                )
                 predictors_set = set(range(len(predictors)))
 
                 def validate_row(row) -> bool:
@@ -539,14 +539,14 @@ class TaskResult:
                     "Truth column doesn't contain all the possible target values: the test dataset may be too small."
                 )
             predictions_set = set(preds.unique())
-            assert (
-                predictions_set <= predictors_set
-            ), "Predictions column contains unexpected values: {}.".format(
-                predictions_set - predictors_set
+            assert predictions_set <= predictors_set, (
+                "Predictions column contains unexpected values: {}.".format(
+                    predictions_set - predictors_set
+                )
             )
-            assert predictions.apply(
-                validate_row, axis=1
-            ).all(), "Predictions don't always match the predictor with the highest probability."
+            assert predictions.apply(validate_row, axis=1).all(), (
+                "Predictions don't always match the predictor with the highest probability."
+            )
 
     @classmethod
     def score_from_predictions_file(cls, path):

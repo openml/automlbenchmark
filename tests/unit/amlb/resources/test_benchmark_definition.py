@@ -97,24 +97,24 @@ def test_validate_task_looks_up_instance_type(amlb_dummy_configuration: Namespac
 
     task = Namespace(name="foo", cores=n_cores_for_small)
     Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
-    assert (
-        task["ec2_instance_type"] == "m5.small"
-    ), "Should resolve to the instance type with the exact amount of cores"
+    assert task["ec2_instance_type"] == "m5.small", (
+        "Should resolve to the instance type with the exact amount of cores"
+    )
 
     task = Namespace(name="foo", cores=n_cores_for_small - 1)
     Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
-    assert (
-        task["ec2_instance_type"] == "m5.small"
-    ), "If exact amount of cores are not available, should resolve to next biggest"
+    assert task["ec2_instance_type"] == "m5.small", (
+        "If exact amount of cores are not available, should resolve to next biggest"
+    )
 
     task = Namespace(name="foo", cores=n_cores_for_small + 1)
     Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
-    assert (
-        task["ec2_instance_type"] == "m5.large"
-    ), "If bigger than largest in map, should revert to default"
+    assert task["ec2_instance_type"] == "m5.large", (
+        "If bigger than largest in map, should revert to default"
+    )
 
     task = Namespace(name="foo", ec2_instance_type="bar")
     Resources._validate_task(task, amlb_dummy_configuration, lenient=True)
-    assert (
-        task["ec2_instance_type"] == "bar"
-    ), "Should not overwrite explicit configuration"
+    assert task["ec2_instance_type"] == "bar", (
+        "Should not overwrite explicit configuration"
+    )
