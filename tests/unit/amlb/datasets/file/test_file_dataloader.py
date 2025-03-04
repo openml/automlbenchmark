@@ -123,9 +123,9 @@ def test_load_multiclass_task_with_num_target_no_type_csv(file_loader):
         target="class",
     )
     ds = file_loader.load(ds_def)
-    assert (
-        ds.type is DatasetType.regression
-    ), "file loader should detect num target as regression by default"
+    assert ds.type is DatasetType.regression, (
+        "file loader should detect num target as regression by default"
+    )
 
 
 @pytest.mark.use_disk
@@ -265,12 +265,12 @@ def _assert_cholesterol_features(dataset, definition, fmt):
     )
     assert pd.api.types.is_float_dtype(dataset.train.y.dtypes.iloc[0])
 
-    assert np.array_equal(
-        dataset.train.y_enc, dataset.train.y.squeeze().to_numpy()
-    ), "no encoding should have been applied on regression target"
-    assert np.array_equal(
-        dataset.test.y_enc, dataset.test.y.squeeze().to_numpy()
-    ), "no encoding should have been applied on regression target"
+    assert np.array_equal(dataset.train.y_enc, dataset.train.y.squeeze().to_numpy()), (
+        "no encoding should have been applied on regression target"
+    )
+    assert np.array_equal(dataset.test.y_enc, dataset.test.y.squeeze().to_numpy()), (
+        "no encoding should have been applied on regression target"
+    )
 
 
 def _assert_target(target, name, values=None):

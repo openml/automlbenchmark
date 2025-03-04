@@ -22,8 +22,10 @@ def run(dataset, config):
     )
     n_jobs = training_params["n_jobs"]
 
-    log.info(f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
-             optimizing {scoring_metric}")
+    log.info(
+        f"Running FEDOT with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores, \
+             optimizing {scoring_metric}"
+    )
 
     runtime_min = config.max_runtime_seconds / 60
 

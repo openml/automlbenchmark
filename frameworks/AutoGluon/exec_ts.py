@@ -76,9 +76,9 @@ def run(dataset, config):
     truth_only = test_df[dataset.target].values
 
     # Sanity check - make sure predictions are ordered correctly
-    assert predictions.index.equals(
-        test_data.index
-    ), "Predictions and test data index do not match"
+    assert predictions.index.equals(test_data.index), (
+        "Predictions and test data index do not match"
+    )
 
     test_data_full = pd.concat([train_data, test_data])
     leaderboard = predictor.leaderboard(test_data_full, silent=True)
