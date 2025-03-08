@@ -217,6 +217,8 @@ class Job:
 
 
 class JobRunner:
+    """Manages a queue of experiments to execute (jobs)."""
+
     state_machine = [
         (None, [State.created]),
         (State.created, [State.starting, State.stopping]),
@@ -266,7 +268,7 @@ class JobRunner:
                 self.set_state(State.stopped)
 
     def stop_if_complete(self):
-        if 0 < len(self.jobs) == len(self.results):
+        if len(self.jobs) == len(self.results):
             self.stop()
 
     def put(self, job: Job, priority: Optional[int] = None):
