@@ -263,7 +263,13 @@ class JobRunner:
         if self._is_state_transition_ok(self.state, State.stopping):
             try:
                 if self._set_state(State.stopping):
-                    return self._stop()
+                    if self._queue:
+                        self._queue.put((-1, JobRunner.END_Q))
+                    jobs = self.jobs.copy()
+                    self.jobs.clear()
+                    for job in jobs:
+                        job.stop()
+                    return None
             finally:
                 self._set_state(State.stopped)
 
@@ -333,14 +339,6 @@ class JobRunner:
 
     def _run(self):
         pass
-
-    def _stop(self):
-        if self._queue:
-            self._queue.put((-1, JobRunner.END_Q))
-        jobs = self.jobs.copy()
-        self.jobs.clear()
-        for job in jobs:
-            job.stop()
 
     def _on_state(self, state: State):
         pass
