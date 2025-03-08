@@ -260,18 +260,20 @@ class JobRunner:
         return self.results
 
     def stop(self):
-        if self._is_state_transition_ok(self.state, State.stopping):
-            try:
-                if self._set_state(State.stopping):
-                    if self._queue:
-                        self._queue.put((-1, JobRunner.END_Q))
-                    jobs = self.jobs.copy()
-                    self.jobs.clear()
-                    for job in jobs:
-                        job.stop()
-                    return None
-            finally:
-                self._set_state(State.stopped)
+        """Best-effort attempt to shut down the runner and stop all jobs."""
+        if not self._is_state_transition_ok(self.state, State.stopping):
+            return  # is either already stopping or stopped
+        try:
+            if not self._set_state(State.stopping):
+                return  # fails for same reason can probably remove above check?
+            if self._queue:
+                self._queue.put((-1, JobRunner.END_Q))
+            jobs = self.jobs.copy()
+            self.jobs.clear()
+            for job in jobs:
+                job.stop()
+        finally:
+            self._set_state(State.stopped)
 
     def _stop_if_complete(self):
         if len(self.jobs) == len(self.results):
