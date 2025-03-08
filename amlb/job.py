@@ -217,6 +217,8 @@ class Job:
 
 
 class JobRunner:
+    """Manages a queue of experiments to execute (jobs)."""
+
     state_machine = [
         (None, [State.created]),
         (State.created, [State.starting, State.stopping]),
@@ -228,7 +230,7 @@ class JobRunner:
     END_Q = object()
 
     @classmethod
-    def is_state_transition_ok(cls, old_state: State | None, new_state: State | None):
+    def _is_state_transition_ok(cls, old_state: State | None, new_state: State | None):
         allowed = next(
             (head for tail, head in cls.state_machine if tail == old_state), None
         )
@@ -241,15 +243,15 @@ class JobRunner:
         self._queue = None
         self._last_priority = 0
         self._on_new_result = on_new_result
-        self.set_state(State.created)
+        self._set_state(State.created)
 
     def start(self):
         t = None
         try:
-            if self.set_state(State.starting):
+            if self._set_state(State.starting):
                 self._setup()
             with Timer() as t:
-                if self.set_state(State.running):
+                if self._set_state(State.running):
                     self._run()
         finally:
             self.stop()
@@ -258,18 +260,26 @@ class JobRunner:
         return self.results
 
     def stop(self):
-        if self.is_state_transition_ok(self.state, State.stopping):
-            try:
-                if self.set_state(State.stopping):
-                    return self._stop()
-            finally:
-                self.set_state(State.stopped)
+        """Best-effort attempt to shut down the runner and stop all jobs."""
+        if not self._is_state_transition_ok(self.state, State.stopping):
+            return  # is either already stopping or stopped
+        try:
+            if not self._set_state(State.stopping):
+                return  # fails for same reason can probably remove above check?
+            if self._queue:
+                self._queue.put((-1, JobRunner.END_Q))
+            jobs = self.jobs.copy()
+            self.jobs.clear()
+            for job in jobs:
+                job.stop()
+        finally:
+            self._set_state(State.stopped)
 
-    def stop_if_complete(self):
-        if 0 < len(self.jobs) == len(self.results):
+    def _stop_if_complete(self):
+        if len(self.jobs) == len(self.results):
             self.stop()
 
-    def put(self, job: Job, priority: Optional[int] = None):
+    def _put(self, job: Job, priority: Optional[int] = None):
         if self.state in [State.stopping, State.stopped]:
             return
         if priority is None:
@@ -282,15 +292,15 @@ class JobRunner:
         else:
             log.warning("Ignoring job `%s`. Runner state: `%s`", job.name, self.state)
 
-    def reschedule(self, job: Job, priority: Optional[int] = None):
+    def _reschedule(self, job: Job, priority: Optional[int] = None):
         if self.state not in [State.running]:
             return
         job.reschedule()
         if job.state is State.rescheduling:
-            self.put(job, priority)
+            self._put(job, priority)
 
-    def set_state(self, state: State):
-        assert self.is_state_transition_ok(self.state, state), (
+    def _set_state(self, state: State):
+        assert self._is_state_transition_ok(self.state, state), (
             f"Illegal job runner transition from state {self.state} to {state}"
         )
         old_state = self.state
@@ -327,18 +337,10 @@ class JobRunner:
     def _setup(self):
         self._queue = queue.PriorityQueue(maxsize=len(self.jobs))
         for job in self.jobs:
-            self.put(job)
+            self._put(job)
 
     def _run(self):
         pass
-
-    def _stop(self):
-        if self._queue:
-            self._queue.put((-1, JobRunner.END_Q))
-        jobs = self.jobs.copy()
-        self.jobs.clear()
-        for job in jobs:
-            job.stop()
 
     def _on_state(self, state: State):
         pass
@@ -355,11 +357,11 @@ class SimpleJobRunner(JobRunner):
                 break
             result = job.start()
             if job.state is State.rescheduling:
-                self.reschedule(job)
+                self._reschedule(job)
             else:
                 self._add_result(result)
                 job.done()
-            self.stop_if_complete()
+            self._stop_if_complete()
 
     def _on_state(self, state: State):
         if state is State.stopping:
@@ -408,9 +410,9 @@ class MultiThreadingJobRunner(JobRunner):
         sup_call = partial(super()._add_result, result)
         self._safe_call_from_exec(sup_call)
 
-    def stop_if_complete(self):
+    def _stop_if_complete(self):
         # Direct calls introduce a race condition by the queued '_add_result' calls
-        sup_call = super().stop_if_complete
+        sup_call = super()._stop_if_complete
         self._safe_call_from_exec(sup_call)
 
     def _run(self):
@@ -427,12 +429,12 @@ class MultiThreadingJobRunner(JobRunner):
                         break
                     result = job.start()
                     if job.state is State.rescheduling:
-                        self.reschedule(job)
+                        self._reschedule(job)
                     else:
                         self._add_result(result)
                         if self._done_async:
                             job.done()
-                    self.stop_if_complete()
+                    self._stop_if_complete()
                 finally:
                     q.task_done()
                     available_workers.inc()
