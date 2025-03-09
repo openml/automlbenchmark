@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, auto
 import logging
 import platform
@@ -481,50 +481,11 @@ class MultiThreadingJobRunner(JobRunner):
             )
         if state is State.stopping:
             self._interrupt.set()
-            if self._exec is not None:
-                try:
-                    self._exec.shutdown(wait=True)
-                except BaseException:
-                    pass
-                finally:
-                    self._exec = None
-
-
-class MultiProcessingJobRunner(JobRunner):
-    pass
-
-
-""" Experimental: trying to simplify multi-threading/processing"""
-
-
-class ExecutorJobRunner(JobRunner):
-    def __init__(self, pool_executor_class, jobs, parallel_jobs):
-        super().__init__(jobs)
-        self.pool_executor_class = pool_executor_class
-        self.parallel_jobs = parallel_jobs
-
-    def _run(self):
-        def worker(job):
-            result, duration = job.start()
-            job.done()
-            return Namespace(name=job.name, result=result, duration=duration)
-
-        with self.pool_executor_class(max_workers=self.parallel_jobs) as executor:
-            self.results.extend(executor.map(worker, self.jobs))
-            # futures = []
-            # for job in self.jobs:
-            #     future = executor.submit(worker, job)
-            #    # future.add_done_callback(lambda _: job.done())
-            #     futures.append(future)
-            # for future in as_completed(futures):
-            #     self.results.append(future.result())
-
-
-class ThreadPoolExecutorJobRunner(ExecutorJobRunner):
-    def __init__(self, jobs, parallel_jobs):
-        super().__init__(ThreadPoolExecutor, jobs, parallel_jobs)
-
-
-class ProcessPoolExecutorJobRunner(ExecutorJobRunner):
-    def __init__(self, jobs, parallel_jobs):
-        super().__init__(ProcessPoolExecutor, jobs, parallel_jobs)
+            if self._exec is None:
+                return
+            try:
+                self._exec.shutdown(wait=True)
+            except BaseException:
+                pass
+            finally:
+                self._exec = None
