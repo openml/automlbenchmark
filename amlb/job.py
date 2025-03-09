@@ -248,11 +248,11 @@ class JobRunner:
     def start(self):
         t = None
         try:
-            if self._set_state(State.starting):
-                self._setup()
+            self._set_state(State.starting)
+            self._setup()
             with Timer() as t:
-                if self._set_state(State.running):
-                    self._run()
+                self._set_state(State.running)
+                self._run()
         finally:
             self.stop()
             if t is not None:
@@ -264,8 +264,7 @@ class JobRunner:
         if not self._is_state_transition_ok(self.state, State.stopping):
             return  # is either already stopping or stopped
         try:
-            if not self._set_state(State.stopping):
-                return  # fails for same reason can probably remove above check?
+            self._set_state(State.stopping)
             if self._queue:
                 self._queue.put((-1, JobRunner.END_Q))
             jobs = self.jobs.copy()
@@ -306,16 +305,14 @@ class JobRunner:
         old_state = self.state
         self.state = state
         log.debug("Changing job runner from state %s to %s.", old_state, state)
-        skip_default = False
         try:
-            skip_default = bool(self._on_state(state))
+            self._on_state(state)
         except Exception as e:
             log.exception(
                 "Error when handling state change to %s for job runner: %s",
                 state,
                 str(e),
             )
-        return not skip_default
 
     def _add_result(self, result):
         self.results.append(result)
