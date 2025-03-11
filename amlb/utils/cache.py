@@ -1,38 +1,25 @@
+from __future__ import annotations
 import logging
 import functools
-
+from functools import cached_property
+from typing import Any, Sequence
 
 log = logging.getLogger(__name__)
 
 __no_export = set(dir())  # all variables defined above this are not exported
 
-_CACHE_PROP_PREFIX_ = "__cached__"
 
+def clear_cache(obj: Any, functions: Sequence[str] | None = None) -> None:
+    attributes_to_check = functions or dir(type(obj))
+    cached_properties = [
+        name
+        for name in attributes_to_check
+        if isinstance(getattr(type(obj), name), cached_property)
+    ]
+    for property_ in cached_properties:
+        delattr(obj, property_)
 
-def _cached_property_name(fn):
-    return _CACHE_PROP_PREFIX_ + (fn.__name__ if hasattr(fn, "__name__") else str(fn))
-
-
-def clear_cache(obj, functions=None):
-    attributes = {att: getattr(obj, att) for att in (functions or dir(obj.__class__))}
-    functions = {
-        name: fn for name, fn in attributes.items() if callable(getattr(obj, name))
-    }
-    properties = {
-        name: getattr(obj.__class__, name).fget
-        for name, prop in attributes.items()
-        if isinstance(getattr(obj.__class__, name), property)
-    }
-    # Note that it is not possible to evict specific entries from the lru cache,
-    # this means that the property and methods will be cleared for *all* objects
-    # obj's class. In practice, doesn't really come into play since clear_cached
-    # is only called on Dataset and Datasplit objects.
-    cleared_properties = []
-    for name, fn in (functions | properties).items():
-        if hasattr(fn, "cache_clear"):
-            fn.cache_clear()
-            cleared_properties.append(name)
-    log.debug("Cleared cached properties: %s.", cleared_properties)
+    log.debug("Cleared cached properties: %s.", cached_properties)
 
 
 def cached(fn):
@@ -44,7 +31,7 @@ def memoize(fn):
 
 
 def lazy_property(prop_fn):
-    return property(functools.cache(prop_fn))
+    return cached_property(functools.cache(prop_fn))
 
 
 __all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

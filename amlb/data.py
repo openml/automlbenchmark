@@ -127,7 +127,7 @@ class Datasplit(ABC):
         """
         pass
 
-    @property
+    @lazy_property
     @abstractmethod
     def data(self) -> DF:
         """
