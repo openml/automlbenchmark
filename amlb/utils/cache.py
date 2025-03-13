@@ -9,6 +9,20 @@ __no_export = set(dir())  # all variables defined above this are not exported
 
 
 def clear_cache(obj: Any, functions: Sequence[str] | None = None) -> None:
+    """
+    Clears cached properties and function caches on an object.
+    
+    This function removes cached properties by deleting their corresponding attributes from the
+    object, ensuring that subsequent accesses recompute their values. It also clears caches for
+    callable attributes by invoking their cache_clear method if available. If a specific list of
+    attribute names is provided via the `functions` parameter, only those attributes are processed;
+    otherwise, all attributes of the object's class are inspected.
+        
+    Args:
+        obj: The object instance whose caches will be cleared.
+        functions: An optional sequence of attribute names to inspect; if omitted, all class
+            attributes are considered.
+    """
     attributes_to_check = functions or dir(type(obj))
     # Must be careful to check the definitions on the class, checking on the instance
     # will trigger invocations of the cached properties through `getattr`.

@@ -254,10 +254,27 @@ class FileDataset(Dataset):
 
     @property
     def target(self) -> Feature:
+        """
+        Returns the target feature metadata associated with the dataset.
+        
+        This method retrieves the metadata for the target feature using a cached lookup.
+        """
         return self._get_metadata("target")
 
     @cache
     def _get_metadata(self, prop):
+        """
+        Retrieve a specific metadata property from the training dataset.
+        
+        Loads the metadata from the training split and returns the value associated with the
+        specified property key.
+        
+        Args:
+            prop: The key for the metadata property to retrieve.
+        
+        Returns:
+            The value corresponding to the given metadata key.
+        """
         meta = self._train.load_metadata()
         return meta[prop]
 
@@ -272,6 +289,22 @@ class FileDatasplit(Datasplit):
         self._data = {file_format: path}
 
     def data_path(self, format):
+        """
+        Return the dataset's data path for the specified format.
+        
+        This method checks if the requested file format is supported based on the available converters.
+        If the format is unsupported, a ValueError is raised. Otherwise, it retrieves and returns the data path
+        using the internal data retrieval method.
+        
+        Parameters:
+            format (str): The desired file format (e.g., 'csv', 'arff').
+        
+        Raises:
+            ValueError: If the specified format is not among the supported formats.
+        
+        Returns:
+            The data path corresponding to the specified format.
+        """
         supported_formats = [cls.format for cls in __file_converters__]
         if format not in supported_formats:
             name = split_path(self._path).basename
@@ -283,6 +316,12 @@ class FileDatasplit(Datasplit):
     @cached_property
     def data(self):
         # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
+        """
+        Loads and returns the data for this datasplit.
+        
+        Retrieves the dataset by calling load_data() and logs the loading process.
+        The result is computed on first access and then cached for subsequent calls.
+        """
         log.debug("Loading datasplit %s.", self.path)
         return self.load_data()
 

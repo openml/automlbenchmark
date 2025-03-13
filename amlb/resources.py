@@ -50,6 +50,18 @@ class Resources:
         return normalized
 
     def __init__(self, config: Namespace):
+        """
+        Initializes the Resources instance using the specified configuration.
+        
+        Normalizes directory paths for input, output, user, and root directories and
+        updates the configuration with these common directories. Additionally, appends
+        the normalized user directory to Python's module search path to enable custom
+        module loading.
+        
+        Parameters:
+            config: A Namespace containing configuration settings, including attributes 
+                'input_dir', 'output_dir', 'user_dir', and 'root_dir'.
+        """
         self._config = config
         common_dirs = dict(
             input=normalize_path(config.input_dir),
@@ -67,6 +79,13 @@ class Resources:
 
     @cached_property
     def project_info(self):
+        """
+        Extracts repository information from the project's repository URL.
+        
+        Splits the URL on the '#' character to separate the repository path from an optional tag.
+        If a tag is present, it is used as the branch name; otherwise, the branch defaults to "master".
+        Returns a Namespace with 'repo', 'tag', and 'branch' attributes.
+        """
         split_url = self.config.project_repository.split("#", 1)
         repo = split_url[0]
         tag = None if len(split_url) == 1 else split_url[1]
@@ -75,6 +94,21 @@ class Resources:
 
     @cached_property
     def git_info(self):
+        """
+        Retrieves Git repository details.
+        
+        This method executes various Git commands to obtain repository URL, branch name,
+        commit hash, tags at HEAD, and the status output. If Git is not available or the
+        current directory is not a repository, it returns default placeholder values.
+        
+        Returns:
+            Namespace: An object with the following attributes:
+                repo (str): Remote repository URL or "NA".
+                branch (str): Current branch name or "NA".
+                commit (str): Latest commit hash or "NA".
+                tags (list[str]): Tags pointing at HEAD, or an empty list.
+                status (list[str]): Git status output as a list of lines, or an empty list.
+        """
         def git(cmd, defval=None):
             try:
                 return run_cmd(f"git {cmd}", _log_level_=logging.DEBUG)[0].strip()
@@ -100,6 +134,13 @@ class Resources:
 
     @cached_property
     def app_version(self):
+        """
+        Returns the formatted application version string.
+        
+        If the version indicates a development build, appends Git metadata—such as a non-default
+        repository URL, branch, and abbreviated commit hash—to the base version. Otherwise, returns the
+        version unchanged.
+        """
         v = __version__
         if v != dev:
             return v
@@ -112,6 +153,20 @@ class Resources:
         return "{v} [{details}]".format(v=v, details=", ".join(tokens))
 
     def seed(self, fold=None):
+        """
+        Compute and return a seed for random number generation.
+        
+        If a fold index is provided and the configuration seed is set to "auto",
+        returns the sum of the fold value and the base seed; otherwise, returns the
+        base seed from the configuration.
+        
+        Args:
+            fold (int, optional): Fold index used to offset the base seed for variability
+                when the seed is auto-generated.
+        
+        Returns:
+            int: The computed seed value.
+        """
         if isinstance(fold, int) and str(self.config.seed).lower() in ["auto"]:
             return fold + self._seed
         else:
@@ -119,6 +174,11 @@ class Resources:
 
     @cached_property
     def _seed(self):
+        """
+        Compute the seed value for random number generation.
+        
+        Returns None if the configured seed is "none" or empty. If the seed is set to "auto", generates a random integer between 1 and 2^31 - 1 (ensuring compatibility with signed 32-bit R frameworks). Otherwise, returns the explicitly configured seed.
+        """
         if str(self.config.seed).lower() in ["none", ""]:
             return None
         elif str(self.config.seed).lower() in ["auto"]:
@@ -130,8 +190,24 @@ class Resources:
 
     def framework_definition(self, name, tag=None):
         """
-        :param name:
-        :return: name of the framework as defined in the frameworks definition file
+        Retrieve a valid framework definition by name and tag.
+        
+        This function searches for and returns a framework definition based on the provided
+        framework name and an optional tag (defaulting to a preset tag if omitted). The search
+        is case-insensitive and validates that the framework is active (i.e., not removed) and
+        not abstract. If the provided tag is invalid, or if the framework is removed, abstract,
+        or not found, a ValueError is raised.
+        
+        Args:
+            name: The name of the framework to retrieve, case-insensitively.
+            tag: Optional; the tag under which to search for the framework. Defaults to a preset tag.
+        
+        Returns:
+            A tuple containing the framework definition and its identifier.
+        
+        Raises:
+            ValueError: If the tag is invalid, if the framework has been removed, is abstract,
+                        or if the framework is not listed in the definition file.
         """
         lname = name.lower()
         if tag is None:
@@ -168,14 +244,32 @@ class Resources:
 
     @cached_property
     def _frameworks(self):
+        """
+        Load framework definitions from the configuration file.
+        
+        Extracts the file path from self.config.frameworks.definition_file and loads the framework
+        definitions using load_framework_definitions, returning the parsed definitions.
+        """
         frameworks_file = self.config.frameworks.definition_file
         return load_framework_definitions(frameworks_file, self.config)
 
     @cache
     def constraint_definition(self, name: str) -> TaskConstraint:
         """
-        :param name: name of the benchmark constraint definition as defined in the constraints file
-        :return: a Namespace object with the constraint config (folds, cores, max_runtime_seconds, ...) for the current benchmamk run.
+        Retrieve the benchmark constraint definition for a given name.
+        
+        This method performs a case-insensitive lookup in the loaded constraints and converts the
+        resulting configuration into a TaskConstraint instance. It raises a ValueError if no matching
+        constraint is found.
+        
+        Args:
+            name (str): The name of the benchmark constraint definition as specified in the constraints file.
+        
+        Returns:
+            TaskConstraint: An instance containing configuration details such as folds, cores, and max_runtime_seconds.
+        
+        Raises:
+            ValueError: If the requested constraint definition is not found.
         """
         constraint = self._constraints[name.lower()]
         if not constraint:
@@ -188,6 +282,13 @@ class Resources:
 
     @cached_property
     def _constraints(self):
+        """
+        Loads benchmark constraint definitions from configuration files.
+        
+        Processes the constraint files specified in the configuration by merging their
+        contents, sanitizing each constraint name, and constructing a lookup Namespace
+        with keys converted to lowercase.
+        """
         constraints_file = self.config.benchmarks.constraints_file
         log.info("Loading benchmark constraint definitions from %s.", constraints_file)
         if not isinstance(constraints_file, list):
