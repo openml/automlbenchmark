@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-import functools
 from functools import cached_property
 from typing import Any, Sequence
 
@@ -36,18 +35,6 @@ def clear_cache(obj: Any, functions: Sequence[str] | None = None) -> None:
             cleared_properties.append(cached_function.__name__)
 
     log.debug("Cleared cached properties: %s.", cleared_properties)
-
-
-def cached(fn):
-    return functools.cache(fn)
-
-
-def memoize(fn):
-    return functools.cache(fn)
-
-
-def lazy_property(prop_fn):
-    return cached_property(functools.cache(prop_fn))
 
 
 __all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]
