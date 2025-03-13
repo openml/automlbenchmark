@@ -8,6 +8,8 @@ from __future__ import annotations
 import collections
 import io
 import logging
+from functools import cache
+
 import math
 import os
 import re
@@ -43,11 +45,9 @@ from .resources import get as rget, config as rconfig, output_dirs
 from .utils import (
     Namespace,
     backup_file,
-    cached,
     datetime_iso,
     get_metadata,
     json_load,
-    memoize,
     profile,
     set_metadata,
 )
@@ -185,7 +185,7 @@ class Scoreboard:
             else None
         )
 
-    @cached
+    @cache
     def as_data_frame(self):
         # index = ['task', 'framework', 'fold']
         index = []
@@ -236,7 +236,7 @@ class Scoreboard:
         log.debug("Scores columns: %s.", df.columns)
         return df
 
-    @memoize
+    @cache
     def as_printable_data_frame(self, verbosity=3):
         def none_like_as_empty(val: Any) -> str:
             return (
@@ -450,7 +450,7 @@ class TaskResult:
                 ]  # reorder columns alphabetically: necessary to match label encoding
                 if any(prob_cols != df.columns.values):
                     encoding_map = {
-                        prob_cols.index(col): i
+                        prob_cols.index(col): i  # type: ignore[union-attr]
                         for i, col in enumerate(df.columns.values)
                     }
                     remap = np.vectorize(lambda v: encoding_map[v])
@@ -606,11 +606,11 @@ class TaskResult:
         )
         self._metadata = metadata
 
-    @cached
+    @cache
     def get_result(self):
         return self.load_predictions(self._predictions_file)
 
-    @cached
+    @cache
     def get_result_metadata(self):
         return self._metadata or self.load_metadata(self._metadata_file)
 

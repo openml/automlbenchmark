@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from copy import copy
 from enum import Enum
+from functools import cached_property
 from importlib import import_module, invalidate_caches
 import logging
 import math
@@ -37,7 +38,6 @@ from .utils import (
     file_lock,
     flatten,
     json_dump,
-    lazy_property,
     profile,
     repr_def,
     run_cmd,
@@ -503,7 +503,7 @@ class Benchmark:
         )
         return board.as_data_frame()
 
-    @lazy_property
+    @cached_property
     def output_dirs(self):
         return routput_dirs(
             rconfig().output_dir,
