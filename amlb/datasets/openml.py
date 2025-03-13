@@ -105,7 +105,7 @@ class OpenmlDataset(Dataset):
     def nrows(self) -> int:
         """
         Returns the number of rows in the dataset.
-        
+
         If the row count has not been computed yet, the full dataset is loaded in dataframe
         format, its length is determined, and the result is cached for subsequent calls.
         """
@@ -117,12 +117,13 @@ class OpenmlDataset(Dataset):
     def type(self):
         """
         Determine the dataset type based on the number of class labels.
-        
+
         If the OpenML task has a 'class_labels' attribute, the type is inferred from its count:
         more than two labels indicate a multiclass task, exactly two indicate a binary task,
         and zero labels indicate a regression task. If there is exactly one label, None is returned.
         When the 'class_labels' attribute is absent, the dataset defaults to regression.
         """
+
         def get_type(card):
             if card > 2:
                 return DatasetType.multiclass
@@ -205,16 +206,16 @@ class OpenmlDataset(Dataset):
     ) -> pathlib.Path:
         """
         Generates and writes an inference subsample of the test split to disk.
-        
+
         Extracts a random subsample of n rows from the test split and saves it as a file
         in the specified format. If with_labels is True, the target column is included;
         if scikit_safe is True, categorical features and missing values are processed
         via encoding and imputation. The keep_empty_features flag controls whether columns
         with all missing values are retained (with zeros imputed) or removed.
-        
+
         The subsample file is named based on the original test split file, the number of
         samples, and the seed value.
-        
+
         Args:
             fmt: The file format for the output file ('csv', 'arff', or 'parquet').
             n: The number of samples to include in the subsample.
@@ -224,10 +225,10 @@ class OpenmlDataset(Dataset):
                 compatibility.
             keep_empty_features: If True, retains columns that contain only missing values,
                 imputing them as 0; otherwise, such columns are removed.
-        
+
         Returns:
             The file path of the saved subsample file.
-        
+
         Raises:
             ValueError: If fmt is not one of 'csv', 'arff', or 'parquet'.
         """
@@ -301,11 +302,12 @@ class OpenmlDataset(Dataset):
     def features(self):
         """
         Returns a list of Feature objects representing the dataset's features.
-        
+
         Iterates over the dataset metadata, excluding attributes listed in the exclusion set,
         and constructs a Feature for each valid attribute with an index, mapped type, sorted nominal
         values (if applicable), and flags indicating missing values and target status.
         """
+
         def has_missing_values(f) -> bool:
             return f.number_missing_values > 0
 
@@ -343,7 +345,7 @@ class OpenmlDataset(Dataset):
     def target(self):
         """
         Returns the target feature of the dataset.
-        
+
         Searches through the list of features and returns the first one flagged as the target.
         Raises StopIteration if no feature is marked as the target.
         """
@@ -390,13 +392,13 @@ class OpenmlDatasplit(Datasplit):
     def data_path(self, format):
         """
         Return the file path for the dataset in the specified format.
-        
+
         Args:
             format (str): The desired file format. Must be one of the supported formats defined by __supported_file_formats__.
-        
+
         Raises:
             ValueError: If the format is not among the supported file formats.
-        
+
         Returns:
             The file path corresponding to the dataset in the given format.
         """
@@ -411,7 +413,7 @@ class OpenmlDatasplit(Datasplit):
     def data(self) -> DF:
         """
         Retrieves the dataset split as a DataFrame.
-        
+
         This method returns the split data in a Pandas DataFrame format by invoking the internal
         data retrieval helper.
         """
@@ -422,10 +424,10 @@ class OpenmlDatasplit(Datasplit):
     def data_enc(self) -> AM:
         """
         Return the dataset in encoded array format.
-        
+
         Retrieves the dataset as an encoded array by invoking the generic data loader with the
         "array" option.
-        
+
         Returns:
             AM: The encoded dataset as an array.
         """

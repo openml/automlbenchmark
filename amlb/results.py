@@ -171,11 +171,11 @@ class Scoreboard:
     ):
         """
         Initialize a Scoreboard instance with optional scores loading.
-        
+
         If no scores are provided and autoload is True, scores are loaded from a file
         at a default location derived from the configuration. The scores directory is set
         to the provided value or computed from the configuration if omitted.
-        
+
         Args:
             scores: Preloaded scores data; if None, scores may be auto-loaded.
             framework_name: Name of the machine learning framework.
@@ -205,13 +205,13 @@ class Scoreboard:
         # index = ['task', 'framework', 'fold']
         """
         Returns a reindexed DataFrame representation of the stored scores.
-        
+
         Converts the internal scores to a Pandas DataFrame if necessary, then reorders its columns into fixed,
         metric, and dynamic groups. Fixed columns include common identifiers (e.g., "id", "task", "framework",
         "fold") while metric columns are identified based on available attributes from classification and
         regression results. Any remaining columns are sorted as dynamic columns. An empty DataFrame is returned
         without reindexing.
-        
+
         Returns:
             pandas.DataFrame: The reindexed DataFrame containing the scores.
         """
@@ -267,12 +267,12 @@ class Scoreboard:
     def as_printable_data_frame(self, verbosity=3):
         """
         Return a formatted DataFrame for display based on verbosity level.
-        
+
         This method retrieves the full result DataFrame using as_data_frame() and applies
         column-specific formatting for enhanced readability. It converts values in identifier,
         integer, and float columns into human-friendly formats and selects a subset of columns
         based on the verbosity setting. If the DataFrame is empty, it is returned immediately.
-        
+
         Args:
             verbosity (int, optional): Level of detail for the output. The value determines
                 which columns are included:
@@ -282,10 +282,11 @@ class Scoreboard:
                 - 2: Basic columns plus identifier, duration, and seed.
                 - 3: All columns.
                 Defaults to 3.
-        
+
         Returns:
             pandas.DataFrame: The formatted DataFrame ready for display.
         """
+
         def none_like_as_empty(val: Any) -> str:
             return (
                 ""
@@ -453,14 +454,14 @@ class TaskResult:
     ):
         """
         Saves predictions, ground truth, and class probabilities to a CSV file.
-        
+
         This function processes predicted labels, ground truth, and optional class probability scores
         into a unified DataFrame, applies label transformations as needed, and writes the result to
         the specified CSV file. If probability scores are provided, their columns are labeled using the
         given list or default target classes from the dataset. When ground truth is omitted, the function
         defaults to using test labels from the dataset. A preview of the output is logged if requested,
         and an existing output file is backed up before saving.
-         
+
         Parameters:
             dataset: Object containing test data and a target label encoder for label conversion.
             output_file: Path to the CSV file where predictions will be saved.
@@ -652,7 +653,7 @@ class TaskResult:
     ):
         """
         Initialize a TaskResult instance with task configuration and execution settings.
-        
+
         Args:
             task_def: The definition or configuration of the task.
             fold (int): The fold number for cross-validation.
@@ -676,7 +677,7 @@ class TaskResult:
     def get_result(self):
         """
         Loads and returns prediction results from the predictions file.
-        
+
         This method invokes load_predictions using the instance's predictions file path to retrieve
         and return the associated prediction data.
         """
@@ -686,7 +687,7 @@ class TaskResult:
     def get_result_metadata(self):
         """
         Retrieve the result's metadata, loading it from the metadata file if not already cached.
-        
+
         Returns:
             The metadata associated with the result.
         """

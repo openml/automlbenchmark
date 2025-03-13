@@ -497,15 +497,15 @@ class Benchmark:
     def _results_summary(self, scoreboard=None):
         """
         Generate a summary of the benchmarking results.
-        
+
         If a scoreboard is provided, it is used; otherwise, the scoreboard is loaded from the scores
         directory specified in the output directories. The function logs a formatted table of the scores
         with verbosity level 2 (excluding columns that are all missing) and returns a DataFrame representation
         of the results.
-          
+
         Args:
             scoreboard (Scoreboard, optional): An optional pre-loaded scoreboard instance. Defaults to None.
-        
+
         Returns:
             DataFrame: A DataFrame containing the benchmarking results.
         """
@@ -521,7 +521,7 @@ class Benchmark:
     def output_dirs(self):
         """
         Return output directories for predictions, scores, and logs.
-        
+
         Constructs the full paths using the base output directory from the global configuration
         and the current session identifier, appending subdirectories for predictions, scores, and logs.
         """

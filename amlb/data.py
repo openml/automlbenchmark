@@ -67,10 +67,10 @@ class Feature:
     def is_numerical(self) -> bool:
         """
         Determines if the feature is numerical.
-        
+
         Checks whether the feature's data_type attribute is one of "int", "float", or "number"
         to indicate that it represents numerical data.
-        
+
         Returns:
             bool: True if the feature is numerical, False otherwise.
         """
@@ -80,7 +80,7 @@ class Feature:
     def label_encoder(self) -> Encoder:
         """
         Creates and returns a fitted encoder for the feature's values.
-        
+
         The encoder is configured based on the feature's properties. It uses "label" encoding if there are values present (or "no-op" otherwise), sets the encoded type to int for non-numerical target features (and float otherwise), and applies masking for missing values if they exist. The encoder also uses the feature's normalization function and is fitted on the current values.
         """
         return Encoder(
@@ -96,7 +96,7 @@ class Feature:
     def one_hot_encoder(self) -> Encoder:
         """
         Creates and fits a one-hot encoder for the feature.
-        
+
         The encoder is instantiated to perform one-hot encoding if the feature has defined
         values, or to act as a no-op encoder otherwise. It is configured based on whether the
         feature is a target (using an integer type for non-numerical targets and float otherwise),
@@ -147,12 +147,12 @@ class Datasplit(ABC):
     def data_path(self, format: str) -> str:
         """
         Return the file path for the data split in the specified format.
-        
+
         The format parameter determines which data file path is returned. Supported formats include 'arff' and 'csv'.
-        
+
         Args:
             format (str): The requested data file format.
-        
+
         Returns:
             str: The path to the data-split file in the requested format.
         """
@@ -163,7 +163,7 @@ class Datasplit(ABC):
     def data(self) -> DF:
         """
         Returns all columns of the data split as a pandas DataFrame.
-        
+
         This includes both predictor features and the target variable.
         """
         pass
@@ -173,7 +173,7 @@ class Datasplit(ABC):
     def X(self) -> DF:
         """
         Return the predictor columns as a pandas DataFrame.
-        
+
         This property extracts and returns the subset of columns corresponding to the
         predictor features defined in the parent dataset.
         """
@@ -185,7 +185,7 @@ class Datasplit(ABC):
     def y(self) -> DF:
         """
         Return the target column as a pandas DataFrame.
-        
+
         Extracts the target column from the underlying data using the feature index defined by the parent dataset.
         If a pandas Series is preferred, apply the squeeze() method to the returned DataFrame.
         """
@@ -196,7 +196,7 @@ class Datasplit(ABC):
     def data_enc(self) -> AM:
         """
         Encodes dataset features into a 2D NumPy array.
-        
+
         Transforms each feature column by applying its label encoder to the corresponding
         raw data column, reshapes the output into a column vector, and concatenates all
         encoded columns horizontally. Cached raw data properties ('data', 'X', and 'y')
@@ -216,7 +216,7 @@ class Datasplit(ABC):
     def X_enc(self) -> AM:
         """
         Returns the encoded predictor features.
-        
+
         Extracts and returns the subset of the encoded data corresponding to the predictor columns,
         using the indices of the predictors defined in the parent dataset.
         """
@@ -229,10 +229,10 @@ class Datasplit(ABC):
         # return self.dataset.target.label_encoder.transform(self.y)
         """
         Returns the encoded target column.
-        
+
         Extracts and returns the encoded target values from the precomputed data array by selecting the
         column corresponding to the target feature's index.
-        
+
         Returns:
             AM: An array or sparse matrix containing the encoded target values.
         """
