@@ -9,6 +9,7 @@ import pathlib
 from abc import abstractmethod
 import copy
 import functools
+from functools import cached_property
 import logging
 import os
 import re
@@ -27,7 +28,6 @@ from ..datautils import impute_array
 from ..resources import config as rconfig, get as rget
 from ..utils import (
     as_list,
-    lazy_property,
     path_from_split,
     profile,
     split_path,
@@ -107,7 +107,7 @@ class OpenmlDataset(Dataset):
             self._nrows = len(self._load_full_data(fmt="dataframe"))
         return self._nrows
 
-    @lazy_property
+    @cached_property
     def type(self):
         def get_type(card):
             if card > 2:
@@ -262,7 +262,7 @@ class OpenmlDataset(Dataset):
 
         return subsample_path
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def features(self):
         def has_missing_values(f) -> bool:
@@ -298,7 +298,7 @@ class OpenmlDataset(Dataset):
             )
         ]
 
-    @lazy_property
+    @cached_property
     def target(self):
         return next(f for f in self.features if f.is_target)
 
@@ -347,12 +347,12 @@ class OpenmlDatasplit(Datasplit):
             )
         return self._get_data(format)
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def data(self) -> DF:
         return self._get_data("dataframe")
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def data_enc(self) -> AM:
         return self._get_data("array")

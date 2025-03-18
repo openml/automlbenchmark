@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from functools import cached_property
 import logging
 from typing import List, Union, Iterable
 
@@ -24,7 +25,7 @@ import scipy.sparse as sp
 from typing_extensions import TypeAlias
 
 from .datautils import Encoder
-from .utils import clear_cache, lazy_property, profile, repr_def
+from .utils import clear_cache, profile, repr_def
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class Feature:
     def is_numerical(self) -> bool:
         return self.data_type in ["int", "float", "number"]
 
-    @lazy_property
+    @cached_property
     def label_encoder(self) -> Encoder:
         return Encoder(
             "label" if self.values is not None else "no-op",
@@ -77,7 +78,7 @@ class Feature:
             normalize_fn=Feature.normalize,
         ).fit(self.values)
 
-    @lazy_property
+    @cached_property
     def one_hot_encoder(self) -> Encoder:
         return Encoder(
             "one-hot" if self.values is not None else "no-op",
@@ -127,7 +128,7 @@ class Datasplit(ABC):
         """
         pass
 
-    @property
+    @cached_property
     @abstractmethod
     def data(self) -> DF:
         """
@@ -135,7 +136,7 @@ class Datasplit(ABC):
         """
         pass
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def X(self) -> DF:
         """
@@ -144,7 +145,7 @@ class Datasplit(ABC):
         predictors_ind = [p.index for p in self.dataset.predictors]
         return self.data.iloc[:, predictors_ind]
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def y(self) -> DF:
         """
@@ -152,7 +153,7 @@ class Datasplit(ABC):
         """
         return self.data.iloc[:, [self.dataset.target.index]]  # type: ignore
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def data_enc(self) -> AM:
         encoded_cols = [
@@ -162,15 +163,15 @@ class Datasplit(ABC):
         # optimize mem usage : frameworks use either raw data or encoded ones,
         # so we can clear the cached raw data once they've been encoded
         self.release(["data", "X", "y"])
-        return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))
+        return np.hstack(tuple(col.reshape(-1, 1) for col in encoded_cols))  # type: ignore[union-attr]
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def X_enc(self) -> AM:
         predictors_ind = [p.index for p in self.dataset.predictors]
         return self.data_enc[:, predictors_ind]
 
-    @lazy_property
+    @cached_property
     @profile(logger=log)
     def y_enc(self) -> AM:
         # return self.dataset.target.label_encoder.transform(self.y)
