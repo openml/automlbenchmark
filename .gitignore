@@ -11,6 +11,7 @@ my_*
 __pycache__
 .python-version
 venv/
+.venv/
 
 # editors/IDEs
 .idea/
