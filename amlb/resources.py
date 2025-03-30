@@ -12,14 +12,13 @@ import os
 import random
 import re
 import sys
+from functools import cache, cached_property
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
 from .frameworks.definitions import TaskConstraint
 from .utils import (
     Namespace,
-    lazy_property,
-    memoize,
     normalize_path,
     run_cmd,
     str_sanitize,
@@ -66,7 +65,7 @@ class Resources:
         sys.path.append(common_dirs["user"])
         log.debug("Extended Python sys.path to user directory: %s.", sys.path)
 
-    @lazy_property
+    @cached_property
     def project_info(self):
         split_url = self.config.project_repository.split("#", 1)
         repo = split_url[0]
@@ -74,7 +73,7 @@ class Resources:
         branch = tag or "master"
         return Namespace(repo=repo, tag=tag, branch=branch)
 
-    @lazy_property
+    @cached_property
     def git_info(self):
         def git(cmd, defval=None):
             try:
@@ -99,7 +98,7 @@ class Resources:
             repo=repo, branch=branch, commit=commit, tags=tags, status=status
         )
 
-    @lazy_property
+    @cached_property
     def app_version(self):
         v = __version__
         if v != dev:
@@ -118,7 +117,7 @@ class Resources:
         else:
             return self._seed
 
-    @lazy_property
+    @cached_property
     def _seed(self):
         if str(self.config.seed).lower() in ["none", ""]:
             return None
@@ -167,12 +166,12 @@ class Resources:
             )
         return framework, framework.name
 
-    @lazy_property
+    @cached_property
     def _frameworks(self):
         frameworks_file = self.config.frameworks.definition_file
         return load_framework_definitions(frameworks_file, self.config)
 
-    @memoize
+    @cache
     def constraint_definition(self, name: str) -> TaskConstraint:
         """
         :param name: name of the benchmark constraint definition as defined in the constraints file
@@ -187,7 +186,7 @@ class Resources:
             )
         return TaskConstraint(**Namespace.dict(constraint))
 
-    @lazy_property
+    @cached_property
     def _constraints(self):
         constraints_file = self.config.benchmarks.constraints_file
         log.info("Loading benchmark constraint definitions from %s.", constraints_file)

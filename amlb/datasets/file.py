@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import tempfile
+from functools import cache, cached_property
 from typing import List
 
 import arff
@@ -18,9 +19,7 @@ from ..resources import config as rconfig
 from ..utils import (
     Namespace as ns,
     as_list,
-    lazy_property,
     list_all_files,
-    memoize,
     path_from_split,
     profile,
     repr_def,
@@ -257,7 +256,7 @@ class FileDataset(Dataset):
     def target(self) -> Feature:
         return self._get_metadata("target")
 
-    @memoize
+    @cache
     def _get_metadata(self, prop):
         meta = self._train.load_metadata()
         return meta[prop]
@@ -281,7 +280,7 @@ class FileDatasplit(Datasplit):
             )
         return self._get_data(format)
 
-    @lazy_property
+    @cached_property
     def data(self):
         # use codecs for unicode support: path = codecs.load(self._path, 'rb', 'utf-8')
         log.debug("Loading datasplit %s.", self.path)

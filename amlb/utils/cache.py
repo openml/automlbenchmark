@@ -1,90 +1,40 @@
+from __future__ import annotations
 import logging
-
-from .core import flatten
+from functools import cached_property
+from typing import Any, Sequence
 
 log = logging.getLogger(__name__)
 
 __no_export = set(dir())  # all variables defined above this are not exported
 
-_CACHE_PROP_PREFIX_ = "__cached__"
 
-
-def _cached_property_name(fn):
-    return _CACHE_PROP_PREFIX_ + (fn.__name__ if hasattr(fn, "__name__") else str(fn))
-
-
-def clear_cache(self, functions=None):
+def clear_cache(obj: Any, functions: Sequence[str] | None = None) -> None:
+    attributes_to_check = functions or dir(type(obj))
+    # Must be careful to check the definitions on the class, checking on the instance
+    # will trigger invocations of the cached properties through `getattr`.
     cached_properties = [
-        prop for prop in dir(self) if prop.startswith(_CACHE_PROP_PREFIX_)
+        name
+        for name in attributes_to_check
+        if isinstance(getattr(type(obj), name), cached_property)
     ]
-    properties_to_clear = (
-        cached_properties
-        if functions is None
-        else [
-            prop
-            for prop in [_cached_property_name(fn) for fn in functions]
-            if prop in cached_properties
-        ]
-    )
-    for prop in properties_to_clear:
-        delattr(self, prop)
-    log.debug("Cleared cached properties: %s.", properties_to_clear)
+    _functions = [fn for fn in attributes_to_check if callable(getattr(type(obj), fn))]
 
+    cleared_properties = []
+    for property_ in cached_properties:
+        # You need to delete the attribute to evict the cache of a cached property,
+        # but you cannot check for it with hasattr as that would invoke it.
+        try:
+            delattr(obj, property_)
+            cleared_properties.append(property_)
+        except AttributeError:
+            pass
 
-def cache(self, key, fn):
-    """
+    for cached_function in [getattr(obj, fn) for fn in _functions]:
+        if hasattr(cached_function, "cache_clear"):
+            cached_function.cache_clear()
+            cleared_properties.append(cached_function.__name__)
 
-    :param self: the object that will hold the cached value
-    :param key: the key/attribute for the cached value
-    :param fn: the function returning the value to be cached
-    :return: the value returned by fn on first call
-    """
-    if not hasattr(self, key):
-        value = fn(self)
-        setattr(self, key, value)
-    return getattr(self, key)
-
-
-def cached(fn):
-    """
-
-    :param fn:
-    :return:
-    """
-    result = _cached_property_name(fn)
-
-    def decorator(self):
-        return cache(self, result, fn)
-
-    return decorator
-
-
-def memoize(fn):
-    prop_name = _cached_property_name(fn)
-
-    def decorator(self, *args, **kwargs):
-        memo = cache(self, prop_name, lambda _: {})
-        key = tuple(flatten((args, kwargs), flatten_dict=True))
-        if key not in memo:
-            memo[key] = fn(self, *args, **kwargs)
-        return memo[key]
-
-    return decorator
-
-
-def lazy_property(prop_fn):
-    """
-
-    :param prop_fn:
-    :return:
-    """
-    prop_name = _cached_property_name(prop_fn)
-
-    @property
-    def decorator(self):
-        return cache(self, prop_name, prop_fn)
-
-    return decorator
+    log.debug("Cleared cached properties: %s.", cleared_properties)
 
 
 __all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]
