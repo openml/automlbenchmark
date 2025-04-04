@@ -18,7 +18,7 @@ matplotlib.use("agg")  # no need for tk
 
 from autogluon.tabular import TabularPredictor, TabularDataset
 from autogluon.core.utils.savers import save_pd, save_pkl, save_json
-import autogluon.core.metrics as metrics
+from autogluon.core.metrics import get_metric, Scorer
 from autogluon.tabular.version import __version__
 
 from frameworks.shared.callee import (
@@ -35,23 +35,8 @@ log = logging.getLogger(__name__)
 def run(dataset, config):
     log.info(f"\n**** AutoGluon [v{__version__}] ****\n")
 
-    metrics_mapping = dict(
-        acc=metrics.accuracy,
-        auc=metrics.roc_auc,
-        f1=metrics.f1,
-        logloss=metrics.log_loss,
-        mae=metrics.mean_absolute_error,
-        mse=metrics.mean_squared_error,
-        r2=metrics.r2,
-        rmse=metrics.root_mean_squared_error,
-    )
-
-    perf_metric = (
-        metrics_mapping[config.metric] if config.metric in metrics_mapping else None
-    )
-    if perf_metric is None:
-        # TODO: figure out if we are going to blindly pass metrics through, or if we use a strict mapping
-        log.warning("Performance metric %s not supported.", config.metric)
+    problem_type = dataset.problem_type
+    perf_metric = get_autogluon_metric(metric=config.metric, problem_type=problem_type)
 
     is_classification = config.type == "classification"
     training_params = {
@@ -81,7 +66,6 @@ def run(dataset, config):
 
     train_path, test_path = dataset.train.path, dataset.test.path
     label = dataset.target.name
-    problem_type = dataset.problem_type
 
     """
     The _include_test_during_fit flag enables the test_data to be passed into AutoGluon's predictor object
@@ -255,6 +239,40 @@ def save_artifacts(predictor, leaderboard, learning_curves, config):
 
     except Exception:
         log.warning("Error when saving artifacts.", exc_info=True)
+
+
+def get_autogluon_metric(metric: str, problem_type: str) -> Scorer:
+    """Map AMLB metric names to equivalent AutoGluon metric"""
+    metrics_mapping = dict(
+        acc="accuracy",
+        auc="roc_auc",
+        f1="f1",
+        logloss="log_loss",
+        mae="mean_absolute_error",
+        mse="mean_squared_error",
+        r2="r2",
+        rmse="root_mean_squared_error",
+    )
+
+    if metric in metrics_mapping:
+        metric_name = metrics_mapping[metric]
+    else:
+        log.warning(
+            f"Warning: metric {metric} is not present in the metrics_mapping! "
+            f"Will attempt to find an AutoGluon metric with a matching name."
+        )
+        metric_name = metric
+
+    # get the AutoGluon metric using the metric name and the problem type
+    # we pass the problem type to raise an exception early in case the user is trying
+    # to use an invalid metric for the given problem type
+    # this will additionally raise an exception if the metric does not exist to AutoGluon
+    perf_metric = get_metric(
+        metric=metric_name,
+        problem_type=problem_type,
+    )
+
+    return perf_metric
 
 
 if __name__ == "__main__":
