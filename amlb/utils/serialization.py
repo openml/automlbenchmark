@@ -6,6 +6,7 @@ import pickle
 import re
 from typing import Optional
 
+
 from .core import Namespace as ns, json_dump, json_load
 from .process import profile
 
@@ -34,9 +35,10 @@ ser_config = ns(
     # the serializer to use when there's no specific serializer available.
     # mainly intended to serialize simple data structures like lists.
     # allowed=['pickle', 'json']
-    fallback_serializer="json",
+    # OPTION REMOVED: Only JSON is allowed. Pickle is evil.
+    # fallback_serializer="json",
     # format used to serialize pandas dataframes/series between processes.
-    # allowed=['pickle', 'parquet', 'hdf', 'json']
+    # allowed=['parquet', 'json']
     pandas_serializer="parquet",
     # the compression format used when serializing pandas dataframes/series.
     # allowed=[None, 'infer', 'bz2', 'gzip']
@@ -182,9 +184,7 @@ def serialize_data(data, path, config: Optional[ns] = None):
             # for example, 'true' and 'false' are converted automatically to booleans, even for column names…
             data.rename(str, axis="columns", inplace=True)
         ser = config.pandas_serializer
-        if ser == "pickle":
-            data.to_pickle(path, compression=config.pandas_compression)
-        elif ser == "parquet":
+        if ser == "parquet":
             if isinstance(data, pd.Series):
                 data = pd.DataFrame({__series__: data})
             # parquet serialization doesn't support sparse dataframes
@@ -194,18 +194,15 @@ def serialize_data(data, path, config: Optional[ns] = None):
                 json_dump(dtypes, f"{path}.dtypes", style="compact")
                 data = unsparsify(data)
             data.to_parquet(path, compression=config.pandas_parquet_compression)
-        elif ser == "hdf":
-            data.to_hdf(path, os.path.basename(path), mode="w", format="table")
         elif ser == "json":
             data.to_json(path, compression=config.pandas_compression)
-    else:  # fallback serializer
-        if config.fallback_serializer == "json":
-            path = f"{root}.json"
-            json_dump(data, path, style="compact")
         else:
-            path = f"{root}.pkl"
-            with open(path, "wb") as f:
-                pickle.dump(data, f)
+            raise ValueError(
+                f"Invalid pandas serialization {ser} must be 'parquet' or 'json'"
+            )
+    else:  # fallback serializer
+        path = f"{root}.json"
+        json_dump(data, path, style="compact")
     return path
 
 
