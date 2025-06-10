@@ -173,6 +173,9 @@ jobs:
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate
+        ls /home/runner/work/automlbenchmark/automlbenchmark/venv/bin/coverage
+        /home/runner/work/automlbenchmark/automlbenchmark/venv/bin/coverage --help
+        coverage --help
         coverage run -m runbenchmark ${{ matrix.framework }} ${{ matrix.benchmark }} test -f 0 -t ${{ matrix.task }} -e
         coverage xml
       env:
