@@ -107,7 +107,7 @@ def call_run(run_fn):
         json_dump(inference_measurements, inference_file, style="compact")
         res["others"]["inference_times"] = str(inference_file)
 
-    res["output_file"] = config.output_predictions_file
+    res.setdefault("output_file", config.output_predictions_file)
     json_dump(res, config.result_file, style="compact")
 
 

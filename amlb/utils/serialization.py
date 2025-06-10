@@ -1,4 +1,5 @@
 import logging
+
 import math
 import os
 import pickle
@@ -34,8 +35,6 @@ ser_config = ns(
     # mainly intended to serialize simple data structures like lists.
     # allowed=['pickle', 'json']
     fallback_serializer="json",
-    # if numpy can use pickle to serialize ndarrays,
-    numpy_allow_pickle=True,
     # format used to serialize pandas dataframes/series between processes.
     # allowed=['pickle', 'parquet', 'hdf', 'json']
     pandas_serializer="parquet",
@@ -163,8 +162,14 @@ def serialize_data(data, path, config: Optional[ns] = None):
     root, ext = os.path.splitext(path)
     np, pd, sp = _import_data_libraries()
     if np and isinstance(data, np.ndarray):
-        path = f"{root}.npy"
-        np.save(path, data, allow_pickle=config.numpy_allow_pickle)
+        if data.dtype == "object":
+            # Numpy cannot save object arrays without pickle
+            path = f"{root}.json"
+            data = data.squeeze().tolist()
+            json_dump(data, path, style="compact")
+        else:
+            path = f"{root}.npy"
+            np.save(path, data, allow_pickle=False)
     elif sp and isinstance(data, sp.spmatrix):
         # use custom extension to recognize sparsed matrices from file name.
         # .npz is automatically appended if missing, and can also potentially be used for numpy arrays.
@@ -212,7 +217,7 @@ def deserialize_data(path, config: Optional[ns] = None):
     if ext == ".npy":
         if np is None:
             raise SerializationError(f"Numpy is required to deserialize {path}.")
-        return np.load(path, allow_pickle=config.numpy_allow_pickle)
+        return np.load(path)
     elif ext == ".npz":
         _, ext2 = os.path.splitext(base)
         if ext2 == ".spy":
