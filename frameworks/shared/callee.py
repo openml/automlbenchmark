@@ -93,6 +93,7 @@ def call_run(run_fn):
                     path = os.path.join(config.result_dir, ".".join([name, "data"]))
                     res[name] = serialize_data(arr, path, config=ser_config)
     except BaseException as e:
+        log.error("Integration script failed with uncaught exception:")
         log.exception(e)
         res = dict(error_message=str(e), models_count=0)
     finally:
