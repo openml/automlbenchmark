@@ -95,7 +95,6 @@ def run(dataset, config):
     get_reusable_executor().shutdown(wait=True)
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions_only,
         truth=truth_only,
         target_is_encoded=False,

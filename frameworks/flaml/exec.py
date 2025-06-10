@@ -91,7 +91,6 @@ def run(dataset, config):
     log.info(f"Finished predict in {predict.duration}s.")
 
     return result(
-        output_file=config.output_predictions_file,
         probabilities=probabilities,
         predictions=predictions,
         truth=y_test,

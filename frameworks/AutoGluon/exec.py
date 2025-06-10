@@ -183,7 +183,6 @@ def run(dataset, config):
     shutil.rmtree(predictor.path, ignore_errors=True)
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         probabilities=probabilities,
         probabilities_labels=prob_labels,

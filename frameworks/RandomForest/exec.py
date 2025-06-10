@@ -132,7 +132,6 @@ def run(dataset, config):
         log.info("Finished inference time measurements.")
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=y_test,
         probabilities=probabilities,

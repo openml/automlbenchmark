@@ -207,7 +207,6 @@ def run(dataset, config):
     save_artifacts(auto_sklearn, config)
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=dataset.test.y if use_pandas else dataset.test.y_enc,
         probabilities=probabilities,

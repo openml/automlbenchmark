@@ -125,7 +125,6 @@ def run(dataset, config):
         target_encoded = False
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=truth,
         probabilities=probabilities,

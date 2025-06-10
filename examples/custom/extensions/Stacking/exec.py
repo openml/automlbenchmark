@@ -133,7 +133,6 @@ def run(dataset, config):
     probabilities = estimator.predict_proba(X_test) if is_classification else None
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=y_test,
         probabilities=probabilities,

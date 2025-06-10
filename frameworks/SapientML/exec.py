@@ -79,7 +79,6 @@ def run(dataset, config):
         )
 
         return result(
-            output_file=config.output_predictions_file,
             predictions=predictions,
             truth=y_test,
             probabilities=probabilities,
@@ -88,7 +87,6 @@ def run(dataset, config):
         )
     else:
         return result(
-            output_file=config.output_predictions_file,
             predictions=predictions,
             truth=y_test,
             training_duration=training.duration,

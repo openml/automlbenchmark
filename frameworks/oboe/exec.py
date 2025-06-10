@@ -123,7 +123,6 @@ def run(dataset, config):
         probabilities = None
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=y_test,
         probabilities=probabilities,

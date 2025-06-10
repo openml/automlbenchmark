@@ -32,7 +32,6 @@ def run(dataset: Dataset, config: TaskConfig):
 
     save_predictions(
         dataset=dataset,
-        output_file=config.output_predictions_file,
         probabilities=probabilities,
         predictions=predictions,
         truth=y_test,
