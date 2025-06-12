@@ -203,7 +203,6 @@ def run(dataset, config):
         save_artifacts(aml, dataset=dataset, config=config)
 
         return result(
-            output_file=config.output_predictions_file,
             predictions=preds.predictions,
             truth=preds.truth,
             probabilities=preds.probabilities,

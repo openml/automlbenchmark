@@ -102,6 +102,7 @@ jobs:
       - name: Create venv
         run: python -m venv venv
       - uses: actions/cache@v3
+        if: failure()
         id: cache
         with:
           path: /home/runner/work/automlbenchmark/automlbenchmark/venv
@@ -151,6 +152,7 @@ jobs:
     - name: Create venv
       run: python -m venv venv
     - uses: actions/cache@v3
+      if: failure()
       id: cache
       with:
         path: /home/runner/work/automlbenchmark/automlbenchmark/venv
@@ -164,6 +166,12 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         python -m pip install "coverage[toml]"
+    - name: Check Things
+      run: |
+        ls -lah venv
+        ls -lah venv/bin
+        ls -lah /home/runner/work/automlbenchmark/automlbenchmark/venv/bin
+        echo $(pwd)
     - name: Run ${{ matrix.framework }} on ${{ matrix.task }}
       run: |
         source venv/bin/activate

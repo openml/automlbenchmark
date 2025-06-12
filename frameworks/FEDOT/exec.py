@@ -53,7 +53,6 @@ def run(dataset, config):
     save_artifacts(fedot, config)
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=dataset.test.y,
         probabilities=probabilities,

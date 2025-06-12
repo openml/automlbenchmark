@@ -27,7 +27,6 @@ class FrameworkError(Exception):
 
 
 def result(
-    output_file=None,
     predictions=None,
     truth=None,
     probabilities=None,
@@ -94,6 +93,7 @@ def call_run(run_fn):
                     path = os.path.join(config.result_dir, ".".join([name, "data"]))
                     res[name] = serialize_data(arr, path, config=ser_config)
     except BaseException as e:
+        log.error("Integration script failed with uncaught exception:")
         log.exception(e)
         res = dict(error_message=str(e), models_count=0)
     finally:
@@ -107,6 +107,8 @@ def call_run(run_fn):
         )
         json_dump(inference_measurements, inference_file, style="compact")
         res["others"]["inference_times"] = str(inference_file)
+
+    res.setdefault("output_file", config.output_predictions_file)
     json_dump(res, config.result_file, style="compact")
 
 

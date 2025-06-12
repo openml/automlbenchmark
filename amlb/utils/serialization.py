@@ -1,9 +1,11 @@
 import logging
+
 import math
 import os
 import pickle
 import re
 from typing import Optional
+
 
 from .core import Namespace as ns, json_dump, json_load
 from .process import profile
@@ -33,11 +35,10 @@ ser_config = ns(
     # the serializer to use when there's no specific serializer available.
     # mainly intended to serialize simple data structures like lists.
     # allowed=['pickle', 'json']
-    fallback_serializer="json",
-    # if numpy can use pickle to serialize ndarrays,
-    numpy_allow_pickle=True,
+    # OPTION REMOVED: Only JSON is allowed. Pickle is evil.
+    # fallback_serializer="json",
     # format used to serialize pandas dataframes/series between processes.
-    # allowed=['pickle', 'parquet', 'hdf', 'json']
+    # allowed=['parquet', 'json']
     pandas_serializer="parquet",
     # the compression format used when serializing pandas dataframes/series.
     # allowed=[None, 'infer', 'bz2', 'gzip']
@@ -163,8 +164,14 @@ def serialize_data(data, path, config: Optional[ns] = None):
     root, ext = os.path.splitext(path)
     np, pd, sp = _import_data_libraries()
     if np and isinstance(data, np.ndarray):
-        path = f"{root}.npy"
-        np.save(path, data, allow_pickle=config.numpy_allow_pickle)
+        if data.dtype == "object":
+            # Numpy cannot save object arrays without pickle
+            path = f"{root}.json"
+            data = data.squeeze().tolist()
+            json_dump(data, path, style="compact")
+        else:
+            path = f"{root}.npy"
+            np.save(path, data, allow_pickle=False)
     elif sp and isinstance(data, sp.spmatrix):
         # use custom extension to recognize sparsed matrices from file name.
         # .npz is automatically appended if missing, and can also potentially be used for numpy arrays.
@@ -177,9 +184,7 @@ def serialize_data(data, path, config: Optional[ns] = None):
             # for example, 'true' and 'false' are converted automatically to booleans, even for column names…
             data.rename(str, axis="columns", inplace=True)
         ser = config.pandas_serializer
-        if ser == "pickle":
-            data.to_pickle(path, compression=config.pandas_compression)
-        elif ser == "parquet":
+        if ser == "parquet":
             if isinstance(data, pd.Series):
                 data = pd.DataFrame({__series__: data})
             # parquet serialization doesn't support sparse dataframes
@@ -189,18 +194,15 @@ def serialize_data(data, path, config: Optional[ns] = None):
                 json_dump(dtypes, f"{path}.dtypes", style="compact")
                 data = unsparsify(data)
             data.to_parquet(path, compression=config.pandas_parquet_compression)
-        elif ser == "hdf":
-            data.to_hdf(path, os.path.basename(path), mode="w", format="table")
         elif ser == "json":
             data.to_json(path, compression=config.pandas_compression)
-    else:  # fallback serializer
-        if config.fallback_serializer == "json":
-            path = f"{root}.json"
-            json_dump(data, path, style="compact")
         else:
-            path = f"{root}.pkl"
-            with open(path, "wb") as f:
-                pickle.dump(data, f)
+            raise ValueError(
+                f"Invalid pandas serialization {ser} must be 'parquet' or 'json'"
+            )
+    else:  # fallback serializer
+        path = f"{root}.json"
+        json_dump(data, path, style="compact")
     return path
 
 
@@ -212,7 +214,7 @@ def deserialize_data(path, config: Optional[ns] = None):
     if ext == ".npy":
         if np is None:
             raise SerializationError(f"Numpy is required to deserialize {path}.")
-        return np.load(path, allow_pickle=config.numpy_allow_pickle)
+        return np.load(path)
     elif ext == ".npz":
         _, ext2 = os.path.splitext(base)
         if ext2 == ".spy":

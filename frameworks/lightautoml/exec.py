@@ -99,7 +99,6 @@ def run(dataset, config):
     save_artifacts(automl, config)
 
     return result(
-        output_file=config.output_predictions_file,
         probabilities_labels=probabilities_labels,
         probabilities=probabilities,
         predictions=predictions,

@@ -104,7 +104,6 @@ def run(dataset, config):
 
     save_artifacts(fedot, config)
     return result(
-        output_file=config.output_predictions_file,
         predictions=all_series_predictions,
         truth=truth_only,
         target_is_encoded=False,

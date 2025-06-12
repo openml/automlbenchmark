@@ -123,7 +123,6 @@ def run(dataset, config):
         probabilities = gama_automl.predict_proba(X_test)
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         probabilities=probabilities,
         truth=y_test,

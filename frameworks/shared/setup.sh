@@ -44,13 +44,5 @@ PIP() {
   $pip_exec "$@"
 }
 
-#if [[ -x "$(command -v $PY_VENV/bin/activate)" ]]; then
-#    $PY_ROOT/activate
-#fi
-
-#echo "PY=$(command -v PY)"
-#echo "PIP=$(command -v PIP)"
 echo "PY=$py_exec"
 echo "PIP=$pip_exec"
-
-PIP install --no-cache-dir -r $SHARED_DIR/requirements.txt

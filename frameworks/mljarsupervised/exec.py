@@ -105,7 +105,6 @@ def run(dataset, config):
         shutil.rmtree(results_path, ignore_errors=True)
 
     return result(
-        output_file=config.output_predictions_file,
         predictions=predictions,
         truth=y_test,
         probabilities=probabilities,
