@@ -100,6 +100,7 @@ def run(dataset, config):
             eval_metric=perf_metric.name,
             path=models_dir,
             problem_type=problem_type,
+            verbosity=4,
         ).fit(train_data=train_path, time_limit=time_limit, **training_params)
 
     log.info(f"Finished fit in {training.duration}s.")
