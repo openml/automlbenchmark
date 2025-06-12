@@ -46,17 +46,3 @@ PIP() {
 
 echo "PY=$py_exec"
 echo "PIP=$pip_exec"
-
-REQ_FILE="$SHARED_DIR/requirements.txt"
-
-for line in $(grep -vE '^\s*#' "$REQ_FILE" | grep -vE '^\s*$'); do
-    pkg=$(echo "$line" | sed -E 's/[=><~!].*$//')
-    # In a line like "numpy==1.12.0" then pkg=numpy and line is the whole line
-
-    if ! PY -c "import $pkg" &> /dev/null; then
-        echo "$pkg not found. Installing from requirements.txt..."
-        PIP install --no-cache-dir "$line"
-    else
-        echo "$pkg is already installed by the framework, using that instead."
-    fi
-done
