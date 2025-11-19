@@ -88,7 +88,7 @@ def parse_args():
 
 def find_most_recent_result_folder() -> pathlib.Path:
     root_dir = pathlib.Path(__file__).parent
-    config = config_load(root_dir / "resources" / "config.yaml")
+    config = config_load(root_dir / "resources" / "config.yaml", strict=True)
     output_dir = pathlib.Path(config.output_dir or default_dirs.output_dir)
 
     def dirname_to_datetime(dirname: str) -> datetime:

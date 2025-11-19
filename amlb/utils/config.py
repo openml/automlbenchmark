@@ -47,9 +47,22 @@ else:
         )
 
 
-def config_load(path, verbose=False):
+def config_load(path, verbose=False, strict=False):
+    """Load a configuration file.
+
+    :param path: Path to the configuration file.
+    :param verbose: If True, log at INFO level instead of DEBUG when loading.
+    :param strict: If True, raise an error when the file doesn't exist.
+                   If False, log a warning/debug message and return empty Namespace.
+    :return: Namespace containing the configuration.
+    """
     path = normalize_path(path)
     if not os.path.isfile(path):
+        if strict:
+            raise FileNotFoundError(
+                f"Configuration file not found: `{path}`. "
+                f"Please check the path for typos or verify the file exists."
+            )
         log.log(
             logging.WARNING if verbose else logging.DEBUG,
             "No config file at `%s`, ignoring it.",

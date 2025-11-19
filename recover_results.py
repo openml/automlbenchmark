@@ -29,7 +29,7 @@ extras = {
 amlb.logger.setup(root_level="DEBUG", console_level="INFO")
 
 root_dir = os.path.dirname(__file__)
-config = config_load(os.path.join(root_dir, "resources", "config.yaml"))
+config = config_load(os.path.join(root_dir, "resources", "config.yaml"), strict=True)
 config_args = ns.parse(
     root_dir=root_dir,
     script=os.path.basename(__file__),

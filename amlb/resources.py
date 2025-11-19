@@ -194,8 +194,10 @@ class Resources:
             constraints_file = [constraints_file]
 
         constraints = Namespace()
-        for ef in constraints_file:
-            constraints += config_load(ef)
+        for i, ef in enumerate(constraints_file):
+            # First constraint file should exist (usually the default one)
+            # Additional files (e.g., user overrides) are optional
+            constraints += config_load(ef, strict=(i == 0))
 
         for name, c in constraints:
             c.name = str_sanitize(name)
