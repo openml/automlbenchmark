@@ -9,7 +9,8 @@ from amlb.utils import Namespace, config_load
 @pytest.fixture
 def load_default_resources(tmp_path):
     config_default = config_load(
-        os.path.join(default_dirs.root_dir, "resources", "config.yaml")
+        os.path.join(default_dirs.root_dir, "resources", "config.yaml"),
+        strict=True  # Default config must exist
     )
     config_default_dirs = default_dirs
     config_test = Namespace(

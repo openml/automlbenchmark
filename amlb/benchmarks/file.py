@@ -33,7 +33,7 @@ def load_file_benchmark(
     """Loads benchmark from a local file."""
     benchmark_file = _find_local_benchmark_definition(name, benchmark_definition_dirs)
     log.info("Loading benchmark definitions from %s.", benchmark_file)
-    tasks = config_load(benchmark_file)
+    tasks = config_load(benchmark_file, strict=True)
     benchmark_name, _ = os.path.splitext(os.path.basename(benchmark_file))
     for task in tasks:
         if task["openml_task_id"] is not None and not isinstance(

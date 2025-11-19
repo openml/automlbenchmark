@@ -56,10 +56,11 @@ def dir_of(caller_file, rel_to_project_root=False):
         return abs_path
 
 
-def list_all_files(paths, filter_=None):
+def list_all_files(paths, filter_=None, strict=False):
     """
     :param paths: the directories to look into.
     :param filter_: None, or a predicate function returning True iff the file should be listed.
+    :param strict: If True, raise an error when a path doesn't exist.
     """
     filter_ = filter_ or (lambda _: True)
     all_files = []
@@ -76,6 +77,11 @@ def list_all_files(paths, filter_=None):
             if filter_(path):
                 all_files.append(path)
         else:
+            if strict:
+                raise FileNotFoundError(
+                    f"Path not found: `{path}`. "
+                    f"Please check the path for typos or verify it exists."
+                )
             log.warning("Skipping file `%s` as it doesn't exist.", path)
 
     return all_files

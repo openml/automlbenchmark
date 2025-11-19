@@ -44,7 +44,11 @@ def _load_and_merge_framework_definitions(
     definitions_by_tag = Namespace()
     for tag in [default_tag] + config.frameworks.tags:
         definitions_by_file = [
-            config_load(_definition_file(file, tag)) for file in frameworks_file
+            config_load(
+                _definition_file(file, tag),
+                strict=(tag == default_tag)  # Only strict for base files, not tagged variants
+            )
+            for file in frameworks_file
         ]
         if not config.frameworks.allow_duplicates:
             for d1, d2 in itertools.combinations(
