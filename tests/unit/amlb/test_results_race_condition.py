@@ -1,13 +1,11 @@
 """Test for race condition fix in local results file writing (issue #691)."""
 
-import os
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-import pytest
 
-from amlb.results import Scoreboard, TaskResult
+from amlb.results import Scoreboard
 
 
 def test_parallel_save_no_race_condition():
@@ -63,23 +61,23 @@ def test_parallel_save_no_race_condition():
         result_df = result_board.as_data_frame()
 
         # Check that we have all the expected rows
-        assert (
-            len(result_df) == num_parallel_saves
-        ), f"Expected {num_parallel_saves} rows, but got {len(result_df)}"
+        assert len(result_df) == num_parallel_saves, (
+            f"Expected {num_parallel_saves} rows, but got {len(result_df)}"
+        )
 
         # Check that all task IDs are present
         expected_task_ids = {f"test_task_{i}" for i in range(num_parallel_saves)}
         actual_task_ids = set(result_df["id"].values)
-        assert (
-            expected_task_ids == actual_task_ids
-        ), f"Missing task IDs: {expected_task_ids - actual_task_ids}"
+        assert expected_task_ids == actual_task_ids, (
+            f"Missing task IDs: {expected_task_ids - actual_task_ids}"
+        )
 
         # Check that all folds are present and unique
         expected_folds = set(range(num_parallel_saves))
         actual_folds = set(result_df["fold"].values)
-        assert (
-            expected_folds == actual_folds
-        ), f"Missing folds: {expected_folds - actual_folds}"
+        assert expected_folds == actual_folds, (
+            f"Missing folds: {expected_folds - actual_folds}"
+        )
 
 
 def test_save_with_file_lock_timeout(mocker):
