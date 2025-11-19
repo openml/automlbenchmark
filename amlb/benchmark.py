@@ -472,7 +472,20 @@ class Benchmark:
         return board
 
     def _save(self, board):
-        board.save(append=True)
+        # Use file locking to prevent race conditions when multiple processes
+        # write to the same local results file simultaneously (issue #691)
+        local_path = board.path
+        timeout = rconfig().results.global_lock_timeout
+        try:
+            with file_lock(local_path, timeout=timeout):
+                board.save(append=True)
+        except TimeoutError:
+            log.exception(
+                "Failed to acquire the lock on local results file `%s` after %ss: "
+                "results may be lost due to race condition.",
+                local_path,
+                timeout,
+            )
         self._save_global(board)
 
     def _save_global(self, board):
