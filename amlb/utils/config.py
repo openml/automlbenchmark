@@ -49,7 +49,7 @@ else:
 
 def config_load(path, verbose=False, strict=False):
     """Load a configuration file.
-    
+
     :param path: Path to the configuration file.
     :param verbose: If True, log at INFO level instead of DEBUG when loading.
     :param strict: If True, raise an error when the file doesn't exist.

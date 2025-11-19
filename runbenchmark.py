@@ -278,7 +278,7 @@ log.debug("Script args: %s.", args)
 
 config_default = config_load(
     os.path.join(default_dirs.root_dir, "resources", "config.yaml"),
-    strict=True  # Default config must exist
+    strict=True,  # Default config must exist
 )
 config_default_dirs = default_dirs
 # allowing config override from user_dir: useful to define custom benchmarks and frameworks for example.
@@ -286,7 +286,7 @@ config_user = config_load(
     extras.get(
         "config", os.path.join(args.userdir or default_dirs.user_dir, "config.yaml")
     ),
-    strict=False  # User config is optional
+    strict=False,  # User config is optional
 )
 # config listing properties set by command line
 config_args = ns.parse(

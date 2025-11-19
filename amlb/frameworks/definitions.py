@@ -46,7 +46,9 @@ def _load_and_merge_framework_definitions(
         definitions_by_file = [
             config_load(
                 _definition_file(file, tag),
-                strict=(tag == default_tag)  # Only strict for base files, not tagged variants
+                strict=(
+                    tag == default_tag
+                ),  # Only strict for base files, not tagged variants
             )
             for file in frameworks_file
         ]
