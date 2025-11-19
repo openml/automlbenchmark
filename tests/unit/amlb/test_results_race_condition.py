@@ -110,10 +110,6 @@ def test_save_with_file_lock_timeout(mocker):
         board = Scoreboard(scores=[score_data], scores_dir=str(scores_dir))
 
         # Mock file_lock to raise TimeoutError
-        from amlb.utils import process
-
-        original_file_lock = process.file_lock
-
         def mock_file_lock(*args, **kwargs):
             raise TimeoutError("Lock timeout")
 
