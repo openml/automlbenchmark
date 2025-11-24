@@ -1,12 +1,12 @@
 import logging
 import sys
-import types
 
 import subprocess
 
 log = logging.getLogger(__name__)
 
 __no_export = set(dir())  # all variables defined above this are not exported
+
 
 def pip_install(module_or_requirements, is_requirements=False):
     try:

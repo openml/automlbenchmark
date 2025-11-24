@@ -110,7 +110,9 @@ class ContainerBenchmark(Benchmark):
                         if hasattr(task_def, "openml_task_id"):
                             openml.tasks.delete_task_cache(task_def.openml_task_id)
                         elif hasattr(task_def, "openml_dataset_id"):
-                            openml.datasets.delete_dataset_cache(task_def.openml_dataset_id)
+                            openml.datasets.delete_dataset_cache(
+                                task_def.openml_dataset_id
+                            )
                     except Exception as e:
                         log.warning(f"Failed to clean up OpenML cache: {e}")
 
