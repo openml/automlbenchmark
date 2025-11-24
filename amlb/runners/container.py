@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 import logging
+import os
 import re
 from typing import cast
 
@@ -17,6 +18,7 @@ from ..errors import InvalidStateError
 from ..frameworks.definitions import Framework
 from ..job import Job
 from ..resources import config as rconfig, get as rget
+from ..utils import run_cmd
 from ..__version__ import __version__, _dev_version as dev
 
 
@@ -78,6 +80,7 @@ class ContainerBenchmark(Benchmark):
             self.parallel_jobs = max_parallel_jobs
 
     def setup(self, mode, upload=False):
+        self.setup_mode = mode
         if mode == SetupMode.skip:
             return
 
@@ -92,12 +95,29 @@ class ContainerBenchmark(Benchmark):
             self._upload_image(self.image)
 
     def cleanup(self):
-        pass
+        if hasattr(self, "setup_mode") and self.setup_mode == SetupMode.clean:
+            if self.image:
+                log.info(f"Cleaning up docker image {self.image}.")
+                run_cmd(f"docker rmi -f {self.image}")
+            if hasattr(self, "_script") and os.path.exists(self._script):
+                log.info("Cleaning up generated script")
+                os.remove(self._script)
+            if hasattr(self, "task_defs"):
+                import openml
+
+                for task_def in self.task_defs:
+                    try:
+                        if hasattr(task_def, "openml_task_id"):
+                            openml.tasks.delete_task_cache(task_def.openml_task_id)
+                        elif hasattr(task_def, "openml_dataset_id"):
+                            openml.datasets.delete_dataset_cache(task_def.openml_dataset_id)
+                    except Exception as e:
+                        log.warning(f"Failed to clean up OpenML cache: {e}")
 
     def run(
         self, tasks: str | list[str] | None = None, folds: int | list[int] | None = None
     ):
-        self._get_task_defs(tasks)  # validates tasks
+        self.task_defs = self._get_task_defs(tasks)  # validates tasks
         if self.parallel_jobs > 1 or not self.minimize_instances:
             return super().run(tasks, folds)
         else:

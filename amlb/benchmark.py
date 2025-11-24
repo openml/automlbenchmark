@@ -65,6 +65,7 @@ class SetupMode(Enum):
     force = 2
     only = 3
     script = 4
+    clean = 5
 
 
 class Benchmark:

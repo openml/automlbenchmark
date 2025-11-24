@@ -12,7 +12,7 @@ import os
 import random
 import re
 import sys
-from functools import cache, cached_property
+from functools import lru_cache, cached_property
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
@@ -171,7 +171,7 @@ class Resources:
         frameworks_file = self.config.frameworks.definition_file
         return load_framework_definitions(frameworks_file, self.config)
 
-    @cache
+    @lru_cache(maxsize=None)
     def constraint_definition(self, name: str) -> TaskConstraint:
         """
         :param name: name of the benchmark constraint definition as defined in the constraints file

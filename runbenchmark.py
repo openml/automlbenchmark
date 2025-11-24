@@ -127,7 +127,7 @@ parser.add_argument(
 parser.add_argument(
     "-s",
     "--setup",
-    choices=["auto", "skip", "force", "only"],
+    choices=["auto", "skip", "force", "only", "clean"],
     default="auto",
     help="Framework/platform setup mode. Available values are:"
     "\n• auto: setup is executed only if strictly necessary."
