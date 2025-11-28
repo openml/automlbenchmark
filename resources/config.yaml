@@ -102,6 +102,9 @@ inference_time_measurements:  # configuration namespace for performing additiona
 openml:                # configuration namespace for openML.
   apikey: c1994bdb7ecb3c6f3c8f3b35f4b47f1f
   infer_dtypes: False
+  default_data_format: parquet   # default file format for data splits: one of 'parquet', 'arff', 'csv'.
+                                 # 'parquet' is recommended for better performance and smaller file sizes.
+                                 # 'arff' is kept for backward compatibility with legacy frameworks.
 
 versions:              # configuration namespace for versions enforcement (libraries versions are usually enforced in requirements.txt for the app and for each framework).
   pip:

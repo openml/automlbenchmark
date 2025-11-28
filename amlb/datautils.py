@@ -122,13 +122,18 @@ def write_csv(  # type: ignore[no-untyped-def]
 def reorder_dataset(
     path: str, target_src: int = 0, target_dest: int = -1, save: bool = True
 ) -> str | np.ndarray:
-    """Put the `target_src`th column as the `target_dest`th column"""
+    """Put the `target_src`th column as the `target_dest`th column.
+
+    Supports multiple file formats: arff, csv, and parquet.
+    The output format matches the input format.
+    """
     if (
         target_src == target_dest and save
     ):  # no reordering needed, not data to load, returning original path
         return path
 
     p = split_path(path)
+    file_ext = p.extension.lower()
     p.basename += "_target_" + (
         "first"
         if target_dest == 0
@@ -143,29 +148,54 @@ def reorder_dataset(
             return reordered_path
         path = reordered_path
 
+    # Load data based on file format
+    if file_ext == ".arff":
+        return _reorder_arff(path, reordered_path, target_src, target_dest, save)
+    elif file_ext == ".parquet":
+        return _reorder_parquet(path, reordered_path, target_src, target_dest, save)
+    elif file_ext == ".csv":
+        return _reorder_csv(path, reordered_path, target_src, target_dest, save)
+    else:
+        raise ValueError(
+            f"Unsupported file format '{file_ext}' for reorder_dataset. "
+            "Supported formats: .arff, .parquet, .csv"
+        )
+
+
+def _reorder_columns(
+    columns: list, target_src: int, target_dest: int
+) -> list | None:
+    """Calculate the new column order. Returns None if no reordering needed."""
+    n_cols = len(columns)
+    src = n_cols + 1 + target_src if target_src < 0 else target_src
+    dest = n_cols + 1 + target_dest if target_dest < 0 else target_dest
+
+    if src == dest:
+        return None
+
+    ori = list(range(n_cols))
+    if src < dest:
+        return ori[:src] + ori[src + 1 : dest] + [src] + ori[dest:]
+    else:
+        return ori[:dest] + [src] + ori[dest:src] + ori[src + 1 :]
+
+
+def _reorder_arff(
+    path: str, reordered_path: str, target_src: int, target_dest: int, save: bool
+) -> str | np.ndarray:
+    """Reorder columns in an ARFF file."""
     with open(path) as file:
         df = arff.load(file)
 
     columns = np.asarray(df["attributes"], dtype=object)
     data = np.asarray(df["data"], dtype=object)
 
-    if (
-        target_src == target_dest or path == reordered_path
-    ):  # no reordering needed, returning loaded data
-        return data
-
-    ori = list(range(len(columns)))
-    src = len(columns) + 1 + target_src if target_src < 0 else target_src
-    dest = len(columns) + 1 + target_dest if target_dest < 0 else target_dest
-    if src < dest:
-        new = ori[:src] + ori[src + 1 : dest] + [src] + ori[dest:]
-    elif src > dest:
-        new = ori[:dest] + [src] + ori[dest:src] + ori[src + 1 :]
-    else:  # no reordering needed, returning loaded data or original path
+    new_order = _reorder_columns(list(columns), target_src, target_dest)
+    if new_order is None or path == reordered_path:
         return data if not save else path
 
-    reordered_attr = columns[new]
-    reordered_data = data[:, new]
+    reordered_attr = columns[new_order]
+    reordered_data = data[:, new_order]
 
     if not save:
         return reordered_data
@@ -180,6 +210,48 @@ def reorder_dataset(
             },
             file,
         )
+    return reordered_path
+
+
+def _reorder_parquet(
+    path: str, reordered_path: str, target_src: int, target_dest: int, save: bool
+) -> str | np.ndarray:
+    """Reorder columns in a Parquet file."""
+    df = pd.read_parquet(path)
+    columns = list(df.columns)
+
+    new_order = _reorder_columns(columns, target_src, target_dest)
+    if new_order is None or path == reordered_path:
+        return df.values if not save else path
+
+    reordered_columns = [columns[i] for i in new_order]
+    reordered_df = df[reordered_columns]
+
+    if not save:
+        return reordered_df.values
+
+    reordered_df.to_parquet(reordered_path)
+    return reordered_path
+
+
+def _reorder_csv(
+    path: str, reordered_path: str, target_src: int, target_dest: int, save: bool
+) -> str | np.ndarray:
+    """Reorder columns in a CSV file."""
+    df = pd.read_csv(path)
+    columns = list(df.columns)
+
+    new_order = _reorder_columns(columns, target_src, target_dest)
+    if new_order is None or path == reordered_path:
+        return df.values if not save else path
+
+    reordered_columns = [columns[i] for i in new_order]
+    reordered_df = df[reordered_columns]
+
+    if not save:
+        return reordered_df.values
+
+    reordered_df.to_csv(reordered_path, index=False)
     return reordered_path
 
 
