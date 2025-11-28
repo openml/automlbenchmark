@@ -136,10 +136,20 @@ def _assert_target(target, name, values=None):
 
 
 def _assert_data_paths(dataset, ds_id, fold):
+    # Default format is determined by config (default: parquet)
+    # The .path property returns data_path(self.format)
+    default_format = dataset.train.format
     assert dataset.train.path.endswith(
-        os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.arff")
+        os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.{default_format}")
     )
     assert dataset.test.path.endswith(
+        os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.{default_format}")
+    )
+    # Verify all supported formats can be requested explicitly
+    assert dataset.train.data_path("arff").endswith(
+        os.path.join("datasets", str(ds_id), f"dataset_train_{fold}.arff")
+    )
+    assert dataset.test.data_path("arff").endswith(
         os.path.join("datasets", str(ds_id), f"dataset_test_{fold}.arff")
     )
     assert dataset.train.data_path("csv").endswith(

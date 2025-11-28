@@ -337,7 +337,16 @@ class OpenmlDataset(Dataset):
 
 class OpenmlDatasplit(Datasplit):
     def __init__(self, dataset: OpenmlDataset):
-        super().__init__(dataset, "arff")
+        default_format = getattr(rconfig().openml, "default_data_format", "parquet")
+        if default_format not in __supported_file_formats__:
+            log.warning(
+                "Invalid default_data_format '%s', falling back to 'parquet'. "
+                "Supported formats: %s",
+                default_format,
+                __supported_file_formats__,
+            )
+            default_format = "parquet"
+        super().__init__(dataset, default_format)
         self._data: dict[str, AM | DF | str] = {}
 
     def data_path(self, format):
