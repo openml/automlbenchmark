@@ -162,9 +162,7 @@ def reorder_dataset(
         )
 
 
-def _reorder_columns(
-    columns: list, target_src: int, target_dest: int
-) -> list | None:
+def _reorder_columns(columns: list, target_src: int, target_dest: int) -> list | None:
     """Calculate the new column order. Returns None if no reordering needed."""
     n_cols = len(columns)
     src = n_cols + 1 + target_src if target_src < 0 else target_src
