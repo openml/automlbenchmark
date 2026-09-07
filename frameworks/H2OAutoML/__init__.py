@@ -37,7 +37,7 @@ def docker_commands(*args, setup_cmd=None):
 {cmd}
 EXPOSE 54321
 EXPOSE 54322
-""".format(cmd="RUN {}".format(setup_cmd) if setup_cmd is not None else "")
+""".format(cmd=f"RUN {setup_cmd}" if setup_cmd is not None else "")
 
 
 # There is no network isolation in Singularity,
@@ -47,4 +47,4 @@ EXPOSE 54322
 def singularity_commands(*args, setup_cmd=None):
     return """
 {cmd}
-""".format(cmd="{}".format(setup_cmd) if setup_cmd is not None else "")
+""".format(cmd=f"{setup_cmd}" if setup_cmd is not None else "")

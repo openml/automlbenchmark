@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from amlb.resources import from_configs
 from amlb.data import DatasetType
 from amlb.datasets.openml import OpenmlLoader
+from amlb.resources import from_configs
 from amlb.utils import Namespace as ns
 
 

@@ -1,8 +1,9 @@
+from collections.abc import Iterable
+from pathlib import Path
 from string import Template
+from typing import NamedTuple
 
 import tomllib
-from pathlib import Path
-from typing import NamedTuple, Iterable
 
 
 class NavigationItem(NamedTuple):

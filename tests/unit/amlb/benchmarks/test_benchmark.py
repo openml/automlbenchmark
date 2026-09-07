@@ -3,7 +3,7 @@ from subprocess import SubprocessError
 
 import pytest
 
-from amlb import Benchmark, SetupMode, resources, DockerBenchmark, SingularityBenchmark
+from amlb import Benchmark, DockerBenchmark, SetupMode, SingularityBenchmark, resources
 from amlb.job import JobError
 from amlb.utils import Namespace
 

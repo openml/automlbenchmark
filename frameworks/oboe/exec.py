@@ -2,12 +2,10 @@ import logging
 import os
 import sys
 
-from sklearn.model_selection import StratifiedKFold
 import numpy as np
+from sklearn.model_selection import StratifiedKFold
 
-sys.path.append(
-    "{}/lib/oboe/automl".format(os.path.realpath(os.path.dirname(__file__)))
-)
+sys.path.append(f"{os.path.realpath(os.path.dirname(__file__))}/lib/oboe/automl")
 from oboe import AutoLearner
 
 from frameworks.shared.callee import call_run, result
@@ -46,7 +44,7 @@ def kfold_fit_validate(self, x_train, y_train, n_folds, random_state=None):
     self.cv_predictions = y_predicted
     self.sampled = True
     if self.verbose:
-        print("{} {} complete.".format(self.algorithm, self.hyperparameters))
+        print(f"{self.algorithm} {self.hyperparameters} complete.")
     return cv_errors, y_predicted
 
 
@@ -71,14 +69,10 @@ def run(dataset, config):
     n_cores = config.framework_params.get("_n_cores", config.cores)
 
     log.info(
-        "Running oboe with a maximum time of {}s on {} cores.".format(
-            config.max_runtime_seconds, n_cores
-        )
+        f"Running oboe with a maximum time of {config.max_runtime_seconds}s on {n_cores} cores."
     )
     log.warning(
-        "We completely ignore the advice to optimize towards metric: {}.".format(
-            config.metric
-        )
+        f"We completely ignore the advice to optimize towards metric: {config.metric}."
     )
 
     aml = AutoLearner(

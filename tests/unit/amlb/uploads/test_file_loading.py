@@ -1,16 +1,16 @@
-from collections import OrderedDict
 import pathlib
+from collections import OrderedDict
 
 import openml
 import pandas as pd
 import pytest
 
 from amlb.uploads import (
-    _load_predictions,
-    _load_fold,
-    _get_flow,
-    _load_task_data,
     _extract_and_format_hyperparameter_configuration,
+    _get_flow,
+    _load_fold,
+    _load_predictions,
+    _load_task_data,
     _upload_results,
 )
 

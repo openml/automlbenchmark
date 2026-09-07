@@ -3,8 +3,8 @@ import pytest
 
 from amlb.benchmarks.openml import (
     is_openml_benchmark,
-    load_openml_task_as_definition,
     load_oml_benchmark,
+    load_openml_task_as_definition,
 )
 from amlb.utils import Namespace
 

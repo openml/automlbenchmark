@@ -1,13 +1,13 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: check-added-large-files
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.5
+  rev: v0.16.6
   hooks:
     - id: ruff
       args: [ --fix ]
@@ -16,7 +16,7 @@ repos:
       types_or: ["python"]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.15.0'
+    rev: 'v2.3.1'
     hooks:
     -   id: mypy
         additional_dependencies: ["types-tabulate", "types-requests"]

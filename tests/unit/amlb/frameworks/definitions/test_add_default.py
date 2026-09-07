@@ -1,12 +1,13 @@
 import pytest
+
 from amlb.frameworks.definitions import (
-    _add_default_module,
-    _add_default_version,
-    _add_default_setup_args,
-    _add_default_setup_script,
-    _add_default_setup_cmd,
-    _add_default_params,
     _add_default_image,
+    _add_default_module,
+    _add_default_params,
+    _add_default_setup_args,
+    _add_default_setup_cmd,
+    _add_default_setup_script,
+    _add_default_version,
 )
 from amlb.utils import Namespace
 
