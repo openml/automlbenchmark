@@ -1,6 +1,6 @@
+import logging
 import os
 import shutil
-import logging
 from typing import Union
 
 import matplotlib
@@ -13,9 +13,9 @@ from supervised.automl import AutoML
 
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer
 

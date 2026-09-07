@@ -11,11 +11,11 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 from hpsklearn import HyperoptEstimator, any_classifier, any_regressor
 from sklearn.metrics import (
-    roc_auc_score,
     f1_score,
     mean_absolute_error,
     mean_squared_error,
     mean_squared_log_error,
+    roc_auc_score,
 )
 
 from frameworks.shared.callee import call_run, result
@@ -34,8 +34,8 @@ def run(dataset, config):
 
     metrics_to_loss_mapping = dict(
         acc=(default, False),  # lambda y, pred: 1.0 - accuracy_score(y, pred)
-        auc=(lambda y, pred: 1.0 - roc_auc_score(y, pred), False),  # noqa: E731
-        f1=(lambda y, pred: 1.0 - f1_score(y, pred), False),  # noqa: E731
+        auc=(lambda y, pred: 1.0 - roc_auc_score(y, pred), False),
+        f1=(lambda y, pred: 1.0 - f1_score(y, pred), False),
         # logloss=(log_loss, True),
         mae=(mean_absolute_error, False),
         mse=(mean_squared_error, False),

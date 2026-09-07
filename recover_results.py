@@ -1,13 +1,12 @@
 import argparse
 import os
 
+import amlb
+
 # prevent asap other modules from defining the root logger using basicConfig
 import amlb.logger
-
-
-import amlb
-from amlb.utils import Namespace as ns, config_load
-
+from amlb.utils import Namespace as ns
+from amlb.utils import config_load
 
 parser = argparse.ArgumentParser()
 parser.add_argument("instances", type=str, help="The path to an instances.csv file.")
