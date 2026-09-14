@@ -3,13 +3,14 @@ import os
 
 import numpy as np
 import pandas as pd
-import pytest
 import pandas.api.types as pat
+import pytest
 
-from amlb.resources import from_configs
 from amlb.data import DatasetType
 from amlb.datasets.file import FileLoader
-from amlb.utils import Namespace as ns, path_from_split, split_path
+from amlb.resources import from_configs
+from amlb.utils import Namespace as ns
+from amlb.utils import path_from_split, split_path
 
 here = os.path.realpath(os.path.dirname(__file__))
 res = os.path.join(here, "resources")
