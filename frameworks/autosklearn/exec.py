@@ -15,16 +15,16 @@ os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 import autosklearn
+from autosklearn import metrics
 from autosklearn.estimators import AutoSklearnClassifier, AutoSklearnRegressor
 from autosklearn.experimental.askl2 import AutoSklearn2Classifier
-import autosklearn.metrics as metrics
 from packaging import version
 
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer, system_memory_mb, walk_apply, zip_path
 

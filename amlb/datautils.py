@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Iterable, Type, Literal, Any, Callable, Tuple, cast, Union
+from collections.abc import Iterable
+from typing import Any, Callable, Literal, Tuple, Type, Union, cast
 
 try:
     from typing_extensions import TypeAlias
@@ -41,14 +42,13 @@ from sklearn.metrics import (  # noqa: F401  # just aliasing
     roc_auc_score,
 )
 from sklearn.preprocessing import (
-    LabelEncoder,
     LabelBinarizer,
+    LabelEncoder,
     OneHotEncoder,
     OrdinalEncoder,
 )
 
-from .utils import profile, path_from_split, repr_def, split_path, touch
-
+from .utils import path_from_split, profile, repr_def, split_path, touch
 
 log = logging.getLogger(__name__)
 
@@ -281,7 +281,7 @@ class Encoder(TransformerMixin):
     def _reshape(self, vec: np.ndarray) -> np.ndarray:
         return vec if self.for_target else vec.reshape(-1, 1)
 
-    def fit(self, vector: Iterable[str] | None) -> "Encoder":
+    def fit(self, vector: Iterable[str] | None) -> Encoder:
         """
         :param vector: must be a line vector (array)
         :return:

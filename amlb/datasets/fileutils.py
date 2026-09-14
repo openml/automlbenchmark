@@ -2,12 +2,13 @@ import logging
 import os
 import shutil
 import tarfile
-import boto3
-from botocore.errorfactory import ClientError
+import zipfile
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
-import zipfile
+
+import boto3
+from botocore.errorfactory import ClientError
 
 from ..utils import touch
 

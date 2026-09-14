@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from amlb import Resources, resources
 from amlb.defaults import default_dirs
 from amlb.utils import Namespace, config_load

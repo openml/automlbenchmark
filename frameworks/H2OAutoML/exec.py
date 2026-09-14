@@ -2,30 +2,30 @@ import contextlib
 import logging
 import os
 import pathlib
-
-import psutil
 import re
 
-from packaging import version
-import pandas as pd
-
 import h2o
+import pandas as pd
+import psutil
 from h2o.automl import H2OAutoML
+from packaging import version
 
 from frameworks.shared.callee import (
     FrameworkError,
     call_run,
+    measure_inference_times,
     output_subdir,
     result,
-    measure_inference_times,
 )
 from frameworks.shared.utils import (
     Monitoring,
-    Namespace as ns,
     Timer,
     clean_dir,
     touch,
     zip_path,
+)
+from frameworks.shared.utils import (
+    Namespace as ns,
 )
 
 log = logging.getLogger(__name__)
@@ -166,9 +166,8 @@ def run(dataset, config):
             else contextlib.nullcontext()  # Py 3.7+ only
             # else contextlib.contextmanager(lambda: (_ for _ in (0,)))()
         )
-        with Timer() as training:
-            with monitor:
-                aml.train(y=dataset.target.index, training_frame=train)
+        with Timer() as training, monitor:
+            aml.train(y=dataset.target.index, training_frame=train)
         log.info(f"Finished fit in {training.duration}s.")
 
         if not aml.leader:
@@ -283,8 +282,10 @@ def save_artifacts(automl, dataset, config):
                 models_artifacts.append(models_archive)
                 clean_dir(
                     models_dir,
-                    filter_=lambda p: p not in models_artifacts
-                    and os.path.splitext(p)[1] in [".json", ".zip", ""],
+                    filter_=lambda p: (
+                        p not in models_artifacts
+                        and os.path.splitext(p)[1] in [".json", ".zip", ""]
+                    ),
                 )
 
         if "model_predictions" in artifacts:
