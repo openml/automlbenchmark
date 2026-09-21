@@ -7,18 +7,19 @@ providing the same parameters and features allowing to import config and export 
 
 from __future__ import annotations
 
-from abc import abstractmethod
 import logging
 import re
+from abc import abstractmethod
 from typing import cast
 
+from ..__version__ import __version__
+from ..__version__ import _dev_version as dev
 from ..benchmark import Benchmark, SetupMode
 from ..errors import InvalidStateError
 from ..frameworks.definitions import Framework
 from ..job import Job
-from ..resources import config as rconfig, get as rget
-from ..__version__ import __version__, _dev_version as dev
-
+from ..resources import config as rconfig
+from ..resources import get as rget
 
 log = logging.getLogger(__name__)
 
@@ -192,9 +193,7 @@ Do you still want to build the container image? (y/[n]) """).lower()
                 if force == "n":
                     raise InvalidStateError(
                         "The image can't be built as the current branch is not clean or up-to-date. "
-                        "Please switch to the expected `{}` branch, and ensure that it is clean before building the container image.".format(
-                            rget().project_info.branch
-                        )
+                        f"Please switch to the expected `{rget().project_info.branch}` branch, and ensure that it is clean before building the container image."
                     )
                 create_dev_image = True
 
@@ -210,10 +209,8 @@ Do you still want to build the container image? (y/[n]) """).lower()
                     )
                 if force == "n":
                     raise InvalidStateError(
-                        "The image can't be built as current branch is not tagged as required `{}`. "
-                        "Please switch to the expected tagged branch before building the container image.".format(
-                            expected_branch
-                        )
+                        f"The image can't be built as current branch is not tagged as required `{expected_branch}`. "
+                        "Please switch to the expected tagged branch before building the container image."
                     )
                 create_dev_image = True
             if create_dev_image and not image:

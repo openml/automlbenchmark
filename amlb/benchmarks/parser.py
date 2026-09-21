@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from .openml import is_openml_benchmark, load_oml_benchmark
+from amlb.utils import Namespace, str_sanitize
+
 from .file import load_file_benchmark
-from amlb.utils import str_sanitize, Namespace
+from .openml import is_openml_benchmark, load_oml_benchmark
 
 
 def benchmark_load(

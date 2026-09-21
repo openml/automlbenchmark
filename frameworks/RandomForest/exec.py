@@ -14,7 +14,7 @@ import psutil
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from frameworks.shared.callee import call_run, result, measure_inference_times
+from frameworks.shared.callee import call_run, measure_inference_times, result
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(os.path.basename(__file__))
@@ -54,14 +54,10 @@ def run(dataset, config):
     memory_margin = config.framework_params.get("_memory_margin", 0.9)
 
     log.info(
-        "Running RandomForest with a maximum time of {}s on {} cores.".format(
-            config.max_runtime_seconds, n_jobs
-        )
+        f"Running RandomForest with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores."
     )
     log.warning(
-        "We completely ignore the advice to optimize towards metric: {}.".format(
-            config.metric
-        )
+        f"We completely ignore the advice to optimize towards metric: {config.metric}."
     )
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor

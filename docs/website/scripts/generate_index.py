@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from string import Template
+from typing import NamedTuple
 
 import tomllib
-from typing import NamedTuple, Sequence, Iterable
-
 from generate_navigation import generate_navigation
 
 
