@@ -195,8 +195,10 @@ def zip_path(
             walk_apply(
                 path,
                 add_to_archive,
-                filter_=lambda p: (filter_ is None or filter_(p))
-                and not os.path.samefile(dest_archive, p),
+                filter_=lambda p: (
+                    (filter_ is None or filter_(p))
+                    and not os.path.samefile(dest_archive, p)
+                ),
             )
 
 
