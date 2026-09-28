@@ -1,15 +1,15 @@
-from ast import literal_eval
 import base64
-from collections import defaultdict
-from collections.abc import Iterable, Sized
-from copy import deepcopy
-from functools import reduce
 import hashlib
 import json
 import logging
 import pprint
 import re
 import threading
+from ast import literal_eval
+from collections import defaultdict
+from collections.abc import Iterable, Sized
+from copy import deepcopy
+from functools import reduce
 
 log = logging.getLogger(__name__)
 
@@ -240,9 +240,7 @@ def _classname(obj):
 
 
 def repr_def(obj, attributes="public"):
-    return "{cls}({attrs!r})".format(
-        cls=_classname(obj), attrs=_attributes(obj, attributes)
-    )
+    return f"{_classname(obj)}({_attributes(obj, attributes)!r})"
 
 
 def noop(*args, **kwargs):
@@ -300,13 +298,15 @@ def as_list(*args):
 def flatten(iterable, flatten_tuple=False, flatten_dict=False):
     return reduce(
         lambda left, right: (
-            left.extend(right)
-            if isinstance(right, (list, tuple) if flatten_tuple else list)
-            else left.extend(right.items())
-            if flatten_dict and isinstance(right, dict)
-            else left.append(right)
-        )
-        or left,
+            (
+                left.extend(right)
+                if isinstance(right, (list, tuple) if flatten_tuple else list)
+                else left.extend(right.items())
+                if flatten_dict and isinstance(right, dict)
+                else left.append(right)
+            )
+            or left
+        ),
         iterable,
         [],
     )

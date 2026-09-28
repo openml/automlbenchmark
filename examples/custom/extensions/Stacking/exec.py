@@ -8,9 +8,14 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
 import sklearn
-from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.ensemble import StackingClassifier, StackingRegressor
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+    StackingClassifier,
+    StackingRegressor,
+)
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -45,15 +50,11 @@ def run(dataset, config):
     }
 
     log.info(
-        "Running Sklearn Stacking Ensemble with a maximum time of {}s on {} cores.".format(
-            config.max_runtime_seconds, n_jobs
-        )
+        f"Running Sklearn Stacking Ensemble with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores."
     )
     log.warning("We completely ignore the requirement to stay within the time limit.")
     log.warning(
-        "We completely ignore the advice to optimize towards metric: {}.".format(
-            config.metric
-        )
+        f"We completely ignore the advice to optimize towards metric: {config.metric}."
     )
 
     if is_classification:

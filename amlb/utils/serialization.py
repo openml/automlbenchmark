@@ -5,7 +5,8 @@ import pickle
 import re
 from typing import Optional
 
-from .core import Namespace as ns, json_dump, json_load
+from .core import Namespace as ns
+from .core import json_dump, json_load
 from .process import profile
 
 log = logging.getLogger(__name__)
