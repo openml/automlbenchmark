@@ -17,21 +17,21 @@ os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
+from naiveautoml import NaiveAutoML
+
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer
-
-from naiveautoml import NaiveAutoML
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    pip_list = subprocess.run("python -m pip list".split(), capture_output=True)
+    pip_list = subprocess.run(["python", "-m", "pip", "list"], capture_output=True)
     match = re.search(
         r"naiveautoml\s+([^\n]+)", pip_list.stdout.decode(), flags=re.IGNORECASE
     )

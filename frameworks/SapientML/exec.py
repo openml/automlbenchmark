@@ -2,10 +2,11 @@ import logging
 import os
 import tempfile as tmp
 
-from frameworks.shared.callee import call_run, result
-from frameworks.shared.utils import Timer
 from sapientml import SapientML
 from sklearn.preprocessing import OneHotEncoder
+
+from frameworks.shared.callee import call_run, result
+from frameworks.shared.utils import Timer
 
 os.environ["JOBLIB_TEMP_FOLDER"] = tmp.gettempdir()
 os.environ["OMP_NUM_THREADS"] = "1"
