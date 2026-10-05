@@ -1,8 +1,8 @@
 import logging
 import os
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
-from amlb.utils import config_load, Namespace
+from amlb.utils import Namespace, config_load
 
 log = logging.getLogger(__name__)
 

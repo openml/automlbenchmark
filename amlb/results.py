@@ -8,19 +8,18 @@ from __future__ import annotations
 import collections
 import io
 import logging
-from functools import cache
-
 import math
 import os
 import re
 import statistics
-from typing import Union, Any
+from functools import cache
+from typing import Any, Union
 
 import numpy as np
-from numpy import nan, sort
 import pandas as pd
 import scipy as sci
 import scipy.sparse
+from numpy import nan, sort
 from typing_extensions import TypeAlias
 
 from .data import Dataset, DatasetType, Feature
@@ -30,18 +29,20 @@ from .datautils import (
     balanced_accuracy_score,
     confusion_matrix,
     fbeta_score,
+    is_data_frame,
     log_loss,
     mean_absolute_error,
     mean_squared_error,
     mean_squared_log_error,
     r2_score,
-    roc_auc_score,
     read_csv,
-    write_csv,
-    is_data_frame,
+    roc_auc_score,
     to_data_frame,
+    write_csv,
 )
-from .resources import get as rget, config as rconfig, output_dirs
+from .resources import config as rconfig
+from .resources import get as rget
+from .resources import output_dirs
 from .utils import (
     Namespace,
     backup_file,
@@ -540,9 +541,7 @@ class TaskResult:
                 )
             predictions_set = set(preds.unique())
             assert predictions_set <= predictors_set, (
-                "Predictions column contains unexpected values: {}.".format(
-                    predictions_set - predictors_set
-                )
+                f"Predictions column contains unexpected values: {predictions_set - predictors_set}."
             )
             assert predictions.apply(validate_row, axis=1).all(), (
                 "Predictions don't always match the predictor with the highest probability."
@@ -716,7 +715,7 @@ class Result:
                 eval_res.value = metric_fn()
             except Exception as e:
                 log.exception("Failed to compute metric %s: ", metric, e)
-                eval_res += Namespace(value=nan, message=f"Scoring {metric}: {str(e)}")
+                eval_res += Namespace(value=nan, message=f"Scoring {metric}: {e!s}")
         else:
             pb_type = self.type.name if self.type is not None else "unknown"
             # raise ValueError(f"Metric {metric} is not supported for {pb_type}.")

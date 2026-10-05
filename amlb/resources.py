@@ -16,6 +16,9 @@ from functools import cache, cached_property
 
 from amlb.benchmarks.parser import benchmark_load
 from amlb.frameworks import default_tag, load_framework_definitions
+
+from .__version__ import __version__
+from .__version__ import _dev_version as dev
 from .frameworks.definitions import TaskConstraint
 from .utils import (
     Namespace,
@@ -25,8 +28,6 @@ from .utils import (
     touch,
 )
 from .utils.config import TransformRule, config_load, transform_config
-from .__version__ import __version__, _dev_version as dev
-
 
 log = logging.getLogger(__name__)
 
@@ -138,9 +139,7 @@ class Resources:
             tag = default_tag
         if tag not in self._frameworks:
             raise ValueError(
-                "Incorrect tag `{}`: only those among {} are allowed.".format(
-                    tag, self.config.frameworks.tags
-                )
+                f"Incorrect tag `{tag}`: only those among {self.config.frameworks.tags} are allowed."
             )
         frameworks = self._frameworks[tag]
         log.debug("Available framework definitions:\n%s", frameworks)
@@ -180,9 +179,7 @@ class Resources:
         constraint = self._constraints[name.lower()]
         if not constraint:
             raise ValueError(
-                "Incorrect constraint definition `{}`: not listed in {}.".format(
-                    name, self.config.benchmarks.constraints_file
-                )
+                f"Incorrect constraint definition `{name}`: not listed in {self.config.benchmarks.constraints_file}."
             )
         return TaskConstraint(**Namespace.dict(constraint))
 
@@ -243,9 +240,7 @@ class Resources:
                 missing.append(conf)
         if not lenient and len(missing) > 0:
             raise ValueError(
-                "{missing} mandatory properties as missing in task definition {taskdef}.".format(
-                    missing=missing, taskdef=task
-                )
+                f"{missing} mandatory properties as missing in task definition {task}."
             )
 
         for conf in [
@@ -259,9 +254,7 @@ class Resources:
             if task[conf] is None:
                 task[conf] = config_.benchmarks.defaults[conf]
                 log.debug(
-                    "Config `{config}` not set for task {name}, using default `{value}`.".format(
-                        config=conf, name=task.name, value=task[conf]
-                    )
+                    f"Config `{conf}` not set for task {task.name}, using default `{task[conf]}`."
                 )
 
         if task["metric"] is None:
@@ -270,9 +263,9 @@ class Resources:
         conf = "id"
         if task[conf] is None:
             task[conf] = (
-                "openml.org/t/{}".format(task.openml_task_id)
+                f"openml.org/t/{task.openml_task_id}"
                 if task["openml_task_id"] is not None
-                else "openml.org/d/{}".format(task.openml_dataset_id)
+                else f"openml.org/d/{task.openml_dataset_id}"
                 if task["openml_dataset_id"] is not None
                 else (
                     (
@@ -291,7 +284,7 @@ class Resources:
                 raise ValueError(
                     "task definition must contain an ID or one property "
                     "among ['openml_task_id', 'dataset'] to create an ID, "
-                    "but task definition is {task}".format(task=str(task))
+                    f"but task definition is {task!s}"
                 )
 
         conf = "ec2_instance_type"
@@ -311,18 +304,14 @@ class Resources:
                 i_size = i_map.default
             task[conf] = ".".join([i_series, i_size])
             log.debug(
-                "Config `{config}` not set for task {name}, using default selection `{value}`.".format(
-                    config=conf, name=task.name, value=task[conf]
-                )
+                f"Config `{conf}` not set for task {task.name}, using default selection `{task[conf]}`."
             )
 
         conf = "ec2_volume_type"
         if task[conf] is None:
             task[conf] = config_.aws.ec2.volume_type
             log.debug(
-                "Config `{config}` not set for task {name}, using default `{value}`.".format(
-                    config=conf, name=task.name, value=task[conf]
-                )
+                f"Config `{conf}` not set for task {task.name}, using default `{task[conf]}`."
             )
 
 
