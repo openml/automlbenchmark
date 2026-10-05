@@ -1,6 +1,6 @@
 # import standard_lib
-import logging
 import json
+import logging
 import os
 import shutil
 import tempfile
@@ -12,7 +12,7 @@ import pandas as pd
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.results import NoResultError, save_predictions
-from amlb.utils import clean_dir, run_cmd, zip_path, Timer
+from amlb.utils import Timer, clean_dir, run_cmd, zip_path
 from frameworks.shared.callee import output_subdir
 
 log = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def run(dataset: Dataset, config: TaskConfig):
             run_cmd(cmd)
         log.info(f"Finished fit in {training.duration}s.")
 
-        train_result_json = os.path.join(output_dir, "{}.mbconfig".format(config.fold))
+        train_result_json = os.path.join(output_dir, f"{config.fold}.mbconfig")
         if not os.path.exists(train_result_json):
             raise NoResultError("MLNet failed producing any prediction.")
 

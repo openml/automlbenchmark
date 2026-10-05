@@ -1,20 +1,18 @@
 import glob
+import json
 import logging
 import os
-import json
 import re
 import tempfile
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, output_subdir, result
 from frameworks.shared.utils import Timer, run_cmd
 
 log = logging.getLogger(__name__)
 
 
 def run(dataset, config):
-    jar_file = glob.glob(
-        "{here}/lib/mlplan/mlplan-cli*.jar".format(here=os.path.dirname(__file__))
-    )[0]
+    jar_file = glob.glob(f"{os.path.dirname(__file__)}/lib/mlplan/mlplan-cli*.jar")[0]
     version = re.match(r".*/mlplan-cli-(.*).jar", jar_file)[1]
     log.info(f"\n**** ML-Plan [v{version}] ****\n")
 
@@ -37,9 +35,7 @@ def run(dataset, config):
         metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     )
     if metric is None:
-        raise ValueError(
-            "Performance metric {} is not supported.".format(config.metric)
-        )
+        raise ValueError(f"Performance metric {config.metric} is not supported.")
 
     train_file = dataset.train.path
     test_file = dataset.test.path
@@ -79,8 +75,8 @@ def run(dataset, config):
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         cmd_params = dict(
-            f='"{}"'.format(train_file),
-            p='"{}"'.format(test_file),
+            f=f'"{train_file}"',
+            p=f'"{test_file}"',
             t=config.max_runtime_seconds,
             ncpus=config.cores,
             l=metric,
@@ -92,9 +88,7 @@ def run(dataset, config):
             **training_params,
         )
 
-        cmd = cmd_root + "".join(
-            [" -{} {}".format(k, v) for k, v in cmd_params.items()]
-        )
+        cmd = cmd_root + "".join([f" -{k} {v}" for k, v in cmd_params.items()])
 
         with Timer() as training:
             run_cmd(cmd, _live_output_=True)

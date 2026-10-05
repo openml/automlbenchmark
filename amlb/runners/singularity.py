@@ -18,7 +18,6 @@ from ..resources import config as rconfig
 from ..utils import dir_of, run_cmd, touch
 from .container import ContainerBenchmark
 
-
 log = logging.getLogger(__name__)
 
 
@@ -76,17 +75,9 @@ class SingularityBenchmark(ContainerBenchmark):
             touch(d, as_dir=True)
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         cmd = (
-            "singularity run --pwd /bench {options} "
-            "-B '{input}':/input -B '{output}':/output -B '{custom}':/custom "
-            '{image} "{params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {extra_params}"'
-        ).format(
-            options=rconfig().singularity.run_extra_options,
-            input=in_dir,
-            output=self.output_dirs.session,
-            custom=custom_dir,
-            image=self.image,
-            params=script_params,
-            extra_params=script_extra_params,
+            f"singularity run --pwd /bench {rconfig().singularity.run_extra_options} "
+            f"-B '{in_dir}':/input -B '{self.output_dirs.session}':/output -B '{custom_dir}':/custom "
+            f'{self.image} "{script_params} -i /input -o /output -u /custom -s skip -Xrun_mode=singularity {script_extra_params}"'
         )
         log.info("Starting Singularity: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)
@@ -112,10 +103,7 @@ class SingularityBenchmark(ContainerBenchmark):
         try:
             # We pull from docker as there are not yet singularity org accounts
             run_cmd(
-                "singularity pull {output_file} docker://{image}".format(
-                    image=self._container_image_name(as_docker_image=True),
-                    output_file=image,
-                ),
+                f"singularity pull {image} docker://{self._container_image_name(as_docker_image=True)}",
                 _live_output_=True,
             )
             return True
@@ -123,11 +111,7 @@ class SingularityBenchmark(ContainerBenchmark):
             try:
                 # If no docker image, pull from singularity hub
                 run_cmd(
-                    "singularity pull {output_file} library://{library}/{image}".format(
-                        image=self._container_image_name(as_docker_image=True),
-                        output_file=image,
-                        library=rconfig().singularity.library,
-                    ),
+                    f"singularity pull {image} library://{rconfig().singularity.library}/{self._container_image_name(as_docker_image=True)}",
                     _live_output_=True,
                 )
                 return True

@@ -1,9 +1,9 @@
 import logging
 import os
 import shutil
-import warnings
 import sys
 import tempfile
+import warnings
 from typing import Union
 
 warnings.simplefilter("ignore")
@@ -16,16 +16,16 @@ import pandas as pd
 
 matplotlib.use("agg")  # no need for tk
 
-from autogluon.tabular import TabularPredictor, TabularDataset
-from autogluon.core.utils.savers import save_pd, save_pkl, save_json
-from autogluon.core.metrics import get_metric, Scorer
+from autogluon.core.metrics import Scorer, get_metric
+from autogluon.core.utils.savers import save_json, save_pd, save_pkl
+from autogluon.tabular import TabularDataset, TabularPredictor
 from autogluon.tabular.version import __version__
 
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer, zip_path
 

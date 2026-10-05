@@ -5,24 +5,26 @@ import re
 import shutil
 import sys
 
-# prevent asap other modules from defining the root logger using basicConfig
-import amlb.logger
-
 import openml
 
 import amlb
+
+# prevent asap other modules from defining the root logger using basicConfig
+import amlb.logger
+from amlb import AutoMLError, log
+from amlb.defaults import default_dirs
 from amlb.utils import (
-    Namespace as ns,
+    Namespace,
+    StaleProcessError,
     config_load,
     datetime_iso,
     str2bool,
     str_sanitize,
     zip_path,
-    StaleProcessError,
-    Namespace,
 )
-from amlb import log, AutoMLError
-from amlb.defaults import default_dirs
+from amlb.utils import (
+    Namespace as ns,
+)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument(
@@ -181,7 +183,7 @@ parser.add_argument(
     "--openml-run-tag",
     type=str,
     default=None,
-    help="Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.",
+    help=r"Tag that will be saved in metadata and OpenML runs created during upload, must match '([a-zA-Z0-9_\-\.])+'.",
 )
 
 parser.add_argument(
@@ -252,12 +254,8 @@ log_levels = ns(
     else {}
 ) | ns(console="INFO", app="DEBUG", root="INFO")  # adding defaults if needed
 amlb.logger.setup(
-    log_file=os.path.join(
-        log_dir, "{script}.{now}.log".format(script=script_name, now=now_str)
-    ),
-    root_file=os.path.join(
-        log_dir, "{script}.{now}.full.log".format(script=script_name, now=now_str)
-    ),
+    log_file=os.path.join(log_dir, f"{script_name}.{now_str}.log"),
+    root_file=os.path.join(log_dir, f"{script_name}.{now_str}.full.log"),
     root_level=log_levels.root,
     app_level=log_levels.app,
     console_level=log_levels.console,
