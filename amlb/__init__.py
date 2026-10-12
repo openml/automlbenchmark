@@ -2,23 +2,23 @@
 amlb entrypoint package.
 """
 
-from .logger import app_logger as log
-from .errors import AutoMLError
-from .resources import Resources
-from .benchmark import Benchmark, SetupMode
-from .runners import AWSBenchmark, DockerBenchmark, SingularityBenchmark
-from .results import TaskResult
 from .__version__ import __version__
+from .benchmark import Benchmark, SetupMode
+from .errors import AutoMLError
+from .logger import app_logger as log
+from .resources import Resources
+from .results import TaskResult
+from .runners import AWSBenchmark, DockerBenchmark, SingularityBenchmark
 
 __all__ = [
-    "log",
+    "AWSBenchmark",
     "AutoMLError",
-    "Resources",
     "Benchmark",
     "DockerBenchmark",
-    "SingularityBenchmark",
-    "AWSBenchmark",
+    "Resources",
     "SetupMode",
+    "SingularityBenchmark",
     "TaskResult",
     "__version__",
+    "log",
 ]

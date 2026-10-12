@@ -15,19 +15,17 @@ os.environ["MKL_NUM_THREADS"] = "1"
 
 
 import category_encoders
-from packaging import version
 import sklearn
-
 from gama import GamaClassifier, GamaRegressor, __version__
+from packaging import version
 
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer, touch
-
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +52,7 @@ def run(dataset, config):
         metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     )
     if scoring_metric is None:
-        raise ValueError("Performance metric {} not supported.".format(config.metric))
+        raise ValueError(f"Performance metric {config.metric} not supported.")
 
     training_params = {
         k: v for k, v in config.framework_params.items() if not k.startswith("_")
