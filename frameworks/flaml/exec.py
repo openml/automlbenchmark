@@ -7,9 +7,9 @@ from flaml import AutoML, __version__
 
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer
 
@@ -24,7 +24,7 @@ def run(dataset, config):
     is_classification = config.type == "classification"
     time_budget = config.max_runtime_seconds
     n_jobs = config.framework_params.get("_n_jobs", config.cores)
-    log.info("Running FLAML with {} number of cores".format(config.cores))
+    log.info(f"Running FLAML with {config.cores} number of cores")
     aml = AutoML()
 
     # Mapping of benchmark metrics to flaml metrics

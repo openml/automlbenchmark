@@ -1,13 +1,13 @@
 import json
 import logging
 import pathlib
-from collections import OrderedDict
 import textwrap
-from typing import Set, Optional, List
+from collections import OrderedDict
+from typing import List, Optional, Set
 
 import openml
 import pandas as pd
-from openml import OpenMLTask, OpenMLFlow
+from openml import OpenMLFlow, OpenMLTask
 from openml.runs.functions import format_prediction
 
 from .utils.core import Namespace

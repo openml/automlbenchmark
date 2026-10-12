@@ -17,14 +17,14 @@ os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
-import psutil
 import pandas as pd
+import psutil
 import sklearn
+from custom_validate import cross_validate
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from frameworks.shared.callee import call_run, result, measure_inference_times
+from frameworks.shared.callee import call_run, measure_inference_times, result
 from frameworks.shared.utils import Timer
-from custom_validate import cross_validate
 
 log = logging.getLogger(__name__)
 
@@ -70,9 +70,7 @@ def run(dataset, config):
     y_train, y_test = dataset.train.y, dataset.test.y
 
     log.info(
-        "Running RandomForest with a maximum time of {}s on {} cores.".format(
-            config.max_runtime_seconds, n_jobs
-        )
+        f"Running RandomForest with a maximum time of {config.max_runtime_seconds}s on {n_jobs} cores."
     )
 
     estimator = RandomForestClassifier if is_classification else RandomForestRegressor
