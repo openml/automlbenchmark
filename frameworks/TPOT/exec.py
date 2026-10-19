@@ -18,12 +18,11 @@ from tpot import TPOTClassifier, TPOTRegressor, __version__
 
 from frameworks.shared.callee import (
     call_run,
+    measure_inference_times,
     output_subdir,
     result,
-    measure_inference_times,
 )
 from frameworks.shared.utils import Timer, is_sparse
-
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ def run(dataset, config):
         metrics_mapping[config.metric] if config.metric in metrics_mapping else None
     )
     if scoring_metric is None:
-        raise ValueError("Performance metric {} not supported.".format(config.metric))
+        raise ValueError(f"Performance metric {config.metric} not supported.")
 
     X_train = dataset.train.X
     y_train = dataset.train.y

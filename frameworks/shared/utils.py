@@ -1,9 +1,10 @@
-from importlib import import_module
 import importlib.util
 import logging
 import os
-import pandas as pd
 import sys
+from importlib import import_module
+
+import pandas as pd
 
 
 def setup_logger():
@@ -60,6 +61,6 @@ def load_timeseries_dataset(dataset):
 
 utils = load_amlb_module("amlb.utils")
 # unorthodox for it's only now that we can safely import those functions
-from amlb.utils import *  # noqa: E402, F403
+from amlb.utils import *
 
 __all__ = [s for s in dir() if not s.startswith("_") and s not in __no_export]

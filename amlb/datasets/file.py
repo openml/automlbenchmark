@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 import logging
 import os
 import re
 import tempfile
+from abc import abstractmethod
 from functools import cache, cached_property
 from typing import List
 
@@ -18,6 +18,8 @@ from ..datautils import read_csv, to_data_frame
 from ..resources import config as rconfig
 from ..utils import (
     Namespace as ns,
+)
+from ..utils import (
     as_list,
     list_all_files,
     path_from_split,
@@ -25,8 +27,7 @@ from ..utils import (
     repr_def,
     split_path,
 )
-
-from .fileutils import is_archive, is_valid_url, unarchive_file, get_file_handler
+from .fileutils import get_file_handler, is_archive, is_valid_url, unarchive_file
 
 log = logging.getLogger(__name__)
 
