@@ -1,13 +1,14 @@
 import pytest
-from amlb.utils import Namespace
+
 from amlb.frameworks.definitions import (
-    _sanitize_and_add_defaults,
     _add_framework_name,
     _find_all_parents,
-    _update_frameworks_with_parent_definitions,
-    _remove_self_reference_extensions,
     _remove_frameworks_with_unknown_parent,
+    _remove_self_reference_extensions,
+    _sanitize_and_add_defaults,
+    _update_frameworks_with_parent_definitions,
 )
+from amlb.utils import Namespace
 
 
 def test_remove_frameworks_with_unknown_parent_removes_framework_with_unknown_parent():

@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import gc
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
-from functools import partial, wraps
 import inspect
 import io
 import logging
@@ -18,12 +15,15 @@ import stat
 import subprocess
 import sys
 import threading
-from typing import Dict, List, Union, Tuple, cast
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from functools import partial, wraps
+from typing import Dict, List, Tuple, Union, cast
 
 import psutil
 
 from .core import Namespace, as_list, flatten, fn_name
-from .os import dir_of, to_mb, path_from_split, split_path
+from .os import dir_of, path_from_split, split_path, to_mb
 from .time import Timeout, Timer
 
 log = logging.getLogger(__name__)
@@ -416,7 +416,7 @@ def call_in_subprocess(target, *args, **kwargs):
         else:
             return result
     except queue.Empty:
-        raise Exception("Subprocess running {} died abruptly.".format(target.__name__))
+        raise Exception(f"Subprocess running {target.__name__} died abruptly.")
     except BaseException:
         try:
             kill_proc_tree(p.pid)

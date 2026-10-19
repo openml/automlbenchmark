@@ -10,28 +10,32 @@
 
 from __future__ import annotations
 
-from copy import copy
-from enum import Enum
-from functools import cached_property
-from importlib import import_module, invalidate_caches
 import logging
 import math
 import os
 import re
 import signal
 import sys
+from copy import copy
+from enum import Enum
+from functools import cached_property
+from importlib import import_module, invalidate_caches
 
 import pandas as pd
 
-from .frameworks.definitions import load_framework_definition
-from .job import Job, JobError, SimpleJobRunner, MultiThreadingJobRunner
-from .datasets import DataLoader, DataSourceType
 from .data import DatasetType
+from .datasets import DataLoader, DataSourceType
 from .datautils import read_csv
-from .resources import get as rget, config as rconfig, output_dirs as routput_dirs
+from .frameworks.definitions import load_framework_definition
+from .job import Job, JobError, MultiThreadingJobRunner, SimpleJobRunner
+from .resources import config as rconfig
+from .resources import get as rget
+from .resources import output_dirs as routput_dirs
 from .results import ErrorResult, Scoreboard, TaskResult
 from .utils import (
     Namespace as ns,
+)
+from .utils import (
     OSMonitoring,
     as_list,
     datetime_iso,
@@ -50,7 +54,6 @@ from .utils import (
     system_volume_mb,
     touch,
 )
-
 
 log = logging.getLogger(__name__)
 
@@ -187,7 +190,7 @@ class Benchmark:
         if mode == SetupMode.skip or mode == SetupMode.auto and self._is_setup_done():
             return
 
-        log.info("Setting up framework {}.".format(self.framework_name))
+        log.info(f"Setting up framework {self.framework_name}.")
 
         self._write_setup_env(
             self.framework_module.__path__[0], **dict(self.framework_def.setup_env)
@@ -235,9 +238,7 @@ class Benchmark:
             )
 
         invalidate_caches()
-        log.info(
-            "Setup of framework {} completed successfully.".format(self.framework_name)
-        )
+        log.info(f"Setup of framework {self.framework_name} completed successfully.")
 
         self._mark_setup_done()
 
@@ -338,15 +339,17 @@ class Benchmark:
             # threading.Thread(target=self.cleanup)
 
         try:
-            with signal_handler(signal.SIGINT, on_interrupt):
-                with OSMonitoring(
+            with (
+                signal_handler(signal.SIGINT, on_interrupt),
+                OSMonitoring(
                     name=jobs[0].name if len(jobs) == 1 else None,
                     interval_seconds=rconfig().monitoring.interval_seconds,
                     check_on_exit=True,
                     statistics=rconfig().monitoring.statistics,
                     verbosity=rconfig().monitoring.verbosity,
-                ):
-                    self.job_runner.start()
+                ),
+            ):
+                self.job_runner.start()
         except (KeyboardInterrupt, InterruptedError):
             pass
         finally:
@@ -381,7 +384,7 @@ class Benchmark:
             )
         except StopIteration:
             if fail_on_missing:
-                raise ValueError("Incorrect task name: {}.".format(task_name))
+                raise ValueError(f"Incorrect task name: {task_name}.")
             return None
         if not include_disabled and not Benchmark._is_task_enabled(task_def):
             raise ValueError(
@@ -563,7 +566,7 @@ class TaskConfig:
         self.git_info = git_info
         self.measure_inference_time = measure_inference_time
         self.ext = ns()  # used if frameworks require extra config points
-        self.quantile_levels = list(sorted(quantile_levels))
+        self.quantile_levels = sorted(quantile_levels)
 
     def __setattr__(self, name, value):
         if name == "metrics":

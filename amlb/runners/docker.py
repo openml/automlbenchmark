@@ -14,7 +14,6 @@ from ..resources import config as rconfig
 from ..utils import dir_of, run_cmd, str_digest, str_sanitize, touch
 from .container import ContainerBenchmark
 
-
 log = logging.getLogger(__name__)
 
 
@@ -59,19 +58,9 @@ class DockerBenchmark(ContainerBenchmark):
         script_extra_params = "--session="  # in combination with `self.output_dirs.session` usage below to prevent creation of 2 sessions locally
         inst_name = f"{self.sid}.{str_sanitize(str_digest(script_params))}"
         cmd = (
-            "docker run --name {name} {options} {run_as} "
-            "-v '{input}':/input -v '{output}':/output -v '{custom}':/custom "
-            "--rm {image} {params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {extra_params}"
-        ).format(
-            name=inst_name,
-            options=rconfig().docker.run_extra_options,
-            run_as=run_as,
-            input=in_dir,
-            output=self.output_dirs.session,
-            custom=custom_dir,
-            image=self.image,
-            params=script_params,
-            extra_params=script_extra_params,
+            f"docker run --name {inst_name} {rconfig().docker.run_extra_options} {run_as} "
+            f"-v '{in_dir}':/input -v '{self.output_dirs.session}':/output -v '{custom_dir}':/custom "
+            f"--rm {self.image} {script_params} -i /input -o /output -u /custom -s skip -Xrun_mode=docker {script_extra_params}"
         )
         log.info("Starting docker: %s.", cmd)
         log.info("Datasets are loaded by default from folder %s.", in_dir)
