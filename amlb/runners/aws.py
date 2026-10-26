@@ -16,21 +16,22 @@ necessary to run a benchmark on EC2 instances:
 
 from __future__ import annotations
 
-import datetime
-from concurrent.futures import ThreadPoolExecutor
 import copy as cp
+import datetime
 import datetime as dt
-from enum import Enum
 import itertools
 import json
 import logging
 import math
 import operator as op
 import os
-from posixpath import join as url_join, relpath as url_relpath
 import re
-import time
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from enum import Enum
+from posixpath import join as url_join
+from posixpath import relpath as url_relpath
 from typing import cast
 from urllib.parse import quote_plus as uenc
 
@@ -44,12 +45,15 @@ from ..job import (
     JobError,
     MultiThreadingJobRunner,
     SimpleJobRunner,
+)
+from ..job import (
     State as JobState,
 )
-from ..resources import config as rconfig, get as rget
+from ..resources import config as rconfig
+from ..resources import get as rget
 from ..results import ErrorResult, NoResultError, Scoreboard, TaskResult
 from ..utils import (
-    Namespace as ns,
+    Namespace,
     countdown,
     datetime_iso,
     file_filter,
@@ -62,10 +66,11 @@ from ..utils import (
     str_iter,
     tail,
     touch,
-    Namespace,
+)
+from ..utils import (
+    Namespace as ns,
 )
 from .docker import DockerBenchmark
-
 
 log = logging.getLogger(__name__)
 
@@ -207,13 +212,11 @@ class AWSBenchmark(Benchmark):
 
     def _validate2(self):
         if self.ami is None:
-            raise ValueError("Region {} not supported by AMI yet.".format(self.region))
+            raise ValueError(f"Region {self.region} not supported by AMI yet.")
 
     def setup(self, mode):
         if mode == SetupMode.skip:
-            log.warning(
-                "AWS setup mode set to unsupported {mode}, ignoring.".format(mode=mode)
-            )
+            log.warning(f"AWS setup mode set to unsupported {mode}, ignoring.")
 
         # S3 setup to exchange files between local and ec2 instances
         self.s3 = boto3.resource("s3", region_name=self.region)
@@ -470,9 +473,7 @@ class AWSBenchmark(Benchmark):
                             self._forward_params["benchmark_name"]
                             if self.benchmark_path is None
                             or self.benchmark_path.startswith(rconfig().root_dir)
-                            else "{}/{}".format(
-                                resources_root, self._rel_path(self.benchmark_path)
-                            )
+                            else f"{resources_root}/{self._rel_path(self.benchmark_path)}"
                         ),
                         constraint=self._forward_params["constraint_name"],
                         task_param=""
@@ -625,9 +626,7 @@ class AWSBenchmark(Benchmark):
             if inst_desc["abort"]:
                 self._update_instance(job.ext.instance_id, status="aborted")
                 raise AWSError(
-                    "Aborting instance {} for job {}.".format(
-                        job.ext.instance_id, job.name
-                    )
+                    f"Aborting instance {job.ext.instance_id} for job {job.name}."
                 )
             try:
                 state = instance.state["Name"]
@@ -883,7 +882,7 @@ class AWSBenchmark(Benchmark):
                 meta_info=None,
             )
         except Exception as e:
-            fake_iid = "no_instance_{}".format(len(self.instances) + 1)
+            fake_iid = f"no_instance_{len(self.instances) + 1}"
             self.instances[fake_iid] = ns(
                 instance=None,
                 key=inst_key,
@@ -975,7 +974,7 @@ class AWSBenchmark(Benchmark):
                 )
             except Exception as e:
                 log.warning(
-                    f"Ignoring exception raised while updating instance {instance_id}: {str(e)}"
+                    f"Ignoring exception raised while updating instance {instance_id}: {e!s}"
                 )
 
     def _update_instance(self, instance_id, **kwargs):
@@ -1351,9 +1350,7 @@ class AWSBenchmark(Benchmark):
             log.info("Role %s successfully created.", role_name)
 
         if iamc.s3_policy_name not in [p.name for p in irole.policies.all()]:
-            resource_prefix = "arn:aws:s3:::{bucket}*/{root_key}".format(
-                bucket=bucket_prefix, root_key=str_def(s3c.root_key)
-            )  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
+            resource_prefix = f"arn:aws:s3:::{bucket_prefix}*/{str_def(s3c.root_key)}"  # ARN format for s3, cf. https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
             s3_policy_json = json.dumps(
                 {
                     "Version": "2012-10-17",
@@ -1361,7 +1358,7 @@ class AWSBenchmark(Benchmark):
                         {
                             "Effect": "Allow",
                             "Action": "s3:List*",
-                            "Resource": "arn:aws:s3:::{}*".format(bucket_prefix),
+                            "Resource": f"arn:aws:s3:::{bucket_prefix}*",
                         },
                         {
                             "Effect": "Allow",

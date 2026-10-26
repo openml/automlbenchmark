@@ -4,11 +4,11 @@ The benchmark run needs to be executed on OpenML datasets to be eligible for upl
 
 import argparse
 import contextlib
-from contextlib import contextmanager
-from datetime import datetime
 import logging
 import os
 import pathlib
+from contextlib import contextmanager
+from datetime import datetime
 from typing import Optional
 
 import openml
@@ -16,7 +16,7 @@ from openml import OpenMLRun
 
 from amlb.defaults import default_dirs
 from amlb.resources import config_load
-from amlb.uploads import process_task_folder, missing_folds, _load_task_data
+from amlb.uploads import _load_task_data, missing_folds, process_task_folder
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

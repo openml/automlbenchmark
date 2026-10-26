@@ -6,10 +6,9 @@ from typing import cast
 
 import openml
 import pandas as pd
-from openml import OpenMLTask, OpenMLDataset
+from openml import OpenMLDataset, OpenMLTask
 
 from amlb.utils import Namespace, str_sanitize
-
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ def load_openml_tasks_from_suite(domain: str, oml_id: int) -> list[Namespace]:
                 name=str_sanitize(datasets.loc[did]["name"]),
                 description=f"{domain}/d/{did}",
                 openml_task_id=tid,
-                id="{}.org/t/{}".format(domain, tid),
+                id=f"{domain}.org/t/{tid}",
             )
         )
     return tasks
@@ -81,7 +80,7 @@ def load_openml_task_as_definition(domain: str, oml_id: int) -> list[Namespace]:
             name=str_sanitize(data.name),
             description=data.description,
             openml_task_id=task.id,
-            id="{}.org/t/{}".format(domain, task.id),
+            id=f"{domain}.org/t/{task.id}",
         )
     ]
 

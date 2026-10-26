@@ -12,18 +12,22 @@ from amlb.benchmark import TaskConfig
 from amlb.data import Dataset
 from amlb.resources import config as rconfig
 from amlb.results import NoResultError, save_predictions
-from amlb.utils import json_dump, Namespace
+from amlb.utils import Namespace, json_dump
 
 from .utils import (
     Namespace as ns,
+)
+from .utils import (
     Timer,
+    deserialize_data,
     dir_of,
-    run_cmd,
+    is_serializable_data,
     json_dumps,
     json_load,
     profile,
+    run_cmd,
+    serialize_data,
 )
-from .utils import is_serializable_data, deserialize_data, serialize_data
 
 log = logging.getLogger(__name__)
 
