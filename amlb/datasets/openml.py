@@ -5,27 +5,29 @@ to expose `OpenML<https://www.openml.org>`_ datasets.
 
 from __future__ import annotations
 
-import pathlib
-from abc import abstractmethod
 import copy
 import functools
-from functools import cached_property
 import logging
 import os
+import pathlib
 import re
-from typing import Generic, Tuple, TypeVar, Hashable
+from abc import abstractmethod
+from collections.abc import Hashable
+from functools import cached_property
+from typing import Generic, Tuple, TypeVar
 
 import arff
 import numpy as np
+import openml as oml
 import pandas as pd
 import pandas.api.types as pat
-import openml as oml
 import xmltodict
 
 from ..benchmarks.openml import load_openml_task_and_data
 from ..data import AM, DF, Dataset, DatasetType, Datasplit, Feature
 from ..datautils import impute_array
-from ..resources import config as rconfig, get as rget
+from ..resources import config as rconfig
+from ..resources import get as rget
 from ..utils import (
     as_list,
     path_from_split,
@@ -33,7 +35,6 @@ from ..utils import (
     split_path,
     unsparsify,
 )
-
 
 # https://github.com/openml/automlbenchmark/pull/574#issuecomment-1646179921
 try:
@@ -68,15 +69,13 @@ class OpenmlLoader:
         if task_id is not None:
             if dataset_id is not None:
                 log.warning(
-                    "Ignoring dataset id {} as a task id {} was already provided.".format(
-                        dataset_id, task_id
-                    )
+                    f"Ignoring dataset id {dataset_id} as a task id {task_id} was already provided."
                 )
             task, dataset = load_openml_task_and_data(task_id, with_data=True)
             _, nfolds, _ = task.get_split_dimensions()
             if fold >= nfolds:
                 raise ValueError(
-                    "OpenML task {} only accepts `fold` < {}.".format(task_id, nfolds)
+                    f"OpenML task {task_id} only accepts `fold` < {nfolds}."
                 )
         elif dataset_id is not None:
             raise NotImplementedError(
@@ -420,9 +419,7 @@ class ArffSplitter(DataSplitter[str]):
         if not os.path.isfile(train_path) or not os.path.isfile(test_path):
             X = self.ds._load_full_data("dataframe")
             train, test = X.iloc[self.train_ind, :], X.iloc[self.test_ind, :]
-            name_template = "{name}_{{split}}_{fold}".format(
-                name=self.ds._oml_dataset.name, fold=self.ds.fold
-            )
+            name_template = f"{self.ds._oml_dataset.name}_{{split}}_{self.ds.fold}"
             self._save_split(train, train_path, name_template.format(split="train"))
             self._save_split(test, test_path, name_template.format(split="test"))
         return train_path, test_path

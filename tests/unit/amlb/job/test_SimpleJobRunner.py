@@ -2,11 +2,10 @@ import functools as ft
 from unittest.mock import patch
 
 import pytest
+from dummy import DummyJob
 
 from amlb.job import SimpleJobRunner
 from amlb.utils import Timeout
-
-from dummy import DummyJob
 
 steps_per_job = 6
 
