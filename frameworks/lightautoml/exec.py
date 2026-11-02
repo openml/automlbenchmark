@@ -10,15 +10,15 @@ import pandas as pd
 
 matplotlib.use("agg")  # no need for tk
 
-from lightautoml.tasks import Task
-from lightautoml.automl.presets.tabular_presets import TabularUtilizedAutoML
 from lightautoml import __version__
+from lightautoml.automl.presets.tabular_presets import TabularUtilizedAutoML
+from lightautoml.tasks import Task
 
 from frameworks.shared.callee import (
     call_run,
-    result,
-    output_subdir,
     measure_inference_times,
+    output_subdir,
+    result,
 )
 from frameworks.shared.utils import Timer
 

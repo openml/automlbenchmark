@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import logging
+from collections.abc import Sequence
 from functools import cached_property
-from typing import Any, Sequence
+from typing import Any
 
 log = logging.getLogger(__name__)
 

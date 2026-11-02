@@ -10,22 +10,22 @@
 from __future__ import annotations
 
 import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
-from enum import Enum, auto
 import logging
 import platform
 import pprint
 import queue
 import signal
 import threading
+from concurrent.futures import ThreadPoolExecutor
+from enum import Enum, auto
 from functools import partial
 from typing import Callable, List, Optional
 
 from .utils import (
-    Namespace,
-    Timer,
-    ThreadSafeCounter,
     InterruptTimeout,
+    Namespace,
+    ThreadSafeCounter,
+    Timer,
     is_main_thread,
     raise_in_thread,
 )
@@ -125,14 +125,16 @@ class Job:
                 interruption_sequence.append(dict(sig=signal.SIGQUIT))
                 interruption_sequence.append(dict(sig=signal.SIGKILL))
 
-            with Timer() as t:
-                with InterruptTimeout(
+            with (
+                Timer() as t,
+                InterruptTimeout(
                     self.timeout,
                     interruptions=interruption_sequence,
                     wait_retry_secs=60,
-                ):  # escalates every minute if the previous interruption was ineffective
-                    if self.set_state(State.running):
-                        result = self._run()
+                ),
+            ):  # escalates every minute if the previous interruption was ineffective
+                if self.set_state(State.running):
+                    result = self._run()
             log.info("Job `%s` executed in %.3f seconds.", self.name, t.duration)
             log.debug("Job `%s` returned: %s", self.name, result)
             return Namespace(name=self.name, result=result, duration=t.duration)
@@ -195,11 +197,9 @@ class Job:
 
     def _setup(self):
         """hook to execute pre-run logic: this is executed in the same thread as the run logic."""
-        pass
 
     def _run(self):
         """jobs should implement their run logic in this method."""
-        pass
 
     def _cancel(self):
         """hook executed on the job once it's being cancelled by the runner:

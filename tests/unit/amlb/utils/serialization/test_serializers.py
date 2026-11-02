@@ -3,7 +3,7 @@ import os
 import pytest
 
 from amlb.utils.core import Namespace as ns
-from amlb.utils.serialization import is_sparse, serialize_data, deserialize_data
+from amlb.utils.serialization import deserialize_data, is_sparse, serialize_data
 
 
 @pytest.mark.use_disk
@@ -100,8 +100,8 @@ def test_serialize_pandas_dataframes(tmpdir):
 
 @pytest.mark.use_disk
 def test_serialize_sparse_matrix(tmpdir):
-    import scipy.sparse as sp
     import numpy as np
+    import scipy.sparse as sp
 
     arr = np.array([[0, 0, 0, 3.3], [4.4, 0, 0, 0], [0, np.nan, 0, 0]])
     nans = np.count_nonzero(np.isnan(arr))
@@ -119,8 +119,8 @@ def test_serialize_sparse_matrix(tmpdir):
 
 @pytest.mark.use_disk
 def test_serialize_sparse_matrix_reload_as_dense(tmpdir):
-    import scipy.sparse as sp
     import numpy as np
+    import scipy.sparse as sp
 
     arr = np.array([[0, 0, 0, 3.3], [4.4, 0, 0, 0], [0, np.nan, 0, 0]])
     mat = sp.csc_matrix(arr)
@@ -139,8 +139,8 @@ def test_serialize_sparse_matrix_reload_as_dense(tmpdir):
 
 @pytest.mark.use_disk
 def test_serialize_sparse_matrix_reload_as_array(tmpdir):
-    import scipy.sparse as sp
     import numpy as np
+    import scipy.sparse as sp
 
     arr = np.array([[0, 0, 0, 3.3], [4.4, 0, 0, 0], [0, np.nan, 0, 0]])
     mat = sp.csc_matrix(arr)
