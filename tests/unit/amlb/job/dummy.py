@@ -1,6 +1,7 @@
 import time
 
-from amlb.job import Job, State as JobState
+from amlb.job import Job
+from amlb.job import State as JobState
 
 
 class DummyJob(Job):

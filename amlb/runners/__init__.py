@@ -7,7 +7,7 @@ from .docker import DockerBenchmark
 from .singularity import SingularityBenchmark
 
 __all__ = [
+    "AWSBenchmark",
     "DockerBenchmark",
     "SingularityBenchmark",
-    "AWSBenchmark",
 ]
