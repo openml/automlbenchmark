@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fedot.api.main import Fedot
 
-from frameworks.shared.callee import call_run, result, output_subdir
+from frameworks.shared.callee import call_run, output_subdir, result
 from frameworks.shared.utils import Timer
 
 log = logging.getLogger(__name__)

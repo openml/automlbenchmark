@@ -1,8 +1,10 @@
 import os
+
 import pytest
+
 from amlb.frameworks.definitions import (
-    default_tag,
     _load_and_merge_framework_definitions,
+    default_tag,
 )
 
 here = os.path.realpath(os.path.dirname(__file__))
