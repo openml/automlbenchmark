@@ -5,7 +5,7 @@ import itertools
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from amlb.utils import Namespace, config_load, str_sanitize
 
@@ -274,7 +274,7 @@ class Framework:
 
 
 def load_framework_definition(
-    framework_name: str, configuration: "Resources"
+    framework_name: str, configuration: Resources
 ) -> Framework:
     tag = None
     if ":" in framework_name:
