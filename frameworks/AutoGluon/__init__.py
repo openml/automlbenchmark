@@ -1,7 +1,8 @@
-from amlb.utils import call_script_in_same_dir
+from copy import deepcopy
+
 from amlb.benchmark import TaskConfig
 from amlb.data import Dataset, DatasetType
-from copy import deepcopy
+from amlb.utils import call_script_in_same_dir
 
 
 def setup(*args, **kwargs):

@@ -1,9 +1,9 @@
+# I don't have OpenML installed locally
+import sys
+
 import arff
 import requests
 import yaml
-
-# I don't have OpenML installed locally
-import sys
 
 sys.path.append("D:\\repositories/openml-python/")
 import openml
@@ -53,7 +53,7 @@ benchmark_dids = set(
     [try_get_did_for_task(tid) for tid in benchmark_tids if tid is not None]
 )
 autosklearn_dids = set(
-    (try_get_did_for_task(tid) for tid in autosklearn_tids if tid is not None)
+    try_get_did_for_task(tid) for tid in autosklearn_tids if tid is not None
 )
 
 print(set(benchmark_dids) & set(autosklearn_dids))

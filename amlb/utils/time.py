@@ -42,13 +42,13 @@ def datetime_iso(
         date_sep = time_sep = datetime_sep = micros_sep = ""
     strf = ""
     if date:
-        strf += "%Y{_}%m{_}%d".format(_=date_sep)
+        strf += f"%Y{date_sep}%m{date_sep}%d"
         if time:
             strf += datetime_sep
     if time:
-        strf += "%H{_}%M{_}%S".format(_=time_sep)
+        strf += f"%H{time_sep}%M{time_sep}%S"
         if micros:
-            strf += "{_}%f".format(_=micros_sep)
+            strf += f"{micros_sep}%f"
     datetime = dt.datetime.utcnow() if datetime is None else datetime
     return datetime.strftime(strf)
 
